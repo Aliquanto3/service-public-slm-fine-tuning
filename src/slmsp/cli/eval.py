@@ -1,4 +1,4 @@
-"""Sous-commande `slmsp eval` : gel du jeu, génération et notation ; `sonde-outils` à venir.
+"""Sous-commande `slmsp eval` : gel du jeu, génération, notation et sonde d'outils.
 
     slmsp eval gel --version v1.0 --verifier-seulement [--racine DIR]
     slmsp eval gel --version v1.0 --statut provisoire --graine 7 [--racine DIR]
@@ -7,6 +7,8 @@
         [--mode-juge batch|direct]
     slmsp eval run --phase generation --reprendre RUN_ID [--racine DIR]
     slmsp eval run --phase notation --depuis RUN_ID [--mode-juge batch|direct] [--racine DIR]
+    slmsp eval sonde-outils --modele base:<slug> [--jeu calibrage] [--items RD-001,RD-002]
+        [--variante cpu|cuda] [--racine DIR]
 
 `--verifier-seulement` n'écrit rien et sort en 0 sans erreur bloquante (les écarts de
 composition sont listés). Le gel écrit `eval/jeu/<version>/MANIFEST.json` et
@@ -22,6 +24,11 @@ validée). Pas de `--reprendre` pour la notation : la relancer suffit, le cache 
 `--phase toutes` (défaut) enchaîne la génération (ou sa reprise) et la notation du run
 produit s'il est `complet` ou `partiel-erreur`.
 
+`sonde-outils` (story 8.2, H-TOOLS) : passe les items RD en protocole d'outils `natif`, puis
+en `json-generique` si `natif` échoue ; une ligne par item, le tableau par protocole, le
+protocole recommandé et le run `eval-sonde`. Code 0 si un protocole est valide et le run
+`complet`, 1 sinon (aucun protocole valide, ou item en erreur).
+
 Code 0 si le dernier run est `complet`, 1 s'il est `partiel-erreur` ou `partiel-budget`, 2
 pour une erreur d'usage, 4 si le jeu est altéré ou si le run repris diffère de la demande.
 """
@@ -36,14 +43,6 @@ from pathlib import Path
 from typing import Any, Final
 
 from slmsp.core.erreurs import CodeSortie
-
-
-def _non_implementee(nom: str) -> Callable[[argparse.Namespace], int]:
-    def executer(_args: argparse.Namespace) -> int:
-        print(f"slmsp : commande non implémentée : eval {nom}", file=sys.stderr)
-        return int(CodeSortie.USAGE)
-
-    return executer
 
 
 def _aide(parseur: argparse.ArgumentParser) -> Callable[[argparse.Namespace], int]:
@@ -317,12 +316,89 @@ def executer_run(args: argparse.Namespace) -> int:
     return _code(resultat.statut)
 
 
+def _usage_sonde(message: str) -> int:
+    print(f"slmsp : eval sonde-outils : {message}", file=sys.stderr)
+    return int(CodeSortie.USAGE)
+
+
+def _rapporter_sonde(ligne: dict[str, Any], rang: int, total: int) -> None:
+    print(
+        f"[{ligne['protocole']} {rang}/{total}] {ligne['item_id']} {ligne['statut']} : "
+        f"{ligne['appels_valides']}/{ligne['appels_attendus']} appel(s) attendu(s) apparié(s), "
+        f"{ligne['non_conformes']} non conforme(s) → "
+        f"{'valide' if ligne['valide'] else 'invalide'} ({ligne['duree_ms']} ms)",
+        flush=True,
+    )
+
+
+COLONNES_SONDE: Final = (
+    ("Protocole", 14),
+    ("Items valides", 13),
+    ("Appels valides", 14),
+    ("Taux", 5),
+    ("Non conformes", 13),
+    ("En erreur", 9),
+)
+
+
+def tableau_sonde(bilans: Any) -> str:
+    """Tableau texte des passes de la sonde : effectifs, taux et verdict par protocole."""
+    lignes = ["  ".join(titre.ljust(largeur) for titre, largeur in COLONNES_SONDE) + "  Verdict"]
+    for protocole, bilan in bilans.items():
+        valeurs = (
+            protocole,
+            f"{bilan.items_valides}/{bilan.items}",
+            f"{bilan.appels_valides}/{bilan.appels_attendus}",
+            _nombre(bilan.taux_appels_valides, 2),
+            bilan.non_conformes,
+            bilan.erreurs,
+        )
+        cellules = [
+            str(valeur).ljust(largeur)
+            for valeur, (_, largeur) in zip(valeurs, COLONNES_SONDE, strict=True)
+        ]
+        lignes.append("  ".join(cellules) + "  " + ("valide" if bilan.valide else "invalide"))
+    return "\n".join(lignes)
+
+
+def executer_sonde(args: argparse.Namespace) -> int:
+    """`slmsp eval sonde-outils` : protocole d'outils `natif`, puis `json-generique`."""
+    from slmsp.evaluation import assemblage
+    from slmsp.evaluation.sonde_outils import sonder
+
+    if args.modele is None:
+        return _usage_sonde("--modele base:<slug> requis")
+    racine = Path(args.racine) if args.racine is not None else None
+    try:
+        rapport = sonder(
+            args.modele,
+            jeu=args.jeu,
+            items=_items(args.items),
+            variante=args.variante,
+            racine=racine,
+            fabrique=assemblage.ouvrir_harnais,
+            rapporter=_rapporter_sonde,
+        )
+    except ValueError as exc:
+        return _usage_sonde(str(exc))
+    print(tableau_sonde(rapport.bilans))
+    verdict = "valide" if rapport.valide else "aucun protocole valide"
+    print(f"Protocole recommandé : {rapport.protocole_recommande} ({verdict})")
+    if rapport.motif:
+        print(f"Motif : {rapport.motif}")
+    print(f"Run : {rapport.run.dossier}")
+    print(f"Statut du run : {rapport.statut}")
+    if rapport.valide and rapport.statut == "complet":
+        return int(CodeSortie.SUCCES)
+    return int(CodeSortie.ERREUR)
+
+
 def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     """Ajoute `eval` et ses sous-commandes au parseur de `slmsp`."""
     parseur = sous_parseurs.add_parser(
         "eval",
-        help="Jeu d'évaluation : gel, génération et notation",
-        description="Jeu d'évaluation : gel, génération et notation.",
+        help="Jeu d'évaluation : gel, génération, notation et sonde d'outils",
+        description="Jeu d'évaluation : gel, génération, notation et sonde d'outils.",
     )
     actions = parseur.add_subparsers(dest="eval_commande", metavar="<action>")
     parseur.set_defaults(func=_aide(parseur))
@@ -374,6 +450,19 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     run.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     run.set_defaults(func=executer_run)
 
-    aide = "sonder les outils MCP (non implémentée)"
-    sonde = actions.add_parser("sonde-outils", help=aide, description=aide, add_help=False)
-    sonde.set_defaults(_remplacement=True, func=_non_implementee("sonde-outils"))
+    sonde = actions.add_parser(
+        "sonde-outils",
+        help="sonder le tool calling d'un candidat (H-TOOLS) : natif, puis json-generique",
+        description=(
+            "Passe les items RD du calibrage par le Harnais d'évaluation en protocole d'outils "
+            "natif, puis json-generique si natif échoue, et recommande un protocole."
+        ),
+    )
+    sonde.add_argument("--modele", help="candidat sondé : base:<slug>")
+    sonde.add_argument("--jeu", default="calibrage", help="version du jeu (défaut : calibrage)")
+    sonde.add_argument("--items", help="items RD séparés par des virgules (défaut : RD-001,RD-002)")
+    sonde.add_argument(
+        "--variante", choices=("cpu", "cuda"), default="cpu", help="variante llama.cpp (cpu)"
+    )
+    sonde.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
+    sonde.set_defaults(func=executer_sonde)

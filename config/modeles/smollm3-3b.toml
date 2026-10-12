@@ -22,7 +22,10 @@ contexte = 8192
 cache_kv = "f16"
 reasoning = "off"
 chat_template_kwargs = { enable_thinking = false }
-# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+# Sonde H-TOOLS (story 8.2), run eval-sonde/20261012-165530-smollm3-3b-80cc : aucun
+# protocole valide (0/5 appel apparié en natif comme en json-generique) ; natif retenu par
+# égalité. En natif, les <tool_call> sortent en texte, non analysés par llama-server
+# --jinja ; en json-generique, réponse en texte sans appel.
 protocole_outils = "natif"
 # Template GGUF différent de celui du tokenizer HF (SHA-256) : le template HF,
 # exporté sous models/<slug>/chat_template.jinja, est imposé à llama-server.

@@ -27,7 +27,8 @@ cache_kv = "f16"
 reasoning = "off"
 chat_template_kwargs = {}
 exclure_vision = true
-# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+# Sonde H-TOOLS (story 8.2), run eval-sonde/20261012-165214-ministral-3-3b-e1a5 :
+# natif valide (2/2 items, 5/5 appels attendus appariés, 0 non conforme).
 protocole_outils = "natif"
 # Template GGUF différent de celui du tokenizer HF (SHA-256) : le template HF,
 # exporté sous models/<slug>/chat_template.jinja, est imposé à llama-server.

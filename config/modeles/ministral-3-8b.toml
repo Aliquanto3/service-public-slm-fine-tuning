@@ -14,7 +14,7 @@ cache_kv = "f16"
 reasoning = "off"
 chat_template_kwargs = {}
 exclure_vision = true
-# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+# Non sondé (story 8.2 : sonde H-TOOLS limitée aux candidats 1B à 4B) : natif par défaut.
 protocole_outils = "natif"
 chat_template_force = false
 

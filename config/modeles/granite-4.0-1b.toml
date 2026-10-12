@@ -21,7 +21,8 @@ contexte = 8192
 cache_kv = "f16"
 reasoning = "off"
 chat_template_kwargs = {}
-# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+# Sonde H-TOOLS (story 8.2), run eval-sonde/20261012-165007-granite-4.0-1b-0543 :
+# natif valide (2/2 items, 4/5 appels attendus appariés, 0 non conforme).
 protocole_outils = "natif"
 chat_template_force = false
 
