@@ -1,0 +1,7 @@
+{
+  "architectures": ["Mistral3ForConditionalGeneration"],
+  "model_type": "mistral3",
+  "dtype": "bfloat16",
+  "text_config": {"model_type": "ministral3", "num_hidden_layers": 26},
+  "vision_config": {"model_type": "pixtral", "num_hidden_layers": 24}
+}

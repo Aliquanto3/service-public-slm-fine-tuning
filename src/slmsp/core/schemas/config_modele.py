@@ -17,12 +17,32 @@ RevisionHf = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{40}$")]
 """Révision Hugging Face figée : SHA de commit complet (40 hexadécimaux minuscules)."""
 
 
+SourceGguf = Literal["officielle", "communautaire", "conversion"]
+"""Origine du GGUF : dépôt de l'éditeur (ou de ggml-org), dépôt communautaire réputé, ou
+conversion maison au tag llama.cpp `tag_conversion`."""
+
+
 class FichierGguf(SousSchema):
-    """Poids GGUF servis par `llama-server`."""
+    """Poids GGUF servis par `llama-server`.
+
+    `revision` épingle le commit du dépôt `depot` ; absente, le GGUF est pris à la révision
+    du modèle (même dépôt) ou à `main` résolu à la volée (autre dépôt).
+    """
 
     depot: str
     fichier: str
     sha256: Sha256
+    revision: RevisionHf | None = None
+    source: SourceGguf | None = None
+    tag_conversion: str | None = None
+
+    @model_validator(mode="after")
+    def _tag_si_conversion(self) -> FichierGguf:
+        if (self.tag_conversion is not None) != (self.source == "conversion"):
+            raise ValueError(
+                'gguf.tag_conversion est requis pour source = "conversion", et seulement pour elle'
+            )
+        return self
 
 
 class ConfigModele(SchemaBase):
@@ -32,6 +52,8 @@ class ConfigModele(SchemaBase):
     depot_hf: str
     revision: RevisionHf
     fichiers: list[str]
+    sha256_fichiers: dict[str, Sha256] = Field(default_factory=dict)
+    """SHA-256 attendu de fichiers de `fichiers` (indispensable pour un fichier non LFS)."""
     gguf: FichierGguf
     contexte: int = Field(gt=0)
     cache_kv: Literal["f16", "q8_0", "q4_0"] = "f16"
@@ -43,6 +65,19 @@ class ConfigModele(SchemaBase):
     chat_template_force: bool = False
     embedding: bool = False
     pooling: Literal["cls", "mean", "last"] | None = None
+
+    @model_validator(mode="after")
+    def _coherence(self) -> ConfigModele:
+        inconnus = sorted(set(self.sha256_fichiers) - set(self.fichiers))
+        if inconnus:
+            raise ValueError(f"sha256_fichiers : fichiers absents de `fichiers` : {inconnus}")
+        if (
+            self.gguf.depot == self.depot_hf
+            and self.gguf.revision is not None
+            and self.gguf.revision != self.revision
+        ):
+            raise ValueError("gguf.revision diffère de revision pour le même dépôt")
+        return self
 
     @model_validator(mode="after")
     def _pooling_si_embedding(self) -> ConfigModele:

@@ -1,0 +1,50 @@
+# Témoin Qwen : Qwen3-4B-Instruct-2507 (Apache 2.0, sans accès conditionnel).
+# Candidat D4, épinglé par la story 8.1 (révisions et SHA-256 relevés le 2026-10-12,
+# recoupés avec l'API Hugging Face). AD-6 : valeurs communes à l'inférence et à
+# l'entraînement.
+# GGUF communautaire réputé (unsloth) : Qwen ne publie pas de GGUF pour ce modèle.
+# Template du tokenizer dans tokenizer_config.json.
+
+schema_version = 1
+depot_hf = "Qwen/Qwen3-4B-Instruct-2507"
+revision = "cdbee75f17c01a7cc42f958dc650907174af0554"
+fichiers = [
+    "config.json",
+    "generation_config.json",
+    "merges.txt",
+    "model-00001-of-00003.safetensors",
+    "model-00002-of-00003.safetensors",
+    "model-00003-of-00003.safetensors",
+    "model.safetensors.index.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+]
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = {}
+# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+protocole_outils = "natif"
+# Template GGUF différent de celui du tokenizer HF (SHA-256) : le template HF,
+# exporté sous models/<slug>/chat_template.jinja, est imposé à llama-server.
+chat_template_force = true
+
+[sha256_fichiers]
+"config.json" = "5beea1a4a34c62782bfb2f911c606741a3bab8f92d80a118fa053c28af12e8ba" # 727 octets
+"generation_config.json" = "835fffe355c9438e7a25be099b3fccaa98350b83451f9fd2d99512e74f1ade48" # 238 octets
+"merges.txt" = "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3" # 1 671 839 octets
+"model-00001-of-00003.safetensors" = "75311d91bb08cf0b882913da464a1e722a31fb44db35208663487efb7a3d8ed6" # 3 957 900 840 octets
+"model-00002-of-00003.safetensors" = "0b48adbb1f60e901153d91907ba11ce63bd4b8b584482e730f48808d055dfba1" # 3 987 450 520 octets
+"model-00003-of-00003.safetensors" = "7dd39ccca5e4de123c74c14af44c9bf2eb75df33b4614382af0134528e060d5d" # 99 630 640 octets
+"model.safetensors.index.json" = "d6c42883a895dfef5b0080ed2116a1bcd764f558406b98923d675978a1abf29c" # 32 819 octets
+"tokenizer.json" = "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4" # 11 422 654 octets
+"tokenizer_config.json" = "a62ff0a2472a0fa1b8eaabcb57c59b58afa42a22831dc141400b6e0cf2b65ce3" # 9 377 octets
+"vocab.json" = "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910" # 2 776 833 octets
+
+[gguf] # 2 497 281 120 octets
+depot = "unsloth/Qwen3-4B-Instruct-2507-GGUF"
+revision = "a06e946bb6b655725eafa393f4a9745d460374c9"
+fichier = "Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+sha256 = "3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597"
+source = "communautaire"

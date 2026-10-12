@@ -1,0 +1,9 @@
+{
+  "architectures": ["GraniteMoeHybridForCausalLM"],
+  "model_type": "granitemoehybrid",
+  "layer_types": ["attention", "attention", "attention", "attention"],
+  "mamba_d_state": 256,
+  "num_hidden_layers": 4,
+  "num_local_experts": 0,
+  "torch_dtype": "bfloat16"
+}

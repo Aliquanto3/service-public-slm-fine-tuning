@@ -1,13 +1,15 @@
 """Pilote `slmsp fetch modeles` : poids décrits par `config/modeles/<slug>.toml` (AD-28).
 
-- GGUF : `<models>/<slug>/gguf/<nom du fichier>`, SHA-256 de la configuration. Pris à la
-  révision `revision` s'il vient de `depot_hf` ; d'un autre dépôt, la révision `main` est
-  résolue en commit (`X-Repo-Commit`) puis téléchargée à ce commit, SHA obligatoire.
-- `fichiers` : `<models>/<slug>/hf/<chemin>`, à la révision `revision` ; SHA-256 attendu
-  lu dans `X-Linked-Etag` (fichiers LFS). Un fichier sans SHA connu est refusé.
+- GGUF : `<models>/<slug>/gguf/<nom du fichier>`, SHA-256 de la configuration. Pris à
+  `gguf.revision` si elle est donnée ; sinon à la révision `revision` s'il vient de
+  `depot_hf`, et d'un autre dépôt à la révision `main` résolue en commit (`X-Repo-Commit`).
+- `fichiers` : `<models>/<slug>/hf/<chemin>`, à la révision `revision`. SHA-256 attendu
+  lu dans `sha256_fichiers`, sinon dans `X-Linked-Etag` (fichiers LFS) ; un fichier sans
+  SHA connu est refusé, un `X-Linked-Etag` différent du SHA de la configuration aussi.
 
-`<models>` vaut `dossier_modeles()` (`SLMSP_MODELS_DIR`). Les modèles candidats et leurs
-contrôles (story 8.1) ne sont pas traités ici.
+Un fichier présent dont le SHA-256 est connu en configuration ne déclenche aucune requête :
+le moteur le vérifie sur disque. `<models>` vaut `dossier_modeles()` (`SLMSP_MODELS_DIR`).
+Les contrôles des modèles candidats sont dans `slmsp.fetch.verifications`.
 """
 
 from __future__ import annotations
@@ -50,7 +52,11 @@ def _gguf(telechargeur: Telechargeur, config: ConfigModele, base: Path) -> Fichi
     chemin = chemin_config(gguf.fichier, f"modèle {config.depot_hf} : gguf.fichier")
     destination = base / "gguf" / PurePosixPath(chemin).name
     meme_depot = gguf.depot == config.depot_hf
-    revision = config.revision if meme_depot else REVISION_AUTRE_DEPOT
+    epinglee = gguf.revision is not None or meme_depot
+    if gguf.revision is not None:
+        revision = gguf.revision
+    else:
+        revision = config.revision if meme_depot else REVISION_AUTRE_DEPOT
     url = url_hf(gguf.depot, chemin, revision)
     if destination.exists():  # contrôlé par le moteur, sans requête
         return FichierPrevu(
@@ -62,7 +68,7 @@ def _gguf(telechargeur: Telechargeur, config: ConfigModele, base: Path) -> Fichi
             f"{gguf.depot}/{chemin}@{revision} : X-Linked-Etag {meta.sha256} différent du "
             f"SHA-256 de la configuration ({gguf.sha256})"
         )
-    if not meme_depot:
+    if not epinglee:
         if meta.commit is None:
             raise TelechargementEchoue(
                 f"{gguf.depot}/{chemin} : commit de la révision {revision} introuvable "
@@ -80,8 +86,20 @@ def _fichier_hf(
 ) -> FichierPrevu:
     chemin = chemin_config(chemin, f"modèle {config.depot_hf} : fichiers")
     url = url_hf(config.depot_hf, chemin, config.revision)
+    destination = base.joinpath("hf", *chemin.split("/"))
+    attendu = config.sha256_fichiers.get(chemin)
+    if attendu is not None and destination.exists():  # contrôlé par le moteur, sans requête
+        return FichierPrevu(
+            config.depot_hf, chemin, config.revision, url, destination, attendu, None, "hf"
+        )
     meta = telechargeur.metadonnees_hf(url)
-    if meta.sha256 is None:
+    if attendu is not None and meta.sha256 is not None and meta.sha256 != attendu:
+        raise ShaInvalide(
+            f"{config.depot_hf}/{chemin}@{config.revision} : X-Linked-Etag {meta.sha256} "
+            f"différent du SHA-256 de la configuration ({attendu})"
+        )
+    sha256 = attendu or meta.sha256
+    if sha256 is None:
         raise ShaInvalide(
             f"{config.depot_hf}/{chemin}@{config.revision} : aucun SHA-256 attendu "
             "(absent de la configuration, pas de X-Linked-Etag : fichier non LFS)"
@@ -91,8 +109,8 @@ def _fichier_hf(
         chemin,
         config.revision,
         url,
-        base.joinpath("hf", *chemin.split("/")),
-        meta.sha256,
+        destination,
+        sha256,
         meta.taille,
         "hf",
     )

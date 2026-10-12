@@ -137,6 +137,87 @@ def test_fichier_hf_sans_sha(banc, outils, tmp_path: Path) -> None:
     assert banc.serveur.requetes_vers("/resolve/", "GET") == []
 
 
+def test_gguf_revision_epinglee_sans_resolution_de_main(banc, outils, tmp_path: Path) -> None:
+    epinglee = "e" * 40
+    config = _config(
+        outils,
+        depot_hf="org/base",
+        gguf={
+            "depot": "tiers/base-GGUF",
+            "fichier": "b.gguf",
+            "sha256": outils.sha(GGUF),
+            "revision": epinglee,
+            "source": "communautaire",
+        },
+    )
+    _servir_lfs(banc, outils, _url("tiers/base-GGUF", epinglee, "b.gguf"), GGUF)  # sans commit
+    lignes = []
+    modeles.executer(banc.telechargeur(), [("base", config)], tmp_path, consigner=lignes.append)
+    assert (tmp_path / "base" / "gguf" / "b.gguf").read_bytes() == GGUF
+    assert lignes[0]["revision"] == epinglee
+    assert banc.serveur.requetes_vers("/resolve/main/") == []
+    assert {str(r.url) for r in banc.serveur.requetes} == {
+        _url("tiers/base-GGUF", epinglee, "b.gguf")
+    }
+
+
+def test_fichier_non_lfs_avec_sha_de_la_config(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils, fichiers=["config.json"], sha256_fichiers={"config.json": outils.sha(b"{}")}
+    )
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF)
+    banc.serveur.servir(
+        _url("org/modele-GGUF", REV, "config.json"), b"{}", en_tetes_head={"Content-Length": "2"}
+    )
+    lignes = []
+    modeles.executer(banc.telechargeur(), [("emb", config)], tmp_path, consigner=lignes.append)
+    assert (tmp_path / "emb" / "hf" / "config.json").read_bytes() == b"{}"
+    assert lignes[1]["sha256"] == outils.sha(b"{}") and lignes[1]["statut"] == "telecharge"
+
+
+def test_fichier_hf_present_sans_requete(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils,
+        fichiers=["sous/config.json"],
+        sha256_fichiers={"sous/config.json": outils.sha(b"{}")},
+    )
+    (tmp_path / "emb" / "gguf").mkdir(parents=True)
+    (tmp_path / "emb" / "gguf" / "m-q8_0.gguf").write_bytes(GGUF)
+    (tmp_path / "emb" / "hf" / "sous").mkdir(parents=True)
+    (tmp_path / "emb" / "hf" / "sous" / "config.json").write_bytes(b"{}")
+    lignes = []
+    modeles.executer(banc.telechargeur(), [("emb", config)], tmp_path, consigner=lignes.append)
+    assert banc.serveur.requetes == []
+    assert [ligne["statut"] for ligne in lignes] == ["deja-present", "deja-present"]
+
+
+def test_fichier_hf_present_mais_altere(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils, fichiers=["config.json"], sha256_fichiers={"config.json": outils.sha(b"{}")}
+    )
+    (tmp_path / "emb" / "gguf").mkdir(parents=True)
+    (tmp_path / "emb" / "gguf" / "m-q8_0.gguf").write_bytes(GGUF)
+    (tmp_path / "emb" / "hf").mkdir(parents=True)
+    (tmp_path / "emb" / "hf" / "config.json").write_bytes(b"{ }")
+    with pytest.raises(ShaInvalide, match="rien n'est écrit"):
+        modeles.executer(banc.telechargeur(), [("emb", config)], tmp_path)
+    assert banc.serveur.requetes == []
+    assert (tmp_path / "emb" / "hf" / "config.json").read_bytes() == b"{ }"
+
+
+def test_etag_hf_different_du_sha_de_la_config(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils,
+        fichiers=["model.safetensors"],
+        sha256_fichiers={"model.safetensors": outils.sha(b"attendu")},
+    )
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF)
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "model.safetensors"), POIDS)
+    with pytest.raises(ShaInvalide, match="X-Linked-Etag .* différent du SHA-256 de la config"):
+        modeles.executer(banc.telechargeur(), [("emb", config)], tmp_path)
+    assert banc.serveur.requetes_vers("/resolve/", "GET") == []
+
+
 def test_chemin_hostile_refuse(banc, outils, tmp_path: Path) -> None:
     config = _config(outils, fichiers=["../evasion.bin"])
     _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF)

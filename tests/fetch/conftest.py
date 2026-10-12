@@ -239,7 +239,8 @@ def cli(banc: Banc, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> SimpleNa
 
 
 def lire_run(racine: Path) -> SimpleNamespace:
-    """Seul run `fetch` sous `racine` : manifeste, lignes de fichiers, statuts."""
+    """Seul run `fetch` sous `racine` : manifeste, lignes de fichiers et de contrôles,
+    statuts."""
     import json
 
     (dossier,) = (racine / "runs" / "fetch").iterdir()
@@ -255,6 +256,7 @@ def lire_run(racine: Path) -> SimpleNamespace:
         manifeste=json.loads((dossier / "run.json").read_text(encoding="utf-8")),
         fichiers=jsonl("fichiers.jsonl"),
         extractions=jsonl("extractions.jsonl"),
+        controles=jsonl("controles.jsonl"),
         statuts=[ligne["statut"] for ligne in jsonl("etat.jsonl")],
     )
 

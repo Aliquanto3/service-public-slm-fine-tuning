@@ -1,0 +1,47 @@
+# SmolLM3 3B (Hugging Face) ; GGUF officiel publié par ggml-org.
+# Candidat D4, épinglé par la story 8.1 (révisions et SHA-256 relevés le 2026-10-12,
+# recoupés avec l'API Hugging Face). AD-6 : valeurs communes à l'inférence et à
+# l'entraînement.
+# Raisonnement étendu désactivé par le template (/no_think).
+
+schema_version = 1
+depot_hf = "HuggingFaceTB/SmolLM3-3B"
+revision = "a07cc9a04f16550a088caea529712d1d335b0ac1"
+fichiers = [
+    "chat_template.jinja",
+    "config.json",
+    "generation_config.json",
+    "model-00001-of-00002.safetensors",
+    "model-00002-of-00002.safetensors",
+    "model.safetensors.index.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+]
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = { enable_thinking = false }
+# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+protocole_outils = "natif"
+# Template GGUF différent de celui du tokenizer HF (SHA-256) : le template HF,
+# exporté sous models/<slug>/chat_template.jinja, est imposé à llama-server.
+chat_template_force = true
+
+[sha256_fichiers]
+"chat_template.jinja" = "3e0e275a527f249670056e0078e474eadbdd007c134b4fdfae5a7b3089702814" # 5 598 octets
+"config.json" = "c72b1031274ff4626e434d0019e88e95a767460135db9ee492eb80652b786af1" # 1 915 octets
+"generation_config.json" = "3458d62b3f9654f4bbe285223b0f4e5a1e67cae61c92bb6aeaadf04468bf9e01" # 182 octets
+"model-00001-of-00002.safetensors" = "e5eed4113a925264c33e3cdf76cd9f547c06a207ef2270914a7274a2bf685ffd" # 4 966 315 264 octets
+"model-00002-of-00002.safetensors" = "6c3ad90646457295723e4da5ee8afac47006e20407b122df5174693dd8d68a43" # 1 183 919 744 octets
+"model.safetensors.index.json" = "e3a7254c086c4a78f95ad5864f435d165ffed1ed8998326ce5107b4423c15b76" # 26 899 octets
+"special_tokens_map.json" = "12403efb970f069ba62ddf3b66166a27254be4a198166b61ad1ee604bd3a4515" # 289 octets
+"tokenizer.json" = "7b6a500b662a34eb3f0374db856ba4ad7de4c81040571d78dc0d357238930005" # 17 208 819 octets
+"tokenizer_config.json" = "59a64b39f05ee0acf7479bbccf99a44d9e481c1a4a494eb03838ae3c35eb29be" # 50 387 octets
+
+[gguf] # 1 915 305 312 octets
+depot = "ggml-org/SmolLM3-3B-GGUF"
+revision = "4965cb60b150737b68a0408c36aeefb65078f894"
+fichier = "SmolLM3-Q4_K_M.gguf"
+sha256 = "8334b850b7bd46238c16b0c550df2138f0889bf433809008cc17a8b05761863e"
+source = "officielle"

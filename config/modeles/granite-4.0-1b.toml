@@ -1,0 +1,44 @@
+# Granite 4.0 1B (IBM), variante dense (`granitemoehybrid` sans couche Mamba).
+# Candidat D4, épinglé par la story 8.1 (révisions et SHA-256 relevés le 2026-10-12,
+# recoupés avec l'API Hugging Face). AD-6 : valeurs communes à l'inférence et à
+# l'entraînement.
+
+schema_version = 1
+depot_hf = "ibm-granite/granite-4.0-1b"
+revision = "6a7381ba1f54d684ff508d991aeb7dc580157103"
+fichiers = [
+    "chat_template.jinja",
+    "config.json",
+    "generation_config.json",
+    "merges.txt",
+    "model.safetensors",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+]
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = {}
+# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+protocole_outils = "natif"
+chat_template_force = false
+
+[sha256_fichiers]
+"chat_template.jinja" = "9524df67b77a7b25a2dfee898f75b316a157eb9d855b51e32aeac79d7c8a83ce" # 6 418 octets
+"config.json" = "5313872f81102e62617e638f8be541ee68f14ded1ae484a892645b5c5a10aea9" # 1 969 octets
+"generation_config.json" = "7c04cb9d2ba771f7528fba5a7104999cdaf7566d02b5fbd58472829f62716177" # 147 octets
+"merges.txt" = "b6fe424e334903f7fb84d3a106d9730455f4744b9fe3c21ee136d97a00e72502" # 916 646 octets
+"model.safetensors" = "cc2def9a94efd3a18b21080b053fa64a3f0c329eef357233f0392940179058f4" # 3 263 538 464 octets
+"special_tokens_map.json" = "c08676c49fd7969a3130f72be6d4bf34da66aa484a6e21dffe359893a1bd5f2e" # 579 octets
+"tokenizer.json" = "e2bad66439538cb4d5a7580680932432ed9ece9d3b8577e675512bdf11599253" # 7 153 421 octets
+"tokenizer_config.json" = "a5ec5daab12ba090a90f3dd169c8f9c275557013a87b9c1258dc7cb497a35c86" # 17 659 octets
+"vocab.json" = "8af71076de8b0b626eed0f4c984faf0a7c062479164b2a31308a948524d4f69c" # 1 612 704 octets
+
+[gguf] # 1 023 645 440 octets
+depot = "ibm-granite/granite-4.0-1b-GGUF"
+revision = "b27c2fe3f211b7f44e80fa620177aea371099aaa"
+fichier = "granite-4.0-1b-Q4_K_M.gguf"
+sha256 = "22ec0f9cc99a90185312de3c882c84e7bd6789bdd050389844380a01a831d7f1"
+source = "officielle"

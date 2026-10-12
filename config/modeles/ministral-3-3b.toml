@@ -1,0 +1,56 @@
+# Ministral 3 3B Instruct 2512 : dépôt officiel BF16 (l'Instruct est en FP8).
+# Candidat D4, épinglé par la story 8.1 (révisions et SHA-256 relevés le 2026-10-12,
+# recoupés avec l'API Hugging Face). AD-6 : valeurs communes à l'inférence et à
+# l'entraînement.
+# Encodeur vision (Pixtral) exclu : aucun --mmproj, aucun poids vision entraîné.
+
+schema_version = 1
+depot_hf = "mistralai/Ministral-3-3B-Instruct-2512-BF16"
+revision = "b6d637bef2393152b3da2b2fde72eecdee30557e"
+fichiers = [
+    "SYSTEM_PROMPT.txt",
+    "chat_template.jinja",
+    "config.json",
+    "generation_config.json",
+    "model-00001-of-00002.safetensors",
+    "model-00002-of-00002.safetensors",
+    "model.safetensors.index.json",
+    "params.json",
+    "processor_config.json",
+    "special_tokens_map.json",
+    "tekken.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+]
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = {}
+exclure_vision = true
+# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+protocole_outils = "natif"
+# Template GGUF différent de celui du tokenizer HF (SHA-256) : le template HF,
+# exporté sous models/<slug>/chat_template.jinja, est imposé à llama-server.
+chat_template_force = true
+
+[sha256_fichiers]
+"SYSTEM_PROMPT.txt" = "331b249682cd52226c50e533f59825184997f3b31f9a62b2c3fea940db6999c5" # 2 406 octets
+"chat_template.jinja" = "0701cfbdc2b7d44fdbad104dff604faee4b0543e8247624568777fe465746f9b" # 11 912 octets
+"config.json" = "c89d1a0b4f237d2892ce911d1fe03e9e5a4834579f7149ebc715a4c3fa564214" # 1 579 octets
+"generation_config.json" = "e0923390059f84a9180b00e5501778acc45ea9856cd7f2fd68208b360927c677" # 131 octets
+"model-00001-of-00002.safetensors" = "b3821ebc30884f66e3d26d339e161641f34b91ed916627011e7b08e5f1edd884" # 4 967 581 832 octets
+"model-00002-of-00002.safetensors" = "718d087fa591fd4356b7241f293c24219399d86f092d46cf36f765051498033a" # 2 730 659 224 octets
+"model.safetensors.index.json" = "7829dcf0040e34f1172b401563fcbb27cc3c5a0244ef01e6af18b7a64d63a81e" # 45 577 octets
+"params.json" = "d15587c57574d2a92c66ff2552c6db5173d4c440ad47f7454dc51bad0ecaeb59" # 1 096 octets
+"processor_config.json" = "ece2373c2ae391bce18785a1810543bc6173a1f28b6767cffab2c35dbea5f002" # 976 octets
+"special_tokens_map.json" = "0a5c981e8c5c6f8886ee007a6d4543a0be6b221cb9ca32a8709384a4c6fc8cbb" # 147 094 octets
+"tekken.json" = "600bb27946565481ecf51ba8aee252e49b9a68507866080ac9c30185bb312843" # 16 753 784 octets
+"tokenizer.json" = "d5f6046775b112f0e2d456ee9dba450684ab964fe5c4e231599bdc6773028135" # 17 078 128 octets
+"tokenizer_config.json" = "f59f7294e4f26383d0ea93840fe21cf197784be0842a8301a0343e8c34ed0d6d" # 198 094 octets
+
+[gguf] # 2 147 023 008 octets
+depot = "mistralai/Ministral-3-3B-Instruct-2512-GGUF"
+revision = "eb599d408350ea2bb60452cb86be7c7b2fc28227"
+fichier = "Ministral-3-3B-Instruct-2512-Q4_K_M.gguf"
+sha256 = "9ed150d4367e68df0ac8e1540f6ddc65b42d0ee26378329d1ecbca60f93fc5f8"
+source = "officielle"

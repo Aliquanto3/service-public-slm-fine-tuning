@@ -1,0 +1,11 @@
+{
+  "architectures": ["Mistral3ForConditionalGeneration"],
+  "model_type": "mistral3",
+  "dtype": "bfloat16",
+  "quantization_config": {
+    "activation_scheme": "static",
+    "quant_method": "fp8",
+    "weight_block_size": null
+  },
+  "text_config": {"model_type": "ministral3", "num_hidden_layers": 26}
+}

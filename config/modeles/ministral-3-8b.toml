@@ -1,0 +1,26 @@
+# Ministral 3 8B Instruct 2512 : plafond de qualité, GGUF seul (évaluation).
+# Candidat D4, épinglé par la story 8.1 (révisions et SHA-256 relevés le 2026-10-12,
+# recoupés avec l'API Hugging Face). AD-6 : valeurs communes à l'inférence et à
+# l'entraînement.
+# Pas de poids HF (D4) : contrôles dense, fp8, vision et chat_template sans objet.
+# Encodeur vision exclu : aucun --mmproj.
+
+schema_version = 1
+depot_hf = "mistralai/Ministral-3-8B-Instruct-2512-GGUF"
+revision = "0102285ad796bd99af90f58de616092e5630e970"
+fichiers = []
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = {}
+exclure_vision = true
+# Provisoire : fixé par la sonde H-TOOLS (story 8.2).
+protocole_outils = "natif"
+chat_template_force = false
+
+[gguf] # 5 198 911 904 octets
+depot = "mistralai/Ministral-3-8B-Instruct-2512-GGUF"
+revision = "0102285ad796bd99af90f58de616092e5630e970"
+fichier = "Ministral-3-8B-Instruct-2512-Q4_K_M.gguf"
+sha256 = "33e7a72cf5e6e2cfc2f2847075acc013d68bba023e35310cef86b5cf8fdca761"
+source = "officielle"
