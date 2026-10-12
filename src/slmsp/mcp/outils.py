@@ -65,6 +65,8 @@ class ConfigOutilsMcp(ModeleConfig):
     schema_version: Literal[1]
     source: str
     tools_list_sha256: Sha256
+    texte_reponse_vide: str = Field(min_length=1)
+    """Texte de la réponse vide normalisée du Bac à sable (AD-10)."""
     outils: list[OutilFige] = Field(min_length=1, max_length=len(OUTILS_AUTORISES))
 
     @field_validator("outils")

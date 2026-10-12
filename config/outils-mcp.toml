@@ -7,6 +7,8 @@
 schema_version = 1
 source = "eval/calibrage/cassettes/tools-list.json"
 tools_list_sha256 = "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15"
+# Réponse vide normalisée du Bac à sable (AD-10) : appel sans équivalent enregistré.
+texte_reponse_vide = "No results found."
 
 [[outils]]
 nom = "search_datasets"
