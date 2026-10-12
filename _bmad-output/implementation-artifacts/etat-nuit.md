@@ -40,5 +40,5 @@ Rien pour l'instant. Le réseau a été limité de 07h47 à 08h15 à la demande 
 ## Dépense API
 | Service | Dépensé | Plafond |
 |---|---|---|
-| Mistral | 0 € | 30 € |
+| Mistral | 0,01 € | 30 € |
 | Anthropic (Juge) | 0,06 € | 10 € |

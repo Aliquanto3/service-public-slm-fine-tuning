@@ -406,3 +406,11 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - Exemples de risque technique : dépense qui approche un plafond, disque plein, GPU instable, suite de tests qui se dégrade sans qu'on sache pourquoi.
   - Exemples de problème d'orchestration : conflits de fusion à répétition, sous-agents qui échouent en boucle.
   - Dans ces cas, l'orchestrateur passe directement à la phase F.
+
+## D-nuit-S5.5 — Adaptateur Mistral et second juge
+- **Journaux séparés (écart à AD-3, qui prévoit un fichier unique ; à valider par Anaël)**
+  - Le second juge écrit dans `appels-mistral-juge.sqlite`, que `data` et `train` ne peuvent pas lire. La génération écrit dans `appels-mistral.sqlite`.
+  - Ce choix règle le point différé de la story 1.3 : aucun texte d'évaluation ne peut se retrouver dans les données d'entraînement.
+- **Modèles Mistral admis** : `mistral-large-latest`, `mistral-large-2411` et `mistral-large-2512`.
+  - **À vérifier par Anaël** : l'API renvoie l'alias dans le champ `model`, si bien que la version réellement utilisée n'est pas vérifiable.
+- **Dépense** : 0,0139 € sur `mistral.juge`, pour le test réel du second juge sur 2 items.
