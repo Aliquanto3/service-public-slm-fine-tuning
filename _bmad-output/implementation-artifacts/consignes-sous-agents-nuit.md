@@ -40,3 +40,6 @@ Ce fichier est lu par chaque sous-agent de story avant de commencer. Il fait aut
   - les décisions prises seul ;
   - les blocages ;
   - la dépense d'API, s'il y en a eu.
+
+## Sous-agents asynchrones (constat de 08h00)
+Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même quand le workflow BMAD exige un appel bloquant. Lance les sous-agents demandés par une étape, puis attends la notification de fin de chacun avant de passer à la suite. **Ne rends jamais la main** (compte rendu final) avant le HALT final du workflow, avec `## Auto Run Result` écrit et le commit fait. Rendre la main pendant qu'un sous-agent tourne interrompt la story.
