@@ -87,6 +87,19 @@ select = ["E", "W", "F", "I", "B", "UP", "TID251"]
 "huggingface_hub.upload_large_folder".msg = "Publication interdite (D1, AD-4)."
 "huggingface_hub.create_commit".msg = "Publication interdite (D1, AD-4)."
 "huggingface_hub.create_repo".msg = "Publication interdite (D1, AD-4)."
+# AD-4, AD-10 : aucun client MCP hors passerelle. Seul `streamable_http_client(url,
+# http_client=<client de slmsp.net>)` est permis, dans slmsp/mcp/ (tests/test_architecture.py,
+# règle `client-mcp`).
+"mcp.client.sse".msg = "Transport MCP SSE interdit : Streamable HTTP seulement (AD-10)."
+"mcp.client.session_group".msg = "Client MCP hors passerelle interdit : slmsp.mcp.direct (AD-4)."
+"mcp.ClientSessionGroup".msg = "Client MCP hors passerelle interdit : slmsp.mcp.direct (AD-4)."
+"mcp.shared._httpx_utils".msg = "Client HTTP du SDK MCP interdit : slmsp.net.client (AD-4)."
+"mcp.Client".msg = "Client MCP hors passerelle interdit : slmsp.mcp.direct (AD-4)."
+"mcp.client.Client".msg = "Client MCP hors passerelle interdit : slmsp.mcp.direct (AD-4)."
+"mcp.client.client".msg = "Client MCP hors passerelle interdit : slmsp.mcp.direct (AD-4)."
+"mcp.client.streamable_http.create_mcp_http_client".msg = "Client HTTP du SDK MCP interdit : slmsp.net.client (AD-4)."
+"mcp.client.stdio".msg = "Transport MCP stdio interdit : Streamable HTTP seulement (AD-10)."
+"mcp.stdio_client".msg = "Transport MCP stdio interdit : Streamable HTTP seulement (AD-10)."
 
 [tool.ruff.lint.per-file-ignores]
 # ruff lève TID251 en bloc par fichier : la matrice exacte est vérifiée par

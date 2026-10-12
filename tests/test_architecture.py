@@ -89,6 +89,23 @@ LECTURE_CONTROLEE = {"data", "train"}
 ATTRIBUTS_LECTURE = {"read_text", "read_bytes", "open"}
 IMPORTS_LECTURE = {("json", "load"), ("io", "open"), ("builtins", "open")}
 
+# AD-4, AD-10 : aucun client MCP créé hors passerelle. Le transport Streamable HTTP ne
+# s'importe que dans `slmsp/mcp/` et reçoit toujours `http_client=` (client de `net`).
+MCP_INTERDITS = (
+    "mcp.client.sse",
+    "mcp.client.session_group",
+    "mcp.ClientSessionGroup",
+    "mcp.shared._httpx_utils",
+    "mcp.Client",
+    "mcp.client.Client",
+    "mcp.client.client",
+    "mcp.client.stdio",
+    "mcp.stdio_client",
+)
+MCP_NOMS_INTERDITS = {"create_mcp_http_client", "ClientSessionGroup"}
+MCP_STREAMABLE = "mcp.client.streamable_http"
+MCP_FABRIQUE_STREAMABLE = "streamable_http_client"
+
 REGLES = {
     "couche",
     "lourd-runtime",
@@ -98,6 +115,7 @@ REGLES = {
     "client-http",
     "lecture-data/train",
     "publication",
+    "client-mcp",
 }
 
 
@@ -222,6 +240,81 @@ def _fermeture_runtime(modules: dict[str, _Module]) -> set[str]:
     return vus
 
 
+def _mcp_interdit(nom: str) -> bool:
+    return any(_correspond(nom, interdit) for interdit in MCP_INTERDITS)
+
+
+def _alias_mcp(arbre: ast.Module) -> dict[str, str]:
+    """Nom local -> nom qualifié, pour les imports du SDK `mcp`."""
+    alias: dict[str, str] = {}
+    for noeud in ast.walk(arbre):
+        if isinstance(noeud, ast.Import):
+            for a in noeud.names:
+                if _correspond(a.name, "mcp"):
+                    if a.asname:
+                        alias[a.asname] = a.name
+                    else:
+                        alias[a.name.split(".")[0]] = a.name.split(".")[0]
+        elif isinstance(noeud, ast.ImportFrom) and noeud.level == 0 and noeud.module:
+            if _correspond(noeud.module, "mcp"):
+                for a in noeud.names:
+                    if a.name != "*":
+                        alias[a.asname or a.name] = f"{noeud.module}.{a.name}"
+    return alias
+
+
+def _chaine(noeud: ast.expr) -> tuple[str | None, list[str]]:
+    """Racine (nom) et attributs d'une chaîne `a.b.c`."""
+    attributs: list[str] = []
+    while isinstance(noeud, ast.Attribute):
+        attributs.insert(0, noeud.attr)
+        noeud = noeud.value
+    return (noeud.id if isinstance(noeud, ast.Name) else None), attributs
+
+
+def _constats_client_mcp(m: _Module) -> list[tuple[int, str]]:
+    """Règle `client-mcp` : imports, références et appels de `streamable_http_client`."""
+    constats: list[tuple[int, str]] = []
+    for imp in m.imports:
+        # Un nom interdit réexporté (`from mcp.client.streamable_http import
+        # create_mcp_http_client`) est signalé quel que soit le module source.
+        interdits = sorted(n for n in imp.noms if _mcp_interdit(n)) or sorted(
+            MCP_NOMS_INTERDITS & set(imp.alias)
+        )
+        if interdits:
+            constats.append((imp.ligne, f"import de {interdits[0]}"))
+        elif m.paquet != "mcp" and any(_correspond(n, MCP_STREAMABLE) for n in imp.noms):
+            constats.append((imp.ligne, f"import de {MCP_STREAMABLE} hors de slmsp/mcp/"))
+    alias = _alias_mcp(m.arbre)
+    internes = {id(noeud.value) for noeud in ast.walk(m.arbre) if isinstance(noeud, ast.Attribute)}
+    for noeud in ast.walk(m.arbre):
+        if isinstance(noeud, ast.Attribute) and id(noeud) not in internes:
+            racine, attributs = _chaine(noeud)
+            qualifie = alias.get(racine or "")
+            if qualifie is not None and _mcp_interdit(qualifie):
+                continue  # déjà signalé à l'import
+            complet = ".".join([qualifie, *attributs]) if qualifie else None
+            if (complet and _mcp_interdit(complet)) or MCP_NOMS_INTERDITS & set(attributs):
+                constats.append((noeud.lineno, f"référence à {complet or '.'.join(attributs)}"))
+        elif isinstance(noeud, ast.Call):
+            fonction = noeud.func
+            if isinstance(fonction, ast.Name):
+                cible = alias.get(fonction.id, fonction.id)
+                est_fabrique = cible.split(".")[-1] == MCP_FABRIQUE_STREAMABLE
+            else:
+                est_fabrique = (
+                    isinstance(fonction, ast.Attribute) and fonction.attr == MCP_FABRIQUE_STREAMABLE
+                )
+            if not est_fabrique:
+                continue
+            client_http = [k.value for k in noeud.keywords if k.arg == "http_client"]
+            if not client_http or (
+                isinstance(client_http[0], ast.Constant) and client_http[0].value is None
+            ):
+                constats.append((noeud.lineno, f"{MCP_FABRIQUE_STREAMABLE} sans http_client="))
+    return constats
+
+
 def analyser(racine_src: Path) -> list[Violation]:
     """Analyse l'arbre `racine_src` (le dossier du paquet `slmsp`) et renvoie ses violations."""
     modules = _charger(racine_src)
@@ -270,6 +363,9 @@ def analyser(racine_src: Path) -> list[Violation]:
                 (imp.base, a) in IMPORTS_LECTURE for a in imp.alias
             ):
                 signaler("lecture-data/train", imp.ligne, f"import de lecture depuis `{imp.base}`")
+
+        for ligne, detail in _constats_client_mcp(m):
+            signaler("client-mcp", ligne, detail)
 
         for noeud in ast.walk(m.arbre):
             if isinstance(noeud, ast.Attribute) and noeud.attr in PUBLICATION:
@@ -340,6 +436,21 @@ ARBRE_PROPRE = {
     "net/__init__.py": "import httpx\nfrom slmsp.core import artefacts\n",
     "budget/registre.py": "from slmsp.core.artefacts import lire\n",
     "inference/serveur.py": "from ..core.artefacts import lire\nfrom slmsp.net import client\n",
+    "mcp/direct.py": """
+        import mcp.types as types
+        from mcp import ClientSession
+        from mcp.client import streamable_http
+        from mcp.client.session import ClientSession as Session
+        from mcp.client.streamable_http import streamable_http_client
+
+        from slmsp.net import client
+
+
+        def ouvrir(url):
+            http = client("outillage", asynchrone=True, usage="mcp")
+            streamable_http.streamable_http_client(url, http_client=http)
+            return streamable_http_client(url, http_client=http, terminate_on_close=False)
+        """,
     "mistral/client.py": "import mistralai\n\nfrom slmsp.net import client\n",
     "judge/claude.py": "import anthropic\n\nfrom slmsp.net import client\n",
     "harness/prompts.py": "from slmsp.core.artefacts import lire\n",
@@ -447,6 +558,84 @@ CAS_FAUTIFS: dict[str, tuple[str, dict[str, str]]] = {
         "publication",
         {"train/a.py": "def f(modele):\n    modele.push_to_hub_gguf('depot')\n"},
     ),
+    "client-mcp-sse": ("client-mcp", {"mcp/a.py": "from mcp.client.sse import sse_client\n"}),
+    "client-mcp-sse-paquet": ("client-mcp", {"harness/a.py": "from mcp.client import sse\n"}),
+    "client-mcp-sse-attribut": (
+        "client-mcp",
+        {"mcp/a.py": "import mcp.client\n\nmcp.client.sse.sse_client(url)\n"},
+    ),
+    "client-mcp-session-group": (
+        "client-mcp",
+        {"cli/a.py": "from mcp import ClientSessionGroup\n"},
+    ),
+    "client-mcp-session-group-module": (
+        "client-mcp",
+        {"mcp/a.py": "import mcp.client.session_group\n"},
+    ),
+    "client-mcp-session-group-attribut": (
+        "client-mcp",
+        {"mcp/a.py": "import mcp\n\nmcp.ClientSessionGroup()\n"},
+    ),
+    "client-mcp-httpx-utils": (
+        "client-mcp",
+        {"mcp/a.py": "import mcp.shared._httpx_utils as u\n\nu.create_mcp_http_client()\n"},
+    ),
+    "client-mcp-create-attribut": (
+        "client-mcp",
+        {"mcp/a.py": "import mcp.shared as s\n\ns._httpx_utils.create_mcp_http_client()\n"},
+    ),
+    "client-mcp-client": ("client-mcp", {"cli/a.py": "from mcp import Client\n"}),
+    "client-mcp-client-paquet": ("client-mcp", {"mcp/a.py": "from mcp.client import Client\n"}),
+    "client-mcp-client-module": ("client-mcp", {"mcp/a.py": "from mcp.client import client\n"}),
+    "client-mcp-client-attribut": (
+        "client-mcp",
+        {"mcp/a.py": "import mcp\n\nmcp.Client(serveur)\n"},
+    ),
+    "client-mcp-client-alias": (
+        "client-mcp",
+        {"mcp/a.py": "import mcp.client as c\n\nc.client.Client(serveur)\n"},
+    ),
+    "client-mcp-streamable-hors-mcp": (
+        "client-mcp",
+        {"harness/a.py": "from mcp.client.streamable_http import streamable_http_client\n"},
+    ),
+    "client-mcp-streamable-module-hors-mcp": (
+        "client-mcp",
+        {"app/a.py": "import mcp.client.streamable_http\n"},
+    ),
+    "client-mcp-streamable-sans-http-client": (
+        "client-mcp",
+        {
+            "mcp/a.py": "from mcp.client.streamable_http import streamable_http_client\n\n"
+            "streamable_http_client('https://mcp.data.gouv.fr/mcp')\n"
+        },
+    ),
+    "client-mcp-streamable-alias": (
+        "client-mcp",
+        {
+            "mcp/a.py": "from mcp.client.streamable_http import streamable_http_client as s\n\n"
+            "s(url, terminate_on_close=False)\n"
+        },
+    ),
+    "client-mcp-streamable-none": (
+        "client-mcp",
+        {
+            "mcp/a.py": "from mcp.client import streamable_http as s\n\n"
+            "s.streamable_http_client(url, http_client=None)\n"
+        },
+    ),
+    "client-mcp-create-reexporte": (
+        "client-mcp",
+        {
+            "mcp/a.py": "from mcp.client.streamable_http import create_mcp_http_client\n\n"
+            "create_mcp_http_client()\n"
+        },
+    ),
+    "client-mcp-stdio": ("client-mcp", {"mcp/a.py": "from mcp import stdio_client\n"}),
+    "client-mcp-stdio-module": (
+        "client-mcp",
+        {"harness/a.py": "from mcp.client.stdio import stdio_client\n"},
+    ),
 }
 
 
@@ -489,6 +678,22 @@ CAS_RUFF: list[tuple[str, str, bool]] = [
     ("fetch", "from huggingface_hub import upload_large_folder\n", True),
     ("fetch", "from huggingface_hub import create_commit\n", True),
     ("fetch", "from huggingface_hub import hf_hub_download\n", False),
+    ("mcp", "import mcp.client.sse\n", True),
+    ("harness", "from mcp.client.sse import sse_client\n", True),
+    ("mcp", "from mcp.client import sse\n", True),
+    ("mcp", "from mcp.client.session_group import ClientSessionGroup\n", True),
+    ("cli", "from mcp import ClientSessionGroup\n", True),
+    ("mcp", "from mcp.shared._httpx_utils import create_mcp_http_client\n", True),
+    ("mcp", "from mcp import Client\n", True),
+    ("mcp", "from mcp.client import Client\n", True),
+    ("mcp", "from mcp.client.client import Client\n", True),
+    ("mcp", "from mcp.client import client\n", True),
+    ("mcp", "from mcp import ClientSession\n", False),
+    ("mcp", "from mcp.client.session import ClientSession\n", False),
+    ("mcp", "from mcp.client.streamable_http import streamable_http_client\n", False),
+    ("mcp", "from mcp.client.streamable_http import create_mcp_http_client\n", True),
+    ("mcp", "from mcp.client.stdio import stdio_client\n", True),
+    ("harness", "from mcp import stdio_client\n", True),
 ]
 
 
