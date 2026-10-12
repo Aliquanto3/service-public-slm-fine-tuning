@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:56Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PCH ACTP",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 16 dataset(s) for query: 'PCH ACTP'\nPage 1 of results:\n\n1. Données concernant la prestation de compensation du handicap (PCH) et de l’allocation compensatrice tierce personne (ACTP)\n   ID: 53788f05a3a7295dd332d9d7\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: allocation, compensation, compensation-du-handicap, handicap, pch\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/donnees-concernant-la-prestation-de-compensation-du-handicap-pch-et-de-l-allocation-compensatrice-ti\n\n2. Les caractéristiques des bénéficiaires de l'aide sociale départementale aux personnes âgées ou handicapées (APA, PCH, ASH, Aides ménagères, …)\n   ID: 62e325ecc71a173720b2178a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: accueil-de-jour, accueil-par-des-particuliers, actp, aide-et-action-sociales, aide-sociale-a-lhebergement\n   Resources: 17\n   URL: https://www.data.gouv.fr/datasets/les-caracteristiques-des-beneficiaires-de-laide-sociale-departementale-aux-personnes-agees-ou-handicapees-apa-pch-ash-aides-menageres\n\n3. Bénéficiaires de la Prestation de compensation du handicap (PCH) et de l'Allocation compensatrice pour tierce personne (ACTP)\n   ID: 57868f18a3a7295d371add50\n   Organization: Département des Hauts-de-Seine\n   Tags: actp, allocation-compensatrice-pour-tierce-personne, allocations, handicaps, pch\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/beneficiaires-de-la-prestation-de-compensation-du-handicap-pch-et-de-lallocation-compensatrice-pour-tierce-personne-actp\n\n4. L’aide humaine apportée aux bénéficiaires d’une allocation de compensation du handicap\n   ID: 53d38613a3a729042701369e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: actp, allocation-compensatrice-pour-ti, allocation-de-compensation, allocation-de-compensation-du-ha, pch\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/l-aide-humaine-apportee-aux-beneficiaires-d-une-allocation-de-compensation-du-handicap\n\n5. RI-Autonomie : Profils des bénéficiaires et montants notifiés et versés au titre de la prestation de compensation de handicap (PCH)\n   ID: 6949ddf266d57ffd3251830e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: actp, aide-et-action-sociales, aide-sociale-aux-personnes-handicapees, allocation-compensatrice-pour-tierce-personne, beneficaires-actp\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ri-autonomie-profils-des-beneficiaires-et-montants-notifies-et-verses-au-titre-de-la-prestation-de-compensation-de-handicap-pch\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 16 dataset(s) for query: 'PCH ACTP'\nPage 1 of results:\n\n1. Données concernant la prestation de compensation du handicap (PCH) et de l’allocation compensatrice tierce personne (ACTP)\n   ID: 53788f05a3a7295dd332d9d7\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: allocation, compensation, compensation-du-handicap, handicap, pch\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/donnees-concernant-la-prestation-de-compensation-du-handicap-pch-et-de-l-allocation-compensatrice-ti\n\n2. Les caractéristiques des bénéficiaires de l'aide sociale départementale aux personnes âgées ou handicapées (APA, PCH, ASH, Aides ménagères, …)\n   ID: 62e325ecc71a173720b2178a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: accueil-de-jour, accueil-par-des-particuliers, actp, aide-et-action-sociales, aide-sociale-a-lhebergement\n   Resources: 17\n   URL: https://www.data.gouv.fr/datasets/les-caracteristiques-des-beneficiaires-de-laide-sociale-departementale-aux-personnes-agees-ou-handicapees-apa-pch-ash-aides-menageres\n\n3. Bénéficiaires de la Prestation de compensation du handicap (PCH) et de l'Allocation compensatrice pour tierce personne (ACTP)\n   ID: 57868f18a3a7295d371add50\n   Organization: Département des Hauts-de-Seine\n   Tags: actp, allocation-compensatrice-pour-tierce-personne, allocations, handicaps, pch\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/beneficiaires-de-la-prestation-de-compensation-du-handicap-pch-et-de-lallocation-compensatrice-pour-tierce-personne-actp\n\n4. L’aide humaine apportée aux bénéficiaires d’une allocation de compensation du handicap\n   ID: 53d38613a3a729042701369e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: actp, allocation-compensatrice-pour-ti, allocation-de-compensation, allocation-de-compensation-du-ha, pch\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/l-aide-humaine-apportee-aux-beneficiaires-d-une-allocation-de-compensation-du-handicap\n\n5. RI-Autonomie : Profils des bénéficiaires et montants notifiés et versés au titre de la prestation de compensation de handicap (PCH)\n   ID: 6949ddf266d57ffd3251830e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: actp, aide-et-action-sociales, aide-sociale-aux-personnes-handicapees, allocation-compensatrice-pour-tierce-personne, beneficaires-actp\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ri-autonomie-profils-des-beneficiaires-et-montants-notifies-et-verses-au-titre-de-la-prestation-de-compensation-de-handicap-pch\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "53788f05a3a7295dd332d9d7"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Données concernant la prestation de compensation du handicap (PCH) et de l’allocation compensatrice tierce personne (ACTP)\nDataset ID: 53788f05a3a7295dd332d9d7\nTotal resources: 3\n\n1. Données annuelles sur les bénéficiaires de la PCH\n   Resource ID: d70317ad-599c-46a1-931a-9fa01288eb00\n   Format: ivt, xls, csv\n   Type: main\n   URL: http://www.data.drees.sante.gouv.fr/ReportFolders/reportFolders.aspx?IF_ActivePath=P,545,549\n\n2. Données trimestrielles sur les bénéficiaires de la PCH et de l’ACTP\n   Resource ID: e073afcc-2434-4888-956d-f1d9b2a4b9b1\n   Format: pdf\n   Type: main\n   URL: http://www.drees.sante.gouv.fr/IMG/pdf/pch_2014_2_t1-2014.pdf\n\n3. Présentation\n   Resource ID: b6957829-c66b-4226-b143-da84b88c1074\n   Format: html\n   Type: main\n   URL: http://www.drees.sante.gouv.fr/donnees-concernant-la-prestation-de-compensation-du,6596.html#donnees_annuelles_sur_les_beneficiaires_de_la_pch\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Données concernant la prestation de compensation du handicap (PCH) et de l’allocation compensatrice tierce personne (ACTP)\nDataset ID: 53788f05a3a7295dd332d9d7\nTotal resources: 3\n\n1. Données annuelles sur les bénéficiaires de la PCH\n   Resource ID: d70317ad-599c-46a1-931a-9fa01288eb00\n   Format: ivt, xls, csv\n   Type: main\n   URL: http://www.data.drees.sante.gouv.fr/ReportFolders/reportFolders.aspx?IF_ActivePath=P,545,549\n\n2. Données trimestrielles sur les bénéficiaires de la PCH et de l’ACTP\n   Resource ID: e073afcc-2434-4888-956d-f1d9b2a4b9b1\n   Format: pdf\n   Type: main\n   URL: http://www.drees.sante.gouv.fr/IMG/pdf/pch_2014_2_t1-2014.pdf\n\n3. Présentation\n   Resource ID: b6957829-c66b-4226-b143-da84b88c1074\n   Format: html\n   Type: main\n   URL: http://www.drees.sante.gouv.fr/donnees-concernant-la-prestation-de-compensation-du,6596.html#donnees_annuelles_sur_les_beneficiaires_de_la_pch\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "get_resource_info",
+     "arguments": {
+      "resource_id": "d70317ad-599c-46a1-931a-9fa01288eb00"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resource Information: Données annuelles sur les bénéficiaires de la PCH\n\nResource ID: d70317ad-599c-46a1-931a-9fa01288eb00\nFormat: ivt, xls, csv\nType: main\n\nURL: http://www.data.drees.sante.gouv.fr/ReportFolders/reportFolders.aspx?IF_ActivePath=P,545,549\n\nDescription: Nombre de bénéficiaires de la prestation de compensation du handicap (PCH) au titre du 31 décembre de chaque année de 2006 à 2011 \n\nDataset ID: 53788f05a3a7295dd332d9d7\nDataset: Données concernant la prestation de compensation du handicap (PCH) et de l’allocation compensatrice tierce personne (ACTP)\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resource Information: Données annuelles sur les bénéficiaires de la PCH\n\nResource ID: d70317ad-599c-46a1-931a-9fa01288eb00\nFormat: ivt, xls, csv\nType: main\n\nURL: http://www.data.drees.sante.gouv.fr/ReportFolders/reportFolders.aspx?IF_ActivePath=P,545,549\n\nDescription: Nombre de bénéficiaires de la prestation de compensation du handicap (PCH) au titre du 31 décembre de chaque année de 2006 à 2011 \n\nDataset ID: 53788f05a3a7295dd332d9d7\nDataset: Données concernant la prestation de compensation du handicap (PCH) et de l’allocation compensatrice tierce personne (ACTP)\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

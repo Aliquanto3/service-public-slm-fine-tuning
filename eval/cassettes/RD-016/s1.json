@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:34Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "immatriculations de véhicules routiers",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 8 dataset(s) for query: 'immatriculations de véhicules routiers'\nPage 1 of results:\n\n1. Immatriculations de véhicules routiers\n   ID: 689c430d73e51e7e33250aea\n   Organization: Service des données et études statistiques (SDES)\n   Tags: automobile, transport, transports, vehicule\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/immatriculations-de-vehicules-routiers\n\n2. Transports\n   ID: 55e4129788ee386899a46ec1\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: automobiles, carburant, immatriculations, transports, voitures\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/transports\n\n3. Les immatriculations de véhicules neufs par type de véhicules\n   ID: 53807cf6a3a7297e4d35d704\n   Organization: Collectivité de Corse\n   Tags: immatriculation-de-vehicule\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/les-immatriculations-de-vehicules-neufs-par-type-de-vehicules-cors\n\n4. Part de voitures particulières (VP) neuves par source d'énergie\n   ID: 69b988bc86054e800a635250\n   Description: L'indicateur représente la part de voitures particulières neuves immatriculées au cours d'une année, selon 7 sources d'énergie : électrique et hydrogène, hydride rechargeable, essence (thermique ou hy...\n   Organization: Tableau de bord des mobilités durables\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/part-de-voitures-particulieres-vp-neuves-par-source-denergie\n\n5. Parc de véhicules routiers\n   ID: 689c430e4bdb87869ae1fce7\n   Organization: Service des données et études statistiques (SDES)\n   Tags: automobile, circulation, transport, transports, vehicule\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/parc-de-vehicules-routiers\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 8 dataset(s) for query: 'immatriculations de véhicules routiers'\nPage 1 of results:\n\n1. Immatriculations de véhicules routiers\n   ID: 689c430d73e51e7e33250aea\n   Organization: Service des données et études statistiques (SDES)\n   Tags: automobile, transport, transports, vehicule\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/immatriculations-de-vehicules-routiers\n\n2. Transports\n   ID: 55e4129788ee386899a46ec1\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: automobiles, carburant, immatriculations, transports, voitures\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/transports\n\n3. Les immatriculations de véhicules neufs par type de véhicules\n   ID: 53807cf6a3a7297e4d35d704\n   Organization: Collectivité de Corse\n   Tags: immatriculation-de-vehicule\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/les-immatriculations-de-vehicules-neufs-par-type-de-vehicules-cors\n\n4. Part de voitures particulières (VP) neuves par source d'énergie\n   ID: 69b988bc86054e800a635250\n   Description: L'indicateur représente la part de voitures particulières neuves immatriculées au cours d'une année, selon 7 sources d'énergie : électrique et hydrogène, hydride rechargeable, essence (thermique ou hy...\n   Organization: Tableau de bord des mobilités durables\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/part-de-voitures-particulieres-vp-neuves-par-source-denergie\n\n5. Parc de véhicules routiers\n   ID: 689c430e4bdb87869ae1fce7\n   Organization: Service des données et études statistiques (SDES)\n   Tags: automobile, circulation, transport, transports, vehicule\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/parc-de-vehicules-routiers\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "689c430d73e51e7e33250aea"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Immatriculations de véhicules routiers\nDataset ID: 689c430d73e51e7e33250aea\nTotal resources: 5\n\n1. Immatriculations de véhicules achetés neufs au niveau communal\n   Resource ID: 07c607f8-5aa6-4bad-a97a-c35fbddce4c1\n   Format: html\n   Type: main\n   URL: https://www.statistiques.developpement-durable.gouv.fr/catalogue?page=datafile&datafileRid=47354cb5-a501-446c-a4f7-1840d6e92f05\n\n2. Immatriculations de véhicules achetés neufs au niveau communal\n   Resource ID: b2bac57a-7a25-4df1-9808-46b96b25311d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datafiles/47354cb5-a501-446c-a4f7-1840d6e92f05/csv\n\n3. Immatriculations de véhicules achetés d'occasion au niveau communal\n   Resource ID: 65548e2a-b124-4cf9-8aaa-4e33b791f4a6\n   Format: html\n   Type: main\n   URL: https://www.statistiques.developpement-durable.gouv.fr/catalogue?page=datafile&datafileRid=e1ce0075-1e89-4c96-afab-167a2bbd4b3f\n\n4. Immatriculations de véhicules achetés d'occasion au niveau communal\n   Resource ID: eac49e71-bad2-49a0-980f-59bc960f5e2c\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datafiles/e1ce0075-1e89-4c96-afab-167a2bbd4b3f/csv\n\n5. Note méthodologique\n   Resource ID: 20f9e29d-b7c4-4a50-bc38-a91957535600\n   Format: pdf\n   Size: 106.4 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://data.statistiques.developpement-durable.gouv.fr/dido/api/files/9f92c535-51d8-4225-a197-5bd3eb1d1bf0\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Immatriculations de véhicules routiers\nDataset ID: 689c430d73e51e7e33250aea\nTotal resources: 5\n\n1. Immatriculations de véhicules achetés neufs au niveau communal\n   Resource ID: 07c607f8-5aa6-4bad-a97a-c35fbddce4c1\n   Format: html\n   Type: main\n   URL: https://www.statistiques.developpement-durable.gouv.fr/catalogue?page=datafile&datafileRid=47354cb5-a501-446c-a4f7-1840d6e92f05\n\n2. Immatriculations de véhicules achetés neufs au niveau communal\n   Resource ID: b2bac57a-7a25-4df1-9808-46b96b25311d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datafiles/47354cb5-a501-446c-a4f7-1840d6e92f05/csv\n\n3. Immatriculations de véhicules achetés d'occasion au niveau communal\n   Resource ID: 65548e2a-b124-4cf9-8aaa-4e33b791f4a6\n   Format: html\n   Type: main\n   URL: https://www.statistiques.developpement-durable.gouv.fr/catalogue?page=datafile&datafileRid=e1ce0075-1e89-4c96-afab-167a2bbd4b3f\n\n4. Immatriculations de véhicules achetés d'occasion au niveau communal\n   Resource ID: eac49e71-bad2-49a0-980f-59bc960f5e2c\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datafiles/e1ce0075-1e89-4c96-afab-167a2bbd4b3f/csv\n\n5. Note méthodologique\n   Resource ID: 20f9e29d-b7c4-4a50-bc38-a91957535600\n   Format: pdf\n   Size: 106.4 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://data.statistiques.developpement-durable.gouv.fr/dido/api/files/9f92c535-51d8-4225-a197-5bd3eb1d1bf0\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:19Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "taux de couverture accueil jeune enfant",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 19 dataset(s) for query: 'taux de couverture accueil jeune enfant'\nPage 1 of results:\n\n1. Taux de couverture d'accueil du jeune enfant [Département]\n   ID: 66d1e5ae79919854e97093ce\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-departement\n\n2. Taux de couverture d'accueil du jeune enfant [EPCI]\n   ID: 66d1e5b579919854e97093e3\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-epci\n\n3. Taux de couverture d'accueil du jeune enfant [Communal]\n   ID: 66d1e5ac79919854e97093c6\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-communal\n\n4. Taux de couverture d'accueil du jeune enfant [National]\n   ID: 66d1e5b279919854e97093d9\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-national\n\n5. Taux de couverture d'accueil du jeune enfant [Région]\n   ID: 66d1e5a279919854e97093a5\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-region\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 19 dataset(s) for query: 'taux de couverture accueil jeune enfant'\nPage 1 of results:\n\n1. Taux de couverture d'accueil du jeune enfant [Département]\n   ID: 66d1e5ae79919854e97093ce\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-departement\n\n2. Taux de couverture d'accueil du jeune enfant [EPCI]\n   ID: 66d1e5b579919854e97093e3\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-epci\n\n3. Taux de couverture d'accueil du jeune enfant [Communal]\n   ID: 66d1e5ac79919854e97093c6\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-communal\n\n4. Taux de couverture d'accueil du jeune enfant [National]\n   ID: 66d1e5b279919854e97093d9\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-national\n\n5. Taux de couverture d'accueil du jeune enfant [Région]\n   ID: 66d1e5a279919854e97093a5\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: assistante-maternelle, cmg, creche, eaje, equipement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/taux-de-couverture-daccueil-du-jeune-enfant-region\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "66d1e5ae79919854e97093ce"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Taux de couverture d'accueil du jeune enfant [Département]\nDataset ID: 66d1e5ae79919854e97093ce\nTotal resources: 2\n\n1. txcouv_pe_dep.csv\n   Resource ID: 91d1b605-b618-4f74-b4da-730f1a2b89ee\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/txcouv_pe_dep/exports/csv?use_labels=true\n\n2. txcouv_pe_dep.json\n   Resource ID: 8d5b5ee9-e905-4b8f-960b-56cb0865d5a7\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/txcouv_pe_dep/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Taux de couverture d'accueil du jeune enfant [Département]\nDataset ID: 66d1e5ae79919854e97093ce\nTotal resources: 2\n\n1. txcouv_pe_dep.csv\n   Resource ID: 91d1b605-b618-4f74-b4da-730f1a2b89ee\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/txcouv_pe_dep/exports/csv?use_labels=true\n\n2. txcouv_pe_dep.json\n   Resource ID: 8d5b5ee9-e905-4b8f-960b-56cb0865d5a7\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/txcouv_pe_dep/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:43Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "prix hébergement tarifs dépendance EHPAD",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'prix hébergement tarifs dépendance EHPAD'\nPage 1 of results:\n\n1. Prix hébergement et tarifs dépendance des EHPAD\n   ID: 5dadc5b7634f4142ddf7b41e\n   Organization: Caisse nationale de solidarité pour l'autonomie (CNSA)\n   Tags: cnsa, ehpad, esms, portail-pour-les-personnes-agees, prix-hebergement\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad\n\n2. Prix hébergement et tarifs dépendance des EHPAD - données brutes\n   ID: 5fc113baffccb502d3fe204e\n   Organization: Caisse nationale de solidarité pour l'autonomie (CNSA)\n   Tags: cnsa, ehpad, esms, portail-pour-les-personnes-agees, prestation\n   Resources: 70\n   URL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad-donnees-brutes\n\n3. Prix hébergement et tarifs dépendance des EHPAD\n   ID: 653feb018effa0f765846ee4\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad-1\n\n4. Etablissements EHPAD, ESLD (établissement de soin longue durée) et RA (résidence autonomie) en Provence-Alpes-Côte d'Azur\n   ID: 668d09e5a847603d391cbea4\n   Organization: Région Provence-Alpes-Côte-d'Azur\n   Tags: accueil, autonomie, conseil-departemental, dependance, ehpad\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/etablissements-ehpad-esld-etablissement-soin-longue-duree-et-ra-residence-autonomie-provence-alpes\n\n5. Etablissements EHPAD, ESLD, résidences autonomie, accueils de jour\n   ID: 5ca48257634f414eb3f14803\n   Tags: accueil-de-jour, autonomie, dependance, ehpad, esld\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/etablissements-ehpad-esld-residences-autonomie-accueils-de-jour\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'prix hébergement tarifs dépendance EHPAD'\nPage 1 of results:\n\n1. Prix hébergement et tarifs dépendance des EHPAD\n   ID: 5dadc5b7634f4142ddf7b41e\n   Organization: Caisse nationale de solidarité pour l'autonomie (CNSA)\n   Tags: cnsa, ehpad, esms, portail-pour-les-personnes-agees, prix-hebergement\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad\n\n2. Prix hébergement et tarifs dépendance des EHPAD - données brutes\n   ID: 5fc113baffccb502d3fe204e\n   Organization: Caisse nationale de solidarité pour l'autonomie (CNSA)\n   Tags: cnsa, ehpad, esms, portail-pour-les-personnes-agees, prestation\n   Resources: 70\n   URL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad-donnees-brutes\n\n3. Prix hébergement et tarifs dépendance des EHPAD\n   ID: 653feb018effa0f765846ee4\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad-1\n\n4. Etablissements EHPAD, ESLD (établissement de soin longue durée) et RA (résidence autonomie) en Provence-Alpes-Côte d'Azur\n   ID: 668d09e5a847603d391cbea4\n   Organization: Région Provence-Alpes-Côte-d'Azur\n   Tags: accueil, autonomie, conseil-departemental, dependance, ehpad\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/etablissements-ehpad-esld-etablissement-soin-longue-duree-et-ra-residence-autonomie-provence-alpes\n\n5. Etablissements EHPAD, ESLD, résidences autonomie, accueils de jour\n   ID: 5ca48257634f414eb3f14803\n   Tags: accueil-de-jour, autonomie, dependance, ehpad, esld\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/etablissements-ehpad-esld-residences-autonomie-accueils-de-jour\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "5dadc5b7634f4142ddf7b41e"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Prix hébergement et tarifs dépendance des EHPAD\n\nID: 5dadc5b7634f4142ddf7b41e\nSlug: prix-hebergement-et-tarifs-dependance-des-ehpad\nURL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad/\n\nFull description: Dans un objectif de renforcer la transparence et l'information sur les prix pratiqués dans les établissements d’hébergement pour personnes âgées dépendantes (EHPAD), la loi d’adaptation de la société au vieillissement oblige les EHPAD à transmettre à la Caisse nationale de solidarité pour l’autonomie (CNSA) leurs prix hébergement et leurs tarifs dépendance pour un affichage dans l’annuaire des EHPAD du portail d’information  www.pour-les-personnes-agees.gouv.fr\nLe décret d’application n°2015-186...\n\nOrganization: Caisse nationale de solidarité pour l'autonomie (CNSA)\n  Organization ID: 534fff5ca3a7292c64a77d26\n\nTags: cnsa, ehpad, esms, portail-pour-les-personnes-agees, prix-hebergement, tarif-dependance\n\nResources: 6 file(s)\n\nCreated: 2019-10-21T16:50:31.133000+00:00\nLast updated: 2021-11-29T15:21:29.464000+00:00\n\nLicense: notspecified\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Prix hébergement et tarifs dépendance des EHPAD\n\nID: 5dadc5b7634f4142ddf7b41e\nSlug: prix-hebergement-et-tarifs-dependance-des-ehpad\nURL: https://www.data.gouv.fr/datasets/prix-hebergement-et-tarifs-dependance-des-ehpad/\n\nFull description: Dans un objectif de renforcer la transparence et l'information sur les prix pratiqués dans les établissements d’hébergement pour personnes âgées dépendantes (EHPAD), la loi d’adaptation de la société au vieillissement oblige les EHPAD à transmettre à la Caisse nationale de solidarité pour l’autonomie (CNSA) leurs prix hébergement et leurs tarifs dépendance pour un affichage dans l’annuaire des EHPAD du portail d’information  www.pour-les-personnes-agees.gouv.fr\nLe décret d’application n°2015-186...\n\nOrganization: Caisse nationale de solidarité pour l'autonomie (CNSA)\n  Organization ID: 534fff5ca3a7292c64a77d26\n\nTags: cnsa, ehpad, esms, portail-pour-les-personnes-agees, prix-hebergement, tarif-dependance\n\nResources: 6 file(s)\n\nCreated: 2019-10-21T16:50:31.133000+00:00\nLast updated: 2021-11-29T15:21:29.464000+00:00\n\nLicense: notspecified\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

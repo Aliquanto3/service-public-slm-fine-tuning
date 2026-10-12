@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:38Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Caen cartes nationales d'identité passeports",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'Caen cartes nationales d'identité passeports'\nPage 1 of results:\n\n1. Ville de Caen - Cartes nationales d'identité, Passeports\n   ID: 6152de005b5026338d407619\n   Organization: Ville de Caen\n   Tags: carte-didentite, citoyennete, etat-civil, passeport, statistique\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ville-de-caen-cartes-nationales-didentite-passeports\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'Caen cartes nationales d'identité passeports'\nPage 1 of results:\n\n1. Ville de Caen - Cartes nationales d'identité, Passeports\n   ID: 6152de005b5026338d407619\n   Organization: Ville de Caen\n   Tags: carte-didentite, citoyennete, etat-civil, passeport, statistique\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ville-de-caen-cartes-nationales-didentite-passeports\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6152de005b5026338d407619"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Ville de Caen - Cartes nationales d'identité, Passeports\nDataset ID: 6152de005b5026338d407619\nTotal resources: 2\n\n1. ville-cartesdidentite-passeports-20210101.csv\n   Resource ID: a216f407-d9d7-44a2-845b-91736487bb24\n   Format: csv\n   Size: 4.6 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/ville-de-caen-cartes-nationales-didentite-passeports/20210928-111904/ville-cartesdidentite-passeports-20210101.csv\n\n2. ville-caen-opendata-sft-citoyennete-identites.xlsx\n   Resource ID: ab888818-13d8-4790-b98a-b55968060e2f\n   Format: xlsx\n   Size: 15.6 KB\n   MIME type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/ville-de-caen-cartes-nationales-didentite-passeports/20220106-094004/ville-caen-opendata-sft-citoyennete-identites.xlsx\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Ville de Caen - Cartes nationales d'identité, Passeports\nDataset ID: 6152de005b5026338d407619\nTotal resources: 2\n\n1. ville-cartesdidentite-passeports-20210101.csv\n   Resource ID: a216f407-d9d7-44a2-845b-91736487bb24\n   Format: csv\n   Size: 4.6 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/ville-de-caen-cartes-nationales-didentite-passeports/20210928-111904/ville-cartesdidentite-passeports-20210101.csv\n\n2. ville-caen-opendata-sft-citoyennete-identites.xlsx\n   Resource ID: ab888818-13d8-4790-b98a-b55968060e2f\n   Format: xlsx\n   Size: 15.6 KB\n   MIME type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/ville-de-caen-cartes-nationales-didentite-passeports/20220106-094004/ville-caen-opendata-sft-citoyennete-identites.xlsx\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "a216f407-d9d7-44a2-845b-91736487bb24",
+      "filter_column": "TypeTitre",
+      "filter_value": "CNI payantes",
+      "filter_operator": "exact",
+      "page_size": 3
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: ville-cartesdidentite-passeports-20210101.csv\nResource ID: a216f407-d9d7-44a2-845b-91736487bb24\nDataset: Ville de Caen - Cartes nationales d'identité, Passeports (ID: 6152de005b5026338d407619)\n\nFilter: TypeTitre exact CNI payantes\n\nTotal rows (Tabular API): 12\nTotal pages: 4 (page size: 3)\nRetrieved: 3 row(s) from page 1\nColumns: __id, TypeTitre, Code postal, Commune, Code INSEE, Année, Mois, Nombre, StatutTitre, Date MAJ\n\nData (3 rows):\n  Row 1:\n    __id: 5\n    TypeTitre: CNI payantes\n    Code postal: 14000\n    Commune: Caen\n    Code INSEE: 14118\n    Année: 2020\n    Mois: 1\n    Nombre: 134\n    StatutTitre: Actif\n    Date MAJ: 2021-01-01\n  Row 2:\n    __id: 11\n    TypeTitre: CNI payantes\n    Code postal: 14000\n    Commune: Caen\n    Code INSEE: 14118\n    Année: 2020\n    Mois: 2\n    Nombre: 137\n    StatutTitre: Actif\n    Date MAJ: 2021-01-01\n  Row 3:\n    __id: 17\n    TypeTitre: CNI payantes\n    Code postal: 14000\n    Commune: Caen\n    Code INSEE: 14118\n    Année: 2020\n    Mois: 3\n    Nombre: 75\n    StatutTitre: Actif\n    Date MAJ: 2021-01-01\n\n📄 More data available. Use page=2 to see the next page."
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: ville-cartesdidentite-passeports-20210101.csv\nResource ID: a216f407-d9d7-44a2-845b-91736487bb24\nDataset: Ville de Caen - Cartes nationales d'identité, Passeports (ID: 6152de005b5026338d407619)\n\nFilter: TypeTitre exact CNI payantes\n\nTotal rows (Tabular API): 12\nTotal pages: 4 (page size: 3)\nRetrieved: 3 row(s) from page 1\nColumns: __id, TypeTitre, Code postal, Commune, Code INSEE, Année, Mois, Nombre, StatutTitre, Date MAJ\n\nData (3 rows):\n  Row 1:\n    __id: 5\n    TypeTitre: CNI payantes\n    Code postal: 14000\n    Commune: Caen\n    Code INSEE: 14118\n    Année: 2020\n    Mois: 1\n    Nombre: 134\n    StatutTitre: Actif\n    Date MAJ: 2021-01-01\n  Row 2:\n    __id: 11\n    TypeTitre: CNI payantes\n    Code postal: 14000\n    Commune: Caen\n    Code INSEE: 14118\n    Année: 2020\n    Mois: 2\n    Nombre: 137\n    StatutTitre: Actif\n    Date MAJ: 2021-01-01\n  Row 3:\n    __id: 17\n    TypeTitre: CNI payantes\n    Code postal: 14000\n    Commune: Caen\n    Code INSEE: 14118\n    Année: 2020\n    Mois: 3\n    Nombre: 75\n    StatutTitre: Actif\n    Date MAJ: 2021-01-01\n\n📄 More data available. Use page=2 to see the next page."
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

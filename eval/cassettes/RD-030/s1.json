@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:38Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "code officiel géographique",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 178 dataset(s) for query: 'code officiel géographique'\nPage 1 of results:\n\n1. Code officiel géographique\n   ID: 58c984b088ee386cdb1261f3\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: code-geographique, decoupages-administratifs, geospatiales, hvd\n   Resources: 33\n   URL: https://www.data.gouv.fr/datasets/code-officiel-geographique-1\n\n2. ADMIN EXPRESS, ADMIN EXPRESS COG, ADMIN EXPRESS COG CARTO, ADMIN EXPRESS COG CARTO PE, ADMIN EXPRESS COG CARTO PLUS PE\n   ID: 5808de39c751df1e0679df72\n   Organization: Institut national de l'information géographique et forestière\n   Tags: demographies, denominations-geographiques, donnees-ouvertes, inspire, repartition-de-la-population\n   Resources: 242\n   URL: https://www.data.gouv.fr/datasets/admin-express-admin-express-cog-admin-express-cog-carto-admin-express-cog-carto-pe-admin-express-cog-carto-plus-pe\n\n3. Communes de la loi Montagne au Code Officiel Géographique (COG 2020->2022)\n   ID: 600a90b60961636713297c87\n   Organization: Ministère de la Cohésion des territoires\n   Tags: 2020, 2021, 2022, bcsi, communes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/communes-de-la-loi-montagne-au-code-officiel-geographique-cog-2020-2022\n\n4. Délimitation communale des massifs selon le décret n° 2004-69 du 16 janvier 2004 au Code Officiel Géographique (COG 2020->2022)\n   ID: 623b3a98f24796fd68273b9e\n   Organization: Ministère de la Cohésion des territoires\n   Tags: 2020, 2021, 2022, commune, dgaln\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/delimitation-communale-des-massifs-selon-le-decret-ndeg-2004-69-du-16-janvier-2004-au-code-officiel-geographique-cog-2020-2022\n\n5. Service-public.gouv.fr - Annuaire de l’administration - Base de données locales\n   ID: 53699fe4a3a729239d206227\n   Organization: Premier ministre\n   Tags: administration-locale, administration-publique, annuaire, annuaire-de-services, base-donnees-locales\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 178 dataset(s) for query: 'code officiel géographique'\nPage 1 of results:\n\n1. Code officiel géographique\n   ID: 58c984b088ee386cdb1261f3\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: code-geographique, decoupages-administratifs, geospatiales, hvd\n   Resources: 33\n   URL: https://www.data.gouv.fr/datasets/code-officiel-geographique-1\n\n2. ADMIN EXPRESS, ADMIN EXPRESS COG, ADMIN EXPRESS COG CARTO, ADMIN EXPRESS COG CARTO PE, ADMIN EXPRESS COG CARTO PLUS PE\n   ID: 5808de39c751df1e0679df72\n   Organization: Institut national de l'information géographique et forestière\n   Tags: demographies, denominations-geographiques, donnees-ouvertes, inspire, repartition-de-la-population\n   Resources: 242\n   URL: https://www.data.gouv.fr/datasets/admin-express-admin-express-cog-admin-express-cog-carto-admin-express-cog-carto-pe-admin-express-cog-carto-plus-pe\n\n3. Communes de la loi Montagne au Code Officiel Géographique (COG 2020->2022)\n   ID: 600a90b60961636713297c87\n   Organization: Ministère de la Cohésion des territoires\n   Tags: 2020, 2021, 2022, bcsi, communes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/communes-de-la-loi-montagne-au-code-officiel-geographique-cog-2020-2022\n\n4. Délimitation communale des massifs selon le décret n° 2004-69 du 16 janvier 2004 au Code Officiel Géographique (COG 2020->2022)\n   ID: 623b3a98f24796fd68273b9e\n   Organization: Ministère de la Cohésion des territoires\n   Tags: 2020, 2021, 2022, commune, dgaln\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/delimitation-communale-des-massifs-selon-le-decret-ndeg-2004-69-du-16-janvier-2004-au-code-officiel-geographique-cog-2020-2022\n\n5. Service-public.gouv.fr - Annuaire de l’administration - Base de données locales\n   ID: 53699fe4a3a729239d206227\n   Organization: Premier ministre\n   Tags: administration-locale, administration-publique, annuaire, annuaire-de-services, base-donnees-locales\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "58c984b088ee386cdb1261f3"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Code officiel géographique\nDataset ID: 58c984b088ee386cdb1261f3\nTotal resources: 33\n\n1. Millésime 2026 : Liste des modalités des fichiers téléchargeables du COG\n   Resource ID: ef2dcc0b-3902-4cd7-b138-1ad8d1497e90\n   Format: html\n   Type: main\n   URL: https://www.insee.fr/fr/information/8740218\n\n2. Millésime 2026 : Communes des collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: 5c1e4617-cdce-4ea4-9079-9361ce117bea\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_outremer_depuis_1943.csv\n\n3. Millésime 2026 : Liste des communes des collectivités et territoires français d'outre-mer au 01/01/2026\n   Resource ID: f47969be-310d-4871-b6c4-6005dbf46a00\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_comer_2026.csv\n\n4. Millésime 2026 : Collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: 9aea3179-6b3a-49c6-9d1f-787465c22b01\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_tom_depuis_1943.csv\n\n5. Millésime 2026 : Liste des collectivités et territoires français d'outre-mer au 01/01/2026\n   Resource ID: 62cf1ca1-f3db-4f49-bfa1-69aca93d34f1\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_comer_2026.csv\n\n6. Millésime 2026 : Communes depuis 1943\n   Resource ID: eb836ef4-8be2-4a55-bfdb-eb1ad041933e\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_depuis_1943.csv\n\n7. Millésime 2026 : Liste des événements survenus aux communes, arrondissements municipaux, communes associées et communes déléguées depuis 1943\n   Resource ID: 1b96750d-08df-433b-a2d1-a8ea7545ece3\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_mvt_commune_2026.csv\n\n8. Millésime 2026 : Codes extension et territoire de rattachement\n   Resource ID: 9a00e057-a627-465b-a21f-8ffb8c8cac31\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_codes_extension_2026.csv\n\n9. Millésime 2026 : Pays et territoires étrangers depuis 1943\n   Resource ID: 77cee87e-9d8f-4d06-8183-e07e20482565\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_pays_et_territoire_depuis_1943.csv\n\n10. Millésime 2026 : Pays et territoires étrangers au 01/01/2026\n   Resource ID: 2ada949d-c383-4bbc-95f0-c01a3391d822\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_pays_territoire_2026.csv\n\n11. Millésime 2026 : Liste des collectivités territoriales ayant les compétences départementales au 01/01/2026\n   Resource ID: 2f280951-f937-46c3-a695-cefd72d1e687\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_ctcd_2026.csv\n\n12. Millésime 2026 : Liste des régions au 01/01/2026\n   Resource ID: f7057d4e-0078-45de-95b7-2a0ce6594807\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_region_2026.csv\n\n13. Millésime 2026 : Liste des départements au 01/01/2026\n   Resource ID: e5f32177-5841-4a46-9c17-f8ff94bd38fc\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_departement_2026.csv\n\n14. Millésime 2026 : Liste des arrondissements au 01/01/2026\n   Resource ID: 33393ce2-6b46-4354-b41f-17722423dd15\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_arrondissement_2026.csv\n\n15. Millésime 2026 : Liste des cantons (et pseudo-cantons) au 01/01/2026\n   Resource ID: 3fe51f74-7185-4782-9f57-339fc1d99b99\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_canton_2026.csv\n\n16. Millésime 2026 : Liste des communes, arrondissements municipaux, communes déléguées et communes associées au 01/01/2026\n   Resource ID: c5800591-813b-4ce2-9a3f-739a9c5d9558\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_2026.csv\n\n17. Millésime 2025 : Liste des modalités des fichiers téléchargeables du COG\n   Resource ID: df7a9765-2ac9-45be-905f-d2bc5dc9fc35\n   Format: html\n   Type: main\n   URL: https://www.insee.fr/fr/information/8377252\n\n18. Millésime 2025 : Communes des collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: 45ecaa9c-1369-4a5c-a8f9-963498a2aea6\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_outremer_depuis_1943.csv\n\n19. Millésime 2025 : Liste des communes des collectivités et territoires français d'outre-mer au 01/01/2025\n   Resource ID: b797d73d-663c-4d3d-baf0-2d24b2d3a321\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_comer_2025.csv\n\n20. Millésime 2025 : Collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: d029bfb8-37a8-495a-92c7-27c35bfe8ff0\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_tom_depuis_1943.csv\n\n21. Millésime 2025 : Liste des collectivités et territoires français d'outre-mer au 01/01/2025\n   Resource ID: d4f01365-a3a7-41b2-9907-01a6cb42c9f2\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_comer_2025.csv\n\n22. Millésime 2025 : Communes depuis 1943\n   Resource ID: f8dc651e-de21-4b55-a3cc-66036fd30420\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_depuis_1943.csv\n\n23. Millésime 2025 : Liste des événements survenus aux communes, arrondissements municipaux, communes associées et communes déléguées depuis 1943\n   Resource ID: f0de309f-66f3-4b2b-8848-352ace54f9b3\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_mvt_commune_2025.csv\n\n24. Millésime 2025 : Codes extension et territoire de rattachement\n   Resource ID: cd7441fd-9854-481e-85e1-86b5d1fd8831\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_codes_extension_2025.csv\n\n25. Millésime 2025 : Pays et territoires étrangers depuis 1943\n   Resource ID: 4cd91b1b-684b-44e0-af86-77b623fcb5f2\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_pays_et_territoire_depuis_1943.csv\n\n26. Millésime 2025 : Pays et territoires étrangers au 01/01/2025\n   Resource ID: 3580bf65-1d11-4574-a2ca-903d64ad41bd\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_pays_territoire_2025.csv\n\n27. Millésime 2025 : Liste des collectivités territoriales ayant les compétences départementales au 01/01/2025\n   Resource ID: 8de9a48d-ed14-4c77-b9e0-f15be28e6cd6\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_ctcd_2025.csv\n\n28. Millésime 2025 : Liste des régions au 01/01/2025\n   Resource ID: 2486b351-5d85-4e1a-8d12-5df082c75104\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_region_2025.csv\n\n29. Millésime 2025 : Liste des départements au 01/01/2025\n   Resource ID: 54a8263d-6e2d-48d5-b214-aa17cc13f7a0\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_departement_2025.csv\n\n30. Millésime 2025 : Liste des arrondissements au 01/01/2025\n   Resource ID: e3bd015d-7593-4bc5-a236-8410167e4599\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_arrondissement_2025.csv\n\n31. Millésime 2025 : Liste des cantons (et pseudo-cantons) au 01/01/2025\n   Resource ID: 58c109f6-b15c-4d87-bada-6a55ba9ef7d3\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_canton_2025.csv\n\n32. Millésime 2025 : Liste des communes, arrondissements municipaux, communes déléguées et communes associées au 01/01/2025\n   Resource ID: 91a95bee-c7c8-45f9-a8aa-f14cc4697545\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_2025.csv\n\n33. Millésimes 1999 à 2024 : Téléchargement des fichiers et liste et modalités des variables\n   Resource ID: 629fb844-f04c-4ea2-8670-82797ba3b630\n   Format: html\n   Type: main\n   URL: https://www.insee.fr/fr/information/2560452\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Code officiel géographique\nDataset ID: 58c984b088ee386cdb1261f3\nTotal resources: 33\n\n1. Millésime 2026 : Liste des modalités des fichiers téléchargeables du COG\n   Resource ID: ef2dcc0b-3902-4cd7-b138-1ad8d1497e90\n   Format: html\n   Type: main\n   URL: https://www.insee.fr/fr/information/8740218\n\n2. Millésime 2026 : Communes des collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: 5c1e4617-cdce-4ea4-9079-9361ce117bea\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_outremer_depuis_1943.csv\n\n3. Millésime 2026 : Liste des communes des collectivités et territoires français d'outre-mer au 01/01/2026\n   Resource ID: f47969be-310d-4871-b6c4-6005dbf46a00\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_comer_2026.csv\n\n4. Millésime 2026 : Collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: 9aea3179-6b3a-49c6-9d1f-787465c22b01\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_tom_depuis_1943.csv\n\n5. Millésime 2026 : Liste des collectivités et territoires français d'outre-mer au 01/01/2026\n   Resource ID: 62cf1ca1-f3db-4f49-bfa1-69aca93d34f1\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_comer_2026.csv\n\n6. Millésime 2026 : Communes depuis 1943\n   Resource ID: eb836ef4-8be2-4a55-bfdb-eb1ad041933e\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_depuis_1943.csv\n\n7. Millésime 2026 : Liste des événements survenus aux communes, arrondissements municipaux, communes associées et communes déléguées depuis 1943\n   Resource ID: 1b96750d-08df-433b-a2d1-a8ea7545ece3\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_mvt_commune_2026.csv\n\n8. Millésime 2026 : Codes extension et territoire de rattachement\n   Resource ID: 9a00e057-a627-465b-a21f-8ffb8c8cac31\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_codes_extension_2026.csv\n\n9. Millésime 2026 : Pays et territoires étrangers depuis 1943\n   Resource ID: 77cee87e-9d8f-4d06-8183-e07e20482565\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_pays_et_territoire_depuis_1943.csv\n\n10. Millésime 2026 : Pays et territoires étrangers au 01/01/2026\n   Resource ID: 2ada949d-c383-4bbc-95f0-c01a3391d822\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_pays_territoire_2026.csv\n\n11. Millésime 2026 : Liste des collectivités territoriales ayant les compétences départementales au 01/01/2026\n   Resource ID: 2f280951-f937-46c3-a695-cefd72d1e687\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_ctcd_2026.csv\n\n12. Millésime 2026 : Liste des régions au 01/01/2026\n   Resource ID: f7057d4e-0078-45de-95b7-2a0ce6594807\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_region_2026.csv\n\n13. Millésime 2026 : Liste des départements au 01/01/2026\n   Resource ID: e5f32177-5841-4a46-9c17-f8ff94bd38fc\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_departement_2026.csv\n\n14. Millésime 2026 : Liste des arrondissements au 01/01/2026\n   Resource ID: 33393ce2-6b46-4354-b41f-17722423dd15\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_arrondissement_2026.csv\n\n15. Millésime 2026 : Liste des cantons (et pseudo-cantons) au 01/01/2026\n   Resource ID: 3fe51f74-7185-4782-9f57-339fc1d99b99\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_canton_2026.csv\n\n16. Millésime 2026 : Liste des communes, arrondissements municipaux, communes déléguées et communes associées au 01/01/2026\n   Resource ID: c5800591-813b-4ce2-9a3f-739a9c5d9558\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_2026.csv\n\n17. Millésime 2025 : Liste des modalités des fichiers téléchargeables du COG\n   Resource ID: df7a9765-2ac9-45be-905f-d2bc5dc9fc35\n   Format: html\n   Type: main\n   URL: https://www.insee.fr/fr/information/8377252\n\n18. Millésime 2025 : Communes des collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: 45ecaa9c-1369-4a5c-a8f9-963498a2aea6\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_outremer_depuis_1943.csv\n\n19. Millésime 2025 : Liste des communes des collectivités et territoires français d'outre-mer au 01/01/2025\n   Resource ID: b797d73d-663c-4d3d-baf0-2d24b2d3a321\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_comer_2025.csv\n\n20. Millésime 2025 : Collectivités et territoires français d’outre-mer depuis 1943\n   Resource ID: d029bfb8-37a8-495a-92c7-27c35bfe8ff0\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_tom_depuis_1943.csv\n\n21. Millésime 2025 : Liste des collectivités et territoires français d'outre-mer au 01/01/2025\n   Resource ID: d4f01365-a3a7-41b2-9907-01a6cb42c9f2\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_comer_2025.csv\n\n22. Millésime 2025 : Communes depuis 1943\n   Resource ID: f8dc651e-de21-4b55-a3cc-66036fd30420\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_depuis_1943.csv\n\n23. Millésime 2025 : Liste des événements survenus aux communes, arrondissements municipaux, communes associées et communes déléguées depuis 1943\n   Resource ID: f0de309f-66f3-4b2b-8848-352ace54f9b3\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_mvt_commune_2025.csv\n\n24. Millésime 2025 : Codes extension et territoire de rattachement\n   Resource ID: cd7441fd-9854-481e-85e1-86b5d1fd8831\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_codes_extension_2025.csv\n\n25. Millésime 2025 : Pays et territoires étrangers depuis 1943\n   Resource ID: 4cd91b1b-684b-44e0-af86-77b623fcb5f2\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_pays_et_territoire_depuis_1943.csv\n\n26. Millésime 2025 : Pays et territoires étrangers au 01/01/2025\n   Resource ID: 3580bf65-1d11-4574-a2ca-903d64ad41bd\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_pays_territoire_2025.csv\n\n27. Millésime 2025 : Liste des collectivités territoriales ayant les compétences départementales au 01/01/2025\n   Resource ID: 8de9a48d-ed14-4c77-b9e0-f15be28e6cd6\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_ctcd_2025.csv\n\n28. Millésime 2025 : Liste des régions au 01/01/2025\n   Resource ID: 2486b351-5d85-4e1a-8d12-5df082c75104\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_region_2025.csv\n\n29. Millésime 2025 : Liste des départements au 01/01/2025\n   Resource ID: 54a8263d-6e2d-48d5-b214-aa17cc13f7a0\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_departement_2025.csv\n\n30. Millésime 2025 : Liste des arrondissements au 01/01/2025\n   Resource ID: e3bd015d-7593-4bc5-a236-8410167e4599\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_arrondissement_2025.csv\n\n31. Millésime 2025 : Liste des cantons (et pseudo-cantons) au 01/01/2025\n   Resource ID: 58c109f6-b15c-4d87-bada-6a55ba9ef7d3\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_canton_2025.csv\n\n32. Millésime 2025 : Liste des communes, arrondissements municipaux, communes déléguées et communes associées au 01/01/2025\n   Resource ID: 91a95bee-c7c8-45f9-a8aa-f14cc4697545\n   Format: csv\n   Type: main\n   URL: https://www.insee.fr/fr/statistiques/fichier/8377162/v_commune_2025.csv\n\n33. Millésimes 1999 à 2024 : Téléchargement des fichiers et liste et modalités des variables\n   Resource ID: 629fb844-f04c-4ea2-8670-82797ba3b630\n   Format: html\n   Type: main\n   URL: https://www.insee.fr/fr/information/2560452\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "e5f32177-5841-4a46-9c17-f8ff94bd38fc",
+      "filter_column": "DEP",
+      "filter_value": "29",
+      "filter_operator": "exact",
+      "page_size": 3
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: Millésime 2026 : Liste des départements au 01/01/2026\nResource ID: e5f32177-5841-4a46-9c17-f8ff94bd38fc\nDataset: Code officiel géographique (ID: 58c984b088ee386cdb1261f3)\n\nFilter: DEP exact 29\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 3)\nRetrieved: 1 row(s) from page 1\nColumns: __id, DEP, REG, CHEFLIEU, TNCC, NCC, NCCENR, LIBELLE\n\nData (1 row):\n  Row 1:\n    __id: 28\n    DEP: 29\n    REG: 53\n    CHEFLIEU: 29232\n    TNCC: 2\n    NCC: FINISTERE\n    NCCENR: Finistère\n    LIBELLE: Finistère"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: Millésime 2026 : Liste des départements au 01/01/2026\nResource ID: e5f32177-5841-4a46-9c17-f8ff94bd38fc\nDataset: Code officiel géographique (ID: 58c984b088ee386cdb1261f3)\n\nFilter: DEP exact 29\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 3)\nRetrieved: 1 row(s) from page 1\nColumns: __id, DEP, REG, CHEFLIEU, TNCC, NCC, NCCENR, LIBELLE\n\nData (1 row):\n  Row 1:\n    __id: 28\n    DEP: 29\n    REG: 53\n    CHEFLIEU: 29232\n    TNCC: 2\n    NCC: FINISTERE\n    NCCENR: Finistère\n    LIBELLE: Finistère"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

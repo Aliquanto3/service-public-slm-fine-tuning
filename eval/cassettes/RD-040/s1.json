@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:30Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "FINESS",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 182 dataset(s) for query: 'FINESS'\nPage 1 of results:\n\n1. FINESS Extraction du Fichier des établissements\n   ID: 53699569a3a729239d2046eb\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activites-de-soins, autorisations, etablissement, etablissement-hospitalier, etablissements-sanitaires\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements\n\n2.  FINESS Extraction des entités juridiques\n   ID: 5369956ba3a729239d2046fc\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activites-de-soins, autorisations, etablissement, etablissement-hospitalier, etablissements-sanitaires\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-des-entites-juridiques\n\n3. Réexposition des données Finess\n   ID: 67e43007cd5e91b9fdcbc7b3\n   Organization: data.gouv.fr\n   Tags: finess\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/reexposition-des-donnees-finess\n\n4. FINESS Extraction  des autorisations d'activités de soin\n   ID: 5369956aa3a729239d2046f7\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activite-de-soins, finess, hopitaux, sante\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-des-autorisations-dactivites-de-soin\n\n5. FINESS Extraction des équipements sociaux et médico-sociaux\n   ID: 5369956ca3a729239d204701\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activite-medicale, equipement, sante, sociaux\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-des-equipements-sociaux-et-medico-sociaux\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 182 dataset(s) for query: 'FINESS'\nPage 1 of results:\n\n1. FINESS Extraction du Fichier des établissements\n   ID: 53699569a3a729239d2046eb\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activites-de-soins, autorisations, etablissement, etablissement-hospitalier, etablissements-sanitaires\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements\n\n2.  FINESS Extraction des entités juridiques\n   ID: 5369956ba3a729239d2046fc\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activites-de-soins, autorisations, etablissement, etablissement-hospitalier, etablissements-sanitaires\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-des-entites-juridiques\n\n3. Réexposition des données Finess\n   ID: 67e43007cd5e91b9fdcbc7b3\n   Organization: data.gouv.fr\n   Tags: finess\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/reexposition-des-donnees-finess\n\n4. FINESS Extraction  des autorisations d'activités de soin\n   ID: 5369956aa3a729239d2046f7\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activite-de-soins, finess, hopitaux, sante\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-des-autorisations-dactivites-de-soin\n\n5. FINESS Extraction des équipements sociaux et médico-sociaux\n   ID: 5369956ca3a729239d204701\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: activite-medicale, equipement, sante, sociaux\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/finess-extraction-des-equipements-sociaux-et-medico-sociaux\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "53699569a3a729239d2046eb"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: FINESS Extraction du Fichier des établissements\nDataset ID: 53699569a3a729239d2046eb\nTotal resources: 5\n\n1. Extraction Finess des Etablissements géolocalisés au 04/05/2026.\n   Resource ID: 98f3161f-79ff-4f16-8f6a-6d571a80fea2\n   Format: csv\n   Size: 45.7 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260512-091152/etalab-cs1100507-stock-20260512-0339.csv\n\n2. Extraction Finess des Etablissements au 04/05/2026.\n   Resource ID: 2ce43ade-8d2c-4d1d-81da-ca06c82abc68\n   Format: csv\n   Size: 34.1 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260512-091308/etalab-cs1100502-stock-20260512-0339.csv\n\n3. HISTORIQUE des Etablissements période : 2004-2025\n   Resource ID: aee8ca28-6ac3-4a9f-9d18-9371ec9de6ea\n   Format: zip\n   Size: 186.6 MB\n   MIME type: application/zip\n   Type: main\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260108-153939/etalab-stock-et-historique-2004-2025.zip\n\n4. Télécharger Description du jeu de données \"établissements Géolocalisés\"\n   Resource ID: d1a2f35f-8823-400f-9296-6eb7361ddf6f\n   Format: pdf\n   Size: 120.2 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20180604-151738/etalab_cs1100507.pdf\n\n5. Télécharger Description du jeu de données \"établissements\"\n   Resource ID: d06a0924-9931-4a60-83b6-93abdb6acfd6\n   Format: pdf\n   Size: 173.1 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20180404-104958/etalab_cs1100502.pdf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: FINESS Extraction du Fichier des établissements\nDataset ID: 53699569a3a729239d2046eb\nTotal resources: 5\n\n1. Extraction Finess des Etablissements géolocalisés au 04/05/2026.\n   Resource ID: 98f3161f-79ff-4f16-8f6a-6d571a80fea2\n   Format: csv\n   Size: 45.7 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260512-091152/etalab-cs1100507-stock-20260512-0339.csv\n\n2. Extraction Finess des Etablissements au 04/05/2026.\n   Resource ID: 2ce43ade-8d2c-4d1d-81da-ca06c82abc68\n   Format: csv\n   Size: 34.1 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260512-091308/etalab-cs1100502-stock-20260512-0339.csv\n\n3. HISTORIQUE des Etablissements période : 2004-2025\n   Resource ID: aee8ca28-6ac3-4a9f-9d18-9371ec9de6ea\n   Format: zip\n   Size: 186.6 MB\n   MIME type: application/zip\n   Type: main\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260108-153939/etalab-stock-et-historique-2004-2025.zip\n\n4. Télécharger Description du jeu de données \"établissements Géolocalisés\"\n   Resource ID: d1a2f35f-8823-400f-9296-6eb7361ddf6f\n   Format: pdf\n   Size: 120.2 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20180604-151738/etalab_cs1100507.pdf\n\n5. Télécharger Description du jeu de données \"établissements\"\n   Resource ID: d06a0924-9931-4a60-83b6-93abdb6acfd6\n   Format: pdf\n   Size: 173.1 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20180404-104958/etalab_cs1100502.pdf\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "get_resource_info",
+     "arguments": {
+      "resource_id": "2ce43ade-8d2c-4d1d-81da-ca06c82abc68"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resource Information: Extraction Finess des Etablissements au 04/05/2026.\n\nResource ID: 2ce43ade-8d2c-4d1d-81da-ca06c82abc68\nFormat: csv\nSize: 34.1 MB\nMIME type: text/csv\nType: main\n\nURL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260512-091308/etalab-cs1100502-stock-20260512-0339.csv\n\nDescription: Extraction Finess des Etablissements au 04/05/2026.\n\n\nDataset ID: 53699569a3a729239d2046eb\nDataset: FINESS Extraction du Fichier des établissements\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resource Information: Extraction Finess des Etablissements au 04/05/2026.\n\nResource ID: 2ce43ade-8d2c-4d1d-81da-ca06c82abc68\nFormat: csv\nSize: 34.1 MB\nMIME type: text/csv\nType: main\n\nURL: https://static.data.gouv.fr/resources/finess-extraction-du-fichier-des-etablissements/20260512-091308/etalab-cs1100502-stock-20260512-0339.csv\n\nDescription: Extraction Finess des Etablissements au 04/05/2026.\n\n\nDataset ID: 53699569a3a729239d2046eb\nDataset: FINESS Extraction du Fichier des établissements\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:26Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "fichier des prénoms",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 532 dataset(s) for query: 'fichier des prénoms'\nPage 1 of results:\n\n1. Fichier  des prénoms depuis 1900\n   ID: 5bf42c958b4c4144b0110ce8\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: etat-civil, naissance, prenom\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/fichier-des-prenoms-depuis-1900\n\n2. Bureaux de vote et adresses de leurs électeurs\n   ID: 649998d50f6f27459dc6cf5b\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: adresses-des-electeurs, bureaux-de-vote, reu\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/bureaux-de-vote-et-adresses-de-leurs-electeurs\n\n3. Prénoms les plus usuels pour les enfants nés à Poitiers\n   ID: 55968e3bc751df26c5a453ba\n   Description: Recense les prénoms des nouveau-nés déclarés au service de l’état civil de la mairie de Poitiers depuis 1981, avec pour chaque année le prénom, le sexe de l’enfant et le nombre d’occurrences enregi......\n   Organization: Grand Poitiers Open Data\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/prenoms-les-plus-usuels-pour-les-enfants-nes-a-poitiers\n\n4. Fichier des personnes décédées\n   ID: 5de8f397634f4164071119c5\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: deces, etat-civil\n   Resources: 89\n   URL: https://www.data.gouv.fr/datasets/fichier-des-personnes-decedees\n\n5. Prénoms des habitants de Riedisheim\n   ID: 5be560c706e3e70c7277c6f2\n   Organization: Mulhouse Alsace Agglomération\n   Tags: citoyennete\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/prenoms-des-habitants-de-riedisheim\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 532 dataset(s) for query: 'fichier des prénoms'\nPage 1 of results:\n\n1. Fichier  des prénoms depuis 1900\n   ID: 5bf42c958b4c4144b0110ce8\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: etat-civil, naissance, prenom\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/fichier-des-prenoms-depuis-1900\n\n2. Bureaux de vote et adresses de leurs électeurs\n   ID: 649998d50f6f27459dc6cf5b\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: adresses-des-electeurs, bureaux-de-vote, reu\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/bureaux-de-vote-et-adresses-de-leurs-electeurs\n\n3. Prénoms les plus usuels pour les enfants nés à Poitiers\n   ID: 55968e3bc751df26c5a453ba\n   Description: Recense les prénoms des nouveau-nés déclarés au service de l’état civil de la mairie de Poitiers depuis 1981, avec pour chaque année le prénom, le sexe de l’enfant et le nombre d’occurrences enregi......\n   Organization: Grand Poitiers Open Data\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/prenoms-les-plus-usuels-pour-les-enfants-nes-a-poitiers\n\n4. Fichier des personnes décédées\n   ID: 5de8f397634f4164071119c5\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: deces, etat-civil\n   Resources: 89\n   URL: https://www.data.gouv.fr/datasets/fichier-des-personnes-decedees\n\n5. Prénoms des habitants de Riedisheim\n   ID: 5be560c706e3e70c7277c6f2\n   Organization: Mulhouse Alsace Agglomération\n   Tags: citoyennete\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/prenoms-des-habitants-de-riedisheim\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

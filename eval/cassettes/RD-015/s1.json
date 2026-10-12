@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:29Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "mariages pacs divorces",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 8 dataset(s) for query: 'mariages pacs divorces'\nPage 1 of results:\n\n1. Mariages, pactes civils de solidarité (pacs) et divorces - séries longues\n   ID: 6960460c981fc53b04b2f067\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: statistiques\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/mariages-pactes-civils-de-solidarite-pacs-et-divorces-series-longues\n\n2. Ensemble de jeux de données d’état civil\n   ID: 67f91af041832be9dabb73ca\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/ensemble-de-jeux-de-donnees-detat-civil\n\n3. Citoyenneté - Mariages à Poitiers\n   ID: 55969dfec751df3da3a453b9\n   Organization: Grand Poitiers Open Data\n   Tags: acte, bans, celebration, commune, contrat\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/citoyennete-mariages-a-poitiers\n\n4. Mariages à Poitiers depuis 2014\n   ID: 67c56bb5e93446e863bea60d\n   Description: Dénombre par année et par mois, depuis 2014, les mariages célébrés à Poitiers ainsi que les contrats de mariage, les publications pour mariages extérieurs à la commune, les mentions de divorce, les......\n   Organization: Grand Poitiers Open Data\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/mariages-a-poitiers-depuis-2014\n\n5. STATISTIQUES ETAT CIVIL de 2000 à 2025\n   ID: 5bac9a4b634f412ce9b72dc3\n   Organization: Ville de Cogolin\n   Tags: deces, etat-civil, mariages, naissances, pacs\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/statistiques-etat-civil-de-2000-a-2025\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 8 dataset(s) for query: 'mariages pacs divorces'\nPage 1 of results:\n\n1. Mariages, pactes civils de solidarité (pacs) et divorces - séries longues\n   ID: 6960460c981fc53b04b2f067\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: statistiques\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/mariages-pactes-civils-de-solidarite-pacs-et-divorces-series-longues\n\n2. Ensemble de jeux de données d’état civil\n   ID: 67f91af041832be9dabb73ca\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/ensemble-de-jeux-de-donnees-detat-civil\n\n3. Citoyenneté - Mariages à Poitiers\n   ID: 55969dfec751df3da3a453b9\n   Organization: Grand Poitiers Open Data\n   Tags: acte, bans, celebration, commune, contrat\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/citoyennete-mariages-a-poitiers\n\n4. Mariages à Poitiers depuis 2014\n   ID: 67c56bb5e93446e863bea60d\n   Description: Dénombre par année et par mois, depuis 2014, les mariages célébrés à Poitiers ainsi que les contrats de mariage, les publications pour mariages extérieurs à la commune, les mentions de divorce, les......\n   Organization: Grand Poitiers Open Data\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/mariages-a-poitiers-depuis-2014\n\n5. STATISTIQUES ETAT CIVIL de 2000 à 2025\n   ID: 5bac9a4b634f412ce9b72dc3\n   Organization: Ville de Cogolin\n   Tags: deces, etat-civil, mariages, naissances, pacs\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/statistiques-etat-civil-de-2000-a-2025\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "6960460c981fc53b04b2f067"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Mariages, pactes civils de solidarité (pacs) et divorces - séries longues\n\nID: 6960460c981fc53b04b2f067\nSlug: mariages-pactes-civils-de-solidarite-pacs-et-divorces-series-longues\nURL: https://www.data.gouv.fr/datasets/mariages-pactes-civils-de-solidarite-pacs-et-divorces-series-longues/\n\nFull description: Données relatives au nombre de mariages enregistrés et domiciliés, au nombre de pactes civils de solidarité (pacs), au nombre de divorces et au taux de nuptialité....\n\nOrganization: Institut national de la statistique et des études économiques (Insee)\n  Organization ID: 534fff81a3a7292c64a77e5c\n\nTags: statistiques\n\nResources: 2 file(s)\n\nCreated: 2025-12-18T19:22:59+00:00\nLast updated: 2026-10-09T00:01:27.488000+00:00\n\nLicense: lov2\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Mariages, pactes civils de solidarité (pacs) et divorces - séries longues\n\nID: 6960460c981fc53b04b2f067\nSlug: mariages-pactes-civils-de-solidarite-pacs-et-divorces-series-longues\nURL: https://www.data.gouv.fr/datasets/mariages-pactes-civils-de-solidarite-pacs-et-divorces-series-longues/\n\nFull description: Données relatives au nombre de mariages enregistrés et domiciliés, au nombre de pactes civils de solidarité (pacs), au nombre de divorces et au taux de nuptialité....\n\nOrganization: Institut national de la statistique et des études économiques (Insee)\n  Organization ID: 534fff81a3a7292c64a77e5c\n\nTags: statistiques\n\nResources: 2 file(s)\n\nCreated: 2025-12-18T19:22:59+00:00\nLast updated: 2026-10-09T00:01:27.488000+00:00\n\nLicense: lov2\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

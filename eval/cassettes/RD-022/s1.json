@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:51Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "centres de formation d'apprentis taux d'insertion",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'centres de formation d'apprentis taux d'insertion'\nPage 1 of results:\n\n1. Listes des centres de formation d'apprentis  (adresse, nombre d'élèves, taux d'insertion, taux de rupture par spécialité)\n   ID: 617a9e0887c6d1cab5c3d281\n   Organization: Dares - statistiques Travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/listes-des-centres-de-formation-dapprentis-adresse-nombre-deleves-taux-dinsertion-taux-de-rupture-par-specialite\n\n2. IPA taux d'emploi en fonction du groupe de spécialité – Enquête cessée depuis 2020\n   ID: 5cc1154206e3e776056fc4fb\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprentis, apprentissage, centre-de-formation-dapprentis, cfa, eleves\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ipa-taux-demploi-en-fonction-du-groupe-de-specialite\n\n3. Inserjeunes Apprentissage par centre de formation d'apprentis (CFA)\n   ID: 60b5b0ed2571d1002e2fcb3e\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprenti, apprentissage, centre-formation-apprentis, cfa, eleves-etudiants-et-apprentis\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/inserjeunes-apprentissage-par-centre-de-formation-dapprentis-cfa\n\n4. Inserjeunes Apprentissage par centre de formation d'apprentis (CFA) et niveau de formation CAP à BTS\n   ID: 60b5b0ed5d1dd28f2b2ee2c5\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprenti, apprentissage, centre-formation-apprentis, cfa, eleves-etudiants-et-apprentis\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/inserjeunes-apprentissage-par-centre-de-formation-dapprentis-cfa-et-niveau-de-formation-cap-a-bts\n\n5. Inserjeunes Apprentissage par centre de formation d'apprentis (CFA) et formation fine niveau CAP à BTS\n   ID: 60b5b0ec04ca1909fd2ee2c7\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprenti, apprentissage, centre-formation-apprentis, cfa, eleves-etudiants-et-apprentis\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/inserjeunes-apprentissage-par-centre-de-formation-dapprentis-cfa-et-formation-fine-niveau-cap-a-bts\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'centres de formation d'apprentis taux d'insertion'\nPage 1 of results:\n\n1. Listes des centres de formation d'apprentis  (adresse, nombre d'élèves, taux d'insertion, taux de rupture par spécialité)\n   ID: 617a9e0887c6d1cab5c3d281\n   Organization: Dares - statistiques Travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/listes-des-centres-de-formation-dapprentis-adresse-nombre-deleves-taux-dinsertion-taux-de-rupture-par-specialite\n\n2. IPA taux d'emploi en fonction du groupe de spécialité – Enquête cessée depuis 2020\n   ID: 5cc1154206e3e776056fc4fb\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprentis, apprentissage, centre-de-formation-dapprentis, cfa, eleves\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ipa-taux-demploi-en-fonction-du-groupe-de-specialite\n\n3. Inserjeunes Apprentissage par centre de formation d'apprentis (CFA)\n   ID: 60b5b0ed2571d1002e2fcb3e\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprenti, apprentissage, centre-formation-apprentis, cfa, eleves-etudiants-et-apprentis\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/inserjeunes-apprentissage-par-centre-de-formation-dapprentis-cfa\n\n4. Inserjeunes Apprentissage par centre de formation d'apprentis (CFA) et niveau de formation CAP à BTS\n   ID: 60b5b0ed5d1dd28f2b2ee2c5\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprenti, apprentissage, centre-formation-apprentis, cfa, eleves-etudiants-et-apprentis\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/inserjeunes-apprentissage-par-centre-de-formation-dapprentis-cfa-et-niveau-de-formation-cap-a-bts\n\n5. Inserjeunes Apprentissage par centre de formation d'apprentis (CFA) et formation fine niveau CAP à BTS\n   ID: 60b5b0ec04ca1909fd2ee2c7\n   Organization: Ministères de l'Éducation nationale\n   Tags: apprenti, apprentissage, centre-formation-apprentis, cfa, eleves-etudiants-et-apprentis\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/inserjeunes-apprentissage-par-centre-de-formation-dapprentis-cfa-et-formation-fine-niveau-cap-a-bts\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "617a9e0887c6d1cab5c3d281"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Listes des centres de formation d'apprentis  (adresse, nombre d'élèves, taux d'insertion, taux de rupture par spécialité)\nDataset ID: 617a9e0887c6d1cab5c3d281\nTotal resources: 1\n\n1. Données - Établissements d'apprentissage 2018-2019 (XLSX, 937.48 Ko)\n   Resource ID: ff92e8ae-82eb-4be1-b3a2-3a5bd58c731f\n   Format: xlsx\n   Type: main\n   URL: https://dares.travail-emploi.gouv.fr/donnees/insertion-des-jeunes-apres-la-voie-professionnelle\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Listes des centres de formation d'apprentis  (adresse, nombre d'élèves, taux d'insertion, taux de rupture par spécialité)\nDataset ID: 617a9e0887c6d1cab5c3d281\nTotal resources: 1\n\n1. Données - Établissements d'apprentissage 2018-2019 (XLSX, 937.48 Ko)\n   Resource ID: ff92e8ae-82eb-4be1-b3a2-3a5bd58c731f\n   Format: xlsx\n   Type: main\n   URL: https://dares.travail-emploi.gouv.fr/donnees/insertion-des-jeunes-apres-la-voie-professionnelle\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

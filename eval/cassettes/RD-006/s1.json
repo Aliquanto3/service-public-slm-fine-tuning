@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:31Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "RSA situation familiale national",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 9 dataset(s) for query: 'RSA situation familiale national'\nPage 1 of results:\n\n1. RSA - Répartition des allocataires selon le type de RSA et la situation familiale [National]\n   ID: 66d1e5a979919854e97093bd\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-national\n\n2. RSA - Répartition des allocataires selon le type de RSA et la situation familiale [Départemental]\n   ID: 66d1e59e79919854e9709399\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-departemental\n\n3. RSA et PA - Répartition des allocataires selon la situation familiale [National]\n   ID: 66d1e5b279919854e97093da\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, pa, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-et-pa-repartition-des-allocataires-selon-la-situation-familiale-national\n\n4. RSA et PA - Répartition des allocataires selon la situation familiale [Département]\n   ID: 66d1e59979919854e970938a\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, pa, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-et-pa-repartition-des-allocataires-selon-la-situation-familiale-departement\n\n5. Allocataires du RSA\n   ID: 53698ed1a3a729239d20358b\n   Organization: Ministère des Solidarités et de la Santé\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/allocataires-du-rsa\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 9 dataset(s) for query: 'RSA situation familiale national'\nPage 1 of results:\n\n1. RSA - Répartition des allocataires selon le type de RSA et la situation familiale [National]\n   ID: 66d1e5a979919854e97093bd\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-national\n\n2. RSA - Répartition des allocataires selon le type de RSA et la situation familiale [Départemental]\n   ID: 66d1e59e79919854e9709399\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-departemental\n\n3. RSA et PA - Répartition des allocataires selon la situation familiale [National]\n   ID: 66d1e5b279919854e97093da\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, pa, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-et-pa-repartition-des-allocataires-selon-la-situation-familiale-national\n\n4. RSA et PA - Répartition des allocataires selon la situation familiale [Département]\n   ID: 66d1e59979919854e970938a\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, pa, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-et-pa-repartition-des-allocataires-selon-la-situation-familiale-departement\n\n5. Allocataires du RSA\n   ID: 53698ed1a3a729239d20358b\n   Organization: Ministère des Solidarités et de la Santé\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/allocataires-du-rsa\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "66d1e5a979919854e97093bd"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: RSA - Répartition des allocataires selon le type de RSA et la situation familiale [National]\n\nID: 66d1e5a979919854e97093bd\nSlug: rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-national\nURL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-national/\n\nFull description: Bénéficiaires mensuels du revenu de solidarité active (RSA) à l'échelle nationale selon le type de RSA et la situation familiale depuis 2016. Ce jeu présente les foyers allocataires, les personnes couvertes et le montant total de prestation versée. Sous conditions de ressources, le revenu de solidarité active assure un revenu minimum aux personnes les plus démunies ou à celles ayant des ressources faibles (<https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-professionnelle/...\n\nOrganization: Caisse Nationale des Allocations familiales \n  Organization ID: 5595066cc751df4582a453ba\n\nTags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n\nResources: 2 file(s)\n\nCreated: 2026-10-09T15:22:26.338000+00:00\nLast updated: 2026-10-09T15:22:26.338000+00:00\n\nLicense: lov2\nUpdate frequency: monthly"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: RSA - Répartition des allocataires selon le type de RSA et la situation familiale [National]\n\nID: 66d1e5a979919854e97093bd\nSlug: rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-national\nURL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-national/\n\nFull description: Bénéficiaires mensuels du revenu de solidarité active (RSA) à l'échelle nationale selon le type de RSA et la situation familiale depuis 2016. Ce jeu présente les foyers allocataires, les personnes couvertes et le montant total de prestation versée. Sous conditions de ressources, le revenu de solidarité active assure un revenu minimum aux personnes les plus démunies ou à celles ayant des ressources faibles (<https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-professionnelle/...\n\nOrganization: Caisse Nationale des Allocations familiales \n  Organization ID: 5595066cc751df4582a453ba\n\nTags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n\nResources: 2 file(s)\n\nCreated: 2026-10-09T15:22:26.338000+00:00\nLast updated: 2026-10-09T15:22:26.338000+00:00\n\nLicense: lov2\nUpdate frequency: monthly"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

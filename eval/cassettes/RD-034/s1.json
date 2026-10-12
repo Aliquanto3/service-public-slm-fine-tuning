@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:56Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "fiscalité locale des particuliers",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 7 dataset(s) for query: 'fiscalité locale des particuliers'\nPage 1 of results:\n\n1. Fiscalité locale des particuliers\n   ID: 66512b67b8c9abb821e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers\n\n2. Fiscalité locale des particuliers - Géo\n   ID: 66512be37d2d55cbd2e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers-geo\n\n3. Fiscalité locale des professionnels\n   ID: 64ac9d02e0951b41b712a193\n   Organization: Ministères économiques et financiers\n   Tags: bati, cfe, collectivites-locales, entreprise, entreprises\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises\n\n4. Fiscalité locale des professionnels - Géo\n   ID: 64ac9d008a3ef9d72912a193\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, entreprises, fiscalite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises-geo\n\n5. Établissement Public Territoriale de Bassin (EPTB) en Bourgogne-Franche-Comté\n   ID: 6a5027f39bbfcc8d2a7fa5b8\n   Organization: DREAL Bourgogne-Franche-Comté\n   Tags: bassin-versant, eau, gestion-eau\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/tablissement-public-territoriale-de-bassin-eptb-en-bourgogne-franche-comt-20260709155743\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 7 dataset(s) for query: 'fiscalité locale des particuliers'\nPage 1 of results:\n\n1. Fiscalité locale des particuliers\n   ID: 66512b67b8c9abb821e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers\n\n2. Fiscalité locale des particuliers - Géo\n   ID: 66512be37d2d55cbd2e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers-geo\n\n3. Fiscalité locale des professionnels\n   ID: 64ac9d02e0951b41b712a193\n   Organization: Ministères économiques et financiers\n   Tags: bati, cfe, collectivites-locales, entreprise, entreprises\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises\n\n4. Fiscalité locale des professionnels - Géo\n   ID: 64ac9d008a3ef9d72912a193\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, entreprises, fiscalite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises-geo\n\n5. Établissement Public Territoriale de Bassin (EPTB) en Bourgogne-Franche-Comté\n   ID: 6a5027f39bbfcc8d2a7fa5b8\n   Organization: DREAL Bourgogne-Franche-Comté\n   Tags: bassin-versant, eau, gestion-eau\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/tablissement-public-territoriale-de-bassin-eptb-en-bourgogne-franche-comt-20260709155743\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "66512b67b8c9abb821e5a98b"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Fiscalité locale des particuliers\nDataset ID: 66512b67b8c9abb821e5a98b\nTotal resources: 2\n\n1. fiscalite-locale-des-particuliers.csv\n   Resource ID: f48d0fcc-f732-445d-ba2d-886ec4952bce\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/fiscalite-locale-des-particuliers/exports/csv?use_labels=true\n\n2. fiscalite-locale-des-particuliers.json\n   Resource ID: c07bbfbf-d007-4aed-a497-7979ae081640\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/fiscalite-locale-des-particuliers/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Fiscalité locale des particuliers\nDataset ID: 66512b67b8c9abb821e5a98b\nTotal resources: 2\n\n1. fiscalite-locale-des-particuliers.csv\n   Resource ID: f48d0fcc-f732-445d-ba2d-886ec4952bce\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/fiscalite-locale-des-particuliers/exports/csv?use_labels=true\n\n2. fiscalite-locale-des-particuliers.json\n   Resource ID: c07bbfbf-d007-4aed-a497-7979ae081640\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/fiscalite-locale-des-particuliers/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:50Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "RSA montant départemental",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 12 dataset(s) for query: 'RSA montant départemental'\nPage 1 of results:\n\n1. RSA - Répartition des allocataires selon le montant du RSA [Départemental]\n   ID: 66d1e5a479919854e97093ac\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-montant-du-rsa-departemental\n\n2. RSA - Répartition des allocataires selon le type de RSA et la situation familiale [Départemental]\n   ID: 66d1e59e79919854e9709399\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-departemental\n\n3. RSA - Répartition des allocataires selon le type de RSA et l'âge [Départemental]\n   ID: 66d1e5a779919854e97093b8\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: age, minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-lage-departemental\n\n4. RSA - Répartition des allocataires selon l'année de demande du RSA [Départemental]\n   ID: 66d1e5ad79919854e97093c9\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-lannee-de-demande-du-rsa-departemental\n\n5. RSA - Répartition des allocataires selon le type de RSA [Communal]\n   ID: 66d1e5b379919854e97093de\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-communal\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 12 dataset(s) for query: 'RSA montant départemental'\nPage 1 of results:\n\n1. RSA - Répartition des allocataires selon le montant du RSA [Départemental]\n   ID: 66d1e5a479919854e97093ac\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-montant-du-rsa-departemental\n\n2. RSA - Répartition des allocataires selon le type de RSA et la situation familiale [Départemental]\n   ID: 66d1e59e79919854e9709399\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, situation-familiale, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-la-situation-familiale-departemental\n\n3. RSA - Répartition des allocataires selon le type de RSA et l'âge [Départemental]\n   ID: 66d1e5a779919854e97093b8\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: age, minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-et-lage-departemental\n\n4. RSA - Répartition des allocataires selon l'année de demande du RSA [Départemental]\n   ID: 66d1e5ad79919854e97093c9\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-lannee-de-demande-du-rsa-departemental\n\n5. RSA - Répartition des allocataires selon le type de RSA [Communal]\n   ID: 66d1e5b379919854e97093de\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: minima-sociaux, revenu-de-solidarite-active, rsa, solidarite-et-soutien-a-lactivite\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/rsa-repartition-des-allocataires-selon-le-type-de-rsa-communal\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "66d1e5a479919854e97093ac"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: RSA - Répartition des allocataires selon le montant du RSA [Départemental]\nDataset ID: 66d1e5a479919854e97093ac\nTotal resources: 2\n\n1. rsa_s_type_mtt_200_dep.csv\n   Resource ID: b3f1f61d-24b2-4254-868f-d893e6309ae3\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/rsa_s_type_mtt_200_dep/exports/csv?use_labels=true\n\n2. rsa_s_type_mtt_200_dep.json\n   Resource ID: e69b6ef0-eee7-4fff-87b1-eb830305b606\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/rsa_s_type_mtt_200_dep/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: RSA - Répartition des allocataires selon le montant du RSA [Départemental]\nDataset ID: 66d1e5a479919854e97093ac\nTotal resources: 2\n\n1. rsa_s_type_mtt_200_dep.csv\n   Resource ID: b3f1f61d-24b2-4254-868f-d893e6309ae3\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/rsa_s_type_mtt_200_dep/exports/csv?use_labels=true\n\n2. rsa_s_type_mtt_200_dep.json\n   Resource ID: e69b6ef0-eee7-4fff-87b1-eb830305b606\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/rsa_s_type_mtt_200_dep/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "get_resource_info",
+     "arguments": {
+      "resource_id": "b3f1f61d-24b2-4254-868f-d893e6309ae3"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resource Information: rsa_s_type_mtt_200_dep.csv\n\nResource ID: b3f1f61d-24b2-4254-868f-d893e6309ae3\nFormat: csv\nMIME type: text/csv\nType: main\n\nURL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/rsa_s_type_mtt_200_dep/exports/csv?use_labels=true\n\nDescription: RSA - Répartition des allocataires selon le montant du RSA [Départemental] (csv)\n\nDataset ID: 66d1e5a479919854e97093ac\nDataset: RSA - Répartition des allocataires selon le montant du RSA [Départemental]\n\nTabular API availability:\n✅ Available via Tabular API (can be queried)"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resource Information: rsa_s_type_mtt_200_dep.csv\n\nResource ID: b3f1f61d-24b2-4254-868f-d893e6309ae3\nFormat: csv\nMIME type: text/csv\nType: main\n\nURL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/rsa_s_type_mtt_200_dep/exports/csv?use_labels=true\n\nDescription: RSA - Répartition des allocataires selon le montant du RSA [Départemental] (csv)\n\nDataset ID: 66d1e5a479919854e97093ac\nDataset: RSA - Répartition des allocataires selon le montant du RSA [Départemental]\n\nTabular API availability:\n✅ Available via Tabular API (can be queried)"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

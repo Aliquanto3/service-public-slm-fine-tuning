@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:09Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "médecins accrédités",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'médecins accrédités'\nPage 1 of results:\n\n1. Médecins accrédités par la HAS\n   ID: 602eaa18c7db5ddb8b0cc547\n   Organization: Haute Autorité de santé\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/medecins-accredites-par-la-has\n\n2. Textes des publications de la HAS\n   ID: 628f9c55cde04a0912e8d854\n   Organization: Haute Autorité de santé\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/textes-des-publications-de-la-has-7\n\n3. Métadonnées des publications de la HAS\n   ID: 61e6c823f1eae83eac2cf47b\n   Organization: Haute Autorité de santé\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/metadonnees-des-publications-de-la-has-1\n\n4. Textes des Publications de la HAS\n   ID: 627246af9e0377f18d4cdb48\n   Organization: Défi iDoc Santé\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/textes-des-publications-de-la-has\n\n5. Métadonnées des Publications de la HAS\n   ID: 627152fbe5cc39edfc691d2c\n   Organization: Défi iDoc Santé\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/metadonnees-des-publications-de-la-has\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'médecins accrédités'\nPage 1 of results:\n\n1. Médecins accrédités par la HAS\n   ID: 602eaa18c7db5ddb8b0cc547\n   Organization: Haute Autorité de santé\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/medecins-accredites-par-la-has\n\n2. Textes des publications de la HAS\n   ID: 628f9c55cde04a0912e8d854\n   Organization: Haute Autorité de santé\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/textes-des-publications-de-la-has-7\n\n3. Métadonnées des publications de la HAS\n   ID: 61e6c823f1eae83eac2cf47b\n   Organization: Haute Autorité de santé\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/metadonnees-des-publications-de-la-has-1\n\n4. Textes des Publications de la HAS\n   ID: 627246af9e0377f18d4cdb48\n   Organization: Défi iDoc Santé\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/textes-des-publications-de-la-has\n\n5. Métadonnées des Publications de la HAS\n   ID: 627152fbe5cc39edfc691d2c\n   Organization: Défi iDoc Santé\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/metadonnees-des-publications-de-la-has\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

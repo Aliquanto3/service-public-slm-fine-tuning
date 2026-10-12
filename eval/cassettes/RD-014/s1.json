@@ -1,0 +1,28 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:20:03Z",
+ "initialize": null,
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "fichier des personnes décédées",
+      "page_size": 5
+     }
+    }
+   },
+   "response": null,
+   "simulation": {
+    "type": "erreur_http",
+    "statut": 503
+   }
+  }
+ ]
+}

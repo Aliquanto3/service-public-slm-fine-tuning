@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:42Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "passeports cartes d'identité Poitiers",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'passeports cartes d'identité Poitiers'\nPage 1 of results:\n\n1. Passeports et Cartes Nationales d'identité délivrés à Poitiers - Identité numérique\n   ID: 67cf1b9daaa68e0f8a08418d\n   Description: Cette donnée retrace depuis 2023, par mois et par mairie de quartier,  le nombre de carte d'identité, de passeports délivrés et depuis 2025, le nombre de demandes portant sur l'identité numérique....\n   Organization: Grand Poitiers Open Data\n   Tags: acte, ants, carte, carte-didentite, citoyennete\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-identite-numerique\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'passeports cartes d'identité Poitiers'\nPage 1 of results:\n\n1. Passeports et Cartes Nationales d'identité délivrés à Poitiers - Identité numérique\n   ID: 67cf1b9daaa68e0f8a08418d\n   Description: Cette donnée retrace depuis 2023, par mois et par mairie de quartier,  le nombre de carte d'identité, de passeports délivrés et depuis 2025, le nombre de demandes portant sur l'identité numérique....\n   Organization: Grand Poitiers Open Data\n   Tags: acte, ants, carte, carte-didentite, citoyennete\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-identite-numerique\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "67cf1b9daaa68e0f8a08418d"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Passeports et Cartes Nationales d'identité délivrés à Poitiers - Identité numérique\nDataset ID: 67cf1b9daaa68e0f8a08418d\nTotal resources: 3\n\n1. Consultez les données\n   Resource ID: 3df32afc-8229-41c0-a3a9-ea67316eb2c5\n   Format: url\n   MIME type: text/html\n   Type: main\n   URL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2\n\n2. Description des champs\n   Resource ID: ff6deae0-d710-4273-b029-b9cc101d1dd3\n   Format: url\n   MIME type: text/html\n   Type: documentation\n   URL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2\n\n3. Documentation de l'API\n   Resource ID: bfe99ca7-91c5-4389-9a25-7aa96d71d23e\n   Format: url\n   MIME type: text/html\n   Type: documentation\n   URL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2/api-doc\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Passeports et Cartes Nationales d'identité délivrés à Poitiers - Identité numérique\nDataset ID: 67cf1b9daaa68e0f8a08418d\nTotal resources: 3\n\n1. Consultez les données\n   Resource ID: 3df32afc-8229-41c0-a3a9-ea67316eb2c5\n   Format: url\n   MIME type: text/html\n   Type: main\n   URL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2\n\n2. Description des champs\n   Resource ID: ff6deae0-d710-4273-b029-b9cc101d1dd3\n   Format: url\n   MIME type: text/html\n   Type: documentation\n   URL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2\n\n3. Documentation de l'API\n   Resource ID: bfe99ca7-91c5-4389-9a25-7aa96d71d23e\n   Format: url\n   MIME type: text/html\n   Type: documentation\n   URL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2/api-doc\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "get_resource_info",
+     "arguments": {
+      "resource_id": "3df32afc-8229-41c0-a3a9-ea67316eb2c5"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resource Information: Consultez les données\n\nResource ID: 3df32afc-8229-41c0-a3a9-ea67316eb2c5\nFormat: url\nMIME type: text/html\nType: main\n\nURL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2\n\nDescription: Consultez directement les données dans un tableau.\n\nDataset ID: 67cf1b9daaa68e0f8a08418d\nDataset: Passeports et Cartes Nationales d'identité délivrés à Poitiers - Identité numérique\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resource Information: Consultez les données\n\nResource ID: 3df32afc-8229-41c0-a3a9-ea67316eb2c5\nFormat: url\nMIME type: text/html\nType: main\n\nURL: https://data.grandpoitiers.fr/datasets/passeports-et-cartes-nationales-didentite-delivres-a-poitiers-2\n\nDescription: Consultez directement les données dans un tableau.\n\nDataset ID: 67cf1b9daaa68e0f8a08418d\nDataset: Passeports et Cartes Nationales d'identité délivrés à Poitiers - Identité numérique\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

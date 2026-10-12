@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:12Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "personnes vaccinées Covid-19",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 21 dataset(s) for query: 'personnes vaccinées Covid-19'\nPage 1 of results:\n\n1. Données relatives aux personnes vaccinées contre la Covid-19\n   ID: 6010206e7aa742eb447930f7\n   Organization: Santé publique France\n   Tags: coronavirus, covid, covid19, vac-si, vaccination\n   Resources: 30\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19-1\n\n2. Données relatives aux personnes vaccinées contre la Covid-19\n   ID: 5ff866dbfde012415e1085eb\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, vaccin, vaccins\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19\n\n3. Données relatives aux livraisons de vaccins contre la COVID-19\n   ID: 600aed4bb7a890065a11297e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, livraisons, vaccins\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-livraisons-de-vaccins-contre-la-covid-19\n\n4. Données relatives aux stocks des doses de vaccins contre la COVID-19\n   ID: 600aede3b7a890065a11297f\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, stocks, vaccins\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-stocks-des-doses-de-vaccins-contre-la-covid-19\n\n5. Données des rendez-vous pris dans des centres de vaccination contre la COVID-19\n   ID: 601121e2d86d4d6f2c43c76a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, rdv, rendez-vous\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-des-rendez-vous-pris-dans-des-centres-de-vaccination-contre-la-covid-19\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 21 dataset(s) for query: 'personnes vaccinées Covid-19'\nPage 1 of results:\n\n1. Données relatives aux personnes vaccinées contre la Covid-19\n   ID: 6010206e7aa742eb447930f7\n   Organization: Santé publique France\n   Tags: coronavirus, covid, covid19, vac-si, vaccination\n   Resources: 30\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19-1\n\n2. Données relatives aux personnes vaccinées contre la Covid-19\n   ID: 5ff866dbfde012415e1085eb\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, vaccin, vaccins\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19\n\n3. Données relatives aux livraisons de vaccins contre la COVID-19\n   ID: 600aed4bb7a890065a11297e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, livraisons, vaccins\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-livraisons-de-vaccins-contre-la-covid-19\n\n4. Données relatives aux stocks des doses de vaccins contre la COVID-19\n   ID: 600aede3b7a890065a11297f\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, stocks, vaccins\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-stocks-des-doses-de-vaccins-contre-la-covid-19\n\n5. Données des rendez-vous pris dans des centres de vaccination contre la COVID-19\n   ID: 601121e2d86d4d6f2c43c76a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, rdv, rendez-vous\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-des-rendez-vous-pris-dans-des-centres-de-vaccination-contre-la-covid-19\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "6010206e7aa742eb447930f7"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Données relatives aux personnes vaccinées contre la Covid-19\n\nID: 6010206e7aa742eb447930f7\nSlug: donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19-1\nURL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19-1/\n\nFull description: 🆕**24/11/2022**\nPublication de nouveaux indicateurs à compter de ce jour :\n1. Couverture vaccinale du vaccin contre la COVID-19, personnes vaccinées avec trois doses de rappel (`n_3_rappel`, `couv_3_rappel`)\n2. Couverture vaccinale du vaccin contre la COVID-19, personnes vaccinées avec un rappel adapté aux variants Omicron (`n_rappel_biv`, `n_cum_rappel_biv`, `couv__rappel_biv`)  \n\nSanté publique France met à jour les référentiels géographiques et de population, utilisés pour la production et la...\n\nOrganization: Santé publique France\n  Organization ID: 5e721a395d57f93d0bed451f\n\nTags: coronavirus, covid, covid19, vac-si, vaccination, vaccins\n\nResources: 30 file(s)\n\nCreated: 2021-01-26T15:00:14.172000+00:00\nLast updated: 2023-07-13T15:52:24.758000+00:00\n\nLicense: lov2\nUpdate frequency: weekly"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Données relatives aux personnes vaccinées contre la Covid-19\n\nID: 6010206e7aa742eb447930f7\nSlug: donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19-1\nURL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-personnes-vaccinees-contre-la-covid-19-1/\n\nFull description: 🆕**24/11/2022**\nPublication de nouveaux indicateurs à compter de ce jour :\n1. Couverture vaccinale du vaccin contre la COVID-19, personnes vaccinées avec trois doses de rappel (`n_3_rappel`, `couv_3_rappel`)\n2. Couverture vaccinale du vaccin contre la COVID-19, personnes vaccinées avec un rappel adapté aux variants Omicron (`n_rappel_biv`, `n_cum_rappel_biv`, `couv__rappel_biv`)  \n\nSanté publique France met à jour les référentiels géographiques et de population, utilisés pour la production et la...\n\nOrganization: Santé publique France\n  Organization ID: 5e721a395d57f93d0bed451f\n\nTags: coronavirus, covid, covid19, vac-si, vaccination, vaccins\n\nResources: 30 file(s)\n\nCreated: 2021-01-26T15:00:14.172000+00:00\nLast updated: 2023-07-13T15:52:24.758000+00:00\n\nLicense: lov2\nUpdate frequency: weekly"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

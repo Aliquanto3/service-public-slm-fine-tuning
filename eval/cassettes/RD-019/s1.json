@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:45Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "répertoire opérationnel des métiers ROME",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 7 dataset(s) for query: 'répertoire opérationnel des métiers ROME'\nPage 1 of results:\n\n1. Répertoire Opérationnel des Métiers et des Emplois (ROME)\n   ID: 58da857388ee384902e505f5\n   Organization: France Travail\n   Tags: competences, demande-d-emploi, fiche-metier, offre-d-emploi, pole-emploi\n   Resources: 18\n   URL: https://www.data.gouv.fr/datasets/repertoire-operationnel-des-metiers-et-des-emplois-rome\n\n2. Idéo-Métiers Onisep\n   ID: 5fa5e38978ad06b169de1e1d\n   Organization: Office national d'information sur les enseignements et les professions\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/ideo-metiers-onisep\n\n3. Idéo-Fiches métiers\n   ID: 65f4e1142b6f0e75cc7cd1aa\n   Organization: Office national d'information sur les enseignements et les professions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/ideo-fiches-metiers\n\n4. Liste des codes des compétences transférables en santé et sécurité au travail\n   ID: 68954ff59b508a29bd32063b\n   Organization: Caisse des Dépôts\n   Tags: formation, formation-professionnelle, passeport-de-prevention, politiques-sociales, rome\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-des-codes-des-competences-transferables-en-sante-et-securite-au-travail\n\n5. La nomenclature des familles professionnelles 2021\n   ID: 66df098c24d76afbdd709396\n   Organization: Dares - statistiques Travail\n   Tags: metiers, nomenclatures, portrait-statistique-des-metiers, prospective-des-metiers\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/la-nomenclature-des-familles-professionnelles-2021\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 7 dataset(s) for query: 'répertoire opérationnel des métiers ROME'\nPage 1 of results:\n\n1. Répertoire Opérationnel des Métiers et des Emplois (ROME)\n   ID: 58da857388ee384902e505f5\n   Organization: France Travail\n   Tags: competences, demande-d-emploi, fiche-metier, offre-d-emploi, pole-emploi\n   Resources: 18\n   URL: https://www.data.gouv.fr/datasets/repertoire-operationnel-des-metiers-et-des-emplois-rome\n\n2. Idéo-Métiers Onisep\n   ID: 5fa5e38978ad06b169de1e1d\n   Organization: Office national d'information sur les enseignements et les professions\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/ideo-metiers-onisep\n\n3. Idéo-Fiches métiers\n   ID: 65f4e1142b6f0e75cc7cd1aa\n   Organization: Office national d'information sur les enseignements et les professions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/ideo-fiches-metiers\n\n4. Liste des codes des compétences transférables en santé et sécurité au travail\n   ID: 68954ff59b508a29bd32063b\n   Organization: Caisse des Dépôts\n   Tags: formation, formation-professionnelle, passeport-de-prevention, politiques-sociales, rome\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-des-codes-des-competences-transferables-en-sante-et-securite-au-travail\n\n5. La nomenclature des familles professionnelles 2021\n   ID: 66df098c24d76afbdd709396\n   Organization: Dares - statistiques Travail\n   Tags: metiers, nomenclatures, portrait-statistique-des-metiers, prospective-des-metiers\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/la-nomenclature-des-familles-professionnelles-2021\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

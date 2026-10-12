@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:28Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "établissements habilités aide sociale à l'enfance",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'établissements habilités aide sociale à l'enfance'\nPage 1 of results:\n\n1. Etablissements habilités au titre de l'aide sociale à l'enfance (ASE)\n   ID: 57868e94a3a7295d371adcf1\n   Organization: Département des Hauts-de-Seine\n   Tags: action-educative-a-domicile, action-educative-en-milieu-ouvert, aed, aemo, aide-sociale-a-lenfance\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/etablissements-habilites-au-titre-de-laide-sociale-a-lenfance-ase\n\n2. Mineurs et jeunes majeurs accueillis ASE CD76 type accueil UTAS 20231231\n   ID: 67edd08a8f8069614ccba3f0\n   Organization: Département de la Seine-Maritime\n   Tags: accueil, aide-sociale-a-lenfance, ase, geospatial, hebergement\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/mineurs-et-jeunes-majeurs-accueillis-ase-cd76-type-accueil-utas-20231231\n\n3. Mineurs et jeunes majeurs accueillis ASE CD76 type accueil UTAS 20211231\n   ID: 67edd08b8f8069614ccba3f1\n   Organization: Département de la Seine-Maritime\n   Tags: accueil, aide-sociale-a-lenfance, ase, geospatial, hebergement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/mineurs-et-jeunes-majeurs-accueillis-ase-cd76-type-accueil-utas-20211231\n\n4. MNA accueillis ASE CD76 par type accueil 2020a2023 20250401\n   ID: 67ec7f5868e9af520a6ca1df\n   Organization: Département de la Seine-Maritime\n   Tags: accueil, aide-sociale-a-lenfance, ase, mie, mna\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/mna-accueillis-ase-cd76-par-type-accueil-2020a2023-20250401\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'établissements habilités aide sociale à l'enfance'\nPage 1 of results:\n\n1. Etablissements habilités au titre de l'aide sociale à l'enfance (ASE)\n   ID: 57868e94a3a7295d371adcf1\n   Organization: Département des Hauts-de-Seine\n   Tags: action-educative-a-domicile, action-educative-en-milieu-ouvert, aed, aemo, aide-sociale-a-lenfance\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/etablissements-habilites-au-titre-de-laide-sociale-a-lenfance-ase\n\n2. Mineurs et jeunes majeurs accueillis ASE CD76 type accueil UTAS 20231231\n   ID: 67edd08a8f8069614ccba3f0\n   Organization: Département de la Seine-Maritime\n   Tags: accueil, aide-sociale-a-lenfance, ase, geospatial, hebergement\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/mineurs-et-jeunes-majeurs-accueillis-ase-cd76-type-accueil-utas-20231231\n\n3. Mineurs et jeunes majeurs accueillis ASE CD76 type accueil UTAS 20211231\n   ID: 67edd08b8f8069614ccba3f1\n   Organization: Département de la Seine-Maritime\n   Tags: accueil, aide-sociale-a-lenfance, ase, geospatial, hebergement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/mineurs-et-jeunes-majeurs-accueillis-ase-cd76-type-accueil-utas-20211231\n\n4. MNA accueillis ASE CD76 par type accueil 2020a2023 20250401\n   ID: 67ec7f5868e9af520a6ca1df\n   Organization: Département de la Seine-Maritime\n   Tags: accueil, aide-sociale-a-lenfance, ase, mie, mna\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/mna-accueillis-ase-cd76-par-type-accueil-2020a2023-20250401\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

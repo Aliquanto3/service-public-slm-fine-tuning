@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:25Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "demande de logement social",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 71 dataset(s) for query: 'demande de logement social'\nPage 1 of results:\n\n1. Demande de logement social\n   ID: 57066d30c751df29c2dafbba\n   Organization: Ministère de la Cohésion des territoires\n   Tags: data-logement, demande-de-logement-social, numero-unique, sne\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/demande-de-logement-social\n\n2. Offre et demandes de logements sociaux\n   ID: 68c4b47ae1a8e651ad64c864\n   Organization: Grand Paris Seine Ouest\n   Tags: demandes-de-logement, habitat, logements, logements-sociaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/offre-et-demandes-de-logements-sociaux-1\n\n3. Urbanisme - Demandes de logements sociaux - Grand Poitiers - 40 communes\n   ID: 58ef2d5ca3a7293d49c4e181\n   Description: Dénombre, pour chaque commune de Grand Poitiers et chaque année au 1er janvier, les ménages dont la demande active de logement social cite cette commune parmi leurs premiers choix. Les valeurs comm......\n   Organization: Grand Poitiers Open Data\n   Tags: logement, logement-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/urbanisme-demandes-de-logements-sociaux-grand-poitiers-40-communes\n\n4. Guichets d'accueil pour les demandes de logements sociaux et aides à l'amélioration de logements sur le territoire de m2A\n   ID: 6a18d85ea4b70fbc9287da96\n   Organization: Mulhouse Alsace Agglomération\n   Tags: accueil, aides, amenagement-du-territoire-urbanisme-batiments-logement, guichet, logement\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/guichets-daccueil-pour-les-demandes-de-logements-sociaux-et-aides-a-lamelioration-de-logements-sur-le-territoire-de-m2a\n\n5. Liste des communes selon le zonage ABC\n   ID: 656715871172d08f8f680063\n   Organization: Ministère de la Transition écologique\n   Tags: abc, fiscalite-de-limmobilier, logement, tension, zonage\n   Resources: 9\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-selon-le-zonage-abc\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 71 dataset(s) for query: 'demande de logement social'\nPage 1 of results:\n\n1. Demande de logement social\n   ID: 57066d30c751df29c2dafbba\n   Organization: Ministère de la Cohésion des territoires\n   Tags: data-logement, demande-de-logement-social, numero-unique, sne\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/demande-de-logement-social\n\n2. Offre et demandes de logements sociaux\n   ID: 68c4b47ae1a8e651ad64c864\n   Organization: Grand Paris Seine Ouest\n   Tags: demandes-de-logement, habitat, logements, logements-sociaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/offre-et-demandes-de-logements-sociaux-1\n\n3. Urbanisme - Demandes de logements sociaux - Grand Poitiers - 40 communes\n   ID: 58ef2d5ca3a7293d49c4e181\n   Description: Dénombre, pour chaque commune de Grand Poitiers et chaque année au 1er janvier, les ménages dont la demande active de logement social cite cette commune parmi leurs premiers choix. Les valeurs comm......\n   Organization: Grand Poitiers Open Data\n   Tags: logement, logement-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/urbanisme-demandes-de-logements-sociaux-grand-poitiers-40-communes\n\n4. Guichets d'accueil pour les demandes de logements sociaux et aides à l'amélioration de logements sur le territoire de m2A\n   ID: 6a18d85ea4b70fbc9287da96\n   Organization: Mulhouse Alsace Agglomération\n   Tags: accueil, aides, amenagement-du-territoire-urbanisme-batiments-logement, guichet, logement\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/guichets-daccueil-pour-les-demandes-de-logements-sociaux-et-aides-a-lamelioration-de-logements-sur-le-territoire-de-m2a\n\n5. Liste des communes selon le zonage ABC\n   ID: 656715871172d08f8f680063\n   Organization: Ministère de la Transition écologique\n   Tags: abc, fiscalite-de-limmobilier, logement, tension, zonage\n   Resources: 9\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-selon-le-zonage-abc\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

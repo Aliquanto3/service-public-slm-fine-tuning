@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:32Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "comptes des communes",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2470 dataset(s) for query: 'comptes des communes'\nPage 1 of results:\n\n1. Comptes des communes 2018-2025\n   ID: 5f68c4ec23ac65f6fd8021e3\n   Organization: Observatoire des Finances et de la Gestion publique Locales\n   Tags: 2018, 2019, 2020, 2021, 2022\n   Resources: 10\n   URL: https://www.data.gouv.fr/datasets/comptes-des-communes-2018-2025\n\n2. Circonscriptions législatives  : Table de correspondance des communes et des cantons pour les élections législatives de 2012 et sa mise à jour pour les élections législatives 2017\n   ID: 5369a160a3a729239d2065bc\n   Organization: Ministère de l'intérieur\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/circonscriptions-legislatives-table-de-correspondance-des-communes-et-des-cantons-pour-les-elections-legislatives-de-2012-et-sa-mise-a-jour-pour-les-elections-legislatives-2017\n\n3. Résultats du contrôle sanitaire de l'eau distribuée commune par commune\n   ID: 5cf8d9ed8b4c4110294c841d\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: alimentation-en-eau, controle-sanitaire, distribution-d-eau, eau, eau-du-robinet\n   Resources: 23\n   URL: https://www.data.gouv.fr/datasets/resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune\n\n4. Géolocalisation des établissements du répertoire SIRENE-pour les études statistiques\n   ID: 61d5e2d372a52d9f9411ff88\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: cadastre, commune, etablissement, geocodage, geolocalisation\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/geolocalisation-des-etablissements-du-repertoire-sirene-pour-les-etudes-statistiques\n\n5. Comptes individuels des communes (fichier global) 2022\n   ID: 68e5aa36cf61185939ecc338\n   Organization: Ministères économiques et financiers\n   Tags: 2022, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-communes-fichier-global-2022\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2470 dataset(s) for query: 'comptes des communes'\nPage 1 of results:\n\n1. Comptes des communes 2018-2025\n   ID: 5f68c4ec23ac65f6fd8021e3\n   Organization: Observatoire des Finances et de la Gestion publique Locales\n   Tags: 2018, 2019, 2020, 2021, 2022\n   Resources: 10\n   URL: https://www.data.gouv.fr/datasets/comptes-des-communes-2018-2025\n\n2. Circonscriptions législatives  : Table de correspondance des communes et des cantons pour les élections législatives de 2012 et sa mise à jour pour les élections législatives 2017\n   ID: 5369a160a3a729239d2065bc\n   Organization: Ministère de l'intérieur\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/circonscriptions-legislatives-table-de-correspondance-des-communes-et-des-cantons-pour-les-elections-legislatives-de-2012-et-sa-mise-a-jour-pour-les-elections-legislatives-2017\n\n3. Résultats du contrôle sanitaire de l'eau distribuée commune par commune\n   ID: 5cf8d9ed8b4c4110294c841d\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: alimentation-en-eau, controle-sanitaire, distribution-d-eau, eau, eau-du-robinet\n   Resources: 23\n   URL: https://www.data.gouv.fr/datasets/resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune\n\n4. Géolocalisation des établissements du répertoire SIRENE-pour les études statistiques\n   ID: 61d5e2d372a52d9f9411ff88\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: cadastre, commune, etablissement, geocodage, geolocalisation\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/geolocalisation-des-etablissements-du-repertoire-sirene-pour-les-etudes-statistiques\n\n5. Comptes individuels des communes (fichier global) 2022\n   ID: 68e5aa36cf61185939ecc338\n   Organization: Ministères économiques et financiers\n   Tags: 2022, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-communes-fichier-global-2022\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5f68c4ec23ac65f6fd8021e3"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Comptes des communes 2018-2025\nDataset ID: 5f68c4ec23ac65f6fd8021e3\nTotal resources: 10\n\n1. ofgl-base-communes.csv\n   Resource ID: 7701d6a6-97e4-4938-9c38-a852cb14cfba\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.ofgl.fr/api/explore/v2.1/catalog/datasets/ofgl-base-communes/exports/csv?use_labels=true\n\n2. ofgl-base-communes.json\n   Resource ID: 6d836671-d7f3-488f-8343-de7962a100af\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.ofgl.fr/api/explore/v2.1/catalog/datasets/ofgl-base-communes/exports/json\n\n3. ofgl_base_communes_2012_pj.zip\n   Resource ID: 86729752-2657-47ad-b1d3-761130dd1c00\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2012_pj_zip\n\n4. ofgl_base_communes_2013_pj.zip\n   Resource ID: 5d974a5a-a00d-4b0d-aa76-5328a14c0738\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2013_pj_zip\n\n5. ofgl_base_communes_2014_pj.zip\n   Resource ID: 238d7417-d390-4540-84eb-46593f32e687\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2014_pj_zip\n\n6. ofgl_base_communes_2015_pj.zip\n   Resource ID: 6c1b61b2-65bd-4037-a234-7a93da4bc6c4\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2015_pj_zip\n\n7. communes_manquantes_2024.csv\n   Resource ID: b94163fe-f15a-4fa9-b911-689fe11f501d\n   Format: csv\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/communes_manquantes_2024_csv\n\n8. ofgl_base_communes_2016_pj.zip\n   Resource ID: 562a8d3b-ff94-4797-b16a-6f031c95445a\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2016_pj_zip\n\n9. ofgl_base_communes_2017_pj.zip\n   Resource ID: 34133b30-05f6-4089-a286-549a45af6490\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2017_pj_zip\n\n10. communes_manquantes_2025.csv\n   Resource ID: c9ef93b1-6520-4ccf-ac1c-c6793c7cb05a\n   Format: csv\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/communes_manquantes_2025_csv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Comptes des communes 2018-2025\nDataset ID: 5f68c4ec23ac65f6fd8021e3\nTotal resources: 10\n\n1. ofgl-base-communes.csv\n   Resource ID: 7701d6a6-97e4-4938-9c38-a852cb14cfba\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.ofgl.fr/api/explore/v2.1/catalog/datasets/ofgl-base-communes/exports/csv?use_labels=true\n\n2. ofgl-base-communes.json\n   Resource ID: 6d836671-d7f3-488f-8343-de7962a100af\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.ofgl.fr/api/explore/v2.1/catalog/datasets/ofgl-base-communes/exports/json\n\n3. ofgl_base_communes_2012_pj.zip\n   Resource ID: 86729752-2657-47ad-b1d3-761130dd1c00\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2012_pj_zip\n\n4. ofgl_base_communes_2013_pj.zip\n   Resource ID: 5d974a5a-a00d-4b0d-aa76-5328a14c0738\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2013_pj_zip\n\n5. ofgl_base_communes_2014_pj.zip\n   Resource ID: 238d7417-d390-4540-84eb-46593f32e687\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2014_pj_zip\n\n6. ofgl_base_communes_2015_pj.zip\n   Resource ID: 6c1b61b2-65bd-4037-a234-7a93da4bc6c4\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2015_pj_zip\n\n7. communes_manquantes_2024.csv\n   Resource ID: b94163fe-f15a-4fa9-b911-689fe11f501d\n   Format: csv\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/communes_manquantes_2024_csv\n\n8. ofgl_base_communes_2016_pj.zip\n   Resource ID: 562a8d3b-ff94-4797-b16a-6f031c95445a\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2016_pj_zip\n\n9. ofgl_base_communes_2017_pj.zip\n   Resource ID: 34133b30-05f6-4089-a286-549a45af6490\n   Format: zip\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/ofgl_base_communes_2017_pj_zip\n\n10. communes_manquantes_2025.csv\n   Resource ID: c9ef93b1-6520-4ccf-ac1c-c6793c7cb05a\n   Format: csv\n   Type: other\n   URL: https://data.ofgl.fr/api/v2/catalog/datasets/ofgl-base-communes/attachments/communes_manquantes_2025_csv\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:35Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "annuaire de l'administration base de données locales",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 11 dataset(s) for query: 'annuaire de l'administration base de données locales'\nPage 1 of results:\n\n1. Service-public.gouv.fr - Annuaire de l’administration - Base de données locales\n   ID: 53699fe4a3a729239d206227\n   Organization: Premier ministre\n   Tags: administration-locale, administration-publique, annuaire, annuaire-de-services, base-donnees-locales\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales\n\n2. Référentiel de l'organisation administrative de l'Etat\n   ID: 57343feb88ee3823b0d1b934\n   Organization: Premier ministre\n   Tags: administration, administration-generale, administration-publique, annuaire, annuaire-de-services\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/referentiel-de-lorganisation-administrative-de-letat\n\n3. Service-public.fr - Annuaire de l’administration - Base de données locales vectorisée\n   ID: 688201cd45ea9d6bf4921b95\n   Organization: Direction interministérielle du numérique\n   Tags: administration, annuaire, embeddings, fiches-pratiques, ia\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/service-public-fr-annuaire-de-ladministration-base-de-donnees-locales-vectorisee\n\n4. Annuaire de l’administration - Base de données locales\n   ID: 66fa98b89c0ed66735436d89\n   Organization: Région des Pays de la Loire\n   Tags: annuaire, citoyennete-institution, localisation, mairie, service-public\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-ladministration-base-de-donnees-locales\n\n5. Annuaire de l’administration francilienne\n   ID: 53698edca3a729239d2035ad\n   Organization: Région Île-de-France\n   Tags: acces-aux-droits, communes, geolocalisation, orientation-scolaire, securite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-l-administration-francilienne-idf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 11 dataset(s) for query: 'annuaire de l'administration base de données locales'\nPage 1 of results:\n\n1. Service-public.gouv.fr - Annuaire de l’administration - Base de données locales\n   ID: 53699fe4a3a729239d206227\n   Organization: Premier ministre\n   Tags: administration-locale, administration-publique, annuaire, annuaire-de-services, base-donnees-locales\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales\n\n2. Référentiel de l'organisation administrative de l'Etat\n   ID: 57343feb88ee3823b0d1b934\n   Organization: Premier ministre\n   Tags: administration, administration-generale, administration-publique, annuaire, annuaire-de-services\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/referentiel-de-lorganisation-administrative-de-letat\n\n3. Service-public.fr - Annuaire de l’administration - Base de données locales vectorisée\n   ID: 688201cd45ea9d6bf4921b95\n   Organization: Direction interministérielle du numérique\n   Tags: administration, annuaire, embeddings, fiches-pratiques, ia\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/service-public-fr-annuaire-de-ladministration-base-de-donnees-locales-vectorisee\n\n4. Annuaire de l’administration - Base de données locales\n   ID: 66fa98b89c0ed66735436d89\n   Organization: Région des Pays de la Loire\n   Tags: annuaire, citoyennete-institution, localisation, mairie, service-public\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-ladministration-base-de-donnees-locales\n\n5. Annuaire de l’administration francilienne\n   ID: 53698edca3a729239d2035ad\n   Organization: Région Île-de-France\n   Tags: acces-aux-droits, communes, geolocalisation, orientation-scolaire, securite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-l-administration-francilienne-idf\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "53699fe4a3a729239d206227"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Service-public.gouv.fr - Annuaire de l’administration - Base de données locales\n\nID: 53699fe4a3a729239d206227\nSlug: service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales\nURL: https://www.data.gouv.fr/datasets/service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales/\n\nFull description: La Base de données locales référence plus de 86 000 guichets publics locaux (mairies, organismes sociaux, services de l'état, etc.). Elle fournit leurs coordonnées (adresses, téléphones, site internet, horaires d'ouverture, coordonnées de géolocalisation). En complément, sont indexés plus de 36 000 fichiers des communes (conformes au Code Officiel Géographique de l’INSEE), précisant la compétence géographique des guichets.\n\nLa liste des types d'organismes référencés dans la base est consultable ...\n\nOrganization: Premier ministre\n  Organization ID: 534fffa5a3a7292c64a7809e\n\nTags: administration-locale, administration-publique, annuaire, annuaire-de-services, base-donnees-locales, base-donnees-locales-service-public-gouv-fr, communes, competence-geographique-services-locaux, coordonnees, coordonnees-geographiques\n\nResources: 5 file(s)\n\nCreated: 2013-07-08T11:02:40.861000+00:00\nLast updated: 2026-10-09T02:38:10+00:00\n\nLicense: fr-lo\nUpdate frequency: punctual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Service-public.gouv.fr - Annuaire de l’administration - Base de données locales\n\nID: 53699fe4a3a729239d206227\nSlug: service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales\nURL: https://www.data.gouv.fr/datasets/service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales/\n\nFull description: La Base de données locales référence plus de 86 000 guichets publics locaux (mairies, organismes sociaux, services de l'état, etc.). Elle fournit leurs coordonnées (adresses, téléphones, site internet, horaires d'ouverture, coordonnées de géolocalisation). En complément, sont indexés plus de 36 000 fichiers des communes (conformes au Code Officiel Géographique de l’INSEE), précisant la compétence géographique des guichets.\n\nLa liste des types d'organismes référencés dans la base est consultable ...\n\nOrganization: Premier ministre\n  Organization ID: 534fffa5a3a7292c64a7809e\n\nTags: administration-locale, administration-publique, annuaire, annuaire-de-services, base-donnees-locales, base-donnees-locales-service-public-gouv-fr, communes, competence-geographique-services-locaux, coordonnees, coordonnees-geographiques\n\nResources: 5 file(s)\n\nCreated: 2013-07-08T11:02:40.861000+00:00\nLast updated: 2026-10-09T02:38:10+00:00\n\nLicense: fr-lo\nUpdate frequency: punctual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

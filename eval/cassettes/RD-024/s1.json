@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:20:00Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "demandeurs d'emploi indemnisables",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 12 dataset(s) for query: 'demandeurs d'emploi indemnisables'\nPage 1 of results:\n\n1. Part des demandeurs d'emploi indemnisables\n   ID: 572355fcc751df3016fcca0d\n   Organization: France Travail\n   Tags: assurance-chomage, couverture, indemnisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/part-des-demandeurs-demploi-indemnisables\n\n2. Inscrits à France Travail - Entrées et sorties des listes - France et régions (mensuelles, CVS-CJO)\n   ID: 66df098524d76afbdd70937e\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-entrees-et-sorties-des-listes-france-et-regions-mensuelles-cvs-cjo\n\n3. Inscrits à France Travail par zone d'emploi (mensuelles, brutes)\n   ID: 66df098924d76afbdd70938b\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-par-zone-demploi-mensuelles-brutes\n\n4. Indicateurs de suivi du Contrat de sécurisation professionnelle (CSP)\n   ID: 63a4384a5ceb0d543d9dde9a\n   Organization: Unédic\n   Tags: allocataires-beneficiant-dun-dispositif-particulier, csp, parcours\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/indicateurs-de-suivi-du-contrat-de-securisation-professionnelle-csp\n\n5. Inscrits à France Travail - Entrées et sorties des listes - France et régions (trimestrielles, CVS-CJO)\n   ID: 66df098a24d76afbdd70938f\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-entrees-et-sorties-des-listes-france-et-regions-trimestrielles-cvs-cjo\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 12 dataset(s) for query: 'demandeurs d'emploi indemnisables'\nPage 1 of results:\n\n1. Part des demandeurs d'emploi indemnisables\n   ID: 572355fcc751df3016fcca0d\n   Organization: France Travail\n   Tags: assurance-chomage, couverture, indemnisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/part-des-demandeurs-demploi-indemnisables\n\n2. Inscrits à France Travail - Entrées et sorties des listes - France et régions (mensuelles, CVS-CJO)\n   ID: 66df098524d76afbdd70937e\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-entrees-et-sorties-des-listes-france-et-regions-mensuelles-cvs-cjo\n\n3. Inscrits à France Travail par zone d'emploi (mensuelles, brutes)\n   ID: 66df098924d76afbdd70938b\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-par-zone-demploi-mensuelles-brutes\n\n4. Indicateurs de suivi du Contrat de sécurisation professionnelle (CSP)\n   ID: 63a4384a5ceb0d543d9dde9a\n   Organization: Unédic\n   Tags: allocataires-beneficiant-dun-dispositif-particulier, csp, parcours\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/indicateurs-de-suivi-du-contrat-de-securisation-professionnelle-csp\n\n5. Inscrits à France Travail - Entrées et sorties des listes - France et régions (trimestrielles, CVS-CJO)\n   ID: 66df098a24d76afbdd70938f\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-entrees-et-sorties-des-listes-france-et-regions-trimestrielles-cvs-cjo\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "572355fcc751df3016fcca0d"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Part des demandeurs d'emploi indemnisables\nDataset ID: 572355fcc751df3016fcca0d\nTotal resources: 1\n\n1. Séries CVS\n   Resource ID: 12ff14e3-f30a-418a-bf05-0ce8694df08b\n   Format: excel\n   Type: api\n   URL: https://statistiques.francetravail.org/indem/teleindempart\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Part des demandeurs d'emploi indemnisables\nDataset ID: 572355fcc751df3016fcca0d\nTotal resources: 1\n\n1. Séries CVS\n   Resource ID: 12ff14e3-f30a-418a-bf05-0ce8694df08b\n   Format: excel\n   Type: api\n   URL: https://statistiques.francetravail.org/indem/teleindempart\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "get_resource_info",
+     "arguments": {
+      "resource_id": "12ff14e3-f30a-418a-bf05-0ce8694df08b"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resource Information: Séries CVS\n\nResource ID: 12ff14e3-f30a-418a-bf05-0ce8694df08b\nFormat: excel\nType: api\n\nURL: https://statistiques.francetravail.org/indem/teleindempart\n\nDataset ID: 572355fcc751df3016fcca0d\nDataset: Part des demandeurs d'emploi indemnisables\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resource Information: Séries CVS\n\nResource ID: 12ff14e3-f30a-418a-bf05-0ce8694df08b\nFormat: excel\nType: api\n\nURL: https://statistiques.francetravail.org/indem/teleindempart\n\nDataset ID: 572355fcc751df3016fcca0d\nDataset: Part des demandeurs d'emploi indemnisables\n\nTabular API availability:\n⚠️  Not available via Tabular API (may not be tabular data)"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

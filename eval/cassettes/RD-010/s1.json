@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:46Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "bailleurs sociaux département",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 28 dataset(s) for query: 'bailleurs sociaux département'\nPage 1 of results:\n\n1. Logements sociaux et bailleurs par département\n   ID: 5fa9901bdf2bbb37b61963e6\n   Organization: Caisse des Dépôts\n   Tags: atlas, bailleurs-sociaux, bdt, departement, logement\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/logements-sociaux-et-bailleurs-par-departement\n\n2. Plafonds de loyer du dispositif Loc’Avantages\n   ID: 6759d0a84451a04fed08d85b\n   Organization: Ministère de la Transition écologique\n   Tags: locavantages, plafond-de-loyer\n   Resources: 9\n   URL: https://www.data.gouv.fr/datasets/plafonds-de-loyer-du-dispositif-locavantages\n\n3. Logements sociaux et bailleurs par région\n   ID: 5fa9901b0d72fc70afa686ec\n   Organization: Caisse des Dépôts\n   Tags: atlas, bailleurs-sociaux, bdt, logement, logements-sociaux\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/logements-sociaux-et-bailleurs-par-region\n\n4. Demande de logement social\n   ID: 57066d30c751df29c2dafbba\n   Organization: Ministère de la Cohésion des territoires\n   Tags: data-logement, demande-de-logement-social, numero-unique, sne\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/demande-de-logement-social\n\n5. Logements locatifs des bailleurs sociaux 76 2021\n   ID: 63cf2228dd1c949cda40440d\n   Organization: Département de la Seine-Maritime\n   Tags: communes, dpe, energie, geospatial, habitat\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/logements-locatifs-des-bailleurs-sociaux-76-2021\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 28 dataset(s) for query: 'bailleurs sociaux département'\nPage 1 of results:\n\n1. Logements sociaux et bailleurs par département\n   ID: 5fa9901bdf2bbb37b61963e6\n   Organization: Caisse des Dépôts\n   Tags: atlas, bailleurs-sociaux, bdt, departement, logement\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/logements-sociaux-et-bailleurs-par-departement\n\n2. Plafonds de loyer du dispositif Loc’Avantages\n   ID: 6759d0a84451a04fed08d85b\n   Organization: Ministère de la Transition écologique\n   Tags: locavantages, plafond-de-loyer\n   Resources: 9\n   URL: https://www.data.gouv.fr/datasets/plafonds-de-loyer-du-dispositif-locavantages\n\n3. Logements sociaux et bailleurs par région\n   ID: 5fa9901b0d72fc70afa686ec\n   Organization: Caisse des Dépôts\n   Tags: atlas, bailleurs-sociaux, bdt, logement, logements-sociaux\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/logements-sociaux-et-bailleurs-par-region\n\n4. Demande de logement social\n   ID: 57066d30c751df29c2dafbba\n   Organization: Ministère de la Cohésion des territoires\n   Tags: data-logement, demande-de-logement-social, numero-unique, sne\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/demande-de-logement-social\n\n5. Logements locatifs des bailleurs sociaux 76 2021\n   ID: 63cf2228dd1c949cda40440d\n   Organization: Département de la Seine-Maritime\n   Tags: communes, dpe, energie, geospatial, habitat\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/logements-locatifs-des-bailleurs-sociaux-76-2021\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5fa9901bdf2bbb37b61963e6"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Logements sociaux et bailleurs par département\nDataset ID: 5fa9901bdf2bbb37b61963e6\nTotal resources: 3\n\n1. bailleurs_sociaux_dep.csv\n   Resource ID: d3a1ca2a-77e5-41e4-a1a1-35e4e436b478\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/bailleurs_sociaux_dep/exports/csv?use_labels=true\n\n2. bailleurs_sociaux_dep.json\n   Resource ID: ef86fec4-bdd9-413f-9c06-dd64bf37f2b2\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/bailleurs_sociaux_dep/exports/json\n\n3. note_methodologique&sources.pdf\n   Resource ID: 0f2dbd40-5d0e-4aa3-b784-ff7e45ac6d81\n   Format: pdf\n   Type: other\n   URL: https://opendata.caissedesdepots.fr/api/v2/catalog/datasets/bailleurs_sociaux_dep/attachments/note_methodologique_sources_pdf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Logements sociaux et bailleurs par département\nDataset ID: 5fa9901bdf2bbb37b61963e6\nTotal resources: 3\n\n1. bailleurs_sociaux_dep.csv\n   Resource ID: d3a1ca2a-77e5-41e4-a1a1-35e4e436b478\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/bailleurs_sociaux_dep/exports/csv?use_labels=true\n\n2. bailleurs_sociaux_dep.json\n   Resource ID: ef86fec4-bdd9-413f-9c06-dd64bf37f2b2\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/bailleurs_sociaux_dep/exports/json\n\n3. note_methodologique&sources.pdf\n   Resource ID: 0f2dbd40-5d0e-4aa3-b784-ff7e45ac6d81\n   Format: pdf\n   Type: other\n   URL: https://opendata.caissedesdepots.fr/api/v2/catalog/datasets/bailleurs_sociaux_dep/attachments/note_methodologique_sources_pdf\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "d3a1ca2a-77e5-41e4-a1a1-35e4e436b478",
+      "filter_column": "Code Département",
+      "filter_value": "91",
+      "filter_operator": "exact",
+      "page_size": 3
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: bailleurs_sociaux_dep.csv\nResource ID: d3a1ca2a-77e5-41e4-a1a1-35e4e436b478\nDataset: Logements sociaux et bailleurs par département (ID: 5fa9901bdf2bbb37b61963e6)\n\nFilter: Code Département exact 91\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 3)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Code_région, Région, Code Département, Libellé Département, Année_publication, Nbre_bailleurs, Nbre_bailleurs_consolidé, Nbre_logements, Part_logement_sociaux_gérés_OPH (%), Part_logement_sociaux_gérés_ESH (%), Part_logement_sociaux_gérés_SEM (%), Part_logements_sociaux_gérés_autres_bailleurs (%)\n\nData (1 row):\n  Row 1:\n    __id: 2\n    Code_région: 11\n    Région: ILE-DE-FRANCE\n    Code Département: 91\n    Libellé Département: Essonne\n    Année_publication: 2018\n    Nbre_bailleurs: 67\n    Nbre_bailleurs_consolidé: 26\n    Nbre_logements: 113838\n    Part_logement_sociaux_gérés_OPH (%): 12\n    Part_logement_sociaux_gérés_ESH (%): 82\n    Part_logement_sociaux_gérés_SEM (%): 4\n    Part_logements_sociaux_gérés_autres_bailleurs (%): 2"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: bailleurs_sociaux_dep.csv\nResource ID: d3a1ca2a-77e5-41e4-a1a1-35e4e436b478\nDataset: Logements sociaux et bailleurs par département (ID: 5fa9901bdf2bbb37b61963e6)\n\nFilter: Code Département exact 91\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 3)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Code_région, Région, Code Département, Libellé Département, Année_publication, Nbre_bailleurs, Nbre_bailleurs_consolidé, Nbre_logements, Part_logement_sociaux_gérés_OPH (%), Part_logement_sociaux_gérés_ESH (%), Part_logement_sociaux_gérés_SEM (%), Part_logements_sociaux_gérés_autres_bailleurs (%)\n\nData (1 row):\n  Row 1:\n    __id: 2\n    Code_région: 11\n    Région: ILE-DE-FRANCE\n    Code Département: 91\n    Libellé Département: Essonne\n    Année_publication: 2018\n    Nbre_bailleurs: 67\n    Nbre_bailleurs_consolidé: 26\n    Nbre_logements: 113838\n    Part_logement_sociaux_gérés_OPH (%): 12\n    Part_logement_sociaux_gérés_ESH (%): 82\n    Part_logement_sociaux_gérés_SEM (%): 4\n    Part_logements_sociaux_gérés_autres_bailleurs (%): 2"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:27Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "BANATIC intercommunalité",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 10 dataset(s) for query: 'BANATIC intercommunalité'\nPage 1 of results:\n\n1. Base nationale sur les intercommunalités\n   ID: 5e1f20058b4c414d3f94460d\n   Organization: Direction générale des collectivités locales\n   Tags: banatic, communes, competence-territoriale, competences, dgcl\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/base-nationale-sur-les-intercommunalites\n\n2. Les données contextuelles des intercommunalités et autres structures territoriales\n   ID: 5e1462e28b4c414163b4dc4b\n   Organization: Direction générale des collectivités locales\n   Tags: banatic, collectivites, dgcl\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/les-donnees-contextuelles-des-intercommunalites-et-autres-structures-territoriales\n\n3. Liste des groupements de communes en Pays de la Loire [ BANATIC ]\n   ID: 6270716b669e0a8e84f11a3b\n   Organization: Région des Pays de la Loire\n   Tags: banatic, citoyennete-institution, competences, epci\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/liste-des-groupements-de-communes-en-pays-de-la-loire-banatic\n\n4. Groupements de collectivités territoriales 2017 en Pays de la Loire\n   ID: 5e32222e06e3e7051f320bab\n   Organization: Région des Pays de la Loire\n   Tags: banatic, communaute-dagglomeration, communaute-urbaine, epci, intercommunalite\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/groupements-de-collectivites-territoriales-2017-en-pays-de-la-loire\n\n5. Evolution des communes et EPCI du Gers entre 2002 et 2015\n   ID: 5d26ec969ce2e73529f50c5d\n   Organization: Département du Gers\n   Tags: administration-territoriale, donnees-territoriales, unites-administratives\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/evolution-des-communes-et-epci-du-gers-entre-2002-et-2015-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 10 dataset(s) for query: 'BANATIC intercommunalité'\nPage 1 of results:\n\n1. Base nationale sur les intercommunalités\n   ID: 5e1f20058b4c414d3f94460d\n   Organization: Direction générale des collectivités locales\n   Tags: banatic, communes, competence-territoriale, competences, dgcl\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/base-nationale-sur-les-intercommunalites\n\n2. Les données contextuelles des intercommunalités et autres structures territoriales\n   ID: 5e1462e28b4c414163b4dc4b\n   Organization: Direction générale des collectivités locales\n   Tags: banatic, collectivites, dgcl\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/les-donnees-contextuelles-des-intercommunalites-et-autres-structures-territoriales\n\n3. Liste des groupements de communes en Pays de la Loire [ BANATIC ]\n   ID: 6270716b669e0a8e84f11a3b\n   Organization: Région des Pays de la Loire\n   Tags: banatic, citoyennete-institution, competences, epci\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/liste-des-groupements-de-communes-en-pays-de-la-loire-banatic\n\n4. Groupements de collectivités territoriales 2017 en Pays de la Loire\n   ID: 5e32222e06e3e7051f320bab\n   Organization: Région des Pays de la Loire\n   Tags: banatic, communaute-dagglomeration, communaute-urbaine, epci, intercommunalite\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/groupements-de-collectivites-territoriales-2017-en-pays-de-la-loire\n\n5. Evolution des communes et EPCI du Gers entre 2002 et 2015\n   ID: 5d26ec969ce2e73529f50c5d\n   Organization: Département du Gers\n   Tags: administration-territoriale, donnees-territoriales, unites-administratives\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/evolution-des-communes-et-epci-du-gers-entre-2002-et-2015-1\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "5e1f20058b4c414d3f94460d"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Base nationale sur les intercommunalités\n\nID: 5e1f20058b4c414d3f94460d\nSlug: base-nationale-sur-les-intercommunalites\nURL: https://www.data.gouv.fr/datasets/base-nationale-sur-les-intercommunalites/\n\nFull description: Les données de la base nationale sur les intercommunalités (BANATIC) comportent des informations sur les intercommunalités.\n\nVous trouverez plusieurs fichiers :\n\n* **Liste des groupements** : la situation géographique, la nature juridique, la date de création, le périmètre, le profil financier ;\n* **Coordonnées des groupements** : des moyens pour contacter un groupement ;\n* **Compétences des groupements** : les compétences exercées par les groupements ;\n* **Périmètre des EPCI à fiscalité propre*...\n\nOrganization: Direction générale des collectivités locales\n  Organization ID: 5e145ef68b4c4135aa9b0b7a\n\nTags: banatic, communes, competence-territoriale, competences, dgcl\n\nResources: 7 file(s)\n\nCreated: 2020-01-15T15:21:57.045000+00:00\nLast updated: 2026-10-12T04:07:54.014000+00:00\n\nLicense: lov2\nUpdate frequency: quarterly"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Base nationale sur les intercommunalités\n\nID: 5e1f20058b4c414d3f94460d\nSlug: base-nationale-sur-les-intercommunalites\nURL: https://www.data.gouv.fr/datasets/base-nationale-sur-les-intercommunalites/\n\nFull description: Les données de la base nationale sur les intercommunalités (BANATIC) comportent des informations sur les intercommunalités.\n\nVous trouverez plusieurs fichiers :\n\n* **Liste des groupements** : la situation géographique, la nature juridique, la date de création, le périmètre, le profil financier ;\n* **Coordonnées des groupements** : des moyens pour contacter un groupement ;\n* **Compétences des groupements** : les compétences exercées par les groupements ;\n* **Périmètre des EPCI à fiscalité propre*...\n\nOrganization: Direction générale des collectivités locales\n  Organization ID: 5e145ef68b4c4135aa9b0b7a\n\nTags: banatic, communes, competence-territoriale, competences, dgcl\n\nResources: 7 file(s)\n\nCreated: 2020-01-15T15:21:57.045000+00:00\nLast updated: 2026-10-12T04:07:54.014000+00:00\n\nLicense: lov2\nUpdate frequency: quarterly"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

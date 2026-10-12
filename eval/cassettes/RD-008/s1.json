@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:40Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "RSA Cour des comptes",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 13 dataset(s) for query: 'RSA Cour des comptes'\nPage 1 of results:\n\n1. Le revenu de solidarité active (RSA) \n   ID: 623842c62a4a68324dbd6bbb\n   Organization: Cour des comptes\n   Tags: revenu-de-solidarite-active, rsa\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/le-revenu-de-solidarite-active-rsa\n\n2. Inscrits à France Travail - Stock détaillé par âge (trimestrielles, brutes)\n   ID: 66df098b24d76afbdd709391\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-stock-detaille-par-age-trimestrielles-brutes\n\n3. ALLOCATIONS - Part_prestations_ressources_foyers (DPC)\n   ID: 5cddfddd06e3e7152e835fa5\n   Organization: Commune de Brocas\n   Tags: administration, citizenship, government, prestations, public-finances\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocations-part-prestations-ressources-foyers-dpc\n\n4. Inscrits à France Travail - Stock - France (trimestrielles, brutes)\n   ID: 66df098424d76afbdd70937b\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-stock-france-trimestrielles-brutes\n\n5. Données du service de vélos en libre-service \"Le Marcel\" - Troyes Champagne Métropole\n   ID: 6a0c2c0a5ea99fbef1554b8c\n   Description: Données temps réel GBFS v2.2 du service de vélos en libre-service « Le Marcel » opéré par Ecovelo sur le territoire de Troyes Champagne Métropole....\n   Organization: Troyes Champagne Métropole\n   Tags: le-marcel, partage, station, station-velo, velo-electrique\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-du-service-de-velos-en-libre-service-le-marcel-troyes-champagne-metropole\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 13 dataset(s) for query: 'RSA Cour des comptes'\nPage 1 of results:\n\n1. Le revenu de solidarité active (RSA) \n   ID: 623842c62a4a68324dbd6bbb\n   Organization: Cour des comptes\n   Tags: revenu-de-solidarite-active, rsa\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/le-revenu-de-solidarite-active-rsa\n\n2. Inscrits à France Travail - Stock détaillé par âge (trimestrielles, brutes)\n   ID: 66df098b24d76afbdd709391\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-stock-detaille-par-age-trimestrielles-brutes\n\n3. ALLOCATIONS - Part_prestations_ressources_foyers (DPC)\n   ID: 5cddfddd06e3e7152e835fa5\n   Organization: Commune de Brocas\n   Tags: administration, citizenship, government, prestations, public-finances\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocations-part-prestations-ressources-foyers-dpc\n\n4. Inscrits à France Travail - Stock - France (trimestrielles, brutes)\n   ID: 66df098424d76afbdd70937b\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-stock-france-trimestrielles-brutes\n\n5. Données du service de vélos en libre-service \"Le Marcel\" - Troyes Champagne Métropole\n   ID: 6a0c2c0a5ea99fbef1554b8c\n   Description: Données temps réel GBFS v2.2 du service de vélos en libre-service « Le Marcel » opéré par Ecovelo sur le territoire de Troyes Champagne Métropole....\n   Organization: Troyes Champagne Métropole\n   Tags: le-marcel, partage, station, station-velo, velo-electrique\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-du-service-de-velos-en-libre-service-le-marcel-troyes-champagne-metropole\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "623842c62a4a68324dbd6bbb"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Le revenu de solidarité active (RSA) \nDataset ID: 623842c62a4a68324dbd6bbb\nTotal resources: 8\n\n1. Données : Equinoxe\n   Resource ID: 05eb31ea-532a-450b-aa69-63c4ff807e72\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-csv-Equinoxe.zip\n\n2.  Données enrichies de graphiques : rapports de synthèse \n   Resource ID: 92d86b0a-31f5-45ce-8b41-4ab6b3029d63\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-source-xls-rapport-synthese.zip\n\n3. Données enrichies de graphiques : Allier, Aude et Gironde\n   Resource ID: f1c94934-5c2f-4a2c-bac5-8df0a7b5f636\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-graphiques-xls-Allier-Aude-Gironde.zip\n\n4. Données brutes : Allier, Aude et Gironde\n   Resource ID: e404ced4-a689-42f6-bfd5-f95b6bbbe4b9\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-brutes-csv-Allier-Aude-Gironde.zip\n\n5. Données enrichies de graphiques : Ille-et-Vilaine, Pas-de-Calais et Bas-Rhin\n   Resource ID: 945f6904-5660-4683-ab75-62655074548a\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-graphiques-xls-Ille-et-Villaine-Pas-de-Calais-Bas-Rhin.zip\n\n6. Données brutes : Ille-et-Vilaine, Pas-de-Calais et Bas-Rhin\n   Resource ID: 3cced813-17f0-408b-9399-7a9120274994\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-brutes-csv-Ille-et-Villaine-Pas-de-Calais-Bas-Rhin.zip\n\n7. Données enrichies de graphiques : Seine-Saint-Denis, Martinique et La Réunion\n   Resource ID: 09df459c-b7bb-4830-a5a5-a2d3ebeec5f0\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-graphiques-xls-Seine-Saint-Denis-La-Reunion-Martinique.zip\n\n8. Données brutes : Seine-Saint-Denis, Martinique et La Réunion\n   Resource ID: 6ab7d7ed-e291-49c3-b115-5122bef564f8\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-brutes-csv-Seine-Saint-Denis-La-Reunion-Martinique.zip\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Le revenu de solidarité active (RSA) \nDataset ID: 623842c62a4a68324dbd6bbb\nTotal resources: 8\n\n1. Données : Equinoxe\n   Resource ID: 05eb31ea-532a-450b-aa69-63c4ff807e72\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-csv-Equinoxe.zip\n\n2.  Données enrichies de graphiques : rapports de synthèse \n   Resource ID: 92d86b0a-31f5-45ce-8b41-4ab6b3029d63\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-source-xls-rapport-synthese.zip\n\n3. Données enrichies de graphiques : Allier, Aude et Gironde\n   Resource ID: f1c94934-5c2f-4a2c-bac5-8df0a7b5f636\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-graphiques-xls-Allier-Aude-Gironde.zip\n\n4. Données brutes : Allier, Aude et Gironde\n   Resource ID: e404ced4-a689-42f6-bfd5-f95b6bbbe4b9\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-brutes-csv-Allier-Aude-Gironde.zip\n\n5. Données enrichies de graphiques : Ille-et-Vilaine, Pas-de-Calais et Bas-Rhin\n   Resource ID: 945f6904-5660-4683-ab75-62655074548a\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-graphiques-xls-Ille-et-Villaine-Pas-de-Calais-Bas-Rhin.zip\n\n6. Données brutes : Ille-et-Vilaine, Pas-de-Calais et Bas-Rhin\n   Resource ID: 3cced813-17f0-408b-9399-7a9120274994\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-brutes-csv-Ille-et-Villaine-Pas-de-Calais-Bas-Rhin.zip\n\n7. Données enrichies de graphiques : Seine-Saint-Denis, Martinique et La Réunion\n   Resource ID: 09df459c-b7bb-4830-a5a5-a2d3ebeec5f0\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-graphiques-xls-Seine-Saint-Denis-La-Reunion-Martinique.zip\n\n8. Données brutes : Seine-Saint-Denis, Martinique et La Réunion\n   Resource ID: 6ab7d7ed-e291-49c3-b115-5122bef564f8\n   Format: csv/utf8\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/2022-01/RSA-donnees-brutes-csv-Seine-Saint-Denis-La-Reunion-Martinique.zip\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

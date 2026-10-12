@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:20Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "répertoire national des élus",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 46 dataset(s) for query: 'répertoire national des élus'\nPage 1 of results:\n\n1. Répertoire national des élus\n   ID: 5c34c4d1634f4173183a64f1\n   Organization: Ministère de l'intérieur\n   Tags: conseillers-communautaires, conseillers-departementaux, conseillers-des-francais-de-letranger, conseillers-municipaux, conseillers-regionaux\n   Resources: 12\n   URL: https://www.data.gouv.fr/datasets/repertoire-national-des-elus-1\n\n2. Répertoire national des élus locaux - Communautaires de Grand Poitiers CU\n   ID: 5faa10c1add575fc841963e6\n   Organization: Grand Poitiers Open Data\n   Tags: administration, citoyennete, conseillers, election, elu\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/repertoire-national-des-elus-locaux-communautaires-de-grand-poitiers-cu\n\n3. Répertoire national des élus locaux  : Municipaux des 40 communes membres de Grand Poitiers CU\n   ID: 5faa10c2aab85bf4631963e6\n   Organization: Grand Poitiers Open Data\n   Tags: administration, citoyennete, conseillers, election, elu\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/repertoire-national-des-elus-locaux-municipaux-des-40-communes-membres-de-grand-poitiers-cu\n\n4. Elections municipales 2026 - Maires et conseillers municipaux sortants\n   ID: 69a233819c17f13feedbc2cc\n   Organization: Ministère de l'intérieur\n   Tags: conseil-municipal, democratie-locale, elections, elus, elus-municipaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2026-maires-et-conseillers-municipaux-sortants\n\n5. Composition de l'assemblée délibérante de Morbihan énergies\n   ID: 6095d51719ca50df62f75ba2\n   Organization: Morbihan énergies\n   Tags: administration-gouvernement-finances-publiques-citoyennete, assemblee-deliberante, comite-syndical\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/composition-de-lassemblee-deliberante-de-morbihan-energies-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 46 dataset(s) for query: 'répertoire national des élus'\nPage 1 of results:\n\n1. Répertoire national des élus\n   ID: 5c34c4d1634f4173183a64f1\n   Organization: Ministère de l'intérieur\n   Tags: conseillers-communautaires, conseillers-departementaux, conseillers-des-francais-de-letranger, conseillers-municipaux, conseillers-regionaux\n   Resources: 12\n   URL: https://www.data.gouv.fr/datasets/repertoire-national-des-elus-1\n\n2. Répertoire national des élus locaux - Communautaires de Grand Poitiers CU\n   ID: 5faa10c1add575fc841963e6\n   Organization: Grand Poitiers Open Data\n   Tags: administration, citoyennete, conseillers, election, elu\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/repertoire-national-des-elus-locaux-communautaires-de-grand-poitiers-cu\n\n3. Répertoire national des élus locaux  : Municipaux des 40 communes membres de Grand Poitiers CU\n   ID: 5faa10c2aab85bf4631963e6\n   Organization: Grand Poitiers Open Data\n   Tags: administration, citoyennete, conseillers, election, elu\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/repertoire-national-des-elus-locaux-municipaux-des-40-communes-membres-de-grand-poitiers-cu\n\n4. Elections municipales 2026 - Maires et conseillers municipaux sortants\n   ID: 69a233819c17f13feedbc2cc\n   Organization: Ministère de l'intérieur\n   Tags: conseil-municipal, democratie-locale, elections, elus, elus-municipaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2026-maires-et-conseillers-municipaux-sortants\n\n5. Composition de l'assemblée délibérante de Morbihan énergies\n   ID: 6095d51719ca50df62f75ba2\n   Organization: Morbihan énergies\n   Tags: administration-gouvernement-finances-publiques-citoyennete, assemblee-deliberante, comite-syndical\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/composition-de-lassemblee-deliberante-de-morbihan-energies-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

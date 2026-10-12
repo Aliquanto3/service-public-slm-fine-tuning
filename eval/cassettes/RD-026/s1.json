@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:25Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "données essentielles commande publique",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2181 dataset(s) for query: 'données essentielles commande publique'\nPage 1 of results:\n\n1. Données essentielles de la commande publique - fichiers consolidés\n   ID: 5cd57bf68b4c4179299eb0e9\n   Organization: Ministères économiques et financiers\n   Tags: acheteurs-publics, commande-publique, marche-de-fournitures, marche-de-services, marche-public\n   Resources: 42\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-de-la-commande-publique-fichiers-consolides\n\n2. [DEPRECIE] Données essentielles de la commande publique - données enrichies\n   ID: 60b6ca5db7db6c843b2ee2c1\n   Organization: Ministères économiques et financiers\n   Tags: commande-publique, declarations, donnees-essentielles, marches-conclus, marches-publics\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/deprecie-donnees-essentielles-de-la-commande-publique-donnees-enrichies\n\n3. Données Essentielles de la Commande Publique - Arrêté du 22/03/2019 - Marchés\n   ID: 65288b5ee67e8843716e33b0\n   Organization: Ministères économiques et financiers\n   Tags: administration, commande-publique, declarations, decp, donnees-essentielles\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-de-la-commande-publique-arrete-du-22-03-2019-marches\n\n4. Données du hackathon sur les données essentielles de la commande publiques reformatées et agrégées\n   ID: 5be5b66a634f4148a8b2e466\n   Organization: Etalab\n   Tags: decp, marche, marche-public, marches, marches-attribues\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/donnees-du-hackathon-sur-les-donnees-essentielles-de-la-commande-publiques-reformatees-et-agregees\n\n5. Données essentielles de la commande publique transmises via le PES Marché\n   ID: 5bd0b6fd8b4c413d0801dc57\n   Organization: data.gouv.fr\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-de-la-commande-publique-transmises-via-le-pes-marche\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2181 dataset(s) for query: 'données essentielles commande publique'\nPage 1 of results:\n\n1. Données essentielles de la commande publique - fichiers consolidés\n   ID: 5cd57bf68b4c4179299eb0e9\n   Organization: Ministères économiques et financiers\n   Tags: acheteurs-publics, commande-publique, marche-de-fournitures, marche-de-services, marche-public\n   Resources: 42\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-de-la-commande-publique-fichiers-consolides\n\n2. [DEPRECIE] Données essentielles de la commande publique - données enrichies\n   ID: 60b6ca5db7db6c843b2ee2c1\n   Organization: Ministères économiques et financiers\n   Tags: commande-publique, declarations, donnees-essentielles, marches-conclus, marches-publics\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/deprecie-donnees-essentielles-de-la-commande-publique-donnees-enrichies\n\n3. Données Essentielles de la Commande Publique - Arrêté du 22/03/2019 - Marchés\n   ID: 65288b5ee67e8843716e33b0\n   Organization: Ministères économiques et financiers\n   Tags: administration, commande-publique, declarations, decp, donnees-essentielles\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-de-la-commande-publique-arrete-du-22-03-2019-marches\n\n4. Données du hackathon sur les données essentielles de la commande publiques reformatées et agrégées\n   ID: 5be5b66a634f4148a8b2e466\n   Organization: Etalab\n   Tags: decp, marche, marche-public, marches, marches-attribues\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/donnees-du-hackathon-sur-les-donnees-essentielles-de-la-commande-publiques-reformatees-et-agregees\n\n5. Données essentielles de la commande publique transmises via le PES Marché\n   ID: 5bd0b6fd8b4c413d0801dc57\n   Organization: data.gouv.fr\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-de-la-commande-publique-transmises-via-le-pes-marche\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

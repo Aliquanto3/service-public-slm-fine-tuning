@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:48Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "effectifs fonction publique par département",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 24 dataset(s) for query: 'effectifs fonction publique par département'\nPage 1 of results:\n\n1. Effectifs de la fonction publique par département depuis 2010\n   ID: 5c4b01198b4c41172131e98d\n   Organization: Direction Générale de l'Administration et de la Fonction Publique\n   Tags: 2010, 2011, 2012, 2013, 2014\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-la-fonction-publique-par-departement-depuis-2010\n\n2. Police municipale : Effectifs par commune\n   ID: 5369986ba3a729239d204f55\n   Organization: Ministère de l'intérieur\n   Tags: communes, effectifs-police, polices-municipales\n   Resources: 13\n   URL: https://www.data.gouv.fr/datasets/police-municipale-effectifs-par-commune\n\n3. Effectifs de retraités de l’IRCANTEC par département de résidence\n   ID: 5fa9901c6256611a031963e8\n   Organization: Caisse des Dépôts\n   Tags: ircantec, lieu-de-residence, politiques-sociales, retraite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-retraites-de-lircantec-par-departement-de-residence\n\n4. Les 10 rémunérations les plus élevées au sein des effectifs de la Ville d'Antibes\n   ID: 5e85f45c21d139adf8b243db\n   Description: Rémunérations les plus élevées versées par la Ville d'Antibes....\n   Organization: Ville d'Antibes\n   Tags: finances, fonction-publique-territoriale, remunerations, ressources-humaines, traitements\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/les-10-remunerations-les-plus-elevees-au-sein-des-effectifs-de-la-ville-dantibes\n\n5. Effectifs de la fonction publique territoriale depuis 2004\n   ID: 5c4b0d2d8b4c413b7e935b3b\n   Organization: Direction Générale de l'Administration et de la Fonction Publique\n   Tags: 2004, 2005, 2006, 2007, 2008\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-la-fonction-publique-territoriale-depuis-2004\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 24 dataset(s) for query: 'effectifs fonction publique par département'\nPage 1 of results:\n\n1. Effectifs de la fonction publique par département depuis 2010\n   ID: 5c4b01198b4c41172131e98d\n   Organization: Direction Générale de l'Administration et de la Fonction Publique\n   Tags: 2010, 2011, 2012, 2013, 2014\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-la-fonction-publique-par-departement-depuis-2010\n\n2. Police municipale : Effectifs par commune\n   ID: 5369986ba3a729239d204f55\n   Organization: Ministère de l'intérieur\n   Tags: communes, effectifs-police, polices-municipales\n   Resources: 13\n   URL: https://www.data.gouv.fr/datasets/police-municipale-effectifs-par-commune\n\n3. Effectifs de retraités de l’IRCANTEC par département de résidence\n   ID: 5fa9901c6256611a031963e8\n   Organization: Caisse des Dépôts\n   Tags: ircantec, lieu-de-residence, politiques-sociales, retraite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-retraites-de-lircantec-par-departement-de-residence\n\n4. Les 10 rémunérations les plus élevées au sein des effectifs de la Ville d'Antibes\n   ID: 5e85f45c21d139adf8b243db\n   Description: Rémunérations les plus élevées versées par la Ville d'Antibes....\n   Organization: Ville d'Antibes\n   Tags: finances, fonction-publique-territoriale, remunerations, ressources-humaines, traitements\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/les-10-remunerations-les-plus-elevees-au-sein-des-effectifs-de-la-ville-dantibes\n\n5. Effectifs de la fonction publique territoriale depuis 2004\n   ID: 5c4b0d2d8b4c413b7e935b3b\n   Organization: Direction Générale de l'Administration et de la Fonction Publique\n   Tags: 2004, 2005, 2006, 2007, 2008\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-la-fonction-publique-territoriale-depuis-2004\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "5c4b01198b4c41172131e98d"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Effectifs de la fonction publique par département depuis 2010\n\nID: 5c4b01198b4c41172131e98d\nSlug: effectifs-de-la-fonction-publique-par-departement-depuis-2010\nURL: https://www.data.gouv.fr/datasets/effectifs-de-la-fonction-publique-par-departement-depuis-2010/\n\nFull description: Effectifs au 31 décembre de chaque année dans la fonction publique et taux d'administration. Série longue depuis 2010.\n\nLe fichier contient les données des effectifs par département pour l'ensemble de la fonction publique et la répartition pour la fonction publique d'État, la fonction publique territoriale et la fonction publique territoriale. Les données disponibles concernent : les effectifs, le taux d'administration, la part des femmes, les âges moyens, la part des plus de 30 ans et la part d...\n\nOrganization: Direction Générale de l'Administration et de la Fonction Publique\n  Organization ID: 5c1b60038b4c41685320f5bd\n\nTags: 2010, 2011, 2012, 2013, 2014, 2015, 2016, administration, demographie-des-effectifs, effectifs\n\nResources: 3 file(s)\n\nCreated: 2019-06-21T15:46:29+00:00\nLast updated: 2019-06-21T15:46:29+00:00\n\nLicense: lov2\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Effectifs de la fonction publique par département depuis 2010\n\nID: 5c4b01198b4c41172131e98d\nSlug: effectifs-de-la-fonction-publique-par-departement-depuis-2010\nURL: https://www.data.gouv.fr/datasets/effectifs-de-la-fonction-publique-par-departement-depuis-2010/\n\nFull description: Effectifs au 31 décembre de chaque année dans la fonction publique et taux d'administration. Série longue depuis 2010.\n\nLe fichier contient les données des effectifs par département pour l'ensemble de la fonction publique et la répartition pour la fonction publique d'État, la fonction publique territoriale et la fonction publique territoriale. Les données disponibles concernent : les effectifs, le taux d'administration, la part des femmes, les âges moyens, la part des plus de 30 ans et la part d...\n\nOrganization: Direction Générale de l'Administration et de la Fonction Publique\n  Organization ID: 5c1b60038b4c41685320f5bd\n\nTags: 2010, 2011, 2012, 2013, 2014, 2015, 2016, administration, demographie-des-effectifs, effectifs\n\nResources: 3 file(s)\n\nCreated: 2019-06-21T15:46:29+00:00\nLast updated: 2019-06-21T15:46:29+00:00\n\nLicense: lov2\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

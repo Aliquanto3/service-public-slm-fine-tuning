@@ -1,0 +1,36 @@
+{
+ "depot": "AgentPublic/data-gouv-datasets-catalog",
+ "revision": "11f3d3c9481ad478dbcff52e85d73b7fd10533ce",
+ "colonnes": "id = chunk_id ; title ; url ; organization ; license",
+ "extrait_le": "2026-10-12",
+ "jeux": {
+  "RD-005": {
+   "id": "6226330c44bec80dc83e0c48",
+   "title": "L'enquête auprès des établissements et services pour enfants et adultes handicapés (ES-Handicap)",
+   "url": "https://www.data.gouv.fr/datasets/lenquete-aupres-des-etablissements-et-services-pour-enfants-et-adultes-handicapes-es-handicap",
+   "organization": "Ministère des Solidarités et de la Santé",
+   "license": "Licence Ouverte / Open Licence version 2.0"
+  },
+  "RD-014": {
+   "id": "5de8f397634f4164071119c5",
+   "title": "Fichier des personnes décédées",
+   "url": "https://www.data.gouv.fr/datasets/fichier-des-personnes-decedees",
+   "organization": "Institut national de la statistique et des études économiques (Insee)",
+   "license": "Licence Ouverte / Open Licence version 2.0"
+  },
+  "RD-020": {
+   "id": "561fa564c751df4f2acdbb48",
+   "title": "Enquête Besoins en Main d'Oeuvre (BMO)",
+   "url": "https://www.data.gouv.fr/datasets/enquete-besoins-en-main-doeuvre-bmo",
+   "organization": "France Travail",
+   "license": "Licence Ouverte / Open Licence"
+  },
+  "RD-032": {
+   "id": "657c88da2947e13be0597058",
+   "title": "Liste des communes selon le zonage TLV",
+   "url": "https://www.data.gouv.fr/datasets/liste-des-communes-selon-le-zonage-tlv-1",
+   "organization": "Ministère de la Transition écologique",
+   "license": "Licence Ouverte / Open Licence version 2.0"
+  }
+ }
+}

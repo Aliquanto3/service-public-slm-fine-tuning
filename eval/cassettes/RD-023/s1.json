@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:56Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "index égalité professionnelle",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 16 dataset(s) for query: 'index égalité professionnelle'\nPage 1 of results:\n\n1. Index Egalité Professionnelle F/H des entreprises de 50 salariés ou plus\n   ID: 61a73dcfe3171089843587bf\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: egalite, egalite-f-h, egalitehommefemme, egaliteprofessionnelle, egalitesalariale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/index-egalite-professionnelle-f-h-des-entreprises-de-50-salaries-ou-plus\n\n2. Index Egalité professionnelle au sein de la Ville d’Antibes\n   ID: 671f49fb87a5bd019d7843d4\n   Organization: Ville d'Antibes\n   Tags: agents, agents-publics, egalite, egalite-homme-femme, emploi\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/index-egalite-professionnelle-au-sein-de-la-ville-dantibes\n\n3. Publication index égalité professionnelle 2024\n   ID: 68d4ef2b057d6578a34eb760\n   Organization: Communauté de Communes de Forez-Est\n   Tags: index-egapro\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/publication-index-egalite-professionnelle-2024\n\n4. Publication index égalité professionnelle 2023\n   ID: 66f6c3d3408c3c1b0af5737f\n   Organization: Communauté de Communes de Forez-Est\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/publication-index-egalite-professionnelle-2023\n\n5. Index égalité professionnelle en région Hauts-de-France\n   ID: 6712f6ff2432948efa2feb13\n   Organization: Région Hauts-de-France\n   Tags: administration-regionale, aisne-departement, egalite-femme-homme, egalite-professionnelle, fonction-publique\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/index-egalite-professionnelle-en-region-hauts-de-france\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 16 dataset(s) for query: 'index égalité professionnelle'\nPage 1 of results:\n\n1. Index Egalité Professionnelle F/H des entreprises de 50 salariés ou plus\n   ID: 61a73dcfe3171089843587bf\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: egalite, egalite-f-h, egalitehommefemme, egaliteprofessionnelle, egalitesalariale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/index-egalite-professionnelle-f-h-des-entreprises-de-50-salaries-ou-plus\n\n2. Index Egalité professionnelle au sein de la Ville d’Antibes\n   ID: 671f49fb87a5bd019d7843d4\n   Organization: Ville d'Antibes\n   Tags: agents, agents-publics, egalite, egalite-homme-femme, emploi\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/index-egalite-professionnelle-au-sein-de-la-ville-dantibes\n\n3. Publication index égalité professionnelle 2024\n   ID: 68d4ef2b057d6578a34eb760\n   Organization: Communauté de Communes de Forez-Est\n   Tags: index-egapro\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/publication-index-egalite-professionnelle-2024\n\n4. Publication index égalité professionnelle 2023\n   ID: 66f6c3d3408c3c1b0af5737f\n   Organization: Communauté de Communes de Forez-Est\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/publication-index-egalite-professionnelle-2023\n\n5. Index égalité professionnelle en région Hauts-de-France\n   ID: 6712f6ff2432948efa2feb13\n   Organization: Région Hauts-de-France\n   Tags: administration-regionale, aisne-departement, egalite-femme-homme, egalite-professionnelle, fonction-publique\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/index-egalite-professionnelle-en-region-hauts-de-france\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "61a73dcfe3171089843587bf"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Index Egalité Professionnelle F/H des entreprises de 50 salariés ou plus\nDataset ID: 61a73dcfe3171089843587bf\nTotal resources: 2\n\n1. FAQ index de l'égalité professionnelle\n   Resource ID: a448b726-93b1-425d-9c0f-7374392ab557\n   Format: html\n   Type: documentation\n   URL: https://travail-emploi.gouv.fr/droit-du-travail/egalite-professionnelle-discrimination-et-harcelement/indexegapro\n\n2. Index Egalité Professionnelle F/H\n   Resource ID: d434859f-8d3b-4381-bcdb-ec9200653ae6\n   Format: xlsx\n   MIME type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: main\n   URL: https://egapro.travail.gouv.fr/index-egalite-fh.xlsx\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Index Egalité Professionnelle F/H des entreprises de 50 salariés ou plus\nDataset ID: 61a73dcfe3171089843587bf\nTotal resources: 2\n\n1. FAQ index de l'égalité professionnelle\n   Resource ID: a448b726-93b1-425d-9c0f-7374392ab557\n   Format: html\n   Type: documentation\n   URL: https://travail-emploi.gouv.fr/droit-du-travail/egalite-professionnelle-discrimination-et-harcelement/indexegapro\n\n2. Index Egalité Professionnelle F/H\n   Resource ID: d434859f-8d3b-4381-bcdb-ec9200653ae6\n   Format: xlsx\n   MIME type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: main\n   URL: https://egapro.travail.gouv.fr/index-egalite-fh.xlsx\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "d434859f-8d3b-4381-bcdb-ec9200653ae6",
+      "filter_column": "SIREN",
+      "filter_value": "479766842",
+      "filter_operator": "exact",
+      "page_size": 3
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: Index Egalité Professionnelle F/H\nResource ID: d434859f-8d3b-4381-bcdb-ec9200653ae6\nDataset: Index Egalité Professionnelle F/H des entreprises de 50 salariés ou plus (ID: 61a73dcfe3171089843587bf)\n\nFilter: SIREN exact 479766842\n\nTotal rows (Tabular API): 8\nTotal pages: 3 (page size: 3)\nRetrieved: 3 row(s) from page 1\nColumns: __id, Année, Structure, Tranche d'effectifs, SIREN, Raison Sociale, Nom UES, Entreprises UES (SIREN), Région, Département, Pays, Code NAF, Note Ecart rémunération, Note Ecart taux d'augmentation (hors promotion), Note Ecart taux de promotion, Note Ecart taux d'augmentation, Note Retour congé maternité, Note Hautes rémunérations, Note Index\n\nData (3 rows):\n  Row 1:\n    __id: 1\n    Année: 2018\n    Structure: Unité Economique et Sociale (UES)\n    Tranche d'effectifs: 1000 et plus\n    SIREN: 479766842\n    Raison Sociale: Capgemini Technology Services\n    Nom UES: UES Capgemini\n    Entreprises UES (SIREN): Capgemini France (328781786),Capgenini Consulting (479766800),Capgemini Service (652025792),Capgemin...\n    Région: Île-de-France\n    Département: Hauts-de-Seine\n    Pays: FRANCE\n    Code NAF: 62.02A - Conseil en systèmes et logiciels informatiques\n    Note Ecart rémunération: 39\n    Note Ecart taux d'augmentation (hors promotion): 20\n    Note Ecart taux de promotion: 15\n    Note Ecart taux d'augmentation: \n    Note Retour congé maternité: 15\n    Note Hautes rémunérations: 5\n    Note Index: 94\n  Row 2:\n    __id: 31169\n    Année: 2019\n    Structure: Unité Economique et Sociale (UES)\n    Tranche d'effectifs: 1000 et plus\n    SIREN: 479766842\n    Raison Sociale: Capgemini Technology Services\n    Nom UES: UES Capgemini\n    Entreprises UES (SIREN): Capgemini France (328781786),Capgemini Consulting (479766800),Capgemini Service (652025792),Capgemin...\n    Région: Île-de-France\n    Département: Hauts-de-Seine\n    Pays: FRANCE\n    Code NAF: 62.02A - Conseil en systèmes et logiciels informatiques\n    Note Ecart rémunération: 39\n    Note Ecart taux d'augmentation (hors promotion): 20\n    Note Ecart taux de promotion: 15\n    Note Ecart taux d'augmentation: \n    Note Retour congé maternité: 15\n    Note Hautes rémunérations: 5\n    Note Index: 94\n  Row 3:\n    __id: 59960\n    Année: 2020\n    Structure: Unité Economique et Sociale (UES)\n    Tranche d'effectifs: 1000 et plus\n    SIREN: 479766842\n    Raison Sociale: Capgemini Technology Services\n    Nom UES: UES Capgemini\n    Entreprises UES (SIREN): Capgemini France (328781786),Capgemini Consulting (479766800),Capgemini Service (652025792),Capgemin...\n    Région: Île-de-France\n    Département: Hauts-de-Seine\n    Pays: FRANCE\n    Code NAF: 62.02A - Conseil en systèmes et logiciels informatiques\n    Note Ecart rémunération: 39\n    Note Ecart taux d'augmentation (hors promotion): 20\n    Note Ecart taux de promotion: 15\n    Note Ecart taux d'augmentation: \n    Note Retour congé maternité: 15\n    Note Hautes rémunérations: 5\n    Note Index: 94\n\n📄 More data available. Use page=2 to see the next page."
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: Index Egalité Professionnelle F/H\nResource ID: d434859f-8d3b-4381-bcdb-ec9200653ae6\nDataset: Index Egalité Professionnelle F/H des entreprises de 50 salariés ou plus (ID: 61a73dcfe3171089843587bf)\n\nFilter: SIREN exact 479766842\n\nTotal rows (Tabular API): 8\nTotal pages: 3 (page size: 3)\nRetrieved: 3 row(s) from page 1\nColumns: __id, Année, Structure, Tranche d'effectifs, SIREN, Raison Sociale, Nom UES, Entreprises UES (SIREN), Région, Département, Pays, Code NAF, Note Ecart rémunération, Note Ecart taux d'augmentation (hors promotion), Note Ecart taux de promotion, Note Ecart taux d'augmentation, Note Retour congé maternité, Note Hautes rémunérations, Note Index\n\nData (3 rows):\n  Row 1:\n    __id: 1\n    Année: 2018\n    Structure: Unité Economique et Sociale (UES)\n    Tranche d'effectifs: 1000 et plus\n    SIREN: 479766842\n    Raison Sociale: Capgemini Technology Services\n    Nom UES: UES Capgemini\n    Entreprises UES (SIREN): Capgemini France (328781786),Capgenini Consulting (479766800),Capgemini Service (652025792),Capgemin...\n    Région: Île-de-France\n    Département: Hauts-de-Seine\n    Pays: FRANCE\n    Code NAF: 62.02A - Conseil en systèmes et logiciels informatiques\n    Note Ecart rémunération: 39\n    Note Ecart taux d'augmentation (hors promotion): 20\n    Note Ecart taux de promotion: 15\n    Note Ecart taux d'augmentation: \n    Note Retour congé maternité: 15\n    Note Hautes rémunérations: 5\n    Note Index: 94\n  Row 2:\n    __id: 31169\n    Année: 2019\n    Structure: Unité Economique et Sociale (UES)\n    Tranche d'effectifs: 1000 et plus\n    SIREN: 479766842\n    Raison Sociale: Capgemini Technology Services\n    Nom UES: UES Capgemini\n    Entreprises UES (SIREN): Capgemini France (328781786),Capgemini Consulting (479766800),Capgemini Service (652025792),Capgemin...\n    Région: Île-de-France\n    Département: Hauts-de-Seine\n    Pays: FRANCE\n    Code NAF: 62.02A - Conseil en systèmes et logiciels informatiques\n    Note Ecart rémunération: 39\n    Note Ecart taux d'augmentation (hors promotion): 20\n    Note Ecart taux de promotion: 15\n    Note Ecart taux d'augmentation: \n    Note Retour congé maternité: 15\n    Note Hautes rémunérations: 5\n    Note Index: 94\n  Row 3:\n    __id: 59960\n    Année: 2020\n    Structure: Unité Economique et Sociale (UES)\n    Tranche d'effectifs: 1000 et plus\n    SIREN: 479766842\n    Raison Sociale: Capgemini Technology Services\n    Nom UES: UES Capgemini\n    Entreprises UES (SIREN): Capgemini France (328781786),Capgemini Consulting (479766800),Capgemini Service (652025792),Capgemin...\n    Région: Île-de-France\n    Département: Hauts-de-Seine\n    Pays: FRANCE\n    Code NAF: 62.02A - Conseil en systèmes et logiciels informatiques\n    Note Ecart rémunération: 39\n    Note Ecart taux d'augmentation (hors promotion): 20\n    Note Ecart taux de promotion: 15\n    Note Ecart taux d'augmentation: \n    Note Retour congé maternité: 15\n    Note Hautes rémunérations: 5\n    Note Index: 94\n\n📄 More data available. Use page=2 to see the next page."
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

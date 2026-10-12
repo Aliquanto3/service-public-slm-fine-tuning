@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:19Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "APA à domicile base floutée",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'APA à domicile base floutée'\nPage 1 of results:\n\n1. Bénéficiaires de l'APA à domicile : base floutée (V1)\n   ID: 62263312d650d1f5383e0c4f\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: allocation-personnalisee-dautonomie, apa-a-domicile, beneficiaires-apa, grand-age-et-autonomie, personne-agee\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/beneficiaires-de-lapa-a-domicile-base-floutee-v1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'APA à domicile base floutée'\nPage 1 of results:\n\n1. Bénéficiaires de l'APA à domicile : base floutée (V1)\n   ID: 62263312d650d1f5383e0c4f\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: allocation-personnalisee-dautonomie, apa-a-domicile, beneficiaires-apa, grand-age-et-autonomie, personne-agee\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/beneficiaires-de-lapa-a-domicile-base-floutee-v1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

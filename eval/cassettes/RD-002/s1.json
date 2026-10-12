@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:19:22Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "inventaire SRU",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'inventaire SRU'\nPage 1 of results:\n\n1. Communes et inventaire SRU\n   ID: 6564969d3579e21795ebd378\n   Organization: Ministère de la Transition écologique\n   Tags: logements-sociaux, solidarite-et-renouvellement-urbains, sru\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/communes-et-inventaire-sru\n\n2. Observatoire de l'habitat\n   ID: 5da118599ce2e74b9d52078c\n   Organization: Grand Paris Seine Ouest\n   Tags: habitat, logements-insalubres, observatoires, plh, population\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/observatoire-de-lhabitat\n\n3. Communes SRU et DALO\n   ID: 5bd89da406e3e738f68c0ec7\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: dalo, donnees-territoriales, sru\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/communes-sru-et-dalo\n\n4. Application de l’article L.302-5 du Code de la construction et de l’habitation en Bretagne\n   ID: 68cbc42cdf952493fcc0bce6\n   Organization: Direction régionale de l'environnement, de l'aménagement et du logement de Bretagne\n   Tags: article-302-5-du-cch, bretagne, dalo, donnees-ouvertes, habitat-urbain\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/application-de-larticle-l-302-5-du-code-de-la-construction-et-de-lhabitation-en-bretagne\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'inventaire SRU'\nPage 1 of results:\n\n1. Communes et inventaire SRU\n   ID: 6564969d3579e21795ebd378\n   Organization: Ministère de la Transition écologique\n   Tags: logements-sociaux, solidarite-et-renouvellement-urbains, sru\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/communes-et-inventaire-sru\n\n2. Observatoire de l'habitat\n   ID: 5da118599ce2e74b9d52078c\n   Organization: Grand Paris Seine Ouest\n   Tags: habitat, logements-insalubres, observatoires, plh, population\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/observatoire-de-lhabitat\n\n3. Communes SRU et DALO\n   ID: 5bd89da406e3e738f68c0ec7\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: dalo, donnees-territoriales, sru\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/communes-sru-et-dalo\n\n4. Application de l’article L.302-5 du Code de la construction et de l’habitation en Bretagne\n   ID: 68cbc42cdf952493fcc0bce6\n   Organization: Direction régionale de l'environnement, de l'aménagement et du logement de Bretagne\n   Tags: article-302-5-du-cch, bretagne, dalo, donnees-ouvertes, habitat-urbain\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/application-de-larticle-l-302-5-du-code-de-la-construction-et-de-lhabitation-en-bretagne\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:12:47Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "annuaire de l'éducation",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 26 dataset(s) for query: 'annuaire de l'éducation'\nPage 1 of results:\n\n1. Annuaire de l'éducation\n   ID: 5889d03fa3a72974cbf0d5b1\n   Organization: Ministères de l'Éducation nationale\n   Tags: cfa, cite-scolaire, colleges, demi-pension, donnees-de-reference\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-leducation\n\n2. Annuaire de l'éducation de la région Bretagne\n   ID: 622be2fd013e075d0c927463\n   Organization: Région Bretagne\n   Tags: cfa, cite-scolaire, colleges, demi-pension, ecoles\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-leducation-de-la-region-bretagne\n\n3. Les ULIS\n   ID: 69cb4711943ad3ae78b42a2b\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleves-etudiants-et-apprentis, ulis\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/les-ulis\n\n4. Annuaire des bureaux des entreprises des lycées professionnels et polyvalents\n   ID: 6503d805d0fd3360f16e33b0\n   Organization: Ministères de l'Éducation nationale\n   Tags: annuaire, bureau-des-entreprises, etablissements-dont-ips, lycees-professionnels, organisation-du-systeme-scolaire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/annuaire-des-bureaux-des-entreprises-des-lycees-professionnels-et-polyvalents\n\n5. SLA - Annuaire de l'éducation\n   ID: 61aa0bd356edd333bc993395\n   Organization: Saint-Louis Agglomération\n   Tags: education, etablissement-scolaire, petite-enfance-enfance-jeunesse\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/sla-annuaire-de-leducation\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 26 dataset(s) for query: 'annuaire de l'éducation'\nPage 1 of results:\n\n1. Annuaire de l'éducation\n   ID: 5889d03fa3a72974cbf0d5b1\n   Organization: Ministères de l'Éducation nationale\n   Tags: cfa, cite-scolaire, colleges, demi-pension, donnees-de-reference\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-leducation\n\n2. Annuaire de l'éducation de la région Bretagne\n   ID: 622be2fd013e075d0c927463\n   Organization: Région Bretagne\n   Tags: cfa, cite-scolaire, colleges, demi-pension, ecoles\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/annuaire-de-leducation-de-la-region-bretagne\n\n3. Les ULIS\n   ID: 69cb4711943ad3ae78b42a2b\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleves-etudiants-et-apprentis, ulis\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/les-ulis\n\n4. Annuaire des bureaux des entreprises des lycées professionnels et polyvalents\n   ID: 6503d805d0fd3360f16e33b0\n   Organization: Ministères de l'Éducation nationale\n   Tags: annuaire, bureau-des-entreprises, etablissements-dont-ips, lycees-professionnels, organisation-du-systeme-scolaire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/annuaire-des-bureaux-des-entreprises-des-lycees-professionnels-et-polyvalents\n\n5. SLA - Annuaire de l'éducation\n   ID: 61aa0bd356edd333bc993395\n   Organization: Saint-Louis Agglomération\n   Tags: education, etablissement-scolaire, petite-enfance-enfance-jeunesse\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/sla-annuaire-de-leducation\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T08:18:26Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "indice de position sociale collèges",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 17 dataset(s) for query: 'indice de position sociale collèges'\nPage 1 of results:\n\n1. Indices de position sociale des collèges (2016-2021)\n   ID: 63478da6e4e27dba6feacfa4\n   Organization: Ministères de l'Éducation nationale\n   Tags: colleges, eleves, etablissements-dont-ips\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-colleges-de-france-metropolitaine-et-drom\n\n2. Indices de position sociale dans les collèges (2022)\n   ID: 64265b62141b6f2153538672\n   Organization: Ministères de l'Éducation nationale\n   Tags: colleges, eleves, eleves-etudiants-et-apprentis\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-colleges-a-partir-de-2022\n\n3. Indices de position sociale des collèges (à partir de 2023)\n   ID: 664d7247ce9d483d0ee5a98b\n   Organization: Ministères de l'Éducation nationale\n   Tags: college, eleve, etablissement-prive-sous-contrat, etablissement-public, etablissements-dont-ips\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/ips-colleges-a-partir-de-2023\n\n4. Éducation : indices de position sociale dans les collèges de Haute-Garonne - 2022-2023\n   ID: 647abc13f5187ea6071c70c7\n   Organization: Conseil départemental de la Haute-Garonne - Haute-Garonne Open Data\n   Tags: college, education, education-nationale, etablissement-scolaire, jeunesse\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-colleges-de-haute-garonne-2022-2023\n\n5. Indices de position sociale des lycées (à partir de 2023)\n   ID: 664d720768d6ab64e06740f0\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleve, etablissement-prive-sous-contrat, etablissement-public, etablissements-dont-ips, indice-de-position-sociale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ips-lycees-a-partir-de-2023\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 17 dataset(s) for query: 'indice de position sociale collèges'\nPage 1 of results:\n\n1. Indices de position sociale des collèges (2016-2021)\n   ID: 63478da6e4e27dba6feacfa4\n   Organization: Ministères de l'Éducation nationale\n   Tags: colleges, eleves, etablissements-dont-ips\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-colleges-de-france-metropolitaine-et-drom\n\n2. Indices de position sociale dans les collèges (2022)\n   ID: 64265b62141b6f2153538672\n   Organization: Ministères de l'Éducation nationale\n   Tags: colleges, eleves, eleves-etudiants-et-apprentis\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-colleges-a-partir-de-2022\n\n3. Indices de position sociale des collèges (à partir de 2023)\n   ID: 664d7247ce9d483d0ee5a98b\n   Organization: Ministères de l'Éducation nationale\n   Tags: college, eleve, etablissement-prive-sous-contrat, etablissement-public, etablissements-dont-ips\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/ips-colleges-a-partir-de-2023\n\n4. Éducation : indices de position sociale dans les collèges de Haute-Garonne - 2022-2023\n   ID: 647abc13f5187ea6071c70c7\n   Organization: Conseil départemental de la Haute-Garonne - Haute-Garonne Open Data\n   Tags: college, education, education-nationale, etablissement-scolaire, jeunesse\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-colleges-de-haute-garonne-2022-2023\n\n5. Indices de position sociale des lycées (à partir de 2023)\n   ID: 664d720768d6ab64e06740f0\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleve, etablissement-prive-sous-contrat, etablissement-public, etablissements-dont-ips, indice-de-position-sociale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ips-lycees-a-partir-de-2023\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "64265b62141b6f2153538672"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Indices de position sociale dans les collèges (2022)\nDataset ID: 64265b62141b6f2153538672\nTotal resources: 4\n\n1. fr-en-ips-colleges-ap2022.csv\n   Resource ID: 28e511a7-af0d-48c7-a8bb-2f38ec003f49\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-colleges-ap2022/exports/csv?use_labels=true\n\n2. fr-en-ips-colleges-ap2022.json\n   Resource ID: 689f1546-7f14-402d-ab09-29035e376a3e\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-colleges-ap2022/exports/json\n\n3. IPS-PCS - Table de passage - Septembre 2022.xlsx\n   Resource ID: 142bd41d-1aec-41bf-b94a-b72c1545a71c\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-colleges-ap2022/attachments/ips_pcs_table_de_passage_septembre_2022_xlsx\n\n4. Table de passage IPS-PCS 2022.xlsx\n   Resource ID: c45b291a-7c38-4d87-9a64-b2c0c9aa1176\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-colleges-ap2022/attachments/table_de_passage_ips_pcs_2022_xlsx\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Indices de position sociale dans les collèges (2022)\nDataset ID: 64265b62141b6f2153538672\nTotal resources: 4\n\n1. fr-en-ips-colleges-ap2022.csv\n   Resource ID: 28e511a7-af0d-48c7-a8bb-2f38ec003f49\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-colleges-ap2022/exports/csv?use_labels=true\n\n2. fr-en-ips-colleges-ap2022.json\n   Resource ID: 689f1546-7f14-402d-ab09-29035e376a3e\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-colleges-ap2022/exports/json\n\n3. IPS-PCS - Table de passage - Septembre 2022.xlsx\n   Resource ID: 142bd41d-1aec-41bf-b94a-b72c1545a71c\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-colleges-ap2022/attachments/ips_pcs_table_de_passage_septembre_2022_xlsx\n\n4. Table de passage IPS-PCS 2022.xlsx\n   Resource ID: c45b291a-7c38-4d87-9a64-b2c0c9aa1176\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-colleges-ap2022/attachments/table_de_passage_ips_pcs_2022_xlsx\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "28e511a7-af0d-48c7-a8bb-2f38ec003f49",
+      "filter_column": "UAI",
+      "filter_value": "0010005A",
+      "filter_operator": "exact",
+      "page_size": 3
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: fr-en-ips-colleges-ap2022.csv\nResource ID: 28e511a7-af0d-48c7-a8bb-2f38ec003f49\nDataset: Indices de position sociale dans les collèges (2022) (ID: 64265b62141b6f2153538672)\n\nFilter: UAI exact 0010005A\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 3)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Rentrée scolaire, Académie, Code du département, Département, UAI, Nom de l'établissment, Code INSEE de la commune, Nom de la commune, Secteur, Effectifs, IPS, Ecart-type de l'IPS\n\nData (1 row):\n  Row 1:\n    __id: 1\n    Rentrée scolaire: 2022-2023\n    Académie: LYON\n    Code du département: 001\n    Département: AIN\n    UAI: 0010005A\n    Nom de l'établissment: COLLEGE ROGER POULNARD\n    Code INSEE de la commune: 01025\n    Nom de la commune: BAGE DOMMARTIN\n    Secteur: public\n    Effectifs: 540.0\n    IPS: 110.4\n    Ecart-type de l'IPS: 31.3"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: fr-en-ips-colleges-ap2022.csv\nResource ID: 28e511a7-af0d-48c7-a8bb-2f38ec003f49\nDataset: Indices de position sociale dans les collèges (2022) (ID: 64265b62141b6f2153538672)\n\nFilter: UAI exact 0010005A\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 3)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Rentrée scolaire, Académie, Code du département, Département, UAI, Nom de l'établissment, Code INSEE de la commune, Nom de la commune, Secteur, Effectifs, IPS, Ecart-type de l'IPS\n\nData (1 row):\n  Row 1:\n    __id: 1\n    Rentrée scolaire: 2022-2023\n    Académie: LYON\n    Code du département: 001\n    Département: AIN\n    UAI: 0010005A\n    Nom de l'établissment: COLLEGE ROGER POULNARD\n    Code INSEE de la commune: 01025\n    Nom de la commune: BAGE DOMMARTIN\n    Secteur: public\n    Effectifs: 540.0\n    IPS: 110.4\n    Ecart-type de l'IPS: 31.3"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}
