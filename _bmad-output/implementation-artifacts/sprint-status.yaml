@@ -67,10 +67,10 @@ development_status:
   epic-5: in-progress
   5-1-lecteur-unique-d-items-api-anti-fuite-et-gel-du-jeu-d-évalua: done
   5-2-fonctions-de-texte-partagées-normalisation-mots-nombres-kand: done
-  5-3-évaluation-phase-génération-sans-réseau: in-progress
+  5-3-évaluation-phase-génération-sans-réseau: done
   5-4-juge-principal-claude-prompt-batch-api-et-cache-de-verdicts: done
   5-5-adaptateur-mistral-et-second-juge-sur-l-échantillon-de-20: done
-  5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: backlog
+  5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: in-progress
   epic-5-retrospective: optional
 
   epic-6: backlog
@@ -97,7 +97,7 @@ development_status:
   epic-8-retrospective: optional
 
   epic-9: in-progress
-  9-1-registre-des-licences-et-configuration-des-données: in-progress
+  9-1-registre-des-licences-et-configuration-des-données: backlog
   9-2-générateur-mistral-prouvé-gabarits-sans-exemple-journal-d-ap: done
   9-3-étape-seed-amorces-publiques-ou-mistral-exclusion-anti-fuite: backlog
   9-4-étape-generate-génération-idempotente-et-traces-d-outils: backlog
@@ -108,7 +108,7 @@ development_status:
   epic-9-retrospective: optional
 
   epic-10: in-progress
-  10-1-environnement-d-entraînement-windows-et-mesure-h-win-train: in-progress
+  10-1-environnement-d-entraînement-windows-et-mesure-h-win-train: review
   10-2-rendu-en-tokens-et-masque-de-perte-h-masque: backlog
   10-3-mesures-de-coût-d-un-run-fr-33: backlog
   10-4-runs-d-entraînement-configurables-slmsp-train-run: backlog
