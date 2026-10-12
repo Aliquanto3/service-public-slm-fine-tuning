@@ -1,0 +1,111 @@
+[project]
+name = "slmsp"
+version = "0.1.0"
+description = "Assistant IA local du secteur public : évaluation, Données d'entraînement et fine-tuning de SLM"
+requires-python = "==3.12.*"
+# Socle runtime (AD-2) : aucune bibliothèque lourde ici.
+dependencies = [
+    "numpy==2.5.4",
+    "pydantic==2.14.1",
+    "jsonschema==4.26.0",
+    "psutil==7.2.2",
+    "nvidia-ml-py==13.615.71",
+    "python-dotenv==1.2.4",
+    "mcp==2.3.0",
+]
+
+# Extras d'outillage (AD-2). Unsloth et bfcl-eval vivent dans des environnements isolés,
+# hors de ce lock.
+[project.optional-dependencies]
+fetch = ["huggingface-hub==2.2.0"]
+data = ["mistralai==3.2.0", "duckdb==1.5.6", "pyarrow==26.0.0"]
+judge = ["anthropic==1.13.0"]
+bench = ["lm-eval==0.4.13", "sacrebleu==2.6.0"]
+train = [
+    "torch==2.14.1",
+    "transformers==5.17.0",
+    "trl==1.13.0",
+    "peft==0.21.2",
+    "bitsandbytes==0.50.2",
+    "accelerate==1.15.0",
+]
+app = ["pywebview==6.2.1", "pyinstaller==6.22.3"]
+
+[project.scripts]
+slmsp = "slmsp.cli:main"
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "ruff==0.17.0"]
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv]
+# Le projet ne vise que Windows (D2) : le lock ne résout pas Linux ni macOS.
+environments = ["sys_platform == 'win32'"]
+# transformers 5.17.0 (épinglé pour Unsloth) exige huggingface-hub<2 alors que l'extra
+# `fetch` épingle huggingface-hub 2.2.0 : les deux extras ne s'installent pas ensemble.
+conflicts = [[{ extra = "fetch" }, { extra = "train" }]]
+
+# torch CUDA (AD-28, D-nuit-A1-17) : roue torch-2.14.1+cu130-cp312-win_amd64.
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# build_calibrage.py est en lecture seule et ne suit ni le format ni les règles de style :
+# il est exclu de ruff en entier (donc aussi de TID251, pour son urllib.request).
+extend-exclude = ["_bmad", "_bmad-output", ".claude", "eval/calibrage/build_calibrage.py"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# AD-3 verrou 1 : anthropic seulement dans slmsp/judge/.
+"anthropic".msg = "anthropic n'est importable que dans slmsp/judge/ (AD-3)."
+# mistralai seulement dans slmsp/mistral/.
+"mistralai".msg = "mistralai n'est importable que dans slmsp/mistral/ (AD-3, AD-4)."
+# AD-4 : clients HTTP seulement dans slmsp/net/.
+"httpx".msg = "Client HTTP interdit hors de slmsp/net/ : utiliser slmsp.net.client(profil) (AD-4)."
+"httpx2".msg = "Client HTTP interdit hors de slmsp/net/ : utiliser slmsp.net.client(profil) (AD-4)."
+"requests".msg = "Client HTTP interdit hors de slmsp/net/ : utiliser slmsp.net.client(profil) (AD-4)."
+"urllib.request".msg = "Client HTTP interdit hors de slmsp/net/ : utiliser slmsp.net.client(profil) (AD-4)."
+"http.client".msg = "Client HTTP interdit hors de slmsp/net/ : utiliser slmsp.net.client(profil) (AD-4)."
+"urllib3".msg = "Client HTTP interdit hors de slmsp/net/ : utiliser slmsp.net.client(profil) (AD-4)."
+"aiohttp".msg = "Client HTTP interdit hors de slmsp/net/ : utiliser slmsp.net.client(profil) (AD-4)."
+# AD-4 : aucune publication, nulle part. Les méthodes d'instance (push_to_hub, HfApi.*) sont
+# détectées par tests/test_architecture.py (règle `publication`).
+"huggingface_hub.upload_file".msg = "Publication interdite (D1, AD-4)."
+"huggingface_hub.upload_folder".msg = "Publication interdite (D1, AD-4)."
+"huggingface_hub.upload_large_folder".msg = "Publication interdite (D1, AD-4)."
+"huggingface_hub.create_commit".msg = "Publication interdite (D1, AD-4)."
+"huggingface_hub.create_repo".msg = "Publication interdite (D1, AD-4)."
+
+[tool.ruff.lint.per-file-ignores]
+# ruff lève TID251 en bloc par fichier : la matrice exacte est vérifiée par
+# tests/test_architecture.py.
+"src/slmsp/judge/**" = ["TID251"]
+"src/slmsp/mistral/**" = ["TID251"]
+"src/slmsp/net/**" = ["TID251"]
+"eval/outils/**" = ["TID251"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--import-mode=importlib",
+    "--strict-markers",
+    "-m",
+    "not reseau and not gpu and not lent",
+]
+markers = [
+    "reseau: accède au réseau hors boucle locale (exclu par défaut)",
+    "gpu: exige un GPU CUDA (exclu par défaut)",
+    "lent: test long (exclu par défaut)",
+]

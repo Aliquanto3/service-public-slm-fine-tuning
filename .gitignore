@@ -11,18 +11,27 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 
-# Données, modèles et sorties lourdes (versionnées hors git)
-data/raw/
-data/cache/
-models/
-checkpoints/
+# Artefacts lourds hors git (AD-21). Les motifs de dossiers racine sont ancrés :
+# « index/ » non ancré ignorerait aussi src/slmsp/index/.
+/index/
+/vendor/
+/models/
+/data/raw/
+/data/cache/
+/data/train/*/train.jsonl
+/runs/**/checkpoints/
+/runs/**/adaptateur/
 outputs/
-runs/
 *.gguf
 *.safetensors
 *.bin
+*.pt
+*.pth
+*.ckpt
 *.parquet
 wandb/
 
 # Répertoire partagé des artefacts du run (SLMSP_VAR_DIR par défaut)
 var/
+# Versionnés (AD-21) : run.json, scores.json, verdicts.jsonl, rapports,
+# data/train/*/MANIFEST.json, data/registre-licences.toml, .env.example.
