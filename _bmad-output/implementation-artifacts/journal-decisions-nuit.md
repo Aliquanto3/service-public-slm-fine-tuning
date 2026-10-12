@@ -330,3 +330,14 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - Les noms fictifs reviennent d'un item à l'autre.
   - CR-001 utilise des noms courants de personnalités, sans prénom.
   - Un `.gitattributes` avec `*.jsonl eol=lf` est recommandé.
+
+## D-nuit-S5.1 — Décisions de la story 5.1 (gel et anti-fuite)
+- Les SHA-256 du manifeste sont calculés après normalisation CRLF→LF. Le `.gitattributes` (`* text=auto eol=lf`) a été ajouté en complément, commit 11a0d50.
+- Le schéma d'item est fermé : il accepte les champs ajoutés par les stories 7.2 et 7.4, qu'il juge cohérents avec SPEC §3.
+- Format des `regles` RD : `{optionnel, ordre_libre, arguments: {nom: {exact}|{contient_un_de}|{optionnel: true}}}`.
+- Un écart de composition ne bloque pas un gel `provisoire`, mais il bloque un gel `relu`.
+- Échantillons :
+  - second juge : au moins 3 items par Tâche ;
+  - relecture humaine : 20 % par strate Tâche × difficulté, et au moins 1 item par strate.
+- Contrôle anti-fuite : 5-grammes hachés, plus les identifiants protégés (empreintes des amorces, URL, `dataset_id`/`resource_id`).
+- Vérification à blanc : les 140 items réels passent `slmsp eval gel --verifier-seulement` sans erreur bloquante.
