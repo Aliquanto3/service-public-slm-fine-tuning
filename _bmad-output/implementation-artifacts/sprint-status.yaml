@@ -64,13 +64,13 @@ development_status:
   4-5-commande-slmsp-ask-et-test-du-document-témoin: backlog
   epic-4-retrospective: optional
 
-  epic-5: in-progress
+  epic-5: done
   5-1-lecteur-unique-d-items-api-anti-fuite-et-gel-du-jeu-d-évalua: done
   5-2-fonctions-de-texte-partagées-normalisation-mots-nombres-kand: done
   5-3-évaluation-phase-génération-sans-réseau: done
   5-4-juge-principal-claude-prompt-batch-api-et-cache-de-verdicts: done
   5-5-adaptateur-mistral-et-second-juge-sur-l-échantillon-de-20: done
-  5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: in-progress
+  5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: done
   epic-5-retrospective: optional
 
   epic-6: backlog
@@ -91,7 +91,7 @@ development_status:
 
   epic-8: in-progress
   8-1-téléchargement-et-préparation-des-modèles-de-base-candidats: done
-  8-2-sonde-de-tool-calling-par-modèle-h-tools: backlog
+  8-2-sonde-de-tool-calling-par-modèle-h-tools: in-progress
   8-3-exécution-de-la-baseline-jeu-maison-benchmarks-mesures: backlog
   8-4-rapport-de-baseline: backlog
   epic-8-retrospective: optional

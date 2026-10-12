@@ -453,3 +453,8 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   4. Baseline réduite sur le Jeu d'évaluation maison seulement, pour 1 ou 2 modèles : Granite 1B, plus un 3B si le budget le permet. Les Benchmarks standardisés (6.x) et les mesures FR-26 sont exclus.
 - **Mis en attente sans fusion** : la 9.1 (worktree `agent-a114d5fa3f921abf8`) et la 10.1 (worktree `agent-ac1ba7aa2d001c9e8`, avec les constats de revue à traiter). Les phases D (données) et E (entraînement) sont reportées.
 - **Limite hebdomadaire d'Anaël** : l'orchestrateur n'a pas accès au compteur d'usage Claude (`/usage`). Il suit à la place les tokens consommés par les sous-agents.
+
+## D-nuit-S5.3 et S5.6 — Banc de bout en bout (mode économe)
+- **Le banc évalue un modèle de bout en bout** : génération sans réseau, puis notation (contrôles automatiques, Juge Claude, second juge Mistral). Test réel sur 8 items avec Granite 1B en CPU : génération en 2 min 41 s, notation pour 0,23 €.
+- **Scores provisoires** (non relus, 1 item par Tâche, donc **non significatifs**) : Q 0, RD 50, CR 2,5, LC 0, CO 81,5, RE 12,5, CT 0, NR 100.
+- **Tokens consommés par les sous-agents en mode économe** : 5.3 environ 126 k, 5.6 environ 263 k (reprise comprise).

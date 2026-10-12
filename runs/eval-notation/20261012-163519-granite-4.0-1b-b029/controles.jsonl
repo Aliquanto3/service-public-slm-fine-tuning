@@ -1,0 +1,8 @@
+{"controle":{"corrigees":5,"fautes":6,"fautes_corrigees":[true,true,true,true,true,false],"mots_inseres_hors_faute":2,"mots_modifies_hors_faute":1,"mots_texte":135,"rappel":0.8333,"taux_hors_faute":0.0222},"item_id":"CO-001","tache":"CO"}
+{"controle":{},"item_id":"CR-001","tache":"CR"}
+{"controle":{"emplacements":{"[Adresse de l'association]":true,"[Commune]":true,"[Date du courrier]":true,"[Nom et qualité du signataire]":true,"[Référence du dossier]":false,"[Téléphone et courriel du service]":true},"emplacements_reussis":false},"item_id":"CT-001","tache":"CT"}
+{"controle":{"gain_km":-0.868,"km_entree":77.32,"km_sortie":76.452},"item_id":"LC-001","tache":"LC"}
+{"controle":{},"item_id":"NR-001","tache":"NR"}
+{"controle":{"urls_inventees":[]},"item_id":"Q-001","tache":"Q"}
+{"controle":{"appariement":[null],"appels_attendus":1,"appels_valides":0,"litige":false,"methode":"identifiant","reponse_exacte":true},"item_id":"RD-001","tache":"RD"}
+{"controle":{"longueur_demandee":"courte","mots":86,"plafond_mots":80,"respect_longueur":false},"item_id":"RE-001","tache":"RE"}
