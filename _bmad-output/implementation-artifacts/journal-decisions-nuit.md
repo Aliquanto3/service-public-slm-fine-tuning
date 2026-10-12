@@ -272,3 +272,20 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 ## D-nuit-B-2 — Préchargement des modèles candidats pendant la phase B (07h37)
 - **Décision** : les téléchargements de la phase C.1 (fichiers seuls, sous `models/`, ignoré par git) démarrent dès la phase B, en arrière-plan. La story 8.1 conserve la vérification, l'épinglage et la configuration, et réutilise ces fichiers.
 - **Justification** : les téléchargements durent longtemps (plusieurs dizaines de Go) et n'ont aucun effet sur le code. C'est du temps gagné sur le chemin critique, et l'opération est réversible.
+
+## D-nuit-B-3 — Consommation internet limitée de 07h47 à 08h30 (consigne d'Anaël)
+- **Consigne d'Anaël** reçue à 07h47 : « Limite ta consommation d'internet pour les 40 prochaines minutes ».
+- **Application** :
+  - tous les téléchargements sont suspendus : modèles, sources du jeu d'évaluation, installations lourdes, dont torch ;
+  - pas d'appel d'API ;
+  - reprise après 08h30.
+- **Constat à 07h48** : aucun processus de téléchargement n'était encore actif.
+
+## D-nuit-S1.1 — Décisions de la story 1.1 (détail : `spec-1-1-squelette-du-projet-et-outillage.md`)
+- Index PyTorch cu130, explicite, avec un verrouillage limité à `win32`.
+- `conflicts = [[fetch],[train]]` dans `pyproject.toml` : `transformers` 5.17 exige `huggingface-hub<2`, et `fetch` épingle la 2.2.0. **À trancher par Anaël.**
+- `BUDGET_*` retiré de `.env.example`. Les plafonds sont dans `config/budgets.toml` (story 1.5).
+- Revue : deux constats reportés.
+  - La règle AD-24 ne détecte pas les lecteurs numpy, pyarrow et duckdb.
+  - Les transports httpx du SDK mcp ne sont pas encore verrouillés ; ils le seront en 1.4 et 3.3.
+- `HF_TOKEN` est vide dans `.env`. Les téléchargements de modèles se font en accès anonyme, ce qui suffit pour des dépôts publics.
