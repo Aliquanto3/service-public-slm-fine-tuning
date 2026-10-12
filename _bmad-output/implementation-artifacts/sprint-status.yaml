@@ -53,7 +53,7 @@ development_status:
   epic-3: in-progress
   3-1-outils-exposés-figés-validation-des-appels-et-format-de-cass: done
   3-2-bac-à-sable-mcp-rejeu-des-cassettes: backlog
-  3-3-client-mcp-en-direct-enregistrement-et-slmsp-mcp-record: in-progress
+  3-3-client-mcp-en-direct-enregistrement-et-slmsp-mcp-record: done
   epic-3-retrospective: optional
 
   epic-4: backlog
@@ -83,7 +83,7 @@ development_status:
   epic-7: in-progress
   7-1-outil-de-construction-et-instantanés-des-sources-réelles: done
   7-2-items-question-60-et-non-régression-30: done
-  7-3-items-recherche-de-données-40-et-cassettes: backlog
+  7-3-items-recherche-de-données-40-et-cassettes: in-progress
   7-4-items-compte-rendu-25-et-langage-clair-25: done
   7-5-items-correction-résumé-et-courrier-type-3-15: backlog
   7-6-double-vérification-finale-échantillon-de-revue-et-gel-v1-0: backlog
