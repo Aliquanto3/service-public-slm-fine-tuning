@@ -1,0 +1,35 @@
+# Corpus MediaTech de l'Index local v1 (AD-28, D3) : parquet lus directement par
+# `resolve/<revision>`, jamais par le datasets-server. Valeurs relevées le 2026-10-12.
+# Destination : data/raw/mediatech/<nom>/<revision>/<nom du fichier>.
+
+[[jeux]]
+nom = "service-public"
+depot = "AgentPublic/service-public"
+revision = "7ddda096b33d48dbda8143fc8c349a8b0e031a3a"
+licence = "etalab-2.0"
+
+[[jeux.fichiers]]
+chemin = "data/service-public-latest/service_public_part_0.parquet"
+sha256 = "e92ddb136dd1312f1b515124aea554646207fcb42112be8e6250196022a86d30"
+taille = 196640948
+
+[[jeux]]
+nom = "data-gouv-datasets-catalog"
+depot = "AgentPublic/data-gouv-datasets-catalog"
+revision = "11f3d3c9481ad478dbcff52e85d73b7fd10533ce"
+licence = "etalab-2.0"
+
+[[jeux.fichiers]]
+chemin = "data/data-gouv-datasets-catalog-latest/data_gouv_datasets_catalog_part_0.parquet"
+sha256 = "32a8c96ad22fea7719fc8fa92f765218a6dc4c1493a252d3bc68afbb5cafd891"
+taille = 208708497
+
+[[jeux.fichiers]]
+chemin = "data/data-gouv-datasets-catalog-latest/data_gouv_datasets_catalog_part_1.parquet"
+sha256 = "7fb33b76725388c9a695a9e60d39ddb590bc641dd7d3171f41f1091bc57c5476"
+taille = 223345448
+
+[[jeux.fichiers]]
+chemin = "data/data-gouv-datasets-catalog-latest/data_gouv_datasets_catalog_part_2.parquet"
+sha256 = "2174d151d7f990874bde05c847c57420f41bec831b48b7af754fcb6143a52479"
+taille = 34698180

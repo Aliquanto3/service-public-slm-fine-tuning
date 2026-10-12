@@ -1,0 +1,33 @@
+# llama.cpp figé (AD-6, AD-28, D-nuit-A1-18) : tag b11429, base de la release stable v0.6.0.
+# Valeurs relevées le 2026-10-12 par l'API GitHub (champ `digest` des assets).
+# Commit du tag : d81235049384534c167caea52b85a694f6103d14.
+
+schema_version = 1
+tag = "b11429"
+depot = "ggml-org/llama.cpp"
+
+[assets.cpu] # 19 398 918 octets
+nom = "llama-b11429-bin-win-cpu-x64.zip"
+sha256 = "1283323272b04cd07905816a597a0da810918102de958f4ff6f7bbaa70ed2efe"
+
+[assets.cuda] # 264 478 423 octets
+nom = "llama-b11429-bin-win-cuda-12.4-x64.zip"
+sha256 = "dd6df685c1024e6aa55ca55ad35038692d5e284d4dc895e7a646c3245d3d14ff"
+
+[assets.cudart] # 391 443 627 octets
+nom = "cudart-llama-bin-win-cuda-12.4-x64.zip"
+sha256 = "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6"
+
+# Archive des sources du tag : https://github.com/<depot>/archive/refs/tags/<tag>.zip
+# (39 712 933 octets, dossier racine `llama.cpp-b11429/`). `nom` est le nom du fichier local.
+[sources]
+nom = "llama.cpp-b11429-sources.zip"
+sha256 = "2c14039274aaf94ad0e4cbdeb575b32cc3d75c3b8bae28b052c9ff9c20ffea46"
+
+# Chemin relatif à vendor/llama.cpp/<tag>/ → SHA-256, vérifié après extraction.
+# Valeurs relevées le 2026-10-12 sur l'extraction réelle.
+[binaires]
+"bin-cpu/llama-server.exe" = "7e236243c9b670c6a49410c03186fd575c57a0efe3fd8a21d8727503d571d5b6"
+"bin-cuda/llama-server.exe" = "7e236243c9b670c6a49410c03186fd575c57a0efe3fd8a21d8727503d571d5b6"
+"bin-cuda/ggml-cuda.dll" = "e839574a72208d598c3c7e8bd19edfa1b8ab8fb523108f8853cad0df9e25cd6c"
+"src/convert_hf_to_gguf.py" = "e9a1da876330bbce9687541ab31736542a01b4ac43c6686126514a50f122fb7f"

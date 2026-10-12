@@ -1,0 +1,10 @@
+# Téléchargeur unique `slmsp fetch` (AD-28, AD-21, AD-22).
+
+[telechargement]
+essais = 6 # tentatives par requête (429, 500 à 504, erreur de transport)
+attente_initiale = 2.0 # secondes, doublée à chaque échec
+attente_max = 120.0 # secondes ; plafonne aussi le `Retry-After` du serveur
+taille_bloc = 1048576 # octets lus et écrits à la fois (1 Mio)
+seuil_verification_espace = 1000000000 # 1 Go : au-delà, l'espace libre est vérifié d'abord
+marge_espace = 2147483648 # octets laissés libres en plus de l'écriture prévue (2 Gio)
+facteur_extraction = 3.0 # octets extraits estimés : au moins taille de l'archive × facteur

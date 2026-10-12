@@ -1,0 +1,17 @@
+# BGE-M3 en GGUF Q8_0 : embedding des requêtes de l'Index local (AD-28, D7).
+# Servi par `llama-server --embedding --pooling cls`. Valeurs relevées le 2026-10-12.
+
+schema_version = 1
+depot_hf = "ggml-org/bge-m3-Q8_0-GGUF"
+revision = "9eba04c5d75ba5a1595e45de734d36bef4e5cb98"
+fichiers = []
+contexte = 8192
+embedding = true
+pooling = "cls"
+# Sans objet pour un modèle d'embedding, mais exigé par le schéma.
+protocole_outils = "natif"
+
+[gguf] # 634 553 760 octets
+depot = "ggml-org/bge-m3-Q8_0-GGUF"
+fichier = "bge-m3-q8_0.gguf"
+sha256 = "aa473d51f451a22f0fcf39ba3330c14bed38a385712b1113440f69df4047a173"
