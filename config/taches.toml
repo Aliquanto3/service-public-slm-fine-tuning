@@ -1,0 +1,70 @@
+# Table des Tâches de l'Assistant (AD-14, story 4.1).
+# Chaque prompt vit dans config/prompts/taches/ et suit la règle D1.1 : des consignes
+# seulement, sans aucun exemple. Il est validé par slmsp.core.gabarits au chargement.
+# L'usage de ces prompts comme entrée d'entraînement attend la validation d'Anaël
+# (D-nuit-A1-10) ; s'il la refuse, il les réécrit lui-même.
+schema_version = 1
+defaut = "Q"
+
+[taches.Q]
+libelle = "Question"
+actif = true
+prompt = "Q.md"
+outils_autorises = []
+avertissement = "Ne vaut pas avis juridique."
+
+[taches.RD]
+libelle = "Recherche de données"
+actif = true
+prompt = "RD.md"
+outils_autorises = [
+    "search_datasets",
+    "get_dataset_info",
+    "list_dataset_resources",
+    "query_resource_data",
+    "get_resource_info",
+]
+
+[taches.CR]
+libelle = "Compte rendu"
+actif = true
+prompt = "CR.md"
+outils_autorises = []
+variantes = { morceau = "CR-morceau.md", fusion = "CR-fusion.md" }
+
+[taches.LC]
+libelle = "Langage clair"
+actif = true
+prompt = "LC.md"
+outils_autorises = []
+
+[taches.CO]
+libelle = "Correction"
+actif = true
+prompt = "CO.md"
+outils_autorises = []
+
+[taches.RE]
+libelle = "Résumé"
+actif = true
+prompt = "RE.md"
+outils_autorises = []
+
+[taches.CT]
+libelle = "Courrier type"
+actif = true
+prompt = "CT.md"
+outils_autorises = []
+
+[taches.NR]
+libelle = "Non-régression"
+actif = true
+prompt = "NR.md"
+outils_autorises = []
+
+[taches.TR]
+libelle = "Traduction"
+actif = true
+prompt = "TR.md"
+outils_autorises = []
+avertissement = "Traduction automatique, à vérifier."
