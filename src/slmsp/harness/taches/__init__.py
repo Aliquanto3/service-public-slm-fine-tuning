@@ -52,6 +52,7 @@ EMPLACEMENTS: Final[tuple[str, ...]] = (
     "passages",
     "consigne",
     "type_courrier",
+    "type",
     "objet",
     "elements_connus",
     "longueur_demandee",
@@ -64,7 +65,11 @@ EMPLACEMENTS: Final[tuple[str, ...]] = (
     "document",
     "parties",
 )
-"""Vocabulaire fermé des emplacements admis dans un prompt de Tâche."""
+"""Vocabulaire fermé des emplacements admis dans un prompt de Tâche.
+
+`type` est un synonyme de `type_courrier` (items CT du jeu gelé), rendu comme lui par
+`harness.prompts` (`SYNONYMES_CLES`).
+"""
 
 NOM_CONFIG: Final = "taches.toml"
 

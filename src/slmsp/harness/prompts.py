@@ -26,6 +26,9 @@ Règle unique de rendu du message `user` :
   imbriqué sont indentées de 2 espaces, au niveau du texte de l'élément. La clé
   `nb_mots`, une métadonnée, est ignorée. Toute autre clé, ou une clé absente des
   emplacements du prompt, lève `EntreeInvalide`.
+- Synonymes (`SYNONYMES_CLES`) : la clé `type` (items CT du jeu gelé) est admise
+  seulement si le prompt la déclare ; elle est rendue exactement comme `type_courrier`
+  (même libellé, même place). `type` et `type_courrier` ensemble lèvent `EntreeInvalide`.
 - Entrées vides refusées (`EntreeInvalide`) : entrée texte blanche, valeur vide (chaîne
   blanche, liste ou dict vide) à tout niveau, entrée objet sans aucune clé de
   `CLES_CONTENU`.
@@ -84,6 +87,9 @@ LIBELLES_CLES: Final[Mapping[str, str]] = {
     "parties": "Parties",
 }
 """Libellé de section de chaque clé d'entrée."""
+
+SYNONYMES_CLES: Final[Mapping[str, str]] = {"type": "type_courrier"}
+"""Clé d'entrée admise → clé canonique de `ORDRE_CLES`, dont elle prend le rendu."""
 
 CLES_IGNOREES: Final[frozenset[str]] = frozenset({"nb_mots"})
 """Métadonnées d'une entrée objet, jamais rendues."""
@@ -177,7 +183,30 @@ def _scalaire(valeur: Any, chemin: str) -> str:
     )
 
 
+def _canoniser(
+    entree: Mapping[str, Any], emplacements: tuple[str, ...], code: str
+) -> Mapping[str, Any]:
+    """`entree` où chaque synonyme déclaré par le prompt prend le nom de sa clé canonique."""
+    presents = [cle for cle in SYNONYMES_CLES if cle in entree]
+    if not presents:
+        return entree
+    canonique = dict(entree)
+    for cle in presents:
+        cible = SYNONYMES_CLES[cle]
+        if cle not in emplacements:
+            raise EntreeInvalide(
+                f"Tâche {code} : clé d'entrée « {cle} » non déclarée par le prompt"
+            )
+        if cible in entree:
+            raise EntreeInvalide(
+                f"Tâche {code} : clés d'entrée « {cle} » et « {cible} » en conflit"
+            )
+        canonique[cible] = canonique.pop(cle)
+    return canonique
+
+
 def _rendre_objet(entree: Mapping[str, Any], emplacements: tuple[str, ...], code: str) -> str:
+    entree = _canoniser(entree, emplacements, code)
     for cle in entree:
         if cle in CLES_IGNOREES:
             continue
@@ -273,12 +302,15 @@ def entree_de_requete(requete: RequeteTache) -> str | dict[str, Any]:
     """Entrée prête pour `construire_messages`, depuis une `RequeteTache` de `core.items`.
 
     Une entrée objet reçoit `longueur_demandee` (RE) et `type_courrier` (CT) depuis les
-    options, sauf si elle les porte déjà. L'entrée est copiée : la requête n'est jamais
-    modifiée.
+    options, sauf si elle les porte déjà, directement ou par un synonyme (`type`). L'entrée
+    est copiée : la requête n'est jamais modifiée.
     """
     entree = copy.deepcopy(requete.entree)
     if isinstance(entree, dict):
         for cle in CLES_OPTIONS:
+            synonymes = [nom for nom, cible in SYNONYMES_CLES.items() if cible == cle]
+            if any(nom in entree for nom in synonymes):
+                continue
             if cle in requete.options and cle not in entree:
                 entree[cle] = copy.deepcopy(requete.options[cle])
     return entree

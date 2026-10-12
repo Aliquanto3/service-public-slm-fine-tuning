@@ -148,7 +148,12 @@ def _sortie_json_generique(texte: str) -> list[Evenement]:
 
 
 class ClientLlama:
-    """`LlmPort` d'un `llama-server` de génération sur `127.0.0.1:<port>`."""
+    """`LlmPort` d'un `llama-server` de génération sur `127.0.0.1:<port>`.
+
+    `taille_contexte` (tokens, `None` si inconnue) est la taille du contexte du serveur ;
+    le Harnais la lit pour découper les comptes rendus longs (story 4.4). Ce n'est pas un
+    membre de `LlmPort` : un port sans cet attribut est traité en un seul appel.
+    """
 
     def __init__(
         self,
@@ -156,6 +161,7 @@ class ClientLlama:
         *,
         protocole_outils: str = "natif",
         chat_template_kwargs: Mapping[str, Any] | None = None,
+        taille_contexte: int | None = None,
         transport_interne: Any = None,
     ) -> None:
         if protocole_outils not in PROTOCOLES:
@@ -166,6 +172,7 @@ class ClientLlama:
         self.port = port
         self.protocole_outils = protocole_outils
         self.chat_template_kwargs = dict(chat_template_kwargs or {})
+        self.taille_contexte = taille_contexte
         self._http = client_local(port, transport_interne=transport_interne)
         self._base = f"http://127.0.0.1:{port}"
 

@@ -57,6 +57,14 @@ def test_est_un_llmport(client: ClientLlama) -> None:
     assert isinstance(client, LlmPort)
 
 
+def test_taille_contexte(client: ClientLlama, serveur_factice: Any) -> None:
+    """Attribut optionnel lu par le Harnais (story 4.4), hors du `Protocol` `LlmPort`."""
+    assert client.taille_contexte is None
+    with ClientLlama(serveur_factice.port, taille_contexte=2048) as instance:
+        assert instance.taille_contexte == 2048
+        assert isinstance(instance, LlmPort)
+
+
 def test_flux_texte(client: ClientLlama, serveur_factice: Any) -> None:
     evenements = list(
         client.generer(MESSAGES, tools=OUTILS, options={"temperature": 0, "seed": 42})

@@ -47,6 +47,7 @@ from slmsp.harness.taches import (
     diffuser,
     traitement,
 )
+from slmsp.harness.taches import compte_rendu as module_compte_rendu
 from slmsp.harness.taches import question as module_question
 from slmsp.harness.taches import redaction as module_redaction
 
@@ -293,11 +294,18 @@ def test_entree_brute_tache_objet(table, config_harnais, code, cle) -> None:
 def test_registre_paresseux_et_repli(monkeypatch) -> None:
     assert traitement("Q") is module_question.traiter
     assert traitement("LC") is module_redaction.traiter
-    assert traitement("CR") is module_redaction.traiter  # repli tant que la 4.4 manque
+    assert traitement("CR") is module_compte_rendu.traiter  # story 4.4
     assert traitement("Q") is traitement("Q")
     with pytest.raises(TacheInconnue):
         traitement("ZZ")
     modules = dict(module_taches.MODULES_TRAITEMENT)
+    modules["CR"] = "module_absent_cr"
+    monkeypatch.setattr(module_taches, "MODULES_TRAITEMENT", MappingProxyType(modules))
+    monkeypatch.setattr(
+        module_taches, "REPLIS_TRAITEMENT", MappingProxyType({"module_absent_cr": "redaction"})
+    )
+    traitement.cache_clear()
+    assert traitement("CR") is module_redaction.traiter  # repli d'un module absent
     modules["LC"] = "module_absent"
     monkeypatch.setattr(module_taches, "MODULES_TRAITEMENT", MappingProxyType(modules))
     traitement.cache_clear()

@@ -78,7 +78,7 @@ def test_prompts_charges(table: TableTaches) -> None:
         "LC": ("consigne", "texte"),
         "CO": ("consigne", "texte"),
         "RE": ("consigne", "texte", "document", "longueur_demandee"),
-        "CT": ("consigne", "type_courrier", "objet", "elements_connus"),
+        "CT": ("consigne", "type_courrier", "type", "objet", "elements_connus"),
         "TR": ("consigne", "langue_source", "langue_cible", "texte"),
     }
     for code, attendus in emplacements.items():

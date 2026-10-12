@@ -581,6 +581,7 @@ class ServeurLlama:
                 self.port,
                 protocole_outils=self.config.protocole_outils,
                 chat_template_kwargs=self.config.chat_template_kwargs,
+                taille_contexte=self.config.contexte,
             )
         return self._client
 

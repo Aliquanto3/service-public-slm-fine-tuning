@@ -51,6 +51,8 @@ prompt = "RE.md"
 outils_autorises = []
 
 [taches.CT]
+# CT.md déclare aussi l'emplacement `type`, synonyme de `type_courrier` (clé des items CT
+# du jeu gelé) : il est rendu exactement comme lui (story 4.4, harness.prompts).
 libelle = "Courrier type"
 actif = true
 prompt = "CT.md"

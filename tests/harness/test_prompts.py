@@ -22,6 +22,7 @@ from slmsp.harness.prompts import (
     AUCUN_PASSAGE,
     LIBELLES_CLES,
     ORDRE_CLES,
+    SYNONYMES_CLES,
     EntreeInvalide,
     construire_messages,
     entree_de_requete,
@@ -165,6 +166,24 @@ def test_courrier_type_valeurs_imbriquees(table: TableTaches) -> None:
     )
 
 
+def test_courrier_type_cle_type_synonyme(table: TableTaches) -> None:
+    """Items CT gelés : `type` est rendu exactement comme `type_courrier` (story 4.4)."""
+    ct = table.tache("CT")
+    base = {"consigne": _f(0), "objet": _f(2), "elements_connus": [_f(3)], "nb_mots": 4}
+    avec_type = construire_messages(ct, {"type": _f(1), **base})
+    avec_type_courrier = construire_messages(ct, {**base, "type_courrier": _f(1)})
+    assert avec_type == avec_type_courrier
+    assert avec_type[1]["content"].startswith(
+        "Consigne :\n<texte-factice-0>\n\nType de courrier :\n<texte-factice-1>\n\nObjet :"
+    )
+    with pytest.raises(EntreeInvalide, match="en conflit"):
+        construire_messages(ct, {**base, "type": _f(1), "type_courrier": _f(1)})
+    with pytest.raises(EntreeInvalide, match="« type » non déclarée"):
+        construire_messages(table.tache("LC"), {"texte": _f(0), "type": _f(1)})
+    with pytest.raises(EntreeInvalide, match="valeur vide"):
+        construire_messages(ct, {**base, "type": " "})
+
+
 def test_resume_et_traduction(table: TableTaches) -> None:
     re_ = construire_messages(
         table.tache("RE"), {"document": _f(2), "longueur_demandee": _f(1), "consigne": _f(0)}
@@ -209,8 +228,10 @@ def test_cle_inconnue_ou_non_declaree(table: TableTaches) -> None:
         construire_messages(table.tache("LC"), {"autre": "x"})
     with pytest.raises(EntreeInvalide, match="« notes » non déclarée"):
         construire_messages(table.tache("LC"), {"notes": "x"})
-    with pytest.raises(EntreeInvalide, match="« type » inconnue"):
-        construire_messages(table.tache("CT"), {"type": "x"})
+    with pytest.raises(EntreeInvalide, match="« type » non déclarée"):
+        construire_messages(table.tache("LC"), {"type": "x"})
+    with pytest.raises(EntreeInvalide, match="« genre » inconnue"):
+        construire_messages(table.tache("CT"), {"genre": "x"})
 
 
 @pytest.mark.parametrize(
@@ -356,15 +377,22 @@ def test_toute_tache_produit_une_conversation_valide(table: TableTaches) -> None
             if prompt.entree_texte:
                 entree: Any = _f(0)
             else:
-                entree = {nom: _f(i) for i, nom in enumerate(prompt.emplacements)}
+                entree = {
+                    nom: _f(i)
+                    for i, nom in enumerate(prompt.emplacements)
+                    if nom not in SYNONYMES_CLES
+                }
             messages = construire_messages(tache, entree, variante=variante)
             assert len(valider_conversation(messages)) == 2
             assert messages[0]["role"] == "system" and messages[1]["role"] == "user"
 
 
 def test_vocabulaire_coherent() -> None:
-    assert set(ORDRE_CLES) | {"question", "demande", "passages"} == set(EMPLACEMENTS)
-    assert set(LIBELLES_CLES) == set(EMPLACEMENTS) - {"passages"}
+    synonymes = set(SYNONYMES_CLES)
+    assert set(ORDRE_CLES) | synonymes | {"question", "demande", "passages"} == set(EMPLACEMENTS)
+    assert set(LIBELLES_CLES) == set(EMPLACEMENTS) - {"passages"} - synonymes
+    assert not synonymes & set(ORDRE_CLES)
+    assert set(SYNONYMES_CLES.values()) <= set(ORDRE_CLES)
     assert len(set(ORDRE_CLES)) == len(ORDRE_CLES)
 
 
@@ -372,6 +400,7 @@ def test_regle_documentee_dans_le_module() -> None:
     doc = prompts.__doc__ or ""
     assert "Règle unique de rendu" in doc
     assert "nb_mots" in doc and "ORDRE_CLES" in doc and "formater_passages" in doc
+    assert "SYNONYMES_CLES" in doc and "`type`" in doc
 
 
 def test_harness_n_importe_que_core_et_mcp() -> None:
@@ -416,5 +445,7 @@ def test_entree_de_requete(table: TableTaches) -> None:
         tache="CT", entree={"type_courrier": _f(3)}, options={"type_courrier": _f(0)}
     )
     assert entree_de_requete(deja) == {"type_courrier": _f(3)}
+    gele = RequeteTache(tache="CT", entree={"type": _f(3)}, options={"type_courrier": _f(0)})
+    assert entree_de_requete(gele) == {"type": _f(3)}
     texte = RequeteTache(tache="Q", entree=_f(0), options={"parametres": {}})
     assert entree_de_requete(texte) == _f(0)

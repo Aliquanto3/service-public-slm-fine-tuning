@@ -19,5 +19,6 @@ Tu rédiges un courrier administratif du type demandé, à partir de l'objet et 
 
 - consigne : consigne de l'Agent sur le courrier attendu.
 - type_courrier : type de courrier à rédiger.
+- type : type de courrier à rédiger (synonyme de type_courrier).
 - objet : objet du courrier.
 - elements_connus : éléments connus à reprendre dans le courrier.

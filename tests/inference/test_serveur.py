@@ -234,6 +234,7 @@ def test_demarrer_generer_arreter(
         (entree,) = _entrees()
         assert entree["pid"] == s.pid and entree["port"] == s.port
         evenements = list(s.client().generer([{"role": "user", "content": "<factice>"}]))
+        assert s.client().taille_contexte == s.config.contexte == 4096
         assert evenements[:2] == [Jeton(texte="Bon"), Jeton(texte="jour")]
         assert isinstance(evenements[-1], Fin)
         description = s.description()
