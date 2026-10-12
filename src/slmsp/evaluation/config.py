@@ -1,7 +1,10 @@
-"""Constantes du Jeu d'évaluation (SPEC §2, §5.4, §7) et chemins du gel.
+"""Constantes du Jeu d'évaluation (SPEC §2, §5.4, §7), chemins du gel, config de notation.
 
 Les cibles reprennent celles de `eval/outils/construire_jeu.py` (outil hors paquet, jamais
 importé). Les parts sont des fractions exactes : `ceil(0,2 × 15)` vaut 3, pas 4.
+
+`charger_evaluation` lit `config/evaluation.toml` (story 5.6) : équivalences typographiques
+de la Correction, plafonds de longueur des résumés et seuils des Scores de Tâche.
 """
 
 from __future__ import annotations
@@ -9,8 +12,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from fractions import Fraction
 from pathlib import Path
-from typing import Final
+from typing import Annotated, Final, Literal
 
+from pydantic import Field, StringConstraints
+
+from slmsp.core.config import ModeleConfig, charger_toml, racine_projet
 from slmsp.core.items import CODES_THEMATIQUES
 
 CIBLES: Final[Mapping[str, tuple[int, int, int]]] = {
@@ -91,3 +97,58 @@ def chemin_grille(racine: Path) -> Path:
 def chemin_config_outils(racine: Path) -> Path:
     """Outils MCP figés : `<racine>/config/outils-mcp.toml`."""
     return racine / "config" / "outils-mcp.toml"
+
+
+# --- Notation : `config/evaluation.toml` (story 5.6) ------------------------------------------
+
+NOM_EVALUATION: Final = "evaluation.toml"
+
+
+class ConfigCO(ModeleConfig):
+    """Section `[co]` : équivalences typographiques de la Correction (motif → forme commune)."""
+
+    equivalences: dict[Annotated[str, StringConstraints(min_length=1)], str] = Field(
+        default_factory=dict
+    )
+
+
+class LongueursRE(ModeleConfig):
+    """Section `[re.longueurs]` : plafond de mots d'un résumé par longueur demandée."""
+
+    courte: int = Field(ge=1)
+    moyenne: int = Field(ge=1)
+    detaillee: int = Field(ge=1)
+
+
+class ConfigRE(ModeleConfig):
+    """Section `[re]`."""
+
+    longueurs: LongueursRE
+
+
+class Seuils(ModeleConfig):
+    """Section `[seuils]` : kappa fragile, gain de Kandel-Moles minimal, plafond LC."""
+
+    kappa_fragile: float = Field(ge=-1, le=1, allow_inf_nan=False)
+    gain_km_min: float = Field(allow_inf_nan=False)
+    plafond_lc: float = Field(ge=0, le=100, allow_inf_nan=False)
+
+
+class ConfigEvaluation(ModeleConfig):
+    """Contenu de `config/evaluation.toml`."""
+
+    schema_version: Literal[1]
+    co: ConfigCO
+    re: ConfigRE
+    seuils: Seuils
+
+
+def charger_evaluation(chemin: str | Path | None = None) -> ConfigEvaluation:
+    """Lit `evaluation.toml` (défaut : `<racine du projet>/config/evaluation.toml`).
+
+    Lève `ConfigurationInvalide` si le fichier est absent, illisible ou non conforme.
+    """
+    return charger_toml(
+        chemin if chemin is not None else racine_projet() / "config" / NOM_EVALUATION,
+        ConfigEvaluation,
+    )

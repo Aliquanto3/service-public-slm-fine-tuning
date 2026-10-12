@@ -740,7 +740,12 @@ def test_cli_usage(arguments: list[str], depot: Path, capsys: pytest.CaptureFixt
     assert "Traceback" not in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("action", ["run", "sonde-outils"])
+@pytest.mark.parametrize("action", ["sonde-outils"])  # `run` : implémentée (stories 5.3, 5.6)
 def test_cli_actions_non_implementees(action: str, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["eval", action, "--modele", "base:x"]) == CodeSortie.USAGE
     assert f"non implémentée : eval {action}" in capsys.readouterr().err
+
+
+def test_cli_run_options_manquantes(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["eval", "run", "--modele", "base:x"]) == CodeSortie.USAGE
+    assert "--quantification, --jeu requis" in capsys.readouterr().err

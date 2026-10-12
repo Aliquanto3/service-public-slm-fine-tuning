@@ -1,0 +1,40 @@
+# Notation du banc d'évaluation (story 5.6). Lu par `slmsp.evaluation.config.charger_evaluation`.
+# Tolérances des contrôles automatiques, longueurs de résumé et seuils des Scores de Tâche
+# (grille `eval/grille-juge-v1.md`). Changer une valeur change les scores : la noter au journal.
+
+schema_version = 1
+
+[co]
+# Équivalences typographiques tolérées par la Correction (CO), appliquées au texte source
+# comme à la sortie avant l'alignement par mots : une reformulation de ponctuation
+# typographique n'est ni une faute corrigée ni une modification hors faute.
+# Clé : caractère ou suite remplacée ; valeur : forme commune.
+[co.equivalences]
+# Apostrophe typographique → apostrophe droite.
+"’" = "'"
+# Guillemets français et anglais → guillemet droit.
+"«" = '"'
+"»" = '"'
+"“" = '"'
+"”" = '"'
+# Points de suspension (un caractère) → trois points.
+"…" = "..."
+# Espace insécable, espace fine insécable et espace fine → espace simple.
+" " = " "
+" " = " "
+" " = " "
+
+[re.longueurs]
+# Plafond de mots d'un résumé (RE) selon `longueur_demandee` (premier mot, sans accent) ;
+# le respect de la longueur est rapporté, il n'entre pas dans le score.
+courte = 80
+moyenne = 200
+detaillee = 400
+
+[seuils]
+# Kappa de Tâche (minimum des kappas par critère) sous lequel la Tâche est marquée `fragile`.
+kappa_fragile = 0.6
+# Gain moyen de Kandel-Moles (sortie − entrée) en dessous duquel le score LC est plafonné.
+gain_km_min = 10.0
+# Plafond du score LC quand le gain moyen de Kandel-Moles est insuffisant (`plafonne_lc`).
+plafond_lc = 50.0

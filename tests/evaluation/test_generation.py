@@ -584,14 +584,30 @@ def test_items_inconnus(depot_eval: Path, modeles: Path, fabrique: Fabrique) -> 
 
 
 @pytest.mark.parametrize("phase", [None, "notation", "toutes"])
-def test_cli_phase_non_implementee(
-    phase: str | None, depot_eval: Path, capsys: pytest.CaptureFixture[str]
+def test_cli_phase_notation_ou_toutes(
+    phase: str | None,
+    depot_eval: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """Story 5.6 : `notation` exige `--depuis` ; `toutes` ouvre les juges avant la génération."""
+    from slmsp.core.erreurs import SecretManquant
+    from slmsp.evaluation import notation
+
+    def refuser(*_args: Any, **_options: Any) -> Any:
+        raise SecretManquant("clé d'API absente")
+
+    monkeypatch.setattr(notation, "ouvrir_juges", refuser)
     arguments = ["eval", "run", "--modele", MODELE, "--quantification", "q4_k_m", "--jeu", "v1.0"]
     if phase is not None:
         arguments += ["--phase", phase]
-    assert main([*arguments, "--racine", str(depot_eval)]) == CodeSortie.USAGE
-    assert "non implémentée (story 5.6)" in capsys.readouterr().err
+    code = main([*arguments, "--racine", str(depot_eval)])
+    if phase == "notation":
+        assert code == CodeSortie.USAGE
+        assert "--depuis RUN_ID requis" in capsys.readouterr().err
+    else:
+        assert code == CodeSortie.ERREUR
+        assert "clé d'API absente" in capsys.readouterr().err
     assert not (depot_eval / "runs").exists()
 
 
