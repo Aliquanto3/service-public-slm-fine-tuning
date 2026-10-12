@@ -38,8 +38,8 @@ development_status:
   epic-1: in-progress
   1-1-squelette-du-projet-et-outillage: done
   1-2-noyau-configuration-secrets-erreurs-json-canonique-et-ressou: done
-  1-3-noyau-runs-immuables-lecteur-contrôlé-ports-messages-et-évèn: in-progress
-  1-4-passerelle-réseau-unique-profils-liste-blanche-journal-des-r: backlog
+  1-3-noyau-runs-immuables-lecteur-contrôlé-ports-messages-et-évèn: done
+  1-4-passerelle-réseau-unique-profils-liste-blanche-journal-des-r: in-progress
   1-5-registre-de-budget-persistant-avec-arrêt-au-plafond: backlog
   epic-1-retrospective: optional
 

@@ -290,3 +290,14 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - Les transports httpx du SDK mcp ne sont pas encore verrouillés ; ils le seront en 1.4 et 3.3.
 - `HF_TOKEN` est vide dans `.env`. Les téléchargements de modèles se font en accès anonyme, ce qui suffit pour des dépôts publics.
 - **Levée** à 08:15, sur consigne d'Anaël (« tu peux réutiliser Internet si besoin »). Les téléchargements de modèles (Qwen 4B, GGUF Ministral 8B) et d'instantanés de sources reprennent.
+
+## D-nuit-S1.2 et S1.3 — Décisions des stories 1.2 et 1.3 (détail dans les specs)
+- **1.2**
+  - `SLMSP_ENV_FILE` et `SLMSP_MODELS_DIR` permettent de pointer le dépôt principal depuis un worktree.
+  - Les sous-processus ne reçoivent ni `*_API_KEY`, ni `*_TOKEN`, ni `*SECRET*`.
+  - Le verrou GPU est un verrou d'octets posé sur `gpu.lock`.
+- **1.3**
+  - Le seuil d'espace libre est fixé à 2 Gio.
+  - `Mode` prend les valeurs `connecte`, `hors-ligne-detecte` et `hors-ligne-force`.
+  - Le lecteur `data` refuse aussi `runs/eval/`.
+- **À trancher par Anaël (1.3, différé)** : le journal `appels-mistral.sqlite`, lisible par `data` et `train`, contiendra aussi les appels du second juge, donc des textes d'évaluation. Deux options : séparer les journaux en 5.5 et 9.2, ou filtrer à la lecture.
