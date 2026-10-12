@@ -458,3 +458,12 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 - **Le banc évalue un modèle de bout en bout** : génération sans réseau, puis notation (contrôles automatiques, Juge Claude, second juge Mistral). Test réel sur 8 items avec Granite 1B en CPU : génération en 2 min 41 s, notation pour 0,23 €.
 - **Scores provisoires** (non relus, 1 item par Tâche, donc **non significatifs**) : Q 0, RD 50, CR 2,5, LC 0, CO 81,5, RE 12,5, CT 0, NR 100.
 - **Tokens consommés par les sous-agents en mode économe** : 5.3 environ 126 k, 5.6 environ 263 k (reprise comprise).
+
+## D-nuit-C1 — Baseline réduite : Granite 4.0 1B (17h38)
+- **Run** : génération `runs/eval-generation/20261012-171658-granite-4.0-1b-3589` (CUDA, 3,3 s par item, 225 items OK), puis notation `runs/eval-notation/20261012-172922-granite-4.0-1b-be1d` (Juge en batch et second juge sur 34 items). **Coût : 2,95 €.**
+- **Scores de Tâche** (provisoires, non relus) : Q 0,0 · RD 73,3 · CR 32,9 · LC 0,0 (plafonné) · CO 79,3 · RE 31,9 · CT 30,0 · NR 20,0.
+- **Points à expliquer dans le rapport**
+  - Q à 0 : la story 4.2 a observé que Granite ne produit aucun renvoi `[n]`. Un critère bloquant des citations est donc probablement en échec.
+  - LC est plafonné.
+  - Le kappa entre les deux juges est faible (0,00 à 0,17), et plusieurs Tâches sont marquées « fragile ».
+- **Modèle suivant** : Ministral 3B, retenu pour son 5/5 à la sonde d'outils. SmolLM3 (0/5) et Qwen 4B (témoin) sont exclus de la Baseline réduite pour tenir le budget.
