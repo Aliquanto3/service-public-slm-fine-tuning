@@ -1,0 +1,57 @@
+# Passerelle réseau (AD-4) : délais, sonde du Mode et règles des profils.
+# Le profil `assistant` suit seulement `config/liste-blanche.toml`.
+
+[delais] # secondes
+defaut = 30
+mcp = 10
+sonde = 3
+local = 600 # llama-server sur 127.0.0.1
+
+[sonde]
+# Seule requête permise en Mode hors ligne détecté (jamais en hors ligne forcé).
+url = "https://mcp.data.gouv.fr/health"
+
+[profils.outillage]
+# GET et HEAD vers les hôtes de la Liste blanche.
+liste_blanche_en_lecture = true
+
+# Hugging Face : téléchargement seulement (Hub, CDN LFS, Xet).
+[[profils.outillage.regles]]
+nom = "hugging-face"
+methodes = ["GET", "HEAD"]
+suffixes = ["huggingface.co", "hf.co"]
+
+# PyPI : lecture.
+[[profils.outillage.regles]]
+nom = "pypi"
+methodes = ["GET", "HEAD"]
+hotes = ["pypi.org", "files.pythonhosted.org"]
+
+# GitHub : lecture (releases llama.cpp, sources).
+[[profils.outillage.regles]]
+nom = "github"
+methodes = ["GET", "HEAD"]
+hotes = ["github.com", "api.github.com", "codeload.github.com"]
+suffixes = ["githubusercontent.com"]
+
+# torch CUDA (D-nuit-A1-17).
+[[profils.outillage.regles]]
+nom = "pytorch"
+methodes = ["GET", "HEAD"]
+hotes = ["download.pytorch.org"]
+
+# Conditions commerciales de Mistral (D-nuit-A2-10) : cette page seule, GET seul.
+[[profils.outillage.regles]]
+nom = "conditions-mistral"
+methodes = ["GET"]
+hotes = ["legal.mistral.ai"]
+chemins = ["/terms/commercial-terms-of-service"]
+
+# API payantes et MCP data.gouv : POST seulement.
+[[profils.outillage.regles]]
+nom = "api-post"
+methodes = ["POST"]
+hotes = ["api.mistral.ai", "api.anthropic.com", "mcp.data.gouv.fr"]
+
+[profils.aucun]
+# Tout est refusé : ni règle, ni lecture de la Liste blanche.

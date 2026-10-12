@@ -1,0 +1,13 @@
+# Liste blanche du profil `assistant` (AD-4, decisions.md D1.5, §B).
+# Correspondance exacte du nom d'hôte, insensible à la casse et au point final ;
+# HTTPS seulement, port 443. Ni adresse IP ni joker.
+hotes = [
+    "mcp.data.gouv.fr",
+    "www.data.gouv.fr",
+    "www.service-public.gouv.fr",
+    "www.service-public.fr",
+    "www.legifrance.gouv.fr",
+    "entreprendre.service-public.gouv.fr",
+    "entreprendre.service-public.fr",
+    "lannuaire.service-public.fr",
+]
