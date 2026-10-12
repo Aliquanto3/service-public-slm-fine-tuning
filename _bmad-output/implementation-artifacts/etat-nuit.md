@@ -34,13 +34,15 @@ Phase B : socle J1 et Jeu d'évaluation, démarrée à 07h30.
 - 12h05 : **gel du Jeu d'évaluation v1.0-provisoire** (commit 12eef73).
 - 12h13 à 13h49 : stories 4.1, 4.2, 5.4, 3.2, 4.4, 5.5, 8.1, 4.3 et 9.2. La suite passe : 2 464 tests sans échec, mesuré à 13h28.
 
-## En cours : RUN EN PAUSE (15h31)
-- Les sous-agents ont été coupés vers 14h50 par la limite de dépense Claude (journal D-nuit-3).
-- **Anaël demande d'attendre son accord avant de relancer les sous-agents.**
-- Stories interrompues, à reprendre dans leur worktree :
-  - 5.3 : génération de l'évaluation ;
-  - 9.1 : registre des licences ;
-  - 10.1 : environnement d'entraînement, implémentée mais revue inachevée.
+- 15h35 : reprise en **mode économe, sur un périmètre réduit** (D-nuit-4) : une story à la fois, une seule couche de revue.
+- 15h55 : story 5.3, génération de l'évaluation.
+- 16h37 : story 5.6, notation et Scores de Tâche. **Le banc fonctionne de bout en bout.**
+- 17h15 : story 8.2, sonde de tool calling : Granite 4/5 et Ministral 3B 5/5 en `natif`, SmolLM3 0/5, Qwen 2/5 en `json-generique`.
+
+## En cours (17h20)
+- **Baseline réduite** (Jeu maison seul) : Granite 1B sur GPU (CUDA), 225 items, puis notation avec le Juge en batch. Run `runs/eval-generation/20261012-171658-granite-4.0-1b-3589`.
+- Ensuite : Ministral 3B (meilleur 3B à la sonde), puis le rapport de Baseline.
+- Stories en attente, sans fusion : 9.1 et 10.1 (D-nuit-3, D-nuit-4).
 
 ## Bloqué
 Rien pour l'instant. Le réseau a été limité de 07h47 à 08h15 à la demande d'Anaël (D-nuit-B-3) ; la limite est levée.
