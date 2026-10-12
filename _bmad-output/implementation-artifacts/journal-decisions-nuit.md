@@ -439,3 +439,17 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
     - paramètres `loss_type`/`router_aux_loss_coef` propres à Granite mais appliqués à tous les modèles ;
     - chemins absolus dans les artefacts.
 - **Reprise** : la reprise attend l'accord d'Anaël. Chaque story reprend dans son worktree, à partir de sa spec (statut `in-progress`).
+
+## D-nuit-4 — Reprise en mode économe et sur un périmètre réduit (15h35, consigne d'Anaël)
+- **Consigne** : « Reprend sur un périmètre réduit en mettant en place tes solutions de réduction de coût ».
+- **Économies mises en place**
+  - Une seule story à la fois.
+  - Une seule couche de revue par story (Blind Hunter), par surcharge `_bmad/custom/bmad-build-auto.toml`. La revue complète se fera par epic.
+  - Comptes rendus plus courts.
+- **Périmètre réduit**
+  1. Story 5.3 : génération, reprise dans son worktree.
+  2. Story 5.6 : notation et Scores de Tâche.
+  3. Story 8.2 : sonde de tool calling.
+  4. Baseline réduite sur le Jeu d'évaluation maison seulement, pour 1 ou 2 modèles : Granite 1B, plus un 3B si le budget le permet. Les Benchmarks standardisés (6.x) et les mesures FR-26 sont exclus.
+- **Mis en attente sans fusion** : la 9.1 (worktree `agent-a114d5fa3f921abf8`) et la 10.1 (worktree `agent-ac1ba7aa2d001c9e8`, avec les constats de revue à traiter). Les phases D (données) et E (entraînement) sont reportées.
+- **Limite hebdomadaire d'Anaël** : l'orchestrateur n'a pas accès au compteur d'usage Claude (`/usage`). Il suit à la place les tokens consommés par les sous-agents.

@@ -50,3 +50,8 @@ Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même q
 - Le verrou GPU est `gpu.lock`, dans `SLMSP_VAR_DIR`. Toute commande CUDA le prend.
 - `SLMSP_VENDOR_DIR=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\vendor` contient les binaires llama.cpp b11429, en variantes cpu et cuda. Le modèle d'embedding BGE-M3 est sous `models/bge-m3/gguf/`. Le corpus MediaTech est sous `data/raw/mediatech/`.
 - Les tests réels de llama-server sont marqués `integration` (story 2.2). Granite 1B en CPU débite environ 42 tokens/s.
+
+## Mode économe (à partir de 15h35, D-nuit-4)
+- **Revue** : une seule couche, Blind Hunter (`_bmad/custom/bmad-build-auto.toml`). Ne relance pas de revue supplémentaire de ta propre initiative.
+- **Sous-agents** : n'en lance pas d'autres que ceux exigés par le workflow. Lis les fichiers par extraits ciblés plutôt qu'en entier quand c'est possible.
+- **Compte rendu final** : 8 lignes au plus.

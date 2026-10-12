@@ -1,0 +1,15 @@
+# Mode économe du run de nuit (D-nuit-4, consigne d'Anaël du 2026-10-12, 15h35).
+# Une seule couche de revue par story (Blind Hunter) ; la revue complète se fait par epic (bmad-code-review).
+# Pour revenir aux 4 couches : supprimer ce fichier.
+
+[[workflow.review_layers]]
+id = "edge-case-hunter"
+instruction = ""
+
+[[workflow.review_layers]]
+id = "verification-gap"
+instruction = ""
+
+[[workflow.review_layers]]
+id = "intent-alignment"
+instruction = ""
