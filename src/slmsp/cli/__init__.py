@@ -16,18 +16,12 @@ import argparse
 import importlib
 import sys
 from collections.abc import Callable, Iterable, Sequence
-from enum import IntEnum
 
+from slmsp.core.config import appliquer_environnement_impose
+from slmsp.core.erreurs import CodeSortie, SlmspError
 
-class CodeSortie(IntEnum):
-    """Codes de sortie de la CLI (Consistency Conventions du spine)."""
-
-    SUCCES = 0
-    ERREUR = 1
-    USAGE = 2
-    BUDGET_EPUISE = 3
-    MANIFESTE_INVALIDE = 4
-    RESSOURCE_OCCUPEE = 5
+# `CodeSortie` vit dans `slmsp.core.erreurs` et reste importable depuis `slmsp.cli`.
+__all__ = ["SOUS_COMMANDES", "CodeSortie", "construire_parseur", "main"]
 
 
 SOUS_COMMANDES: dict[str, str] = {
@@ -129,12 +123,23 @@ def _code_de_sortie(exc: SystemExit) -> int:
     return CodeSortie.ERREUR
 
 
+def _signaler(exc: SlmspError) -> int:
+    # Message seul, sans trace technique (convention « Erreurs ») ; préfixe sur chaque ligne.
+    for ligne in (str(exc) or type(exc).__name__).splitlines():
+        print(f"slmsp : {ligne}", file=sys.stderr)
+    return int(exc.code_sortie)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Exécute `slmsp` et renvoie le code de sortie."""
     _sortie_utf8()
+    appliquer_environnement_impose()
     arguments = list(sys.argv[1:] if argv is None else argv)
     charger = arguments[:1] if arguments and arguments[0] in SOUS_COMMANDES else []
-    parseur = construire_parseur(charger)
+    try:
+        parseur = construire_parseur(charger)
+    except SlmspError as exc:
+        return _signaler(exc)
     try:
         args, inconnus = parseur.parse_known_args(arguments)
         if inconnus and not getattr(args, "_remplacement", False):
@@ -145,5 +150,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if func is None:
         parseur.print_help(sys.stderr)
         return int(CodeSortie.USAGE)
-    code = func(args)
+    try:
+        code = func(args)
+    except SlmspError as exc:
+        return _signaler(exc)
     return int(CodeSortie.SUCCES if code is None else code)
