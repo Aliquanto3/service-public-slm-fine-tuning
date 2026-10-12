@@ -58,9 +58,9 @@ development_status:
 
   epic-4: in-progress
   4-1-table-des-tâches-prompts-de-tâche-et-construction-unique-des: done
-  4-2-assistantservice-flux-d-évènements-question-fondée-sur-l-ind: in-progress
+  4-2-assistantservice-flux-d-évènements-question-fondée-sur-l-ind: done
   4-3-recherche-de-données-boucle-d-outils-modes-et-repli: backlog
-  4-4-comptes-rendus-longs-découpage-et-fusion: backlog
+  4-4-comptes-rendus-longs-découpage-et-fusion: in-progress
   4-5-commande-slmsp-ask-et-test-du-document-témoin: backlog
   epic-4-retrospective: optional
 

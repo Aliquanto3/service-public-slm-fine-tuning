@@ -379,3 +379,11 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - Paires LC × Q portant sur la même fiche.
   - Aucun item sur les marchés publics.
   - Q-042.
+
+## D-nuit-S4.2 — AssistantService
+- **Test réel de Question fondée sur l'Index**
+  - Qwen3 4B produit 4 citations réelles et l'avertissement juridique.
+  - Granite 1B retrouve les bons passages mais ne produit **aucun renvoi `[n]`**. Le test est marqué xfail.
+  - **Risque** : Granite 1B ne suit pas la consigne de citation. C'est une donnée utile pour la Baseline et pour le choix du modèle de l'essai QLoRA.
+- **Config du Harnais** : 5 itérations, 10 s par appel MCP, sonde de 300 s / 3 s, réserve de 1 024 tokens.
+- **`Sources`** ne contient que les passages effectivement cités.
