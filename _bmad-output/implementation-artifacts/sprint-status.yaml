@@ -51,9 +51,9 @@ development_status:
   epic-2-retrospective: optional
 
   epic-3: in-progress
-  3-1-outils-exposés-figés-validation-des-appels-et-format-de-cass: in-progress
+  3-1-outils-exposés-figés-validation-des-appels-et-format-de-cass: done
   3-2-bac-à-sable-mcp-rejeu-des-cassettes: backlog
-  3-3-client-mcp-en-direct-enregistrement-et-slmsp-mcp-record: backlog
+  3-3-client-mcp-en-direct-enregistrement-et-slmsp-mcp-record: in-progress
   epic-3-retrospective: optional
 
   epic-4: backlog
