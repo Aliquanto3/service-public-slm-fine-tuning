@@ -41,4 +41,4 @@ Rien pour l'instant. Le réseau a été limité de 07h47 à 08h15 à la demande 
 | Service | Dépensé | Plafond |
 |---|---|---|
 | Mistral | 0 € | 30 € |
-| Anthropic (Juge) | 0 € | 10 € |
+| Anthropic (Juge) | 0,06 € | 10 € |

@@ -387,3 +387,10 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - **Risque** : Granite 1B ne suit pas la consigne de citation. C'est une donnée utile pour la Baseline et pour le choix du modèle de l'essai QLoRA.
 - **Config du Harnais** : 5 itérations, 10 s par appel MCP, sonde de 300 s / 3 s, réserve de 1 024 tokens.
 - **`Sources`** ne contient que les passages effectivement cités.
+
+## D-nuit-S5.4 — Juge principal Claude
+- **Coût réel mesuré (H-JUGE-COUT confirmée)** : environ 0,028 € par verdict en appel direct, soit environ 0,014 € en batch. Un modèle évalué sur 170 items jugés en batch coûte donc environ 2,4 €.
+- **Dépense** : 0,0555 € sur le poste anthropic, enregistrée dans le RegistreBudget.
+- **Paramètres** : `max_tokens` 6000, effort medium, sans `temperature` (A1-5).
+- **À trancher par Anaël** : la règle réseau `anthropic-lots` autorise les GET vers `api.anthropic.com` sans restriction de chemin.
+- **Non vérifié** : le chemin Batch API réel n'a pas encore été exercé contre l'API. Il le sera par H-BATCH, à la Baseline.
