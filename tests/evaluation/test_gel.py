@@ -299,6 +299,25 @@ def test_composition_complete_sans_ecart() -> None:
     assert "Q sans réponse : 7 (attendu 8)" in ecarts
 
 
+@pytest.mark.parametrize(
+    ("colonnes", "erreur"),
+    [
+        (["Nombre", "Mois"], "colonne absente des lignes : Mois"),
+        ([], "liste non vide de noms de colonnes attendue"),
+        ("Nombre", "liste non vide de noms de colonnes attendue"),
+    ],
+)
+def test_colonnes_rd_invalides_bloquantes(depot: Path, colonnes: Any, erreur: str) -> None:
+    valeurs = {"lignes": [{"Année": "2020", "Nombre": "134"}], "colonnes": colonnes}
+    items = [
+        {**i, "valeurs_attendues": valeurs} if i["id"] == "RD-001" else i
+        for i in items_par_defaut()
+    ]
+    ecrire_items(depot, items)
+    erreurs = verifier_jeu("v1.0", depot).erreurs
+    assert f"RD-001 : `valeurs_attendues.colonnes` : {erreur}" in erreurs
+
+
 def test_cassette_absente_bloquante(depot: Path) -> None:
     (depot / "eval" / "cassettes" / "RD-001" / "session.json").unlink()
     rapport = verifier_jeu("v1.0", depot)

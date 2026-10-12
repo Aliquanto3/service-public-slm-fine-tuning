@@ -9,7 +9,8 @@ Chaque `controle_<tache>(item, generation, …)` rend un `dict` JSON, écrit tel
 - **RD** : appel valide par appariement glouton des appels attendus aux appels émis (même
   outil, `regles` satisfaites, ordre de la liste sauf `ordre_libre`) ; un appel attendu
   `optionnel` est hors comptes ; sans `regles` (calibrage), l'outil seul compte. Réponse
-  exacte : avec `valeurs_attendues.lignes`, toutes leurs valeurs numériques figurent parmi
+  exacte : avec `valeurs_attendues.lignes`, toutes leurs valeurs numériques (des seules
+  `valeurs_attendues.colonnes` si la liste est donnée) figurent parmi
   `extraire_nombres(texte)` ; sinon l'identifiant **ou** l'URL normalisée du jeu principal
   (ou d'un jeu de `autres_jeux_cites_possibles`) figure dans le texte. Litige : le titre
   normalisé d'un de ces jeux est dans le texte sans identifiant ni URL (le Juge tranche).
@@ -174,15 +175,22 @@ def _jeux_references(item: ItemRD) -> list[Mapping[str, Any]]:
 
 
 def _valeurs_numeriques(valeurs_attendues: Any) -> list[Decimal] | None:
-    """Valeurs numériques des `lignes` attendues ; `None` sans lignes."""
+    """Valeurs numériques des `lignes` attendues (seulement des `colonnes` si elles sont
+    listées) ; `None` sans lignes."""
     if not isinstance(valeurs_attendues, Mapping):
         return None
     lignes = valeurs_attendues.get("lignes")
     if not isinstance(lignes, list):
         return None
+    colonnes = valeurs_attendues.get("colonnes")
     nombres: list[Decimal] = []
     for ligne in lignes:
-        cellules = ligne.values() if isinstance(ligne, Mapping) else [ligne]
+        if not isinstance(ligne, Mapping):
+            cellules: Iterable[Any] = [ligne]
+        elif isinstance(colonnes, list):
+            cellules = [ligne.get(colonne) for colonne in colonnes]
+        else:
+            cellules = ligne.values()
         for cellule in cellules:
             if isinstance(cellule, bool) or cellule is None:
                 continue

@@ -331,6 +331,19 @@ def test_reprise(depot_eval: Path, modeles: Path, fabrique: Fabrique) -> None:
         reprendre_generation(run_id, racine=depot_eval, fabrique=fabrique)
 
 
+def test_reprise_garde_les_erreurs_anterieures(depot_eval: Path, modeles: Path) -> None:
+    llm = FakeLlmDeterministe()
+    llm.lever = lambda messages: RuntimeError(mots(3, "panne")) if len(llm.appels) == 1 else None
+    fabrique = Fabrique(llm)  # seul le tout premier appel échoue : premier item en erreur
+    run_id = _run_interrompu(depot_eval, fabrique)
+    run = ouvrir_run(run_id, racine=depot_eval)
+    assert [g.statut for g in lignes(run)] == ["erreur", "ok", "ok"]
+
+    rapport = reprendre_generation(run_id, racine=depot_eval, fabrique=fabrique)
+    assert (rapport.ok, rapport.erreur, rapport.sautes) == (5, 0, 3)  # session sans erreur
+    assert rapport.statut == "partiel-erreur" and run.statut_courant() == "partiel-erreur"
+
+
 def test_reprise_refusee(depot_eval: Path, modeles: Path, fabrique: Fabrique) -> None:
     run_id = _run_interrompu(depot_eval, fabrique)
     with pytest.raises(ManifesteInvalide, match="modele_ref"):

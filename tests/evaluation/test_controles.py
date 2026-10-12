@@ -194,6 +194,19 @@ def test_rd_valeurs_numeriques() -> None:
     assert set(partiel["valeurs_manquantes"]) == {"26", "113838"}
 
 
+def test_rd_valeurs_des_colonnes_declarees() -> None:
+    item = V10.item("RD-017")  # Caen : (2020, mois 1 à 3) → 134, 137, 75
+    reponse = "Janvier 2020 : 134 cartes, février : 137, mars : 75."
+    sans = controle_rd(item, generation(item, reponse))
+    assert sans["reponse_exacte"] is False and set(sans["valeurs_manquantes"]) == {"1", "2", "3"}
+    valeurs = {**item.valeurs_attendues, "colonnes": ["Nombre"]}
+    declare = item.model_copy(update={"valeurs_attendues": valeurs})
+    assert controle_rd(declare, generation(declare, reponse))["reponse_exacte"] is True
+    partiel = controle_rd(declare, generation(declare, "Janvier : 134."))
+    assert partiel["reponse_exacte"] is False
+    assert set(partiel["valeurs_manquantes"]) == {"137", "75"}
+
+
 def test_rd_calibrage_sans_regles_ni_identifiant() -> None:
     item = CALIBRAGE.item("RD-001")  # R-001 : jeu principal sans `id`, règles textuelles
     emis = [("search_datasets", {"query": "x"}), ("get_dataset_info", {"dataset_id": "y"})]

@@ -455,6 +455,9 @@ def _noter_dans(
             ligne = _ligne_verdict(item, juge, jugement)
             run.ajouter_jsonl(FICHIER_VERDICTS, ligne)
             lignes_verdicts.setdefault(item.id, []).append(ligne)
+    for nom, ecrit in ((FICHIER_CONTROLES, controles), (FICHIER_VERDICTS, lignes_verdicts)):
+        if not ecrit:
+            run.ecrire(nom, b"")  # les quatre fichiers existent même sans ligne
 
     manifeste_run = run.manifeste
     scores = calculer_scores(

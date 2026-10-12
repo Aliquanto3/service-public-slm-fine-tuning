@@ -2,7 +2,8 @@
 
 - `verifier_jeu` : items stricts, cassettes RD existantes et lisibles, empreinte
   `tools_list_sha256` conforme à `config/outils-mcp.toml`, arguments des appels attendus
-  connus de l'outil, puis composition comparée à SPEC §2. N'écrit rien.
+  connus de l'outil, `valeurs_attendues.colonnes` présentes dans les lignes, puis
+  composition comparée à SPEC §2. N'écrit rien.
 - `gel` : vérifie, tire les deux échantillons (second juge, relecture) avec la graine,
   écrit l'export de revue puis `MANIFEST.json`, chacun par création exclusive.
 - `verifier_manifeste` : recalcule les empreintes des fichiers listés.
@@ -21,7 +22,7 @@ import random
 import re
 import subprocess
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from fractions import Fraction
@@ -124,6 +125,29 @@ class RapportVerification:
         return "\n".join(lignes)
 
 
+def _erreurs_colonnes(item: ItemRD) -> list[str]:
+    """`valeurs_attendues.colonnes` : liste non vide de noms présents dans une des `lignes`."""
+    valeurs = item.valeurs_attendues
+    if not isinstance(valeurs, Mapping) or "colonnes" not in valeurs:
+        return []
+    colonnes = valeurs["colonnes"]
+    champ = f"{item.id} : `valeurs_attendues.colonnes`"
+    if (
+        not isinstance(colonnes, list)
+        or not colonnes
+        or not all(isinstance(c, str) for c in colonnes)
+    ):
+        return [f"{champ} : liste non vide de noms de colonnes attendue"]
+    lignes = valeurs.get("lignes")
+    connues = {
+        cle
+        for ligne in (lignes if isinstance(lignes, list) else [])
+        if isinstance(ligne, Mapping)
+        for cle in ligne
+    }
+    return [f"{champ} : colonne absente des lignes : {c}" for c in colonnes if c not in connues]
+
+
 def _verifier_rd(rapport: RapportVerification, jeu: Jeu, racine: Path) -> None:
     rd = [item for item in jeu.items if isinstance(item, ItemRD)]
     if not rd:
@@ -139,6 +163,7 @@ def _verifier_rd(rapport: RapportVerification, jeu: Jeu, racine: Path) -> None:
     }
     vues: set[Path] = set()
     for item in rd:
+        rapport.erreurs.extend(_erreurs_colonnes(item))
         try:
             chemins = resoudre_cassettes(jeu, item)
         except ItemInvalide as exc:

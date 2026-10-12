@@ -135,7 +135,7 @@ def relecture_validee(dossier: str | Path) -> bool:
     """Vrai si `dossier` contient un `relecture-validee.json` objet à `date` ISO valide."""
     chemin = Path(dossier) / NOM_VALIDATION
     try:
-        contenu = json.loads(chemin.read_text(encoding="utf-8"))
+        contenu = json.loads(chemin.read_text(encoding="utf-8-sig"))  # BOM de PowerShell 5.1
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return False
     if not isinstance(contenu, dict) or not isinstance(contenu.get("date"), str):

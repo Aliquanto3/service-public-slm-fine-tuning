@@ -252,6 +252,7 @@ class JugeFactice:
     `juger(demandes)` (principal) ou `juger(demandes, echantillon)` (second). Un verdict en
     cache n'est jamais redemandé (`appels_payants` n'augmente pas). `budget_apres=n` épuise
     le budget après `n` appels payants ; `invalides` force des verdicts `invalide` ;
+    `non_juges` (item → motif) rend `non-juge` sans appel (`erreur-api`, `limite-debit`) ;
     `fabriquer(item)` remplace `verdict_factice`.
     """
 
@@ -264,6 +265,7 @@ class JugeFactice:
         cout: float = 0.0125,
         budget_apres: int | None = None,
         invalides: Sequence[str] = (),
+        non_juges: Mapping[str, str] | None = None,
     ) -> None:
         self.cache = cache
         self.nom = nom
@@ -271,6 +273,7 @@ class JugeFactice:
         self.cout = cout
         self.budget_apres = budget_apres
         self.invalides = set(invalides)
+        self.non_juges = dict(non_juges or {})
         self.appels_payants = 0
         self.recus: list[str] = []
 
@@ -290,6 +293,10 @@ class JugeFactice:
                     {"juge": self.nom, "item": item.id, "sortie": demande.sortie.get("texte")}
                 )
             )
+            if item.id in self.non_juges:
+                motif = self.non_juges[item.id]
+                resultats.append(ResultatFactice(item.id, cle, "non-juge", None, False, 0.0, motif))
+                continue
             en_cache = self.cache.lire(cle)
             if en_cache is not None:
                 verdict = en_cache.verdict

@@ -258,6 +258,120 @@ def test_budget_epuise_leve_par_le_juge(depot_eval: Path, cache: CacheVerdicts) 
     assert rapport.scores.taches["Q"].kappa.effectif == 0
 
 
+@pytest.mark.parametrize("motif", ["erreur-api", "limite-debit"])
+def test_non_juge_hors_budget_partiel_erreur(
+    motif: str, depot_eval: Path, cache: CacheVerdicts
+) -> None:
+    parent = fabriquer_generation(depot_eval, ["NR-001", "NR-002"])
+    juges = juges_factices(cache, non_juges={"NR-001": motif})
+    rapport = noter(parent.run_id, juges=juges, racine=depot_eval)
+    assert rapport.statut == "partiel-erreur" and not rapport.budget_epuise
+    assert rapport.run.statut_courant() == "partiel-erreur"
+    nr = rapport.scores.taches["NR"]
+    assert nr.effectifs.non_juges == 1 and nr.effectifs.notes == 1 and nr.score == 100.0
+    ligne = next(v for v in verdicts(rapport.run) if v["item_id"] == "NR-001")
+    assert (ligne["statut"], ligne["motif"], ligne["verdict"]) == ("non-juge", motif, None)
+
+
+def test_second_juge_limite_debit_hors_kappa(depot_eval: Path, cache: CacheVerdicts) -> None:
+    echantillon = lire_manifeste("v1.0", depot_eval).echantillons.second_juge
+    cible = next(i for i in echantillon if i.split("-")[0] in ("Q", "NR", "LC", "CT"))
+    parent = fabriquer_generation(depot_eval, [cible])
+    juges = Juges(
+        principal=JugeFactice(cache, "principal"),
+        second=JugeFactice(cache, "second", non_juges={cible: "limite-debit"}),
+        cache=cache,
+    )
+    rapport = noter(parent.run_id, juges=juges, racine=depot_eval)
+    assert rapport.statut == "partiel-erreur" and rapport.demandes_second == 1
+    tache = rapport.scores.taches[cible.split("-")[0]]
+    assert tache.kappa.effectif == 0 and tache.effectifs.second_juge == 0
+    assert tache.effectifs.juges == 1 and tache.effectifs.non_juges == 0
+    assert [(v["juge"], v["motif"]) for v in verdicts(rapport.run)] == [
+        ("principal", None),
+        ("second", "limite-debit"),
+    ]
+
+
+def test_item_non_jugeable_partiel_erreur(
+    depot_eval: Path, cache: CacheVerdicts, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from slmsp.judge.prompt import ItemNonJugeable
+
+    schema = notation.schema_sortie
+
+    def schema_sans_cr(item: Any) -> Any:
+        if item.id == "CR-001":
+            raise ItemNonJugeable("CR sans référence d'éléments")
+        return schema(item)
+
+    monkeypatch.setattr(notation, "schema_sortie", schema_sans_cr)
+    parent = fabriquer_generation(depot_eval, ["CR-001", "NR-001"])
+    juges = juges_factices(cache)
+    rapport = noter(parent.run_id, juges=juges, racine=depot_eval)
+    assert rapport.statut == "partiel-erreur" and juges.principal.recus == ["NR-001"]
+    assert rapport.scores.taches["CR"].effectifs.non_juges == 1
+    ligne = next(v for v in verdicts(rapport.run) if v["item_id"] == "CR-001")
+    assert (ligne["statut"], ligne["motif"]) == ("non-juge", "non-jugeable")
+
+
+def test_juge_qui_leve_interrompt_le_run(depot_eval: Path, cache: CacheVerdicts) -> None:
+    class JugeEnPanne:
+        def juger(self, demandes: Any, echantillon: Any = None) -> Any:
+            raise RuntimeError("<panne-factice>")
+
+    parent = fabriquer_generation(depot_eval, ["NR-001"])
+    juges = Juges(principal=JugeEnPanne(), second=None, cache=cache)
+    with pytest.raises(RuntimeError, match="panne-factice"):
+        noter(parent.run_id, juges=juges, racine=depot_eval)
+    (dossier,) = runs_notation(depot_eval)
+    run = ouvrir_run(dossier.name, racine=depot_eval)
+    assert run.statut_courant() == "interrompu"
+    dernier = (run.dossier / "etat.jsonl").read_text(encoding="utf-8").splitlines()[-1]
+    assert "RuntimeError" in json.loads(dernier)["motif"]
+
+
+def test_fichiers_presents_sans_controle_ni_verdict(depot_eval: Path, cache: CacheVerdicts) -> None:
+    parent = fabriquer_generation(
+        depot_eval, ["NR-001"], erreurs=["NR-001"], statut="partiel-erreur"
+    )
+    rapport = noter(parent.run_id, juges=juges_factices(cache), racine=depot_eval)
+    assert rapport.statut == "partiel-erreur"
+    for nom in (FICHIER_CONTROLES, FICHIER_VERDICTS):
+        assert (rapport.run.dossier / nom).read_bytes() == b"", nom
+    assert (rapport.run.dossier / FICHIER_SCORES).is_file()
+    assert (rapport.run.dossier / FICHIER_RELECTURE).is_file()
+
+
+def test_ouvrir_juges_surcharge_le_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+
+    import slmsp.judge.claude as module_claude
+    import slmsp.mistral.client as module_mistral
+    from slmsp.judge.config import charger_juges
+
+    class Crochets:
+        def register_before_request_hook(self, crochet: Any) -> None: ...
+
+        def register_after_success_hook(self, crochet: Any) -> None: ...
+
+    sdk = SimpleNamespace(sdk_configuration=SimpleNamespace(_hooks=Crochets()))
+    clients: list[Any] = []
+    monkeypatch.setattr(module_claude, "fabriquer_client", lambda config: clients.append(config))
+    monkeypatch.setattr(module_mistral, "fabriquer_sdk", lambda config: sdk)
+
+    configure = charger_juges().principal.mode_appel
+    autre = "direct" if configure == "batch" else "batch"
+    juges = notation.ouvrir_juges(racine_projet(), autre)
+    assert juges.principal.config.mode_appel == autre == clients[-1].mode_appel
+    assert juges.description["principal"]["mode_appel"] == autre
+    assert juges.second is not None and juges.second.client.sdk is sdk
+    assert juges.principal.cache is juges.cache is juges.second.cache
+    assert notation.ouvrir_juges(racine_projet()).principal.config.mode_appel == configure
+    with pytest.raises(ValueError, match="mode d'appel inconnu"):
+        notation.ouvrir_juges(racine_projet(), "lot")
+
+
 def test_cache_plein_scores_identiques(depot_eval: Path, cache: CacheVerdicts) -> None:
     parent = fabriquer_generation(depot_eval)
     premier = juges_factices(cache)
@@ -286,6 +400,9 @@ def test_relecture_validee(depot_eval: Path, cache: CacheVerdicts) -> None:
     (run.dossier / NOM_VALIDATION).write_text(
         '{"date": "2026-10-13T09:30:00+02:00"}', encoding="utf-8"
     )
+    assert relecture_validee(run.dossier)
+    # Out-File / Set-Content -Encoding utf8 de PowerShell 5.1 écrivent un BOM.
+    (run.dossier / NOM_VALIDATION).write_bytes(b'\xef\xbb\xbf{"date": "2026-10-13"}')
     assert relecture_validee(run.dossier)
 
 
@@ -376,6 +493,20 @@ def test_cli_notation_partielle_code_1(depot_eval: Path, juges_cli: list[Any]) -
     parent = fabriquer_generation(depot_eval, erreurs=["NR-001"], statut="partiel-erreur")
     commande = ["eval", "run", "--phase", "notation", "--depuis", parent.run_id]
     assert main([*commande, "--racine", str(depot_eval)]) == CodeSortie.ERREUR
+
+
+def test_cli_notation_erreur_api_code_1(
+    depot_eval: Path,
+    cache: CacheVerdicts,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    juges = juges_factices(cache, non_juges={"NR-001": "erreur-api"})
+    monkeypatch.setattr(notation, "ouvrir_juges", lambda racine=None, mode_appel=None: juges)
+    parent = fabriquer_generation(depot_eval, ["NR-001", "NR-002"])
+    commande = ["eval", "run", "--phase", "notation", "--depuis", parent.run_id]
+    assert main([*commande, "--racine", str(depot_eval)]) == CodeSortie.ERREUR
+    assert "Statut du run : partiel-erreur" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(
