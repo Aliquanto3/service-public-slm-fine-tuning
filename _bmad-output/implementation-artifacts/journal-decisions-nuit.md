@@ -263,3 +263,12 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - Les Epics 12 (J4) et 13 (J5) restent en `backlog` sans stories, avec un commentaire « hors sprint de la nuit » dans le fichier.
   - Les clés sont celles du script : `<epic>-<story>-<titre en kebab-case>`, minuscules, accents conservés, tronquées. L'orchestrateur cible une story par son préfixe numérique unique `<epic>-<story>-` (par exemple `1-1-`), qui est aussi la règle de résolution de `bmad-build`.
 - **Justification** : c'est le format natif du skill, qui garde la synchronisation des statuts par `bmad-build` sans réécrire les clés. On ne touche pas aux clés générées, ce qui est le choix le plus réversible.
+
+## D-nuit-B-1 — Stories parallèles dans des worktrees git, fusion en squash (07h35)
+- **Constat** : `bmad-build-auto` exige un arbre de travail propre au démarrage et commite lui-même. Deux stories ne peuvent donc pas tourner en parallèle dans le même checkout.
+- **Décision** : chaque story tourne dans un worktree git isolé. L'orchestrateur fusionne ensuite chaque branche de story dans `nuit/2026-10-12` par `git merge --squash`, avec un commit par story au format D5. Les branches de worktree sont conservées, sans réécriture d'historique.
+- **Consignes communes** : `consignes-sous-agents-nuit.md`.
+
+## D-nuit-B-2 — Préchargement des modèles candidats pendant la phase B (07h37)
+- **Décision** : les téléchargements de la phase C.1 (fichiers seuls, sous `models/`, ignoré par git) démarrent dès la phase B, en arrière-plan. La story 8.1 conserve la vérification, l'épinglage et la configuration, et réutilise ces fichiers.
+- **Justification** : les téléchargements durent longtemps (plusieurs dizaines de Go) et n'ont aucun effet sur le code. C'est du temps gagné sur le chemin critique, et l'opération est réversible.

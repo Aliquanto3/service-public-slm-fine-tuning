@@ -10,7 +10,10 @@ Ce fichier est lu par chaque sous-agent de story avant de commencer. Il fait aut
 - **Dépôt principal** (lecture des fichiers non versionnés) : `C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning`.
   - Les secrets sont dans `<dépôt principal>\.env`. Lis-les par chemin absolu. Ne recopie jamais leur valeur dans un fichier versionné ni dans un log.
   - Les données brutes sont dans `<dépôt principal>\data\raw\` (lecture seule).
-  - **Téléchargements lourds et artefacts d'exécution** (modèles, corpus, binaires llama.cpp, runs, registre de budget) : ils vont dans un répertoire partagé hors worktree. Utilise `SLMSP_VAR_DIR` s'il est défini, sinon `<dépôt principal>\var\`, et ne télécharge jamais deux fois le même fichier. Ce répertoire n'est pas versionné.
+  - **État machine** : registre de budget, cache des verdicts, `gpu.lock` et `pids/`. Il va dans `SLMSP_VAR_DIR`, selon l'architecture (par défaut `%LOCALAPPDATA%\slmsp\var\`). Ce dossier est partagé par tous les worktrees.
+  - **Téléchargements lourds** : modèles, corpus, binaires llama.cpp.
+    - Ils restent dans le dépôt principal, sous `models/`, `data/` et `var/`, qui sont ignorés par git. Accède-y par chemin absolu, ou par une variable d'environnement de configuration que tu documentes.
+    - Ne télécharge jamais deux fois le même fichier. Un worktree de story de code ne télécharge rien de lourd : ses tests utilisent des fixtures.
 
 ## Règles bloquantes (decisions.md D1, rappel)
 1. **Claude ne génère aucune Donnée d'entraînement** : ni exemple, ni réponse cible, ni few-shot, ni amorce insérée dans un prompt du générateur. C'est Mistral `mistral-large-latest` qui génère. Les gabarits du générateur ne contiennent aucun exemple de réponse. Dans les tests, les fixtures de « données d'entraînement » sont des chaînes factices manifestement artificielles (`"<réponse-factice-1>"`), jamais du contenu réaliste rédigé par Claude.
