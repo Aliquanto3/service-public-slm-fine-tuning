@@ -414,3 +414,10 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 - **Modèles Mistral admis** : `mistral-large-latest`, `mistral-large-2411` et `mistral-large-2512`.
   - **À vérifier par Anaël** : l'API renvoie l'alias dans le champ `model`, si bien que la version réellement utilisée n'est pas vérifiable.
 - **Dépense** : 0,0139 € sur `mistral.juge`, pour le test réel du second juge sur 2 items.
+
+## D-nuit-S4.3 — Recherche de données
+- **Test réel**, Qwen3 4B avec décodage contraint par schéma JSON, sur les cassettes gelées RD-001 et RD-002 : les appels sont conformes, le bon jeu de données est cité et aucune URL n'est inventée.
+- **Décision prise au vu du test** : en Mode connecté, le premier tour n'envoie que la demande, sans les passages de l'Index. Avec ces passages dans le prompt, Qwen n'appelait aucun outil.
+- **À voir avec Anaël**
+  - Variante de prompt `RD-connecte`.
+  - FR-38 n'est pas encore vérifié : les arguments d'outil générés pourraient recopier la phrase de l'Agent.

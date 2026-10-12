@@ -59,7 +59,7 @@ development_status:
   epic-4: in-progress
   4-1-table-des-tâches-prompts-de-tâche-et-construction-unique-des: done
   4-2-assistantservice-flux-d-évènements-question-fondée-sur-l-ind: done
-  4-3-recherche-de-données-boucle-d-outils-modes-et-repli: in-progress
+  4-3-recherche-de-données-boucle-d-outils-modes-et-repli: done
   4-4-comptes-rendus-longs-découpage-et-fusion: done
   4-5-commande-slmsp-ask-et-test-du-document-témoin: backlog
   epic-4-retrospective: optional
@@ -67,7 +67,7 @@ development_status:
   epic-5: in-progress
   5-1-lecteur-unique-d-items-api-anti-fuite-et-gel-du-jeu-d-évalua: done
   5-2-fonctions-de-texte-partagées-normalisation-mots-nombres-kand: done
-  5-3-évaluation-phase-génération-sans-réseau: backlog
+  5-3-évaluation-phase-génération-sans-réseau: in-progress
   5-4-juge-principal-claude-prompt-batch-api-et-cache-de-verdicts: done
   5-5-adaptateur-mistral-et-second-juge-sur-l-échantillon-de-20: done
   5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: backlog
