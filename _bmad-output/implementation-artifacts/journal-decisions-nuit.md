@@ -301,3 +301,12 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - `Mode` prend les valeurs `connecte`, `hors-ligne-detecte` et `hors-ligne-force`.
   - Le lecteur `data` refuse aussi `runs/eval/`.
 - **À trancher par Anaël (1.3, différé)** : le journal `appels-mistral.sqlite`, lisible par `data` et `train`, contiendra aussi les appels du second juge, donc des textes d'évaluation. Deux options : séparer les journaux en 5.5 et 9.2, ou filtrer à la lecture.
+
+## D-nuit-B-4 — Priorisation sous contrainte de temps (09h08)
+- **Constat** : il a fallu environ 1 h 40 pour 6 stories, à raison de 20 à 50 minutes par story avec `bmad-build-auto` et sa revue. À ce rythme, les 53 stories ne tiennent pas avant 14h00.
+- **Décision** : on avance en priorité sur deux chemins critiques.
+  1. **Le gel du Jeu d'évaluation**, qui débloque la phase D : 3.1 → 5.1, 3.3 → 7.3, puis 7.5 et 7.6.
+  2. **Le banc de bout en bout**, par la chaîne 1.4 → 2.1/2.2 → 2.3 → 4.x → 5.3 à 5.6.
+- Les stories de mesure secondaires et les Benchmarks passent après.
+- **Repli de l'essai QLoRA** : si la Baseline n'est pas prête, on applique la règle D4 et on prend Granite 4.0 1B.
+- **Story 7.4** : les transcriptions de Compte rendu font entre 4 489 et 5 159 mots (5 items longs). FR-13 cite une entrée d'au moins 6 000 mots pour l'Assistant, mais le sous-agent ne relève aucun écart avec la SPEC du jeu. **À vérifier par Anaël lors de la relecture.**

@@ -50,8 +50,8 @@ development_status:
   2-4-mesure-h-emb-compatibilité-de-l-embedding-de-requête-avec-le: backlog
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-outils-exposés-figés-validation-des-appels-et-format-de-cass: backlog
+  epic-3: in-progress
+  3-1-outils-exposés-figés-validation-des-appels-et-format-de-cass: in-progress
   3-2-bac-à-sable-mcp-rejeu-des-cassettes: backlog
   3-3-client-mcp-en-direct-enregistrement-et-slmsp-mcp-record: backlog
   epic-3-retrospective: optional
@@ -84,7 +84,7 @@ development_status:
   7-1-outil-de-construction-et-instantanés-des-sources-réelles: done
   7-2-items-question-60-et-non-régression-30: in-progress
   7-3-items-recherche-de-données-40-et-cassettes: backlog
-  7-4-items-compte-rendu-25-et-langage-clair-25: in-progress
+  7-4-items-compte-rendu-25-et-langage-clair-25: done
   7-5-items-correction-résumé-et-courrier-type-3-15: backlog
   7-6-double-vérification-finale-échantillon-de-revue-et-gel-v1-0: backlog
   epic-7-retrospective: optional
