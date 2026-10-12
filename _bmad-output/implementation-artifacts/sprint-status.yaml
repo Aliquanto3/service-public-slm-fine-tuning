@@ -90,7 +90,7 @@ development_status:
   epic-7-retrospective: optional
 
   epic-8: in-progress
-  8-1-téléchargement-et-préparation-des-modèles-de-base-candidats: in-progress
+  8-1-téléchargement-et-préparation-des-modèles-de-base-candidats: done
   8-2-sonde-de-tool-calling-par-modèle-h-tools: backlog
   8-3-exécution-de-la-baseline-jeu-maison-benchmarks-mesures: backlog
   8-4-rapport-de-baseline: backlog
@@ -107,8 +107,8 @@ development_status:
   9-8-campagne-de-génération-de-la-nuit-jeu-v1: backlog
   epic-9-retrospective: optional
 
-  epic-10: backlog
-  10-1-environnement-d-entraînement-windows-et-mesure-h-win-train: backlog
+  epic-10: in-progress
+  10-1-environnement-d-entraînement-windows-et-mesure-h-win-train: in-progress
   10-2-rendu-en-tokens-et-masque-de-perte-h-masque: backlog
   10-3-mesures-de-coût-d-un-run-fr-33: backlog
   10-4-runs-d-entraînement-configurables-slmsp-train-run: backlog
