@@ -436,7 +436,7 @@ afin que l'environnement soit reproductible et que rien ne soit téléchargé ho
 **Dépendances :** 1.4.
 
 **Critères d'acceptation :**
-1. **Étant donné** `config/llamacpp.toml`, **quand** on lance `uv run slmsp fetch llamacpp`, **alors** les binaires CPU et CUDA (avec `cudart`) et les sources du tag sont installés sous `vendor/llama.cpp/b11429/{bin-cpu,bin-cuda,src}`, chaque archive est vérifiée par SHA-256 et `llama-server --version` des deux variantes rapporte le tag.
+1. **Étant donné** `config/llamacpp.toml`, **quand** on lance `uv run slmsp fetch llamacpp`, **alors** les binaires CPU et CUDA (avec `cudart`) et les sources du tag sont installés sous `vendor/llama.cpp/b11429/{bin-cpu,bin-cuda,src}` et chaque archive est vérifiée par SHA-256 ; `fetch` ne lance aucun binaire llama.cpp (AD-6 : le contrôle `--version` est fait par la story 2.2).
 2. **Étant donné** `config/sources.toml`, **quand** on lance `uv run slmsp fetch sources`, **alors** les parquet de service-public et du catalogue data.gouv sont lus directement (sans datasets-server) et écrits sous `data/raw/mediatech/<jeu>/<revision>/`, avec reprises après échec (erreurs 429 et 500) et révision épinglée par commit.
 3. **Étant donné** `config/modeles/bge-m3.toml`, **quand** on lance `uv run slmsp fetch modeles bge-m3`, **alors** le GGUF Q8_0 est écrit sous `models/bge-m3/gguf/` et son SHA-256 correspond à la config.
 4. **Étant donné** un fichier déjà présent avec le bon SHA, **quand** on relance la commande, **alors** il n'est pas retéléchargé ; un fichier partiel `.part` est repris et n'est jamais supprimé ; un SHA faux lève une erreur et le fichier final n'est pas créé.
@@ -455,7 +455,7 @@ afin que le Harnais, le banc, les Benchmarks et les mesures interrogent les mod�
 **Couvre :** NFR-1 à NFR-3 (moteur), NFR-8 ; AD-6, AD-27 (Job Object, PID, nettoyage), AD-22 (environnement filtré) ; D3.
 
 **Fichiers et modules :**
-- `src/slmsp/inference/serveur.py` (`ServeurLlama` : arguments tirés de `ConfigModele` et `ConfigLlamacpp`, variante `cpu` ou `cuda`, `127.0.0.1` sur port libre, `--jinja`, `--parallel 1` en évaluation, contexte, cache KV, threads, `reasoning`, `--chat-template-file` si `chat_template_force`, attente de santé)
+- `src/slmsp/inference/serveur.py` (`ServeurLlama` : arguments tirés de `ConfigModele` et `ConfigLlamacpp`, variante `cpu` ou `cuda`, `127.0.0.1` sur port libre, `--jinja`, `--parallel 1` en évaluation, contexte, cache KV, threads, `reasoning`, `--chat-template-file` si `chat_template_force`, attente de santé ; seul lanceur des processus llama.cpp selon AD-6 : `version(variante)`, `convertir_hf_vers_gguf(...)` par `convert_hf_to_gguf.py` des sources du tag, `quantifier(...)` par `llama-quantize` du tag, utilisés ensuite par les stories 8.1 et 10.6)
 - `src/slmsp/inference/processus.py` (Job Object `KILL_ON_JOB_CLOSE` par `ctypes`, `CREATE_NO_WINDOW`, registre `SLMSP_VAR_DIR/pids/`, nettoyage des orphelins au démarrage)
 - `src/slmsp/inference/client.py` (adaptateur `LlmPort` : chat completions en flux via `net.client_local`, `tools`, `response_format`, `temperature`, `seed`, `chat_template_kwargs`, `compter_tokens` par `/tokenize`)
 - `src/slmsp/inference/embedding.py` (adaptateur `EmbedderPort` : `--embedding --pooling cls`, normalisation L2)
@@ -471,6 +471,7 @@ afin que le Harnais, le banc, les Benchmarks et les mesures interrogent les mod�
 5. **Étant donné** un serveur d'embedding BGE-M3, **quand** on appelle `vectoriser(textes)`, **alors** on obtient des vecteurs float32 de dimension 1024 de norme 1.
 6. **Étant donné** deux instances (génération et embedding), **quand** elles tournent ensemble, **alors** elles écoutent sur deux ports distincts de `127.0.0.1` et sont toutes deux inscrites au registre des PID.
 7. **Étant donné** la fabrique réseau, **quand** l'adaptateur parle au serveur, **alors** il utilise `net.client_local(port)` et aucune autre bibliothèque HTTP.
+8. **Étant donné** `vendor/llama.cpp/<tag>/` installé par la story 2.1, **quand** on appelle `version(variante)` pour `cpu` et `cuda`, **alors** `llama-server --version` rapporte le tag de `config/llamacpp.toml` ; **et** `convertir_hf_vers_gguf` et `quantifier` construisent leurs lignes de commande à partir des seuls outils de ce tag, avec `env_sous_processus()` (AD-6, D-nuit-A3-1).
 
 **Stratégie de test :** serveur HTTP factice en thread sur la boucle locale (réponses SSE au format OpenAI, `/tokenize`, `/embedding`, `/health`) ; test du Job Object avec un sous-processus Python factice ; test réel avec `vendor/` et le GGUF BGE-M3 marqué `lent`.
 
@@ -647,11 +648,12 @@ afin d'obtenir une réponse sourcée sans qu'aucun texte collé ne quitte le pos
 **Fichiers et modules :**
 - `src/slmsp/harness/service.py` (`AssistantService(llm, embedder, vector_store, outils, mode, config).repondre(tache, messages, options)` → itérateur d'évènements)
 - `src/slmsp/harness/citations.py` (extraction des URL, vérification contre les passages et les résultats d'outils)
-- `src/slmsp/harness/recherche_index.py` (vectorisation de la requête, top-k, seuil de pertinence)
+- `src/slmsp/harness/recherche_index.py` (vectorisation de la requête, top-k, seuil de pertinence ; `k` et le seuil sont lus dans `config/index.toml` par `slmsp.index.config` de la story 2.3, source unique)
+- `src/slmsp/harness/config.py` (`ConfigHarnais`, créé ici et lu sans modification par les stories 4.3 et 4.4 : itérations maximales de la boucle d'outils, période de sonde, réserve de sortie et chevauchement du découpage CR) et `config/harnais.toml` (D-nuit-A3-2)
 - `src/slmsp/harness/taches/__init__.py` (registre code → module de traitement, chargé paresseusement ; RD → `recherche`, CR → `compte_rendu`, déclarés d'avance), `src/slmsp/harness/taches/question.py`, `src/slmsp/harness/taches/redaction.py` (LC, CO, RE, CT, NR, TR, et CR tant que `compte_rendu` n'existe pas)
 - `tests/harness/test_service.py`, `test_citations.py`, `test_question.py`, `test_redaction.py`, `tests/harness/factices.py` (`FakeLlm`, `FakeEmbedder`, `FakeVectorStore`, `SpyToolPort`)
 
-**Dépendances :** 4.1.
+**Dépendances :** 4.1, 2.3 (`slmsp.index.config` pour `k` et le seuil).
 
 **Critères d'acceptation :**
 1. **Étant donné** le service, **quand** on appelle `repondre`, **alors** il ne garde aucun état entre deux appels : toute la conversation est fournie par l'appelant (FR-1), et il émet des évènements typés de `core.evenements`.
@@ -675,7 +677,7 @@ afin de ne jamais recevoir d'appel non conforme ni de valeur inventée.
 **Fichiers et modules :**
 - `src/slmsp/harness/taches/recherche.py` (boucle d'appels : validation par `mcp.outils.valider_appel`, `AppelNonConforme` jamais envoyé, `AppelOutil` puis `ResultatOutil`, nombre d'itérations plafonné en config, repli)
 - `src/slmsp/harness/modes.py` (`ModeSonde` : sonde `GET /health` < 3 s au démarrage, toutes les 5 min et avant chaque appel d'outil, aucune sonde en hors ligne forcé, contrôle du schéma au passage en connecté ; `ModeFixe(mode)`)
-- `src/slmsp/harness/config.py` (itérations maximales, période de sonde, k, seuil)
+- lit `src/slmsp/harness/config.py` et `config/harnais.toml` (story 4.2 : itérations maximales, période de sonde) sans les modifier
 - `tests/harness/test_recherche.py`, `test_modes.py`, `test_repli.py`
 
 **Dépendances :** 4.2, 3.2.
@@ -702,6 +704,7 @@ afin d'obtenir un compte rendu complet d'une réunion de plus de 6 000 mots.
 
 **Fichiers et modules :**
 - `src/slmsp/harness/taches/compte_rendu.py`, `src/slmsp/harness/decoupage.py`
+- lit la réserve de sortie et le chevauchement dans `harness/config.py` et `config/harnais.toml` (story 4.2) sans les modifier
 - `tests/harness/test_compte_rendu.py`, `test_decoupage.py`
 
 **Dépendances :** 4.2.
@@ -979,7 +982,7 @@ afin que FR-18 soit mesurée en v1 et que le tool calling soit comparable avant 
 - `envs/bfcl/pyproject.toml` (environnement uv isolé : `bfcl-eval` 2026.3.23), `envs/bfcl/verifier.py` (vérificateur AST, entrée et sortie JSON)
 - `tests/benchmarks/test_traduction.py`, `test_bfcl.py`
 
-**Dépendances :** 6.1, 2.2.
+**Dépendances :** 6.1, 2.2, 4.1 (prompt de Tâche TR et `harness.prompts.construire_messages`, AD-7).
 
 **Critères d'acceptation :**
 1. **Étant donné** un GGUF servi, **quand** on lance la traduction, **alors** chaque paire de langues produit un chrF sacrebleu avec la signature sacrebleu archivée, avant et après quantification.
@@ -1000,7 +1003,7 @@ afin de vérifier NFR-1 à NFR-3 et NFR-6 pour chaque Modèle de base candidat.
 **Fichiers et modules :**
 - `src/slmsp/measure/protocole.py`, `src/slmsp/measure/ram.py` (pic de la somme des working sets de l'arbre de processus, échantillonné toutes les 100 ms par psutil), `src/slmsp/measure/debit.py` (tokens/s en génération, délai au premier token d'une Question avec recherche dans l'Index), `src/slmsp/measure/taille.py` (GGUF, index, binaires), `src/slmsp/measure/config.py`
 - `src/slmsp/core/schemas/mesure.py` (complément de `ResultatMesure`)
-- `src/slmsp/cli/measure.py` (`measure run --modele base:<slug> [--quantification q4_k_m]`)
+- `src/slmsp/cli/measure.py` (`measure run --modele base:<slug> [--quantification q4_k_m]` ; assemble l'Assistant par `cli/_assemblage.py` et le passe à `slmsp.measure`, qui n'importe jamais `slmsp.cli` (AD-1))
 - `config/mesures.toml` (questions de mesure rédigées par le projet et distinctes du Jeu d'évaluation, répétitions, plafond de threads, période d'échantillonnage, seuils NFR)
 - `tests/measure/test_ram.py`, `test_debit.py`, `test_exclusivite.py`
 
@@ -1169,7 +1172,7 @@ afin que la Baseline et le fine-tuning portent sur des modèles vérifiés et co
 1. **Étant donné** chaque `config/modeles/<slug>.toml`, **quand** on le lit, **alors** il épingle `revision` (commit HF), le fichier GGUF Q4_K_M attendu et son SHA-256, la source du GGUF (officielle, communautaire réputée ou conversion maison avec le tag b11429) et les paramètres d'inférence d'AD-6.
 2. **Étant donné** `uv run --extra fetch slmsp fetch modeles --candidats`, **quand** on lance la commande (en arrière-plan), **alors** les modèles sont téléchargés dans l'ordre de D4 sous `models/<slug>/{hf|hf-bf16,gguf}/`, avec contrôle de l'espace disque ; Ministral 3 8B n'est téléchargé qu'en GGUF (évaluation seulement).
 3. **Étant donné** Granite 4.0 1B, **quand** la vérification tourne, **alors** le modèle est refusé si une couche n'est pas de type attention ; le support par llama.cpp est vérifié par un démarrage de `llama-server` sur son GGUF.
-4. **Étant donné** Ministral 3 3B, **quand** il est préparé, **alors** le dépôt officiel BF16 est pris pour l'entraînement et le GGUF officiel pour l'inférence s'il propose Q4_K_M ; à défaut, la conversion est faite avec le tag figé et consignée ; `exclure_vision = true` est inscrit et le GGUF est chargé sans projecteur multimodal.
+4. **Étant donné** Ministral 3 3B, **quand** il est préparé, **alors** le dépôt officiel BF16 est pris pour l'entraînement et le GGUF officiel pour l'inférence s'il propose Q4_K_M ; à défaut, la conversion est faite avec le tag figé par `inference.serveur.convertir_hf_vers_gguf` et `quantifier` (story 2.2, AD-6) et consignée ; `exclure_vision = true` est inscrit et le GGUF est chargé sans projecteur multimodal.
 5. **Étant donné** le témoin Qwen, **quand** il est résolu, **alors** le dépôt retenu (par défaut `Qwen/Qwen3-4B-Instruct-2507`, sinon le Qwen d'environ 4B Instruct sous Apache 2.0 le plus récent sans accès conditionnel) est épinglé et consigné.
 6. **Étant donné** un GGUF dont le chat template diffère de celui du tokenizer HF, **quand** la vérification le constate, **alors** `chat_template_force = true` est inscrit et le template du tokenizer est exporté sous `models/<slug>/chat_template.jinja`.
 7. **Étant donné** la fin des téléchargements, **quand** le run `runs/fetch/<run_id>/` est clos, **alors** il liste les contrôles effectués et leur résultat ; tout modèle écarté l'est avec son motif dans le journal.
@@ -1190,7 +1193,7 @@ afin que la Baseline RD mesure le modèle et non un défaut de format.
 - `config/modeles/<slug>.toml` (valeur de `protocole_outils` fixée par la story d'après le résultat)
 - `tests/evaluation/test_sonde_outils.py`
 
-**Dépendances :** 8.1, 4.3, 5.1.
+**Dépendances :** 8.1, 4.3, 5.1, 5.6 (assemblage d'évaluation de la story 5.3 ; `cli/eval.py` modifié après 5.3 et 5.6, jamais en parallèle ; D-nuit-A3-1).
 
 **Critères d'acceptation :**
 1. **Étant donné** un candidat, **quand** on lance `eval sonde-outils`, **alors** les items R-001 et R-002 du calibrage passent par le Harnais (Bac à sable, `ModeFixe` connecté, profil réseau `aucun`) en protocole `natif`, et le run `runs/eval-sonde/<run_id>/` rapporte, par item, les appels produits et leur validité au regard des `appels_attendus`.
@@ -1236,7 +1239,7 @@ afin de lire en quelques minutes les scores, les mesures, la conformité aux NFR
 - `src/slmsp/cli/compare.py` (`compare baseline [--sortie …]`, par défaut `_bmad-output/implementation-artifacts/baseline-rapport.md` ; `compare comparatif` déclarée « non implémentée » jusqu'à la story 11.1)
 - `tests/compare/test_chargement.py`, `test_baseline.py`, `tests/compare/fixtures/` (runs synthétiques)
 
-**Dépendances :** 1.3 pour le développement ; 8.3 pour la production du rapport réel.
+**Dépendances :** 5.6, 6.1, 6.4 pour le développement (schémas `Scores`, `ResultatBench` et `ResultatMesure` d'AD-25 que charge `compare.chargement`) ; 8.3 pour la production du rapport réel.
 
 **Critères d'acceptation :**
 1. **Étant donné** des runs archivés, **quand** on lance `slmsp compare baseline`, **alors** le rapport présente, par modèle : les Scores de Tâche avec leurs statuts (« non relus », `fragile`, `plafonne_lc`, effectifs invalides et non jugés), les Benchmarks, les mesures (RAM, débit, délai au premier token, taille) avec la conformité à NFR-1, NFR-2 et NFR-3, et le coût du Juge.
@@ -1338,7 +1341,7 @@ afin de produire les données comportementales dans le budget de 25 €.
 - `src/slmsp/cli/data.py` (implémentation de `generate`)
 - `tests/data/test_generate.py`, `test_sessions.py`, `test_prealables.py`
 
-**Dépendances :** 9.3, 3.3, 4.1 ; exécution réelle après 7.6.
+**Dépendances :** 9.3, 3.3, 4.1, 4.2 (passages Q par `harness.recherche_index`) ; exécution réelle après 7.6.
 
 **Critères d'acceptation :**
 1. **Étant donné** `slmsp data generate --depuis <seed_run>`, **quand** il démarre, **alors** il vérifie `jeu_gele_et_commite("v1.0")` et refuse avec le code 4 si le gel n'est pas commité ou s'il n'est pas un ancêtre de `HEAD` (D1.3).
@@ -1503,7 +1506,7 @@ afin de comparer le coût des méthodes sur une base identique.
 
 **Fichiers et modules :**
 - `src/slmsp/train/couts.py` (`TrainerCallback` : tokens/s hors padding après 10 pas de chauffe, VRAM par `torch.cuda.max_memory_allocated` et `max_memory_reserved` et par échantillonnage NVML, énergie par intégration de la puissance NVML échantillonnée toutes les 200 ms, durée)
-- `config/mesures.toml` (section `[entrainement]` : pas de chauffe, période d'échantillonnage)
+- `config/entrainement.toml` (protocole de mesure du coût : pas de chauffe, période d'échantillonnage), validé par `ConfigCouts` dans `src/slmsp/train/config.py`, créé ici et complété par la story 10.4 ; `config/mesures.toml` reste à la story 6.4, car `train` ne peut pas importer `measure` (AD-1 ; D-nuit-A3-2)
 - `tests/train/test_couts.py`
 
 **Dépendances :** 10.1.
@@ -1524,7 +1527,7 @@ afin de comparer M1 à M4 sans modifier de code et dans des conditions équitabl
 **Couvre :** FR-32, FR-33 (reprise), FR-34 ; AD-18, AD-24, AD-7, AD-27, AD-21 ; D1.7 ; D-nuit-A2-18.
 
 **Fichiers et modules :**
-- `src/slmsp/train/config.py` (`RunConfig` pydantic : `campagne`, `modele`, `methode` ∈ {`qlora`, `lora`, `dora`, `orpo`, `rslora`, `pissa`, `qlora-unsloth`}, hyperparamètres, graine, version du jeu, longueur maximale)
+- `src/slmsp/train/config.py` (complète le module créé par la story 10.3 ; `RunConfig` pydantic : `campagne`, `modele`, `methode` ∈ {`qlora`, `lora`, `dora`, `orpo`, `rslora`, `pissa`, `qlora-unsloth`}, hyperparamètres, graine, version du jeu, longueur maximale)
 - `src/slmsp/train/methodes.py` (méthode → `BitsAndBytesConfig`, `LoraConfig` (`use_dora`, `use_rslora`, `init_lora_weights="pissa"`), entraîneur TRL ; ORPO par `trl.experimental.orpo` après SFT ; `qlora-unsloth` délégué à l'environnement isolé, indisponible jusqu'à la story 10.5)
 - `src/slmsp/train/chargement.py` (jeu lu par `core.artefacts.lire(lecteur="train")` ; MANIFEST issu d'un run `data-build` ; `appel_ids` recontrôlés contre le journal ; contraintes : aucune couche Mamba, aucun poids FP8, encodeur vision exclu ; collator utilisant `train.masque`)
 - `src/slmsp/train/run.py`, `src/slmsp/cli/train.py` (implémentation de `train run --config … [--reprendre <run_id>]`)
@@ -1575,12 +1578,12 @@ afin de réévaluer le Modèle fine-tuné dans le format de l'Assistant, avant e
 **Couvre :** FR-35 ; AD-19, AD-6, AD-27, AD-28 (`gguf` depuis le tag) ; addendum §F (pièges).
 
 **Fichiers et modules :**
-- `src/slmsp/train/export.py` (fusion 16 bits sur la base bf16 d'origine pour LoRA, QLoRA et DoRA, sur le modèle résiduel pour PiSSA ; `convert_hf_to_gguf.py` et `gguf-py` du tag ; `llama-quantize` du même tag ; contrôle du chat template embarqué)
+- `src/slmsp/train/export.py` (fusion 16 bits sur la base bf16 d'origine pour LoRA, QLoRA et DoRA, sur le modèle résiduel pour PiSSA ; conversion et quantification par `inference.serveur.convertir_hf_vers_gguf` et `quantifier` (story 2.2 ; AD-6 : `train` ne lance aucun processus llama.cpp lui-même), donc `convert_hf_to_gguf.py`, `gguf-py` et `llama-quantize` du tag ; contrôle du chat template embarqué)
 - `src/slmsp/cli/export.py` (`export --depuis <train_run_id>`)
 - `pyproject.toml` (dépendance `gguf` par chemin vers `vendor/llama.cpp/<tag>/src/gguf-py`, dans l'extra `train`)
 - `tests/train/test_export.py`
 
-**Dépendances :** 10.4, 2.2.
+**Dépendances :** 10.4, 2.2, 8.2 (le critère 3 utilise `evaluation.modele_ref` de la story 5.3 et la sonde d'outils de la story 8.2 ; D-nuit-A3-1).
 
 **Critères d'acceptation :**
 1. **Étant donné** un Run d'entraînement complet, **quand** on lance `slmsp export --depuis <id>`, **alors** `runs/export/<run_id>/` contient le modèle fusionné en 16 bits, `modele-f16.gguf` (conservé) et `modele-q4_k_m.gguf`, produits par les outils du tag de `config/llamacpp.toml`.
@@ -1686,15 +1689,15 @@ afin d'avoir au réveil un premier signal sur le gain du fine-tuning, sans que c
 | 1.4 | 1.3 | `net/`, `core/schemas/journal_requetes.py`, `config/{reseau,liste-blanche}.toml` |
 | 1.5 | 1.2 | `budget/`, `config/{budgets,tarifs}.toml`, `cli/budget.py` |
 | 2.1 | 1.4 | `fetch/{hf,llamacpp,sources,modeles,config}.py`, `cli/fetch.py`, `config/{llamacpp,sources}.toml`, `config/modeles/bge-m3.toml` |
-| 2.2 | 1.4 | `inference/` |
+| 2.2 | 1.4 | `inference/` (dont les lanceurs `version`, `convertir_hf_vers_gguf`, `quantifier`) |
 | 2.3 | 2.1, 2.2 | `indexation/{construction,mesure_vec}.py`, `index/`, `core/schemas/{manifeste_index,mesure}.py`, `cli/index.py`, `config/index.toml` |
 | 2.4 | 2.3 | `indexation/verification_embedding.py`, `cli/index.py` |
 | 3.1 | 1.3 | `mcp/{outils,cassettes,erreurs}.py`, `core/schemas/cassette.py`, `config/outils-mcp.toml` |
 | 3.2 | 3.1 | `mcp/bac_a_sable.py`, `config/outils-mcp.toml` (texte de la réponse vide) |
 | 3.3 | 3.1, 1.4 | `mcp/{direct,enregistrement}.py`, `cli/mcp.py` |
 | 4.1 | 1.3 | `config/taches.toml`, `config/prompts/taches/`, `core/gabarits.py`, `harness/{taches,prompts}.py` |
-| 4.2 | 4.1 | `harness/{service,citations,recherche_index}.py`, `harness/taches/{__init__,question,redaction}.py` |
-| 4.3 | 4.2, 3.2 | `harness/taches/recherche.py`, `harness/{modes,config}.py` |
+| 4.2 | 4.1, 2.3 | `harness/{service,citations,recherche_index,config}.py`, `harness/taches/{__init__,question,redaction}.py`, `config/harnais.toml` |
+| 4.3 | 4.2, 3.2 | `harness/taches/recherche.py`, `harness/modes.py` |
 | 4.4 | 4.2 | `harness/taches/compte_rendu.py`, `harness/decoupage.py` |
 | 4.5 | 4.3, 4.4, 2.3, 3.3 | `cli/{ask,_assemblage}.py` |
 | 5.1 | 1.3, 3.1 | `core/items.py`, `core/schemas/manifeste_jeu.py`, `evaluation/{gel,config}.py`, `cli/eval.py` |
@@ -1705,7 +1708,7 @@ afin d'avoir au réveil un premier signal sur le gain du fine-tuning, sans que c
 | 5.6 | 5.2, 5.3, 5.5 | `evaluation/{controles,scores,notation,relecture}.py`, `core/schemas/scores.py`, `config/evaluation.toml`, `cli/eval.py` |
 | 6.1 | 2.1 | `benchmarks/{orchestrateur,config}.py`, `benchmarks/moteurs/__init__.py`, `fetch/benchmarks.py`, `core/schemas/bench.py`, `cli/bench.py`, `config/benchmarks/` |
 | 6.2 | 6.1, 2.2 | `benchmarks/moteurs/lm_eval.py`, `benchmarks/taches_lmeval/` |
-| 6.3 | 6.1, 2.2 | `benchmarks/moteurs/{traduction,bfcl}.py`, `envs/bfcl/` |
+| 6.3 | 6.1, 2.2, 4.1 | `benchmarks/moteurs/{traduction,bfcl}.py`, `envs/bfcl/` |
 | 6.4 | 4.5 | `measure/`, `core/schemas/mesure.py`, `cli/measure.py`, `config/mesures.toml` |
 | 7.1 | — | `eval/outils/`, `eval/construction/v1.0/`, `tests/eval_outils/` |
 | 7.2 | 7.1 | `eval/construction/v1.0/{Q,NR}.jsonl` et leur vérification |
@@ -1714,23 +1717,23 @@ afin d'avoir au réveil un premier signal sur le gain du fine-tuning, sans que c
 | 7.5 | 7.1 | `eval/construction/v1.0/{CO,RE,CT}.jsonl` |
 | 7.6 | 7.2 à 7.5, 5.1 | `eval/jeu/v1.0/`, `eval/revue/`, commit de gel |
 | 8.1 | 2.1, 2.2 | `config/modeles/<candidats>.toml`, `fetch/verifications.py`, `cli/fetch.py`, `models/` |
-| 8.2 | 8.1, 4.3, 5.1 | `evaluation/sonde_outils.py`, `cli/eval.py`, `config/modeles/*.toml` (`protocole_outils`) |
+| 8.2 | 8.1, 4.3, 5.1, 5.6 | `evaluation/sonde_outils.py`, `cli/eval.py`, `config/modeles/*.toml` (`protocole_outils`) |
 | 8.3 | 8.2, 5.6, 6.2, 6.3, 6.4, 7.6 | `runs/`, `config/juges.toml` (ajustement) |
-| 8.4 | 1.3 (8.3 pour le rapport réel) | `compare/{chargement,baseline}.py`, `cli/compare.py` |
+| 8.4 | 5.6, 6.1, 6.4 (8.3 pour le rapport réel) | `compare/{chargement,baseline}.py`, `cli/compare.py` |
 | 9.1 | 1.3 | `data/registre-licences.toml`, `data/{licences,config}.py` (paquet `slmsp.data`), `config/donnees.toml` |
 | 9.2 | 5.5, 4.1 | `mistral/{generateur,journal}.py`, `core/schemas/amorce.py`, `config/prompts/generateur/` |
 | 9.3 | 9.1, 9.2, 5.1, 2.1 | `data/seed.py`, `cli/data.py`, `config/sources.toml` |
-| 9.4 | 9.3, 3.3, 4.1 (7.6 pour l'exécution) | `data/{generate,sessions}.py`, `cli/data.py` |
+| 9.4 | 9.3, 3.3, 4.1, 4.2 (7.6 pour l'exécution) | `data/{generate,sessions}.py`, `cli/data.py` |
 | 9.5 | 9.4, 3.2, 2.3 | `data/{validate,filter}.py`, `cli/data.py` |
 | 9.6 | 9.5 | `data/{extraction,build}.py`, `core/schemas/entrainement.py`, `cli/data.py`, `tests/data/test_verrous_ad3.py` |
 | 9.7 | 9.6, 8.1 | `data/preferences.py`, `cli/data.py` |
 | 9.8 | 9.6, 7.6 (8.4 recommandée) | `config/donnees.toml`, `data/train/v1/`, `runs/data-*` |
 | 10.1 | 8.1 | `train/environnement.py`, `cli/train.py`, `envs/unsloth/` |
 | 10.2 | 10.1, 4.1 | `train/{rendu,masque}.py` |
-| 10.3 | 10.1 | `train/couts.py`, `config/mesures.toml` (section `[entrainement]`) |
+| 10.3 | 10.1 | `train/{couts,config}.py`, `config/entrainement.toml` |
 | 10.4 | 10.2, 10.3 (9.6 pour l'exécution réelle) | `train/{config,methodes,chargement,run}.py`, `cli/train.py`, `config/runs/` |
 | 10.5 | 10.4 | `envs/unsloth/entrainer.py`, `train/methodes.py`, `config/runs/v-qlora-unsloth-*.toml` |
-| 10.6 | 10.4, 2.2 | `train/export.py`, `cli/export.py`, `pyproject.toml` |
+| 10.6 | 10.4, 2.2, 8.2 | `train/export.py`, `cli/export.py`, `pyproject.toml` |
 | 11.1 | 8.4 | `compare/{comparatif,chargement}.py`, `cli/compare.py` |
 | 11.2 | 10.6, 9.8, 8.3, 11.1 | `config/runs/m1-qlora-<slug>.toml`, `runs/`, `essai-qlora-rapport.md` |
 
@@ -1750,6 +1753,7 @@ flowchart LR
   s13 --> s41[4.1] --> s42[4.2] --> s43[4.3]
   s32 --> s43
   s42 --> s44[4.4]
+  s23 --> s42
   s43 --> s45[4.5]
   s44 --> s45
   s23 --> s45
@@ -1767,6 +1771,7 @@ flowchart LR
   s21 --> s61[6.1]
   s61 --> s62[6.2]
   s61 --> s63[6.3]
+  s41 --> s63
   s45 --> s64[6.4]
   s71[7.1] --> s72[7.2] --> s76[7.6]
   s71 --> s73[7.3] --> s76
@@ -1779,6 +1784,7 @@ flowchart LR
   s22 --> s81
   s81 --> s82[8.2]
   s43 --> s82
+  s56 --> s82
   s82 --> s83[8.3]
   s56 --> s83
   s62 --> s83
@@ -1786,10 +1792,14 @@ flowchart LR
   s64 --> s83
   s76 --> s83
   s83 --> s84[8.4]
+  s56 --> s84
+  s61 --> s84
+  s64 --> s84
   s13 --> s91[9.1] --> s93[9.3]
   s55 --> s92[9.2] --> s93
   s93 --> s94[9.4] --> s95[9.5] --> s96[9.6]
   s76 --> s94
+  s42 --> s94
   s96 --> s97[9.7]
   s96 --> s98[9.8]
   s81 --> s101[10.1]
@@ -1797,6 +1807,7 @@ flowchart LR
   s101 --> s103[10.3] --> s104
   s104 --> s105[10.5]
   s104 --> s106[10.6]
+  s82 --> s106
   s84 --> s111[11.1]
   s106 --> s112[11.2]
   s98 --> s112
@@ -1840,6 +1851,6 @@ Chaque vague liste au plus trois stories dont les dépendances sont satisfaites 
 - **Starter template** : aucun ; la story 1.1 crée le squelette.
 - **Entités créées au besoin** : chaque schéma (`core/schemas/<nom>.py`), base SQLite et fichier de config est créé par la première story qui en a besoin.
 - **Dépendances** : aucune story ne dépend d'une story de numéro supérieur ; les dépendances d'exécution réelle (9.4 → 7.6, 10.4 → 9.6, 8.4 → 8.3) portent sur des stories antérieures. L'ordre d'exécution des vagues avance certaines stories (8.1, 10.1) sans enfreindre cette règle.
-- **Chevauchement de fichiers entre epics** : `cli/eval.py` (5.1, 5.3, 5.6, 8.2), `cli/data.py` (9.3 à 9.7), `cli/compare.py` (8.4, 11.1) et `config/mesures.toml` (6.4, 10.3) sont modifiés par des stories toujours séquentielles ; le découpage en epics est conservé pour la revue de code par epic (D5).
+- **Chevauchement de fichiers entre epics** : `cli/eval.py` (5.1, 5.3, 5.6, 8.2), `cli/data.py` (9.3 à 9.7), `cli/compare.py` (8.4, 11.1) et `train/config.py` (10.3, 10.4) sont modifiés par des stories toujours séquentielles (dépendances corrigées en phase A.3, D-nuit-A3-1 et A3-2) ; le découpage en epics est conservé pour la revue de code par epic (D5).
 - **Epic technique** : l'Epic 1 est un socle assumé (projet greenfield, garde-fous D1 en code) ; les autres epics livrent une capacité utilisable par Anaël ou par l'Agent.
 - **D1.1** : aucune story ne permet à Claude de produire des Données d'entraînement ; les verrous AD-3 sont testés (stories 1.1, 9.2, 9.3, 9.6) ; les fixtures de données sont aléatoires.

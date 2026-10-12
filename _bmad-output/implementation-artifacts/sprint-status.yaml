@@ -1,0 +1,129 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 10-12-2026 07:28
+last_updated: 10-12-2026 07:28
+project: service-public-slm-fine-tuning
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+development_status:
+  epic-1: backlog
+  1-1-squelette-du-projet-et-outillage: backlog
+  1-2-noyau-configuration-secrets-erreurs-json-canonique-et-ressou: backlog
+  1-3-noyau-runs-immuables-lecteur-contrôlé-ports-messages-et-évèn: backlog
+  1-4-passerelle-réseau-unique-profils-liste-blanche-journal-des-r: backlog
+  1-5-registre-de-budget-persistant-avec-arrêt-au-plafond: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-téléchargeur-unique-slmsp-fetch-llama-cpp-corpus-mediatech-b: backlog
+  2-2-inférence-par-llama-server-géré-génération-et-embedding: backlog
+  2-3-index-local-construction-recherche-exacte-et-mesure-h-vec: backlog
+  2-4-mesure-h-emb-compatibilité-de-l-embedding-de-requête-avec-le: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-outils-exposés-figés-validation-des-appels-et-format-de-cass: backlog
+  3-2-bac-à-sable-mcp-rejeu-des-cassettes: backlog
+  3-3-client-mcp-en-direct-enregistrement-et-slmsp-mcp-record: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-table-des-tâches-prompts-de-tâche-et-construction-unique-des: backlog
+  4-2-assistantservice-flux-d-évènements-question-fondée-sur-l-ind: backlog
+  4-3-recherche-de-données-boucle-d-outils-modes-et-repli: backlog
+  4-4-comptes-rendus-longs-découpage-et-fusion: backlog
+  4-5-commande-slmsp-ask-et-test-du-document-témoin: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-lecteur-unique-d-items-api-anti-fuite-et-gel-du-jeu-d-évalua: backlog
+  5-2-fonctions-de-texte-partagées-normalisation-mots-nombres-kand: backlog
+  5-3-évaluation-phase-génération-sans-réseau: backlog
+  5-4-juge-principal-claude-prompt-batch-api-et-cache-de-verdicts: backlog
+  5-5-adaptateur-mistral-et-second-juge-sur-l-échantillon-de-20: backlog
+  5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-orchestrateur-déclaratif-de-benchmarks-et-téléchargement-des: backlog
+  6-2-moteur-lm-eval-qcm-sur-poids-hf-et-ifeval-contre-llama-serve: backlog
+  6-3-moteurs-de-traduction-sacrebleu-et-bfcl-vérificateur-isolé: backlog
+  6-4-mesures-techniques-fr-26-slmsp-measure: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-outil-de-construction-et-instantanés-des-sources-réelles: backlog
+  7-2-items-question-60-et-non-régression-30: backlog
+  7-3-items-recherche-de-données-40-et-cassettes: backlog
+  7-4-items-compte-rendu-25-et-langage-clair-25: backlog
+  7-5-items-correction-résumé-et-courrier-type-3-15: backlog
+  7-6-double-vérification-finale-échantillon-de-revue-et-gel-v1-0: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-téléchargement-et-préparation-des-modèles-de-base-candidats: backlog
+  8-2-sonde-de-tool-calling-par-modèle-h-tools: backlog
+  8-3-exécution-de-la-baseline-jeu-maison-benchmarks-mesures: backlog
+  8-4-rapport-de-baseline: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-registre-des-licences-et-configuration-des-données: backlog
+  9-2-générateur-mistral-prouvé-gabarits-sans-exemple-journal-d-ap: backlog
+  9-3-étape-seed-amorces-publiques-ou-mistral-exclusion-anti-fuite: backlog
+  9-4-étape-generate-génération-idempotente-et-traces-d-outils: backlog
+  9-5-étapes-validate-et-filter: backlog
+  9-6-étape-build-re-dérivation-jeu-versionné-et-suite-des-verrous: backlog
+  9-7-paires-de-préférence-orpo: backlog
+  9-8-campagne-de-génération-de-la-nuit-jeu-v1: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-environnement-d-entraînement-windows-et-mesure-h-win-train: backlog
+  10-2-rendu-en-tokens-et-masque-de-perte-h-masque: backlog
+  10-3-mesures-de-coût-d-un-run-fr-33: backlog
+  10-4-runs-d-entraînement-configurables-slmsp-train-run: backlog
+  10-5-variante-qlora-unsloth-en-environnement-isolé: backlog
+  10-6-export-gguf-et-contrôle-après-quantification: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  11-1-squelette-du-comparatif: backlog
+  11-2-essai-m1-qlora-de-la-nuit-et-mini-rapport: backlog
+  epic-11-retrospective: optional
+
+  # Epics 12 (J4) et 13 (J5) : hors sprint de la nuit, epics seulement, stories à détailler après la nuit (D5, PRD §9.3)
+  epic-12: backlog
+  epic-12-retrospective: optional
+
+  epic-13: backlog
+  epic-13-retrospective: optional

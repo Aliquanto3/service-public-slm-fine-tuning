@@ -222,3 +222,44 @@ Document : `_bmad-output/planning-artifacts/epics.md`. Mode non interactif : les
 ## D-nuit-A2-22 — Baseline sans Juge après épuisement du budget
 - **Décision** : si le budget `anthropic` ou `mistral.juge` est épuisé pendant la Baseline, la notation du modèle en cours est marquée `partiel-budget` et les modèles suivants sont évalués par les seuls contrôles automatiques (RD, CO, URL, emplacements, Kandel-Moles), avec Benchmarks et mesures complets.
 - **Justification** : D1.6 impose l'arrêt « sur ce poste » puis la suite ; les mesures sans Juge restent utiles à la décision d'Anaël.
+
+## Décisions du sprint planning (phase A.3, `bmad-sprint-planning`)
+
+Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut : `_bmad-output/implementation-artifacts/sprint-status.yaml`. Mode non interactif.
+
+## D-nuit-A3-1 — Dépendances corrigées et lancement de llama.cpp ramené dans `inference.serveur` (epics.md)
+- **Constat** : le contrôle de préparation a relevé des dépendances manquantes ou erronées, et un conflit avec AD-6. AD-6 réserve à `inference.serveur` le lancement de `llama-server`, de `llama-quantize` et de `convert_hf_to_gguf.py`, alors que les stories 2.1, 8.1 et 10.6 les lançaient elles-mêmes.
+- **Décision** : corrections marginales d'`epics.md`, sans changer le périmètre :
+  - la story 2.2 porte les lanceurs `version`, `convertir_hf_vers_gguf` et `quantifier`, avec un nouveau CA8 ;
+  - la story 2.1 ne lance plus de binaire (CA1) ;
+  - les stories 8.1 (CA4) et 10.6 utilisent les lanceurs de la 2.2 ;
+  - dépendances ajoutées : 4.2 → 2.3, 6.3 → 4.1, 8.2 → 5.6, 9.4 → 4.2, 10.6 → 8.2 ;
+  - la dépendance de développement de la 8.4 passe de 1.3 à 5.6, 6.1 et 6.4 (schémas chargés) ;
+  - précision AD-1 dans la 6.4 : `measure` n'importe pas `cli`.
+
+  Le tableau des dépendances, le graphe et la rubrique « Validation finale » ont été mis à jour.
+- **Justification** : un agent autonome qui suit les stories à la lettre aurait violé AD-6 ou le test d'architecture, ou modifié en parallèle un même fichier (`cli/eval.py`). Chaque nouvelle dépendance vise une story d'une vague antérieure, donc l'ordre V0 à V19 n'a pas à changer. La correction est réversible et n'a rien coûté au chemin critique.
+
+## D-nuit-A3-2 — Propriété des fichiers de configuration du Harnais et du coût d'entraînement
+- **Constat** :
+  - `harness/config.py` appartenait à la story 4.3. Or la 4.2, qui la précède, a besoin de `k` et du seuil, et la 4.4, parallèle à la 4.3, a besoin de la réserve de sortie et du chevauchement.
+  - La 10.3 ajoutait une section `[entrainement]` à `config/mesures.toml`, qui appartient à la 6.4. Les deux stories n'étaient pas séquentielles. `train` ne peut pas importer `measure.config` (couche égale, AD-1), et le chargement en `extra="forbid"` aurait rejeté la section.
+- **Décision** :
+  - **Harnais.** La 4.2 crée `harness/config.py` (`ConfigHarnais`) et `config/harnais.toml` : itérations d'outils, période de sonde, réserve de sortie, chevauchement. Les stories 4.3 et 4.4 lisent ces fichiers sans les modifier. `k` et le seuil restent dans `config/index.toml` (story 2.3), qui est la source unique ; le Harnais les lit par `slmsp.index.config`.
+  - **Coût d'entraînement.** La 10.3 crée `config/entrainement.toml` et `ConfigCouts` dans `train/config.py`, que la 10.4 complète.
+- **Justification** : cela respecte la convention « un modèle de config par paquet », supprime deux conflits de fichiers entre stories parallèles et évite deux sources pour un même réglage (AD-22). C'est la solution la plus simple : de nouveaux fichiers, aucune nouvelle dépendance entre epics.
+
+## D-nuit-A3-3 — Verdict CONCERNS : on génère le suivi sans attendre
+- **Décision** : après correction des sept constats bloquants, le contrôle rend le verdict « prêt avec réserves ». En mode non interactif, `sprint-status.yaml` est généré sans attendre. Les réserves restantes sont listées dans `implementation-readiness.md` :
+  - décisions déjà en attente d'Anaël ;
+  - import de `slmsp.core.texte` par l'outil de l'Epic 7 en `--no-project` ;
+  - stories d'exécution sérialisées par le GPU ;
+  - clés accentuées.
+- **Justification** : aucune de ces réserves n'oblige un développeur à inventer une décision non consignée. Bloquer la nuit coûterait plus cher (D5).
+
+## D-nuit-A3-4 — Statuts initiaux et J4/J5 hors sprint
+- **Décision** :
+  - Toutes les stories des Epics 1 à 11 sont en `backlog`, car aucun fichier de story n'existe encore. C'est `bmad-build-auto` qui crée la spec de chaque story.
+  - Les Epics 12 (J4) et 13 (J5) restent en `backlog` sans stories, avec un commentaire « hors sprint de la nuit » dans le fichier.
+  - Les clés sont celles du script : `<epic>-<story>-<titre en kebab-case>`, minuscules, accents conservés, tronquées. L'orchestrateur cible une story par son préfixe numérique unique `<epic>-<story>-` (par exemple `1-1-`), qui est aussi la règle de résolution de `bmad-build`.
+- **Justification** : c'est le format natif du skill, qui garde la synchronisation des statuts par `bmad-build` sans réécrire les clés. On ne touche pas aux clés générées, ce qui est le choix le plus réversible.
