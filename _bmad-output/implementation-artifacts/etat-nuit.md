@@ -4,7 +4,7 @@
 > Organisation : chaque story tourne dans un worktree git et est fusionnée en squash sur `nuit/2026-10-12` (D-nuit-B-1). Le statut des stories est dans `sprint-status.yaml`.
 
 ## Phase en cours
-Phase B : socle J1 et Jeu d'évaluation, démarrée à 07h30.
+**Run terminé à 18h30** (périmètre réduit, D-nuit-4). Voir `rapport-de-nuit.md`.
 
 ## Fait
 - 06h26 : commit de cadrage sur `main` (3431c35), puis création de la branche `nuit/2026-10-12`.
@@ -39,10 +39,12 @@ Phase B : socle J1 et Jeu d'évaluation, démarrée à 07h30.
 - 16h37 : story 5.6, notation et Scores de Tâche. **Le banc fonctionne de bout en bout.**
 - 17h15 : story 8.2, sonde de tool calling : Granite 4/5 et Ministral 3B 5/5 en `natif`, SmolLM3 0/5, Qwen 2/5 en `json-generique`.
 
-## En cours (17h20)
-- **Baseline réduite** (Jeu maison seul) : Granite 1B sur GPU (CUDA), 225 items, puis notation avec le Juge en batch. Run `runs/eval-generation/20261012-171658-granite-4.0-1b-3589`.
-- Ensuite : Ministral 3B (meilleur 3B à la sonde), puis le rapport de Baseline.
-- Stories en attente, sans fusion : 9.1 et 10.1 (D-nuit-3, D-nuit-4).
+- 18h20 : Baseline réduite terminée (Granite 1B, Ministral 3B), avec `baseline-rapport.md`.
+- 18h30 : `rapport-de-nuit.md` rédigé. Suite de tests : 2 940 réussis, 0 échec.
+
+## En attente
+- Stories 9.1 et 10.1 : worktrees conservés, non fusionnés.
+- Revues de code par epic : non lancées, par économie.
 
 ## Bloqué
 Rien pour l'instant. Le réseau a été limité de 07h47 à 08h15 à la demande d'Anaël (D-nuit-B-3) ; la limite est levée.
