@@ -341,3 +341,11 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - relecture humaine : 20 % par strate Tâche × difficulté, et au moins 1 item par strate.
 - Contrôle anti-fuite : 5-grammes hachés, plus les identifiants protégés (empreintes des amorces, URL, `dataset_id`/`resource_id`).
 - Vérification à blanc : les 140 items réels passent `slmsp eval gel --verifier-seulement` sans erreur bloquante.
+
+## D-nuit-S7.3 — Items Recherche de données
+- 40 items, chacun avec sa cassette : 36 enregistrées en réel sur `mcp.data.gouv.fr`, 4 simulées pour les cas de panne (délai, 503, injoignable, 500). Taux de rejet à la vérification : 1,5 %.
+- La règle `contient_un_de` passe par `core.texte.normaliser` et compare en début de mot. Le banc (story 5.3) doit appliquer exactement cette règle.
+- **À relire par Anaël** :
+  - certains fragments sont trop larges (« cni » correspond aussi à « CNIL ») ;
+  - les 5 demandes de valeurs supposent un aperçu préalable des données.
+- **Instabilité constatée** : `tests/inference/test_serveur.py::test_demarrage_rate_sante` échoue sous charge, mais passe seul.
