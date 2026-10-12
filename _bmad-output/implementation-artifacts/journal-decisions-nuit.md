@@ -310,3 +310,11 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 - Les stories de mesure secondaires et les Benchmarks passent après.
 - **Repli de l'essai QLoRA** : si la Baseline n'est pas prête, on applique la règle D4 et on prend Granite 4.0 1B.
 - **Story 7.4** : les transcriptions de Compte rendu font entre 4 489 et 5 159 mots (5 items longs). FR-13 cite une entrée d'au moins 6 000 mots pour l'Assistant, mais le sous-agent ne relève aucun écart avec la SPEC du jeu. **À vérifier par Anaël lors de la relecture.**
+
+## D-nuit-S1.4 — Décisions de la story 1.4
+- **Profil `assistant`** : HTTPS sur le port 443 uniquement. Toutes les méthodes sont permises vers la Liste blanche, ce que MCP impose.
+- **Profil `outillage`** :
+  - Hugging Face et `githubusercontent.com` sont autorisés par suffixe, et `codeload.github.com` ajouté pour les archives GitHub ;
+  - la page des conditions Mistral (`legal.mistral.ai`) est autorisée en GET seul (A2-10, à valider par Anaël).
+- **Journal** : il est tenu dans `SLMSP_VAR_DIR/requetes-sortantes.sqlite`.
+- **Risque relevé** : `outillage` refuse les GET vers les API Mistral et Anthropic. Le suivi des lots batch (story 5.4) demandera d'ajouter une règle dans `config/reseau.toml`.

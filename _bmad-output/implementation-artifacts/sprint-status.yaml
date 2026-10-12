@@ -39,12 +39,12 @@ development_status:
   1-1-squelette-du-projet-et-outillage: done
   1-2-noyau-configuration-secrets-erreurs-json-canonique-et-ressou: done
   1-3-noyau-runs-immuables-lecteur-contrôlé-ports-messages-et-évèn: done
-  1-4-passerelle-réseau-unique-profils-liste-blanche-journal-des-r: in-progress
+  1-4-passerelle-réseau-unique-profils-liste-blanche-journal-des-r: done
   1-5-registre-de-budget-persistant-avec-arrêt-au-plafond: backlog
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-téléchargeur-unique-slmsp-fetch-llama-cpp-corpus-mediatech-b: backlog
+  epic-2: in-progress
+  2-1-téléchargeur-unique-slmsp-fetch-llama-cpp-corpus-mediatech-b: in-progress
   2-2-inférence-par-llama-server-géré-génération-et-embedding: backlog
   2-3-index-local-construction-recherche-exacte-et-mesure-h-vec: backlog
   2-4-mesure-h-emb-compatibilité-de-l-embedding-de-requête-avec-le: backlog
