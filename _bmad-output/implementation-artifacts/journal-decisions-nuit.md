@@ -425,3 +425,17 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 ## D-nuit-S9.2 — Générateur Mistral
 - **Contrôle de l'orchestrateur (D1.1)** : les 11 gabarits de `config/prompts/generateur/` (1 557 mots au total) ne contiennent que des consignes et des emplacements. La recherche de motifs (exemple, Q/R, JSON rempli, citations) ne trouve rien.
 - **Préalables D1.2** : `config/donnees.toml [mistral]` doit contenir `conditions_verifiees_le` et `modeles_stables`, sinon le Générateur refuse de démarrer. La story 9.1 les crée.
+
+## D-nuit-3 — Interruption pour limite de dépense Claude (vers 14h50), run en pause
+- **Constat** : les sous-agents des stories 5.3, 9.1 et 10.1 se sont arrêtés sur une erreur 429 (« monthly spend limit »), ainsi que les relecteurs de la story 10.1.
+- **Consigne d'Anaël** : « attends que je t'autorise à continuer avant de relancer les sous-agents ». Elle fait suite à une consommation de crédits plus forte que prévu.
+- **État des worktrees interrompus** (rien n'est fusionné, rien n'est perdu) :
+  - **5.3** (`agent-abec6c22c92e8d5ad`) : 10 fichiers non commités, travail en cours.
+  - **9.1** (`agent-a114d5fa3f921abf8`) : 6 fichiers non commités, travail en cours.
+  - **10.1** (`agent-ac1ba7aa2d001c9e8`) : l'implémentation et la sonde réelle sont commitées (793bd33), mais la revue est inachevée. Un relecteur (Blind Hunter) a relevé des points à corriger avant la fusion :
+    - provenance des runs ;
+    - `uv run` sans `--frozen` sous `gpu.lock` ;
+    - seuil de débordement de la VRAM trop permissif ;
+    - paramètres `loss_type`/`router_aux_loss_coef` propres à Granite mais appliqués à tous les modèles ;
+    - chemins absolus dans les artefacts.
+- **Reprise** : la reprise attend l'accord d'Anaël. Chaque story reprend dans son worktree, à partir de sa spec (statut `in-progress`).

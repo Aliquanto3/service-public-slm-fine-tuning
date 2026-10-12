@@ -28,11 +28,19 @@ Phase B : socle J1 et Jeu d'évaluation, démarrée à 07h30.
 - 10h17 : story 5.1, lecteur d'items, anti-fuite et gel (fad05df). Les 140 items passent `--verifier-seulement`.
 - 10h26 : story 2.2, llama-server géré (5dd6e14). Granite 1B tourne en CPU à environ 42 tokens/s.
 
-## En cours (10h26)
-- Story 2.3 : Index local et mesure H-VEC.
-- Story 7.3 : 40 items RD et leurs cassettes (piste 2).
-- Story 7.5 : 15 items CO, 15 RE et 15 CT (piste 2).
-- Ensuite : la story 7.6, qui gèle le jeu, puis le chemin du banc (4.1 à 4.5, 1.5, 5.3 à 5.6). Priorisation : D-nuit-B-4.
+- 10h50 : story 7.3, 40 items RD et leurs cassettes.
+- 11h19 : story 7.5, 15 items CO, 15 RE et 15 CT.
+- 11h35 : stories 2.3 (Index local, H-VEC) et 1.5 (registre de budget).
+- 12h05 : **gel du Jeu d'évaluation v1.0-provisoire** (commit 12eef73).
+- 12h13 à 13h49 : stories 4.1, 4.2, 5.4, 3.2, 4.4, 5.5, 8.1, 4.3 et 9.2. La suite passe : 2 464 tests sans échec, mesuré à 13h28.
+
+## En cours : RUN EN PAUSE (15h31)
+- Les sous-agents ont été coupés vers 14h50 par la limite de dépense Claude (journal D-nuit-3).
+- **Anaël demande d'attendre son accord avant de relancer les sous-agents.**
+- Stories interrompues, à reprendre dans leur worktree :
+  - 5.3 : génération de l'évaluation ;
+  - 9.1 : registre des licences ;
+  - 10.1 : environnement d'entraînement, implémentée mais revue inachevée.
 
 ## Bloqué
 Rien pour l'instant. Le réseau a été limité de 07h47 à 08h15 à la demande d'Anaël (D-nuit-B-3) ; la limite est levée.
