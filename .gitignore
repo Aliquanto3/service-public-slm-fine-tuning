@@ -23,3 +23,6 @@ runs/
 *.bin
 *.parquet
 wandb/
+
+# Répertoire partagé des artefacts du run (SLMSP_VAR_DIR par défaut)
+var/
