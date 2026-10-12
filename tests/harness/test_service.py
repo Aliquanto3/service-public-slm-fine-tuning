@@ -218,9 +218,10 @@ def test_tache_inconnue(table, config_harnais) -> None:
         service(FakeLlm(), table, config_harnais).repondre("ZZ", [user("abc")])
 
 
-def test_rd_indisponible_avant_la_4_3(table, config_harnais) -> None:
-    with pytest.raises(TacheIndisponible, match="recherche"):
-        service(FakeLlm(), table, config_harnais).repondre("RD", [user("abc")])
+def test_rd_disponible_depuis_la_4_3() -> None:
+    from slmsp.harness.taches import recherche, traitement
+
+    assert traitement("RD") is recherche.traiter
 
 
 def test_tache_inactive(table, config_harnais) -> None:
