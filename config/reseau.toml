@@ -53,5 +53,13 @@ nom = "api-post"
 methodes = ["POST"]
 hotes = ["api.mistral.ai", "api.anthropic.com", "mcp.data.gouv.fr"]
 
+# Suivi des lots batch du Juge (story 5.4) : état et résultats des lots, GET seul. Pas de
+# restriction de chemin : les identifiants de lot varient et la règle n'admet que des
+# chemins exacts.
+[[profils.outillage.regles]]
+nom = "anthropic-lots"
+methodes = ["GET"]
+hotes = ["api.anthropic.com"]
+
 [profils.aucun]
 # Tout est refusé : ni règle, ni lecture de la Liste blanche.

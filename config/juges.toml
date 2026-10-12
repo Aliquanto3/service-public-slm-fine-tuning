@@ -1,0 +1,29 @@
+# Juges du banc d'évaluation (AD-3, AD-12). Lu par `slmsp.judge.config.charger_juges`.
+# La section `second` (second juge Mistral) sera ajoutée par la story 5.5.
+
+schema_version = 1
+
+[principal]
+# Juge principal : identifiant exact du modèle Anthropic (tarifé dans `tarifs.toml`).
+modele = "claude-opus-5-5"
+# Effort de raisonnement (`low`, `medium`, `high`, `xhigh`, `max`) ; à confirmer par la
+# mesure H-JUGE-COUT à la Baseline. Fait partie de la clé du cache de verdicts.
+effort = "medium"
+# `batch` (Batch API, tarif -50 %, par défaut) ou `direct` (un appel par item).
+mode_appel = "batch"
+# Plafond de tokens de sortie d'un verdict ; sert aussi au coût pire cas réservé.
+max_tokens = 6000
+# Délai maximal d'un lot (secondes) : au-delà, le lot est annulé et les items restants
+# passent en appels directs.
+delai_max_lot = 3600
+# Pause entre deux relevés de l'état d'un lot (secondes).
+intervalle_sondage = 60
+# Délai d'attente de la confirmation d'une annulation de lot (secondes) ; au-delà, le lot
+# reste ouvert et ses items sont marqués non jugés.
+delai_annulation = 600
+# Délai d'un appel HTTP à l'API (secondes), passé au client `anthropic`.
+delai_appel = 600
+# Usage de budget déclaré dans `budgets.toml` (poste `anthropic`).
+usage_budget = "juge-principal"
+# Grille du Juge, relative à la racine du dépôt (lecture seule).
+grille = "eval/grille-juge-v1.md"
