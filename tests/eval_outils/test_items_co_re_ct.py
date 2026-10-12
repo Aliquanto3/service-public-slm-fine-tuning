@@ -70,6 +70,12 @@ def _ids(items: list[dict]) -> list[str]:
     return [it["id"] for it in items]
 
 
+def _retenus(items: list[dict]) -> list[dict]:
+    """Items dont le dernier verdict n'est pas `rejete` (un remplacé reste dans le brouillon)."""
+    verdicts, _ = cj.derniers_verdicts(CONSTRUCTION)
+    return [it for it in items if verdicts.get(it["id"], {}).get("verdict") != "rejete"]
+
+
 # ---------------------------------------------------------------------------
 # Fichiers
 # ---------------------------------------------------------------------------
@@ -100,7 +106,7 @@ def test_champs_communs(code):
 
 @pytest.mark.parametrize("code", CODES)
 def test_composition_par_difficulte(code):
-    items = PAR_CODE[code]
+    items = _retenus(PAR_CODE[code])
     assert len(items) == 15
     assert Counter(it["difficulte"] for it in items) == REPARTITION
 
@@ -291,9 +297,10 @@ def test_structure_ct(it):
 
 
 def test_composition_ct():
-    assert Counter(it["type_courrier"] for it in CT) == TYPES_CT
-    assert sum(1 for it in CT if it.get("base_reglementaire")) >= 4
-    assert len({it["entree"]["objet"] for it in CT}) == len(CT), "objets en double"
+    retenus = _retenus(CT)
+    assert Counter(it["type_courrier"] for it in retenus) == TYPES_CT
+    assert sum(1 for it in retenus if it.get("base_reglementaire")) >= 4
+    assert len({it["entree"]["objet"] for it in retenus}) == len(retenus), "objets en double"
 
 
 # ---------------------------------------------------------------------------
@@ -453,7 +460,12 @@ def test_verdicts_acceptes(code):
             assert v.get("motif") in cj.MOTIFS, (code, n)
     verdicts, erreurs = cj.derniers_verdicts(CONSTRUCTION)
     assert [e for e in erreurs if e.startswith(f"{code}.jsonl")] == []
+    # Un item rejeté puis remplacé (CT-003 par CT-016) reste dans le brouillon, exclu.
+    sans_verdict = [it["id"] for it in PAR_CODE[code] if it["id"] not in verdicts]
+    assert sans_verdict == [], f"{code} non vérifiés : {sans_verdict}"
     non_acceptes = [
-        it["id"] for it in PAR_CODE[code] if verdicts.get(it["id"], {}).get("verdict") != "accepte"
+        it["id"]
+        for it in _retenus(PAR_CODE[code])
+        if verdicts.get(it["id"], {}).get("verdict") != "accepte"
     ]
     assert non_acceptes == [], f"{code} non vérifiés ou rejetés : {non_acceptes}"

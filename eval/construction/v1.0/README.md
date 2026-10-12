@@ -15,9 +15,10 @@ uv run --no-project --python 3.12 --with duckdb --with openpyxl python -I eval/o
 | `composition` | écarts des brouillons avec SPEC §2 et anomalies de structure (Markdown) |
 | `rejets` | taux de rejet par Tâche et par motif (Markdown) |
 | `assembler --version v1.0` | écrit `eval/jeu/v1.0/items.jsonl` |
+| `revue --version v1.0` | après le gel : exporte l'échantillon `echantillons.relecture` du manifeste dans `eval/revue/echantillon-revue-v1.0.jsonl` (lignes de `items.jsonl` telles quelles) et `eval/revue/echantillon-revue-v1.0-lecture.md` (une fiche par item, champs rendus lisiblement) ; refuse (code 2, aucun fichier) si le manifeste manque, si un `id` est absent de `items.jsonl` ou si un export existe déjà |
 
 Options et comportements :
-- `assembler`, `composition` et `rejets` acceptent `--racine <dossier>` (racine du dépôt, défaut `.`) et `--version` (`vN` ou `vN.M`).
+- `assembler`, `composition`, `rejets` et `revue` acceptent `--racine <dossier>` (racine du dépôt, défaut `.`) et `--version` (`vN` ou `vN.M`).
 - `assembler` refuse d'écrire (code 2, aucun fichier) si un brouillon ou une ligne de vérification est illisible, si un `id` est mal formé ou dupliqué (`Q-001` et `Q-0001` comptent comme doublons), si un verdict est inconnu, ou si aucun item n'est retenu. Il refuse aussi si `eval/jeu/<version>/MANIFEST.json` existe (jeu gelé) ; `--force` passe outre.
 - Les items sans verdict sont assemblés mais listés (comme les verdicts sans brouillon) par `assembler` et `composition`.
 - `sources --quoi service-public catalogue legi questions` choisit les sources (défaut : toutes) ; `--legi-codes crpa casf cgct civil ccp` (défaut) accepte aussi un nom de dossier LEGI brut (`code_du_travail`) ; `--page URL` (répétable) fige une page d'un hôte de la Liste blanche. `--page` seul, sans `--quoi`, ne télécharge aucune donnée Hugging Face.

@@ -19,7 +19,9 @@ Sous-commandes :
 - `assembler`   : concatène `eval/construction/<version>/<CODE>.jsonl` dans
                   `eval/jeu/<version>/items.jsonl` (tri par identifiant, UTF-8, LF) ;
 - `composition` : écarts des brouillons avec SPEC §2, en Markdown ;
-- `rejets`      : taux de rejet par Tâche et par motif, en Markdown.
+- `rejets`      : taux de rejet par Tâche et par motif, en Markdown ;
+- `revue`       : exporte l'échantillon de relecture du manifeste gelé dans `eval/revue/`
+                  (JSONL pour les outils, Markdown lisible champ par champ).
 
 Garde-fous : le client HTTP est en lecture seule (GET, HEAD), en `https` uniquement, et
 vérifie l'hôte contre une liste codée (D1.5) avant chaque connexion, y compris à chaque
@@ -1315,6 +1317,160 @@ def cmd_rejets(racine: Path, version: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Sous-commande `revue`
+# ---------------------------------------------------------------------------
+CHAMPS_TITRE_REVUE = ("id", "tache", "difficulte", "theme")
+
+
+def _cloture(texte: str) -> str:
+    """Barrière de bloc de code plus longue que toute suite d'accents graves du texte."""
+    plus_longue = max((len(m) for m in re.findall(r"`+", texte)), default=0)
+    return "`" * max(3, plus_longue + 1)
+
+
+def _bloc_texte(texte: str, retrait: str) -> list[str]:
+    cloture = _cloture(texte)
+    return (
+        [f"{retrait}{cloture}text"]
+        + [f"{retrait}{ligne}" if ligne else "" for ligne in texte.split("\n")]
+        + [f"{retrait}{cloture}"]
+    )
+
+
+def _scalaire(valeur: Any) -> str:
+    return valeur if isinstance(valeur, str) else json.dumps(valeur, ensure_ascii=False)
+
+
+def _simple(valeur: Any) -> bool:
+    """Valeur rendue sur la ligne de sa puce (scalaire sans saut de ligne, conteneur vide)."""
+    if isinstance(valeur, str):
+        return "\n" not in valeur
+    if isinstance(valeur, dict | list):
+        return not valeur
+    return True
+
+
+def _rendre_valeur(valeur: Any, retrait: str) -> list[str]:
+    """Rend une valeur composée sous sa puce : listes en puces, objets en sous-puces,
+    texte multiligne en bloc. `retrait` est la colonne du contenu de la puce parente."""
+    if isinstance(valeur, str):
+        return _bloc_texte(valeur, retrait)
+    lignes: list[str] = []
+    paires = valeur.items() if isinstance(valeur, dict) else ((None, v) for v in valeur)
+    for cle, v in paires:
+        puce = f"{retrait}- **{cle}** :" if cle is not None else f"{retrait}-"
+        if _simple(v):
+            lignes.append(f"{puce} {_scalaire(v)}".rstrip())
+        else:
+            lignes.append(puce)
+            lignes += _rendre_valeur(v, retrait + "  ")
+    return lignes
+
+
+def rendre_lecture(version: str, items: list[dict]) -> str:
+    """Markdown de lecture : une fiche par item, chaque champ rendu lisiblement."""
+    lignes = [
+        f"# Échantillon de relecture du Jeu d'évaluation {version} — lecture",
+        "",
+        f"- Items : {len(items)}, dans l'ordre du manifeste "
+        f"(`eval/jeu/{version}/MANIFEST.json`, `echantillons.relecture`).",
+        f"- Document officiel : `eval/revue/echantillon-revue-{version}.md` (export du gel) ; "
+        "même contenu, rendu ici champ par champ.",
+        "",
+    ]
+    for it in items:
+        lignes += [
+            f"## {it['id']} — {it.get('tache', '?')} "
+            f"({it.get('difficulte', '?')}, thème `{it.get('theme', '?')}`)",
+            "",
+            "- [ ] Relu",
+            "- Remarques :",
+            "",
+        ]
+        for cle, valeur in it.items():
+            if cle in CHAMPS_TITRE_REVUE:
+                continue
+            if _simple(valeur):
+                lignes += [f"**{cle}** : {_scalaire(valeur)}".rstrip(), ""]
+            else:
+                lignes += [f"### {cle}", ""] + _rendre_valeur(valeur, "") + [""]
+    return "\n".join(lignes).rstrip("\n") + "\n"
+
+
+def cmd_revue(racine: Path, version: str) -> int:
+    jeu = racine / "eval" / "jeu" / version
+    chemin_manifeste = jeu / "MANIFEST.json"
+    chemin_items = jeu / "items.jsonl"
+    revue = racine / "eval" / "revue"
+    sorties = (
+        revue / f"echantillon-revue-{version}.jsonl",
+        revue / f"echantillon-revue-{version}-lecture.md",
+    )
+    if not chemin_manifeste.is_file():
+        raise ErreurOutil(f"manifeste absent : {chemin_manifeste} (geler d'abord le jeu)")
+    manifeste = _decoder_json(chemin_manifeste.read_bytes(), chemin_manifeste)
+    echantillons = manifeste.get("echantillons") if isinstance(manifeste, dict) else None
+    ids = echantillons.get("relecture") if isinstance(echantillons, dict) else None
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        raise ErreurOutil(f"{chemin_manifeste} : `echantillons.relecture` absent ou invalide")
+    if not chemin_items.is_file():
+        raise ErreurOutil(f"items absents : {chemin_items}")
+    brutes: dict[str, str] = {}
+    objets: dict[str, dict] = {}
+    with open(chemin_items, encoding="utf-8-sig", newline="") as f:
+        for n, ligne in enumerate(f, start=1):
+            ligne = ligne.rstrip("\r\n")
+            if not ligne.strip():
+                continue
+            try:
+                it = json.loads(ligne)
+            except json.JSONDecodeError as exc:
+                raise ErreurOutil(f"{chemin_items.name}:{n} : JSON illisible ({exc.msg})") from None
+            if isinstance(it, dict) and isinstance(it.get("id"), str):
+                brutes[it["id"]] = ligne
+                objets[it["id"]] = it
+    inconnus = [i for i in ids if i not in brutes]
+    if inconnus:
+        raise ErreurOutil(
+            f"identifiant(s) de l'échantillon absent(s) de {chemin_items.name} : "
+            + ", ".join(inconnus)
+        )
+    existants = [s for s in sorties if s.exists()]
+    if existants:
+        raise ErreurOutil(
+            "export déjà présent, rien n'est écrit : " + ", ".join(str(s) for s in existants)
+        )
+    contenus = (
+        "".join(brutes[i] + "\n" for i in ids),
+        rendre_lecture(version, [objets[i] for i in ids]),
+    )
+    revue.mkdir(parents=True, exist_ok=True)
+    ecrits: list[Path] = []
+    try:
+        for chemin, contenu in zip(sorties, contenus, strict=True):
+            with open(chemin, "x", encoding="utf-8", newline="\n") as f:  # création exclusive
+                ecrits.append(chemin)
+                f.write(contenu)
+    except OSError as exc:  # existant, disque plein, droits… : aucun export partiel
+        for chemin in ecrits:  # n'efface que ce que cet appel vient de créer
+            chemin.unlink(missing_ok=True)
+        if isinstance(exc, FileExistsError):
+            raise ErreurOutil(f"export déjà présent, rien n'est écrit : {exc.filename}") from None
+        raise ErreurOutil(f"écriture de l'export impossible, rien n'est écrit : {exc}") from None
+    print(
+        "\n".join(
+            [
+                f"# Revue {version}",
+                "",
+                f"- Items de l'échantillon : {len(ids)}",
+                *(f"- Écrit : `{s.relative_to(racine).as_posix()}`" for s in sorties),
+            ]
+        )
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Entrée
 # ---------------------------------------------------------------------------
 def analyser(argv: list[str] | None) -> argparse.Namespace:
@@ -1355,6 +1511,7 @@ def analyser(argv: list[str] | None) -> argparse.Namespace:
         ("assembler", "brouillons -> eval/jeu/<version>/items.jsonl"),
         ("composition", "écarts avec SPEC §2 (Markdown)"),
         ("rejets", "taux de rejet par Tâche et par motif (Markdown)"),
+        ("revue", "échantillon de relecture du manifeste -> eval/revue/ (JSONL et Markdown)"),
     ):
         p = sous.add_parser(nom, help=aide)
         p.add_argument("--version", default="v1.0")
@@ -1385,6 +1542,8 @@ def main(argv: list[str] | None = None, client: ClientHTTP | None = None) -> int
             return cmd_assembler(a.racine, a.version, a.force)
         if a.cmd == "composition":
             return cmd_composition(a.racine, a.version)
+        if a.cmd == "revue":
+            return cmd_revue(a.racine, a.version)
         return cmd_rejets(a.racine, a.version)
     except ErreurOutil as exc:
         print(f"Erreur ({type(exc).__name__}) : {exc}", file=sys.stderr)
