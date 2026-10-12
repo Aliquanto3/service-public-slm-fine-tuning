@@ -1,0 +1,45 @@
+# Index local v1 (AD-9, D4) : construction par `slmsp index build`, lecture par
+# `slmsp.index.lecture`, mesure H-VEC par `slmsp index mesurer`.
+# Lu sous `<racine du projet>/config`, jamais sous `--racine`.
+
+schema_version = 1
+
+# Les vecteurs du corpus sont ceux de MediaTech (colonne JSON), jamais recalculés.
+modele_embedding = "BAAI/bge-m3"
+colonne_vecteurs = "embeddings_bge-m3"
+dimension = 1024
+
+# Recherche exacte par blocs : lignes du memmap converties en float32 à la fois.
+taille_bloc = 4096
+# Nombre de passages renvoyés au Harnais et seuil de score sous lequel un passage
+# n'est pas jugé pertinent (appliqué par le Harnais, pas par l'Index).
+k = 5
+seuil_pertinence = 0.5
+
+# Lignes lues par lot pyarrow à la construction.
+taille_lot_lecture = 2048
+
+# Sources de l'Index v1 : service-public et catalogue data.gouv (D4). `jeu` et `revision`
+# reprennent config/sources.toml ; `date_snapshot` est la date (`lastModified`) de la
+# révision Hugging Face épinglée. La version de l'Index est la plus récente de ces dates.
+[[sources]]
+nom = "service-public"
+jeu = "service-public"
+revision = "7ddda096b33d48dbda8143fc8c349a8b0e031a3a"
+date_snapshot = 2026-09-25
+colonnes = { chunk_id = "chunk_id", doc_id = "doc_id", titre = "title", url = "url", texte = "chunk_text" }
+
+[[sources]]
+nom = "data-gouv-datasets-catalog"
+jeu = "data-gouv-datasets-catalog"
+revision = "11f3d3c9481ad478dbcff52e85d73b7fd10533ce"
+date_snapshot = 2026-09-26
+colonnes = { chunk_id = "chunk_id", doc_id = "doc_id", titre = "title", url = "url", texte = "chunk_text" }
+
+# Mesure H-VEC : requêtes tirées sans remise parmi les vecteurs du corpus.
+[mesure]
+requetes = 200
+graine = 42
+k = 10
+seuil_p95_ms = 300
+seuil_ram_mo = 350
