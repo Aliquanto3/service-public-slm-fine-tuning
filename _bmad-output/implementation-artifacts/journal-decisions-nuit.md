@@ -394,3 +394,7 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 - **Paramètres** : `max_tokens` 6000, effort medium, sans `temperature` (A1-5).
 - **À trancher par Anaël** : la règle réseau `anthropic-lots` autorise les GET vers `api.anthropic.com` sans restriction de chemin.
 - **Non vérifié** : le chemin Batch API réel n'a pas encore été exercé contre l'API. Il le sera par H-BATCH, à la Baseline.
+
+## D-nuit-S3.2 — Bac à sable MCP
+- Texte de la réponse vide : « No results found. ». Question ouverte C7 de la revue d'architecture, **à valider par Anaël**.
+- Les 40 cassettes RD gelées se rejouent à l'identique sans réseau.
