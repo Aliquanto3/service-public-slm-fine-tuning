@@ -1,5 +1,7 @@
 # Juges du banc d'évaluation (AD-3, AD-12). Lu par `slmsp.judge.config.charger_juges`.
-# La section `second` (second juge Mistral) sera ajoutée par la story 5.5.
+# Section `principal` : Juge principal Claude (story 5.4). Section `second` : second juge
+# Mistral (story 5.5), qui renote l'échantillon du manifeste ; son délai d'appel est dans
+# `config/mistral.toml`.
 
 schema_version = 1
 
@@ -27,3 +29,23 @@ delai_appel = 600
 usage_budget = "juge-principal"
 # Grille du Juge, relative à la racine du dépôt (lecture seule).
 grille = "eval/grille-juge-v1.md"
+
+[second]
+# Second juge : modèle Mistral demandé (doit figurer dans la liste stable de `mistral.toml` et
+# être tarifé dans `tarifs.toml`). Fait partie de la clé du cache de verdicts.
+modele = "mistral-large-latest"
+# Température d'échantillonnage : 0 pour un verdict aussi déterministe que possible. Seule
+# valeur admise : la clé du cache (`effort_cache`) la suppose.
+temperature = 0.0
+# Plafond de tokens de sortie d'un verdict ; sert aussi au coût pire cas réservé.
+max_tokens = 4000
+# Usage de budget déclaré dans `budgets.toml` (sous-poste `mistral.juge`) ; il route aussi
+# l'appel vers le journal du juge (`appels-mistral-juge.sqlite`). Seule valeur admise : tout
+# autre usage enverrait les prompts d'évaluation dans un journal lisible par `data` et `train`.
+usage_budget = "juge-second"
+# Valeur tenant lieu d'effort dans la clé du cache de verdicts, suivie de `+<format_reponse>` :
+# le second juge n'a pas d'effort de raisonnement, il est réglé par sa température.
+effort_cache = "temperature-0"
+# Format de réponse demandé : `json_schema` (schéma strict du Juge principal) ou
+# `json_object` (JSON libre, validé ensuite contre le même schéma).
+format_reponse = "json_schema"

@@ -1,0 +1,30 @@
+# Adaptateur Mistral (AD-3 verrous 1 et 3, D1.2). Lu par `slmsp.mistral.config.charger_mistral`.
+# Toute requête à l'API Mistral passe par `slmsp.mistral.client.ClientMistral` : réservation au
+# budget, appel unique sans relance, journal, régularisation, contrôle du modèle résolu.
+
+# Version du format de ce fichier (seule valeur admise : 1).
+schema_version = 1
+
+# Modèle demandé à chaque appel. Les réservations et les coûts se font à son tarif
+# (`tarifs.toml`) ; c'est le seul modèle Mistral tarifé.
+modele = "mistral-large-latest"
+
+# Liste stable : modèles admis, demandés comme résolus (champ `model` de la réponse). Alias et
+# versions datées stables de Mistral Large, sans Labs ni préversion. Une version résolue
+# absente est refusée (`ModeleMistralRefuse`) : ne l'ajouter qu'après vérification.
+modeles_autorises = ["mistral-large-latest", "mistral-large-2411", "mistral-large-2512"]
+
+# Motifs refusés dans un nom de modèle, demandé ou résolu (sous-chaîne, insensible à la
+# casse) : modèles Labs, préversions, bêtas, candidats et modèles expérimentaux.
+motifs_interdits = ["labs", "preview", "beta", "-rc", "experimental"]
+
+# Délai d'un appel HTTP à l'API (secondes), passé au SDK `mistralai` (`timeout_ms`).
+delai_appel = 300
+
+# Journaux des appels, dans `SLMSP_VAR_DIR`. Journal des données (`generation`, `validation`) :
+# lisible par les pipelines `data` et `train` (AD-24) ; son nom doit rester celui de
+# `slmsp.core.artefacts.NOM_JOURNAL_MISTRAL`.
+fichier_journal_donnees = "appels-mistral.sqlite"
+# Journal du second juge (`juge-second`) : fichier à part, que la liste d'accès d'AD-24
+# refuse aux lecteurs `data` et `train` (les textes d'évaluation n'y fuient pas).
+fichier_journal_juge = "appels-mistral-juge.sqlite"
