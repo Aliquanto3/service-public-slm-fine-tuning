@@ -349,3 +349,10 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - certains fragments sont trop larges (« cni » correspond aussi à « CNIL ») ;
   - les 5 demandes de valeurs supposent un aperçu préalable des données.
 - **Instabilité constatée** : `tests/inference/test_serveur.py::test_demarrage_rate_sante` échoue sous charge, mais passe seul.
+
+## D-nuit-S2.3 — Index local v1 et mesure H-VEC
+- **Index construit** : `index/20260926/`, avec 143 437 chunks (35 758 service-public, 107 679 catalogue data.gouv) pour 457 Mo.
+- **H-VEC infirmée de peu sur la latence** : p95 de 314 à 329 ms, pour un seuil de 300 ms. La RAM ajoutée, entre 282 et 298 Mio, reste sous le plafond de 350 Mio.
+  - Ces mesures ont été prises avec un CPU chargé à environ 60 % par les stories qui tournaient en parallèle. **Il faut les reprendre au repos avant de basculer vers le repli usearch HNSW i8**, qui n'est pas implémenté.
+  - **À trancher par Anaël** après cette remesure.
+- **Paramètres retenus** : `k = 5`, `seuil_pertinence = 0,5`. La version de l'index correspond à la date `lastModified` de la révision HF épinglée.
