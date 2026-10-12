@@ -37,6 +37,12 @@ FORMAT = {
     "json_schema": {"name": "verdict", "schema": {"type": "object"}, "strict": True},
 }
 COUT_FACTICE = (1000 + 200) / 1_000_000  # tarifs de test : 1 $/M, taux 1
+META: dict[str, Any] = {
+    "gabarit_id": "gabarit-factice",
+    "version_gabarit": 1,
+    "sha256_gabarit": "0" * 64,
+    "amorce_ids": ["amorce-a", "amorce-b"],
+}
 
 
 def appeler(client: Any, usage: str = "juge-second", **options: Any) -> ReponseMistral:
@@ -281,26 +287,113 @@ def test_jeton_du_generateur_accepte(banc: Any, monkeypatch: pytest.MonkeyPatch)
     client = banc.client()
     with pytest.raises(UsageInterdit):  # un autre objet ne vaut pas jeton
         client._appeler(
-            "generation", "s", MESSAGES, max_tokens=10, tokens_entree_estimes=10, jeton=object()
+            "generation",
+            "s",
+            MESSAGES,
+            max_tokens=10,
+            tokens_entree_estimes=10,
+            jeton=object(),
+            complements_journal=META,
         )
+    with pytest.raises(UsageInterdit):  # le bon jeton sans méta de journal
+        client._appeler(
+            "generation", "s", MESSAGES, max_tokens=10, tokens_entree_estimes=10, jeton=jeton
+        )
+    _rien_n_est_parti(banc)
     reponse = client._appeler(
-        "generation", "session-gen", MESSAGES, max_tokens=10, tokens_entree_estimes=10, jeton=jeton
+        "generation",
+        "session-gen",
+        MESSAGES,
+        max_tokens=10,
+        tokens_entree_estimes=10,
+        jeton=jeton,
+        complements_journal=META,
     )
     (ligne,) = banc.lignes_journal(JOURNAL_DONNEES)
     assert ligne["appel_id"] == reponse.appel_id and ligne["usage"] == "generation"
+    assert ligne["gabarit_id"] == META["gabarit_id"]
+    assert ligne["version_gabarit"] == META["version_gabarit"]
+    assert ligne["sha256_gabarit"] == META["sha256_gabarit"]
+    assert json.loads(ligne["amorce_ids"]) == META["amorce_ids"]
     assert banc.lignes_journal(JOURNAL_JUGE) == []
     (reservation,) = banc.lignes_registre()
     assert (reservation["poste"], reservation["sous_poste"]) == ("mistral", "generation")
 
 
+@pytest.mark.parametrize(
+    "meta",
+    [
+        {k: v for k, v in META.items() if k != "amorce_ids"},
+        {**META, "amorce_ids": []},
+        {**META, "amorce_ids": "amorce-a"},
+        {**META, "version_gabarit": 0},
+        {**META, "sha256_gabarit": "abc"},
+    ],
+)
+def test_meta_de_generation_incomplete(
+    banc: Any, monkeypatch: pytest.MonkeyPatch, meta: dict[str, Any]
+) -> None:
+    jeton = object()
+    module = types.ModuleType("slmsp.mistral.generateur")
+    module._JETON = jeton  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "slmsp.mistral.generateur", module)
+    with pytest.raises(UsageInterdit):
+        banc.client()._appeler(
+            "generation",
+            "s",
+            MESSAGES,
+            max_tokens=10,
+            tokens_entree_estimes=10,
+            jeton=jeton,
+            complements_journal=meta,
+        )
+    _rien_n_est_parti(banc)
+
+
+@pytest.mark.parametrize("usage", ["validation", "juge-second"])
+def test_meta_refusee_hors_generation(banc: Any, usage: str) -> None:
+    with pytest.raises(UsageInterdit):
+        banc.client()._appeler(
+            usage,
+            "s",
+            MESSAGES,
+            max_tokens=10,
+            tokens_entree_estimes=10,
+            complements_journal=META,
+        )
+    _rien_n_est_parti(banc)
+
+
+def test_complement_inconnu_refuse(banc: Any) -> None:
+    with pytest.raises(UsageInterdit):
+        banc.client()._appeler(
+            "validation",
+            "s",
+            MESSAGES,
+            max_tokens=10,
+            tokens_entree_estimes=10,
+            complements_journal={"texte_libre": "<texte-factice>"},
+        )
+    _rien_n_est_parti(banc)
+
+
+def test_jeton_delegue_au_journal() -> None:
+    from slmsp.mistral import client as module_client
+    from slmsp.mistral import generateur
+    from slmsp.mistral import journal as module_journal
+
+    assert module_client._jeton_generateur() is generateur._JETON
+    assert module_journal.jeton_generateur() is generateur._JETON
+
+
 def test_import_du_generateur_en_echec_releve(banc: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     """Un `ModuleNotFoundError` sur un autre nom (dépendance du Générateur) est relevé."""
-    from slmsp.mistral import client as module_client
+    from slmsp.mistral import journal as module_journal
 
     def importer(nom: str) -> Any:
         raise ModuleNotFoundError("No module named 'dependance_absente'", name="dependance_absente")
 
-    monkeypatch.setattr(module_client.importlib, "import_module", importer)
+    monkeypatch.setattr(module_journal.importlib, "import_module", importer)
     client = banc.client()
     with pytest.raises(ModuleNotFoundError) as erreur:
         client._appeler(

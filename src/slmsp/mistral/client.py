@@ -2,8 +2,9 @@
 
 `ClientMistral.appeler(usage, ...)` déroule, dans cet ordre :
 
-1. les contrôles : usage connu (`generation` refusé, réservé au futur `Generateur` de la
-   story 9.2 par un jeton de preuve), modèle demandé dans la liste stable ;
+1. les contrôles : usage connu (`generation` refusé, réservé au `Generateur` de
+   `slmsp.mistral.generateur` par un jeton de preuve et la méta de gabarit et d'amorces
+   passée par `complements_journal`), modèle demandé dans la liste stable ;
 2. la réservation au pire cas (`RegistreBudget.reserver`) au sous-poste de l'usage ;
 3. un appel unique `chat.complete` (`retries=None`, aucune relance) ;
 4. le journal de l'usage (requête canonique, corps brut de la réponse, SHA, référence
@@ -23,7 +24,6 @@ débogage du SDK (il écrirait les en-têtes, donc la clé).
 
 from __future__ import annotations
 
-import importlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -39,6 +39,7 @@ from slmsp.budget.tarifs import UsageTokens
 from slmsp.core.erreurs import SlmspError
 from slmsp.core.ports import JournalRequetes
 from slmsp.core.secrets import secret
+from slmsp.mistral import journal as journal_mistral
 from slmsp.mistral.config import ConfigMistral
 from slmsp.mistral.journal import USAGES, UsageInterdit, journal_pour
 from slmsp.net import client as client_reseau
@@ -54,8 +55,10 @@ __all__ = [
 
 URL_API: Final = "https://api.mistral.ai"
 NOM_SECRET: Final = "MISTRAL_API_KEY"
-MODULE_GENERATEUR: Final = "slmsp.mistral.generateur"
+MODULE_GENERATEUR: Final = journal_mistral.MODULE_GENERATEUR
 USAGE_GENERATION: Final = "generation"
+CLES_COMPLEMENTS: Final = ("gabarit_id", "version_gabarit", "sha256_gabarit", "amorce_ids")
+"""Méta admise dans `complements_journal` (ligne `generation` du journal)."""
 MODE: Final = "direct"
 """Mode tarifaire : appels directs seulement (aucun mode batch Mistral)."""
 
@@ -127,16 +130,9 @@ def _delai_ms(config: ConfigMistral) -> int:
 def _jeton_generateur() -> object | None:
     """Jeton de preuve du Générateur (`slmsp.mistral.generateur._JETON`), s'il existe.
 
-    Le module arrive avec la story 9.2 ; d'ici là, aucun jeton n'existe et l'usage
-    `generation` est toujours refusé.
+    Délègue à `slmsp.mistral.journal.jeton_generateur`, qui contrôle aussi l'inscription.
     """
-    try:
-        module = importlib.import_module(MODULE_GENERATEUR)
-    except ModuleNotFoundError as exc:
-        if exc.name == MODULE_GENERATEUR:
-            return None
-        raise
-    return getattr(module, "_JETON", None)
+    return journal_mistral.jeton_generateur()
 
 
 class _Capture:
@@ -248,13 +244,16 @@ class ClientMistral:
             jeton=None,
         )
 
-    def _controler(self, usage: str, jeton: object | None) -> None:
+    def _controler(self, usage: str, jeton: object | None, complements: Mapping[str, Any]) -> None:
         if usage not in USAGES:
             raise UsageInterdit(f"usage Mistral inconnu : {usage!r} (attendu : {USAGES})")
         if usage == USAGE_GENERATION and (jeton is None or jeton is not _jeton_generateur()):
             raise UsageInterdit(
                 "usage « generation » réservé au Générateur (story 9.2) : appel refusé"
             )
+        # Méta du journal (gabarit, amorce_ids) contrôlée avant toute réservation : un refus
+        # du journal après l'appel laisserait un appel payé sans ligne.
+        journal_mistral.controler_inscription(usage, jeton=jeton, **complements)
         refus = self.config.refus_modele(self.config.modele)
         if refus is not None:
             raise ModeleMistralRefuse(
@@ -272,8 +271,19 @@ class ClientMistral:
         temperature: float | None = None,
         response_format: Mapping[str, Any] | None = None,
         jeton: object | None = None,
+        complements_journal: Mapping[str, Any] | None = None,
     ) -> ReponseMistral:
-        self._controler(usage, jeton)
+        """`appeler`, avec le jeton du Générateur et la méta de sa ligne de journal.
+
+        `complements_journal` porte `gabarit_id`, `version_gabarit`, `sha256_gabarit` et
+        `amorce_ids`, exigés pour `generation` et refusés ailleurs (`UsageInterdit`, avant
+        toute réservation).
+        """
+        complements = dict(complements_journal or {})
+        inconnues = set(complements) - set(CLES_COMPLEMENTS)
+        if inconnues:
+            raise UsageInterdit(f"compléments de journal inconnus : {sorted(inconnues)}")
+        self._controler(usage, jeton, complements)
         journal = journal_pour(usage, self.config, self.dossier_journaux)
         modele = self.config.modele
         parametres: dict[str, Any] = {
@@ -297,6 +307,8 @@ class ClientMistral:
                 modele_demande=modele,
                 reservation_id=reservation_id,
                 requete=self._requete_envoyee(parametres),
+                jeton=jeton,
+                **complements,
                 **champs,
             )
 

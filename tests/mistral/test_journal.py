@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -138,3 +139,150 @@ def test_liste_d_acces(lecteur: str) -> None:
     with pytest.raises(LectureInterdite):
         chemin_autorise(juge.chemin, lecteur)
     assert chemin_autorise(donnees.chemin, lecteur) == donnees.chemin.resolve()
+
+
+# --- Schéma v2 (story 9.2) : méta de génération, jeton, migration -------------------------
+
+META: dict[str, Any] = {
+    "gabarit_id": "gabarit-factice",
+    "version_gabarit": 1,
+    "sha256_gabarit": "a" * 64,
+    "amorce_ids": ["amorce-b", "amorce-a"],
+}
+
+
+def jeton_du_generateur() -> object:
+    pytest.importorskip("mistralai")  # le Générateur importe le client, donc le SDK
+    from slmsp.mistral.generateur import _JETON
+
+    return _JETON
+
+
+def inscrire_generation(journal: JournalMistral, **options: Any) -> str:
+    valeurs: dict[str, Any] = {
+        "session_id": "session-gen",
+        "usage": "generation",
+        "modele_demande": "mistral-large-latest",
+        "modele_resolu": "mistral-large-2512",
+        "requete": {"messages": [{"role": "user", "content": "<consigne-factice>"}]},
+        "reponse_brute": b'{"ok":1}',
+        "reservation_id": 3,
+        "statut": "ok",
+        "statut_http": 200,
+        **META,
+    }
+    return journal.inscrire(**{**valeurs, **options})
+
+
+def test_generation_avec_jeton_et_meta(tmp_path: Path) -> None:
+    jeton = jeton_du_generateur()
+
+    journal = journal_pour("generation", charger_mistral(), tmp_path)
+    ligne = journal.lire(inscrire_generation(journal, jeton=jeton))
+    assert ligne is not None
+    assert ligne.gabarit_id == "gabarit-factice" and ligne.version_gabarit == 1
+    assert ligne.sha256_gabarit == "a" * 64
+    assert ligne.amorce_ids == '["amorce-b","amorce-a"]'  # ordre conservé, JSON canonique
+
+
+@pytest.mark.parametrize("options", [{}, {"jeton": object()}, {"jeton": None}])
+def test_generation_sans_jeton_refusee(tmp_path: Path, options: dict[str, Any]) -> None:
+    journal = journal_pour("generation", charger_mistral(), tmp_path)
+    with pytest.raises(UsageInterdit):
+        inscrire_generation(journal, **options)
+    assert journal.appels() == []
+
+
+@pytest.mark.parametrize(
+    "manque", ["gabarit_id", "version_gabarit", "sha256_gabarit", "amorce_ids"]
+)
+def test_generation_sans_meta_refusee(tmp_path: Path, manque: str) -> None:
+    jeton = jeton_du_generateur()
+
+    journal = journal_pour("generation", charger_mistral(), tmp_path)
+    with pytest.raises(UsageInterdit):
+        inscrire_generation(journal, jeton=jeton, **{manque: None})
+    with pytest.raises(UsageInterdit):
+        inscrire_generation(journal, jeton=jeton, amorce_ids=[])
+    assert journal.appels() == []
+
+
+@pytest.mark.parametrize("usage", ["validation", "juge-second"])
+@pytest.mark.parametrize("champ", ["gabarit_id", "version_gabarit", "sha256_gabarit", "amorce_ids"])
+def test_meta_refusee_hors_generation(tmp_path: Path, usage: str, champ: str) -> None:
+    journal = journal_pour(usage, charger_mistral(), tmp_path)
+    with pytest.raises(UsageInterdit):
+        journal.inscrire(
+            session_id="s",
+            usage=usage,
+            modele_demande="m",
+            modele_resolu=None,
+            requete={},
+            reponse_brute=None,
+            reservation_id=None,
+            statut="ok",
+            statut_http=200,
+            **{champ: META[champ]},
+        )
+    assert journal.appels() == []
+
+
+def test_appels_session(tmp_path: Path) -> None:
+    jeton = jeton_du_generateur()
+
+    journal = journal_pour("generation", charger_mistral(), tmp_path)
+    premier = inscrire_generation(journal, jeton=jeton)
+    inscrire_generation(journal, jeton=jeton, session_id="autre-session")
+    second = inscrire(journal, "validation")
+    assert [ligne.appel_id for ligne in journal.appels_session("session-gen")] == [premier]
+    assert [ligne.appel_id for ligne in journal.appels_session("session-test")] == [second]
+    assert journal.appels_session("inconnue") == []
+
+
+_SCHEMA_V1 = """
+CREATE TABLE appels (
+    appel_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, usage TEXT NOT NULL,
+    modele_demande TEXT NOT NULL, modele_resolu TEXT, requete TEXT NOT NULL,
+    sha256_requete TEXT NOT NULL, reponse_brute BLOB, sha256_reponse TEXT,
+    reservation_id INTEGER, statut TEXT NOT NULL, statut_http INTEGER,
+    horodatage TEXT NOT NULL
+);
+CREATE TRIGGER appels_sans_mise_a_jour BEFORE UPDATE ON appels
+BEGIN SELECT RAISE(ABORT, 'journal Mistral en ajout seul'); END;
+CREATE TRIGGER appels_sans_suppression BEFORE DELETE ON appels
+BEGIN SELECT RAISE(ABORT, 'journal Mistral en ajout seul'); END;
+INSERT INTO appels VALUES ('a1', 's1', 'validation', 'mistral-large-latest', NULL, '{}',
+    'x', X'7B7D', 'y', 4, 'ok', 200, '2026-10-12T00:00:00+00:00');
+PRAGMA user_version = 1;
+"""
+
+
+def test_migration_v1_vers_v2(tmp_path: Path) -> None:
+    jeton = jeton_du_generateur()
+
+    chemin = tmp_path / "appels-mistral.sqlite"
+    with closing(sqlite3.connect(chemin)) as connexion:
+        connexion.executescript(_SCHEMA_V1)
+    journal = journal_pour("validation", charger_mistral(), tmp_path)
+    with closing(sqlite3.connect(chemin)) as connexion:
+        assert connexion.execute("PRAGMA user_version").fetchone() == (2,)
+        colonnes = [c[1] for c in connexion.execute("PRAGMA table_info(appels)")]
+    assert colonnes[-4:] == ["gabarit_id", "version_gabarit", "sha256_gabarit", "amorce_ids"]
+    (ancienne,) = journal.appels()
+    assert ancienne.appel_id == "a1" and ancienne.reponse_brute == b"{}"
+    assert ancienne.gabarit_id is None and ancienne.amorce_ids is None
+    inscrire_generation(journal, jeton=jeton)
+    assert len(journal_pour("generation", charger_mistral(), tmp_path).appels()) == 2
+    with closing(sqlite3.connect(chemin)) as connexion:  # toujours en ajout seul
+        with pytest.raises(sqlite3.DatabaseError, match="ajout seul"):
+            connexion.execute("DELETE FROM appels")
+
+
+def test_version_inconnue_refusee(tmp_path: Path) -> None:
+    from slmsp.core.erreurs import SlmspError
+
+    chemin = tmp_path / "appels-mistral.sqlite"
+    with closing(sqlite3.connect(chemin)) as connexion:
+        connexion.execute("PRAGMA user_version = 3")
+    with pytest.raises(SlmspError, match="version de schéma 3"):
+        journal_pour("validation", charger_mistral(), tmp_path)
