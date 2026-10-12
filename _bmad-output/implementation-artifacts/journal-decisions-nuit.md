@@ -421,3 +421,7 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 - **À voir avec Anaël**
   - Variante de prompt `RD-connecte`.
   - FR-38 n'est pas encore vérifié : les arguments d'outil générés pourraient recopier la phrase de l'Agent.
+
+## D-nuit-S9.2 — Générateur Mistral
+- **Contrôle de l'orchestrateur (D1.1)** : les 11 gabarits de `config/prompts/generateur/` (1 557 mots au total) ne contiennent que des consignes et des emplacements. La recherche de motifs (exemple, Q/R, JSON rempli, citations) ne trouve rien.
+- **Préalables D1.2** : `config/donnees.toml [mistral]` doit contenir `conditions_verifiees_le` et `modeles_stables`, sinon le Générateur refuse de démarrer. La story 9.1 les crée.
