@@ -43,3 +43,8 @@ Ce fichier est lu par chaque sous-agent de story avant de commencer. Il fait aut
 
 ## Sous-agents asynchrones (constat de 08h00)
 Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même quand le workflow BMAD exige un appel bloquant. Lance les sous-agents demandés par une étape, puis attends la notification de fin de chacun avant de passer à la suite. **Ne rends jamais la main** (compte rendu final) avant le HALT final du workflow, avec `## Auto Run Result` écrit et le commit fait. Rendre la main pendant qu'un sous-agent tourne interrompt la story.
+
+## Accès au dépôt principal depuis un worktree (story 1.2, fusionnée)
+- `SLMSP_ENV_FILE=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\.env` donne accès aux secrets.
+- `SLMSP_MODELS_DIR=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models` donne accès aux modèles, avec `HF_HOME=<models>/.cache-hf`. Les modèles candidats sont déjà préchargés : voir `models/PRECHARGEMENT.md`.
+- Le verrou GPU est `gpu.lock`, dans `SLMSP_VAR_DIR`. Toute commande CUDA le prend.

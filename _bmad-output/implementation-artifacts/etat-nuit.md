@@ -19,7 +19,7 @@ Phase B : socle J1 et jeu d'évaluation (démarrée à 07h30)
 - Préchargement des modèles candidats sous `models/` (D-nuit-B-2)
 
 ## Bloqué
-- 07h47 à 08h30 : réseau limité à la demande d'Anaël (D-nuit-B-3), téléchargements suspendus.
+- 07h47 à 08:15 : réseau limité à la demande d'Anaël (D-nuit-B-3). Limite levée à 08:15.
 (rien)
 
 ## Dépense API

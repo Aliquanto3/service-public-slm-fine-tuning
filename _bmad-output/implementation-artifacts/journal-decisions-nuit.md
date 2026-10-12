@@ -289,3 +289,4 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - La règle AD-24 ne détecte pas les lecteurs numpy, pyarrow et duckdb.
   - Les transports httpx du SDK mcp ne sont pas encore verrouillés ; ils le seront en 1.4 et 3.3.
 - `HF_TOKEN` est vide dans `.env`. Les téléchargements de modèles se font en accès anonyme, ce qui suffit pour des dépôts publics.
+- **Levée** à 08:15, sur consigne d'Anaël (« tu peux réutiliser Internet si besoin »). Les téléchargements de modèles (Qwen 4B, GGUF Ministral 8B) et d'instantanés de sources reprennent.
