@@ -100,6 +100,15 @@ deferred:
 - Given chaque appel régularisé, when on lit la table `appels`, then tokens et coût en euros par item y figurent.
 - Given `uv run pytest` et `uv run ruff check`, when on les lance, then tout passe (hors échecs préexistants listés, hors zone).
 
+### Review Findings
+
+Revue de code du lot 1, le 2026-10-12. Détail et constats rejetés : `revue-code-lot-1-juges-mistral.md`.
+
+- [x] [Review][Patch] P11 (ex-D2, tranché le 2026-10-12 : arrêt du run). Un 429 arrête les appels restants du run, comme un 401 ou un 403, avec le nouveau motif `limite-debit`. L'appel est réglé à 0. Aucune relance [src/slmsp/judge/claude.py:614]
+- [x] [Review][Patch] P1. Sur un échec de `batches.create`, un refus 4xx est réglé au pire cas et un 401 ou un 403 n'arrête pas la boucle de lots [src/slmsp/judge/claude.py:405]
+- [x] [Review][Patch] P8. Aucun test ne couvre la reprise d'un lot déjà réglé au registre (garde `_lot_ouvert_au_registre` de `_achever_lot`) [tests/judge/test_claude.py]
+- [x] [Review][Patch] P9. `cout_total_eur` n'est pas vérifié après l'échec de création d'un lot [tests/judge/test_claude.py:320]
+
 ## Spec Change Log
 
 ## Review Triage Log

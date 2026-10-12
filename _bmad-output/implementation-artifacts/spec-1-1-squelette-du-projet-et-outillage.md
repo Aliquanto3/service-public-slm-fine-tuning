@@ -96,6 +96,13 @@ deferred:
 - Given `.gitignore`, when `git check-ignore --no-index` sur les chemins du critère 8, then les chemins à ignorer le sont, les autres non, et `src/slmsp/index/__init__.py` n'est pas ignoré.
 - Given `.env.example`, when on le lit, then il contient `MISTRAL_API_KEY=`, `ANTHROPIC_API_KEY=`, `HF_TOKEN=` sans valeur et `SLMSP_VAR_DIR` en commentaire.
 
+### Review Findings
+
+Revue de code du lot 1, le 2026-10-12. Détail et constats rejetés : `revue-code-lot-1-juges-mistral.md`.
+
+- [x] [Review][Patch] P3. La règle `lecture-data/train` ne voit ni `sqlite3`, ni `duckdb`, ni `pyarrow`, ni `numpy.load`, ni `pickle`, ni `tomllib` (AD-24) [tests/test_architecture.py:89]
+- [x] [Review][Patch] P4. Sous `eval/outils/**`, `anthropic` et `mistralai` passent ruff et `analyser()` sans alerte (AD-3 verrou 1) [pyproject.toml:110]
+
 ## Spec Change Log
 
 ## Review Triage Log

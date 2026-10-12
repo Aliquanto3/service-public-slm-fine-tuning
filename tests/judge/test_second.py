@@ -389,6 +389,19 @@ def test_refus_d_authentification_arrete_tout(
     assert (appel["tokens_entree"], appel["tokens_sortie"]) == (0, 0)
 
 
+def test_limite_de_debit_arrete_tout(banc: Banc, items: dict[str, Item]) -> None:
+    banc.faux.reponses["Q-001"] = [429]
+    rapport = banc.juge().juger(
+        demandes(items, banc.doublures, "Q-001", "Q-002"), {"Q-001", "Q-002"}
+    )
+    assert [(r.statut, r.motif) for r in rapport.resultats] == [
+        ("non-juge", "limite-debit"),
+        ("non-juge", "limite-debit"),
+    ]
+    assert banc.faux.items() == ["Q-001"]  # aucune relance, aucun appel suivant
+    assert banc.lignes_registre()[0]["montant_reel_eur"] == 0
+
+
 def test_refus_400_item_suivant_juge(banc: Banc, items: dict[str, Item]) -> None:
     banc.faux.reponses["Q-001"] = [400]
     rapport = banc.juge().juger(

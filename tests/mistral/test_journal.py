@@ -141,6 +141,39 @@ def test_liste_d_acces(lecteur: str) -> None:
     assert chemin_autorise(donnees.chemin, lecteur) == donnees.chemin.resolve()
 
 
+@pytest.mark.parametrize("lecteur", ["data", "train"])
+def test_journal_du_juge_refuse_a_l_ouverture(lecteur: str) -> None:
+    """Ouvert avec un `lecteur`, le journal du juge lève `LectureInterdite` sans être créé."""
+    config = charger_mistral()
+    with pytest.raises(LectureInterdite):
+        journal_pour("juge-second", config, lecteur=lecteur)
+    with pytest.raises(LectureInterdite):
+        JournalMistral(
+            dossier_var() / config.fichier_journal_juge, ("juge-second",), lecteur=lecteur
+        )
+    assert not (dossier_var() / config.fichier_journal_juge).exists()
+
+
+@pytest.mark.parametrize("lecteur", ["data", "train"])
+def test_journal_des_donnees_en_lecture_seule(lecteur: str) -> None:
+    """Le journal des données s'ouvre pour `data` et `train`, en lecture seule."""
+    config = charger_mistral()
+    appel_id = inscrire(journal_pour("validation", config), "validation")
+    lecture = journal_pour("validation", config, lecteur=lecteur)
+    assert [ligne.appel_id for ligne in lecture.appels()] == [appel_id]
+    assert lecture.lire(appel_id) is not None
+    assert [ligne.appel_id for ligne in lecture.appels_session("session-test")] == [appel_id]
+    with pytest.raises(UsageInterdit):
+        inscrire(lecture, "validation")
+    assert len(journal_pour("validation", config).appels()) == 1
+
+
+def test_journal_hors_liste_d_acces_refuse(tmp_path: Path) -> None:
+    """Un journal hors de `SLMSP_VAR_DIR` est refusé au lecteur `data`."""
+    with pytest.raises(LectureInterdite):
+        journal_pour("validation", charger_mistral(), tmp_path, lecteur="data")
+
+
 # --- Schéma v2 (story 9.2) : méta de génération, jeton, migration -------------------------
 
 META: dict[str, Any] = {

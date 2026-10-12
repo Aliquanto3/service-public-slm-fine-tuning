@@ -5,8 +5,14 @@ Deux fichiers de `SLMSP_VAR_DIR`, au même schéma de ligne :
 - le journal des données (`fichier_journal_donnees`, `appels-mistral.sqlite`) reçoit les
   usages `generation` et `validation` ; les pipelines `data` et `train` peuvent le lire ;
 - le journal du juge (`fichier_journal_juge`, `appels-mistral-juge.sqlite`) reçoit l'usage
-  `juge-second` ; la liste d'accès de `slmsp.core.artefacts` le refuse à `data` et `train`,
-  si bien que les textes d'évaluation envoyés au second juge ne leur sont jamais lisibles.
+  `juge-second` ; les textes d'évaluation envoyés au second juge ne sont jamais lisibles par
+  `data` ni `train` (AD-24).
+
+Un journal ouvert avec un `lecteur` (`data`, `train`) est en lecture seule et passe par la
+liste d'accès de `slmsp.core.artefacts` : `chemin_autorise` dès l'ouverture (le journal du
+juge lève `LectureInterdite`), `ouvrir_sqlite_lecture` pour chaque lecture, aucune
+création, migration ni inscription. `tests/test_architecture.py` exige ce `lecteur` de tout
+journal ouvert depuis `data` ou `train`, et leur interdit de nommer le journal du juge.
 
 Chaque journal refuse les usages de l'autre (`UsageInterdit`). Une ligne porte l'appel
 (`appel_id`, `session_id`, `usage`), les modèles demandé et résolu, la requête complète en
@@ -33,6 +39,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, Literal
 
+from slmsp.core.artefacts import chemin_autorise, ouvrir_sqlite_lecture
 from slmsp.core.canonique import json_canonique, sha256_hex
 from slmsp.core.erreurs import SlmspError
 from slmsp.core.var import dossier_var, ouvrir_sqlite
@@ -183,14 +190,28 @@ class LigneAppel:
 
 
 class JournalMistral:
-    """Journal SQLite en ajout seul, limité aux usages `usages_admis`."""
+    """Journal SQLite en ajout seul, limité aux usages `usages_admis`.
 
-    def __init__(self, chemin: str | Path, usages_admis: tuple[str, ...] | list[str]) -> None:
+    Avec `lecteur` (`data`, `train`), le journal est en lecture seule et soumis à la liste
+    d'accès d'AD-24 : `LectureInterdite` dès l'ouverture d'un chemin refusé à ce lecteur.
+    """
+
+    def __init__(
+        self,
+        chemin: str | Path,
+        usages_admis: tuple[str, ...] | list[str],
+        *,
+        lecteur: str | None = None,
+    ) -> None:
         inconnus = [u for u in usages_admis if u not in USAGES]
         if inconnus or not usages_admis:
             raise UsageInterdit(f"usages de journal invalides : {list(usages_admis)!r}")
         self.chemin = Path(chemin)
         self.usages_admis = tuple(usages_admis)
+        self.lecteur = lecteur
+        if lecteur is not None:
+            chemin_autorise(self.chemin, lecteur)  # LectureInterdite : journal du juge
+            return
         with self._transaction() as connexion:
             (version,) = connexion.execute("PRAGMA user_version").fetchone()
             if version not in (0, 1, VERSION_SCHEMA):
@@ -247,6 +268,10 @@ class JournalMistral:
         cette méta (`controler_inscription`) ; `ValueError` pour un statut inconnu. Rien
         n'est écrit dans ces cas.
         """
+        if self.lecteur is not None:
+            raise UsageInterdit(
+                f"journal {self.chemin.name} ouvert en lecture seule (lecteur {self.lecteur!r})"
+            )
         if usage not in self.usages_admis:
             raise UsageInterdit(
                 f"usage {usage!r} refusé par le journal {self.chemin.name} "
@@ -295,7 +320,11 @@ class JournalMistral:
         return appel_id
 
     def _lignes(self, requete: str, parametres: tuple[Any, ...] = ()) -> list[LigneAppel]:
-        with closing(ouvrir_sqlite(self.chemin)) as connexion:
+        if self.lecteur is not None:
+            connexion = ouvrir_sqlite_lecture(self.chemin, self.lecteur)
+        else:
+            connexion = ouvrir_sqlite(self.chemin)
+        with closing(connexion):
             connexion.row_factory = sqlite3.Row
             lignes = connexion.execute(requete, parametres).fetchall()
         return [LigneAppel(**dict(ligne)) for ligne in lignes]
@@ -317,15 +346,22 @@ class JournalMistral:
 
 
 def journal_pour(
-    usage: str, config: ConfigMistral, dossier: str | Path | None = None
+    usage: str,
+    config: ConfigMistral,
+    dossier: str | Path | None = None,
+    *,
+    lecteur: str | None = None,
 ) -> JournalMistral:
     """Journal de `usage` : celui du juge pour `juge-second`, celui des données sinon.
 
-    `dossier` vaut par défaut `SLMSP_VAR_DIR`. Lève `UsageInterdit` pour un usage inconnu.
+    `dossier` vaut par défaut `SLMSP_VAR_DIR`. Lève `UsageInterdit` pour un usage inconnu ;
+    avec `lecteur`, journal en lecture seule (`LectureInterdite` pour le journal du juge).
     """
     base = Path(dossier) if dossier is not None else dossier_var()
     if usage in USAGES_JUGE:
-        return JournalMistral(base / config.fichier_journal_juge, USAGES_JUGE)
+        return JournalMistral(base / config.fichier_journal_juge, USAGES_JUGE, lecteur=lecteur)
     if usage in USAGES_DONNEES:
-        return JournalMistral(base / config.fichier_journal_donnees, USAGES_DONNEES)
+        return JournalMistral(
+            base / config.fichier_journal_donnees, USAGES_DONNEES, lecteur=lecteur
+        )
     raise UsageInterdit(f"usage Mistral inconnu : {usage!r} (attendu : {', '.join(USAGES)})")

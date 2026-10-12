@@ -14,9 +14,10 @@
 Deux sorties non conformes pour une même clé (JSON illisible, écart au schéma,
 `finish_reason` d'interruption) donnent un verdict `invalide`, mis en cache. Sur
 `BudgetEpuise`, les items restants sont `non-juge` (motif `budget`, « non rejugés ») sans
-exception. Un refus 4xx est réglé à 0 et l'item passe `non-juge` ; 401 et 403 arrêtent
-tous les appels restants. `ModeleMistralRefuse` remonte à l'appelant : c'est une
-configuration à corriger, pas un aléa. Les scores et le kappa relèvent de la story 5.6.
+exception. Un refus 4xx est réglé à 0 et l'item passe `non-juge` ; 401 et 403 (motif
+`erreur-api`) et 429 (motif `limite-debit`) arrêtent tous les appels restants, sans
+relance. `ModeleMistralRefuse` remonte à l'appelant : c'est une configuration à corriger,
+pas un aléa. Les scores et le kappa relèvent de la story 5.6.
 """
 
 from __future__ import annotations
@@ -39,11 +40,11 @@ from slmsp.judge.claude import (
     ISSUE_NON_CONFORME,
     MOTIF_BUDGET,
     MOTIF_ERREUR_API,
-    STATUTS_ARRET,
     DemandeJugement,
     RapportJugement,
     ResultatJugement,
     StatutJugement,
+    motif_arret,
 )
 from slmsp.judge.config import ConfigSecondJuge
 from slmsp.judge.grille import Grille
@@ -88,7 +89,8 @@ class _Etat:
     couts: dict[str, float] = field(default_factory=dict)
     usages: dict[str, UsageTokens] = field(default_factory=dict)
     budget_epuise: bool = False
-    arret_api: bool = False
+    arret: str | None = None
+    """Motif d'arrêt du run (401, 403, 429) : plus aucun appel."""
 
     def imputer(self, cle: str, cout: float, usage: UsageTokens | None) -> None:
         self.couts[cle] = self.couts.get(cle, 0.0) + cout
@@ -145,8 +147,8 @@ class JugeMistral:
                     mode=en_cache.mode,
                 )
                 continue
-            if etat.arret_api:  # clé refusée (401, 403) : plus aucun appel
-                etat.issues[cle] = _Issue("non-juge", motif=MOTIF_ERREUR_API)
+            if etat.arret is not None:  # 401, 403 ou 429 : plus aucun appel
+                etat.issues[cle] = _Issue("non-juge", motif=etat.arret)
             elif etat.budget_epuise:
                 etat.issues[cle] = _Issue("non-juge", motif=MOTIF_BUDGET)
             else:
@@ -223,8 +225,9 @@ class JugeMistral:
                     cout_eur=exc.cout_eur,
                     issue=ISSUE_ERREUR_API,
                 )
-                etat.arret_api = etat.arret_api or exc.statut_http in STATUTS_ARRET
-                etat.issues[cle] = _Issue("non-juge", mode=MODE, motif=MOTIF_ERREUR_API)
+                arret = motif_arret(exc.statut_http) if refus else None
+                etat.arret = etat.arret or arret
+                etat.issues[cle] = _Issue("non-juge", mode=MODE, motif=arret or MOTIF_ERREUR_API)
                 return
             etat.imputer(cle, reponse.cout_eur, reponse.usage)
             try:

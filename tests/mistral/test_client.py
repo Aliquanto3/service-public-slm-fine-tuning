@@ -271,6 +271,39 @@ def test_hote_refuse_par_la_garde(banc: Any) -> None:
     assert reservation["etat"] == "regularisee" and reservation["montant_reel_eur"] == 0
 
 
+def test_interruption_journalisee(banc: Any) -> None:
+    """Un arrêt (`KeyboardInterrupt`) pendant l'appel laisse une ligne `erreur` : il remonte
+    tel quel, et la réservation reste comptée au pire cas."""
+    banc.faux.reponses.append(KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        appeler(banc.client())
+    (ligne,) = banc.lignes_journal(JOURNAL_JUGE)
+    assert ligne["statut"] == "erreur" and ligne["statut_http"] is None
+    (reservation,) = banc.lignes_registre()
+    assert reservation["etat"] == "pire-cas"
+    assert reservation["id"] == ligne["reservation_id"]
+
+
+def test_echec_apres_reponse_garde_le_corps_brut(
+    banc: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Une exception levée après la réception d'une réponse 200 (hors `MistralError`) laisse
+    une ligne qui porte le corps brut capturé par le hook."""
+    client = banc.client()
+    complete = client.sdk.chat.complete
+
+    def complete_puis_echec(**parametres: Any) -> Any:
+        complete(**parametres)
+        raise RuntimeError("échec après la réponse (factice)")
+
+    monkeypatch.setattr(client.sdk.chat, "complete", complete_puis_echec)
+    with pytest.raises(ErreurApiMistral):
+        appeler(client)
+    (ligne,) = banc.lignes_journal(JOURNAL_JUGE)
+    assert ligne["statut"] == "erreur" and ligne["statut_http"] == 200
+    assert ligne["reponse_brute"] == banc.faux.servis[0]
+
+
 def test_message_mal_forme_sans_reservation(banc: Any) -> None:
     client = banc.client()
     with pytest.raises(TypeError, match="not iterable"):  # `dict(42)` : message mal formé

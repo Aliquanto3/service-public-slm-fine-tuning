@@ -95,6 +95,15 @@ deferred: []
 - Given le lecteur `data` ou `train`, when il demande `appels-mistral-juge.sqlite`, then `LectureInterdite`.
 - Given `uv run pytest` et `uv run ruff check`, when on les lance, then tout passe (test d'architecture compris), hors échecs préexistants listés hors zone.
 
+### Review Findings
+
+Revue de code du lot 1, le 2026-10-12. Détail et constats rejetés : `revue-code-lot-1-juges-mistral.md`.
+
+- [x] [Review][Patch] P10 (ex-D1, tranché le 2026-10-12 : contrôle à l'exécution). Les lectures de `JournalMistral` passent par `core.artefacts.ouvrir_sqlite_lecture(chemin, lecteur)`, avec un `lecteur` obligatoire : le journal du juge est donc refusé à `data` et `train`. Une règle AST interdit à `data` et `train` de nommer `USAGES_JUGE`. La docstring est corrigée [src/slmsp/mistral/journal.py:319]
+- [x] [Review][Patch] P11 (ex-D2, tranché le 2026-10-12 : arrêt du run). Même correctif que dans la story 5.4, appliqué à `second.py` [src/slmsp/judge/second.py:215]
+- [x] [Review][Patch] P5. Un échec après une réponse 200 est journalisé sans le corps brut déjà capturé [src/slmsp/mistral/client.py:335]
+- [x] [Review][Patch] P6. Un `KeyboardInterrupt` pendant l'appel laisse un appel réglé au pire cas sans ligne de journal [src/slmsp/mistral/client.py:335]
+
 ## Spec Change Log
 
 ## Review Triage Log

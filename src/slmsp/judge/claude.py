@@ -16,8 +16,11 @@
 
 Deux sorties non conformes pour une même clé (JSON illisible, écart au schéma, `stop_reason`
 `refusal` ou `max_tokens`) donnent un verdict `invalide`, mis en cache. Sur `BudgetEpuise`,
-les items restants sont marqués `non-juge` (motif `budget`) sans exception. Chaque tentative
-payée est journalisée par item dans la table `appels` du cache (tokens et coût en euros).
+les items restants sont marqués `non-juge` (motif `budget`) sans exception. Un refus 4xx
+(direct ou création de lot) n'est pas facturé : il est réglé à 0. 401 et 403 (motif
+`erreur-api`) et 429 (motif `limite-debit`) arrêtent tous les appels restants du run, sans
+relance. Chaque tentative payée est journalisée par item dans la table `appels` du cache
+(tokens et coût en euros).
 
 Requête au Juge : `model`, `max_tokens`, un seul message `user` et `output_config`
 (`effort`, `format` JSON schema), sans `temperature`, `top_p`, `top_k`, `thinking`,
@@ -65,9 +68,12 @@ ERREURS_SONDAGE_TOLEREES: Final = 3
 """Erreurs consécutives du relevé d'un lot tolérées ; la suivante laisse le lot ouvert."""
 STATUTS_ARRET: Final = frozenset({401, 403})
 """Refus d'authentification : plus aucun appel dans ce run."""
+STATUT_LIMITE_DEBIT: Final = 429
+"""Limite de débit : plus aucun appel dans ce run (aucune relance)."""
 
 MOTIF_BUDGET: Final = "budget"
 MOTIF_ERREUR_API: Final = "erreur-api"
+MOTIF_LIMITE_DEBIT: Final = "limite-debit"
 MOTIF_LOT_NON_ANNULE: Final = "lot-non-annule"
 
 ISSUE_JUGE: Final = "juge"
@@ -76,6 +82,15 @@ ISSUE_INVALIDE: Final = "invalide"
 ISSUE_ERREUR_API: Final = "erreur-api"
 
 StatutJugement = Literal["juge", "invalide", "non-juge"]
+
+
+def motif_arret(statut: int | None) -> str | None:
+    """Motif d'arrêt du run pour un refus HTTP `statut`, ou `None` s'il n'arrête rien."""
+    if statut in STATUTS_ARRET:
+        return MOTIF_ERREUR_API
+    if statut == STATUT_LIMITE_DEBIT:
+        return MOTIF_LIMITE_DEBIT
+    return None
 
 
 def fabriquer_client(
@@ -163,7 +178,8 @@ class _Etat:
     usages: dict[str, UsageTokens] = field(default_factory=dict)
     directs: list[str] = field(default_factory=list)
     budget_epuise: bool = False
-    arret_api: bool = False
+    arret: str | None = None
+    """Motif d'arrêt du run (401, 403, 429) : plus aucun appel."""
     cout_hors_items: float = 0.0
 
     def demandee(self, cle: str) -> bool:
@@ -359,7 +375,7 @@ class JugeClaude:
     def _juger_par_lots(self, a_juger: list[str], etat: _Etat) -> None:
         restantes = list(a_juger)
         while restantes:
-            if etat.budget_epuise:
+            if etat.budget_epuise or etat.arret is not None:
                 break
             lot_id = f"{PREFIXE_LOT}{uuid.uuid4().hex}"
             requetes = [
@@ -402,19 +418,27 @@ class JugeClaude:
                         for r in soumises
                     ]
                 )
-            except Exception:
-                # Création non confirmée : pire cas, items non jugés (erreur d'API).
-                etat.cout_hors_items += self.registre.annuler_lot(lot_id)
+            except Exception as exc:
+                # Refus 4xx : rien n'est créé ni facturé, réglé à 0 ; 401, 403 et 429 arrêtent
+                # le run. Toute autre erreur : création non confirmée, pire cas.
+                statut = exc.status_code if isinstance(exc, anthropic.APIStatusError) else None
+                refus = statut is not None and 400 <= statut < 500
+                usage = UsageTokens(0, 0) if refus else None
+                etat.cout_hors_items += self.registre.annuler_lot(lot_id, usage)
                 self.cache.changer_statut(lot_id, "abandonne")
+                arret = motif_arret(statut) if refus else None
+                etat.arret = etat.arret or arret
                 for r in soumises:
-                    etat.resoudre(r.cle, _Issue("non-juge", mode="batch", motif=MOTIF_ERREUR_API))
+                    etat.resoudre(
+                        r.cle, _Issue("non-juge", mode="batch", motif=arret or MOTIF_ERREUR_API)
+                    )
                 continue
             self.cache.marquer_soumis(lot_id, cree.id, self.maintenant())
             lot = self.cache.lot(lot_id)
             assert lot is not None
             self._achever_lot(lot, soumises, etat)
         for cle in restantes:
-            etat.resoudre(cle, _Issue("non-juge", motif=MOTIF_BUDGET))
+            etat.resoudre(cle, _Issue("non-juge", motif=etat.arret or MOTIF_BUDGET))
 
     def _ecoule(self, lot: LotLocal, debut: float) -> float:
         """Secondes écoulées depuis `soumis_le` (horloge murale), sinon depuis `debut`."""
@@ -595,8 +619,8 @@ class JugeClaude:
             indice += 1
             if not etat.demandee(cle):
                 continue
-            if etat.arret_api:  # clé refusée (401, 403) : plus aucun appel
-                etat.resoudre(cle, _Issue("non-juge", motif=MOTIF_ERREUR_API))
+            if etat.arret is not None:  # 401, 403 ou 429 : plus aucun appel
+                etat.resoudre(cle, _Issue("non-juge", motif=etat.arret))
                 continue
             if etat.budget_epuise:
                 etat.resoudre(cle, _Issue("non-juge", motif=MOTIF_BUDGET))
@@ -669,9 +693,11 @@ class JugeClaude:
                     issue=ISSUE_ERREUR_API,
                 )
                 etat.imputer(preparee.cle, 0.0, None)
-                etat.arret_api = etat.arret_api or message.statut in STATUTS_ARRET
+                arret = motif_arret(message.statut)
+                etat.arret = etat.arret or arret
                 etat.resoudre(
-                    preparee.cle, _Issue("non-juge", mode="direct", motif=MOTIF_ERREUR_API)
+                    preparee.cle,
+                    _Issue("non-juge", mode="direct", motif=arret or MOTIF_ERREUR_API),
                 )
                 return
             usage = _usage(message)

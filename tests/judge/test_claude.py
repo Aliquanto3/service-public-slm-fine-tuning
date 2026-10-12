@@ -323,8 +323,58 @@ def test_creation_de_lot_en_erreur(banc: Any, doublures: SimpleNamespace, items:
     (resultat,) = rapport.resultats
     assert resultat.statut == "non-juge" and resultat.motif == "erreur-api"
     assert banc.lots()[0]["statut"] == "abandonne"
-    assert banc.lignes_registre()[0]["etat"] == "pire-cas"
+    (ligne,) = banc.lignes_registre()
+    assert ligne["etat"] == "pire-cas"
+    assert rapport.cout_total_eur == pytest.approx(ligne["montant_reel_eur"])
+    assert rapport.cout_total_eur > 0 and resultat.cout_eur == 0
     assert banc.faux.compter("POST /v1/messages") == 0
+
+
+@pytest.mark.parametrize(
+    ("statut", "motif"), [(400, "erreur-api"), (401, "erreur-api"), (429, "limite-debit")]
+)
+def test_creation_de_lot_refusee_non_facturee(
+    banc: Any, doublures: SimpleNamespace, items: Any, statut: int, motif: str
+) -> None:
+    """Un refus 4xx de la création : rien n'est créé ni facturé, réservation réglée à 0."""
+    banc.faux.creation = lambda: httpx2.Response(
+        statut, json={"type": "error", "error": {"type": "api_error", "message": "x"}}
+    )
+    rapport = banc.juge().juger(demandes(doublures, items, "Q-001", "NR-001"))
+    assert all(r.statut == "non-juge" and r.motif == motif for r in rapport.resultats)
+    (ligne,) = banc.lignes_registre()
+    assert ligne["etat"] == "regularisee" and ligne["montant_reel_eur"] == 0
+    assert rapport.cout_total_eur == 0
+    assert banc.faux.compter("POST /v1/messages/batches") == 1
+    assert banc.faux.compter("POST /v1/messages") == 0
+
+
+def test_creation_de_lot_refusee_arrete_les_lots_suivants(
+    banc: Any, doublures: SimpleNamespace, items: Any
+) -> None:
+    """Un 401 à la création d'un premier lot partiel : aucun lot suivant n'est créé, et le
+    reste n'est pas compté comme un épuisement du budget."""
+    config = doublures.config_juge()
+    prompt = construire_prompt(items["Q-001"], doublures.sortie_factice(), banc.grille)
+    unitaire = cout_pire_cas(
+        charger_tarifs(banc.chemin_tarifs),
+        doublures.MODELE,
+        "batch",
+        estimer_tokens_entree(prompt),
+        config.max_tokens,
+        1.0,
+    )
+    banc.plafond = unitaire * 1.5  # une seule requête par lot
+    banc.faux.creation = lambda: httpx2.Response(
+        401, json={"type": "error", "error": {"type": "authentication_error", "message": "x"}}
+    )
+    sorties = [doublures.sortie_factice(f"<sortie-factice-{i}>") for i in range(2)]
+    rapport = banc.juge().juger([DemandeJugement(items["Q-001"], s) for s in sorties])
+    assert banc.faux.compter("POST /v1/messages/batches") == 1
+    assert [(r.statut, r.motif) for r in rapport.resultats] == [("non-juge", "erreur-api")] * 2
+    assert not rapport.budget_epuise
+    (ligne,) = banc.lignes_registre()
+    assert ligne["nb_requetes"] == 1 and ligne["montant_reel_eur"] == 0
 
 
 # --- Matrice : délai de lot dépassé -----------------------------------------------------------
@@ -742,6 +792,38 @@ def test_reprise_lot_reserve_sans_ligne_registre(
     assert all(lg["batch_id"] != "slmsp-juge-orphelin" for lg in banc.lignes_registre())
 
 
+def test_reprise_apres_crash_apres_la_collecte(
+    banc: Any, doublures: SimpleNamespace, items: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Arrêt entre `collecter_lot` (réussi) et le passage du lot à `collecte` : la reprise
+    ne règle pas une seconde fois la ligne du registre et ne lève rien."""
+    demandees = demandes(doublures, items, "Q-001")
+    juge = banc.juge()
+    changer_statut = banc.cache.changer_statut
+
+    def crash_a_la_collecte(lot_id: str, statut: str) -> None:
+        if statut == "collecte":
+            raise doublures.Crash("arrêt simulé après la collecte du lot")
+        changer_statut(lot_id, statut)
+
+    monkeypatch.setattr(banc.cache, "changer_statut", crash_a_la_collecte)
+    with pytest.raises(doublures.Crash):
+        juge.juger(demandees)
+    monkeypatch.undo()
+    (lot,) = banc.lots()
+    assert lot["statut"] == "en_cours"
+    assert banc.lignes_registre()[0]["etat"] == "regularisee"
+
+    rapport = banc.juge().juger(demandees)  # aucune exception
+    (resultat,) = rapport.resultats
+    assert resultat.statut == "juge"
+    (lot,) = banc.lots()
+    assert lot["statut"] == "collecte"
+    (ligne,) = banc.lignes_registre()
+    assert ligne["etat"] == "regularisee"
+    assert banc.faux.compter("POST /v1/messages/batches") == 1
+
+
 # --- Refus 4xx non facturés -------------------------------------------------------------------
 
 
@@ -764,6 +846,17 @@ def test_refus_401_arrete_le_run(banc: Any, doublures: SimpleNamespace, items: A
     )
     assert banc.faux.compter("POST /v1/messages") == 1
     assert all(r.statut == "non-juge" and r.motif == "erreur-api" for r in rapport.resultats)
+    (ligne,) = banc.lignes_registre()
+    assert ligne["montant_reel_eur"] == 0
+
+
+def test_limite_de_debit_arrete_le_run(banc: Any, doublures: SimpleNamespace, items: Any) -> None:
+    banc.faux.directes["Q-001"] = [429]
+    rapport = banc.juge(mode_appel="direct").juger(
+        demandes(doublures, items, "Q-001", "NR-001", "LC-001")
+    )
+    assert banc.faux.compter("POST /v1/messages") == 1  # aucune relance, aucun appel suivant
+    assert all(r.statut == "non-juge" and r.motif == "limite-debit" for r in rapport.resultats)
     (ligne,) = banc.lignes_registre()
     assert ligne["montant_reel_eur"] == 0
 

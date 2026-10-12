@@ -101,6 +101,13 @@ deferred:
 - Given `ClientMistral.appeler("generation", ...)` ou `JournalMistral.inscrire(usage="generation")` sans `_JETON`, when on appelle, then `UsageInterdit` et aucune ligne.
 - Given chaque gabarit de `config/prompts/generateur/`, when il est analysé, then `valider_gabarit` passe et il ne contient ni « ? », ni guillemets « » ou `"`, ni emplacement non déclaré : aucune question, réponse ou amorce rédigée.
 
+### Review Findings
+
+Revue de code du lot 1, le 2026-10-12. Détail et constats rejetés : `revue-code-lot-1-juges-mistral.md`.
+
+- [x] [Review][Patch] P2. Rien n'interdit d'importer `_JETON` ni d'appeler `._appeler` hors de `generateur.py` (verrou 3) [src/slmsp/mistral/generateur.py:62]
+- [x] [Review][Patch] P7. Aucun test ne couvre l'appel `valider_conversation(requete)` de `generer` : il manque les cas `cle-en-plus` et `reponse-en-double` [tests/mistral/test_generateur.py]
+
 ## Spec Change Log
 
 ## Review Triage Log

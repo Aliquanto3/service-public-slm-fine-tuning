@@ -333,11 +333,16 @@ class ClientMistral:
                 f"API Mistral : réponse HTTP {statut} ({usage})", statut, cout
             ) from exc
         except BaseException as exc:
+            # Toute issue laisse une ligne, interruption comprise (AD-3 verrou 3). Une réponse
+            # 200 que le SDK n'a pas su lire garde son corps brut, capturé par le hook.
+            brut = self._capture.reponse
             try:
-                if isinstance(exc, Exception):
-                    inscrire(
-                        modele_resolu=None, reponse_brute=None, statut="erreur", statut_http=None
-                    )
+                inscrire(
+                    modele_resolu=None,
+                    reponse_brute=brut,
+                    statut="erreur",
+                    statut_http=200 if brut is not None else None,
+                )
             finally:
                 # Une `SlmspError` (`HoteBloque` de la garde réseau…) part avant tout envoi :
                 # rien n'est facturé. Toute autre exception est comptée au pire cas.

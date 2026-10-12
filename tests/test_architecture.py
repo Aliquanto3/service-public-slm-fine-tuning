@@ -1,4 +1,4 @@
-"""Test d'architecture (AD-1, AD-2, AD-3 verrou 1, AD-4, AD-24).
+"""Test d'architecture (AD-1, AD-2, AD-3 verrous 1 et 3, AD-4, AD-24).
 
 Les sources sont lues par `ast.parse`, sans importer les modules. L'analyseur est
 auto-testé sur des arbres synthétiques écrits dans `tmp_path` : un arbre propre et un
@@ -84,10 +84,44 @@ PUBLICATION = {
     "create_commit",
     "create_repo",
 }
-# AD-24 : lectures de `data` et `train` seulement via `slmsp.core.artefacts.lire`.
+# AD-24 : lectures de `data` et `train` seulement via `slmsp.core.artefacts` (`lire`,
+# `ouvrir_sqlite_lecture`). Lecteurs interdits : module qualifié -> fonctions.
 LECTURE_CONTROLEE = {"data", "train"}
 ATTRIBUTS_LECTURE = {"read_text", "read_bytes", "open"}
-IMPORTS_LECTURE = {("json", "load"), ("io", "open"), ("builtins", "open")}
+LECTEURS_INTERDITS: dict[str, frozenset[str]] = {
+    "json": frozenset({"load"}),
+    "io": frozenset({"open"}),
+    "builtins": frozenset({"open"}),
+    "pickle": frozenset({"load"}),
+    "tomllib": frozenset({"load"}),
+    "sqlite3": frozenset({"connect"}),
+    "duckdb": frozenset(
+        {"connect", "sql", "query", "read_csv", "read_json", "read_parquet", "from_parquet"}
+    ),
+    "pyarrow.parquet": frozenset({"read_table", "read_pandas", "ParquetFile", "ParquetDataset"}),
+    "pyarrow.dataset": frozenset({"dataset"}),
+    "pyarrow.csv": frozenset({"read_csv", "open_csv"}),
+    "pyarrow.json": frozenset({"read_json"}),
+    "numpy": frozenset({"load", "loadtxt", "genfromtxt", "fromfile"}),
+    "pandas": frozenset({"read_csv", "read_json", "read_parquet", "read_pickle"}),
+    "slmsp.core.var": frozenset({"ouvrir_sqlite"}),
+}
+IMPORTS_LECTURE = {
+    (module, f) for module, fonctions in LECTEURS_INTERDITS.items() for f in fonctions
+}
+# AD-24 : le journal du second juge n'est jamais lisible par `data` ni `train`. Tout journal
+# Mistral qu'ils ouvrent porte un `lecteur` (liste d'accès appliquée à l'ouverture).
+NOMS_JOURNAL_JUGE = {"USAGES_JUGE", "fichier_journal_juge"}
+USAGE_JUGE = "juge-second"
+OUVERTURES_JOURNAL = {"journal_pour", "JournalMistral"}
+# AD-3 verrou 3 : le jeton de preuve et `_appeler` ne sortent pas du Générateur.
+JETON = "_JETON"
+MODULES_JETON = {"slmsp.mistral.generateur", "slmsp.mistral.journal"}
+APPEL_PRIVE = "_appeler"
+MODULES_APPEL_PRIVE = {"slmsp.mistral.client", "slmsp.mistral.generateur"}
+# AD-3 verrou 1 : `eval/outils/` échappe à ruff (TID251) ; ses imports de SDK sont vérifiés ici.
+OUTILS = RACINE / "eval" / "outils"
+SDK_RESERVES = {"anthropic": "slmsp/judge/", "mistralai": "slmsp/mistral/"}
 
 # AD-4, AD-10 : aucun client MCP créé hors passerelle. Le transport Streamable HTTP ne
 # s'importe que dans `slmsp/mcp/` et reçoit toujours `http_client=` (client de `net`).
@@ -114,6 +148,8 @@ REGLES = {
     "judge-depuis-data/train",
     "client-http",
     "lecture-data/train",
+    "journal-juge-depuis-data/train",
+    "jeton-generateur",
     "publication",
     "client-mcp",
 }
@@ -238,6 +274,95 @@ def _fermeture_runtime(modules: dict[str, _Module]) -> set[str]:
                 # importer un sous-module exécute aussi les __init__ de ses paquets parents
                 a_visiter.extend(n for n in _ancetres_et_soi(interne) if n in modules)
     return vus
+
+
+def _alias_modules(arbre: ast.Module, nom_module: str, est_paquet: bool) -> dict[str, str]:
+    """Nom local -> nom qualifié, pour tous les imports du module (relatifs compris)."""
+    alias: dict[str, str] = {}
+    for noeud in ast.walk(arbre):
+        if isinstance(noeud, ast.Import):
+            for a in noeud.names:
+                if a.asname:
+                    alias[a.asname] = a.name
+                else:
+                    alias[a.name.split(".")[0]] = a.name.split(".")[0]
+        elif isinstance(noeud, ast.ImportFrom):
+            base = _base_relative(noeud, nom_module, est_paquet)
+            for a in noeud.names:
+                if a.name != "*":
+                    alias[a.asname or a.name] = f"{base}.{a.name}"
+    return alias
+
+
+def _module_appele(fonction: ast.Attribute, alias: dict[str, str]) -> str | None:
+    """Module qualifié de l'appel `m.f(...)` (`m` résolu par les alias), sinon `None`."""
+    racine, attributs = _chaine(fonction)
+    if racine is None:
+        return None
+    return ".".join([alias.get(racine, racine), *attributs[:-1]])
+
+
+def _constats_journal_et_jeton(m: _Module) -> list[tuple[str, int, str]]:
+    """Règles `journal-juge-depuis-data/train` et `jeton-generateur`."""
+    constats: list[tuple[str, int, str]] = []
+    controle = m.paquet in LECTURE_CONTROLEE
+    for imp in m.imports:
+        if controle and NOMS_JOURNAL_JUGE & set(imp.alias):
+            constats.append(("journal-juge-depuis-data/train", imp.ligne, f"import de {imp.alias}"))
+        if m.nom not in MODULES_JETON and JETON in imp.alias:
+            constats.append(("jeton-generateur", imp.ligne, f"import de {JETON}"))
+    for noeud in ast.walk(m.arbre):
+        if isinstance(noeud, ast.Attribute):
+            if controle and noeud.attr in NOMS_JOURNAL_JUGE:
+                constats.append(
+                    ("journal-juge-depuis-data/train", noeud.lineno, f"`.{noeud.attr}`")
+                )
+            if noeud.attr == JETON and m.nom not in MODULES_JETON:
+                constats.append(("jeton-generateur", noeud.lineno, f"`.{JETON}`"))
+            if noeud.attr == APPEL_PRIVE and m.nom not in MODULES_APPEL_PRIVE:
+                constats.append(("jeton-generateur", noeud.lineno, f"`.{APPEL_PRIVE}`"))
+        elif isinstance(noeud, ast.Constant) and isinstance(noeud.value, str):
+            if controle and noeud.value == USAGE_JUGE:
+                constats.append(("journal-juge-depuis-data/train", noeud.lineno, repr(USAGE_JUGE)))
+            if noeud.value == JETON and m.nom not in MODULES_JETON:
+                constats.append(("jeton-generateur", noeud.lineno, repr(JETON)))
+        elif controle and isinstance(noeud, ast.Call):
+            fonction = noeud.func
+            if isinstance(fonction, ast.Name):
+                nom: str | None = fonction.id
+            elif isinstance(fonction, ast.Attribute):
+                nom = fonction.attr
+            else:
+                nom = None
+            if nom in OUVERTURES_JOURNAL and not any(k.arg == "lecteur" for k in noeud.keywords):
+                constats.append(
+                    ("journal-juge-depuis-data/train", noeud.lineno, f"{nom}() sans lecteur=")
+                )
+    return constats
+
+
+def analyser_outils(dossier: Path) -> list[Violation]:
+    """Imports de `anthropic` et `mistralai` sous `dossier` (`eval/outils/`)."""
+    violations: list[Violation] = []
+    for chemin in sorted(dossier.rglob("*.py")):
+        if "__pycache__" in chemin.parts:
+            continue
+        fichier = chemin.relative_to(dossier.parent).as_posix()
+        arbre = ast.parse(chemin.read_text(encoding="utf-8-sig"), filename=str(chemin))
+        for noeud in ast.walk(arbre):
+            if isinstance(noeud, ast.Import):
+                noms = [a.name for a in noeud.names]
+            elif isinstance(noeud, ast.ImportFrom) and noeud.level == 0 and noeud.module:
+                noms = [noeud.module]
+            else:
+                continue
+            for nom in noms:
+                for sdk, dossier_permis in SDK_RESERVES.items():
+                    if _correspond(nom, sdk):
+                        violations.append(
+                            Violation(sdk, fichier, noeud.lineno, f"{sdk} hors de {dossier_permis}")
+                        )
+    return violations
 
 
 def _mcp_interdit(nom: str) -> bool:
@@ -367,6 +492,10 @@ def analyser(racine_src: Path) -> list[Violation]:
         for ligne, detail in _constats_client_mcp(m):
             signaler("client-mcp", ligne, detail)
 
+        for regle, ligne, detail in _constats_journal_et_jeton(m):
+            signaler(regle, ligne, detail)
+
+        alias = _alias_modules(m.arbre, m.nom, m.chemin.name == "__init__.py")
         for noeud in ast.walk(m.arbre):
             if isinstance(noeud, ast.Attribute) and noeud.attr in PUBLICATION:
                 signaler("publication", noeud.lineno, f"`.{noeud.attr}`")
@@ -379,11 +508,8 @@ def analyser(racine_src: Path) -> list[Violation]:
                     signaler("lecture-data/train", noeud.lineno, "open() hors de core.artefacts")
                 elif isinstance(fonction, ast.Attribute) and (
                     fonction.attr in ATTRIBUTS_LECTURE
-                    or (
-                        fonction.attr == "load"
-                        and isinstance(fonction.value, ast.Name)
-                        and fonction.value.id == "json"
-                    )
+                    or fonction.attr
+                    in LECTEURS_INTERDITS.get(_module_appele(fonction, alias) or "", frozenset())
                 ):
                     signaler(
                         "lecture-data/train",
@@ -399,6 +525,28 @@ def analyser(racine_src: Path) -> list[Violation]:
 def test_code_source_sans_violation() -> None:
     violations = analyser(SRC)
     assert not violations, "\n".join(map(str, violations))
+
+
+def test_outils_d_evaluation_sans_sdk_reserve() -> None:
+    violations = analyser_outils(OUTILS)
+    assert not violations, "\n".join(map(str, violations))
+
+
+@pytest.mark.parametrize(
+    ("contenu", "regle"),
+    [
+        ("import anthropic\n", "anthropic"),
+        ("from anthropic import Anthropic\n", "anthropic"),
+        ("import mistralai.client\n", "mistralai"),
+        ("from mistralai.client import Mistral\n", "mistralai"),
+        ("import urllib.request\nimport json\n", None),
+    ],
+)
+def test_outils_synthetiques(tmp_path: Path, contenu: str, regle: str | None) -> None:
+    outils = tmp_path / "eval" / "outils"
+    outils.mkdir(parents=True)
+    (outils / "outil.py").write_text(contenu, encoding="utf-8")
+    assert [v.regle for v in analyser_outils(outils)] == ([regle] if regle else [])
 
 
 def test_tous_les_paquets_ont_une_couche() -> None:
@@ -451,7 +599,27 @@ ARBRE_PROPRE = {
             streamable_http.streamable_http_client(url, http_client=http)
             return streamable_http_client(url, http_client=http, terminate_on_close=False)
         """,
-    "mistral/client.py": "import mistralai\n\nfrom slmsp.net import client\n",
+    "mistral/client.py": """
+        import mistralai
+
+        from slmsp.net import client
+
+
+        class ClientMistral:
+            def appeler(self, usage):
+                return self._appeler(usage, jeton=None)
+        """,
+    "mistral/journal.py": """
+        def jeton(module):
+            return getattr(module, "_JETON", None)
+        """,
+    "mistral/generateur.py": """
+        _JETON = object()
+
+
+        def generer(client):
+            return client._appeler("generation", jeton=_JETON)
+        """,
     "judge/claude.py": "import anthropic\n\nfrom slmsp.net import client\n",
     "harness/prompts.py": "from slmsp.core.artefacts import lire\n",
     "harness/service.py": "from . import prompts\nfrom slmsp.inference import serveur\n",
@@ -463,6 +631,20 @@ ARBRE_PROPRE = {
 
         def charger(chemin):
             return lire(chemin, lecteur="data")
+        """,
+    "data/provenance.py": """
+        import json as j
+
+        from slmsp.core.artefacts import ouvrir_sqlite_lecture
+        from slmsp.mistral.journal import journal_pour
+
+
+        def appels(config):
+            return journal_pour("generation", config, lecteur="data").appels()
+
+
+        def decoder(texte):
+            return j.loads(texte)
         """,
     "train/run.py": """
         import torch
@@ -538,6 +720,89 @@ CAS_FAUTIFS: dict[str, tuple[str, dict[str, str]]] = {
         {"train/a.py": "import json\n\n\ndef f(fichier):\n    return json.load(fichier)\n"},
     ),
     "lecture-import-json-load": ("lecture-data/train", {"data/a.py": "from json import load\n"}),
+    "lecture-json-alias": (
+        "lecture-data/train",
+        {"data/a.py": "import json as j\n\n\ndef f(fichier):\n    return j.load(fichier)\n"},
+    ),
+    "lecture-sqlite3": (
+        "lecture-data/train",
+        {"data/a.py": "import sqlite3\n\nsqlite3.connect('var/appels-mistral.sqlite')\n"},
+    ),
+    "lecture-duckdb-alias": (
+        "lecture-data/train",
+        {"train/a.py": "import duckdb as d\n\nd.read_parquet('data/x.parquet')\n"},
+    ),
+    "lecture-import-duckdb": ("lecture-data/train", {"data/a.py": "from duckdb import sql\n"}),
+    "lecture-pyarrow-parquet": (
+        "lecture-data/train",
+        {"data/a.py": "import pyarrow.parquet as pq\n\npq.read_table('data/x.parquet')\n"},
+    ),
+    "lecture-pyarrow-from": (
+        "lecture-data/train",
+        {"train/a.py": "from pyarrow import parquet\n\nparquet.read_table('x')\n"},
+    ),
+    "lecture-numpy": (
+        "lecture-data/train",
+        {"train/a.py": "import numpy as np\n\nnp.load('x.npy')\n"},
+    ),
+    "lecture-pickle": (
+        "lecture-data/train",
+        {"data/a.py": "import pickle\n\n\ndef f(flux):\n    return pickle.load(flux)\n"},
+    ),
+    "lecture-tomllib": (
+        "lecture-data/train",
+        {"data/a.py": "import tomllib\n\n\ndef f(flux):\n    return tomllib.load(flux)\n"},
+    ),
+    "lecture-ouvrir-sqlite": (
+        "lecture-data/train",
+        {"data/a.py": "from slmsp.core.var import ouvrir_sqlite\n"},
+    ),
+    "lecture-ouvrir-sqlite-module": (
+        "lecture-data/train",
+        {"train/a.py": "from ..core import var\n\nvar.ouvrir_sqlite('x')\n"},
+    ),
+    "journal-juge-usages": (
+        "journal-juge-depuis-data/train",
+        {"data/a.py": "from slmsp.mistral.journal import USAGES_JUGE\n"},
+    ),
+    "journal-juge-usage-litteral": (
+        "journal-juge-depuis-data/train",
+        {"train/a.py": "USAGE = 'juge-second'\n"},
+    ),
+    "journal-juge-fichier": (
+        "journal-juge-depuis-data/train",
+        {"data/a.py": "def f(config):\n    return config.fichier_journal_juge\n"},
+    ),
+    "journal-sans-lecteur": (
+        "journal-juge-depuis-data/train",
+        {
+            "data/a.py": "from slmsp.mistral.journal import journal_pour\n\n\n"
+            "def f(usage, config):\n    return journal_pour(usage, config).appels()\n"
+        },
+    ),
+    "journal-classe-sans-lecteur": (
+        "journal-juge-depuis-data/train",
+        {
+            "train/a.py": "from slmsp.mistral import journal\n\n\n"
+            "def f(chemin, usages):\n    return journal.JournalMistral(chemin, usages)\n"
+        },
+    ),
+    "jeton-import": (
+        "jeton-generateur",
+        {"data/a.py": "from slmsp.mistral.generateur import _JETON\n"},
+    ),
+    "jeton-attribut": (
+        "jeton-generateur",
+        {"evaluation/a.py": "import slmsp.mistral.generateur as g\n\nJETON = g._JETON\n"},
+    ),
+    "jeton-getattr": (
+        "jeton-generateur",
+        {"mistral/a.py": "def f(module):\n    return getattr(module, '_JETON')\n"},
+    ),
+    "jeton-appel-prive": (
+        "jeton-generateur",
+        {"harness/a.py": "def f(client):\n    return client._appeler('generation')\n"},
+    ),
     "publication-push-to-hub": (
         "publication",
         {"train/a.py": "def f(modele):\n    modele.push_to_hub('depot')\n"},

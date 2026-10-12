@@ -697,6 +697,8 @@ def test_precedent_assistant_refuse(monde: Monde, cas: str) -> None:
         "nom-different",
         "tool-orphelin",
         "arguments-differents",
+        "cle-en-plus",
+        "reponse-en-double",
     ],
 )
 def test_precedent_tool_refuse(monde: Monde, cas: str) -> None:
@@ -718,12 +720,15 @@ def test_precedent_tool_refuse(monde: Monde, cas: str) -> None:
         "name": "autre_outil" if cas == "nom-different" else "outil_factice",
         "content": factice("resultat") if cas == "contenu-different" else resultat,
     }
+    if cas == "cle-en-plus":  # texte libre glissé hors des clés admises (verrou 3)
+        outil["prefix"] = factice("texte-libre")
     precedents = (
         [outil]
         if cas == "tool-orphelin"
         else [
             {"role": "assistant", "tool_calls": [APPEL_OUTIL]},
             outil,
+            *([dict(outil)] if cas == "reponse-en-double" else []),
         ]
     )
     with pytest.raises(ProvenanceInvalide):
