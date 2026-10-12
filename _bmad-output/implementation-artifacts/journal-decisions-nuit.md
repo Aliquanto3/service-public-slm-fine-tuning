@@ -127,3 +127,98 @@ Document : `_bmad-output/planning-artifacts/architecture/architecture-service-pu
 ## D-nuit-A1-25 — `.gitignore` : versionner les artefacts légers des runs
 - **Décision** : le squelette du projet remplace les règles `runs/` et `checkpoints/` du `.gitignore` par une liste ciblée (AD-21). Sont exclus de git : `index/`, `var/`, `vendor/`, `models/`, `data/raw/`, `data/train/*/train.jsonl`, `runs/**/checkpoints/`, `runs/**/adaptateur/`, `*.gguf`, `*.safetensors`. `run.json`, `scores.json`, `verdicts.jsonl` et les rapports sont versionnés.
 - **Justification** : FR-36 et NFR-8 exigent un Comparatif régénérable à partir des artefacts archivés, et D1.7 interdit de réécrire l'historique. Un gros fichier commité par erreur ne pourrait plus en être retiré.
+
+## Décisions du découpage en epics et stories (phase A.2, `bmad-create-epics-and-stories`)
+
+Document : `_bmad-output/planning-artifacts/epics.md`. Mode non interactif : les menus du workflow ont été validés d'office.
+
+## D-nuit-A2-1 — Découpage : 13 epics, J1 à J3 détaillés, J4 et J5 en epics seulement
+- **Décision** : 11 epics détaillés pour J1 à J3 (53 stories), dont l'Epic 7 pour le Jeu d'évaluation complet ; Epics 12 (J4) et 13 (J5) sans stories. L'Epic 1 est un socle technique assumé (projet greenfield, garde-fous D1 en code), par exception au principe « un epic = une valeur utilisateur ».
+- **Justification** : périmètre de la mission et de PRD §9.3 ; la revue de code se fait par epic (D5), d'où des epics de taille moyenne.
+
+## D-nuit-A2-2 — Piste 2 (Jeu d'évaluation) isolée hors de `src/`
+- **Décision** : un outil dédié `eval/outils/construire_jeu.py`, lancé par `uv run --no-project`, gère les instantanés des sources, l'assemblage des brouillons (`eval/construction/v1.0/<CODE>.jsonl`) vers `eval/jeu/v1.0/items.jsonl`, la composition et les rejets. La validation stricte et le manifeste restent à `slmsp eval gel` (AD-11), avec une option `--verifier-seulement` ; les cassettes RD passent par `slmsp mcp record` (AD-10).
+- **Justification** : AD-11 interdit un second lecteur d'items et réserve l'écriture du manifeste à `eval gel` ; la mission demande que la piste ne touche pas `src/`.
+
+## D-nuit-A2-3 — Le calibrage n'est pas repris dans le jeu v1.0, mais il est protégé contre la fuite
+- **Décision** : le jeu v1.0 est construit à neuf (identifiants à partir de 001) ; les 16 items du calibrage restent des fixtures de développement. L'API anti-fuite couvre v1.0 et le calibrage.
+- **Justification** : les agents de la nuit développent et testent sur le calibrage ; le reprendre dans le jeu de décision exposerait la mesure à un réglage sur ces items. Réversible : Anaël peut les intégrer en v1.1.
+
+## D-nuit-A2-4 — Chemins de cassettes des items v1.0
+- **Décision** : le champ `cassettes` des items v1.0 contient des chemins relatifs au dossier du jeu, soit `../../cassettes/RD-xxx/<session>.json`.
+- **Justification** : AD-11 (« relatifs au dossier du jeu ») et SPEC §8 (`eval/cassettes/RD-xxx/`) sont tous deux respectés ; `core.items` résout ces chemins.
+
+## D-nuit-A2-5 — Gel borné dans le temps
+- **Décision** : si les volumes de SPEC §2 ne sont pas atteints à l'heure prévue du gel (vague V9), le jeu est gelé en `v1.0-provisoire` avec ses écarts de composition inscrits dans le manifeste et le journal, au lieu de bloquer la Baseline et la génération.
+- **Justification** : D5 (« une story ne doit jamais bloquer toute la nuit ») ; le jeu est de toute façon provisoire et passera en v1.1 après relecture.
+- **À trancher par Anaël** : accepter un gel incomplet le cas échéant.
+
+## D-nuit-A2-6 — CLI en paquet `slmsp/cli/` et sous-commande `slmsp budget`
+- **Décision** : la CLI est un paquet (`slmsp/cli/__init__.py` + un module par sous-commande) au lieu d'un fichier `cli.py`. La story 1.1 déclare d'avance toutes les sous-commandes ; un module absent répond « non implémentée ». Une sous-commande en lecture seule `slmsp budget etat` est ajoutée à la liste du spine.
+- **Justification** : trois stories en parallèle ne doivent pas modifier le même fichier ; le relevé de dépense est exigé par `etat-nuit.md` et le rapport de nuit. Le point d'entrée `slmsp.cli:main` est inchangé.
+
+## D-nuit-A2-7 — Schémas et modèles de configuration répartis par fichier
+- **Décision** : `core/schemas/` est un paquet, un module par schéma, sans réexport, créé par la première story qui en a besoin. Chaque paquet porte son modèle pydantic de configuration (`<paquet>/config.py`) ; seuls `ConfigModele` et `ConfigLlamacpp`, partagés, sont dans `core/schemas/` (story 1.3).
+- **Justification** : éviter les conflits de fichiers entre stories parallèles et créer les entités au moment où elles servent.
+
+## D-nuit-A2-8 — Primitives partagées dans `core`
+- **Décision** : `core/var.py` (`SLMSP_VAR_DIR`, SQLite WAL, verrou GPU), `core/canonique.py` (JSON canonique, SHA-256) et `core/gabarits.py` (liste blanche structurelle des prompts de Tâche et des gabarits du générateur, AD-3 verrou 6).
+- **Justification** : le spine fixe ces règles sans fixer leur module ; les placer en couche 0 permet à tous les paquets de les utiliser sans enfreindre AD-1.
+
+## D-nuit-A2-9 — Tarifs prudents et imputation de `validation`
+- **Décision** : `config/tarifs.toml` part d'un tarif prudent pour `mistral-large-latest` (2 $ / 6 $ par million de tokens) et d'un taux de 1 USD = 1 EUR, datés et marqués « à vérifier ». Les appels Mistral d'usage `validation` sont imputés au sous-poste `mistral.generation`.
+- **Justification** : la page de tarifs de Mistral n'est pas un hôte de D1.5 ; un tarif surévalué fait arrêter plus tôt, jamais dépasser. Le sous-poste juge (5 €) reste réservé au kappa.
+- **À trancher par Anaël** : remplacer par les tarifs réels.
+
+## D-nuit-A2-10 — Relecture des conditions de Mistral (D1.2) par une lecture GET
+- **Décision** : le profil réseau `outillage` autorise une lecture GET de la page des conditions commerciales de Mistral, et rien d'autre sur cet hôte. La campagne de génération (story 9.8) consigne la date, l'URL et le SHA de la page ; si la page est inaccessible, la génération ne démarre pas.
+- **Justification** : D1.2 exige de revérifier les conditions avant la campagne, ce qui est impossible sans lire la page, alors que D1.5 ne liste que l'API Mistral. Même raisonnement que D-nuit-A1-17 : l'esprit des deux règles est respecté par une lecture seule ciblée.
+- **À trancher par Anaël** : valider cet ajout.
+
+## D-nuit-A2-11 — Mesure de H-JUGE-COUT et H-BATCH à la première notation réelle
+- **Décision** : ces hypothèses sont mesurées à l'étape 0 de la Baseline (story 8.3), sur le calibrage noté pour le premier modèle, et non dans la story du Juge (5.4).
+- **Justification** : les tests n'appellent jamais d'API payante, et il faut des sorties de modèle à noter.
+
+## D-nuit-A2-12 — Rapport de Baseline produit par `slmsp compare baseline`
+- **Décision** : le rapport de Baseline est le premier module de `slmsp.compare` (chargement des artefacts, sélection des runs complets) ; le Comparatif (story 11.1) le réutilise.
+- **Justification** : une seule voie de chargement des artefacts, fonction pure et régénérable (AD-20).
+
+## D-nuit-A2-13 — Benchmarks en sous-processus, Hugging Face hors ligne
+- **Décision** : les jeux de benchmarks sont pré-téléchargés par `slmsp fetch benchmarks` ; lm-eval et les autres outils tiers tournent en sous-processus avec `HF_HUB_OFFLINE=1` et `HF_DATASETS_OFFLINE=1`.
+- **Justification** : les bibliothèques tierces (datasets, fsspec) peuvent ouvrir leurs propres connexions et contourner la passerelle `slmsp.net` (AD-4).
+
+## D-nuit-A2-14 — Volumes de la campagne de nuit
+- **Décision** : environ 600 exemples : Q 100, RD 140, CR 80, LC 80, CO 35, RE 35, CT 35, génériques 90 (≈ 15 %). La Traduction est exclue.
+- **Justification** : proportions médianes de l'addendum §G ramenées à 600 (D4). Le poste « traces de tool calling » couvre à la fois les traces RD et les réponses Q sourcées sur l'Index. La Traduction est le n° 2 de l'ordre de coupe et n'a pas de Jeu maison en v1. Ajustable en config d'après les faiblesses de la Baseline.
+
+## D-nuit-A2-15 — Témoin Qwen
+- **Décision** : `Qwen/Qwen3-4B-Instruct-2507` par défaut ; à défaut, le Qwen d'environ 4B Instruct sous Apache 2.0 le plus récent sans accès conditionnel. Le choix et la révision sont consignés par la story 8.1.
+- **Justification** : D4 ne nomme pas le dépôt.
+
+## D-nuit-A2-16 — Baseline officielle seulement sur le jeu gelé
+- **Décision** : la Baseline ne porte que sur `v1.0-provisoire` gelé et commité. Avant le gel, seul un essai de fumée sur le calibrage est permis, étiqueté `jeu_version = calibrage`, jamais présenté comme une Baseline.
+- **Justification** : FR-24, FR-39 et SPEC §6 ; éviter des scores non comparables.
+
+## D-nuit-A2-17 — URL inventées signalées sans réécriture
+- **Décision** : le Harnais signale les URL inventées dans l'évènement `Fin` sans modifier le texte ; le banc les compte (Q).
+- **Justification** : réécrire la sortie fausserait la mesure ; le signalement suffit à FR-3 en J1. L'affichage côté application est une question de J4.
+
+## D-nuit-A2-18 — Lecture du journal Mistral par `train`
+- **Décision** : la liste de lecture du lecteur `train` (AD-24) inclut, en lecture seule, `appels-mistral.sqlite`.
+- **Justification** : AD-18 demande de recontrôler les `appel_ids` au chargement, ce qui exige de lire le journal ; AD-24 ne le listait pas.
+
+## D-nuit-A2-19 — Fixtures de test du pipeline de données
+- **Décision** : les réponses Mistral factices et les exemples d'entraînement de test sont des chaînes ou des tokens aléatoires produits par le code de test dans `tmp_path`. Aucun exemple réaliste rédigé n'est versionné, même comme fixture.
+- **Justification** : esprit de D1.1 et règle d'AD-24 sur les fixtures.
+
+## D-nuit-A2-20 — `eval/outils/` hors de la règle TID251
+- **Décision** : comme `build_calibrage.py`, l'outil de construction du jeu est exclu de `TID251` ; il porte sa propre liste d'hôtes autorisés (D1.5), vérifiée avant chaque requête.
+- **Justification** : l'outil ne fait pas partie du paquet et ne doit pas en dépendre (D-nuit-A2-2).
+
+## D-nuit-A2-21 — Adaptateur Mistral construit en J1, générateur en J2
+- **Décision** : `slmsp.mistral` (client, journal d'appels avec `usage`) est construit avec le second juge (story 5.5). Seule la classe `Generateur` (story 9.2) peut écrire une entrée `usage = generation`, au moyen d'un jeton de preuve propre à son module.
+- **Justification** : la Baseline a besoin du second juge avant le pipeline de données ; un journal unique avec un usage protégé ferme la voie d'une réponse de juge ou de validation réutilisée comme donnée (AD-3, verrous 3 et 4).
+
+## D-nuit-A2-22 — Baseline sans Juge après épuisement du budget
+- **Décision** : si le budget `anthropic` ou `mistral.juge` est épuisé pendant la Baseline, la notation du modèle en cours est marquée `partiel-budget` et les modèles suivants sont évalués par les seuls contrôles automatiques (RD, CO, URL, emplacements, Kandel-Moles), avec Benchmarks et mesures complets.
+- **Justification** : D1.6 impose l'arrêt « sur ce poste » puis la suite ; les mesures sans Juge restent utiles à la décision d'Anaël.

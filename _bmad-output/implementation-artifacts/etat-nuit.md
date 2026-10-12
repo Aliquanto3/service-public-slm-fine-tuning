@@ -6,10 +6,11 @@
 Phase A : planification (démarrée à 06h30)
 
 ## Fait
-- 06h28 : commit de cadrage sur `main` (3431c35), puis branche `nuit/2026-10-12`.
+- 06h26 : commit de cadrage sur `main` (3431c35), puis branche `nuit/2026-10-12`.
+- 06h56 : A.1 architecture terminée, commit a25c83b. Points à trancher par Anaël : D-nuit-A1-5, A1-10 et A1-17.
 
 ## En cours
-- Phase A.1 : architecture (`bmad-architecture`)
+- Phase A.2 : epics et stories (`bmad-create-epics-and-stories`), lancée à 06h57
 
 ## Bloqué
 (rien)
