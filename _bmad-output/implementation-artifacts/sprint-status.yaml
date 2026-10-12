@@ -65,7 +65,7 @@ development_status:
   epic-4-retrospective: optional
 
   epic-5: in-progress
-  5-1-lecteur-unique-d-items-api-anti-fuite-et-gel-du-jeu-d-évalua: backlog
+  5-1-lecteur-unique-d-items-api-anti-fuite-et-gel-du-jeu-d-évalua: in-progress
   5-2-fonctions-de-texte-partagées-normalisation-mots-nombres-kand: done
   5-3-évaluation-phase-génération-sans-réseau: backlog
   5-4-juge-principal-claude-prompt-batch-api-et-cache-de-verdicts: backlog
@@ -82,7 +82,7 @@ development_status:
 
   epic-7: in-progress
   7-1-outil-de-construction-et-instantanés-des-sources-réelles: done
-  7-2-items-question-60-et-non-régression-30: in-progress
+  7-2-items-question-60-et-non-régression-30: done
   7-3-items-recherche-de-données-40-et-cassettes: backlog
   7-4-items-compte-rendu-25-et-langage-clair-25: done
   7-5-items-correction-résumé-et-courrier-type-3-15: backlog

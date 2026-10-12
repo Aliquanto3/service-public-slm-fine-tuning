@@ -318,3 +318,15 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - la page des conditions Mistral (`legal.mistral.ai`) est autorisée en GET seul (A2-10, à valider par Anaël).
 - **Journal** : il est tenu dans `SLMSP_VAR_DIR/requetes-sortantes.sqlite`.
 - **Risque relevé** : `outillage` refuse les GET vers les API Mistral et Anthropic. Le suivi des lots batch (story 5.4) demandera d'ajouter une règle dans `config/reseau.toml`.
+
+## D-nuit-S7.2 et S7.4 — Points des items du Jeu d'évaluation (à relire par Anaël)
+- **7.2 (Q 60, NR 30)** : taux de rejet de 10,4 % à la vérification indépendante. Tous les rejets ont été corrigés et revérifiés.
+  - **À trancher** :
+    - aucun item ne porte sur les marchés publics, car leurs fiches sont sur `entreprendre`, exclu par le critère d'acceptation 2 ;
+    - les montants et dates 2026 n'ont pas d'ancre de date ;
+    - Q-042 (« 1/24e ») est à recouper avec le décret.
+  - NR est classé `non-classe` et porte un champ `sous_type`.
+- **7.4 (CR 25, LC 25)** : taux de rejet de 11,3 %, rejets corrigés.
+  - Les noms fictifs reviennent d'un item à l'autre.
+  - CR-001 utilise des noms courants de personnalités, sans prénom.
+  - Un `.gitattributes` avec `*.jsonl eol=lf` est recommandé.
