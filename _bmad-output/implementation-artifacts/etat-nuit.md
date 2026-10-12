@@ -1,6 +1,6 @@
 # État du run autonome — 2026-10-12
 
-> Horaire décalé (voir journal D-nuit-1) : phase F à 14h00, arrêt dur à 14h30, seuil DoRA à 13h00.
+> **Run prolongé (journal D-nuit-2, consigne d'Anaël à 12h40)** : il continue jusqu'à la fin du travail planifié, au plus tard le 2026-10-13 à 07h00. Phase F à la fin du travail, ou le 13 à 06h30 au plus tard. Seuil DoRA : le 13 à 05h30. Arrêt anticipé en cas de risque technique ou de problème d'orchestration.
 > Organisation : chaque story tourne dans un worktree git et est fusionnée en squash sur `nuit/2026-10-12` (D-nuit-B-1). Le statut des stories est dans `sprint-status.yaml`.
 
 ## Phase en cours

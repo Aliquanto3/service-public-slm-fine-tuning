@@ -398,3 +398,11 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 ## D-nuit-S3.2 — Bac à sable MCP
 - Texte de la réponse vide : « No results found. ». Question ouverte C7 de la revue d'architecture, **à valider par Anaël**.
 - Les 40 cassettes RD gelées se rejouent à l'identique sans réseau.
+
+## D-nuit-2 — Prolongation du run (12h40, consigne d'Anaël)
+- **Consigne** : « Prolonge le run tant qu'il n'y a pas de risque technique ou de souci d'orchestration ».
+- **Nouvel horaire** : le run continue jusqu'à la fin du travail planifié (phases B à E), au plus tard le **2026-10-13 à 07h00**, l'horaire d'origine du prompt. La phase F (revues par epic, rapport de nuit) a lieu à la fin du travail planifié, ou à 06h30 le 13 au plus tard. Le seuil DoRA (M3) passe au 13 à 05h30. L'horaire de D-nuit-1 est remplacé.
+- **Conditions d'arrêt anticipé** : risque technique ou problème d'orchestration.
+  - Exemples de risque technique : dépense qui approche un plafond, disque plein, GPU instable, suite de tests qui se dégrade sans qu'on sache pourquoi.
+  - Exemples de problème d'orchestration : conflits de fusion à répétition, sous-agents qui échouent en boucle.
+  - Dans ces cas, l'orchestrateur passe directement à la phase F.
