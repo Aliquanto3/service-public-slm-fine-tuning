@@ -467,3 +467,8 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - LC est plafonné.
   - Le kappa entre les deux juges est faible (0,00 à 0,17), et plusieurs Tâches sont marquées « fragile ».
 - **Modèle suivant** : Ministral 3B, retenu pour son 5/5 à la sonde d'outils. SmolLM3 (0/5) et Qwen 4B (témoin) sont exclus de la Baseline réduite pour tenir le budget.
+
+## D-nuit-C2 — Baseline de Ministral 3B interrompue par Claude Code (17h44)
+- **Constat** : Claude Code a arrêté le run en arrière-plan parce que la mémoire du système était critique. L'arrêt est intervenu à l'item 29/225 (CR-014), dans le run `runs/eval-generation/20261012-173832-ministral-3-3b-5531`. llama-server s'est arrêté proprement grâce au Job Object, et la RAM libre est remontée à 14,3 Go sur 31,1 Go.
+- **Décision** : pas de relance automatique, conformément à la consigne de l'outil. **Elle attend l'accord d'Anaël.** Commande de reprise, en ajout seul et sans refaire les 29 items :
+  `uv run --extra judge --extra data slmsp eval run --modele base:ministral-3-3b --quantification q4_k_m --jeu v1.0 --variante cuda --phase toutes --mode-juge batch --reprendre 20261012-173832-ministral-3-3b-5531`
