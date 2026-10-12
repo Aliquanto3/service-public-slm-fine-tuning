@@ -472,3 +472,9 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
 - **Constat** : Claude Code a arrêté le run en arrière-plan parce que la mémoire du système était critique. L'arrêt est intervenu à l'item 29/225 (CR-014), dans le run `runs/eval-generation/20261012-173832-ministral-3-3b-5531`. llama-server s'est arrêté proprement grâce au Job Object, et la RAM libre est remontée à 14,3 Go sur 31,1 Go.
 - **Décision** : pas de relance automatique, conformément à la consigne de l'outil. **Elle attend l'accord d'Anaël.** Commande de reprise, en ajout seul et sans refaire les 29 items :
   `uv run --extra judge --extra data slmsp eval run --modele base:ministral-3-3b --quantification q4_k_m --jeu v1.0 --variante cuda --phase toutes --mode-juge batch --reprendre 20261012-173832-ministral-3-3b-5531`
+
+## D-nuit-C3 — Baseline réduite terminée (18h20), rapport rédigé par l'orchestrateur
+- **Ministral 3B terminé** : reprise après l'arrêt pour mémoire, soit 196 items générés et 29 déjà présents. Coût : 3,28 €.
+- **Rapport** : `baseline-rapport.md`. Il ne prend **aucune décision go/no-go**. Appliquée strictement, la règle D4 désigne Granite 4.0 1B pour l'essai QLoRA (moyenne 33,4 contre 32,2), mais l'écart n'est pas significatif.
+- **Stories 8.3 et 8.4 en `review`** : ce sont des exécutions réduites, sans benchmarks ni mesures FR-26. Le module `compare/baseline.py` (8.4) n'est pas développé : le rapport a été rédigé à la main à partir des fichiers `scores.json`.
+- **Dépense totale** : Anthropic 6,06 € sur 10 €, Mistral 0,47 € sur 30 €.
