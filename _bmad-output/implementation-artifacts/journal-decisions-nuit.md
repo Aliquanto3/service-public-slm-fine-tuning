@@ -364,3 +364,18 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - Mistral : tarif prudent de 2 $/6 $ (batch 1 $/3 $), fixé par D-nuit-A2-9. **À vérifier par Anaël**, car le tarif réel serait plus bas.
   - Conversion : 1 USD = 1 EUR.
 - **Remise à zéro** : les totaux sont filtrés par `campagne_id`. Changer d'identifiant redémarre donc le compteur sans rien effacer. **À confirmer par Anaël.**
+
+## D-nuit-S7.6 — Gel du Jeu d'évaluation v1.0-provisoire (12h05)
+- **Commit de gel** : `12eef73`, `eval: gel du jeu d'évaluation v1.0-provisoire`. Le contrôle `jeu_gele_et_commite("v1.0")` passe sur la branche `nuit/2026-10-12`. **La règle D1.3 est levée** : la génération de Données d'entraînement est désormais permise.
+- **Contenu** : 225 items aux cibles de SPEC §2, sans écart (Q 60, RD 40, CR 25, LC 25, CO 15, RE 15, CT 15, NR 30).
+  - SHA-256 du `MANIFEST.json` : `70c42fb5…43dc`. Graine des échantillons : 20261012.
+  - Taux de rejet cumulé des vérifications : 34 rejets sur 363 verdicts, soit 9,4 %.
+- **Vérification finale**
+  - Elle a trouvé 3 constats bloquants, tous corrigés : Q-056 et CT-003 étaient trop proches du calibrage et ont été remplacés par Q-067 et CT-016 ; les consignes CT listent désormais les libellés d'emplacement exacts.
+  - Décision prise seul : lister ces libellés rend la Tâche CT plus facile. Le choix est réversible en v1.1.
+- **Échantillon de revue pour Anaël** : 47 items, dans `eval/revue/echantillon-revue-v1.0-lecture.md`.
+- **À relire en priorité**
+  - Items proches du calibrage : Q-045, Q-048, CT-005, CT-007 et CR-023.
+  - Paires LC × Q portant sur la même fiche.
+  - Aucun item sur les marchés publics.
+  - Q-042.
