@@ -45,8 +45,8 @@ development_status:
 
   epic-2: in-progress
   2-1-téléchargeur-unique-slmsp-fetch-llama-cpp-corpus-mediatech-b: done
-  2-2-inférence-par-llama-server-géré-génération-et-embedding: in-progress
-  2-3-index-local-construction-recherche-exacte-et-mesure-h-vec: backlog
+  2-2-inférence-par-llama-server-géré-génération-et-embedding: done
+  2-3-index-local-construction-recherche-exacte-et-mesure-h-vec: in-progress
   2-4-mesure-h-emb-compatibilité-de-l-embedding-de-requête-avec-le: backlog
   epic-2-retrospective: optional
 

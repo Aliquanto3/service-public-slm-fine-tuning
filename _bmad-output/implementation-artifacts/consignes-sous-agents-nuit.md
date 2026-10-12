@@ -48,3 +48,5 @@ Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même q
 - `SLMSP_ENV_FILE=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\.env` donne accès aux secrets.
 - `SLMSP_MODELS_DIR=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models` donne accès aux modèles, avec `HF_HOME=<models>/.cache-hf`. Les modèles candidats sont déjà préchargés : voir `models/PRECHARGEMENT.md`.
 - Le verrou GPU est `gpu.lock`, dans `SLMSP_VAR_DIR`. Toute commande CUDA le prend.
+- `SLMSP_VENDOR_DIR=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\vendor` contient les binaires llama.cpp b11429, en variantes cpu et cuda. Le modèle d'embedding BGE-M3 est sous `models/bge-m3/gguf/`. Le corpus MediaTech est sous `data/raw/mediatech/`.
+- Les tests réels de llama-server sont marqués `integration` (story 2.2). Granite 1B en CPU débite environ 42 tokens/s.
