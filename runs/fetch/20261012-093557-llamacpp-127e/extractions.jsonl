@@ -1,0 +1,4 @@
+{"archive":"llama-b11429-bin-win-cpu-x64.zip","cible":"C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\vendor\\llama.cpp\\b11429\\bin-cpu","statut":"deja-extrait"}
+{"archive":"llama-b11429-bin-win-cuda-12.4-x64.zip","cible":"C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\vendor\\llama.cpp\\b11429\\bin-cuda","statut":"deja-extrait"}
+{"archive":"cudart-llama-bin-win-cuda-12.4-x64.zip","cible":"C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\vendor\\llama.cpp\\b11429\\bin-cuda","statut":"deja-extrait"}
+{"archive":"llama.cpp-b11429-sources.zip","cible":"C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\vendor\\llama.cpp\\b11429\\src","statut":"deja-extrait"}
