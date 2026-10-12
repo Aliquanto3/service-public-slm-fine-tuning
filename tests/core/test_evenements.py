@@ -103,3 +103,19 @@ def test_valeurs_refusees() -> None:
         Progression(etape="x", fait=-1)
     with pytest.raises(ValidationError):
         Progression(etape="x", fait=0, total=-1)
+
+
+def test_champs_story_4_2() -> None:
+    """`Fin.urls_inventees` et `Source.numero` : valeurs par défaut et aller-retour."""
+    fin = Fin(raison="terminee")
+    assert fin.urls_inventees == []
+    assert vers_dict(fin)["urls_inventees"] == []
+    signalee = Fin(raison="terminee", urls_inventees=["https://exemple.invalid/x"])
+    assert depuis_dict(vers_dict(signalee)) == signalee
+    assert depuis_dict({"type": "fin", "raison": "terminee"}) == fin
+    source = Source(numero=2, titre="<titre>", url="https://exemple.invalid/y", origine="index")
+    assert Source(titre="t", url="u", origine="index").numero is None
+    sources = Sources(sources=[source])
+    assert depuis_dict(vers_dict(sources)) == sources
+    with pytest.raises(ValidationError):
+        Source(numero=0, titre="t", url="u", origine="index")

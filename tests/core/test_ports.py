@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Iterator
-from typing import Any, get_args
+from typing import Any, get_args, get_type_hints
 
 import numpy as np
 import pytest
 
 from slmsp.core import ports
-from slmsp.core.evenements import Fin, Jeton
+from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.core.ports import (
     EmbedderPort,
     JournalRequetes,
@@ -140,6 +140,13 @@ def test_passage_fige() -> None:
         "date_snapshot",
         "score",
     ]
+
+
+def test_generer_annonce_appel_non_conforme() -> None:
+    """Report de la story 2.2 : `generer` peut émettre un `AppelNonConforme`."""
+    retour = get_type_hints(LlmPort.generer)["return"]
+    (union,) = get_args(retour)
+    assert set(get_args(union)) == {Jeton, AppelOutil, AppelNonConforme, Fin}
 
 
 def test_flux_de_la_doublure() -> None:

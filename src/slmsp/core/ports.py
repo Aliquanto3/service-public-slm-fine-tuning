@@ -12,7 +12,7 @@ from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
-from slmsp.core.evenements import AppelOutil, Fin, Jeton
+from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 
 if TYPE_CHECKING:
     import numpy as np
@@ -46,8 +46,8 @@ class LlmPort(Protocol):
         *,
         tools: Sequence[Mapping[str, Any]] | None = None,
         options: Mapping[str, Any] | None = None,
-    ) -> Iterator[Jeton | AppelOutil | Fin]:
-        """Génère en flux : jetons, appels d'outils, puis `Fin`."""
+    ) -> Iterator[Jeton | AppelOutil | AppelNonConforme | Fin]:
+        """Génère en flux : jetons, appels d'outils (conformes ou non), puis `Fin`."""
         ...
 
     def compter_tokens(

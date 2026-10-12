@@ -52,8 +52,12 @@ class AppelNonConforme(_Fige):
 
 
 class Source(_Fige):
-    """Source citée : passage de l'Index local ou résultat MCP."""
+    """Source citée : passage de l'Index local ou résultat MCP.
 
+    `numero` est le renvoi `[n]` du texte généré qui la cite (passage de l'Index), s'il existe.
+    """
+
+    numero: int | None = Field(default=None, ge=1)
     titre: str
     url: str
     origine: Literal["index", "mcp"]
@@ -94,11 +98,16 @@ class Repli(_Fige):
 
 
 class Fin(_Fige):
-    """Fin du flux, avec la raison et l'usage en tokens s'il est connu."""
+    """Fin du flux, avec la raison et l'usage en tokens s'il est connu.
+
+    `urls_inventees` liste les URL du texte généré absentes des passages, des résultats
+    d'outils et des textes saisis (`harness.citations`) ; le texte n'est jamais réécrit.
+    """
 
     type: Literal["fin"] = "fin"
     raison: Literal["terminee", "longueur", "interrompue"]
     usage: dict[str, int] | None = None
+    urls_inventees: list[str] = Field(default_factory=list)
 
 
 class Erreur(_Fige):

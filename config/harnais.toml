@@ -1,0 +1,26 @@
+# Paramètres du Harnais de l'Assistant (story 4.2, D-nuit-A3-2).
+# Créé par la story 4.2 ; les stories 4.3 (boucle d'outils, Modes) et 4.4 (comptes rendus
+# longs) le lisent sans le modifier. `k` et le seuil de pertinence ne sont pas ici : ils
+# restent dans config/index.toml (story 2.3), source unique, lue par slmsp.index.config.
+schema_version = 1
+
+# Boucle d'outils de la Recherche de données (story 4.3).
+[outils]
+# Nombre maximal de tours « appel d'outil puis résultat » avant d'arrêter la boucle.
+iterations_max = 5
+# Délai d'un appel MCP au-delà duquel on bascule sur l'Index local (« non vérifié en ligne »).
+delai_appel_s = 10.0
+
+# Sonde du Mode connecté (story 4.3) : `GET /health`.
+[modes]
+# Période de la sonde (5 min), en plus du démarrage et d'avant chaque appel d'outil.
+periode_sonde_s = 300.0
+# Délai maximal d'une sonde ; au-delà, le Mode reste hors ligne.
+delai_sonde_s = 3.0
+
+# Découpage des comptes rendus longs (story 4.4).
+[compte_rendu]
+# Tokens réservés à la sortie du modèle dans le contexte de chaque morceau.
+reserve_sortie_tokens = 1024
+# Paragraphes repris d'un morceau au suivant.
+chevauchement_paragraphes = 1

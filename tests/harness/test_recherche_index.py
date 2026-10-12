@@ -1,0 +1,41 @@
+"""`harness.recherche_index` : top-k et seuil de pertinence (story 4.2, AD-9)."""
+
+from __future__ import annotations
+
+import pytest
+from harness_factices import FakeEmbedder, FakeVectorStore, mots, passage
+
+from slmsp.harness.recherche_index import RechercheIndex, RequeteVide, depuis_config
+from slmsp.index.config import charger_config_index
+
+
+def test_seuil_inclusif_et_k() -> None:
+    passages = [passage(1, 0.9), passage(2, 0.5), passage(3, 0.49), passage(4, 0.95)]
+    embedder, store = FakeEmbedder(), FakeVectorStore(passages)
+    recherche = RechercheIndex(embedder, store, 3, 0.5)
+    requete = mots(5, "requete")
+    trouves = recherche.rechercher(requete)
+    assert [p.chunk_id for p in trouves] == ["c4", "c1", "c2"]
+    assert embedder.textes == [requete]
+    assert store.appels == [3]
+    assert RechercheIndex(embedder, store, 2, 0.5).rechercher(requete) == trouves[:2]
+
+
+def test_requete_vide() -> None:
+    with pytest.raises(RequeteVide):
+        RechercheIndex(FakeEmbedder(), FakeVectorStore(), 3, 0.5).rechercher("  ")
+
+
+@pytest.mark.parametrize(("k", "seuil"), [(0, 0.5), (True, 0.5), (2.0, 0.5), (3, float("nan"))])
+def test_parametres_invalides(k, seuil) -> None:
+    with pytest.raises(ValueError):
+        RechercheIndex(FakeEmbedder(), FakeVectorStore(), k, seuil)
+
+
+def test_depuis_config() -> None:
+    config = charger_config_index()
+    recherche = depuis_config(FakeEmbedder(), FakeVectorStore())
+    assert (recherche.k, recherche.seuil) == (config.k, config.seuil_pertinence)
+    autre = config.model_copy(update={"k": 2, "seuil_pertinence": 0.1})
+    recherche = depuis_config(FakeEmbedder(), FakeVectorStore(), autre)
+    assert (recherche.k, recherche.seuil) == (2, 0.1)

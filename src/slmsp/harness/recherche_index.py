@@ -1,0 +1,58 @@
+"""Recherche dans l'Index local pour le Harnais (AD-9).
+
+La requête est vectorisée par l'`EmbedderPort`, puis le `VectorStore` renvoie les `k`
+passages les plus proches. Seuls les passages de score `>= seuil` sont gardés : le seuil
+de pertinence est appliqué ici, pas par l'Index. `k` et le seuil viennent de
+`config/index.toml` par `slmsp.index.config` (source unique) ; `depuis_config` les lit.
+Le pipeline `data` (story 9.4) réutilise cette classe.
+"""
+
+from __future__ import annotations
+
+import math
+from typing import TYPE_CHECKING
+
+from slmsp.core.erreurs import SlmspError
+from slmsp.index.config import ConfigIndex, charger_config_index
+
+if TYPE_CHECKING:
+    from slmsp.core.ports import EmbedderPort, Passage, VectorStore
+
+
+class RequeteVide(SlmspError):
+    """Requête de recherche vide."""
+
+
+class RechercheIndex:
+    """Recherche des passages pertinents de l'Index local."""
+
+    def __init__(
+        self, embedder: EmbedderPort, vector_store: VectorStore, k: int, seuil: float
+    ) -> None:
+        if isinstance(k, bool) or not isinstance(k, int) or k <= 0:
+            raise ValueError(f"k doit être un entier > 0 (reçu {k!r})")
+        if not math.isfinite(seuil):
+            raise ValueError(f"seuil doit être un nombre fini (reçu {seuil!r})")
+        self.embedder = embedder
+        self.vector_store = vector_store
+        self.k = k
+        self.seuil = float(seuil)
+
+    def rechercher(self, requete: str) -> list[Passage]:
+        """Passages de score `>= seuil` parmi les `k` plus proches, par score décroissant."""
+        if not requete.strip():
+            raise RequeteVide("requête de recherche vide")
+        matrice = self.embedder.vectoriser([requete])
+        passages = self.vector_store.rechercher(matrice[0], self.k)
+        return [passage for passage in passages if passage.score >= self.seuil]
+
+
+def depuis_config(
+    embedder: EmbedderPort, vector_store: VectorStore, config: ConfigIndex | None = None
+) -> RechercheIndex:
+    """`RechercheIndex` avec `k` et `seuil_pertinence` de `config/index.toml` (ou `config`)."""
+    index = config if config is not None else charger_config_index()
+    return RechercheIndex(embedder, vector_store, index.k, index.seuil_pertinence)
+
+
+__all__ = ["RechercheIndex", "RequeteVide", "depuis_config"]
