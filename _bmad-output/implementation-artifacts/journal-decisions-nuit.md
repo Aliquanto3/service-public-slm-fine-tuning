@@ -356,3 +356,11 @@ Rapport : `_bmad-output/planning-artifacts/implementation-readiness.md`. Statut 
   - Ces mesures ont été prises avec un CPU chargé à environ 60 % par les stories qui tournaient en parallèle. **Il faut les reprendre au repos avant de basculer vers le repli usearch HNSW i8**, qui n'est pas implémenté.
   - **À trancher par Anaël** après cette remesure.
 - **Paramètres retenus** : `k = 5`, `seuil_pertinence = 0,5`. La version de l'index correspond à la date `lastModified` de la révision HF épinglée.
+
+## D-nuit-S1.5 — Registre de budget
+- **Marges** : 0,50 € de marge par sous-poste et par poste, et une majoration de 1,25 sur les tokens d'entrée estimés.
+- **Tarifs**
+  - Juge Opus 5.5 : 4 $/20 $ par Mtok en direct, 2 $/10 $ en batch.
+  - Mistral : tarif prudent de 2 $/6 $ (batch 1 $/3 $), fixé par D-nuit-A2-9. **À vérifier par Anaël**, car le tarif réel serait plus bas.
+  - Conversion : 1 USD = 1 EUR.
+- **Remise à zéro** : les totaux sont filtrés par `campagne_id`. Changer d'identifiant redémarre donc le compteur sans rien effacer. **À confirmer par Anaël.**
