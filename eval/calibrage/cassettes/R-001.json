@@ -1,0 +1,89 @@
+{
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-12T05:43:56+02:00",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-06-18",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "défibrillateurs",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 118 dataset(s) for query: 'défibrillateurs'\nPage 1 of results:\n\n1. Géo'DAE - Base Nationale des Défibrillateurs\n   ID: 61556e1e9d6adb2df86eb0fc\n   Organization: Atlasanté\n   Tags: arret-cardiaque, dae, declaration, defibrillateur, defibrillateurs-automatises-externes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/geodae-base-nationale-des-defibrillateurs\n\n2. Défibrillateurs du réseau RATP\n   ID: 6340f5cfe42bc68a88eacfa5\n   Organization: Régie autonome des transports parisiens (RATP)\n   Tags: dae, defibrillateur, secours\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/defibrillateurs-du-reseau-ratp\n\n3. Equipements Défibrillateurs\n   ID: 68d678ab33f614c8149c8844\n   Organization: SNCF\n   Tags: dae, defibrillateur, gares, services-gare, services-voyageurs\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/equipements-defibrillateurs\n\n4. Défibrillateurs gérés par GPSO\n   ID: 687fb22ec1c7a7aaffff137f\n   Organization: Grand Paris Seine Ouest\n   Tags: administration-finances-publiques, dae, defibrillateurs, geodae, sante\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/defibrillateurs-geres-par-gpso\n\n5. Défibrillateurs dans les gares SNCF d'Île-de-France\n   ID: 6a506f9af53d94a0ff7fa5c6\n   Organization: Région Île-de-France\n   Tags: deplacements-transports, equipement, gare, logement-sante-social, sante\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/defibrillateurs-dans-les-gares-sncf-dile-de-france\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 118 dataset(s) for query: 'défibrillateurs'\nPage 1 of results:\n\n1. Géo'DAE - Base Nationale des Défibrillateurs\n   ID: 61556e1e9d6adb2df86eb0fc\n   Organization: Atlasanté\n   Tags: arret-cardiaque, dae, declaration, defibrillateur, defibrillateurs-automatises-externes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/geodae-base-nationale-des-defibrillateurs\n\n2. Défibrillateurs du réseau RATP\n   ID: 6340f5cfe42bc68a88eacfa5\n   Organization: Régie autonome des transports parisiens (RATP)\n   Tags: dae, defibrillateur, secours\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/defibrillateurs-du-reseau-ratp\n\n3. Equipements Défibrillateurs\n   ID: 68d678ab33f614c8149c8844\n   Organization: SNCF\n   Tags: dae, defibrillateur, gares, services-gare, services-voyageurs\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/equipements-defibrillateurs\n\n4. Défibrillateurs gérés par GPSO\n   ID: 687fb22ec1c7a7aaffff137f\n   Organization: Grand Paris Seine Ouest\n   Tags: administration-finances-publiques, dae, defibrillateurs, geodae, sante\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/defibrillateurs-geres-par-gpso\n\n5. Défibrillateurs dans les gares SNCF d'Île-de-France\n   ID: 6a506f9af53d94a0ff7fa5c6\n   Organization: Région Île-de-France\n   Tags: deplacements-transports, equipement, gare, logement-sante-social, sante\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/defibrillateurs-dans-les-gares-sncf-dile-de-france\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "61556e1e9d6adb2df86eb0fc"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Géo'DAE - Base Nationale des Défibrillateurs\n\nID: 61556e1e9d6adb2df86eb0fc\nSlug: geodae-base-nationale-des-defibrillateurs\nURL: https://www.data.gouv.fr/datasets/geodae-base-nationale-des-defibrillateurs/\n\nFull description: Géo'DAE est la base de données nationale des défibrillateurs automatisés externes (DAE), recensés en France. \n \nA peine 1 citoyen sur 10 survit à un arrêt cardiaque faute d'avoir bénéficié au bon moment de l'intervention d'une personne. \n \nLe plan national de santé publique prévoit de former 80% de la population aux gestes de premiers secours et d'améliorer l'accès aux défibrillateurs automatisés externes sur le territoire national, en favorisant leur géolocalisation et leur maintenance.\n \nLa cr...\n\nOrganization: Atlasanté\n  Organization ID: 56f294ae88ee3825f9020aeb\n\nTags: arret-cardiaque, dae, declaration, defibrillateur, defibrillateurs-automatises-externes, exploitant, geodae, mainteneur, sante-publique, secours\n\nResources: 2 file(s)\n\nCreated: 2021-09-30T09:58:22.245000+00:00\nLast updated: 2026-10-12T01:01:09.414000+00:00\n\nLicense: lov2\nUpdate frequency: severalTimesADay"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Géo'DAE - Base Nationale des Défibrillateurs\n\nID: 61556e1e9d6adb2df86eb0fc\nSlug: geodae-base-nationale-des-defibrillateurs\nURL: https://www.data.gouv.fr/datasets/geodae-base-nationale-des-defibrillateurs/\n\nFull description: Géo'DAE est la base de données nationale des défibrillateurs automatisés externes (DAE), recensés en France. \n \nA peine 1 citoyen sur 10 survit à un arrêt cardiaque faute d'avoir bénéficié au bon moment de l'intervention d'une personne. \n \nLe plan national de santé publique prévoit de former 80% de la population aux gestes de premiers secours et d'améliorer l'accès aux défibrillateurs automatisés externes sur le territoire national, en favorisant leur géolocalisation et leur maintenance.\n \nLa cr...\n\nOrganization: Atlasanté\n  Organization ID: 56f294ae88ee3825f9020aeb\n\nTags: arret-cardiaque, dae, declaration, defibrillateur, defibrillateurs-automatises-externes, exploitant, geodae, mainteneur, sante-publique, secours\n\nResources: 2 file(s)\n\nCreated: 2021-09-30T09:58:22.245000+00:00\nLast updated: 2026-10-12T01:01:09.414000+00:00\n\nLicense: lov2\nUpdate frequency: severalTimesADay"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

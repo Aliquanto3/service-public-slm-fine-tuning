@@ -1,0 +1,124 @@
+---
+title: Décisions pré-arbitrées pour le développement autonome
+status: final
+created: 2026-10-12
+owner: Anaël
+applies_to: tout agent BMAD (architecture, stories, dev, review) travaillant sur ce dépôt
+---
+
+# Décisions pré-arbitrées
+
+Ce document **fait autorité** pour les agents autonomes. En cas de conflit :
+1. il s'aligne sur le PRD et l'UX ;
+2. il prime sur toute préférence d'agent.
+
+Une décision qui n'est couverte ni ici ni dans le PRD ou l'UX est prise par l'agent selon la règle « la solution la plus simple et la plus réversible ». Elle est consignée dans `_bmad-output/implementation-artifacts/journal-decisions-nuit.md`, avec sa justification.
+
+## D1. Règles bloquantes (jamais d'exception)
+
+1. **Claude ne génère aucune Donnée d'entraînement.** L'interdiction couvre les exemples, les réponses cibles, les exemples few-shot et les amorces insérés dans les prompts du générateur (PRD §8). Claude peut faire tout le reste : le code, le Juge et les items du Jeu d'évaluation maison.
+2. **Le générateur de Données d'entraînement est Mistral via l'API**, avec le modèle `mistral-large-latest` en version stable (jamais un modèle « Labs » ni une préversion). Revérifier les conditions §3.3 avant la campagne et consigner la date de vérification.
+3. **Pas de génération avant le gel.** Aucune Donnée d'entraînement n'est générée avant le commit de gel du Jeu d'évaluation maison `v1.0-provisoire` (manifeste SHA-256 ; `eval/SPEC-jeu-evaluation.md` §6).
+4. **Aucune publication.** Pas de push vers un dépôt distant, pas de publication sur Hugging Face, aucun envoi vers un service hors de la liste ci-dessous.
+5. **Seuls services réseau autorisés pendant la nuit :**
+   - Hugging Face, en téléchargement de modèles et de jeux de données ;
+   - PyPI et GitHub, en lecture, pour les dépendances et les benchmarks ;
+   - l'API Mistral ;
+   - l'API Anthropic, pour le Juge ;
+   - `mcp.data.gouv.fr` et `www.data.gouv.fr` ;
+   - les hôtes de la Liste blanche (addendum §B).
+6. **Budgets durs, contrôlés par le code** (compteur persistant, arrêt automatique au plafond) :
+
+   | Service | Plafond pour la nuit | Usage |
+   |---|---|---|
+   | Mistral | **30 €** | Génération des données et second juge |
+   | Anthropic | **10 €** | Juge principal |
+
+   Au-delà, l'agent s'arrête sur ce poste et passe à la suite.
+7. **Ne jamais supprimer** de données téléchargées, de checkpoints ni d'artefacts d'évaluation. Ne jamais réécrire l'historique git.
+8. **Ne jamais modifier** les décisions explicites du PRD, de l'UX, de la spécification du Jeu d'évaluation maison, de la Grille du Juge ou du présent document. Un désaccord se signale dans le journal de la nuit.
+9. **Ne pas modifier le dépôt voisin `../wavelocalai`.** Il est consultable en lecture seule (voir D6).
+
+## D2. Environnement
+
+- **Python 3.12 via `uv`.**
+  - La commande `python` du PATH n'est pas fiable : toujours passer par `uv run` ou par l'environnement du projet (`uv venv --python 3.12`, `pyproject.toml`).
+  - PyTorch avec CUDA, compatible avec le pilote 610.x de la RTX 3050 (8 Go).
+- **Windows 11 natif uniquement cette nuit.** WSL2 n'est pas installé sur le poste (constaté le 2026-10-12, l'installation demande un redémarrage). Si une brique refuse de fonctionner nativement (noyaux Mamba, bitsandbytes…), l'agent consigne le blocage, l'écarte (ex. modèles Granite H) et passe à la suite.
+- **Secrets** : dans `.env`, non versionné. Variables : `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY`, `HF_TOKEN`. Un fichier `.env.example` est versionné.
+
+## D3. Stack technique retenue
+
+| Brique | Choix | Raison |
+|---|---|---|
+| Langage | Python 3.12 pour tout : Harnais, banc d'évaluation, pipeline de données, entraînement, application | Une seule langue, un seul outillage de tests |
+| Inférence | llama.cpp avec `llama-server` (binaire Windows embarqué, CPU), modèles GGUF, décodage contraint par grammaire ou schéma JSON pour les appels d'outils | Pas de dépendance à installer chez l'Agent, et RAM maîtrisée |
+| Client MCP | SDK Python officiel MCP, transport Streamable HTTP | Conforme au serveur data.gouv |
+| Index local | Corpus MediaTech pré-vectorisé ; stockage sur disque, mappé en mémoire | Imposé par NFR-1 |
+| Entraînement | TRL + PEFT, avec Unsloth en variante de vitesse | Décision du PRD |
+| Benchmarks standardisés | lm-evaluation-harness ; BFCL via `bfcl-eval` ; sacrebleu | Addendum §E |
+| Application (J4) | pywebview (WebView2) + interface HTML/CSS/JS sans framework lourd ; PyInstaller ; installateur Inno Setup par utilisateur, sans droits administrateur | Décision d'Anaël du 2026-10-12 |
+| Tests | pytest ; ruff | |
+
+L'architecture fixe la bibliothèque vectorielle et le modèle d'embedding, par la mesure, sous la contrainte NFR-1. Le premier choix par défaut est BGE-M3, pour rester compatible avec les vecteurs MediaTech. Un modèle plus léger n'est retenu que si la mesure dépasse le budget de RAM.
+
+## D4. Données et périmètre
+
+- **Index local v1** : service-public et catalogue data.gouv. LEGI, travail-emploi, CNIL et Constitution viennent en extension si la mesure de RAM le permet.
+- **Modèles de base candidats pour la Baseline**, par ordre de passage :
+  1. Granite 4.0 1B dense ;
+  2. Ministral 3 3B ;
+  3. SmolLM3 3B ;
+  4. le témoin Qwen d'environ 4B ;
+  5. Ministral 3 8B, en plafond de qualité, en évaluation seulement et si le temps le permet.
+
+  Les modèles sont téléchargés en GGUF Q4_K_M pour l'inférence, et en poids HF pour l'entraînement.
+- **Premier essai de fine-tuning (cette nuit)** : M1 QLoRA. Choix du modèle :
+  - **par défaut** : le meilleur Score de Tâche moyen de Baseline parmi les modèles de 3B ou moins qui tiennent dans 5 Go de RAM ;
+  - **si la Baseline n'est pas terminée à temps** : Granite 4.0 1B dense.
+
+  L'essai entraîne sur le jeu disponible, évalue et produit un mini-rapport. **Ce n'est pas la décision go/no-go**, qui revient à Anaël.
+- **Volumes de données pour la nuit**, dans le budget de 30 € : visez environ 600 exemples, avec les proportions de l'addendum §G, dont 10 à 20 % de données génériques.
+
+## D5. Méthode de travail BMAD pour la nuit
+
+- **Ordre de travail** : PRD §9.3. Le banc d'évaluation et le Comparatif passent avant l'application. J4 et J5 ne sont pas attendus cette nuit.
+- **Git.**
+  - Commit local après chaque story terminée et testée, au format `feat(<epic>): <story> (story X.Y)` avec la ligne d'attribution.
+  - Branche de travail `nuit/2026-10-12`, puisque la branche `main` reçoit le commit de cadrage.
+- **Qualité.**
+  - Une story est terminée quand ses tests passent.
+  - La code review BMAD est faite pour chaque epic, pas pour chaque story, afin de tenir le budget de temps.
+- **Blocage.**
+  - Après deux tentatives infructueuses sur un même problème, consigner, contourner (stub, mock ou fixture) et passer à la story suivante.
+  - Une story ne doit jamais bloquer toute la nuit.
+- **Fin de nuit.** Le run s'arrête au plus tard le **2026-10-12 à 07h00**, ou plus tôt quand le travail planifié est terminé. Il produit alors `_bmad-output/implementation-artifacts/rapport-de-nuit.md`, qui contient :
+  - le fait et le non-fait ;
+  - les scores de Baseline ;
+  - le résultat de l'essai QLoRA ;
+  - la dépense par API ;
+  - les décisions prises seul ;
+  - les points à trancher par Anaël.
+
+## D6. Réutilisation
+
+- **`../wavelocalai`** (projet d'Anaël, Streamlit) : il contient un banc de benchmark de SLM (`benchmarks/`) et la mesure carbone avec CodeCarbon. Il peut servir de référence ou d'inspiration en lecture seule. Le code utile est recopié et adapté, sans dépendance croisée.
+- **Calibrage du Jeu d'évaluation** : `eval/calibrage/` (16 items validés, script `build_calibrage.py`, cassettes MCP). C'est la référence de format pour le jeu complet.
+
+## D7. Constats d'environnement (2026-10-12)
+
+- Les fiches service-public sont servies sur `www.service-public.gouv.fr`.
+- Légifrance refuse la lecture automatique (HTTP 403).
+- Le serveur datasets-server de Hugging Face est instable (erreurs 500 et 429) : préférer la lecture directe des fichiers parquet, avec des reprises après échec.
+- Le serveur MCP data.gouv a bien répondu le 2026-10-12.
+- **Modèles candidats sur Hugging Face** (vérifié le 2026-10-12, aucun accès conditionnel signalé ; licences Apache 2.0) :
+  - **Granite.** `ibm-granite/granite-4.0-1b` déclare l'architecture `granitemoehybrid`.
+    - Vérifier dans `config.json` que toutes les couches sont de type attention (variante dense). Sinon, il s'agit de la variante hybride Mamba, à écarter sous Windows natif.
+    - Vérifier aussi le support par llama.cpp.
+  - **Ministral.**
+    - Les dépôts disponibles sont `mistralai/Ministral-3-3B-Instruct-2512`, `-3B-Base-2512` et `-8B-Instruct-2512` (+ GGUF officiel pour le 8B).
+    - **Pas de GGUF officiel pour le 3B** : il faut le convertir soi-même ou prendre une conversion communautaire réputée (consigner la source).
+    - Les poids Instruct sont étiquetés **FP8** : la RTX 3050 (Ampere) ne gère pas le FP8. Il faut obtenir ou produire une version bf16 avant QLoRA, et consigner la méthode.
+    - L'architecture `mistral3` comprend un encodeur vision, à exclure.
+  - **SmolLM3.** `HuggingFaceTB/SmolLM3-3B`.
+- **Corpus de l'Index local** : `AgentPublic/service-public` et `AgentPublic/data-gouv-datasets-catalog`, sous licence Etalab 2.0, mis à jour fin septembre 2026.

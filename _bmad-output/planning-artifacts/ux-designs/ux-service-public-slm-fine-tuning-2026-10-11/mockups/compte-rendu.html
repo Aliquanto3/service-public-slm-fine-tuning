@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette - Compte rendu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Manrope:wght@700&display=swap" rel="stylesheet">
+<style>
+/*
+  Maquette clé : vue de rédaction Compte rendu, Flux 3 étape 4 (Thomas relit les Décisions puis copie).
+  Spines qui gouvernent cet écran :
+  - DESIGN.md : tokens du frontmatter, Layout & Spacing (vue de rédaction : deux volets égaux séparés par spacing.5),
+    Components (task-nav-item, mode-indicator-online, editor-pane, button-primary, button-secondary, feedback-button).
+  - EXPERIENCE.md : Information Architecture (Compte rendu), Component Patterns (Vue de rédaction,
+    Barre d'actions du Résultat, Retour, Indicateur de Mode, Historique), Key Flows > Flux 3 étapes 1-4.
+  Le vert n'apparaît que sur la pastille « Connecté » (point), jamais en texte.
+  Les polices Inter et Manrope sont chargées depuis Google Fonts pour la maquette seulement.
+*/
+:root{
+  --primary:#451DC7; --primary-hover:#250F6B; --primary-soft:#EDE7FE; --on-primary:#FFFFFF;
+  --accent:#04F06A; --accent-soft:#CAFEE0;
+  --ink:#0A0A14; --ink-soft:#4A4A5E; --gray:#8A8A9E; --line:#E6E6EC;
+  --surface:#FFFFFF; --surface-alt:#F6F5FA; --warning:#FFCA4A; --danger:#FF2A49;
+  --font:Aptos, Inter, "Segoe UI", sans-serif; --font-label:Manrope, Inter, sans-serif;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:9999px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{background:#D9D7E3;font-family:var(--font);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--s5)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+svg.i.sm{width:16px;height:16px}
+
+.window{width:1280px;height:800px;background:var(--surface);border-radius:var(--r-sm);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(10,10,20,.08);border:1px solid var(--line)}
+.titlebar{height:32px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 0 0 var(--s3);background:var(--surface-alt);border-bottom:1px solid var(--line);font-size:.875rem;color:var(--ink-soft)}
+.titlebar .ctrl{display:flex}
+.titlebar .ctrl span{width:46px;height:32px;display:flex;align-items:center;justify-content:center}
+.titlebar .ctrl svg{width:10px;height:10px;stroke:var(--ink-soft);stroke-width:1;fill:none}
+.app{flex:1;display:flex;min-height:0}
+
+/* Colonne de gauche */
+.sidebar{width:264px;flex:none;background:var(--surface-alt);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:var(--s4) var(--s3)}
+.label{font-family:var(--font-label);font-size:.78rem;font-weight:700;line-height:1.4;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.sidebar .label{padding:0 var(--s3);margin-bottom:var(--s2)}
+.nav{list-style:none;display:flex;flex-direction:column;gap:2px}
+.nav button{width:100%;display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s3);border-radius:var(--r-sm);font-size:.875rem;line-height:1.5;text-align:left;position:relative}
+.nav button:hover{background:var(--primary-soft)}
+.nav button[aria-current="page"]{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.nav button[aria-current="page"]::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--primary)}
+.more{margin-top:2px}
+.more button{color:var(--ink-soft)}
+.more .chev{margin-left:auto}
+.history{margin-top:var(--s5);flex:1;overflow:hidden;display:flex;flex-direction:column}
+.history .day{font-size:.875rem;font-weight:600;color:var(--ink-soft);padding:var(--s3) var(--s3) var(--s1)}
+.history .day:first-of-type{padding-top:0}
+.history a{display:block;padding:6px var(--s3);border-radius:var(--r-sm);font-size:.875rem;line-height:1.5;color:var(--ink);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history a:hover{background:var(--primary-soft)}
+.history a.current{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.sidebar-foot{border-top:1px solid var(--line);padding:var(--s3) var(--s3) 0;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand svg{width:84px;height:auto}
+.brand span{font-size:.875rem;color:var(--ink-soft)}
+.icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);color:var(--ink-soft)}
+.icon-btn:hover{background:var(--primary-soft);color:var(--primary)}
+
+/* Zone centrale */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s5);border-bottom:1px solid var(--line)}
+.topbar h1{font-size:1.25rem;font-weight:700;line-height:1.3;letter-spacing:-.01em}
+.mode{display:inline-flex;align-items:center;gap:var(--s2);padding:6px var(--s3);border-radius:var(--r-full);background:var(--surface-alt);border:1px solid var(--line);font-size:.875rem;font-weight:600;color:var(--ink)}
+.mode .dot{width:8px;height:8px;border-radius:50%;background:var(--gray)}
+.mode.online .dot{background:var(--accent);box-shadow:0 0 0 1px rgba(10,10,20,.15)}
+
+/* Vue de rédaction */
+.workspace{flex:1;display:flex;gap:var(--s5);padding:var(--s5);min-height:0}
+.pane{flex:1 1 0;min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.pane.input{background:var(--surface-alt)}
+.pane.result{background:var(--surface)}
+.pane-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:var(--s3) var(--s4);border-bottom:1px solid var(--line)}
+.pane-head .sub{font-size:.875rem;color:var(--ink-soft)}
+.pane-body{flex:1;overflow:auto;padding:var(--s4)}
+.notes{font-size:1rem;line-height:1.6;color:var(--ink);white-space:pre-wrap;font-family:var(--font)}
+.pane-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:var(--s3) var(--s4);border-top:1px solid var(--line)}
+.count{font-size:.875rem;color:var(--ink-soft)}
+.btn-primary,.btn-secondary{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 var(--s3);border-radius:var(--r-sm);font-size:1rem;font-weight:600;line-height:1}
+.btn-primary{background:var(--primary);color:var(--on-primary)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:var(--surface);color:var(--primary);border:1px solid var(--line)}
+.btn-secondary:hover{background:var(--primary-soft)}
+.btn-ghost{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 var(--s3);border-radius:var(--r-sm);font-size:.875rem;color:var(--ink-soft)}
+.btn-ghost:hover{background:var(--primary-soft);color:var(--primary)}
+
+.result h2{font-size:1.25rem;font-weight:700;line-height:1.3;letter-spacing:-.01em}
+.result .doc-meta{margin-top:var(--s1);font-size:.875rem;color:var(--ink-soft)}
+.result h3{margin-top:var(--s4);margin-bottom:var(--s2);font-family:var(--font-label);font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.result p,.result li{font-size:1rem;line-height:1.6}
+.result ul,.result ol{padding-left:1.25rem}
+.result li+li{margin-top:var(--s1)}
+.result .focus{margin:0 calc(-1 * var(--s2));padding:var(--s1) var(--s2) var(--s2);border-radius:var(--r-sm);background:var(--primary-soft)}
+table{width:100%;border-collapse:collapse;font-size:.875rem;line-height:1.5}
+th{text-align:left;font-size:.875rem;font-weight:600;padding:var(--s2);border-bottom:1px solid var(--line)}
+td{padding:var(--s2);vertical-align:top;border-bottom:1px solid var(--line)}
+tbody tr:nth-child(even) td{background:var(--surface-alt)}
+td.nowrap{white-space:nowrap}
+
+.result-scroll{display:flex;flex-direction:column-reverse} /* maquette : volet affiché à la relecture des Décisions (Flux 3, étape 4) */
+.result-bar{flex:none;display:flex;align-items:center;gap:var(--s2);padding:var(--s3) var(--s4);border-top:1px solid var(--line);background:var(--surface)}
+.result-bar .spacer{flex:1}
+.copied{display:inline-flex;align-items:center;gap:4px;font-size:.875rem;color:var(--ink-soft)}
+.fb{display:flex;align-items:center;gap:2px}
+.fb .label{margin-right:var(--s1)}
+.fb button{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);color:var(--ink-soft)}
+.fb button:hover{background:var(--primary-soft);color:var(--primary)}
+.btn-back{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 var(--s2);border-radius:var(--r-sm);font-size:.875rem;color:var(--ink-soft)}
+.btn-back:hover{background:var(--primary-soft);color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="window" role="application" aria-label="Assistant">
+  <div class="titlebar">
+    <span>Assistant</span>
+    <div class="ctrl" aria-hidden="true">
+      <span><svg viewBox="0 0 10 10"><path d="M0 5h10"/></svg></span>
+      <span><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9"/></svg></span>
+      <span><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10"/></svg></span>
+    </div>
+  </div>
+  <div class="app">
+
+    <!-- Colonne de gauche -->
+    <nav class="sidebar" aria-label="Tâches">
+      <div class="label">Tâches</div>
+      <ul class="nav">
+        <li><button>
+          <svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/><path d="M9.8 9.5a2.3 2.3 0 0 1 4.4.9c0 1.6-2.2 2-2.2 3.3"/><path d="M12 16.5h.01"/></svg>
+          Question</button></li>
+        <li><button>
+          <svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7" ry="2.5"/><path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5M19 5.5V10"/><path d="M5 11.5v6c0 1.4 3.1 2.5 7 2.5"/><circle cx="17" cy="16" r="3"/><path d="m21 20-1.8-1.8"/></svg>
+          Recherche de données</button></li>
+        <li><button aria-current="page">
+          <svg class="i" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
+          Compte rendu</button></li>
+        <li><button>
+          <svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m15 17 2 2 4-4"/></svg>
+          Langage clair</button></li>
+        <li class="more"><button aria-expanded="false">
+          <svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+          Plus<svg class="i sm chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button></li>
+      </ul>
+
+      <section class="history" aria-label="Historique">
+        <div class="label">Historique</div>
+        <div class="day">Aujourd'hui</div>
+        <a href="#">Ma mère de 82 ans peut-elle avoir l'APA…</a>
+        <a href="#">Délai de renouvellement d'une carte d'identité</a>
+        <a href="#" class="current" aria-current="true">COPIL dématérialisation subventions…</a>
+        <a href="#">Compte rendu réunion partenaires CCAS</a>
+        <div class="day">Hier</div>
+        <a href="#">Pièces pour une demande de RSA</a>
+        <a href="#">Courrier : demande de pièces complémentaires</a>
+        <a href="#">Aide au logement pour un étudiant boursier</a>
+        <div class="day">Lundi 6 octobre</div>
+        <a href="#">Prime d'activité et pension d'invalidité</a>
+        <a href="#">Langage clair : notification de droits MDPH</a>
+      </section>
+
+      <div class="sidebar-foot">
+        <div class="brand">
+          <svg viewBox="0 0 307 42" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wavestone" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2">
+            <path d="M-3.843-8.349h16.891l-2.409 3.746-12.447-.019-2.035-3.727Z" style="fill:#431cc7;fill-rule:nonzero" transform="scale(2 -2) rotate(-61.367 .264 -10.29)"/>
+            <path d="M0 12.081c-3.666 0-5.343-2.682-5.343-6.041C-5.343 2.682-3.666 0 0 0s5.343 2.682 5.343 6.04c0 3.359-1.677 6.041-5.343 6.041M0-1.617c-4.933 0-8.833 2.907-8.833 7.657 0 4.751 3.9 7.658 8.833 7.658 4.932 0 8.833-2.907 8.833-7.658 0-4.75-3.901-7.657-8.833-7.657" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 221.951 14.024)"/>
+            <path d="M0-10.554h5.34V2.011h3.329v-12.565h5.34v-2.011H0v2.011Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 173.832 36.636)"/>
+            <path d="M0-3.449c-2.126-.554-4.134-1.078-4.134-2.391 0-1.323 1.848-1.915 3.679-1.915 1.82 0 3.546.456 5.278 1.392l.42.227v-1.927l-.165-.082C3.516-8.92 1.457-9.383-.429-9.383c-3.162 0-6.54 1.165-6.540 4.436 0 3.154 3.247 4.013 6.112 4.772C1.3.395 3.336.934 3.336 2.334c0 1.338-1.927 1.980-3.717 1.98-2.118 0-4.221-.665-6.248-1.957l-.227-.145-.942 1.367.255.173c2.018 1.367 4.779 2.182 7.384 2.182 3.945 0 6.493-1.756 6.493-4.439 0-3.292-3.512-4.208-6.334-4.944" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 156.98 29.542)"/>
+            <path d="M0 2h8.257l.006-2.016H0v-4.251h8.904l.006-2.017H-3.329V8.284H9.035l.006-2.016H0V2Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 117.545 24.063)"/>
+            <path d="M0 10.535V6.267h8.257l.006-2.016H0V0h8.905l.005-2.016H-3.329v14.567H9.035l.006-2.016H0Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 288.814 15.528)"/>
+            <path d="M0 5.542 2.493.901l2.542 4.641H0Zm-4.823 4.64 2.329.003 1.411-2.627H6.14l1.438 2.624h3.783L3.267-4.643l-8.09 14.825Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 54.77 20.265)"/>
+            <path d="m0 3.74-5.085-9.281h-3.784L-.775 9.284l8.090-14.825-2.330-.003L0 3.740Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 90.655 22.593)"/>
+            <path d="m0-14.575.004 9.072-12.051-9.333V-.003h2.014l.014-9.063L2.014.261l.002-14.836H0Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 270.249 40.645)"/>
+            <path d="M0-20.58h-2.653c-2.896 3.035-5.583 6.249-7.672 9.626a51.752 51.752 0 0 0-2.356 4.236l-4.442-8.107h-4.246L-13.275 0l.002-.008C-10.777-7.504-6.209-14.46 0-20.58" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 60.381 41.16)"/>
+          </svg>
+          <span>Assistant local</span>
+        </div>
+        <button class="icon-btn" aria-label="Paramètres">
+          <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Zone centrale : vue de rédaction -->
+    <main class="main">
+      <header class="topbar">
+        <h1>Compte rendu</h1>
+        <button class="mode online" aria-label="Mode : connecté. Ouvrir le menu du mode">
+          <span class="dot" aria-hidden="true"></span>Connecté
+          <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </header>
+
+      <div class="workspace">
+        <!-- Volet Entrée -->
+        <section class="pane input" aria-label="Entrée">
+          <div class="pane-head">
+            <span class="label">Entrée</span>
+            <span class="sub">Notes collées</span>
+          </div>
+          <div class="pane-body" tabindex="0" role="textbox" aria-multiline="true" aria-label="Vos notes de réunion">
+<div class="notes">copil démat subventions assos 9/10 salle 204
+présents : M. Lefèvre (DGA solidarités), S. Martin (DSI), C. Roux (dir vie associative), A. Benali (finances), moi
+excusée : Mme Garnier (élue déléguée vie asso)
+
+planning : recette portail glisse de 2 sem. presta a livré le lot 2 le 2/10 au lieu du 18/09
+37 anomalies ouvertes dont 4 bloquantes (signature électronique, PJ &gt; 10 Mo refusées, export compta, accusé réception pas envoyé)
+CR : campagne 2027 ouvre le 5 janvier, pas négociable, assos déjà prévenues dans la lettre de sept
+-&gt; décision on maintient le 5/01, formulaire papier gardé en secours jusqu'au 31/03
+
+formation instructeurs : 3 sessions en nov (12 agents), salle pas réservée
+webinaire assos : CR propose 2 dates déc (4 ou 11), à caler avec la com
+DSI : hébergement ok, PV recette sécu attendu fin oct, SM pas inquiet
+
+reprise données 2024-2026 : 1 800 dossiers, presta chiffre 18 k€
+AB : imputation possible sur ligne modernisation 2026, crédits dispo
+-&gt; décision validation budget complémentaire 18 k€
+
+module versement : pas prêt, trop de dépendances avec le SI finances
+-&gt; décision report en v2, mars 2027, versements restent dans l'outil actuel
+
+actions
+SM relance presta anomalies bloquantes, retour avant 17/10
+CR réserve salles formation + confirme date webinaire
+moi : note aux élus sur le calendrier, pour le 24/10
+AB engage le bon de commande avant le 31/10
+prochain copil 6/11 14h
+
+divers : question de M. Lefèvre sur les assos sans accès internet, voir avec les maisons France services ? pas tranché, on en reparle
+</div>
+          </div>
+          <div class="pane-foot">
+            <span class="count" aria-live="polite">2 140 mots</span>
+            <div style="display:flex;gap:var(--s2)">
+              <button class="btn-ghost">Effacer</button>
+              <button class="btn-secondary">
+                <svg class="i sm" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Rédiger</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Volet Résultat -->
+        <section class="pane result" aria-label="Résultat">
+          <div class="pane-head">
+            <span class="label">Résultat</span>
+            <span class="sub">Lecture seule</span>
+          </div>
+          <div class="pane-body result-scroll" tabindex="0" aria-label="Compte rendu produit"><div>
+            <h2>COPIL dématérialisation des subventions aux associations</h2>
+            <p class="doc-meta">Jeudi 9 octobre 2026, salle 204. Prochain COPIL : jeudi 6 novembre, 14 h.</p>
+
+            <h3>Participants</h3>
+            <p>M. Lefèvre (DGA solidarités), S. Martin (DSI), C. Roux (vie associative), A. Benali (finances), T. Hamel (chef de projet). Excusée : Mme Garnier (élue).</p>
+
+            <h3>Points abordés</h3>
+            <ul>
+              <li><strong>Planning.</strong> Recette décalée de deux semaines (lot 2 livré le 2 oct. au lieu du 18 sept.). 37 anomalies ouvertes, dont 4 bloquantes.</li>
+              <li><strong>Formation et information.</strong> 3 sessions en novembre pour 12 instructeurs, salle à réserver. Webinaire associations le 4 ou le 11 déc.</li>
+              <li><strong>Sécurité.</strong> Hébergement validé, PV de recette attendu fin octobre.</li>
+              <li><strong>Associations sans internet.</strong> Piste des maisons France services, non tranchée.</li>
+            </ul>
+
+            <div class="focus">
+              <h3 style="margin-top:var(--s2)">Décisions</h3>
+              <ol>
+                <li>L'ouverture de la campagne 2027 est maintenue au 5 janvier. Le formulaire papier reste disponible en secours jusqu'au 31 mars.</li>
+                <li>Un budget complémentaire de 18 k€ est validé pour la reprise des données 2024-2026 (1 800 dossiers), imputé sur la ligne modernisation 2026.</li>
+                <li>Le module de versement est reporté en v2 (mars 2027). Les versements restent gérés dans l'outil actuel.</li>
+              </ol>
+            </div>
+
+            <h3>Actions</h3>
+            <table>
+              <thead><tr><th>Action</th><th>Responsable</th><th>Échéance</th></tr></thead>
+              <tbody>
+                <tr><td>Relancer le prestataire (4 bloquantes)</td><td>S. Martin</td><td class="nowrap">17 oct.</td></tr>
+                <tr><td>Note aux élus sur le calendrier</td><td>T. Hamel</td><td class="nowrap">24 oct.</td></tr>
+                <tr><td>Bon de commande, reprise de données</td><td>A. Benali</td><td class="nowrap">31 oct.</td></tr>
+                <tr><td>Salles de formation, date du webinaire</td><td>C. Roux</td><td class="nowrap">Non précisée</td></tr>
+              </tbody>
+            </table>
+            
+            </div>
+          </div>
+
+          <div class="result-bar" role="toolbar" aria-label="Actions sur le résultat">
+            <button class="btn-primary" aria-describedby="copied">
+              <svg class="i sm" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>Copier</button>
+            <span class="copied" id="copied" role="status">
+              Copié</span>
+            <button class="btn-secondary">
+              Régénérer</button>
+            <button class="btn-secondary">
+              Affiner</button>
+            <span class="spacer"></span>
+            <div class="fb" role="group" aria-label="Retour">
+              
+              <button aria-label="Résultat utile">
+                <svg class="i sm" viewBox="0 0 24 24"><path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"/><path d="M7 10l4-7a2.5 2.5 0 0 1 2.5 3L13 10h6a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 21H7"/></svg></button>
+              <button aria-label="Résultat à améliorer">
+                <svg class="i sm" viewBox="0 0 24 24"><path d="M17 14V3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1Z"/><path d="M17 14l-4 7a2.5 2.5 0 0 1-2.5-3L11 14H5a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.2 3H17"/></svg></button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
