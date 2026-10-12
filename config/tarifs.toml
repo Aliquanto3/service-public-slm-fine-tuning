@@ -1,0 +1,50 @@
+# Tarifs des API payantes (AD-5), en dollars US par million de tokens, par modèle et par
+# mode (`direct`, `batch`). Chaque mode porte `entree`, `sortie` et, s'ils sont connus,
+# `ecriture_cache` et `lecture_cache`. Aucun tarif par défaut : un modèle, un mode ou une
+# composante de cache absents lèvent `TarifInconnu`. Le modèle est cherché par son
+# identifiant exact (aucun alias).
+
+schema_version = 1
+
+# 1 USD = `valeur` EUR. Valeur prudente : le dollar compté au pair surestime le coût en
+# euros (D-nuit-A2-9).
+[taux_usd_eur]
+valeur = 1.0
+date = 2026-10-12
+source = "valeur prudente fixée pour le run de nuit (D-nuit-A2-9)"
+note = "au pair, volontairement au-dessus du cours"
+
+[modeles."claude-opus-5-5"]
+devise = "USD"
+date = 2026-10-06
+source = "skill claude-api, relevé du 2026-10-06"
+note = "écriture de cache au tarif du TTL 1 h (le plus cher) ; batch à -50 %"
+
+[modeles."claude-opus-5-5".modes.direct]
+entree = 4.0
+sortie = 20.0
+ecriture_cache = 8.0
+lecture_cache = 0.20
+
+[modeles."claude-opus-5-5".modes.batch]
+entree = 2.0
+sortie = 10.0
+ecriture_cache = 4.0
+lecture_cache = 0.10
+
+# Aucun tarif de cache : un usage de cache sur ce modèle lève `TarifInconnu`.
+# `mistral-large-latest` est un alias flottant chez Mistral : il peut désigner un autre
+# modèle sous-jacent au fil du temps. Le prix prudent doit couvrir ce changement.
+[modeles."mistral-large-latest"]
+devise = "USD"
+date = 2026-10-12
+source = "valeur prudente (D-nuit-A2-9)"
+note = "à vérifier par Anaël ; alias flottant (le modèle sous-jacent peut changer), prix prudent censé couvrir ce changement"
+
+[modeles."mistral-large-latest".modes.direct]
+entree = 2.0
+sortie = 6.0
+
+[modeles."mistral-large-latest".modes.batch]
+entree = 1.0
+sortie = 3.0

@@ -1,0 +1,35 @@
+# Budgets durs des API payantes (D1.6, AD-5), en euros. Relevé : `uv run slmsp budget etat`.
+# Le registre (`SLMSP_VAR_DIR/budget.sqlite`) est unique par machine et ne se remet jamais
+# à zéro : changer `campagne_id` démarre une nouvelle campagne, les lignes anciennes restent
+# en base hors des totaux.
+# Fichier daté du 2026-10-12.
+
+schema_version = 1
+
+campagne_id = "nuit-2026-10-12"
+
+# Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
+# réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
+# Valeur prise seule pendant le run de nuit (solution prudente et réversible).
+marge_eur = 0.5
+
+# Majoration des tokens d'entrée estimés pour le coût pire cas (1,25 = +25 %).
+majoration_entree = 1.25
+
+[postes.anthropic]
+plafond_eur = 10.0
+
+[postes.mistral]
+plafond_eur = 30.0
+
+# Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
+[postes.mistral.sous_postes]
+generation = 25.0
+juge = 5.0
+
+# Imputation des usages : "poste" ou "poste.sous_poste".
+[imputations]
+generation = "mistral.generation"
+validation = "mistral.generation"
+juge-second = "mistral.juge"
+juge-principal = "anthropic"
