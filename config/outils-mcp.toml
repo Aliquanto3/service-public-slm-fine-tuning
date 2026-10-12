@@ -1,0 +1,147 @@
+# Outils data.gouv exposés au modèle (AD-8), figés depuis le `tools/list` du calibrage.
+# Fichier produit par script : descriptions recopiées du serveur (après strip), schémas
+# simplifiés (sans `title`, sans `default` nul, `additionalProperties = false` à la racine).
+# `sha256_schema_serveur` empreinte le `inputSchema` d'origine (JSON canonique) ;
+# `tools_list_sha256` empreinte la liste `result.tools` complète.
+
+schema_version = 1
+source = "eval/calibrage/cassettes/tools-list.json"
+tools_list_sha256 = "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15"
+
+[[outils]]
+nom = "search_datasets"
+description = '''
+Search for datasets on data.gouv.fr by keywords.
+
+This is typically the first step in exploring data.gouv.fr.
+Use short, specific queries (the API uses AND logic, so generic words
+like "données" or "fichier" may return zero results).
+
+Use `sort` to order results. Accepted values: created, last_update,
+reuses, followers, views. Optionally prefixed with '-' for descending
+(e.g. -last_update). Use `last_update_range` to restrict
+results to recently updated datasets: last_30_days, last_12_months,
+last_3_years.
+
+Typical workflow: search_datasets → list_dataset_resources → query_resource_data.'''
+sha256_schema_serveur = "be7f52eae269ea7f7b5d5a07c6396d4e1feb8d2b50ee5d5b587ee4b440caaf33"
+
+[outils.parametres]
+required = ["query"]
+type = "object"
+additionalProperties = false
+
+[outils.parametres.properties.query]
+type = "string"
+
+[outils.parametres.properties.page]
+default = 1
+type = "integer"
+
+[outils.parametres.properties.page_size]
+default = 20
+type = "integer"
+
+[outils.parametres.properties.sort]
+anyOf = [{ type = "string" }, { type = "null" }]
+
+[outils.parametres.properties.last_update_range]
+anyOf = [{ type = "string" }, { type = "null" }]
+
+[[outils]]
+nom = "get_dataset_info"
+description = '''
+Get detailed metadata about a specific dataset.
+
+Returns title, description, organization, tags, resource count,
+creation/update dates, and license information.'''
+sha256_schema_serveur = "82a855657dcb12ff5f931ce96e28f03bc56c9f342941c9a6eabbfbec43ad085d"
+
+[outils.parametres]
+required = ["dataset_id"]
+type = "object"
+additionalProperties = false
+
+[outils.parametres.properties.dataset_id]
+type = "string"
+
+[[outils]]
+nom = "list_dataset_resources"
+description = '''
+List all resources (files) in a dataset with their metadata.
+
+Returns resource ID, title, format, size, and URL for each file.
+Next step: use query_resource_data for CSV/XLSX files via the Tabular API,
+or fetch the resource URL directly for other formats (JSON, JSONL) or large datasets.'''
+sha256_schema_serveur = "5b34e924f0f31abc5e6bbeb681caeb66c7af88968ae09e933f0dc54ec625708c"
+
+[outils.parametres]
+required = ["dataset_id"]
+type = "object"
+additionalProperties = false
+
+[outils.parametres.properties.dataset_id]
+type = "string"
+
+[[outils]]
+nom = "query_resource_data"
+description = '''
+Query tabular data from a resource via the Tabular API (no download needed).
+
+Works for CSV/XLSX files. Start with small page_size (20) to preview structure.
+Use filter_column/filter_value/filter_operator to filter, sort_column/sort_direction to sort.
+Filter operators: exact, contains, less, greater, strictly_less, strictly_greater.
+For large datasets requiring full analysis, paginate through pages or use
+get_resource_info to retrieve the raw file URL and fetch it directly.'''
+sha256_schema_serveur = "16d3602f33ace82fe46cd500856adec9ac34bc17ff57ed89866afb74178f59fa"
+
+[outils.parametres]
+required = ["resource_id"]
+type = "object"
+additionalProperties = false
+
+[outils.parametres.properties.resource_id]
+type = "string"
+
+[outils.parametres.properties.page]
+default = 1
+type = "integer"
+
+[outils.parametres.properties.page_size]
+default = 20
+type = "integer"
+
+[outils.parametres.properties.filter_column]
+anyOf = [{ type = "string" }, { type = "null" }]
+
+[outils.parametres.properties.filter_value]
+anyOf = [{ type = "string" }, { type = "null" }]
+
+[outils.parametres.properties.filter_operator]
+default = "exact"
+type = "string"
+
+[outils.parametres.properties.sort_column]
+anyOf = [{ type = "string" }, { type = "null" }]
+
+[outils.parametres.properties.sort_direction]
+default = "asc"
+type = "string"
+
+[[outils]]
+nom = "get_resource_info"
+description = '''
+Get detailed information about a specific resource (file).
+
+Returns format, size, MIME type, URL, and checks Tabular API availability.
+Helps decide whether to use query_resource_data (if Tabular API is available)
+or fetch the raw file URL directly for unsupported formats or large files.'''
+sha256_schema_serveur = "5aaacde9f634f8af1d0eb65dbc70a9cd20546573d8cc55762641e08788b384c1"
+
+[outils.parametres]
+required = ["resource_id"]
+type = "object"
+additionalProperties = false
+
+[outils.parametres.properties.resource_id]
+type = "string"
