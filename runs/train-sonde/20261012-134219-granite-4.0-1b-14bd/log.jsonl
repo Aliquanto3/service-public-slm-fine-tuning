@@ -1,0 +1,11 @@
+{"message":"chargement de granite-4.0-1b (qlora)"}
+{"message":"longueur 512 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 512 : ok, perte 12.180929183959961, VRAM réservée 3026190336"}
+{"message":"longueur 1024 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 1024 : ok, perte 11.672539710998535, VRAM réservée 4261412864"}
+{"message":"longueur 2048 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 2048 : ok, perte 11.615336418151855, VRAM réservée 6513754112"}
+{"message":"longueur 4096 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 4096 : debordement, perte 11.599775314331055, VRAM réservée 10330570752"}
+{"message":"Unsloth : pas tenté dans envs/unsloth (longueur 2048)"}
+{"message":"Unsloth : pas réussi"}

@@ -1,0 +1,9 @@
+{"message":"chargement de smollm3-3b (qlora)"}
+{"message":"longueur 512 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 512 : ok, perte 12.970697402954102, VRAM réservée 4519362560"}
+{"message":"longueur 1024 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 1024 : ok, perte 12.559088706970215, VRAM réservée 5570035712"}
+{"message":"longueur 2048 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 2048 : ok, perte 12.298665046691895, VRAM réservée 8210350080"}
+{"message":"longueur 4096 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 4096 : debordement, perte 12.21988582611084, VRAM réservée 12622757888"}

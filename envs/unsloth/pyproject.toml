@@ -1,0 +1,36 @@
+# Environnement uv isolé de la variante QLoRA Unsloth (stories 10.1 et 10.5).
+#
+# Hors du lock principal : `slmsp` n'importe jamais `unsloth`. Il appelle ce projet en
+# sous-processus, `uv run --project envs/unsloth python envs/unsloth/<script>.py <entree.json>`,
+# avec `env_sous_processus()` (sans secret, télémétrie coupée), et échange du JSON.
+# Windows natif seulement (D2), Python 3.12, torch CUDA 13.0 comme l'extra `train`.
+
+[project]
+name = "slmsp-unsloth"
+version = "0.1.0"
+description = "Variante isolée QLoRA Unsloth de slmsp (sonde H-WIN-TRAIN, story 10.5)"
+requires-python = "==3.12.*"
+dependencies = [
+    "unsloth==2026.10.3",
+    "transformers==5.17.0",
+    "trl==1.13.0",
+    "torch==2.14.1",
+    "triton-windows==3.8.0.post29",
+]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'win32'"]
+# unsloth déclare `triton ; 'linux' in sys_platform` : uv ne sait pas écarter ce marqueur
+# pour win32 et exige une roue Windows de triton, qui n'existe pas. Le marqueur est
+# réécrit en égalité ; sous Windows, triton vient de `triton-windows`.
+override-dependencies = ["triton>=3.0.0 ; sys_platform == 'linux'"]
+
+# torch CUDA (AD-28, D-nuit-A1-17) : même index que l'extra `train` du projet principal.
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
