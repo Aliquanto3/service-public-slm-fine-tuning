@@ -1,0 +1,12 @@
+# Réglages d'entraînement (stories 10.3 et 10.4). Lu par `slmsp.train.config.charger_entrainement`.
+# Les sections de chaque story sont validées par un modèle pydantic de `train/config.py`.
+
+schema_version = 1
+
+[couts]
+# Protocole de mesure du coût d'un Run (FR-33, story 10.3). Identique pour toutes les méthodes :
+# le changer change la base de comparaison, donc le noter au journal.
+# Pas d'optimisation ignorés avant de mesurer le débit en tokens/s (chauffe, compilation).
+pas_chauffe = 10
+# Période d'échantillonnage NVML (puissance et mémoire), en millisecondes.
+periode_echantillonnage_ms = 200
