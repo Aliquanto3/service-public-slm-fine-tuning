@@ -1,0 +1,274 @@
+"""`slmsp data {seed, generate, validate, filter, build}` : pipeline des Données (AD-17).
+
+Seule l'étape `seed` est implémentée (story 9.3) ; les quatre autres répondent « commande
+non implémentée » (code 2) en attendant leurs stories.
+
+`seed [--racine DIR] [--facteur N] [--scenarios N]` constitue `runs/data-seed/<run_id>/`
+(`amorces.jsonl`, `comptes.json`) depuis les jeux publics de `config/sources.toml`, déjà
+téléchargés sous `<racine>/data/raw/mediatech/` par `slmsp fetch sources` (extra `data` :
+pyarrow). Les scénarios de réunion Mistral sont opt-in : `--scenarios N` (0 par défaut)
+exige le gel commité du Jeu d'évaluation v1.1 (code 4 sinon) et fait appel à Mistral.
+
+Codes de sortie : 0 run complet ; 1 erreur ou run partiel ; 3 budget Mistral épuisé ;
+4 gel absent ou provenance invalide.
+
+`--racine` désigne la racine de `data/`, `eval/`, `runs/` (défaut : racine du projet) ;
+les fichiers de `config/` suivent le code exécuté. Ce module n'importe pyarrow qu'à
+l'exécution de `seed`.
+"""
+
+from __future__ import annotations
+
+import argparse
+import io
+import sys
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from datetime import date
+from pathlib import Path
+from typing import Any
+
+from slmsp.core.config import racine_projet
+from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, ProvenanceInvalide
+from slmsp.data.config import charger_config_donnees
+from slmsp.data.licences import RegistreLicences
+from slmsp.data.seed import (
+    FACTEUR_DEFAUT,
+    GABARIT_SCENARIO,
+    Decodeur,
+    FabriqueScenario,
+    FichierJeu,
+    JeuPublic,
+    construire_protection,
+    executer_seed,
+    versions_protegees,
+)
+from slmsp.fetch.config import ConfigSources, charger_config_sources
+from slmsp.fetch.sources import dossier_jeu
+
+TAILLE_LOT = 8192
+"""Lignes décodées par lot de lecture parquet."""
+
+ETAPES_A_VENIR: dict[str, str] = {
+    "generate": "génération idempotente et traces d'outils",
+    "validate": "validation contre les sources et le Bac à sable",
+    "filter": "doublons et fuites du Jeu d'évaluation",
+    "build": "jeu versionné et verrous AD-3",
+}
+
+
+def _entier_positif(valeur: str) -> int:
+    try:
+        nombre = int(valeur)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"entier attendu (reçu {valeur!r})") from None
+    if nombre < 1:
+        raise argparse.ArgumentTypeError("entier strictement positif attendu")
+    return nombre
+
+
+def _entier_positif_ou_nul(valeur: str) -> int:
+    try:
+        nombre = int(valeur)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"entier attendu (reçu {valeur!r})") from None
+    if nombre < 0:
+        raise argparse.ArgumentTypeError("entier positif ou nul attendu")
+    return nombre
+
+
+def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
+    """Ajoute `data` et ses actions."""
+    parseur = sous_parseurs.add_parser(
+        "data",
+        help="pipeline des Données d'entraînement",
+        description="Pipeline des Données : seed, generate, validate, filter, build.",
+    )
+    actions = parseur.add_subparsers(dest="action", metavar="<action>", required=True)
+
+    p = actions.add_parser(
+        "seed",
+        help="constituer les amorces (jeux publics, scénarios Mistral) hors fuite",
+        description="Étape seed : amorces publiques ou Mistral, exclusion anti-fuite.",
+    )
+    p.add_argument(
+        "--racine",
+        type=Path,
+        default=None,
+        help="racine de data/, eval/ et runs/ (défaut : racine du projet)",
+    )
+    p.add_argument(
+        "--facteur",
+        type=_entier_positif,
+        default=FACTEUR_DEFAUT,
+        metavar="N",
+        help=f"amorces conservées par exemple visé (défaut : {FACTEUR_DEFAUT})",
+    )
+    p.add_argument(
+        "--scenarios",
+        type=_entier_positif_ou_nul,
+        default=0,
+        metavar="N",
+        help="scénarios de réunion à faire écrire par Mistral (défaut : 0, aucun appel d'API)",
+    )
+    p.set_defaults(func=_seed)
+
+    for nom, aide in ETAPES_A_VENIR.items():
+        autre = actions.add_parser(nom, help=aide, description=aide)
+        autre.set_defaults(func=_non_implementee(nom))
+
+
+def _non_implementee(nom: str) -> Callable[[argparse.Namespace], int]:
+    def executer(_args: argparse.Namespace) -> int:
+        print(f"slmsp : commande non implémentée : data {nom}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+
+    return executer
+
+
+# --- Lecture parquet et jeux -------------------------------------------------------------
+
+
+def _decodeur_pyarrow() -> Decodeur:
+    """Décodeur parquet (pyarrow) : `ParquetFile(BytesIO).iter_batches`, colonnes demandées.
+
+    Lève `ConfigurationInvalide` si l'extra `data` n'est pas installé.
+    """
+    try:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+    except ImportError:
+        raise ConfigurationInvalide(
+            "pyarrow introuvable : installer l'extra `data` (uv sync --extra data)"
+        ) from None
+
+    def decoder(octets: bytes, colonnes: Sequence[str]) -> Iterator[Mapping[str, Any]]:
+        try:
+            fichier = pq.ParquetFile(io.BytesIO(octets))
+            for lot in fichier.iter_batches(batch_size=TAILLE_LOT, columns=list(colonnes)):
+                yield from lot.to_pylist()
+        except (pa.ArrowException, KeyError) as exc:
+            raise ConfigurationInvalide(
+                f"parquet illisible ou colonne absente parmi {', '.join(colonnes)} "
+                f"({type(exc).__name__})"
+            ) from None
+
+    return decoder
+
+
+def _jeux_publics(config: ConfigSources, racine: Path) -> list[JeuPublic]:
+    """Jeux de `config/sources.toml` convertis, fichiers sous `data/raw/mediatech/`."""
+    return [
+        JeuPublic(
+            nom=jeu.nom,
+            depot=jeu.depot,
+            revision=jeu.revision,
+            fichiers=tuple(
+                FichierJeu(dossier_jeu(racine, jeu) / Path(fichier.chemin).name, fichier.sha256)
+                for fichier in jeu.fichiers
+            ),
+        )
+        for jeu in config.jeux
+    ]
+
+
+# --- Scénarios Mistral -------------------------------------------------------------------
+
+
+def _fabrique_depuis(creer_generateur: Callable[[str], Any]) -> FabriqueScenario:
+    """Fabrique de scénarios : `Generateur(seed_run_id).generer("scenario-reunion", [thème])`.
+
+    Le texte de l'amorce est le contenu du message `assistant` de la réponse brute
+    journalisée, celui que `Generateur` revérifie ensuite.
+    """
+    from slmsp.mistral.generateur import message_assistant
+
+    def fabrique(seed_run_id: str, theme_id: str, session_id: str) -> tuple[str, str]:
+        generation = creer_generateur(seed_run_id).generer(
+            GABARIT_SCENARIO, [theme_id], session_id, "CR"
+        )
+        contenu = message_assistant(generation.reponse_brute).get("content")
+        if not isinstance(contenu, str) or not contenu:
+            raise ProvenanceInvalide(f"appel {generation.appel_id} : réponse sans contenu texte")
+        return generation.appel_id, contenu
+
+    return fabrique
+
+
+def _fabrique_scenarios(racine: Path) -> FabriqueScenario:
+    """Fabrique réelle (appels Mistral payants) ; préalables D1.2 vérifiés dès maintenant."""
+    from slmsp.budget.registre import RegistreBudget
+    from slmsp.mistral.client import ClientMistral, fabriquer_sdk
+    from slmsp.mistral.config import charger_mistral
+    from slmsp.mistral.generateur import Generateur, charger_prealables
+
+    config = charger_mistral()
+    dossier = racine_projet() / "config"
+    fichier_donnees = dossier / "donnees.toml"
+    charger_prealables(fichier_donnees, modele=config.modele, aujourd_hui=date.today())
+    client = ClientMistral(config, RegistreBudget(), fabriquer_sdk(config))
+
+    def creer(seed_run_id: str) -> Generateur:
+        return Generateur(
+            seed_run_id,
+            client=client,
+            racine=racine,
+            fichier_donnees=fichier_donnees,
+            dossier_gabarits=dossier / "prompts" / "generateur",
+        )
+
+    return _fabrique_depuis(creer)
+
+
+# --- seed --------------------------------------------------------------------------------
+
+
+def _racine(args: argparse.Namespace) -> Path:
+    return (args.racine if args.racine is not None else racine_projet()).resolve()
+
+
+def _consigner(message: str) -> None:
+    print(message, flush=True)
+
+
+def _seed(args: argparse.Namespace) -> int:
+    racine = _racine(args)
+    decodeur = _decodeur_pyarrow()
+    config_sources = charger_config_sources()
+    config = charger_config_donnees()
+    registre = RegistreLicences.charger(racine=racine)
+    fabrique = None
+    if args.scenarios > 0:
+        from slmsp.evaluation.gel import jeu_gele_et_commite
+
+        jeu_gele_et_commite("v1.1", racine)  # ManifesteInvalide (code 4) avant toute génération
+        fabrique = _fabrique_scenarios(racine)
+    protection = construire_protection(versions_protegees(racine), config, racine)
+    try:
+        resultat = executer_seed(
+            racine=racine,
+            jeux=_jeux_publics(config_sources, racine),
+            registre=registre,
+            config=config,
+            protection=protection,
+            decodeur=decodeur,
+            facteur=args.facteur,
+            nb_scenarios=args.scenarios,
+            fabrique_scenarios=fabrique,
+            consigner=_consigner,
+        )
+    except ProvenanceInvalide as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.MANIFESTE_INVALIDE)
+    for tache, emplacements in resultat.comptes["taches"].items():
+        for emplacement, compte in emplacements.items():
+            print(
+                f"{tache}/{emplacement} : {compte['conservees']}/{compte['cible']} amorces "
+                f"({compte['exclus']} exclues par l'anti-fuite)"
+            )
+    scenarios = resultat.comptes["scenarios"]
+    if scenarios["demandes"]:
+        print(f"scénarios : {scenarios['produits']}/{scenarios['demandes']}")
+    print(f"run {resultat.run_id} ({resultat.statut}) : {resultat.dossier}")
+    if resultat.statut == "partiel-budget":
+        return int(CodeSortie.BUDGET_EPUISE)
+    return int(CodeSortie.SUCCES if resultat.statut == "complet" else CodeSortie.ERREUR)

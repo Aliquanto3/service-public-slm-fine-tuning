@@ -99,7 +99,7 @@ development_status:
   epic-9: in-progress
   9-1-registre-des-licences-et-configuration-des-données: done
   9-2-générateur-mistral-prouvé-gabarits-sans-exemple-journal-d-ap: done
-  9-3-étape-seed-amorces-publiques-ou-mistral-exclusion-anti-fuite: backlog
+  9-3-étape-seed-amorces-publiques-ou-mistral-exclusion-anti-fuite: done
   9-4-étape-generate-génération-idempotente-et-traces-d-outils: backlog
   9-5-étapes-validate-et-filter: backlog
   9-6-étape-build-re-dérivation-jeu-versionné-et-suite-des-verrous: backlog

@@ -1,5 +1,6 @@
-# Corpus MediaTech de l'Index local v1 (AD-28, D3) : parquet lus directement par
-# `resolve/<revision>`, jamais par le datasets-server. Valeurs relevées le 2026-10-12.
+# Corpus MediaTech de l'Index local v1 (AD-28, D3) et jeux publics d'amorces de l'étape
+# `seed` (FR-29) : parquet lus directement par `resolve/<revision>`, jamais par le
+# datasets-server. Valeurs relevées le 2026-10-12.
 # Destination : data/raw/mediatech/<nom>/<revision>/<nom du fichier>.
 
 [[jeux]]
@@ -33,3 +34,14 @@ taille = 223345448
 chemin = "data/data-gouv-datasets-catalog-latest/data_gouv_datasets_catalog_part_2.parquet"
 sha256 = "2174d151d7f990874bde05c847c57420f41bec831b48b7af754fcb6143a52479"
 taille = 34698180
+
+[[jeux]]
+nom = "piaf"
+depot = "AgentPublic/piaf"
+revision = "bda8c063bc7297180796cd835d1974c0bc71c521"
+licence = "mit"
+
+[[jeux.fichiers]]
+chemin = "plain_text/train-00000-of-00001.parquet"
+sha256 = "868b00642fd947182dd406becee1f7981c4ab69c2dc78ee5f0e6e7a42d98ebad"
+taille = 650352

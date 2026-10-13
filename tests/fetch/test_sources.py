@@ -256,11 +256,17 @@ def test_cli_benchmarks_delegue(monkeypatch, tmp_path: Path) -> None:
 
 def test_config_versionnee() -> None:
     config = charger_config_sources()
-    assert [jeu.nom for jeu in config.jeux] == ["service-public", "data-gouv-datasets-catalog"]
-    assert [len(jeu.fichiers) for jeu in config.jeux] == [1, 3]
+    assert [jeu.nom for jeu in config.jeux] == [
+        "service-public",
+        "data-gouv-datasets-catalog",
+        "piaf",
+    ]
+    assert [len(jeu.fichiers) for jeu in config.jeux] == [1, 3, 1]
     assert config.jeux[0].revision == "7ddda096b33d48dbda8143fc8c349a8b0e031a3a"
     assert config.jeux[1].revision == "11f3d3c9481ad478dbcff52e85d73b7fd10533ce"
-    assert sum(f.taille for jeu in config.jeux for f in jeu.fichiers) == 663_393_073
+    assert config.jeux[2].depot == "AgentPublic/piaf"
+    assert config.jeux[2].revision == "bda8c063bc7297180796cd835d1974c0bc71c521"
+    assert sum(f.taille for jeu in config.jeux for f in jeu.fichiers) == 663_393_073 + 650_352
 
 
 @pytest.mark.reseau
