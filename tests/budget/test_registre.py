@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import ast
 import inspect
+import json
 import math
 import os
 import sqlite3
 import subprocess
 import sys
+from contextlib import closing
 from pathlib import Path
 
 import psutil
@@ -24,9 +26,16 @@ import slmsp.budget.config
 import slmsp.budget.registre
 import slmsp.budget.tarifs
 from slmsp.budget.config import charger_budgets, charger_tarifs
-from slmsp.budget.registre import NOM_REGISTRE, RegistreBudget
+from slmsp.budget.registre import (
+    NOM_REGISTRE,
+    VERSION_SCHEMA,
+    LigneEtat,
+    RegistreBudget,
+    Releve,
+)
 from slmsp.budget.tarifs import UsageTokens
 from slmsp.cli import main
+from slmsp.core.canonique import json_canonique
 from slmsp.core.erreurs import (
     BudgetEpuise,
     CodeSortie,
@@ -535,6 +544,98 @@ def test_etat_reste_par_poste(registre) -> None:
     assert releve[("mistral", None)].reste_eur == pytest.approx(25.0)
     assert releve[("mistral", "juge")].reste_eur == pytest.approx(3.0)
     assert releve[("anthropic", None)].reste_eur == pytest.approx(10.0)
+
+
+def test_en_dict_sans_zero_negatif() -> None:
+    ligne = LigneEtat("mistral", "juge", 5.0, 5.0, 0.0, -1e-12)
+    situation = Releve("campagne-test", 0.0, (ligne,))
+    sortie = json_canonique(situation.en_dict())
+    assert b"-0.0" not in sortie
+    assert situation.en_dict()["lignes"][0]["reste_eur"] == 0.0
+
+
+# --- ancrage de la campagne (D1 de la revue du lot 3a) ---------------------------------------
+
+
+def _campagnes(registre: RegistreBudget) -> dict[str, dict[str, float]]:
+    with closing(sqlite3.connect(registre.chemin)) as connexion:
+        lignes = connexion.execute("SELECT campagne_id, plafonds FROM campagnes").fetchall()
+    return {campagne: json.loads(plafonds) for campagne, plafonds in lignes}
+
+
+def test_campagne_ancree_a_la_premiere_ouverture(registre) -> None:
+    assert _campagnes(registre) == {
+        "campagne-test": {
+            "anthropic": 10.0,
+            "mistral": 30.0,
+            "mistral.generation": 25.0,
+            "mistral.juge": 5.0,
+        }
+    }
+    with closing(sqlite3.connect(registre.chemin)) as connexion:
+        assert connexion.execute("PRAGMA user_version").fetchone() == (VERSION_SCHEMA,)
+    RegistreBudget(registre.config, registre.tarifs)  # même config : ouverture permise
+
+
+@pytest.mark.parametrize(
+    ("parametres", "ecart"),
+    [
+        ({"juge": 6.0}, "mistral.juge : 5 € inscrit, 6 € dans budgets.toml"),
+        ({"anthropic": 20.0}, "anthropic : 10 € inscrit, 20 € dans budgets.toml"),
+    ],
+)
+def test_plafond_modifie_refuse(config_test, lignes, parametres, ecart) -> None:
+    registre = config_test().ouvrir()
+    reserver_euros(registre, 1)
+    with pytest.raises(ConfigurationInvalide, match="nouveau campagne_id") as erreur:
+        config_test(**parametres).ouvrir()
+    assert ecart in str(erreur.value)
+    assert len(lignes(registre)) == 1
+    assert _campagnes(registre)["campagne-test"]["mistral.juge"] == 5.0
+
+
+def test_plafond_modifie_avec_nouvelle_campagne_permis(config_test) -> None:
+    config_test().ouvrir()
+    nouvelle = config_test(campagne="nouvelle", juge=6.0).ouvrir()
+    assert _campagnes(nouvelle)["nouvelle"]["mistral.juge"] == 6.0
+
+
+def test_nouvelle_campagne_refusee_tant_qu_un_lot_reste_ouvert(config_test) -> None:
+    ancienne = config_test(campagne="ancienne").ouvrir()
+    ancienne.reserver_lot("lot-ancien", "anthropic", None, "m-test", 0, MILLION, 2)
+    with pytest.raises(ConfigurationInvalide, match=r"lot-ancien \(ancienne\)"):
+        config_test(campagne="nouvelle").ouvrir()
+    assert "nouvelle" not in _campagnes(ancienne)
+    ancienne.collecter_lot("lot-ancien", UsageTokens(0, MILLION))
+    nouvelle = config_test(campagne="nouvelle").ouvrir()
+    assert set(_campagnes(nouvelle)) == {"ancienne", "nouvelle"}
+
+
+def test_migration_d_une_base_en_version_1(config_test, lignes) -> None:
+    fichiers = config_test()
+    chemin = dossier_var() / NOM_REGISTRE
+    # Base de la version 1 : une campagne démarrée, et un lot d'une autre campagne ouvert.
+    with closing(sqlite3.connect(chemin)) as connexion, connexion:
+        connexion.execute(slmsp.budget.registre._CREATION)
+        connexion.execute("PRAGMA user_version = 1")
+        for campagne, batch_id in (("campagne-test", None), ("autre", "lot-autre")):
+            connexion.execute(
+                "INSERT INTO reservations (campagne_id, poste, sous_poste, modele, mode, pid, "
+                "creation_processus, batch_id, nb_requetes, etat, montant_reserve_eur, "
+                "montant_reel_eur, cree_le) VALUES (?, 'anthropic', NULL, 'm-test', 'direct', 1, "
+                "1.0, ?, 1, 'pire-cas', 2.0, 2.0, '2026-10-12T08:00:00+02:00')",
+                (campagne, batch_id),
+            )
+        connexion.execute("UPDATE reservations SET etat = 'reservee' WHERE batch_id IS NOT NULL")
+        avant = connexion.execute("SELECT * FROM reservations ORDER BY id").fetchall()
+    # La campagne a déjà démarré : elle est ancrée malgré le lot ouvert de « autre ».
+    registre = fichiers.ouvrir()
+    with closing(sqlite3.connect(chemin)) as connexion:
+        assert connexion.execute("SELECT * FROM reservations ORDER BY id").fetchall() == avant
+    assert set(_campagnes(registre)) == {"campagne-test"}
+    assert total(registre, "anthropic", None) == (pytest.approx(2.0), 0.0)
+    with closing(sqlite3.connect(chemin)) as connexion:
+        assert connexion.execute("PRAGMA user_version").fetchone() == (VERSION_SCHEMA,)
 
 
 def test_version_de_schema_inattendue(registre) -> None:

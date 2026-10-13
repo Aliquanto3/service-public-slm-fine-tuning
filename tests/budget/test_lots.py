@@ -45,9 +45,10 @@ def test_critere_8_taille_max_bornee_par_le_poste(config_test, lignes) -> None:
 
 
 def test_lots_ouverts_toutes_campagnes(config_test) -> None:
+    # Les deux campagnes sont inscrites avant le lot : la nouvelle s'ouvre sans refus.
     ancienne = config_test(campagne="ancienne").ouvrir()
-    lot(ancienne, "lot-ancien", 2)
     nouvelle = config_test(campagne="nouvelle").ouvrir()
+    lot(ancienne, "lot-ancien", 2)
     (ouvert,) = nouvelle.lots_ouverts()
     assert (ouvert.batch_id, ouvert.campagne_id) == ("lot-ancien", "ancienne")
 

@@ -20,6 +20,7 @@ from slmsp.budget.config import charger_budgets
 from slmsp.budget.registre import NOM_REGISTRE, RegistreBudget
 from slmsp.budget.tarifs import UsageTokens
 from slmsp.cli import CodeSortie, main
+from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.var import dossier_var
 
 INTERDITS = ("reset", "remise", "zero", "vider", "supprimer")
@@ -142,3 +143,56 @@ def test_aide_sans_action_de_remise_a_zero(capsys: pytest.CaptureFixture[str]) -
     aide = capsys.readouterr().out
     assert "etat" in aide
     assert [mot for mot in INTERDITS if mot in aide.lower()] == []
+
+
+def test_releve_version_de_schema_inattendue(capsys: pytest.CaptureFixture[str]) -> None:
+    registre = RegistreBudget()
+    with closing(sqlite3.connect(registre.chemin)) as connexion, connexion:
+        connexion.execute("PRAGMA user_version = 99")
+    avant = registre.chemin.read_bytes()
+    assert main(["budget", "etat"]) == CodeSortie.ERREUR
+    capture = capsys.readouterr()
+    assert capture.out == ""
+    assert "version de schéma 99" in capture.err
+    assert "Traceback" not in capture.err
+    assert registre.chemin.read_bytes() == avant
+
+
+def test_releve_base_sans_table_sommes_nulles(capsys: pytest.CaptureFixture[str]) -> None:
+    # Base SQLite valide mais sans `reservations` (ex. initialisation interrompue).
+    chemin = dossier_var() / NOM_REGISTRE
+    with closing(sqlite3.connect(chemin)) as connexion, connexion:
+        connexion.execute("CREATE TABLE autre (x INTEGER)")
+    avant = chemin.read_bytes()
+    releve = _json(capsys)
+    assert chemin.read_bytes() == avant
+    assert releve["ecarts"] == []
+    for ligne in releve["lignes"]:
+        assert (ligne["depense_eur"], ligne["reserve_eur"]) == (0, 0)
+        assert ligne["reste_eur"] == ligne["plafond_eur"]
+
+
+def test_releve_signale_un_ecart_avec_les_plafonds_inscrits(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    registre = RegistreBudget()
+    # Simule un `budgets.toml` modifié après l'ancrage : le plafond inscrit était de 4 €.
+    with closing(sqlite3.connect(registre.chemin)) as connexion, connexion:
+        (plafonds,) = connexion.execute(
+            "SELECT plafonds FROM campagnes WHERE campagne_id = ?", (registre.campagne_id,)
+        ).fetchone()
+        inscrits = json.loads(plafonds) | {"mistral.juge": 4.0}
+        connexion.execute(
+            "UPDATE campagnes SET plafonds = ? WHERE campagne_id = ?",
+            (json.dumps(inscrits), registre.campagne_id),
+        )
+    avant = registre.chemin.read_bytes()
+    ecart = "mistral.juge : 4 € inscrit, 5 € dans budgets.toml"
+
+    assert _json(capsys)["ecarts"] == [ecart]
+    assert main(["budget", "etat"]) == CodeSortie.SUCCES
+    sortie = capsys.readouterr().out
+    assert "attention" in sortie and ecart in sortie
+    assert registre.chemin.read_bytes() == avant
+    with pytest.raises(ConfigurationInvalide, match="nouveau campagne_id"):
+        RegistreBudget()

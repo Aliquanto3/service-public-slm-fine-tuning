@@ -57,7 +57,8 @@ SEUIL_ESPACE_LIBRE: Final = 2 * 1024**3
 NOM_MANIFESTE: Final = "run.json"
 NOM_ETAT: Final = "etat.jsonl"
 NOM_JOURNAL_MISTRAL: Final = "appels-mistral.sqlite"
-NOM_CACHE_VERDICTS: Final = "cache-verdicts.sqlite"
+NOM_CACHE_VERDICTS: Final = "verdicts.sqlite"
+"""Cache des verdicts du Juge (`slmsp.judge.cache.NOM_CACHE`), refusé à `data` et `train`."""
 ESSAIS_RUN_ID: Final = 20
 DELAI_GIT: Final = 10.0
 """Délai maximal de chaque appel `git` de l'empreinte (secondes)."""

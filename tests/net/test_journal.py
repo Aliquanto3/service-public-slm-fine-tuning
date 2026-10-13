@@ -275,3 +275,90 @@ def test_corps_en_flux_sans_termes() -> None:
         garde.post("https://mcp.data.gouv.fr/mcp", content=flux())
     (entree,) = journal.lister()
     assert (entree.statut, entree.outil, entree.termes) == ("envoyee", None, None)
+
+
+class _FluxSurveille(httpx2.SyncByteStream, httpx2.AsyncByteStream):
+    """Corps de réponse qui note sa fermeture (synchrone ou asynchrone)."""
+
+    def __init__(self) -> None:
+        self.ferme = False
+
+    def __iter__(self):
+        yield b"ok"
+
+    async def __aiter__(self):
+        yield b"ok"
+
+    def close(self) -> None:
+        self.ferme = True
+
+    async def aclose(self) -> None:
+        self.ferme = True
+
+
+class _JournalEnPanne:
+    """Journal dont l'inscription de `statut` lève, comme une base SQLite verrouillée."""
+
+    def __init__(self, statut: str) -> None:
+        self.statut = statut
+
+    def inscrire(self, entree: EntreeJournalRequetes) -> None:
+        if entree.statut == self.statut:
+            raise sqlite3.OperationalError("database is locked")
+
+    def lister(self, limite: int | None = None) -> list[EntreeJournalRequetes]:
+        return []
+
+
+def _envoyer(garde, asynchrone: bool) -> None:
+    if asynchrone:
+
+        async def envoyer() -> None:
+            async with garde:
+                await garde.get("https://www.data.gouv.fr/x")
+
+        asyncio.run(envoyer())
+    else:
+        with garde:
+            garde.get("https://www.data.gouv.fr/x")
+
+
+@pytest.mark.parametrize("asynchrone", [False, True])
+def test_journal_en_panne_apres_envoi_ferme_la_reponse_et_propage(asynchrone: bool) -> None:
+    flux = _FluxSurveille()
+    appels = []
+
+    def repondre(requete):
+        appels.append(requete)
+        return httpx2.Response(200, stream=flux)
+
+    garde = client(
+        "assistant",
+        asynchrone=asynchrone,
+        mode=_Mode(),
+        journal=_JournalEnPanne("envoyee"),
+        transport_interne=httpx2.MockTransport(repondre),
+    )
+    with pytest.raises(sqlite3.OperationalError, match="locked"):
+        _envoyer(garde, asynchrone)
+    assert len(appels) == 1
+    assert flux.ferme
+
+
+@pytest.mark.parametrize("asynchrone", [False, True])
+def test_journal_en_panne_sur_echec_garde_l_erreur_reseau(asynchrone: bool) -> None:
+    erreur = httpx2.ConnectError("refusée")
+
+    def lever(requete):
+        raise erreur
+
+    garde = client(
+        "assistant",
+        asynchrone=asynchrone,
+        mode=_Mode(),
+        journal=_JournalEnPanne("echouee"),
+        transport_interne=httpx2.MockTransport(lever),
+    )
+    with pytest.raises(sqlite3.OperationalError) as info:
+        _envoyer(garde, asynchrone)
+    assert info.value.__context__ is erreur

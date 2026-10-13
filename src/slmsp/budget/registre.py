@@ -11,6 +11,12 @@ régularisée au coût réel (`regulariser`) ou comptée au pire cas (`compter_p
 coût réel), `pire-cas` (comptée au montant réservé, comme dépensé). Les totaux ne portent
 que sur le `campagne_id` de `budgets.toml` : changer de campagne n'efface rien.
 
+Chaque campagne est ancrée dans la table `campagnes` à sa première ouverture, avec ses
+plafonds (D1 de la revue du lot 3a). À l'ouverture, le registre refuse (`ConfigurationInvalide`)
+un plafond qui diffère de celui inscrit pour la même campagne, et une nouvelle campagne tant
+qu'un lot d'une autre campagne reste ouvert : changer un plafond exige une nouvelle campagne,
+et aucun changement ne passe en silence.
+
 À l'ouverture, les réservations sans lot dont le processus est mort (PID et date de
 création, via psutil) passent au pire cas avec le motif `orpheline`. Une réservation liée
 à un `batch_id` reste ouverte jusqu'à `collecter_lot` ou `annuler_lot`.
@@ -21,12 +27,13 @@ par opération (WAL, `busy_timeout` 30 s).
 
 from __future__ import annotations
 
+import json
 import math
 import os
 import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import closing, contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Final
@@ -35,11 +42,14 @@ import psutil
 
 from slmsp.budget.config import ConfigBudgets, ConfigTarifs, charger_budgets, charger_tarifs
 from slmsp.budget.tarifs import UsageTokens, cout_pire_cas, cout_reel
+from slmsp.core.canonique import json_canonique
 from slmsp.core.erreurs import BudgetEpuise, ConfigurationInvalide, SlmspError
 from slmsp.core.var import BUSY_TIMEOUT_MS, dossier_var, ouvrir_sqlite
 
 NOM_REGISTRE: Final = "budget.sqlite"
-VERSION_SCHEMA: Final = 1
+VERSION_SCHEMA: Final = 2
+"""1 : table `reservations` ; 2 : table `campagnes` ajoutée (migration sans réécriture)."""
+VERSIONS_LISIBLES: Final = (0, 1, VERSION_SCHEMA)
 
 RESERVEE: Final = "reservee"
 REGULARISEE: Final = "regularisee"
@@ -87,6 +97,13 @@ _INDEX_LOTS = (
 _INDEX_CAMPAGNE = (
     "CREATE INDEX IF NOT EXISTS reservations_campagne ON reservations (campagne_id, poste)"
 )
+_CREATION_CAMPAGNES = """
+CREATE TABLE IF NOT EXISTS campagnes (
+    campagne_id TEXT PRIMARY KEY,
+    plafonds TEXT NOT NULL,
+    cree_le TEXT NOT NULL
+)
+"""
 
 
 @dataclass(frozen=True)
@@ -108,6 +125,8 @@ class Releve:
     campagne_id: str
     marge_eur: float
     lignes: tuple[LigneEtat, ...]
+    ecarts: tuple[str, ...] = ()
+    """Écarts entre les plafonds de `budgets.toml` et ceux inscrits pour la campagne."""
 
     def en_dict(self, decimales: int = 6) -> dict[str, Any]:
         """Dictionnaire sérialisable, montants arrondis à `decimales` (micro-euro)."""
@@ -120,6 +139,7 @@ class Releve:
             lignes.append(donnees)
         return {
             "campagne_id": self.campagne_id,
+            "ecarts": list(self.ecarts),
             "marge_eur": round(self.marge_eur, decimales),
             "lignes": lignes,
         }
@@ -195,7 +215,7 @@ def _transaction(chemin: Path) -> Iterator[sqlite3.Connection]:
 
 def _verifier_version(connexion: sqlite3.Connection, chemin: Path) -> int:
     (version,) = connexion.execute("PRAGMA user_version").fetchone()
-    if version not in (0, VERSION_SCHEMA):
+    if version not in VERSIONS_LISIBLES:
         raise SlmspError(
             f"{chemin} : version de schéma {version} inattendue (attendu {VERSION_SCHEMA})"
         )
@@ -237,10 +257,48 @@ def _calculer_releve(connexion: sqlite3.Connection | None, config: ConfigBudgets
     return Releve(config.campagne_id, config.marge_eur, tuple(lignes))
 
 
+def _plafonds_a_plat(config: ConfigBudgets) -> dict[str, float]:
+    """Plafonds de `config` par nom : `poste` ou `poste.sous_poste` (un `Nom` n'a pas de point)."""
+    plafonds: dict[str, float] = {}
+    for poste, definition in config.postes.items():
+        plafonds[poste] = definition.plafond_eur
+        for sous_poste, plafond in definition.sous_postes.items():
+            plafonds[f"{poste}.{sous_poste}"] = plafond
+    return plafonds
+
+
+def _ecarts_plafonds(inscrits: dict[str, float], lus: dict[str, float]) -> tuple[str, ...]:
+    """Écarts entre les plafonds inscrits au registre et ceux lus dans `budgets.toml`."""
+
+    def montant(valeur: float | None) -> str:
+        return "absent" if valeur is None else f"{valeur:g} €"
+
+    return tuple(
+        f"{nom} : {montant(inscrits.get(nom))} inscrit, {montant(lus.get(nom))} dans budgets.toml"
+        for nom in sorted(inscrits.keys() | lus.keys())
+        if inscrits.get(nom) != lus.get(nom)
+    )
+
+
+def _plafonds_inscrits(connexion: sqlite3.Connection, campagne_id: str) -> dict[str, float] | None:
+    """Plafonds ancrés de la campagne, ou `None` si elle n'est pas (encore) inscrite."""
+    ligne = connexion.execute(
+        "SELECT plafonds FROM campagnes WHERE campagne_id = ?", (campagne_id,)
+    ).fetchone()
+    return None if ligne is None else json.loads(ligne[0])
+
+
+def _table_existe(connexion: sqlite3.Connection, nom: str) -> bool:
+    requete = "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?"
+    return connexion.execute(requete, (nom,)).fetchone() is not None
+
+
 def releve(chemin: str | Path | None = None, config: ConfigBudgets | None = None) -> Releve:
     """Relevé en lecture seule : la base n'est ni créée, ni modifiée, ni régularisée.
 
-    Base absente (ou encore vide) : plafonds et sommes nulles.
+    Base absente (ou encore vide) : plafonds et sommes nulles. Si la campagne est inscrite
+    avec d'autres plafonds que ceux de `budgets.toml`, l'écart est signalé dans `ecarts`
+    (le registre refusera de s'ouvrir tant qu'il persiste).
     """
     config = config if config is not None else charger_budgets()
     chemin = Path(chemin) if chemin is not None else dossier_var() / NOM_REGISTRE
@@ -252,10 +310,15 @@ def releve(chemin: str | Path | None = None, config: ConfigBudgets | None = None
         with closing(connexion):
             connexion.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MS}")
             _verifier_version(connexion, chemin)
-            table = connexion.execute(
-                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'reservations'"
-            ).fetchone()
-            return _calculer_releve(connexion if table else None, config)
+            table = _table_existe(connexion, "reservations")
+            situation = _calculer_releve(connexion if table else None, config)
+            if not _table_existe(connexion, "campagnes"):
+                return situation
+            inscrits = _plafonds_inscrits(connexion, config.campagne_id)
+            if inscrits is None:
+                return situation
+            ecarts = _ecarts_plafonds(inscrits, _plafonds_a_plat(config))
+            return replace(situation, ecarts=ecarts)
     except sqlite3.Error as exc:
         raise SlmspError(f"{chemin} : registre de budget illisible ({exc})") from None
 
@@ -278,9 +341,48 @@ class RegistreBudget:
             connexion.execute(_CREATION)
             connexion.execute(_INDEX_LOTS)
             connexion.execute(_INDEX_CAMPAGNE)
-            if version == 0:
+            connexion.execute(_CREATION_CAMPAGNES)
+            if version != VERSION_SCHEMA:
                 connexion.execute(f"PRAGMA user_version = {VERSION_SCHEMA}")
             self.orphelines_regularisees = self._regulariser_orphelines(connexion)
+            self._ancrer_campagne(connexion)
+
+    def _ancrer_campagne(self, connexion: sqlite3.Connection) -> None:
+        """Inscrit la campagne et ses plafonds, ou vérifie ceux déjà inscrits (D1, lot 3a).
+
+        Une campagne déjà présente dans `reservations` (base antérieure à la version 2) est
+        ancrée sur la configuration lue, sans contrôle des lots : elle a déjà démarré.
+        """
+        lus = _plafonds_a_plat(self.config)
+        inscrits = _plafonds_inscrits(connexion, self.campagne_id)
+        if inscrits is not None:
+            ecarts = _ecarts_plafonds(inscrits, lus)
+            if ecarts:
+                raise ConfigurationInvalide(
+                    f"campagne {self.campagne_id} : plafonds différents de ceux inscrits au "
+                    f"registre ({' ; '.join(ecarts)}) ; changer un plafond exige un nouveau "
+                    "campagne_id"
+                )
+            return
+        deja_demarree = connexion.execute(
+            "SELECT 1 FROM reservations WHERE campagne_id = ? LIMIT 1", (self.campagne_id,)
+        ).fetchone()
+        if deja_demarree is None:
+            lots = connexion.execute(
+                "SELECT batch_id, campagne_id FROM reservations "
+                "WHERE batch_id IS NOT NULL AND etat = ? AND campagne_id != ? ORDER BY id",
+                (RESERVEE, self.campagne_id),
+            ).fetchall()
+            if lots:
+                detail = ", ".join(f"{batch_id} ({campagne})" for batch_id, campagne in lots)
+                raise ConfigurationInvalide(
+                    f"nouvelle campagne {self.campagne_id} refusée : lots encore ouverts "
+                    f"({detail}) ; les collecter ou les annuler d'abord"
+                )
+        connexion.execute(
+            "INSERT INTO campagnes (campagne_id, plafonds, cree_le) VALUES (?, ?, ?)",
+            (self.campagne_id, json_canonique(lus).decode("utf-8"), _maintenant()),
+        )
 
     # --- imputation et contrôle -----------------------------------------------------------
 

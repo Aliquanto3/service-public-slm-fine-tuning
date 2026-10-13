@@ -42,7 +42,7 @@ def racine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (modeles / "granite" / "config.json").write_bytes(b"{}")
     monkeypatch.setenv("SLMSP_MODELS_DIR", str(modeles))
     var = dossier_var()
-    for nom in ("appels-mistral.sqlite", "cache-verdicts.sqlite", "budget.sqlite"):
+    for nom in ("appels-mistral.sqlite", "verdicts.sqlite", "budget.sqlite"):
         connexion = ouvrir_sqlite(var / nom)  # WAL, comme en production
         connexion.execute("CREATE TABLE t (x INTEGER)")
         connexion.execute("INSERT INTO t VALUES (1)")
@@ -98,7 +98,7 @@ def test_data_refuse(racine: Path, relatif: str) -> None:
     assert erreur.value.code_sortie == CodeSortie.ERREUR
 
 
-@pytest.mark.parametrize("nom", ["cache-verdicts.sqlite", "budget.sqlite"])
+@pytest.mark.parametrize("nom", ["verdicts.sqlite", "budget.sqlite"])
 def test_data_refuse_autres_bases_var(racine: Path, nom: str) -> None:
     with pytest.raises(LectureInterdite):
         lire(dossier_var() / nom, "data", racine=racine)
@@ -128,9 +128,19 @@ def test_train_refuse(racine: Path, relatif: str) -> None:
         lire(relatif, "train", racine=racine)
 
 
-def test_train_refuse_cache_verdicts(racine: Path) -> None:
-    with pytest.raises(LectureInterdite):
-        lire(dossier_var() / "cache-verdicts.sqlite", "train", racine=racine)
+@pytest.mark.parametrize("lecteur", ["data", "train"])
+def test_refus_explicite_du_cache_verdicts(racine: Path, lecteur: str) -> None:
+    # Le motif prouve le refus explicite, pas un simple « hors de la liste d'accès ».
+    with pytest.raises(LectureInterdite, match="cache des verdicts"):
+        lire(dossier_var() / "verdicts.sqlite", lecteur, racine=racine)
+
+
+def test_nom_du_cache_verdicts_aligne_sur_le_juge() -> None:
+    # `core` ne peut pas importer `judge` : le test garde les deux constantes alignées.
+    from slmsp.core.artefacts import NOM_CACHE_VERDICTS
+    from slmsp.judge.cache import NOM_CACHE
+
+    assert NOM_CACHE_VERDICTS == NOM_CACHE
 
 
 @pytest.mark.parametrize("lecteur", ["eval", "", "DATA", "judge"])

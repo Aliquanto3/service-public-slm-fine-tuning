@@ -2,7 +2,8 @@
 
 Le relevé lit `SLMSP_VAR_DIR/budget.sqlite` sans le créer ni le modifier, et sans
 régulariser les réservations orphelines. Il affiche, par poste et sous-poste de la campagne
-courante (`config/budgets.toml`), le plafond, le dépensé, le réservé et le reste, en euros.
+courante (`config/budgets.toml`), le plafond, le dépensé, le réservé et le reste, en euros,
+puis les écarts éventuels entre ces plafonds et ceux inscrits au registre pour la campagne.
 """
 
 from __future__ import annotations
@@ -41,6 +42,9 @@ def _texte(situation: Releve) -> str:
             f"{ligne.reserve_eur:>12.4f}{ligne.reste_eur:>12.4f}"
         )
     lignes.append("montants en euros")
+    if situation.ecarts:
+        lignes.append("attention : plafonds différents de ceux inscrits au registre")
+        lignes.extend(f"  {ecart}" for ecart in situation.ecarts)
     return "\n".join(lignes)
 
 
