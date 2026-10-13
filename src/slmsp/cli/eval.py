@@ -155,8 +155,10 @@ def _items(valeur: str | None) -> list[str] | None:
 
 
 def _rapporter(generation: Any, rang: int, total: int) -> None:
+    tronquee = " tronquée" if generation.tronquee else ""
     print(
-        f"[{rang}/{total}] {generation.item_id} {generation.statut} ({generation.duree_ms} ms)",
+        f"[{rang}/{total}] {generation.item_id} {generation.statut}{tronquee} "
+        f"({generation.duree_ms} ms)",
         flush=True,
     )
 
@@ -216,6 +218,8 @@ def _afficher_generation(rapport: Any) -> None:
         f"Statut du run : {rapport.statut} (cette session : {rapport.ok} ok, "
         f"{rapport.erreur} en erreur, {rapport.sautes} déjà présent(s))"
     )
+    if rapport.tronquees:
+        print(f"Sorties tronquées au plafond max_tokens (cette session) : {rapport.tronquees}")
     print(
         "Durée moyenne par item (cette session) : "
         + ("sans objet" if moyenne is None else f"{moyenne:.0f} ms")

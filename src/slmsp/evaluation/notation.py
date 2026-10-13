@@ -5,7 +5,8 @@
 1. ouvre le run de génération `depuis` (type `eval-generation`, statut `complet` ou
    `partiel-erreur`, sinon `SlmspError` sans créer de run) et revérifie le manifeste du jeu
    (`verifier_manifeste`, code 4) ; `calibrage` est admis sans manifeste, ses échantillons
-   sont alors tirés par `gel.tirer_echantillons(items, GRAINE)` ;
+   sont alors tirés par `gel.tirer_echantillons(items, graine)`, avec la graine de la
+   section `[generation]` de `config/evaluation.toml` ;
 2. crée le run (slug du parent, `parents=[depuis]`, modèle et jeu recopiés) ;
 3. calcule les contrôles automatiques des items `ok` (`controles.jsonl`) ;
 4. soumet au Juge principal les items `ok` des Tâches jugées et les RD en litige (jamais
@@ -59,8 +60,6 @@ FICHIER_CONTROLES: Final = "controles.jsonl"
 FICHIER_VERDICTS: Final = "verdicts.jsonl"
 FICHIER_SCORES: Final = NOM_SCORES
 FICHIER_RELECTURE: Final = NOM_RELECTURE
-GRAINE: Final = phase_generation.GRAINE
-"""Graine des échantillons du calibrage (sans manifeste)."""
 STATUTS_PARENT: Final = ("complet", "partiel-erreur")
 JUGE_PRINCIPAL: Final = "principal"
 JUGE_SECOND: Final = "second"
@@ -331,7 +330,7 @@ def noter(
     manifeste_sha: str | None = None
     if jeu_version == VERSION_CALIBRAGE:
         jeu = lire_jeu(jeu_version, base)
-        echantillons: Echantillons = tirer_echantillons(jeu.items, GRAINE)
+        echantillons: Echantillons = tirer_echantillons(jeu.items, evaluation.generation.graine)
         jeu_statut = VERSION_CALIBRAGE
     else:
         manifeste_jeu = verifier_manifeste(jeu_version, base)

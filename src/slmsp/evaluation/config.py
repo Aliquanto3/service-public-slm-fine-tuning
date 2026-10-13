@@ -4,7 +4,8 @@ Les cibles reprennent celles de `eval/outils/construire_jeu.py` (outil hors paqu
 importé). Les parts sont des fractions exactes : `ceil(0,2 × 15)` vaut 3, pas 4.
 
 `charger_evaluation` lit `config/evaluation.toml` (story 5.6) : équivalences typographiques
-de la Correction, plafonds de longueur des résumés et seuils des Scores de Tâche.
+de la Correction, plafonds de longueur des résumés, seuils des Scores de Tâche et réglages
+de décodage de la phase génération (section `[generation]`, report W2).
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from fractions import Fraction
 from pathlib import Path
-from typing import Annotated, Final, Literal
+from typing import Annotated, Any, Final, Literal
 
 from pydantic import Field, StringConstraints
 
@@ -134,6 +135,32 @@ class Seuils(ModeleConfig):
     plafond_lc: float = Field(ge=0, le=100, allow_inf_nan=False)
 
 
+GRAINE_DEFAUT: Final = 42
+MAX_TOKENS_DEFAUT: Final = 1024
+TEMPERATURE_DEFAUT: Final = 0.0
+
+
+class ConfigGeneration(ModeleConfig):
+    """Section `[generation]` : décodage de la phase génération (glouton, graine fixe).
+
+    Section et clés facultatives : absentes, elles valent les défauts ci-dessus (les anciennes
+    constantes de la story 5.3), donc les mêmes options transmises au serveur et le même
+    `run.json`.
+    """
+
+    graine: int = Field(default=GRAINE_DEFAUT, ge=0, strict=True)
+    temperature: float = Field(default=TEMPERATURE_DEFAUT, ge=0, allow_inf_nan=False)
+    max_tokens: int = Field(default=MAX_TOKENS_DEFAUT, ge=1, strict=True)
+
+    def options_llm(self) -> dict[str, Any]:
+        """Options transmises au client LLM : `temperature`, `seed`, `max_tokens`."""
+        return {
+            "temperature": self.temperature,
+            "seed": self.graine,
+            "max_tokens": self.max_tokens,
+        }
+
+
 class ConfigEvaluation(ModeleConfig):
     """Contenu de `config/evaluation.toml`."""
 
@@ -141,6 +168,7 @@ class ConfigEvaluation(ModeleConfig):
     co: ConfigCO
     re: ConfigRE
     seuils: Seuils
+    generation: ConfigGeneration = Field(default_factory=ConfigGeneration)
 
 
 def charger_evaluation(chemin: str | Path | None = None) -> ConfigEvaluation:

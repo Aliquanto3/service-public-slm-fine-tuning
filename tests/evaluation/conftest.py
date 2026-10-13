@@ -69,13 +69,17 @@ class FakeLlmDeterministe:
 
     Avec `tools` et sans message `tool` dans la conversation (premier tour de la Recherche
     de données), émet un `AppelOutil` `search_datasets` à requête aléatoire. `lever(messages)`
-    peut rendre une exception, levée au milieu du flux. Enregistre chaque appel.
+    peut rendre une exception, levée au milieu du flux. `raison(messages, options)` donne la
+    raison du `Fin` (défaut : `terminee`). Enregistre chaque appel.
     """
 
     def __init__(
-        self, lever: Callable[[Sequence[Mapping[str, Any]]], BaseException | None] | None = None
+        self,
+        lever: Callable[[Sequence[Mapping[str, Any]]], BaseException | None] | None = None,
+        raison: Callable[[Sequence[Mapping[str, Any]], Mapping[str, Any]], str] | None = None,
     ) -> None:
         self.lever = lever
+        self.raison = raison
         self.appels: list[dict[str, Any]] = []
 
     def generer(
@@ -96,6 +100,7 @@ class FakeLlmDeterministe:
         )
         graine = _empreinte(messages)
         erreur = self.lever(messages) if self.lever is not None else None
+        raison = self.raison(messages, options or {}) if self.raison is not None else "terminee"
 
         def flux() -> Iterator[Any]:
             texte = factices.mots(12, graine)
@@ -109,7 +114,7 @@ class FakeLlmDeterministe:
                     nom="search_datasets",
                     arguments={"query": factices.mots(2, f"requete-{graine}")},
                 )
-            yield Fin(raison="terminee", usage=dict(factices.USAGE))
+            yield Fin(raison=raison, usage=dict(factices.USAGE))
 
         return flux()
 

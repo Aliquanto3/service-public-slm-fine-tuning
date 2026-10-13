@@ -28,26 +28,29 @@ from slmsp.core.artefacts import nouveau_run, ouvrir_run
 from slmsp.core.canonique import json_canonique
 from slmsp.core.erreurs import (
     CodeSortie,
+    ConfigurationInvalide,
     HoteBloque,
     ManifesteInvalide,
     RessourceOccupee,
     SchemaOutilModifie,
     SlmspError,
 )
+from slmsp.core.evenements import Erreur, Fin, Jeton
 from slmsp.core.items import lire_jeu
 from slmsp.core.schemas.generation import Generation
 from slmsp.core.var import verrou_gpu
 from slmsp.evaluation import assemblage
 from slmsp.evaluation.assemblage import MODES_RD, PROFIL_RESEAU, sans_reseau
+from slmsp.evaluation.config import ConfigGeneration, charger_evaluation
 from slmsp.evaluation.generation import (
     CODE_ERREUR_EVALUATION,
     FICHIER_GENERATIONS,
-    GRAINE,
-    OPTIONS_LLM,
     TYPE_RUN,
     generer_item,
     lancer_generation,
+    options_llm,
     reprendre_generation,
+    tronquee,
 )
 from slmsp.harness.prompts import construire_messages
 from slmsp.mcp.bac_a_sable import BacASable
@@ -55,6 +58,8 @@ from slmsp.mcp.outils import charger_outils
 
 MODELE = "base:granite-4.0-1b"
 CIBLE_DISTANTE = ("192.0.2.1", 443)
+OPTIONS_5_3 = {"temperature": 0.0, "seed": 42, "max_tokens": 1024}
+"""Décodage des anciennes constantes de la story 5.3 : valeurs par défaut inchangées (W2)."""
 
 
 def lancer(depot: Path, fabrique: Any, items=ITEMS_8, **options: Any):
@@ -114,9 +119,9 @@ def test_run_json(depot_eval: Path, modeles: Path, fabrique: Fabrique) -> None:
     assert brut["chat_template_sha256"] == SHA_TEMPLATE
     assert brut["jeu_version"] == "v1.0"
     assert brut["index_version"] == "factice"
-    assert brut["graine"] == GRAINE
+    assert brut["graine"] == 42
     config = brut["config"]
-    assert config["options_llm"] == dict(OPTIONS_LLM)
+    assert config["options_llm"] == OPTIONS_5_3
     assert config["items"] == [g.item_id for g in lignes(run)]
     assert config["serveur"] == {"generation": {"factice": True}, "embedding": {"factice": True}}
     assert config["chat_template_force"] is False
@@ -152,7 +157,8 @@ def test_sortie_canonique_et_trace(depot_eval: Path, modeles: Path) -> None:
     assert rd.trace[types.index("avertissement")]["code"] == "appel-non-prevu"
 
     # Seules les options de décodage vont au LlmPort (ni parametres, ni mode, ni entree).
-    assert llm.appels and all(a["options"] == dict(OPTIONS_LLM) for a in llm.appels)
+    assert llm.appels and all(a["options"] == OPTIONS_5_3 for a in llm.appels)
+    assert all(g.tronquee is False for g in generations.values())
 
 
 def test_entree_objet_rendue_dans_le_message_user(depot_eval: Path, modeles: Path) -> None:
@@ -246,6 +252,7 @@ def test_item_en_echec(depot_eval: Path, modeles: Path) -> None:
     assert rapport.run.statut_courant() == "partiel-erreur"
     nr = generations["NR-001"]
     assert nr.statut == "erreur" and nr.trace[-1]["type"] == "erreur"
+    assert nr.tronquee is None  # flux coupé avant tout `Fin` : troncature inconnue
     assert all(g.statut == "ok" for i, g in generations.items() if i != "NR-001")
 
 
@@ -687,6 +694,9 @@ def test_schema_generation() -> None:
         "duree_ms": 0,
     }
     assert Generation.model_validate(valide).schema_version == 1
+    # Ligne écrite avant W2 (sans `tronquee`) : toujours lisible, troncature inconnue.
+    assert Generation.model_validate(valide).tronquee is None
+    assert Generation.model_validate({**valide, "tronquee": True}).tronquee is True
     for modif in (
         {"trace": [{"type": "inconnu"}]},
         {"duree_ms": -1},
@@ -696,3 +706,108 @@ def test_schema_generation() -> None:
     ):
         with pytest.raises(ValueError):
             Generation.model_validate({**valide, **modif})
+
+
+# --- Réglages de décodage et troncature (report W2) ---------------------------------------------
+
+
+def _toml_evaluation(dossier: Path, generation: str | None) -> Path:
+    """`evaluation.toml` minimal, avec la section `[generation]` donnée (ou sans elle)."""
+    texte = (
+        "schema_version = 1\n[co]\n[re.longueurs]\ncourte = 80\nmoyenne = 200\ndetaillee = 400\n"
+        "[seuils]\nkappa_fragile = 0.6\ngain_km_min = 10.0\nplafond_lc = 50.0\n"
+    )
+    if generation is not None:
+        texte += "[generation]\n" + generation + "\n"
+    chemin = dossier / "evaluation.toml"
+    chemin.write_text(texte, encoding="utf-8")
+    return chemin
+
+
+def _avec_generation(**reglages: Any) -> Any:
+    return charger_evaluation().model_copy(update={"generation": ConfigGeneration(**reglages)})
+
+
+def test_reglages_par_defaut_inchanges(tmp_path: Path) -> None:
+    assert charger_evaluation().generation == ConfigGeneration()
+    assert options_llm() == ConfigGeneration().options_llm() == OPTIONS_5_3
+    # Section absente : mêmes défauts ; clé absente : défaut de la clé.
+    assert charger_evaluation(_toml_evaluation(tmp_path, None)).generation == ConfigGeneration()
+    partiel = charger_evaluation(_toml_evaluation(tmp_path, "max_tokens = 2048"))
+    assert options_llm(partiel) == {**OPTIONS_5_3, "max_tokens": 2048}
+
+
+@pytest.mark.parametrize(
+    "ligne",
+    [
+        "max_tokens = 0",
+        "max_tokens = 1024.0",
+        "graine = -1",
+        'graine = "42"',
+        "graine = true",
+        "temperature = -0.5",
+        "temperature = nan",
+        "top_p = 0.9",
+    ],
+)
+def test_reglages_invalides(tmp_path: Path, ligne: str) -> None:
+    with pytest.raises(ConfigurationInvalide):
+        charger_evaluation(_toml_evaluation(tmp_path, ligne))
+
+
+def test_reglages_configures_transmis_et_inscrits(depot_eval: Path, modeles: Path) -> None:
+    llm = FakeLlmDeterministe()
+    rapport = lancer(depot_eval, Fabrique(llm), config=_avec_generation(graine=7, max_tokens=64))
+
+    attendu = {"temperature": 0.0, "seed": 7, "max_tokens": 64}
+    assert llm.appels and all(a["options"] == attendu for a in llm.appels)
+    brut = json.loads((rapport.run.dossier / "run.json").read_text(encoding="utf-8"))
+    assert brut["graine"] == 7 and brut["config"]["options_llm"] == attendu
+
+
+def test_reprise_refusee_si_decodage_different(
+    depot_eval: Path, modeles: Path, fabrique: Fabrique
+) -> None:
+    run_id = _run_interrompu(depot_eval, fabrique)
+    with pytest.raises(ManifesteInvalide, match="décodage"):
+        reprendre_generation(
+            run_id, racine=depot_eval, fabrique=fabrique, config=_avec_generation(max_tokens=2048)
+        )
+    run = ouvrir_run(run_id, racine=depot_eval)
+    assert len(lignes(run)) == 3 and run.statut_courant() == "interrompu"
+    # Mêmes valeurs, données explicitement : la reprise passe.
+    rapport = reprendre_generation(
+        run_id, racine=depot_eval, fabrique=fabrique, config=_avec_generation()
+    )
+    assert rapport.statut == "complet"
+
+
+def test_tronquee() -> None:
+    assert tronquee([Jeton(texte="a"), Fin(raison="longueur")]) is True
+    assert tronquee([Fin(raison="terminee")]) is False
+    assert tronquee([Fin(raison="interrompue")]) is False
+    assert tronquee([Jeton(texte="a"), Erreur(code="x", message="y")]) is None
+
+
+def test_sortie_tronquee_reste_ok(depot_eval: Path, modeles: Path) -> None:
+    """`finish_reason` `length` (Fin `longueur`) : statut `ok`, `tronquee` vrai, compté."""
+    llm = FakeLlmDeterministe(raison=lambda messages, options: "longueur")
+    rapport = lancer(depot_eval, Fabrique(llm), items=("CR-001", "RE-001", "Q-001"))
+
+    assert (rapport.ok, rapport.erreur, rapport.tronquees) == (3, 0, 3)
+    assert rapport.statut == "complet"
+    for generation in lignes(rapport.run):
+        assert generation.statut == "ok" and generation.tronquee is True
+        assert generation.trace[-1]["type"] == "fin"
+        assert generation.trace[-1]["raison"] == "longueur"
+
+
+def test_cr_tronque_sur_un_seul_appel(depot_eval: Path, modeles: Path) -> None:
+    """CR : la raison la plus grave des appels l'emporte, un seul appel coupé suffit."""
+    llm = FakeLlmDeterministe()
+    llm.raison = lambda messages, options: "longueur" if len(llm.appels) == 1 else "terminee"
+    rapport = lancer(depot_eval, Fabrique(llm), items=("CR-001",))
+
+    (generation,) = lignes(rapport.run)
+    assert generation.statut == "ok" and generation.tronquee is True
+    assert rapport.tronquees == 1

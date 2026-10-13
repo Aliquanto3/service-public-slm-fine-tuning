@@ -5,24 +5,26 @@
 le verrou GPU en `cuda`, monte le Harnais d'évaluation (`fabrique`, par défaut
 `assemblage.ouvrir_harnais`), puis crée le run et traite chaque item sous
 `assemblage.sans_reseau()`. Chaque item passe par la seule voie `core.items.vers_requete`
-→ `harness.prompts.entree_de_requete` → `AssistantService.repondre`, avec le décodage
-glouton `OPTIONS_LLM`. Une erreur d'item laisse un évènement `Erreur` en fin de trace et le
-run continue ; le statut final est `complet`, `partiel-erreur` (au moins une ligne en
-erreur) ou `interrompu` (exception hors item, relancée).
+→ `harness.prompts.entree_de_requete` → `AssistantService.repondre`, avec le décodage de la
+section `[generation]` de `config/evaluation.toml` (glouton, graine fixe). Une erreur d'item
+laisse un évènement `Erreur` en fin de trace et le run continue ; le statut final est
+`complet`, `partiel-erreur` (au moins une ligne en erreur) ou `interrompu` (exception hors
+item, relancée). Une sortie coupée au plafond `max_tokens` reste `ok` et porte
+`tronquee = true`.
 
 `reprendre_generation` complète le même dossier en ajout seul : les items déjà présents
-dans `generations.jsonl` (en erreur compris) sont sautés.
+dans `generations.jsonl` (en erreur compris) sont sautés. Elle refuse un run dont les
+options de décodage inscrites diffèrent de la configuration courante.
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import AbstractContextManager, ExitStack
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import perf_counter
-from types import MappingProxyType
 from typing import Any, Final
 
 from slmsp.core.artefacts import Run, nouveau_run, ouvrir_run, reprendre
@@ -48,12 +50,6 @@ LOGGER: Final = logging.getLogger("slmsp.evaluation")
 
 TYPE_RUN: Final = "eval-generation"
 FICHIER_GENERATIONS: Final = "generations.jsonl"
-GRAINE: Final = 42
-MAX_TOKENS: Final = 1024
-OPTIONS_LLM: Final = MappingProxyType(
-    {"temperature": 0.0, "seed": GRAINE, "max_tokens": MAX_TOKENS}
-)
-"""Décodage glouton, graine fixe (constantes en attendant `config/evaluation.toml`, 5.6)."""
 
 CODE_ERREUR_EVALUATION: Final = "erreur-evaluation"
 """Code de l'`Erreur` d'un item dont le traitement échoue hors du flux du Harnais."""
@@ -71,6 +67,8 @@ class RapportGeneration:
     ok: int = 0
     erreur: int = 0
     sautes: int = 0
+    tronquees: int = 0
+    """Items de cette session coupés au plafond `max_tokens` (comptés aussi dans `ok`)."""
     statut: str = "en_cours"
     durees_ms: list[int] = field(default_factory=list)
     connexions_bloquees: list[str] = field(default_factory=list)
@@ -115,8 +113,30 @@ def _contenu(harnais: HarnaisEvaluation, code: str, entree: str | dict[str, Any]
     return construire_messages(harnais.taches.tache(code), entree)[1]["content"]
 
 
-def generer_item(harnais: HarnaisEvaluation, jeu: Jeu, item: ItemBase) -> Generation:
-    """Génère la sortie de `item` par le Harnais complet ; ne lève pas pour une erreur d'item."""
+def options_llm(config: cfg.ConfigEvaluation | None = None) -> dict[str, Any]:
+    """Options de décodage de `[generation]` (défaut : `config/evaluation.toml` du projet)."""
+    return (config if config is not None else cfg.charger_evaluation()).generation.options_llm()
+
+
+def tronquee(trace: Sequence[Evenement]) -> bool | None:
+    """`True` si un `Fin` de la trace a la raison `longueur` ; `None` sans aucun `Fin`."""
+    fins = [e for e in trace if isinstance(e, Fin)]
+    if not fins:
+        return None
+    return any(fin.raison == "longueur" for fin in fins)
+
+
+def generer_item(
+    harnais: HarnaisEvaluation,
+    jeu: Jeu,
+    item: ItemBase,
+    options: Mapping[str, Any] | None = None,
+) -> Generation:
+    """Génère la sortie de `item` par le Harnais complet ; ne lève pas pour une erreur d'item.
+
+    `options` : décodage transmis au client LLM (défaut : `options_llm()`).
+    """
+    decodage = dict(options) if options is not None else options_llm()
     trace: list[Evenement] = []
     debut = perf_counter()
     try:
@@ -124,9 +144,7 @@ def generer_item(harnais: HarnaisEvaluation, jeu: Jeu, item: ItemBase) -> Genera
         requete = vers_requete(item)
         entree = entree_de_requete(requete)
         messages = [{"role": "user", "content": _contenu(harnais, requete.tache, entree)}]
-        for evenement in service.repondre(
-            requete.tache, messages, {"entree": entree, **OPTIONS_LLM}
-        ):
+        for evenement in service.repondre(requete.tache, messages, {"entree": entree, **decodage}):
             trace.append(evenement)
     except Exception as exc:
         LOGGER.error("item %s : %s : %s", item.id, type(exc).__name__, exc)
@@ -142,6 +160,7 @@ def generer_item(harnais: HarnaisEvaluation, jeu: Jeu, item: ItemBase) -> Genera
         sortie_canonique=sortie_canonique(trace),
         trace=[vers_dict(e) for e in _fusionner_jetons(trace)],
         duree_ms=duree_ms,
+        tronquee=tronquee(trace),
     )
 
 
@@ -202,6 +221,7 @@ def _boucle(
     selection: Sequence[ItemBase],
     deja: set[str],
     rapporter: Rapporteur | None,
+    options: Mapping[str, Any],
 ) -> RapportGeneration:
     """Traite les items absents de `deja`, puis inscrit le statut final."""
     rapport = RapportGeneration(run=run)
@@ -211,12 +231,14 @@ def _boucle(
                 if item.id in deja:
                     rapport.sautes += 1
                     continue
-                generation = generer_item(harnais, jeu, item)
+                generation = generer_item(harnais, jeu, item, options)
                 run.ajouter_jsonl(FICHIER_GENERATIONS, generation)
                 if generation.statut == "ok":
                     rapport.ok += 1
                 else:
                     rapport.erreur += 1
+                if generation.tronquee:
+                    rapport.tronquees += 1
                 rapport.durees_ms.append(generation.duree_ms)
                 if rapporter is not None:
                     rapporter(generation, rang, len(selection))
@@ -249,25 +271,28 @@ def lancer_generation(
     racine: str | Path | None = None,
     fabrique: Fabrique = ouvrir_harnais,
     rapporter: Rapporteur | None = None,
+    config: cfg.ConfigEvaluation | None = None,
 ) -> RapportGeneration:
     """Phase génération de `modele_ref` × `quantification` sur le jeu `jeu` (voir le module).
 
+    `config` : réglages de `config/evaluation.toml` (défaut : lus dans le projet).
     Lève `ManifesteInvalide` (jeu altéré, code 4) avant toute autre action, `ValueError`
     (usage : variante, référence, quantification ou item inconnus), `ConfigurationInvalide`
-    (modèle), `RessourceOccupee` (GPU).
+    (modèle, `evaluation.toml`), `RessourceOccupee` (GPU).
     """
     base = _racine(racine)
     if variante not in VARIANTES:
         raise ValueError(f"variante inconnue : {variante!r} (attendu : {', '.join(VARIANTES)})")
     _verifier_jeu(jeu, base)
+    reglages = (config if config is not None else cfg.charger_evaluation()).generation
     jeu_lu = lire_jeu(jeu, base)
     selection = _selection(jeu_lu, items)
     modele = resoudre(modele_ref, quantification, racine=base)
     with ExitStack() as pile:
         _verrou(variante, pile, modele)
         harnais = pile.enter_context(fabrique(modele, variante, base))
-        run = _nouveau_run(harnais, jeu_lu, selection, modele, variante, base)
-        return _boucle(run, harnais, jeu_lu, selection, set(), rapporter)
+        run = _nouveau_run(harnais, jeu_lu, selection, modele, variante, base, reglages)
+        return _boucle(run, harnais, jeu_lu, selection, set(), rapporter, reglages.options_llm())
 
 
 def _nouveau_run(
@@ -277,10 +302,11 @@ def _nouveau_run(
     modele: ModeleResolu,
     variante: str,
     racine: Path,
+    reglages: cfg.ConfigGeneration,
 ) -> Run:
     config = {
         "phase": "generation",
-        "options_llm": dict(OPTIONS_LLM),
+        "options_llm": reglages.options_llm(),
         "items": [item.id for item in selection],
         "serveur": harnais.description,
         "chat_template_force": modele.config.chat_template_force,
@@ -291,7 +317,7 @@ def _nouveau_run(
         modele.slug_run,
         config,
         entrees=_entrees(jeu, modele, racine),
-        graine=GRAINE,
+        graine=reglages.graine,
         racine=racine,
         modele_ref=modele.ref,
         quantification=modele.quantification,
@@ -313,15 +339,17 @@ def reprendre_generation(
     quantification: str | None = None,
     jeu: str | None = None,
     variante: str | None = None,
+    config: cfg.ConfigEvaluation | None = None,
 ) -> RapportGeneration:
     """Reprend le run `run_id` en ajout seul (items déjà présents sautés).
 
     Relit `run.json` (modèle, quantification, variante, jeu, items) ; `modele_ref`,
     `quantification`, `jeu` et `variante`, s'ils sont donnés, doivent lui être égaux.
-    Revérifie le manifeste du jeu et refuse un chat template servi, une version d'Index ou
-    un tag llama.cpp différents de ceux du run. Lève `SlmspError` pour un run `complet`,
+    Revérifie le manifeste du jeu et refuse des options de décodage (`config`, défaut :
+    `config/evaluation.toml`), un chat template servi, une version d'Index ou un tag
+    llama.cpp différents de ceux du run. Lève `SlmspError` pour un run `complet`,
     `ManifesteInvalide` pour un run introuvable, d'un autre type, d'un autre modèle, d'un
-    autre template, d'un autre Index ou d'un autre llama.cpp.
+    autre décodage, d'un autre template, d'un autre Index ou d'un autre llama.cpp.
     """
     base = _racine(racine)
     run = ouvrir_run(run_id, racine=base)
@@ -352,6 +380,13 @@ def reprendre_generation(
     ):
         raise ManifesteInvalide(f"run {run_id} : run.json incomplet pour une reprise")
     _verifier_jeu(manifeste.jeu_version, base)
+    options = options_llm(config)
+    inscrites = manifeste.config.get("options_llm")
+    if inscrites != options:
+        raise ManifesteInvalide(
+            f"run {run_id} : options de décodage différentes de config/evaluation.toml "
+            f"({options}, inscrites {inscrites})"
+        )
     jeu_lu = lire_jeu(manifeste.jeu_version, base)
     try:
         selection = _selection(jeu_lu, manifeste.config["items"])
@@ -371,19 +406,18 @@ def reprendre_generation(
                     f"run {run_id} : {libelle} différent ({servi}, inscrit {inscrit})"
                 )
         run, deja = reprendre(run_id, fichier=FICHIER_GENERATIONS, cle="item_id", racine=base)
-        return _boucle(run, harnais, jeu_lu, selection, deja, rapporter)
+        return _boucle(run, harnais, jeu_lu, selection, deja, rapporter, options)
 
 
 __all__ = [
     "CODE_ERREUR_EVALUATION",
     "FICHIER_GENERATIONS",
-    "GRAINE",
-    "MAX_TOKENS",
-    "OPTIONS_LLM",
     "TYPE_RUN",
     "RapportGeneration",
     "generer_item",
     "lancer_generation",
+    "options_llm",
     "reprendre_generation",
     "sortie_canonique",
+    "tronquee",
 ]

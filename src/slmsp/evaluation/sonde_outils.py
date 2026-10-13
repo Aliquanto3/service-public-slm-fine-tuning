@@ -2,9 +2,10 @@
 
 `sonder("base:<slug>")` passe les items RD-001 et RD-002 du calibrage (R-001 et R-002 de
 H-TOOLS) par le Harnais d'évaluation de la phase génération (`generation.generer_item`,
-Bac à sable sur les cassettes, `ModeFixe` connecté, profil réseau `aucun`, décodage
-`OPTIONS_LLM`), d'abord avec le protocole d'outils `natif`. Si ce protocole échoue, une
-seconde passe relance les mêmes items en `json-generique`, avec un Harnais rouvert. Le
+Bac à sable sur les cassettes, `ModeFixe` connecté, profil réseau `aucun`, décodage de la
+section `[generation]` de `config/evaluation.toml`), d'abord avec le protocole d'outils
+`natif`. Si ce protocole échoue, une seconde passe relance les mêmes items en
+`json-generique`, avec un Harnais rouvert. Le
 protocole est imposé sur une copie de la configuration du modèle : aucun TOML n'est réécrit.
 
 Critère de validité d'un protocole : chaque item sondé a le statut `ok`, au moins un appel
@@ -32,6 +33,7 @@ from slmsp.core.canonique import json_canonique
 from slmsp.core.items import VERSION_CALIBRAGE, ItemBase, ItemRD, Jeu, lire_jeu
 from slmsp.core.schemas.generation import Generation
 from slmsp.core.var import verrou_gpu
+from slmsp.evaluation import config as cfg
 from slmsp.evaluation.assemblage import (
     PROFIL_RESEAU,
     HarnaisEvaluation,
@@ -40,8 +42,6 @@ from slmsp.evaluation.assemblage import (
 )
 from slmsp.evaluation.controles import controle_rd
 from slmsp.evaluation.generation import (
-    GRAINE,
-    OPTIONS_LLM,
     Fabrique,
     _entrees,
     _racine,
@@ -218,13 +218,14 @@ def _nouveau_run(
     modele: ModeleResolu,
     variante: str,
     racine: Path,
+    reglages: cfg.ConfigGeneration,
 ) -> Run:
     config = {
         "phase": "sonde-outils",
         "critere": CRITERE,
         "protocoles": list(PROTOCOLES),
         "protocole_toml": modele.config.protocole_outils,
-        "options_llm": dict(OPTIONS_LLM),
+        "options_llm": reglages.options_llm(),
         "items": [item.id for item in selection],
         "serveur": harnais.description,
         "chat_template_force": modele.config.chat_template_force,
@@ -235,7 +236,7 @@ def _nouveau_run(
         modele.slug_run,
         config,
         entrees=_entrees(jeu, modele, racine),
-        graine=GRAINE,
+        graine=reglages.graine,
         racine=racine,
         modele_ref=modele.ref,
         quantification=modele.quantification,
@@ -256,12 +257,14 @@ def sonder(
     racine: str | Path | None = None,
     fabrique: Fabrique = ouvrir_harnais,
     rapporter: Rapporteur | None = None,
+    config: cfg.ConfigEvaluation | None = None,
 ) -> RapportSonde:
     """Sonde le tool calling de `modele_ref` (`base:<slug>`) : voir le module.
 
+    `config` : réglages de `config/evaluation.toml` (défaut : lus dans le projet).
     Lève `ValueError` (usage : référence, variante, item inconnu ou hors RD) avant tout
-    run, `ManifesteInvalide` (jeu gelé altéré), `ConfigurationInvalide` (modèle),
-    `RessourceOccupee` (GPU).
+    run, `ManifesteInvalide` (jeu gelé altéré), `ConfigurationInvalide` (modèle,
+    `evaluation.toml`), `RessourceOccupee` (GPU).
     """
     base = _racine(racine)
     if variante not in VARIANTES:
@@ -271,6 +274,8 @@ def sonder(
             f"référence de modèle invalide : {modele_ref!r} (la sonde porte sur base:<slug>)"
         )
     _verifier_jeu(jeu, base)
+    reglages = (config if config is not None else cfg.charger_evaluation()).generation
+    options = reglages.options_llm()
     jeu_lu = lire_jeu(jeu, base)
     selection = _selection_rd(jeu_lu, items)
     modele = resoudre(modele_ref, QUANTIFICATION, racine=base)
@@ -283,7 +288,9 @@ def sonder(
                 with fabrique(_avec_protocole(modele, protocole), variante, base) as harnais:
                     if rapport is None:
                         rapport = RapportSonde(
-                            run=_nouveau_run(harnais, jeu_lu, selection, modele, variante, base)
+                            run=_nouveau_run(
+                                harnais, jeu_lu, selection, modele, variante, base, reglages
+                            )
                         )
                     bilan = BilanProtocole(
                         protocole,
@@ -293,7 +300,8 @@ def sonder(
                     rapport.bilans[protocole] = bilan
                     with sans_reseau() as bloquees:
                         for rang, item in enumerate(selection, start=1):
-                            ligne = evaluer(item, generer_item(harnais, jeu_lu, item), protocole)
+                            generation = generer_item(harnais, jeu_lu, item, options)
+                            ligne = evaluer(item, generation, protocole)
                             rapport.run.ajouter_jsonl(FICHIER_SONDE, ligne)
                             bilan.ajouter(ligne)
                             if rapporter is not None:

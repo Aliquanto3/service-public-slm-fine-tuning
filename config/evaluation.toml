@@ -4,6 +4,17 @@
 
 schema_version = 1
 
+[generation]
+# Décodage de la phase génération (story 5.3, report W2) : glouton, graine fixe. Ces valeurs
+# sont transmises à llama-server et inscrites dans `run.json` (`options_llm`, `graine`) ;
+# une reprise refuse un run généré avec d'autres valeurs. La graine sert aussi au tirage
+# des échantillons du calibrage (sans manifeste) à la notation.
+graine = 42
+temperature = 0.0
+# Plafond de tokens générés par appel au modèle. Une sortie coupée à ce plafond garde le
+# statut `ok` et porte `tronquee = true` dans `generations.jsonl`.
+max_tokens = 1024
+
 [co]
 # Équivalences typographiques tolérées par la Correction (CO), appliquées au texte source
 # comme à la sortie avant l'alignement par mots : une reformulation de ponctuation
