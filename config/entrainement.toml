@@ -1,0 +1,9 @@
+# Protocole d'entraînement (AD-22). La story 10.3 y pose la mesure du coût d'un Run (FR-33) ;
+# la story 10.4 le complète. `config/mesures.toml` reste à la story 6.4 : `train` ne peut pas
+# importer `measure` (AD-1).
+
+[couts]
+# Pas ignorés avant de mesurer le débit en tokens/s hors padding (chauffe : CUDA, caches).
+pas_chauffe = 10
+# Période d'échantillonnage NVML (puissance, VRAM), en millisecondes.
+periode_echantillonnage_ms = 200
