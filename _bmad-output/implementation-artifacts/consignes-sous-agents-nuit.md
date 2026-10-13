@@ -66,3 +66,19 @@ Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même q
   - **Rapport de nuit** : les recommandations du §1 (écarts et décisions techniques) sont validées.
   - **Dépense API** : environ 10 $ restent disponibles sur l'API Anthropic. La campagne de génération Mistral (9.8) est autorisée. Ces deux autorisations ne valent que pour l'orchestrateur : un sous-agent de story reste sans appel payant.
   - **Anti-fuite (9.3 et suivantes)** : l'exclusion porte aussi sur les items de `eval/jeu/v1.1/items.jsonl` (gelé `relu`), en plus de ceux du jeu v1.0.
+
+## Agents du projet (à partir du redémarrage du 2026-10-13)
+- **Agents disponibles** :
+  - `dev-story` : Sonnet, effort medium. Il ne peut lancer ni sous-agent ni workflow. Un hook `Stop` lance `outils/controle_rapide.py`.
+  - `reviewer` : Sonnet, effort medium.
+  - `lookup` : Haiku, effort low, en lecture seule.
+
+  Ils sont définis dans `.claude/agents/`.
+- **Déroulé d'une story** :
+  1. L'orchestrateur lance `dev-story` dans un worktree.
+  2. Il lance ensuite `reviewer` sur le commit, par un appel qui attend le résultat.
+  3. Il fusionne en squash, met à jour `sprint-status.yaml` et tient le décompte.
+
+  `bmad-build-auto` n'est plus lancé dans les sous-agents : il lançait ses propres sous-agents, qui partaient en arrière-plan.
+- **Story transverse ou à risque** (D1, budget d'API, cassettes, plusieurs couches) : `dev-story` avec le paramètre `model: opus`. Le reviewer passe aussi sur Opus pour un commit à risque.
+- **Coût réel d'un sous-agent** : `uv run python outils/cout_sous_agents.py --session <dossier de session> --ids <id>`.
