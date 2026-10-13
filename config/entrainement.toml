@@ -1,0 +1,13 @@
+# Configuration de l'entraînement (epic 10). Fichier créé par la story 10.3 (protocole de
+# mesure du coût, FR-33) ; la story 10.4 y ajoute le reste. Validé par
+# `slmsp.train.config.ConfigEntrainement`. Fichier daté du 2026-10-13.
+
+schema_version = 1
+
+[couts]
+# Pas d'entraînement exclus du débit (chauffe : compilation, caches, allocateur).
+pas_chauffe = 10
+# Période d'échantillonnage NVML (puissance et mémoire), en millisecondes.
+periode_echantillonnage_ms = 200
+# Indice du GPU interrogé par NVML.
+indice_gpu = 0
