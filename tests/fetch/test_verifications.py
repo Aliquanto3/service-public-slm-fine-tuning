@@ -297,6 +297,16 @@ def test_template_identique(tmp_path: Path) -> None:
     assert not (base / "chat_template.jinja").exists()
 
 
+def test_template_identique_avec_force_exporte(tmp_path: Path) -> None:
+    """Revue lot 3b, P3 : `chat_template_force` exige le fichier exporté, même identique."""
+    base, gguf = preparer_template(tmp_path, TEMPLATE_HF, TEMPLATE_HF)
+    controle = verifier_chat_template("m", config_modele(chat_template_force=True), base, gguf)
+    assert controle.statut == "ok"
+    assert "superflu" in controle.detail
+    assert controle.valeurs["issue_export"] == "cree"
+    assert (base / "chat_template.jinja").read_bytes() == TEMPLATE_HF.encode("utf-8")
+
+
 def test_template_different_sans_force(tmp_path: Path) -> None:
     base, gguf = preparer_template(tmp_path, TEMPLATE_HF, TEMPLATE_AUTRE)
     controle = verifier_chat_template("m", config_modele(), base, gguf)
@@ -549,6 +559,34 @@ def test_fabrique_par_defaut_et_chemins_de_serveur_llama(
     assert serveur.chat_template is not None and serveur.chat_template.is_file()
     assert serveur.gguf == dossier_modeles() / "m" / "gguf" / GGUF_NOM
     assert serveur.gguf.resolve() == gguf.resolve()
+
+
+def test_gguf_en_sous_dossier_meme_chemin_pour_fetch_controles_et_serveur(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Revue lot 3b, P1 : `gguf.fichier` avec un sous-dossier du dépôt."""
+    from slmsp.core.config import dossier_modeles
+    from slmsp.fetch import modeles
+    from slmsp.inference.serveur import ServeurLlama
+
+    monkeypatch.setenv("SLMSP_MODELS_DIR", str(tmp_path / "models"))
+    base, gguf = preparer_template(tmp_path, TEMPLATE_HF, TEMPLATE_HF)
+    config = config_modele(
+        gguf={
+            "depot": "org/modele-GGUF",
+            "fichier": f"Q4_K_M/{GGUF_NOM}",
+            "sha256": "0" * 64,
+            "revision": "b" * 40,
+            "source": "officielle",
+        }
+    )
+    # Destination de `fetch modeles` (fichier présent : aucune requête).
+    destination = modeles._gguf(None, config, base).destination  # type: ignore[arg-type]
+    serveur = ServeurLlama(config, "cpu", slug="m")  # jamais démarré
+    assert destination == serveur.gguf == dossier_modeles() / "m" / "gguf" / GGUF_NOM
+    assert serveur.gguf.resolve() == gguf.resolve()
+    controles = verifier_modele("m", config, dossier_modeles(), sans_serveur=True)
+    assert controles[3].valeurs["sha256_gguf"] == sha(TEMPLATE_HF)
 
 
 @pytest.mark.parametrize(

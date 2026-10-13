@@ -310,6 +310,20 @@ def test_compter_tokens(client: ClientLlama, serveur_factice: Any) -> None:
     assert tokenize["content"].startswith("<|system|>")
 
 
+def test_compter_tokens_transmet_les_kwargs(serveur_factice: Any) -> None:
+    """Revue lot 3b, P4 : le compte porte sur le rendu que `generer` produira."""
+    with ClientLlama(serveur_factice.port, chat_template_kwargs={"a": 1}) as client:
+        client.compter_tokens(MESSAGES, OUTILS)
+    (gabarit,) = serveur_factice.corps("/apply-template")
+    assert gabarit["chat_template_kwargs"] == {"a": 1}
+
+
+def test_compter_tokens_sans_kwargs(client: ClientLlama, serveur_factice: Any) -> None:
+    client.compter_tokens(MESSAGES, OUTILS)
+    (gabarit,) = serveur_factice.corps("/apply-template")
+    assert "chat_template_kwargs" not in gabarit
+
+
 def test_compter_tokens_json_generique_sans_outils(
     client_json: ClientLlama, serveur_factice: Any
 ) -> None:

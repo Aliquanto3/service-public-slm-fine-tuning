@@ -260,6 +260,9 @@ def test_demarrage_rate_processus_mort(
         instance.demarrer()
     assert _entrees() == []
     assert not instance.demarre
+    # Le journal reste désigné après l'échec : c'est là qu'il sert (revue lot 3b, P2).
+    assert instance.journal is not None
+    assert "mort volontaire" in instance.journal.read_text(encoding="utf-8")
 
 
 def test_demarrage_rate_sante(
@@ -267,7 +270,12 @@ def test_demarrage_rate_sante(
 ) -> None:
     _factice(monkeypatch, "--sante", "503")
     instance = ServeurLlama(
-        config_modele(), slug=SLUG, config_llamacpp=vendor_factice.config, delai_demarrage=2
+        # 5 s : sous la charge de la suite complète, le factice met parfois plus de 2 s à
+        # écrire « écoute sur » dans le journal.
+        config_modele(),
+        slug=SLUG,
+        config_llamacpp=vendor_factice.config,
+        delai_demarrage=5,
     )
     debut = time.monotonic()
     with pytest.raises(ErreurInference, match="(?s)pas prêt.*écoute sur"):
@@ -275,6 +283,7 @@ def test_demarrage_rate_sante(
     assert time.monotonic() - debut < 30
     assert not lancements[0]["gere"].vivant
     assert _entrees() == []
+    assert instance.journal is not None and instance.journal.is_file()
 
 
 def test_deux_instances(

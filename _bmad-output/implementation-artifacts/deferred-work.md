@@ -32,3 +32,13 @@ Trois relectures indépendantes (Haiku, Sonnet et Opus) ont été faites pendant
   - `--longueur-unsloth` n'est ni validé ni consigné.
   - Motif trompeur quand la sonde TRL échoue avec `--unsloth`.
 - **W4.7. Tests absents** : longueur en `erreur` après `ok`, débordement à la première longueur, erreur au chargement 4 bits hors bitsandbytes, dépendance entre longueurs, statuts `deduite`.
+
+## Deferred from: code review of lot 3b, téléchargeur et inférence (2026-10-13)
+
+- **W5. `fetch llamacpp` écrit sous `<--racine>/vendor`, alors que `ServeurLlama` lit `SLMSP_VENDOR_DIR` en priorité** (`src/slmsp/fetch/llamacpp.py:72`, `src/slmsp/inference/serveur.py:73`).
+  - Conséquence : dans un worktree où `SLMSP_VENDOR_DIR` est défini, un `fetch llamacpp` sans `--racine` retélécharge le tag dans le worktree, et le serveur continue de lire l'autre copie.
+  - Piste : quand `--racine` est absent, faire suivre `SLMSP_VENDOR_DIR` à `fetch`, comme `models/` suit `SLMSP_MODELS_DIR`.
+  - Motif du report : choix d'interface sur le sens de `--racine`.
+- **W6. `evaluation/modele_ref.py` joint `gguf.fichier` complet** (`src/slmsp/evaluation/modele_ref.py:74`). C'est le même écart que P1 du lot 3b : un GGUF rangé dans un sous-dossier du dépôt serait déclaré absent.
+  - Piste : reprendre `PurePosixPath(config.gguf.fichier).name`, ou mieux, `ServeurLlama(config, slug=…).gguf`.
+  - Motif du report : fichier hors de la cible du lot 3b (lot 2). Aucun TOML actuel n'est concerné.

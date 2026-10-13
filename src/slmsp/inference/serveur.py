@@ -23,7 +23,7 @@ import time
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Final, Literal, get_args
 
 from slmsp.core.artefacts import ArtefactExistant
@@ -390,7 +390,10 @@ class ServeurLlama:
         if self._gguf is not None:
             return self._gguf
         assert self.slug is not None
-        return dossier_modeles() / self.slug / "gguf" / self.config.gguf.fichier
+        # Nom de base seul, comme `fetch modeles` qui range le GGUF sous `gguf/<nom>` même
+        # quand `gguf.fichier` désigne un sous-dossier du dépôt.
+        nom = PurePosixPath(self.config.gguf.fichier).name
+        return dossier_modeles() / self.slug / "gguf" / nom
 
     @property
     def chat_template(self) -> Path | None:
@@ -491,6 +494,7 @@ class ServeurLlama:
                 nom = self.slug or self.gguf.name
                 pile.enter_context(verrou_gpu(commande=f"llama-server {nom} (cuda)"))
             journal = self._journal or self._chemin_journal(port)
+            self._journal = journal  # gardé aussi quand le démarrage échoue
             gere = processus.lancer(
                 arguments, role=self.role, port=port, journal=journal, env=env_sous_processus()
             )
@@ -499,7 +503,6 @@ class ServeurLlama:
         except BaseException:
             pile.close()
             raise
-        self._journal = journal
         self._processus, self._pile, self._port = gere, pile, port
         return self
 

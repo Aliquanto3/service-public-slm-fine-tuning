@@ -247,6 +247,39 @@ def test_nettoyer_laisse_un_processus_dont_le_parent_vit(tmp_path: Path) -> None
         gere.arreter()
 
 
+@pytest.mark.parametrize(
+    "modification",
+    [
+        {"pid": "12"},  # psutil.Process("12") lèverait TypeError
+        {"parent_pid": True},
+        {"creation": "hier"},
+        {"role": None, "pid": 12.0},
+    ],
+)
+def test_nettoyer_entree_mal_typee(modification: dict) -> None:
+    """Revue lot 3b, P5 : JSON valide mais mal typé → `illisible`, sans exception."""
+    entree = {
+        "pid": 12,
+        "port": None,
+        "role": "x",
+        "parent_pid": 13,
+        "parent_creation": 1.0,
+        "creation": 2.0,
+    }
+    chemin = processus.dossier_pids() / "mal-type.json"
+    chemin.write_text(json.dumps({**entree, **modification}), encoding="utf-8")
+    lignes = processus.nettoyer_orphelins()
+    assert [ligne["action"] for ligne in lignes] == ["illisible"]
+    assert not chemin.exists()
+
+
+def test_nettoyer_entree_incomplete() -> None:
+    chemin = processus.dossier_pids() / "incomplete.json"
+    chemin.write_text(json.dumps({"pid": 12, "role": "x", "creation": 2.0}), encoding="utf-8")
+    assert [ligne["action"] for ligne in processus.nettoyer_orphelins()] == ["illisible"]
+    assert not chemin.exists()
+
+
 def test_lancer_commande_introuvable(tmp_path: Path) -> None:
     with pytest.raises(OSError):
         processus.lancer([str(tmp_path / "absent.exe")], role="x", journal=tmp_path / "j.log")
