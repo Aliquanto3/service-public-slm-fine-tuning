@@ -1,0 +1,13 @@
+# Configuration de l'entrainement (AD-18). Lue par `slmsp.train.config.charger_config_entrainement`.
+# La story 10.3 cree la table [couts] ; la story 10.4 complete ce fichier.
+
+# Version du format de ce fichier (seule valeur admise : 1).
+schema_version = 1
+
+# Protocole de mesure du cout d'un Run (FR-33), identique pour toutes les methodes.
+# `config/mesures.toml` reste a la story 6.4 : `train` ne peut pas importer `measure` (AD-1).
+[couts]
+# Nombre de pas d'optimisation exclus du debit (chauffe) : le debit se mesure apres eux.
+pas_chauffe = 10
+# Periode d'echantillonnage NVML (puissance et memoire), en millisecondes.
+periode_echantillonnage_ms = 200
