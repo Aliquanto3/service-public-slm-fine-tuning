@@ -1,0 +1,8 @@
+# Protocole d'entraînement de `slmsp train` (AD-18, FR-33). Créé par la story 10.3
+# (mesures de coût) et complété par la story 10.4. `train` ne peut pas importer `measure`
+# (AD-1) : le protocole de coût d'un Run vit ici, pas dans `config/mesures.toml`.
+
+[couts]
+pas_chauffe = 10 # pas d'optimisation exclus du débit (tokens/s hors padding)
+periode_echantillonnage = 0.2 # secondes entre deux relevés NVML (puissance, VRAM)
+indice_gpu = 0 # carte NVML interrogée
