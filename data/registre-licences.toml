@@ -1,0 +1,124 @@
+# Registre des licences (FR-31, AD-3 verrou 5). Lu par `slmsp.data.licences.RegistreLicences`.
+#
+# Toute source d'amorce ou de Donnée d'entraînement doit figurer ici, sinon la construction
+# échoue (`SourceSansLicence`). Valeurs relevées le 2026-10-12 sur les fiches Hugging Face
+# (API `huggingface.co/api/datasets`, profil réseau `outillage`). Ne rien inscrire sans
+# l'avoir lu sur la fiche ou la page de conditions.
+#
+# Champs d'une entrée `[[sources]]` :
+# - `id` : identifiant de la source (`<organisation>/<nom>`, celui de la fiche HF pour un jeu) ;
+# - `licence` : licence déclarée sur la fiche (ou « non-declaree ») ;
+# - `usage` : `diffusable` (variante diffusable admise), `recherche` (variante `recherche`
+#   seulement) ou `evaluation_seulement` (refusée par tout le pipeline de données) ;
+# - `auteur_contenu` : `public`, `mistral` ou `anael` (jamais `claude` ni `inconnu`) ;
+# - `genere_par` : `humain`, `mistral` ou `api-publique` (aucun modèle non autorisé) ;
+# - `revision` : commit du jeu lu (facultatif) ; `verifie_le` : date du relevé (facultatif) ;
+# - `notes` : précisions utiles à la diffusion (facultatif).
+
+# Version du format de ce fichier (seule valeur admise : 1).
+schema_version = 1
+
+[[sources]]
+id = "AgentPublic/service-public"
+licence = "etalab-2.0"
+usage = "diffusable"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "7ddda096b33d48dbda8143fc8c349a8b0e031a3a"
+verifie_le = 2026-10-12
+notes = "Licence Ouverte 2.0 : attribution obligatoire."
+
+[[sources]]
+id = "AgentPublic/data-gouv-datasets-catalog"
+licence = "etalab-2.0"
+usage = "diffusable"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "11f3d3c9481ad478dbcff52e85d73b7fd10533ce"
+verifie_le = 2026-10-12
+notes = "Licence Ouverte 2.0 : attribution obligatoire."
+
+[[sources]]
+id = "AgentPublic/sp_questions_corpus"
+licence = "mit"
+usage = "diffusable"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "495a22cf7b572621a85d2f3e97783b2f4189c47e"
+verifie_le = 2026-10-12
+
+[[sources]]
+id = "AgentPublic/assistant_ia_questions_corpus"
+licence = "mit"
+usage = "diffusable"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "62cef57af7cc5fe54862a8118c221246771ad9ea"
+verifie_le = 2026-10-12
+notes = "Fiche : « generated and improved using non-expert knowledge », mode de génération non précisé : à confirmer par Anaël."
+
+[[sources]]
+id = "AgentPublic/retriever_dataset"
+licence = "non-declaree"
+usage = "recherche"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "aab978b2db590116dadd108f337bfbda036887e1"
+verifie_le = 2026-10-12
+notes = "Aucune fiche ni licence déclarée : classé recherche par prudence."
+
+[[sources]]
+id = "AgentPublic/piaf"
+licence = "mit"
+usage = "diffusable"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "bda8c063bc7297180796cd835d1974c0bc71c521"
+verifie_le = 2026-10-12
+notes = "Jeu produit par contribution participative (crowdsourced)."
+
+[[sources]]
+id = "AgentPublic/MCQ-eval"
+licence = "etalab-2.0"
+usage = "evaluation_seulement"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "d104aa4fef453abe9716e8866c68778a0804198c"
+verifie_le = 2026-10-12
+notes = "Jeu d'évaluation : refusé dès `seed`."
+
+[[sources]]
+id = "esoria3/french_simplified"
+licence = "non-declaree"
+usage = "evaluation_seulement"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "baebde461d0fd28baba32671a9af16826c55ccee"
+verifie_le = 2026-10-12
+notes = "Aucune licence déclarée (source : alector_corpus) : évaluation seulement."
+
+[[sources]]
+id = "OpenLLM-France/Claire-Dialogue-French-0.1"
+licence = "cc-by-nc-sa-4.0"
+usage = "recherche"
+auteur_contenu = "public"
+genere_par = "humain"
+revision = "2d003b86aff5b622533ecfea29ada554f3e6db03"
+verifie_le = 2026-10-12
+notes = "Clause non commerciale et partage à l'identique : variante recherche seulement."
+
+[[sources]]
+id = "mistral/reponses-generateur"
+licence = "conditions-commerciales-mistral"
+usage = "diffusable"
+auteur_contenu = "mistral"
+genere_par = "mistral"
+notes = "Réponses du Générateur Mistral ; date de vérification des conditions portée par config/donnees.toml [mistral]."
+
+[[sources]]
+id = "data.gouv/reponses-outils-mcp"
+licence = "etalab-2.0"
+usage = "diffusable"
+auteur_contenu = "public"
+genere_par = "api-publique"
+notes = "Réponses d'outils MCP data.gouv (métadonnées publiées sous Licence Ouverte 2.0) ; licence de chaque jeu interrogé à confirmer."

@@ -1,0 +1,67 @@
+# Pipeline de données (AD-17, D1.2, D4). Lu par `slmsp.data.config.charger_config_donnees`.
+# La table [mistral] est aussi lue par `slmsp.mistral.generateur.charger_prealables`.
+
+# Version du format de ce fichier (seule valeur admise : 1).
+schema_version = 1
+
+# Préalables du Générateur Mistral (D1.2). La campagne relit la page des conditions par GET
+# (profil réseau `outillage`) puis inscrit ici la date, l'URL et le SHA de la page.
+[mistral]
+# Date (TOML, AAAA-MM-JJ) de vérification des conditions commerciales de Mistral. Le
+# Générateur refuse de démarrer si elle n'est pas égale au jour même. Chaîne vide tant que
+# la vérification n'a pas été faite : la génération est alors refusée. Renseignée si et
+# seulement si `conditions_sha256` l'est aussi.
+conditions_verifiees_le = ""
+# Méthode de vérification des conditions (texte libre consigné au MANIFEST).
+methode_verification = "GET de la page des conditions par slmsp.net.client('outillage'), SHA-256 des octets reçus"
+# Page des conditions commerciales relue (seule URL admise par le profil `outillage`).
+conditions_url = "https://legal.mistral.ai/terms/commercial-terms-of-service"
+# SHA-256 (64 caractères hexadécimaux) de la page relue ; chaîne vide tant qu'elle ne l'a pas été.
+# Renseigné si et seulement si `conditions_verifiees_le` l'est aussi.
+conditions_sha256 = ""
+# Modèles Mistral stables admis comme générateur (même liste que `modeles_autorises` de
+# `config/mistral.toml`) : ni modèle Labs, ni préversion.
+modeles_stables = ["mistral-large-latest", "mistral-large-2411", "mistral-large-2512"]
+
+# Volumes cibles de la nuit par Tâche (nombre d'exemples SFT). Traduction exclue : aucune
+# autre clé n'est admise. La part `generique` doit rester entre 10 % et 20 % du total (D4).
+[volumes]
+# Question.
+Q = 100
+# Recherche de données (traces d'outils MCP).
+RD = 140
+# Compte rendu.
+CR = 80
+# Langage clair.
+LC = 80
+# Correction.
+CO = 35
+# Résumé.
+RE = 35
+# Courrier type.
+CT = 35
+# Exemples génériques (hors Tâches métier).
+generique = 90
+
+# Doublons exacts et proches entre exemples générés (étape `filter`, motif `doublon`).
+[deduplication]
+# Taille des n-grammes de mots normalisés.
+n_ngrammes = 5
+# Similarité de Jaccard au-delà de laquelle deux exemples sont des doublons, dans ]0, 1].
+seuil_jaccard = 0.8
+
+# Anti-fuite du Jeu d'évaluation (étape `filter`, motifs `fuite_ngram` et `fuite_cosinus`).
+[anti_fuite]
+# Taille des n-grammes hachés (même valeur que `slmsp.core.items.N_DEFAUT`).
+n_ngrammes = 5
+# Jaccard de n-grammes hachés au-delà duquel un exemple est exclu, dans ]0, 1].
+seuil_jaccard = 0.5
+# Cosinus BGE-M3 au-delà duquel un exemple est exclu, dans ]0, 1].
+seuil_cosinus = 0.9
+
+# Échantillon de relecture humaine (non bloquant).
+[relecture]
+# Nombre d'exemples tirés pour la relecture.
+taille_echantillon = 30
+# Graine du tirage, pour un échantillon reproductible.
+graine = 42
