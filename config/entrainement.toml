@@ -1,0 +1,13 @@
+# Entraînement (epic 10). Lu par `slmsp.train.config.charger_config_entrainement`.
+# Créé par la story 10.3 (protocole de mesure du coût, FR-33, AD-18) ; la story 10.4 y ajoute
+# le reste du protocole d'entraînement. Le protocole de mesure est commun à toutes les méthodes :
+# le changer rend les coûts des Runs déjà mesurés non comparables, le noter au journal.
+# (`config/mesures.toml` reste à la story 6.4 : `train` ne peut pas importer `measure`.)
+
+schema_version = 1
+
+[couts]
+# Pas d'optimisation écartés avant de mesurer le débit (compilation, caches, chauffe du GPU).
+pas_chauffe = 10
+# Période d'échantillonnage NVML (puissance et mémoire), en millisecondes.
+periode_nvml_ms = 200
