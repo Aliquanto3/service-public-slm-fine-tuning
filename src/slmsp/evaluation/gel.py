@@ -24,7 +24,7 @@ import subprocess
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from fractions import Fraction
 from pathlib import Path
 from typing import Final
@@ -417,16 +417,28 @@ def gel(
     racine: str | Path | None = None,
     *,
     maintenant: datetime | None = None,
+    date_reference: date | None = None,
 ) -> ManifesteJeu:
     """Gèle le jeu `version` : écrit l'export de revue puis `MANIFEST.json`.
 
-    Lève `ArtefactExistant` si le manifeste ou l'export existe déjà, `JeuNonConforme` sur
-    une erreur bloquante (ou un écart de composition en statut `relu`).
+    `date_reference` (facultative) est l'ancre de date des références, inscrite dans le
+    manifeste ; elle ne peut pas être postérieure à la date du gel (`ValueError`, rien
+    n'est écrit). Lève `ArtefactExistant` si le manifeste ou l'export existe déjà,
+    `JeuNonConforme` sur une erreur bloquante (ou un écart de composition en statut `relu`).
     """
     if statut not in cfg.STATUTS_GEL:
         raise ValueError(f"statut de gel inconnu : {statut!r} (attendu : provisoire ou relu)")
     if isinstance(graine, bool) or not isinstance(graine, int):
         raise ValueError(f"graine entière attendue (reçu {graine!r})")
+    cree_le = maintenant or datetime.now().astimezone()
+    if date_reference is not None:
+        if isinstance(date_reference, datetime) or not isinstance(date_reference, date):
+            raise ValueError(f"date de référence attendue (reçu {date_reference!r})")
+        if date_reference > cree_le.date():
+            raise ValueError(
+                f"date de référence {date_reference.isoformat()} postérieure à la date du gel "
+                f"({cree_le.date().isoformat()})"
+            )
     _version_gelable(version)
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
     chemin_manifeste = cfg.chemin_manifeste(base, version)
@@ -469,13 +481,14 @@ def gel(
     manifeste = ManifesteJeu(
         version=version,
         statut=statut,  # type: ignore[arg-type]
-        cree_le=maintenant or datetime.now().astimezone(),
+        cree_le=cree_le,
         regle_empreinte=REGLE_EMPREINTE,
         fichiers=fichiers,
         nb_items=len(jeu.items),
         composition=rapport.composition(),
         ecarts=rapport.ecarts,
         echantillons=tirer_echantillons(jeu.items, graine),
+        date_reference=date_reference,
     )
     revue = rendre_revue(manifeste, jeu).encode("utf-8")
     contenu = json_canonique(manifeste.model_dump(mode="json")) + b"\n"

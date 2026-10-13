@@ -569,6 +569,8 @@ def test_identifiants_en_double(tmp_path: Path) -> None:
         {"optionnel": True},
         {"exact": 5, "optionnel": True},
         {"contient_un_de": ["a"], "optionnel": True},
+        {"mot_entier_un_de": ["REI"]},
+        {"contient_un_de": ["a"], "mot_entier_un_de": ["REI"], "optionnel": True},
     ],
 )
 def test_regle_argument_valide(regle: dict[str, Any]) -> None:
@@ -582,12 +584,43 @@ def test_regle_argument_valide(regle: dict[str, Any]) -> None:
         {"optionnel": False},
         {"exact": 1, "contient_un_de": ["a"]},
         {"contient_un_de": []},
+        {"mot_entier_un_de": []},
+        {"exact": 1, "mot_entier_un_de": ["a"]},
         {"egal": 1},
     ],
 )
 def test_regle_argument_invalide(regle: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
         RegleArgument.model_validate(regle)
+
+
+def test_regle_argument_serialisation_sans_mot_entier() -> None:
+    """Sans `mot_entier_un_de`, la forme sérialisée est celle d'avant la règle (v1.1)."""
+    sans = RegleArgument.model_validate({"contient_un_de": ["a"]})
+    assert sans.model_dump(mode="json") == {
+        "exact": None,
+        "contient_un_de": ["a"],
+        "optionnel": False,
+    }
+    avec = RegleArgument.model_validate({"mot_entier_un_de": ["REI"]})
+    assert avec.model_dump(mode="json")["mot_entier_un_de"] == ["REI"]
+
+
+EMPREINTE_DUMP_V1_0 = "80a820709e81f8efd217167b8083e4399b00f4e8c611a3a4d969e37d9ff9bd7a"
+"""SHA-256 des `model_dump(mode="json")` canoniques des 225 items de `eval/jeu/v1.0`, calculé
+avant l'ajout de `mot_entier_un_de` : la clé du cache des verdicts (`judge/cache.py`) en
+dépend."""
+
+
+def test_model_dump_v1_0_inchange() -> None:
+    from slmsp.core.canonique import json_canonique
+
+    jeu = lire_jeu("v1.0", RACINE)
+    empreinte = hashlib.sha256()
+    for it in jeu.items:
+        empreinte.update(json_canonique(it.model_dump(mode="json")) + b"\n")
+    assert len(jeu.items) == 225
+    assert empreinte.hexdigest() == EMPREINTE_DUMP_V1_0
 
 
 def test_regles_appel_defauts() -> None:

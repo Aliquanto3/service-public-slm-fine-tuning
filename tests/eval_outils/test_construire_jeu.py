@@ -992,6 +992,13 @@ def _sans(champ):
     return lambda it: it.pop(champ)
 
 
+def test_version_item_incremente_admis():
+    """Un item corrigé après relecture passe à `version_item` 2 (SPEC §6, v1.1)."""
+    it = _valide("Q")
+    it["version_item"] = 2
+    assert not [a for a in cj.anomalies_item("Q", it) if "version_item" in a]
+
+
 @pytest.mark.parametrize(
     "code, modif, attendu",
     [
@@ -1020,7 +1027,9 @@ def _sans(champ):
             "corpus AgentPublic",
         ),
         ("Q", {"sans_reponse": "non"}, "`sans_reponse` doit être un booléen"),
-        ("Q", {"version_item": 2}, "`version_item`"),
+        ("Q", {"version_item": 0}, "`version_item`"),
+        ("Q", {"version_item": True}, "`version_item`"),
+        ("Q", {"version_item": "2"}, "`version_item`"),
         ("Q", _sans("parametres"), "`parametres`"),
         ("RD", {"mode": "offline"}, "`mode` invalide"),
         ("RD", {"appels_attendus": [{"outil": "get_metrics", "regles": {}}]}, "outil hors"),

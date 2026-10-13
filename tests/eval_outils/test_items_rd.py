@@ -1,7 +1,7 @@
-"""Items Recherche de données (RD) du jeu v1.0 et leurs cassettes (story 7.3). Aucun réseau.
+"""Items Recherche de données (RD) des jeux v1.0 et v1.1 et leurs cassettes (story 7.3).
 
-Le brouillon `eval/construction/v1.0/RD.jsonl`, ses verdicts et les cassettes
-`eval/cassettes/RD-xxx/*.json` sont lus tels quels. `anomalies_rd` est une fonction pure,
+Aucun réseau. Les brouillons `eval/construction/<version>/RD.jsonl`, leurs verdicts et les
+cassettes `eval/cassettes/RD-xxx/*.json` sont lus tels quels. `anomalies_rd` est une fonction pure,
 réutilisable sur un lot de brouillons avant fusion.
 
 Sémantique des `regles` d'un appel attendu (format de la story 5.1, consignée pour le banc) :
@@ -10,6 +10,8 @@ Sémantique des `regles` d'un appel attendu (format de la story 5.1, consignée 
   (AD-29 : casse, ponctuation → espace, accents gardés), apparaît **en début de mot** dans la
   valeur normalisée (`(?:^| )` + fragment). Les chaînes sont écrites déjà normalisées (points
   fixes de `normaliser`), avec leurs variantes accentuée et non accentuée ;
+- `mot_entier_un_de` (v1.1) : au moins un des mots, normalisé, apparaît en mot entier dans la
+  valeur normalisée (`(?:^| )` + mot + `(?: |$)`) ; combiné en « ou » avec `contient_un_de` ;
 - `optionnel: true` seul : absent ou quelconque ; combiné : si présent, satisfait la règle ;
 - argument non listé : libre (dans le schéma de l'outil) ;
 - appel `optionnel` : peut manquer ; `ordre_libre` : position libre, sinon ordre de la liste.
@@ -40,7 +42,7 @@ from slmsp.mcp.outils import charger_outils, valider_appel
 
 RACINE = Path(__file__).resolve().parents[2]
 OUTIL = RACINE / "eval" / "outils" / "construire_jeu.py"
-CONSTRUCTION = RACINE / "eval" / "construction" / "v1.0"
+VERSIONS = tuple(v for v in ("v1.0", "v1.1") if (RACINE / "eval" / "construction" / v).is_dir())
 FIXTURE_REPLI = Path(__file__).resolve().parent / "fixtures" / "catalogue_repli.json"
 SERVEUR = "https://mcp.data.gouv.fr/mcp"
 CATALOGUE = "AgentPublic/data-gouv-datasets-catalog"
@@ -48,8 +50,9 @@ REVISION_CATALOGUE = "11f3d3c9481ad478dbcff52e85d73b7fd10533ce"
 
 CLES_APPEL = frozenset({"outil", "arguments", "regle", "regles"})
 CLES_REGLES = frozenset({"optionnel", "ordre_libre", "arguments"})
-CLES_REGLE_ARGUMENT = frozenset({"exact", "contient_un_de", "optionnel"})
+CLES_REGLE_ARGUMENT = frozenset({"exact", "contient_un_de", "mot_entier_un_de", "optionnel"})
 CLES_VALEURS = frozenset({"ressource_id", "filtre", "total_lignes", "lignes"})
+CLES_VALEURS_FACULTATIVES = frozenset({"colonnes"})
 CLES_FILTRE = frozenset({"colonne", "operateur", "valeur"})
 
 PROPRIETES_OUTILS = {
@@ -92,14 +95,22 @@ def fragment_en_debut_de_mot(fragment: str, valeur: str) -> bool:
     return re.search(motif, normaliser(valeur)) is not None
 
 
+def mot_entier(mot: str, valeur: str) -> bool:
+    """`mot` normalisé apparaît en mot entier dans `valeur` normalisée (v1.1)."""
+    forme = normaliser(mot)
+    motif = r"(?:^| )" + re.escape(forme) + r"(?: |$)"
+    return bool(forme) and re.search(motif, normaliser(valeur)) is not None
+
+
 def regle_argument_satisfaite(regle: dict, present: bool, valeur: Any) -> bool:
     if not present:
         return regle.get("optionnel") is True
     if "exact" in regle:
         return valeur == regle["exact"] and type(valeur) is type(regle["exact"])
-    if "contient_un_de" in regle:
-        return isinstance(valeur, str) and any(
-            fragment_en_debut_de_mot(c, valeur) for c in regle["contient_un_de"]
+    if "contient_un_de" in regle or "mot_entier_un_de" in regle:
+        return isinstance(valeur, str) and (
+            any(fragment_en_debut_de_mot(c, valeur) for c in regle.get("contient_un_de", []))
+            or any(mot_entier(m, valeur) for m in regle.get("mot_entier_un_de", []))
         )
     return regle.get("optionnel") is True
 
@@ -130,8 +141,15 @@ def _anomalies_regles(regles: Any, lieu: str, outil: str | None = None) -> list[
         if not isinstance(regle, dict) or not regle or set(regle) - CLES_REGLE_ARGUMENT:
             a.append(f"{ici} : règle mal formée {regle!r}")
             continue
-        if "exact" in regle and "contient_un_de" in regle:
-            a.append(f"{ici} : `exact` et `contient_un_de` exclusifs")
+        if "exact" in regle and ("contient_un_de" in regle or "mot_entier_un_de" in regle):
+            a.append(f"{ici} : `exact` exclut `contient_un_de` et `mot_entier_un_de`")
+        mots = regle.get("mot_entier_un_de")
+        if "mot_entier_un_de" in regle and not (
+            isinstance(mots, list)
+            and mots
+            and all(isinstance(m, str) and normaliser(m) for m in mots)
+        ):
+            a.append(f"{ici} : `mot_entier_un_de` liste de mots non vide attendue")
         if "optionnel" in regle and regle["optionnel"] is not True:
             a.append(f"{ici} : `optionnel` vaut `true` ou est absent")
         liste = regle.get("contient_un_de")
@@ -197,9 +215,27 @@ def _blocs_lignes(texte: str) -> list[str]:
 
 def _anomalies_valeurs(it: dict, appels_cassette: list[dict]) -> list[str]:
     va = it["valeurs_attendues"]
-    if not isinstance(va, dict) or set(va) != CLES_VALEURS:
-        return [f"`valeurs_attendues` : clés {sorted(CLES_VALEURS)} attendues"]
+    if (
+        not isinstance(va, dict)
+        or not CLES_VALEURS <= set(va)
+        or set(va) - CLES_VALEURS - CLES_VALEURS_FACULTATIVES
+    ):
+        return [
+            f"`valeurs_attendues` : clés {sorted(CLES_VALEURS)} attendues "
+            f"(et {sorted(CLES_VALEURS_FACULTATIVES)} facultatives)"
+        ]
     a = []
+    if "colonnes" in va:
+        colonnes = va["colonnes"]
+        connues = [set(ligne) for ligne in va["lignes"] if isinstance(ligne, dict)]
+        if not (
+            isinstance(colonnes, list)
+            and colonnes
+            and all(isinstance(c, str) for c in colonnes)
+            and connues
+            and all(set(colonnes) <= cles for cles in connues)
+        ):
+            a.append(f"`valeurs_attendues.colonnes` absentes des lignes : {colonnes!r}")
     filtre = va["filtre"]
     if filtre is not None and (not isinstance(filtre, dict) or set(filtre) != CLES_FILTRE):
         a.append(f"`valeurs_attendues.filtre` : null ou clés {sorted(CLES_FILTRE)}")
@@ -269,8 +305,8 @@ def anomalies_rd(it: dict, racine: Path = RACINE) -> list[str]:
     a += cj.anomalies_item("RD", it)
     if it.get("tache") != "Recherche de données" or it.get("fictif") is not False:
         a.append("`tache` ou `fictif` inattendu")
-    if it.get("parametres") != {} or it.get("version_item") != 1:
-        a.append("`parametres` = {} et `version_item` = 1 attendus")
+    if it.get("parametres") != {} or it.get("version_item") not in (1, 2):
+        a.append("`parametres` = {} et `version_item` = 1 (2 si corrigé en v1.1) attendus")
     if not isinstance(it.get("entree"), str) or not it["entree"].strip():
         a.append("`entree` texte non vide attendue")
     mode = it.get("mode")
@@ -436,24 +472,32 @@ def _anomalies_repli(it: dict, cassette: dict, interactions, ref: dict, mcp) -> 
 # ---------------------------------------------------------------------------
 # Données réelles
 # ---------------------------------------------------------------------------
-def _items() -> list[dict]:
-    chemin = CONSTRUCTION / "RD.jsonl"
+def _construction(version: str) -> Path:
+    return RACINE / "eval" / "construction" / version
+
+
+def _items(version: str) -> list[dict]:
+    chemin = _construction(version) / "RD.jsonl"
     if not chemin.is_file():
         return []
     lignes = chemin.read_text(encoding="utf-8").splitlines()
     return [json.loads(ligne) for ligne in lignes if ligne.strip()]
 
 
-RD = _items()
+def _retenus(version: str) -> list[dict]:
+    verdicts, _ = cj.derniers_verdicts(_construction(version))
+    return [it for it in RD[version] if verdicts.get(it["id"], {}).get("verdict") != "rejete"]
 
 
-def _retenus() -> list[dict]:
-    verdicts, _ = cj.derniers_verdicts(CONSTRUCTION)
-    return [it for it in RD if verdicts.get(it["id"], {}).get("verdict") != "rejete"]
+RD = {v: _items(v) for v in VERSIONS}
+RETENUS_V = {v: _retenus(v) for v in VERSIONS}
+RETENUS = RETENUS_V["v1.0"]  # cas négatifs du contrôleur
+PAIRES = [(v, it) for v in VERSIONS for it in RETENUS_V[v]]
+REPLIS = [(v, it) for v, it in PAIRES if it.get("mode") == "repli"]
 
 
-RETENUS = _retenus()
-REPLIS = [it for it in RETENUS if it.get("mode") == "repli"]
+def _ids(paires: list[tuple[str, dict]]) -> list[str]:
+    return [f"{v}-{it['id']}" for v, it in paires]
 
 
 @pytest.fixture(autouse=True)
@@ -467,26 +511,31 @@ def sans_reseau(monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", interdit)
 
 
-def test_fichier_jsonl_utf8_lf_trie():
-    texte = (CONSTRUCTION / "RD.jsonl").read_bytes().decode("utf-8")
+@pytest.mark.parametrize("version", VERSIONS)
+def test_fichier_jsonl_utf8_lf_trie(version):
+    texte = (_construction(version) / "RD.jsonl").read_bytes().decode("utf-8")
     assert "\r" not in texte and texte.endswith("\n")
     for n, ligne in enumerate(texte.split("\n")[:-1], 1):
         assert ligne == json.dumps(json.loads(ligne), ensure_ascii=False), f"RD.jsonl:{n}"
-    ids = [it["id"] for it in RD]
+    ids = [it["id"] for it in RD[version]]
     assert ids == sorted(ids, key=cj.cle_id) and len(set(ids)) == len(ids), ids
 
 
-def test_lecture_stricte_par_core_items():
-    items = lire_items(CONSTRUCTION / "RD.jsonl", strict=True)
-    assert len(items) == len(RD)
+@pytest.mark.parametrize("version", VERSIONS)
+def test_lecture_stricte_par_core_items(version):
+    items = lire_items(_construction(version) / "RD.jsonl", strict=True)
+    assert len(items) == len(RD[version])
 
 
-@pytest.mark.parametrize("it", RETENUS, ids=[it["id"] for it in RETENUS])
-def test_item_coherent_avec_sa_cassette(it):
+@pytest.mark.parametrize(("version", "it"), PAIRES, ids=_ids(PAIRES))
+def test_item_coherent_avec_sa_cassette(version, it):
     assert anomalies_rd(it) == [], it["id"]
 
 
-def test_composition_rd():
+@pytest.mark.parametrize("version", VERSIONS)
+def test_composition_rd(version):
+    RETENUS = RETENUS_V[version]
+    REPLIS = [it for it in RETENUS if it.get("mode") == "repli"]
     assert len(RETENUS) == 40
     assert Counter(it["difficulte"] for it in RETENUS) == {
         "facile": 15,
@@ -524,14 +573,15 @@ def _fixture_repli() -> dict:
     return json.loads(FIXTURE_REPLI.read_text(encoding="utf-8"))
 
 
-def test_fixture_repli_couvre_les_replis():
+@pytest.mark.parametrize("version", VERSIONS)
+def test_fixture_repli_couvre_les_replis(version):
     fixture = _fixture_repli()
     assert fixture["depot"] == CATALOGUE and fixture["revision"] == REVISION_CATALOGUE
-    assert set(fixture["jeux"]) == {it["id"] for it in REPLIS}
+    assert set(fixture["jeux"]) == {it["id"] for v, it in REPLIS if v == version}
 
 
-@pytest.mark.parametrize("it", REPLIS, ids=[it["id"] for it in REPLIS])
-def test_repli_reference_egale_la_fixture(it):
+@pytest.mark.parametrize(("version", "it"), REPLIS, ids=_ids(REPLIS))
+def test_repli_reference_egale_la_fixture(version, it):
     ligne = _fixture_repli()["jeux"][it["id"]]
     jeu = it["reponse_reference"]["jeu_principal"]
     assert jeu == {
@@ -543,8 +593,8 @@ def test_repli_reference_egale_la_fixture(it):
     assert it["producteurs"] == [ligne["organization"]], it["id"]
 
 
-@pytest.mark.parametrize("it", REPLIS, ids=[it["id"] for it in REPLIS])
-def test_repli_fixture_recoupee_avec_le_catalogue_local(it):
+@pytest.mark.parametrize(("version", "it"), REPLIS, ids=_ids(REPLIS))
+def test_repli_fixture_recoupee_avec_le_catalogue_local(version, it):
     """La ligne de la fixture est celle de l'instantané parquet (si présent)."""
     duckdb = pytest.importorskip("duckdb")
     candidat = os.environ.get("SLMSP_EVAL_SOURCES")
@@ -569,23 +619,26 @@ def test_repli_fixture_recoupee_avec_le_catalogue_local(it):
     assert attendu in lignes, (it["id"], lignes)
 
 
-def test_hors_sujets_du_calibrage():
-    for it in RETENUS:
+@pytest.mark.parametrize("version", VERSIONS)
+def test_hors_sujets_du_calibrage(version):
+    for it in RETENUS_V[version]:
         assert "defibrillat" not in json.dumps(it, ensure_ascii=False).lower(), it["id"]
         assert "défibrillat" not in json.dumps(it, ensure_ascii=False).lower(), it["id"]
 
 
-def test_cassettes_sans_orphelines():
+@pytest.mark.parametrize("version", VERSIONS)
+def test_cassettes_sans_orphelines(version):
     """Chaque fichier sous `eval/cassettes/RD-*/` est cité par un item retenu."""
     dossier = RACINE / "eval" / "cassettes"
-    cites = {chemin_cassette(c) for it in RETENUS for c in it["cassettes"]}
+    cites = {chemin_cassette(c) for it in RETENUS_V[version] for c in it["cassettes"]}
     fichiers = {f.resolve() for d in dossier.glob("RD-*") for f in d.rglob("*") if f.is_file()}
     assert sorted(str(f) for f in fichiers - cites) == []
     assert sorted(str(f) for f in cites - fichiers) == []
 
 
-def test_verdicts_acceptes():
-    chemin = CONSTRUCTION / "verification" / "RD.jsonl"
+@pytest.mark.parametrize("version", VERSIONS)
+def test_verdicts_acceptes(version):
+    chemin = _construction(version) / "verification" / "RD.jsonl"
     assert chemin.is_file(), f"verdicts absents : {chemin}"
     for n, ligne in enumerate(chemin.read_text(encoding="utf-8").splitlines(), 1):
         if not ligne.strip():
@@ -595,16 +648,19 @@ def test_verdicts_acceptes():
         assert cj.RE_DATE_ISO.fullmatch(v["verifie_le"]), n
         if v["verdict"] == "rejete":
             assert v.get("motif") in cj.MOTIFS, n
-    verdicts, erreurs = cj.derniers_verdicts(CONSTRUCTION)
+    verdicts, erreurs = cj.derniers_verdicts(_construction(version))
     assert [e for e in erreurs if e.startswith("RD.jsonl")] == []
     non_acceptes = [
-        it["id"] for it in RETENUS if verdicts.get(it["id"], {}).get("verdict") != "accepte"
+        it["id"]
+        for it in RETENUS_V[version]
+        if verdicts.get(it["id"], {}).get("verdict") != "accepte"
     ]
     assert non_acceptes == []
 
 
-def test_commande_composition(capsys):
-    assert cj.cmd_composition(RACINE, "v1.0") == 0
+@pytest.mark.parametrize("version", VERSIONS)
+def test_commande_composition(capsys, version):
+    assert cj.cmd_composition(RACINE, version) == 0
     sortie = capsys.readouterr().out
     assert (
         "| RD (Recherche de données) | 40 / 40 (0) | 15 / 15 (0) | 15 / 15 (0) | 10 / 10 (0) |"
@@ -703,6 +759,11 @@ def test_controleur_signale_une_interaction_simulee_dans_un_connecte(tmp_path):
         ({"optionnel": True, "contient_un_de": ["caen"]}, False, None, True),
         ({"optionnel": True, "contient_un_de": ["caen"]}, True, "Ville de Caen", True),
         ({"optionnel": True, "contient_un_de": ["caen"]}, True, "Poitiers", False),
+        ({"mot_entier_un_de": ["REI"]}, True, "fichier REI 2024", True),
+        ({"mot_entier_un_de": ["REI"]}, True, "Reims", False),
+        ({"mot_entier_un_de": ["REI"], "contient_un_de": ["impôts locaux"]}, True, "impôts", False),
+        ({"mot_entier_un_de": ["REI"], "contient_un_de": ["impots"]}, True, "impots locaux", True),
+        ({"mot_entier_un_de": ["REI"]}, False, None, False),
     ],
 )
 def test_regle_argument(regle, present, valeur, attendu):

@@ -15,8 +15,10 @@ seule `ItemInvalide`, chacune citant l'item et le champ.
 
 Format `regles` d'un appel attendu (RD, fixé ici, suivi par la story 7.3) :
 `{"optionnel": bool, "ordre_libre": bool, "arguments": {<nom>: {"exact": <valeur>} |
-{"contient_un_de": [str, …]} | {"optionnel": true}}}`, `optionnel` combinable avec `exact`
-ou `contient_un_de`.
+{"contient_un_de": [str, …]} | {"mot_entier_un_de": [str, …]} | {"optionnel": true}}}`,
+`optionnel` combinable avec `exact`, `contient_un_de` ou `mot_entier_un_de` ;
+`contient_un_de` (fragment en début de mot) et `mot_entier_un_de` (mot entier, v1.1) se
+combinent en « ou ». Une règle sans `mot_entier_un_de` se sérialise sans cette clé.
 
 API anti-fuite : le pipeline `data` ne voit le jeu que par des empreintes de n-grammes
 hachés (`empreintes_antifuite`), des vecteurs (`vecteurs_antifuite`) et des identifiants
@@ -36,7 +38,16 @@ from datetime import date, datetime
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    ValidationError,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 
 from slmsp.core.canonique import sha256_hex
 from slmsp.core.config import racine_projet
@@ -164,21 +175,41 @@ class Provenance(BaseModel):
 
 
 class RegleArgument(_Ferme):
-    """Règle d'un argument : `exact`, `contient_un_de` ou `optionnel` seul."""
+    """Règle d'un argument : `exact`, `contient_un_de` et/ou `mot_entier_un_de`, ou
+    `optionnel` seul.
+
+    `contient_un_de` : un fragment en début de mot ; `mot_entier_un_de` : un mot (ou une
+    suite de mots) entier, bordé d'une espace ou du bord du texte, après normalisation
+    (« REI » accepte « fichier REI 2024 », refuse « Reims »). Les deux listes se combinent
+    en « ou ».
+    """
 
     exact: Any = None
     contient_un_de: list[str] | None = Field(default=None, min_length=1)
+    mot_entier_un_de: list[str] | None = Field(default=None, min_length=1)
     optionnel: bool = False
 
     @model_validator(mode="after")
     def _une_regle(self) -> Self:
         a_exact = "exact" in self.model_fields_set
-        a_liste = self.contient_un_de is not None
+        a_liste = self.contient_un_de is not None or self.mot_entier_un_de is not None
         if a_exact and a_liste:
-            raise ValueError("`exact` et `contient_un_de` sont exclusifs")
+            raise ValueError("`exact` exclut `contient_un_de` et `mot_entier_un_de`")
         if not (a_exact or a_liste or self.optionnel):
-            raise ValueError("règle vide : `exact`, `contient_un_de` ou `optionnel: true` attendu")
+            raise ValueError(
+                "règle vide : `exact`, `contient_un_de`, `mot_entier_un_de` ou "
+                "`optionnel: true` attendu"
+            )
         return self
+
+    @model_serializer(mode="wrap")
+    def _sans_mot_entier_vide(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        # Sans la règle, la forme sérialisée reste celle d'avant son ajout : le
+        # `model_dump` d'un item, donc la clé du cache des verdicts, ne change pas.
+        donnees = handler(self)
+        if self.mot_entier_un_de is None:
+            donnees.pop("mot_entier_un_de", None)
+        return donnees
 
     @property
     def a_exact(self) -> bool:

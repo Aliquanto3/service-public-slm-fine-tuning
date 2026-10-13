@@ -110,6 +110,37 @@ def test_rd_contient_un_de_en_debut_de_mot(valeur: str, attendu: bool) -> None:
     assert conforme is attendu
 
 
+@pytest.mark.parametrize(
+    ("valeur", "attendu"),
+    [
+        ("fichier REI 2024", True),  # matrice : mot entier
+        ("Reims", False),  # matrice : « rei » en début de mot seulement
+        ("rei", True),
+        ("données (REI).", True),  # ponctuation -> espace
+        ("REIS", False),
+        ("fiscalité directe locale", True),  # `contient_un_de`, en « ou »
+        ("recensement", False),
+        ("", False),
+    ],
+)
+def test_rd_mot_entier_un_de(valeur: str, attendu: bool) -> None:
+    regle = appel_attendu(
+        "search_datasets",
+        {"query": {"contient_un_de": ["fiscalité directe locale"], "mot_entier_un_de": ["REI"]}},
+    )
+    assert appel_conforme(regle, "search_datasets", {"query": valeur}) is attendu
+
+
+def test_rd_mot_entier_seul_et_optionnel() -> None:
+    regle = appel_attendu(
+        "search_datasets", {"query": {"mot_entier_un_de": ["carte grise"], "optionnel": True}}
+    )
+    assert appel_conforme(regle, "search_datasets", {})
+    assert appel_conforme(regle, "search_datasets", {"query": "Carte grise, Paris"})
+    assert not appel_conforme(regle, "search_datasets", {"query": "carte grisée"})
+    assert not appel_conforme(regle, "search_datasets", {"query": 5})
+
+
 def test_rd_regles_exact_optionnel_et_outil() -> None:
     regle = appel_attendu(
         "query_resource_data",

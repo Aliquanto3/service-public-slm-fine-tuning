@@ -7,7 +7,8 @@ Chaque `controle_<tache>(item, generation, …)` rend un `dict` JSON, écrit tel
   sources de la sortie, les résultats `resultat-outil` de la trace et les textes de l'entrée
   (`textes_entree`) ; les passages complets ne sont pas dans la génération.
 - **RD** : appel valide par appariement glouton des appels attendus aux appels émis (même
-  outil, `regles` satisfaites, ordre de la liste sauf `ordre_libre`) ; un appel attendu
+  outil, `regles` satisfaites, ordre de la liste sauf `ordre_libre` ; `contient_un_de` en
+  début de mot et `mot_entier_un_de` en mot entier, combinés en « ou ») ; un appel attendu
   `optionnel` est hors comptes ; sans `regles` (calibrage), l'outil seul compte. Réponse
   exacte : avec `valeurs_attendues.lignes`, toutes leurs valeurs numériques (des seules
   `valeurs_attendues.colonnes` si la liste est donnée) figurent parmi
@@ -97,14 +98,26 @@ def _debut_de_mot(fragment: str, valeur: str) -> bool:
     return re.search(motif, normaliser(valeur)) is not None
 
 
+def _mot_entier(mot: str, valeur: str) -> bool:
+    """`mot` normalisé apparaît comme mot entier (ou suite de mots entiers) dans `valeur`
+    normalisée : bordé d'une espace ou du bord du texte (« rei » dans « fichier rei 2024 »,
+    pas dans « reims »)."""
+    forme = normaliser(mot)
+    if not forme:
+        return False
+    motif = r"(?:^| )" + re.escape(forme) + r"(?: |$)"
+    return re.search(motif, normaliser(valeur)) is not None
+
+
 def _argument_conforme(regle: RegleArgument, present: bool, valeur: Any) -> bool:
     if not present:
         return regle.optionnel
     if regle.a_exact:
         return valeur == regle.exact and type(valeur) is type(regle.exact)
-    if regle.contient_un_de is not None:
-        return isinstance(valeur, str) and any(
-            _debut_de_mot(fragment, valeur) for fragment in regle.contient_un_de
+    if regle.contient_un_de is not None or regle.mot_entier_un_de is not None:
+        return isinstance(valeur, str) and (
+            any(_debut_de_mot(fragment, valeur) for fragment in regle.contient_un_de or ())
+            or any(_mot_entier(mot, valeur) for mot in regle.mot_entier_un_de or ())
         )
     return regle.optionnel
 
@@ -113,8 +126,9 @@ def appel_conforme(attendu: AppelAttendu, nom: str, arguments: Mapping[str, Any]
     """L'appel émis `nom(arguments)` satisfait-il l'appel attendu ?
 
     Même outil, puis chaque règle d'argument (`exact` : égalité et même type ;
-    `contient_un_de` : un fragment en début de mot ; absent : admis si `optionnel`). Sans
-    `regles` (calibrage), l'outil seul compte.
+    `contient_un_de` : un fragment en début de mot, ou `mot_entier_un_de` : un mot entier,
+    les deux en « ou » ; absent : admis si `optionnel`). Sans `regles` (calibrage), l'outil
+    seul compte.
     """
     if nom != attendu.outil:
         return False

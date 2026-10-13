@@ -8,6 +8,7 @@ disque dépendent du checkout, pas le contenu normalisé.
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated, Final, Literal, Self
 
 from pydantic import AwareDatetime, Field, StringConstraints, field_validator, model_validator
@@ -66,6 +67,9 @@ class ManifesteJeu(SchemaBase):
     ecarts: list[str] = Field(default_factory=list)
     """Écarts de composition avec SPEC §2 (non bloquants en `provisoire`)."""
     echantillons: Echantillons
+    date_reference: date | None = None
+    """Ancre de date des références (v1.1) : montants et dates font foi à cette date. Absente
+    des manifestes antérieurs (v1.0), qui restent valides ; jamais postérieure au gel."""
 
     @model_validator(mode="after")
     def _fichiers_coherents(self) -> Self:
@@ -77,4 +81,9 @@ class ManifesteJeu(SchemaBase):
             nombre = sum(f.role == role for f in self.fichiers)
             if nombre != 1:
                 raise ValueError(f"exactement un fichier de rôle `{role}` attendu ({nombre})")
+        if self.date_reference is not None and self.date_reference > self.cree_le.date():
+            raise ValueError(
+                f"`date_reference` ({self.date_reference}) postérieure à la date du gel "
+                f"({self.cree_le.date()})"
+            )
         return self

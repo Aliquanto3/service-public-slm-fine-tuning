@@ -1,6 +1,7 @@
-"""Items Compte rendu (CR) et Langage clair (LC) du jeu v1.0 (story 7.4). Aucun appel réseau.
+"""Items Compte rendu (CR) et Langage clair (LC) des jeux v1.0 et v1.1 (story 7.4). Aucun réseau.
 
-Les brouillons `eval/construction/v1.0/{CR,LC}.jsonl` et leurs verdicts sont lus tels quels.
+Les brouillons `eval/construction/<version>/{CR,LC}.jsonl` et leurs verdicts sont lus tels
+quels. En v1.1, CR-006 et CR-021 sont allongés au-delà de 6 500 mots (FR-13, arbitrage F).
 Le contrôle du verbatim LC lit les instantanés parquet locaux (`SLMSP_EVAL_SOURCES`, sinon
 `<racine>/data/raw/eval-sources`) avec duckdb ; il est ignoré si l'un ou l'autre manque.
 """
@@ -21,7 +22,9 @@ import pytest
 RACINE = Path(__file__).resolve().parents[2]
 OUTIL = RACINE / "eval" / "outils" / "construire_jeu.py"
 TEXTE = RACINE / "src" / "slmsp" / "core" / "texte.py"
-CONSTRUCTION = RACINE / "eval" / "construction" / "v1.0"
+VERSIONS = tuple(v for v in ("v1.0", "v1.1") if (RACINE / "eval" / "construction" / v).is_dir())
+SEUIL_FR13 = 6500
+"""FR-13 : au moins deux transcriptions de plus de 6 500 mots à partir de v1.1."""
 CONSULTE_LE = "2026-10-12"
 RE_SHA40 = re.compile(r"[0-9a-f]{40}")
 
@@ -38,14 +41,28 @@ cj = _charger("construire_jeu_items_cr_lc", OUTIL)
 tx = _charger("slmsp_core_texte_items_cr_lc", TEXTE)
 
 
-def _items(code: str) -> list[dict]:
-    chemin = CONSTRUCTION / f"{code}.jsonl"
+def _construction(version: str) -> Path:
+    return RACINE / "eval" / "construction" / version
+
+
+def _items(version: str, code: str) -> list[dict]:
+    chemin = _construction(version) / f"{code}.jsonl"
     lignes = chemin.read_text(encoding="utf-8").splitlines()
     return [json.loads(ligne) for ligne in lignes if ligne.strip()]
 
 
-CR = _items("CR")
-LC = _items("LC")
+ITEMS = {(v, c): _items(v, c) for v in VERSIONS for c in ("CR", "LC")}
+CR = [(v, it) for v in VERSIONS for it in ITEMS[(v, "CR")]]
+LC = [(v, it) for v in VERSIONS for it in ITEMS[(v, "LC")]]
+
+
+def _ids(paires: list[tuple[str, dict]]) -> list[str]:
+    return [f"{v}-{it['id']}" for v, it in paires]
+
+
+def _version_item_ok(version: str, it: dict) -> bool:
+    """1 en v1.0 ; 1 ou 2 (item corrigé) ensuite."""
+    return it["version_item"] == 1 if version == "v1.0" else it["version_item"] in (1, 2)
 
 
 @pytest.fixture(autouse=True)
@@ -62,29 +79,31 @@ def sans_reseau(monkeypatch):
 # ---------------------------------------------------------------------------
 # Fichiers
 # ---------------------------------------------------------------------------
+@pytest.mark.parametrize("version", VERSIONS)
 @pytest.mark.parametrize("code", ["CR", "LC"])
-def test_fichier_jsonl_utf8_lf_un_item_par_ligne(code):
+def test_fichier_jsonl_utf8_lf_un_item_par_ligne(version, code):
     # Le dépôt n'a pas de .gitattributes : avec core.autocrlf, la copie de travail peut être
     # en CRLF alors que le blob versionné est en LF. On normalise CRLF, et seulement lui.
-    texte = (CONSTRUCTION / f"{code}.jsonl").read_bytes().decode("utf-8").replace("\r\n", "\n")
+    chemin = _construction(version) / f"{code}.jsonl"
+    texte = chemin.read_bytes().decode("utf-8").replace("\r\n", "\n")
     assert "\r" not in texte, f"{code}.jsonl : retour chariot isolé"
     assert texte.endswith("\n")
     for n, ligne in enumerate(texte.split("\n")[:-1], 1):
         it = json.loads(ligne)
         assert ligne == json.dumps(it, ensure_ascii=False), f"{code}.jsonl:{n} non canonique"
-    ids = [it["id"] for it in _items(code)]
+    ids = [it["id"] for it in _items(version, code)]
     assert ids == [f"{code}-{i:03d}" for i in range(1, len(ids) + 1)], ids
 
 
 # ---------------------------------------------------------------------------
 # Structure CR
 # ---------------------------------------------------------------------------
-@pytest.mark.parametrize("it", CR, ids=[it["id"] for it in CR])
-def test_structure_cr(it):
+@pytest.mark.parametrize(("version", "it"), CR, ids=_ids(CR))
+def test_structure_cr(version, it):
     assert cj.anomalies_item("CR", it) == [], it["id"]
     assert it["tache"] == "Compte rendu"
     assert it["fictif"] is True
-    assert it["version_item"] == 1
+    assert _version_item_ok(version, it), it["id"]
     entree = it["entree"]
     cles = set(entree) - {"consigne", "nb_mots"}
     assert len(cles) == 1 and cles <= {"notes", "transcription"}, (it["id"], set(entree))
@@ -103,7 +122,9 @@ def test_structure_cr(it):
         assert p["consulte_le"] == CONSULTE_LE, it["id"]
 
 
-def test_composition_cr():
+@pytest.mark.parametrize("version", VERSIONS)
+def test_composition_cr(version):
+    CR = ITEMS[(version, "CR")]
     assert Counter(it["difficulte"] for it in CR) == {"facile": 8, "moyen": 10, "difficile": 7}
     longues = [it["id"] for it in CR if cj._nb_mots(it["entree"]) > cj.SEUIL_CR_LONGUE_MOTS]
     assert len(longues) >= 5, longues
@@ -113,17 +134,46 @@ def test_composition_cr():
             assert it["difficulte"] == "difficile", it["id"]
             assert it["entree"]["nb_mots"] > cj.SEUIL_CR_LONGUE_MOTS, it["id"]
     assert len({it["type_reunion"] for it in CR}) == len(CR), "types de réunion en double"
+    if version != "v1.0":
+        tres_longues = sorted(it["id"] for it in CR if it["entree"]["nb_mots"] > SEUIL_FR13)
+        assert tres_longues == ["CR-006", "CR-021"], tres_longues
+
+
+def test_cr_allonges_references_inchangees():
+    """Arbitrage F : seuls la transcription, `nb_mots` et `version_item` changent."""
+    if "v1.1" not in VERSIONS:
+        pytest.fail("brouillons v1.1 absents")
+    anciens = {it["id"]: it for it in ITEMS[("v1.0", "CR")]}
+    for it in ITEMS[("v1.1", "CR")]:
+        ancien = anciens[it["id"]]
+        if it["id"] not in ("CR-006", "CR-021"):
+            assert it == ancien, it["id"]
+            continue
+        assert it["version_item"] == 2
+        assert set(it) == set(ancien), it["id"]
+        assert set(it["entree"]) == set(ancien["entree"]), it["id"]
+        hors_entree = {k for k in it if k not in ("entree", "version_item")}
+        assert {k: it[k] for k in hors_entree} == {k: ancien[k] for k in hors_entree}
+        assert it["entree"]["consigne"] == ancien["entree"]["consigne"]
+        paragraphes = it["entree"]["transcription"].split("\n\n")
+        restants = iter(paragraphes)
+        absents = [
+            p
+            for p in ancien["entree"]["transcription"].split("\n\n")
+            if not any(q == p for q in restants)
+        ]
+        assert absents == [], f"{it['id']} : paragraphes v1.0 perdus ou déplacés"
 
 
 # ---------------------------------------------------------------------------
 # Structure LC
 # ---------------------------------------------------------------------------
-@pytest.mark.parametrize("it", LC, ids=[it["id"] for it in LC])
-def test_structure_lc(it):
+@pytest.mark.parametrize(("version", "it"), LC, ids=_ids(LC))
+def test_structure_lc(version, it):
     assert cj.anomalies_item("LC", it) == [], it["id"]
     assert it["tache"] == "Langage clair"
     assert it["fictif"] is False
-    assert it["version_item"] == 1
+    assert _version_item_ok(version, it), it["id"]
     entree = it["entree"]
     assert set(entree) == {"consigne", "texte", "nb_mots"}, it["id"]
     assert entree["nb_mots"] == tx.compter_mots(entree["texte"]), it["id"]
@@ -144,21 +194,23 @@ def test_structure_lc(it):
             assert p["url"].endswith(p["legiarti"]), it["id"]
 
 
-@pytest.mark.parametrize("it", LC, ids=[it["id"] for it in LC])
-def test_termes_juridiques_dans_le_texte(it):
+@pytest.mark.parametrize(("version", "it"), LC, ids=_ids(LC))
+def test_termes_juridiques_dans_le_texte(version, it):
     texte = it["entree"]["texte"].lower()
     absents = [t for t in it["termes_juridiques_a_conserver"] if t.lower() not in texte]
     assert absents == [], f"{it['id']} : termes absents de entree.texte : {absents}"
 
 
-@pytest.mark.parametrize("it", LC, ids=[it["id"] for it in LC])
-def test_kandel_moles_recalcule(it):
+@pytest.mark.parametrize(("version", "it"), LC, ids=_ids(LC))
+def test_kandel_moles_recalcule(version, it):
     assert it["version_texte"] == tx.VERSION_TEXTE, it["id"]
     recalcul = tx.kandel_moles(it["entree"]["texte"])
     assert abs(recalcul - it["kandel_moles_entree"]) <= 0.005, (it["id"], recalcul)
 
 
-def test_composition_lc():
+@pytest.mark.parametrize("version", VERSIONS)
+def test_composition_lc(version):
+    LC = ITEMS[(version, "LC")]
     assert Counter(it["difficulte"] for it in LC) == {"facile": 8, "moyen": 10, "difficile": 7}
     assert Counter(it["theme"] for it in LC) == {
         "social-autonomie": 7,
@@ -178,7 +230,7 @@ def test_composition_lc():
 
 def test_lc_hors_calibrage():
     """Ni la fiche F34440 ni les articles CRPA L112-3, R112-5 et L112-6 du calibrage."""
-    for it in LC:
+    for _, it in LC:
         for p in it["provenance"]:
             assert p.get("doc_id") != "F34440", it["id"]
             if "relations_entre_le_public" in p.get("code", ""):
@@ -235,8 +287,8 @@ def _textes_source(duckdb, sources: Path, p: dict) -> list[str]:
     return [t for r in lignes for t in (r[2] or "", r[3] or "")]
 
 
-@pytest.mark.parametrize("it", LC, ids=[it["id"] for it in LC])
-def test_verbatim_lc(it):
+@pytest.mark.parametrize(("version", "it"), LC, ids=_ids(LC))
+def test_verbatim_lc(version, it):
     duckdb = pytest.importorskip("duckdb")
     sources = _dossier_sources()
     if sources is None:
@@ -266,8 +318,9 @@ def test_verbatim_lc(it):
 # ---------------------------------------------------------------------------
 # Composition (outil) et verdicts de la double vérification
 # ---------------------------------------------------------------------------
-def test_commande_composition(capsys):
-    assert cj.cmd_composition(RACINE, "v1.0") == 0
+@pytest.mark.parametrize("version", VERSIONS)
+def test_commande_composition(capsys, version):
+    assert cj.cmd_composition(RACINE, version) == 0
     sortie = capsys.readouterr().out
     assert "| CR (Compte rendu) | 25 / 25 (0) | 8 / 8 (0) | 10 / 10 (0) | 7 / 7 (0) |" in sortie
     assert "| LC (Langage clair) | 25 / 25 (0) | 8 / 8 (0) | 10 / 10 (0) | 7 / 7 (0) |" in sortie
@@ -278,9 +331,10 @@ def test_commande_composition(capsys):
     assert "CR.jsonl" not in anomalies and "LC.jsonl" not in anomalies, anomalies
 
 
+@pytest.mark.parametrize("version", VERSIONS)
 @pytest.mark.parametrize("code", ["CR", "LC"])
-def test_verdicts_acceptes(code):
-    chemin = CONSTRUCTION / "verification" / f"{code}.jsonl"
+def test_verdicts_acceptes(version, code):
+    chemin = _construction(version) / "verification" / f"{code}.jsonl"
     assert chemin.is_file(), f"verdicts absents : {chemin}"
     for n, ligne in enumerate(chemin.read_text(encoding="utf-8").splitlines(), 1):
         if not ligne.strip():
@@ -290,9 +344,9 @@ def test_verdicts_acceptes(code):
         assert cj.RE_DATE_ISO.fullmatch(v["verifie_le"]), (code, n)
         if v["verdict"] == "rejete":
             assert v.get("motif") in cj.MOTIFS, (code, n)
-    verdicts, erreurs = cj.derniers_verdicts(CONSTRUCTION)
+    verdicts, erreurs = cj.derniers_verdicts(_construction(version))
     assert [e for e in erreurs if e.startswith(f"{code}.jsonl")] == []
-    items = CR if code == "CR" else LC
+    items = ITEMS[(version, code)]
     non_acceptes = [
         it["id"] for it in items if verdicts.get(it["id"], {}).get("verdict") != "accepte"
     ]

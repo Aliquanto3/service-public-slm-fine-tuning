@@ -1,6 +1,9 @@
-"""Items Correction (CO), Résumé (RE) et Courrier type (CT) du jeu v1.0 (story 7.5). Aucun réseau.
+"""Items Correction (CO), Résumé (RE) et Courrier type (CT) des jeux v1.0 et v1.1 (story 7.5).
 
-Les brouillons `eval/construction/v1.0/{CO,RE,CT}.jsonl` et leurs verdicts sont lus tels quels.
+Aucun réseau. Les brouillons `eval/construction/<version>/{CO,RE,CT}.jsonl` et leurs verdicts
+sont lus tels quels. Un CO « réel » est un texte de fiche service-public (provenance de type
+`service-public`) où des fautes ont été injectées : `fictif: false` en v1.0, `fictif: true`
+depuis v1.1 (arbitrage G4), d'où une sélection par la provenance et non par `fictif`.
 Les contrôles de verbatim lisent les instantanés parquet locaux (`SLMSP_EVAL_SOURCES`, sinon
 `<racine>/data/raw/eval-sources`) avec duckdb ; ils sont ignorés si l'un ou l'autre manque.
 Le contrôle par le lecteur strict (`slmsp.core.items`) est ignoré hors de l'environnement du
@@ -23,7 +26,7 @@ import pytest
 RACINE = Path(__file__).resolve().parents[2]
 OUTIL = RACINE / "eval" / "outils" / "construire_jeu.py"
 TEXTE = RACINE / "src" / "slmsp" / "core" / "texte.py"
-CONSTRUCTION = RACINE / "eval" / "construction" / "v1.0"
+VERSIONS = tuple(v for v in ("v1.0", "v1.1") if (RACINE / "eval" / "construction" / v).is_dir())
 CALIBRAGE = RACINE / "eval" / "calibrage" / "echantillon-calibrage.jsonl"
 CONSULTE_LE = "2026-10-12"
 RE_SHA40 = re.compile(r"[0-9a-f]{40}")
@@ -43,16 +46,29 @@ cj = _charger("construire_jeu_items_co_re_ct", OUTIL)
 tx = _charger("slmsp_core_texte_items_co_re_ct", TEXTE)
 
 
-def _items(code: str) -> list[dict]:
-    chemin = CONSTRUCTION / f"{code}.jsonl"
+def _construction(version: str) -> Path:
+    return RACINE / "eval" / "construction" / version
+
+
+def _items(version: str, code: str) -> list[dict]:
+    chemin = _construction(version) / f"{code}.jsonl"
     lignes = chemin.read_text(encoding="utf-8").splitlines()
     return [json.loads(ligne) for ligne in lignes if ligne.strip()]
 
 
-CO = _items("CO")
-RE = _items("RE")
-CT = _items("CT")
-PAR_CODE = {"CO": CO, "RE": RE, "CT": CT}
+PAR_VERSION = {(v, c): _items(v, c) for v in VERSIONS for c in CODES}
+CO = [(v, it) for v in VERSIONS for it in PAR_VERSION[(v, "CO")]]
+RE = [(v, it) for v in VERSIONS for it in PAR_VERSION[(v, "RE")]]
+CT = [(v, it) for v in VERSIONS for it in PAR_VERSION[(v, "CT")]]
+
+
+def co_reel(it: dict) -> bool:
+    """CO tiré d'une fiche réelle (fautes injectées), quel que soit `fictif`."""
+    return any(p.get("type") == "service-public" for p in it["provenance"])
+
+
+def _fictif_co_reel(version: str) -> bool:
+    return version != "v1.0"  # arbitrage G4 : textes réels modifiés, donc fictifs
 
 
 @pytest.fixture(autouse=True)
@@ -66,37 +82,41 @@ def sans_reseau(monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", interdit)
 
 
-def _ids(items: list[dict]) -> list[str]:
-    return [it["id"] for it in items]
+def _ids(paires: list[tuple[str, dict]]) -> list[str]:
+    return [f"{v}-{it['id']}" for v, it in paires]
 
 
-def _retenus(items: list[dict]) -> list[dict]:
+def _retenus(version: str, items: list[dict]) -> list[dict]:
     """Items dont le dernier verdict n'est pas `rejete` (un remplacé reste dans le brouillon)."""
-    verdicts, _ = cj.derniers_verdicts(CONSTRUCTION)
+    verdicts, _ = cj.derniers_verdicts(_construction(version))
     return [it for it in items if verdicts.get(it["id"], {}).get("verdict") != "rejete"]
 
 
 # ---------------------------------------------------------------------------
 # Fichiers
 # ---------------------------------------------------------------------------
+@pytest.mark.parametrize("version", VERSIONS)
 @pytest.mark.parametrize("code", CODES)
-def test_fichier_jsonl_utf8_lf_un_item_par_ligne(code):
+def test_fichier_jsonl_utf8_lf_un_item_par_ligne(version, code):
     # Avec core.autocrlf, la copie de travail peut être en CRLF : on normalise CRLF seulement.
-    texte = (CONSTRUCTION / f"{code}.jsonl").read_bytes().decode("utf-8").replace("\r\n", "\n")
+    chemin = _construction(version) / f"{code}.jsonl"
+    texte = chemin.read_bytes().decode("utf-8").replace("\r\n", "\n")
     assert "\r" not in texte, f"{code}.jsonl : retour chariot isolé"
     assert texte.endswith("\n")
     for n, ligne in enumerate(texte.split("\n")[:-1], 1):
         it = json.loads(ligne)
         assert ligne == json.dumps(it, ensure_ascii=False), f"{code}.jsonl:{n} non canonique"
-    ids = _ids(PAR_CODE[code])
+    ids = [it["id"] for it in PAR_VERSION[(version, code)]]
     assert ids == [f"{code}-{i:03d}" for i in range(1, len(ids) + 1)], ids
 
 
+@pytest.mark.parametrize("version", VERSIONS)
 @pytest.mark.parametrize("code", CODES)
-def test_champs_communs(code):
-    for it in PAR_CODE[code]:
+def test_champs_communs(version, code):
+    for it in PAR_VERSION[(version, code)]:
         assert cj.anomalies_item(code, it) == [], it["id"]
-        assert it["version_item"] == 1 and it["parametres"] == {}, it["id"]
+        attendus = (1,) if version == "v1.0" else (1, 2)
+        assert it["version_item"] in attendus and it["parametres"] == {}, it["id"]
         assert it["theme"] in cj.THEMES, it["id"]
         assert it["provenance"], it["id"]
         for p in it["provenance"]:
@@ -104,9 +124,10 @@ def test_champs_communs(code):
         assert isinstance(it["licence_source"], str) and it["licence_source"].strip(), it["id"]
 
 
+@pytest.mark.parametrize("version", VERSIONS)
 @pytest.mark.parametrize("code", CODES)
-def test_composition_par_difficulte(code):
-    items = _retenus(PAR_CODE[code])
+def test_composition_par_difficulte(version, code):
+    items = _retenus(version, PAR_VERSION[(version, code)])
     assert len(items) == 15
     assert Counter(it["difficulte"] for it in items) == REPARTITION
 
@@ -126,8 +147,8 @@ def _provenance_service_public(it: dict, p: dict) -> None:
 FAUTES_PAR_DIFFICULTE = {"facile": (5, 7), "moyen": (7, 10), "difficile": (10, 14)}
 
 
-@pytest.mark.parametrize("it", CO, ids=_ids(CO))
-def test_positions_co(it):
+@pytest.mark.parametrize(("version", "it"), CO, ids=_ids(CO))
+def test_positions_co(version, it):
     entree = it["entree"]
     assert set(entree) == {"consigne", "texte", "nb_mots"}, it["id"]
     texte = entree["texte"]
@@ -157,15 +178,19 @@ def test_positions_co(it):
     assert it["note_positions"], it["id"]
 
 
-def test_composition_co():
-    reels = [it for it in CO if not it["fictif"]]
-    assert len(reels) >= 5, _ids(reels)
+@pytest.mark.parametrize("version", VERSIONS)
+def test_composition_co(version):
+    items = PAR_VERSION[(version, "CO")]
+    reels = [it for it in items if co_reel(it)]
+    assert len(reels) >= 5, [it["id"] for it in reels]
     for it in reels:
         (p,) = it["provenance"]
         _provenance_service_public(it, p)
         assert len(p["chunks"]) == 1, it["id"]
-    for it in CO:
-        if it["fictif"]:
+        assert it["fictif"] is _fictif_co_reel(version), it["id"]
+    for it in items:
+        if not co_reel(it):
+            assert it["fictif"] is True, it["id"]
             assert all("fictif" in p["source"] for p in it["provenance"]), it["id"]
     sources = [it["provenance"][0]["doc_id"] for it in reels]
     assert len(sources) == len(set(sources)), "une fiche différente par item CO réel"
@@ -180,8 +205,8 @@ MOTS_POINTS_CLES = {"courte": 60, "moyenne": 170, "detaillee": 400}
 MOTS_DOCUMENT = {"facile": (250, 650), "moyen": (500, 1000), "difficile": (900, 1700)}
 
 
-@pytest.mark.parametrize("it", RE, ids=_ids(RE))
-def test_structure_re(it):
+@pytest.mark.parametrize(("version", "it"), RE, ids=_ids(RE))
+def test_structure_re(version, it):
     assert it["fictif"] is False
     entree = it["entree"]
     assert set(entree) == {"consigne", "document", "nb_mots"}, it["id"]
@@ -204,7 +229,9 @@ def _fiches_citees(*chemins: Path) -> set[str]:
     return set(re.findall(r"\bF[0-9]+\b", textes))
 
 
-def test_composition_re():
+@pytest.mark.parametrize("version", VERSIONS)
+def test_composition_re(version):
+    RE = PAR_VERSION[(version, "RE")]
     assert Counter(it["longueur_demandee"] for it in RE) == {
         "courte": 5,
         "moyenne": 5,
@@ -220,13 +247,14 @@ def test_composition_re():
     }
     fiches = [it["provenance"][0]["doc_id"] for it in RE]
     assert len(fiches) == len(set(fiches)), "une fiche différente par item RE"
-    deja = _fiches_citees(CONSTRUCTION / "Q.jsonl", CONSTRUCTION / "LC.jsonl", CALIBRAGE)
+    construction = _construction(version)
+    deja = _fiches_citees(construction / "Q.jsonl", construction / "LC.jsonl", CALIBRAGE)
     assert set(fiches) & deja == set(), "fiches déjà citées par Q, LC ou le calibrage"
 
 
 def test_sources_hors_calibrage():
     calibrage = _fiches_citees(CALIBRAGE)
-    for it in CO + RE + CT:
+    for _, it in CO + RE + CT:
         for p in it["provenance"]:
             assert p.get("doc_id") not in calibrage, it["id"]
     objets_calibrage = {
@@ -235,10 +263,10 @@ def test_sources_hors_calibrage():
         if ligne.strip() and json.loads(ligne)["tache"] == "Courrier type"
     }
     assert objets_calibrage, "scénarios CT du calibrage introuvables"
-    assert {it["entree"]["objet"] for it in CT}.isdisjoint(objets_calibrage)
+    assert {it["entree"]["objet"] for _, it in CT}.isdisjoint(objets_calibrage)
     articles_calibrage = set(re.findall(r"LEGIARTI[0-9]+", CALIBRAGE.read_text(encoding="utf-8")))
     assert articles_calibrage, "articles LEGI du calibrage introuvables"
-    for it in CT:
+    for _, it in CT:
         cites = {p.get("legiarti") for p in it["provenance"]}
         cites.add((it.get("base_reglementaire") or {}).get("legiarti"))
         assert cites.isdisjoint(articles_calibrage), it["id"]
@@ -262,8 +290,8 @@ def _valeurs(connus: dict) -> list[str]:
     return valeurs
 
 
-@pytest.mark.parametrize("it", CT, ids=_ids(CT))
-def test_structure_ct(it):
+@pytest.mark.parametrize(("version", "it"), CT, ids=_ids(CT))
+def test_structure_ct(version, it):
     assert it["fictif"] is True
     entree = it["entree"]
     assert set(entree) == {"type", "objet", "elements_connus", "consigne"}, it["id"]
@@ -296,8 +324,9 @@ def test_structure_ct(it):
         assert all(p.get("type") is None for p in it["provenance"]), it["id"]
 
 
-def test_composition_ct():
-    retenus = _retenus(CT)
+@pytest.mark.parametrize("version", VERSIONS)
+def test_composition_ct(version):
+    retenus = _retenus(version, PAR_VERSION[(version, "CT")])
     assert Counter(it["type_courrier"] for it in retenus) == TYPES_CT
     assert sum(1 for it in retenus if it.get("base_reglementaire")) >= 4
     assert len({it["entree"]["objet"] for it in retenus}) == len(retenus), "objets en double"
@@ -306,11 +335,12 @@ def test_composition_ct():
 # ---------------------------------------------------------------------------
 # Lecteur strict (slmsp.core.items)
 # ---------------------------------------------------------------------------
+@pytest.mark.parametrize("version", VERSIONS)
 @pytest.mark.parametrize("code", CODES)
-def test_lecteur_strict(code):
+def test_lecteur_strict(version, code):
     items_mod = pytest.importorskip("slmsp.core.items")
     erreurs = []
-    for it in PAR_CODE[code]:
+    for it in PAR_VERSION[(version, code)]:
         try:
             items_mod.valider_item(it, strict=True)
         except items_mod.ItemInvalide as exc:
@@ -396,28 +426,28 @@ def _verifier_revision(sources, it: dict, p: dict) -> None:
         assert revisions.get(p["depot"]) == p["revision"], (it["id"], p["depot"])
 
 
-@pytest.mark.parametrize("it", RE, ids=_ids(RE))
-def test_verbatim_re(it, sources):
+@pytest.mark.parametrize(("version", "it"), RE, ids=_ids(RE))
+def test_verbatim_re(version, it, sources):
     (p,) = it["provenance"]
     assert it["entree"]["document"] == _chunks(sources, p), f"{it['id']} : document non verbatim"
     _verifier_revision(sources, it, p)
 
 
-CO_REELS = [it for it in CO if not it["fictif"]]
+CO_REELS = [(v, it) for v, it in CO if co_reel(it)]
 
 
-@pytest.mark.parametrize("it", CO_REELS, ids=_ids(CO_REELS))
-def test_verbatim_co_reel(it, sources):
+@pytest.mark.parametrize(("version", "it"), CO_REELS, ids=_ids(CO_REELS))
+def test_verbatim_co_reel(version, it, sources):
     (p,) = it["provenance"]
     assert it["texte_corrige_reference"] == _chunks(sources, p), f"{it['id']} : non verbatim"
     _verifier_revision(sources, it, p)
 
 
-CT_BASES = [it for it in CT if it.get("base_reglementaire")]
+CT_BASES = [(v, it) for v, it in CT if it.get("base_reglementaire")]
 
 
-@pytest.mark.parametrize("it", CT_BASES, ids=_ids(CT_BASES))
-def test_verbatim_base_ct(it, sources):
+@pytest.mark.parametrize(("version", "it"), CT_BASES, ids=_ids(CT_BASES))
+def test_verbatim_base_ct(version, it, sources):
     base = it["base_reglementaire"]
     (p,) = [p for p in it["provenance"] if p.get("type") in ("legi", "service-public")]
     if p["type"] == "legi":
@@ -434,8 +464,9 @@ def test_verbatim_base_ct(it, sources):
 # ---------------------------------------------------------------------------
 # Composition (outil) et verdicts de la double vérification
 # ---------------------------------------------------------------------------
-def test_commande_composition(capsys):
-    assert cj.cmd_composition(RACINE, "v1.0") == 0
+@pytest.mark.parametrize("version", VERSIONS)
+def test_commande_composition(capsys, version):
+    assert cj.cmd_composition(RACINE, version) == 0
     sortie = capsys.readouterr().out
     for code, libelle in (("CO", "Correction"), ("RE", "Résumé"), ("CT", "Courrier type")):
         ligne = f"| {code} ({libelle}) | 15 / 15 (0) | 5 / 5 (0) | 5 / 5 (0) | 5 / 5 (0) |"
@@ -446,9 +477,10 @@ def test_commande_composition(capsys):
         assert f"{code}.jsonl" not in anomalies, anomalies
 
 
+@pytest.mark.parametrize("version", VERSIONS)
 @pytest.mark.parametrize("code", CODES)
-def test_verdicts_acceptes(code):
-    chemin = CONSTRUCTION / "verification" / f"{code}.jsonl"
+def test_verdicts_acceptes(version, code):
+    chemin = _construction(version) / "verification" / f"{code}.jsonl"
     assert chemin.is_file(), f"verdicts absents : {chemin}"
     for n, ligne in enumerate(chemin.read_text(encoding="utf-8").splitlines(), 1):
         if not ligne.strip():
@@ -458,14 +490,15 @@ def test_verdicts_acceptes(code):
         assert cj.RE_DATE_ISO.fullmatch(v["verifie_le"]), (code, n)
         if v["verdict"] == "rejete":
             assert v.get("motif") in cj.MOTIFS, (code, n)
-    verdicts, erreurs = cj.derniers_verdicts(CONSTRUCTION)
+    verdicts, erreurs = cj.derniers_verdicts(_construction(version))
     assert [e for e in erreurs if e.startswith(f"{code}.jsonl")] == []
     # Un item rejeté puis remplacé (CT-003 par CT-016) reste dans le brouillon, exclu.
-    sans_verdict = [it["id"] for it in PAR_CODE[code] if it["id"] not in verdicts]
+    items = PAR_VERSION[(version, code)]
+    sans_verdict = [it["id"] for it in items if it["id"] not in verdicts]
     assert sans_verdict == [], f"{code} non vérifiés : {sans_verdict}"
     non_acceptes = [
         it["id"]
-        for it in _retenus(PAR_CODE[code])
+        for it in _retenus(version, items)
         if verdicts.get(it["id"], {}).get("verdict") != "accepte"
     ]
     assert non_acceptes == [], f"{code} non vérifiés ou rejetés : {non_acceptes}"

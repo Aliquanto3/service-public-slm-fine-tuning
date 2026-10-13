@@ -11,7 +11,6 @@ Prérequis (binaires, modèles, Index) : ceux de `test_integration_question.py`,
 from __future__ import annotations
 
 import importlib.util
-import re
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -21,7 +20,7 @@ import pytest
 
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton, ResultatOutil
 from slmsp.core.items import lire_jeu, resoudre_cassettes
-from slmsp.core.texte import normaliser
+from slmsp.evaluation import controles
 from slmsp.harness.config import charger_config_harnais
 from slmsp.harness.modes import ModeFixe
 from slmsp.harness.service import AssistantService
@@ -50,24 +49,9 @@ ITEMS = ("RD-001", "RD-002")
 PROTOCOLE = "json-generique"
 
 
-def respecte(valeur: Any, fragments: list[str]) -> bool:
-    """Règle `contient_un_de` : un fragment normalisé en début de mot de la valeur normalisée."""
-    if not isinstance(valeur, str):
-        return False
-    texte = normaliser(valeur)
-    return any(re.search(rf"(?<!\w){re.escape(normaliser(f))}", texte) for f in fragments)
-
-
 def appel_conforme(appel: AppelOutil, attendu: Any) -> bool:
-    if appel.nom != attendu.outil:
-        return False
-    for nom, regle in (attendu.regles.arguments if attendu.regles else {}).items():
-        valeur = appel.arguments.get(nom)
-        if regle.contient_un_de is not None and not respecte(valeur, regle.contient_un_de):
-            return False
-        if regle.a_exact and valeur != regle.exact:
-            return False
-    return True
+    """Règles de production (`exact`, `contient_un_de`, `mot_entier_un_de`, `optionnel`)."""
+    return controles.appel_conforme(attendu, appel.nom, appel.arguments)
 
 
 @pytest.mark.lent

@@ -9,7 +9,7 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from itertools import cycle
 from pathlib import Path
 from typing import Any
@@ -479,6 +479,43 @@ def test_gel_relu_d_un_jeu_complet(depot: Path) -> None:
     assert len(manifeste.fichiers) == 3  # une seule cassette partagée
 
 
+def test_gel_relu_avec_date_de_reference(depot: Path) -> None:
+    ecrire_items(depot, jeu_complet())
+    manifeste = gel(
+        "v1.0", "relu", 3, depot, maintenant=MAINTENANT, date_reference=date(2026, 10, 12)
+    )
+    assert manifeste.date_reference == date(2026, 10, 12)
+    brut = json.loads((depot / "eval" / "jeu" / "v1.0" / "MANIFEST.json").read_bytes())
+    assert brut["date_reference"] == "2026-10-12"
+    assert verifier_manifeste("v1.0", depot).date_reference == date(2026, 10, 12)
+
+
+@pytest.mark.parametrize("date_reference", [date(2026, 10, 13), "2026-10-12", datetime.now()])
+def test_gel_refuse_une_date_de_reference_invalide(depot: Path, date_reference: Any) -> None:
+    avant = etat(depot)
+    with pytest.raises(ValueError, match="date de référence"):
+        gel("v1.0", "provisoire", 7, depot, maintenant=MAINTENANT, date_reference=date_reference)
+    assert etat(depot) == avant
+
+
+def test_manifeste_sans_date_de_reference_reste_valide(depot: Path) -> None:
+    donnees = gel("v1.0", "provisoire", 7, depot, maintenant=MAINTENANT).model_dump(mode="json")
+    assert donnees["date_reference"] is None
+    del donnees["date_reference"]  # manifeste v1.0 : clé absente
+    assert ManifesteJeu.model_validate(donnees).date_reference is None
+    donnees["date_reference"] = "2026-10-13"  # postérieure au gel du 2026-10-12
+    with pytest.raises(ValueError, match="postérieure"):
+        ManifesteJeu.model_validate(donnees)
+
+
+def test_manifeste_v1_0_du_depot_reste_valide() -> None:
+    """Le manifeste gelé v1.0, sans `date_reference`, passe toujours (matrice v1.1)."""
+    if not (RACINE / "eval" / "jeu" / "v1.0" / "MANIFEST.json").is_file():
+        pytest.fail("eval/jeu/v1.0/MANIFEST.json absent du dépôt")
+    manifeste = verifier_manifeste("v1.0", RACINE)
+    assert manifeste.date_reference is None and manifeste.nb_items == 225
+
+
 def test_gel_refuse_un_jeu_non_conforme(depot: Path) -> None:
     (depot / "eval" / "cassettes" / "RD-001" / "session.json").unlink()
     with pytest.raises(JeuNonConforme) as exc:
@@ -739,6 +776,39 @@ def test_cli_gel_puis_refus(depot: Path, capsys: pytest.CaptureFixture[str]) -> 
     assert verifier_manifeste("v1.0", depot).echantillons.graine == 7
     assert main([*arguments, "--racine", str(depot)]) == CodeSortie.ERREUR
     assert "existe déjà" in capsys.readouterr().err
+
+
+def test_cli_gel_avec_date_de_reference(depot: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    ecrire_items(depot, jeu_complet())
+    arguments = ["eval", "gel", "--version", "v1.0", "--statut", "relu", "--graine", "7"]
+    code = main([*arguments, "--date-reference", "2026-10-12", "--racine", str(depot)])
+    assert code == CodeSortie.SUCCES
+    assert "Date de référence : 2026-10-12." in capsys.readouterr().out
+    brut = json.loads((depot / "eval" / "jeu" / "v1.0" / "MANIFEST.json").read_bytes())
+    assert brut["date_reference"] == "2026-10-12" and brut["statut"] == "relu"
+
+
+@pytest.mark.parametrize(
+    ("options", "message"),
+    [
+        (["--statut", "provisoire", "--graine", "7", "--date-reference", "12/10/2026"], "invalide"),
+        (["--statut", "provisoire", "--graine", "7", "--date-reference", "20261012"], "invalide"),
+        (["--statut", "provisoire", "--graine", "7", "--date-reference", "2026-02-30"], "invalide"),
+        (["--statut", "provisoire", "--graine", "7", "--date-reference", "FUTURE"], "postérieure"),
+        (["--verifier-seulement", "--date-reference", "2026-10-12"], "exclut --date-reference"),
+    ],
+)
+def test_cli_date_de_reference_refusee(
+    depot: Path, capsys: pytest.CaptureFixture[str], options: list[str], message: str
+) -> None:
+    lointain = (datetime.now().astimezone().date() + timedelta(days=3653)).isoformat()
+    options = [lointain if o == "FUTURE" else o for o in options]
+    avant = etat(depot)
+    code = main(["eval", "gel", "--version", "v1.0", *options, "--racine", str(depot)])
+    assert code == CodeSortie.USAGE == 2
+    erreur = capsys.readouterr().err
+    assert message in erreur and "Traceback" not in erreur
+    assert etat(depot) == avant
 
 
 @pytest.mark.parametrize(

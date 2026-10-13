@@ -21,7 +21,10 @@ Sous-commandes :
 - `composition` : écarts des brouillons avec SPEC §2, en Markdown ;
 - `rejets`      : taux de rejet par Tâche et par motif, en Markdown ;
 - `revue`       : exporte l'échantillon de relecture du manifeste gelé dans `eval/revue/`
-                  (JSONL pour les outils, Markdown lisible champ par champ).
+                  (JSONL pour les outils, Markdown lisible champ par champ) ;
+- `changements` : avant le gel d'une nouvelle version, exporte dans `eval/revue/` les items
+                  nouveaux, modifiés (ancienne et nouvelle valeur de chaque champ changé) et
+                  retirés par rapport au `items.jsonl` d'une version de référence.
 
 Garde-fous : le client HTTP est en lecture seule (GET, HEAD), en `https` uniquement, et
 vérifie l'hôte contre une liste codée (D1.5) avant chaque connexion, y compris à chaque
@@ -1026,8 +1029,9 @@ def anomalies_item(code: str, it: dict) -> list[str]:
             a.append(f"`entree` doit être {'un texte' if attendu is str else 'un objet'}")
     if "fictif" in it and not isinstance(it["fictif"], bool):
         a.append("`fictif` doit être un booléen")
-    if "version_item" in it and (type(it["version_item"]) is not int or it["version_item"] != 1):
-        a.append(f"`version_item` doit valoir 1 : {it['version_item']!r}")
+    if "version_item" in it and (type(it["version_item"]) is not int or it["version_item"] < 1):
+        # 1 à la création ; incrémenté quand un item relu est corrigé (SPEC §6, v1.1).
+        a.append(f"`version_item` doit être un entier >= 1 : {it['version_item']!r}")
     prov = it.get("provenance")
     if "provenance" in it:
         if not isinstance(prov, list) or not prov:
@@ -1367,6 +1371,26 @@ def _rendre_valeur(valeur: Any, retrait: str) -> list[str]:
     return lignes
 
 
+def _titre_fiche(it: dict) -> str:
+    return (
+        f"## {it['id']} — {it.get('tache', '?')} "
+        f"({it.get('difficulte', '?')}, thème `{it.get('theme', '?')}`)"
+    )
+
+
+def _rendre_champs(it: dict) -> list[str]:
+    """Champs d'un item hors titre : scalaire sur une ligne, sinon sous-titre et rendu."""
+    lignes: list[str] = []
+    for cle, valeur in it.items():
+        if cle in CHAMPS_TITRE_REVUE:
+            continue
+        if _simple(valeur):
+            lignes += [f"**{cle}** : {_scalaire(valeur)}".rstrip(), ""]
+        else:
+            lignes += [f"### {cle}", ""] + _rendre_valeur(valeur, "") + [""]
+    return lignes
+
+
 def rendre_lecture(version: str, items: list[dict]) -> str:
     """Markdown de lecture : une fiche par item, chaque champ rendu lisiblement."""
     lignes = [
@@ -1379,22 +1403,34 @@ def rendre_lecture(version: str, items: list[dict]) -> str:
         "",
     ]
     for it in items:
-        lignes += [
-            f"## {it['id']} — {it.get('tache', '?')} "
-            f"({it.get('difficulte', '?')}, thème `{it.get('theme', '?')}`)",
-            "",
-            "- [ ] Relu",
-            "- Remarques :",
-            "",
-        ]
-        for cle, valeur in it.items():
-            if cle in CHAMPS_TITRE_REVUE:
-                continue
-            if _simple(valeur):
-                lignes += [f"**{cle}** : {_scalaire(valeur)}".rstrip(), ""]
-            else:
-                lignes += [f"### {cle}", ""] + _rendre_valeur(valeur, "") + [""]
+        lignes += [_titre_fiche(it), "", "- [ ] Relu", "- Remarques :", ""]
+        lignes += _rendre_champs(it)
     return "\n".join(lignes).rstrip("\n") + "\n"
+
+
+def _ecrire_exclusifs(sorties: tuple[Path, ...], contenus: tuple[str, ...]) -> None:
+    """Écrit chaque sortie par création exclusive (UTF-8, LF) ; aucun export partiel.
+
+    Lève `ErreurOutil` si une sortie existe déjà (rien n'est écrit) ou si une écriture
+    échoue (les fichiers créés par l'appel sont retirés)."""
+    existants = [s for s in sorties if s.exists()]
+    if existants:
+        raise ErreurOutil(
+            "export déjà présent, rien n'est écrit : " + ", ".join(str(s) for s in existants)
+        )
+    sorties[0].parent.mkdir(parents=True, exist_ok=True)
+    ecrits: list[Path] = []
+    try:
+        for chemin, contenu in zip(sorties, contenus, strict=True):
+            with open(chemin, "x", encoding="utf-8", newline="\n") as f:  # création exclusive
+                ecrits.append(chemin)
+                f.write(contenu)
+    except OSError as exc:  # existant, disque plein, droits… : aucun export partiel
+        for chemin in ecrits:  # n'efface que ce que cet appel vient de créer
+            chemin.unlink(missing_ok=True)
+        if isinstance(exc, FileExistsError):
+            raise ErreurOutil(f"export déjà présent, rien n'est écrit : {exc.filename}") from None
+        raise ErreurOutil(f"écriture de l'export impossible, rien n'est écrit : {exc}") from None
 
 
 def cmd_revue(racine: Path, version: str) -> int:
@@ -1435,28 +1471,11 @@ def cmd_revue(racine: Path, version: str) -> int:
             f"identifiant(s) de l'échantillon absent(s) de {chemin_items.name} : "
             + ", ".join(inconnus)
         )
-    existants = [s for s in sorties if s.exists()]
-    if existants:
-        raise ErreurOutil(
-            "export déjà présent, rien n'est écrit : " + ", ".join(str(s) for s in existants)
-        )
     contenus = (
         "".join(brutes[i] + "\n" for i in ids),
         rendre_lecture(version, [objets[i] for i in ids]),
     )
-    revue.mkdir(parents=True, exist_ok=True)
-    ecrits: list[Path] = []
-    try:
-        for chemin, contenu in zip(sorties, contenus, strict=True):
-            with open(chemin, "x", encoding="utf-8", newline="\n") as f:  # création exclusive
-                ecrits.append(chemin)
-                f.write(contenu)
-    except OSError as exc:  # existant, disque plein, droits… : aucun export partiel
-        for chemin in ecrits:  # n'efface que ce que cet appel vient de créer
-            chemin.unlink(missing_ok=True)
-        if isinstance(exc, FileExistsError):
-            raise ErreurOutil(f"export déjà présent, rien n'est écrit : {exc.filename}") from None
-        raise ErreurOutil(f"écriture de l'export impossible, rien n'est écrit : {exc}") from None
+    _ecrire_exclusifs(sorties, contenus)
     print(
         "\n".join(
             [
@@ -1467,6 +1486,203 @@ def cmd_revue(racine: Path, version: str) -> int:
             ]
         )
     )
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Sous-commande `changements`
+# ---------------------------------------------------------------------------
+STATUTS_CHANGEMENT = ("nouveau", "modifie", "retire")
+_ABSENT: Any = object()
+
+
+def lire_items_jeu(chemin: Path) -> dict[str, dict]:
+    """Items d'un `items.jsonl` assemblé, par identifiant ; lève `ErreurOutil` si absent,
+    illisible, ou si un item n'a pas d'`id` ou le répète."""
+    if not chemin.is_file():
+        raise ErreurOutil(f"items absents : {chemin} (assembler d'abord la version)")
+    objets, erreurs = lire_jsonl(chemin)
+    if erreurs:
+        raise ErreurOutil("; ".join(erreurs))
+    items: dict[str, dict] = {}
+    for n, it in objets:
+        if not isinstance(it, dict) or not isinstance(it.get("id"), str):
+            raise ErreurOutil(f"{chemin.name}:{n} : item sans `id`")
+        if it["id"] in items:
+            raise ErreurOutil(f"{chemin.name}:{n} : `id` dupliqué : {it['id']}")
+        items[it["id"]] = it
+    return items
+
+
+def diff_champs(ancien: Any, nouveau: Any, chemin: str = "") -> list[dict]:
+    """Champs changés entre deux items. Un objet est comparé clé par clé (chemin pointé,
+    `entree.transcription`) ; une liste ou un scalaire, en bloc. Chaque entrée porte
+    `champ`, `changement` (`ajoute`, `retire` ou `modifie`) et les valeurs `ancien` et
+    `nouveau` présentes."""
+    if isinstance(ancien, dict) and isinstance(nouveau, dict):
+        diffs: list[dict] = []
+        for cle in list(ancien) + [c for c in nouveau if c not in ancien]:
+            sous = f"{chemin}.{cle}" if chemin else str(cle)
+            diffs += diff_champs(ancien.get(cle, _ABSENT), nouveau.get(cle, _ABSENT), sous)
+        return diffs
+    if (
+        ancien is not _ABSENT
+        and nouveau is not _ABSENT
+        and json.dumps(ancien, sort_keys=True) == json.dumps(nouveau, sort_keys=True)
+    ):
+        return []
+    entree: dict[str, Any] = {"champ": chemin}
+    if ancien is _ABSENT:
+        entree.update(changement="ajoute", nouveau=nouveau)
+    elif nouveau is _ABSENT:
+        entree.update(changement="retire", ancien=ancien)
+    else:
+        entree.update(changement="modifie", ancien=ancien, nouveau=nouveau)
+    return [entree]
+
+
+def comparer_jeux(
+    reference: dict[str, dict], version: dict[str, dict], verdicts: dict[str, dict]
+) -> list[dict]:
+    """Lignes de l'export, dans l'ordre des Tâches puis des numéros : `nouveau` (item),
+    `modifie` (champs changés, puis item), `retire` (ancien item). Chaque ligne porte aussi
+    le dernier verdict de l'item dans la version (`verdict`), s'il existe."""
+
+    def ordre(identifiant: str) -> tuple[int, str, int]:  # ordre des Tâches de SPEC §2
+        code, numero = cle_id(identifiant)
+        return (CODES.index(code) if code in CODES else len(CODES), code, numero)
+
+    lignes: list[dict] = []
+    for identifiant in sorted(set(reference) | set(version), key=ordre):
+        ancien, nouveau = reference.get(identifiant), version.get(identifiant)
+        ligne: dict[str, Any]
+        if ancien is None:
+            ligne = {"id": identifiant, "statut": "nouveau", "item": nouveau}
+        elif nouveau is None:
+            ligne = {"id": identifiant, "statut": "retire", "item": ancien}
+        else:
+            champs = diff_champs(ancien, nouveau)
+            if not champs:
+                continue
+            ligne = {"id": identifiant, "statut": "modifie", "champs": champs, "item": nouveau}
+        if identifiant in verdicts:
+            ligne["verdict"] = verdicts[identifiant]
+        lignes.append(ligne)
+    return lignes
+
+
+def _bloc_diff(ancien: str, nouveau: str) -> list[str]:
+    import difflib
+
+    corps = list(
+        difflib.unified_diff(
+            ancien.split("\n"), nouveau.split("\n"), "ancien", "nouveau", n=1, lineterm=""
+        )
+    )
+    cloture = _cloture("\n".join(corps))
+    return [f"{cloture}diff", *corps, cloture]
+
+
+def _rendre_valeur_bloc(valeur: Any) -> list[str]:
+    if _simple(valeur):
+        return [_scalaire(valeur) if valeur != "" else "(texte vide)"]
+    return _rendre_valeur(valeur, "")
+
+
+def _rendre_champ_change(changement: dict) -> list[str]:
+    nature = {"ajoute": "ajouté", "retire": "retiré", "modifie": "modifié"}
+    lignes = [f"### `{changement['champ']}` ({nature[changement['changement']]})", ""]
+    ancien = changement.get("ancien", _ABSENT)
+    nouveau = changement.get("nouveau", _ABSENT)
+    if isinstance(ancien, str) and isinstance(nouveau, str) and ("\n" in ancien or "\n" in nouveau):
+        lignes += ["Différences, ligne à ligne :", ""] + _bloc_diff(ancien, nouveau) + [""]
+        for libelle, valeur in (("Ancienne valeur", ancien), ("Nouvelle valeur", nouveau)):
+            lignes += [f"<details><summary>{libelle} complète</summary>", ""]
+            lignes += _bloc_texte(valeur, "") + ["", "</details>", ""]
+        return lignes
+    if changement["changement"] == "modifie" and not (
+        isinstance(ancien, str) and isinstance(nouveau, str)
+    ):
+        avant, apres = (
+            json.dumps(v, ensure_ascii=False, indent=1, sort_keys=True) for v in (ancien, nouveau)
+        )
+        lignes += ["Différences, ligne à ligne (JSON) :", ""] + _bloc_diff(avant, apres) + [""]
+    for libelle, valeur in (("Ancienne valeur", ancien), ("Nouvelle valeur", nouveau)):
+        if valeur is not _ABSENT:
+            lignes += [f"**{libelle}** :", ""] + _rendre_valeur_bloc(valeur) + [""]
+    return lignes
+
+
+def _lignes_verdict(verdict: dict | None) -> list[str]:
+    if not verdict:
+        return ["**Dernier verdict** : aucun", ""]
+    return [
+        f"**Dernier verdict** : `{verdict.get('verdict')}` "
+        f"({verdict.get('motif', '-')}, {verdict.get('verifie_le', '?')}) : "
+        + _scalaire(verdict.get("detail", "")).replace("\n", " "),
+        "",
+    ]
+
+
+def rendre_changements(reference: str, version: str, lignes: list[dict]) -> str:
+    """Markdown de relecture des changements : items nouveaux, modifiés, retirés."""
+    par_statut = {s: [lg for lg in lignes if lg["statut"] == s] for s in STATUTS_CHANGEMENT}
+    sortie = [
+        f"# Changements du Jeu d'évaluation {version} par rapport à {reference}",
+        "",
+        f"- Comparaison : `eval/jeu/{reference}/items.jsonl` (référence gelée) et "
+        f"`eval/jeu/{version}/items.jsonl` (assemblé, non gelé).",
+        f"- Items nouveaux : {len(par_statut['nouveau'])} ; modifiés : "
+        f"{len(par_statut['modifie'])} ; retirés : {len(par_statut['retire'])}.",
+        f"- Valeurs complètes : `eval/revue/changements-{reference}-{version}.jsonl`.",
+        "",
+    ]
+    titres = {"nouveau": "Items nouveaux", "modifie": "Items modifiés", "retire": "Items retirés"}
+    for statut in STATUTS_CHANGEMENT:
+        sortie += [f"# {titres[statut]} ({len(par_statut[statut])})", ""]
+        if not par_statut[statut]:
+            sortie += ["Aucun.", ""]
+        for ligne in par_statut[statut]:
+            it = ligne["item"]
+            sortie += [_titre_fiche(it), "", "- [ ] Relu", "- Remarques :", ""]
+            sortie += _lignes_verdict(ligne.get("verdict"))
+            if statut == "modifie":
+                noms = ", ".join(f"`{c['champ']}`" for c in ligne["champs"])
+                sortie += [f"Champs changés : {noms}.", ""]
+                for changement in ligne["champs"]:
+                    sortie += _rendre_champ_change(changement)
+                continue
+            if statut == "retire":
+                sortie += ["Ancien item :", ""]
+            sortie += _rendre_champs(it)
+    return "\n".join(sortie).rstrip("\n") + "\n"
+
+
+def cmd_changements(racine: Path, version: str, reference: str) -> int:
+    if version == reference:
+        raise ErreurOutil(f"version et référence identiques : {version}")
+    items_reference = lire_items_jeu(racine / "eval" / "jeu" / reference / "items.jsonl")
+    items_version = lire_items_jeu(racine / "eval" / "jeu" / version / "items.jsonl")
+    verdicts, erreurs = derniers_verdicts(racine / "eval" / "construction" / version)
+    if erreurs:
+        raise ErreurOutil("verdicts illisibles, rien n'est écrit : " + "; ".join(erreurs))
+    lignes = comparer_jeux(items_reference, items_version, verdicts)
+    revue = racine / "eval" / "revue"
+    sorties = (
+        revue / f"changements-{reference}-{version}.jsonl",
+        revue / f"changements-{reference}-{version}.md",
+    )
+    contenus = (
+        "".join(json.dumps(lg, ensure_ascii=False) + "\n" for lg in lignes),
+        rendre_changements(reference, version, lignes),
+    )
+    _ecrire_exclusifs(sorties, contenus)
+    out = [f"# Changements {version} / {reference}", ""]
+    for statut in STATUTS_CHANGEMENT:
+        ids = [lg["id"] for lg in lignes if lg["statut"] == statut]
+        out.append(f"- {statut} : {len(ids)}" + (f" ({', '.join(ids)})" if ids else ""))
+    out += [f"- Écrit : `{s.relative_to(racine).as_posix()}`" for s in sorties]
+    print("\n".join(out))
     return 0
 
 
@@ -1512,12 +1728,17 @@ def analyser(argv: list[str] | None) -> argparse.Namespace:
         ("composition", "écarts avec SPEC §2 (Markdown)"),
         ("rejets", "taux de rejet par Tâche et par motif (Markdown)"),
         ("revue", "échantillon de relecture du manifeste -> eval/revue/ (JSONL et Markdown)"),
+        ("changements", "items nouveaux, modifiés et retirés -> eval/revue/ (JSONL et Markdown)"),
     ):
         p = sous.add_parser(nom, help=aide)
         p.add_argument("--version", default="v1.0")
         p.add_argument("--racine", type=Path, default=Path("."), help="racine du dépôt")
         if nom == "assembler":
             p.add_argument("--force", action="store_true", help="assembler malgré un MANIFEST.json")
+        if nom == "changements":
+            p.add_argument(
+                "--reference", default="v1.0", help="version de référence gelée (défaut : v1.0)"
+            )
     return ap.parse_args(argv)
 
 
@@ -1528,9 +1749,11 @@ def main(argv: list[str] | None = None, client: ClientHTTP | None = None) -> int
         except (AttributeError, ValueError, OSError):
             pass
     a = analyser(argv)
-    if not re.fullmatch(r"v\d+(\.\d+)*", getattr(a, "version", "v1")):
-        print(f"version invalide : {a.version!r}", file=sys.stderr)
-        return 2
+    for option in ("version", "reference"):
+        valeur = getattr(a, option, "v1")
+        if not re.fullmatch(r"v\d+(\.\d+)*", valeur):
+            print(f"{option} invalide : {valeur!r}", file=sys.stderr)
+            return 2
     try:
         if a.cmd == "sources":
             return cmd_sources(
@@ -1544,6 +1767,8 @@ def main(argv: list[str] | None = None, client: ClientHTTP | None = None) -> int
             return cmd_composition(a.racine, a.version)
         if a.cmd == "revue":
             return cmd_revue(a.racine, a.version)
+        if a.cmd == "changements":
+            return cmd_changements(a.racine, a.version, a.reference)
         return cmd_rejets(a.racine, a.version)
     except ErreurOutil as exc:
         print(f"Erreur ({type(exc).__name__}) : {exc}", file=sys.stderr)

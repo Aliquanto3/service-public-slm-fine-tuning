@@ -1,7 +1,8 @@
 """Sous-commande `slmsp eval` : gel du jeu, génération, notation et sonde d'outils.
 
     slmsp eval gel --version v1.0 --verifier-seulement [--racine DIR]
-    slmsp eval gel --version v1.0 --statut provisoire --graine 7 [--racine DIR]
+    slmsp eval gel --version v1.0 --statut provisoire --graine 7 [--date-reference AAAA-MM-JJ]
+        [--racine DIR]
     slmsp eval run --modele base:granite-4.0-1b --quantification q4_k_m --jeu v1.0
         [--phase generation|toutes] [--variante cpu|cuda] [--items ID,ID…] [--racine DIR]
         [--mode-juge batch|direct]
@@ -13,6 +14,9 @@
 `--verifier-seulement` n'écrit rien et sort en 0 sans erreur bloquante (les écarts de
 composition sont listés). Le gel écrit `eval/jeu/<version>/MANIFEST.json` et
 `eval/revue/echantillon-revue-<version>.md`, et refuse si l'un des deux existe.
+`--date-reference AAAA-MM-JJ` inscrit l'ancre de date des références dans le manifeste ;
+elle est refusée (code 2, rien n'est écrit) si elle est mal formée, postérieure à la date
+du gel, ou donnée avec `--verifier-seulement`.
 
 `run --phase generation` (story 5.3) : une ligne de progression par item, puis le chemin du
 run, son statut et la durée moyenne par item. `run --phase notation --depuis RUN_ID`
@@ -39,6 +43,7 @@ import argparse
 import re
 import sys
 from collections.abc import Callable
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Final
 
@@ -58,6 +63,26 @@ def _usage(message: str) -> int:
     return int(CodeSortie.USAGE)
 
 
+MOTIF_DATE: Final = r"[0-9]{4}-[0-9]{2}-[0-9]{2}"
+"""Forme exigée de `--date-reference` (AAAA-MM-JJ)."""
+
+
+def _date_reference(valeur: str, maintenant: datetime) -> date | str:
+    """Date de `--date-reference`, ou le message d'erreur d'usage."""
+    if not re.fullmatch(MOTIF_DATE, valeur):
+        return f"date de référence invalide : {valeur!r} (attendu : AAAA-MM-JJ)"
+    try:
+        jour = date.fromisoformat(valeur)
+    except ValueError:
+        return f"date de référence invalide : {valeur!r} (attendu : AAAA-MM-JJ)"
+    if jour > maintenant.date():
+        return (
+            f"date de référence {valeur} postérieure à la date du gel "
+            f"({maintenant.date().isoformat()})"
+        )
+    return jour
+
+
 def executer_gel(args: argparse.Namespace) -> int:
     """`slmsp eval gel` : vérification seule, ou gel complet."""
     from slmsp.core.items import MOTIF_VERSION
@@ -69,6 +94,8 @@ def executer_gel(args: argparse.Namespace) -> int:
     if args.verifier_seulement:
         if args.statut is not None or args.graine is not None:
             return _usage("--verifier-seulement exclut --statut et --graine")
+        if args.date_reference is not None:
+            return _usage("--verifier-seulement exclut --date-reference")
         rapport = verifier_jeu(args.version, racine)
         print(rapport.texte())
         if rapport.erreurs:
@@ -79,7 +106,21 @@ def executer_gel(args: argparse.Namespace) -> int:
         return int(CodeSortie.SUCCES)
     if args.statut is None or args.graine is None:
         return _usage("--statut et --graine sont requis (ou --verifier-seulement)")
-    manifeste = gel(args.version, args.statut, args.graine, racine)
+    maintenant = datetime.now().astimezone()
+    date_reference = None
+    if args.date_reference is not None:
+        lue = _date_reference(args.date_reference, maintenant)
+        if isinstance(lue, str):
+            return _usage(lue)
+        date_reference = lue
+    manifeste = gel(
+        args.version,
+        args.statut,
+        args.graine,
+        racine,
+        maintenant=maintenant,
+        date_reference=date_reference,
+    )
     print(f"Jeu {manifeste.version} gelé ({manifeste.statut}) : {manifeste.nb_items} items.")
     print(f"Fichiers empreints : {len(manifeste.fichiers)}.")
     print(
@@ -87,6 +128,8 @@ def executer_gel(args: argparse.Namespace) -> int:
         f"{len(manifeste.echantillons.second_juge)}, relecture "
         f"{len(manifeste.echantillons.relecture)}."
     )
+    if manifeste.date_reference is not None:
+        print(f"Date de référence : {manifeste.date_reference.isoformat()}.")
     print(f"Écarts de composition inscrits : {len(manifeste.ecarts)}.")
     for ecart in manifeste.ecarts:
         print(f"- {ecart}")
@@ -416,6 +459,11 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     gel.add_argument("--statut", choices=("provisoire", "relu"), help="statut du gel")
     gel.add_argument("--graine", type=int, help="graine des échantillons (second juge, relecture)")
+    gel.add_argument(
+        "--date-reference",
+        metavar="AAAA-MM-JJ",
+        help="ancre de date des références, inscrite dans le manifeste (au plus la date du gel)",
+    )
     gel.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     gel.set_defaults(func=executer_gel)
 
