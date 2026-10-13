@@ -55,3 +55,8 @@ Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même q
 - **Revue** : une seule couche, Blind Hunter (`_bmad/custom/bmad-build-auto.toml`). Ne relance pas de revue supplémentaire de ta propre initiative.
 - **Sous-agents** : n'en lance pas d'autres que ceux exigés par le workflow. Lis les fichiers par extraits ciblés plutôt qu'en entier quand c'est possible.
 - **Compte rendu final** : 8 lignes au plus.
+
+## Run du 2026-10-13 : code seul, sans API (consigne d'Anaël)
+- **Périmètre** : du code et des tests uniquement. Aucun appel d'API payant (Anthropic, Mistral), même pour une vérification ponctuelle. Aucun téléchargement lourd. Aucun entraînement ni aucune Baseline réels. Les mesures réelles (H-EMB, H-WIN-TRAIN, benchmarks) ne sont pas lancées : prévois la commande et un test sur fixture, puis consigne la commande à lancer plus tard.
+- **Jeu d'évaluation** : la v1.1 attend la relecture d'Anaël. Ne touche ni à `eval/jeu/`, ni à `eval/revue/`, ni à `eval/construction/`.
+- **Économie** : le mode économe reste actif (une couche de revue). Compte rendu final en 8 lignes au plus.
