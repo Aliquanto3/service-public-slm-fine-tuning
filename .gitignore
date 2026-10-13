@@ -35,3 +35,6 @@ wandb/
 var/
 # Versionnés (AD-21) : run.json, scores.json, verdicts.jsonl, rapports,
 # data/train/*/MANIFEST.json, data/registre-licences.toml, .env.example.
+
+# Réglages Claude Code personnels
+.claude/settings.local.json

@@ -60,6 +60,7 @@ Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même q
 - **Périmètre** : du code et des tests uniquement. Aucun appel d'API payant (Anthropic, Mistral), même pour une vérification ponctuelle. Aucun téléchargement lourd. Aucun entraînement ni aucune Baseline réels. Les mesures réelles (H-EMB, H-WIN-TRAIN, benchmarks) ne sont pas lancées : prévois la commande et un test sur fixture, puis consigne la commande à lancer plus tard.
 - **Jeu d'évaluation** : la v1.1 attend la relecture d'Anaël. Ne touche ni à `eval/jeu/`, ni à `eval/revue/`, ni à `eval/construction/`.
 - **Économie** : le mode économe reste actif (une couche de revue). Compte rendu final en 8 lignes au plus.
+- **Sortie des tests** : pendant le développement, lance seulement les tests de ta zone (`uv run pytest -q --tb=short <chemins>`). La suite complète tourne **une seule fois**, à la fin, avec `uv run pytest -q --tb=line -p no:warnings`. Ne relis jamais une sortie de tests en entier : seulement le résumé et les échecs.
 - **Mise à jour du 2026-10-13 (Anaël)** :
   - **Branche** : `nuit/2026-10-12` est fusionnée dans `main`, qui devient la branche de travail. Les stories sont fusionnées en squash sur `main`.
   - **Rapport de nuit** : les recommandations du §1 (écarts et décisions techniques) sont validées.
