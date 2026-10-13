@@ -198,6 +198,15 @@ def test_record_simule(
         assert interaction.simulation.model_dump() == {"type": "erreur_http", "statut": 503}
 
 
+def test_fichier_d_appels_avec_bom(racine: Path, interdire_connexion: None, tmp_path: Path) -> None:
+    """PowerShell 5.1 écrit un BOM UTF-8 : le fichier reste lisible."""
+    appels = tmp_path / "appels.json"
+    appels.write_bytes(b"\xef\xbb\xbf" + json.dumps(APPELS[:1]).encode("utf-8"))
+    argv = ["mcp", "record", "--item", "RD-7", "--appels", str(appels), "--simulation"]
+    assert main([*argv, "injoignable"]) == CodeSortie.SUCCES
+    assert len(_fichiers(racine)) == 1
+
+
 @pytest.mark.parametrize("type_", ["delai_depasse", "injoignable"])
 def test_record_simule_sans_statut(
     racine: Path, interdire_connexion: None, tmp_path: Path, type_: str
@@ -218,6 +227,7 @@ def test_record_simule_sans_statut(
     [
         b"{pas du json",
         b"\xff\xfe",
+        b"[" * 100_000,
         {"nom": "search_datasets"},
         [],
         ["search_datasets"],
@@ -228,6 +238,7 @@ def test_record_simule_sans_statut(
     ids=[
         "json",
         "encodage",
+        "imbrication-excessive",
         "pas-une-liste",
         "liste-vide",
         "appel-non-objet",

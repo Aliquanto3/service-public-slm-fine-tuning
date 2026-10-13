@@ -270,6 +270,30 @@ def test_dialogue_dans_une_description_d_emplacement() -> None:
     assert any("dialogue" in faute for faute in fautes)
 
 
+@pytest.mark.parametrize(
+    ("consigne", "attendu"),
+    [
+        ("<c> exem\u200bple", "invisible"),
+        ("<c> few\u00adshot", "invisible"),
+        ("<c> \u2060", "invisible"),
+        ("<c> \uff40x\uff40", "backtick"),
+        ("\uff1e <citation-factice>", "citation"),
+        ("<c> \uff5b\uff02a\uff02\uff5d", "accolade"),
+        ("<c> few-\nshot", "coupé"),
+        ("<c> une réponse\ntype", "coupé"),
+        ("<c> un modèle de\nréponse", "coupé"),
+    ],
+)
+def test_contournements_de_la_liste_noire(consigne: str, attendu: str) -> None:
+    fautes = _fautes(_gabarit(consigne=consigne))
+    assert any(attendu in faute for faute in fautes), fautes
+
+
+def test_mot_entier_sur_une_ligne_n_est_pas_signale_comme_coupe() -> None:
+    fautes = _fautes(_gabarit(consigne="<c> few-shot\nsuite"))
+    assert not any("coupé" in faute for faute in fautes), fautes
+
+
 def test_mots_proches_admis() -> None:
     consigne = (
         "La question de l'Agent appelle une réponse claire.\n"

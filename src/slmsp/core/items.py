@@ -191,8 +191,8 @@ class RegleArgument(_Ferme):
 
     @model_validator(mode="after")
     def _une_regle(self) -> Self:
-        a_exact = "exact" in self.model_fields_set
         a_liste = self.contient_un_de is not None or self.mot_entier_un_de is not None
+        a_exact = self.a_exact
         if a_exact and a_liste:
             raise ValueError("`exact` exclut `contient_un_de` et `mot_entier_un_de`")
         if not (a_exact or a_liste or self.optionnel):
@@ -213,7 +213,10 @@ class RegleArgument(_Ferme):
 
     @property
     def a_exact(self) -> bool:
-        return "exact" in self.model_fields_set
+        # `model_dump` écrit toujours `exact: null` : accolé à une liste, il ne compte pas
+        # comme une règle `exact` (sinon un item exporté ne se relit plus).
+        a_liste = self.contient_un_de is not None or self.mot_entier_un_de is not None
+        return "exact" in self.model_fields_set and not (a_liste and self.exact is None)
 
 
 class ReglesAppel(_Ferme):
@@ -625,6 +628,10 @@ def lire_items(chemin: str | Path, *, strict: bool) -> list[Item]:
         except json.JSONDecodeError as exc:
             erreurs.append(f"{lieu} : `(item)` : JSON illisible ({exc.msg})")
             continue
+        except (RecursionError, ValueError) as exc:
+            # Imbrication trop profonde, ou entier de plus de 4 300 chiffres.
+            erreurs.append(f"{lieu} : `(item)` : JSON illisible ({type(exc).__name__})")
+            continue
         resultat = _erreurs_item(brut, strict=strict, lieu=lieu)
         if isinstance(resultat, list):
             erreurs.extend(resultat)
@@ -686,11 +693,14 @@ def chemins_jeu(version: str, racine: str | Path | None = None) -> tuple[Path, P
 def lire_jeu(version: str, racine: str | Path | None = None) -> Jeu:
     """Lit le jeu `version` (`calibrage` en mode souple, `vN[.M]` en mode strict).
 
-    Ne vérifie pas le manifeste (rôle de `slmsp.evaluation.gel`) et n'écrit rien.
+    Ne vérifie pas le manifeste (rôle de `slmsp.evaluation.gel`) et n'écrit rien. Un
+    fichier sans aucun item est refusé : l'API anti-fuite ne protégerait plus rien.
     """
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
     dossier, chemin, strict = chemins_jeu(version, base)
     items = lire_items(chemin, strict=strict)
+    if not items:
+        raise ItemInvalide(f"{chemin} : aucun item dans le fichier du jeu {version}")
     return Jeu(
         version=version,
         racine=base,

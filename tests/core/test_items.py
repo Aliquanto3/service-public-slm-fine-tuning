@@ -606,6 +606,21 @@ def test_regle_argument_serialisation_sans_mot_entier() -> None:
     assert avec.model_dump(mode="json")["mot_entier_un_de"] == ["REI"]
 
 
+def test_regle_argument_relit_son_propre_dump() -> None:
+    """`model_dump` écrit `exact: null` ; accolé à une liste, il ne compte pas comme `exact`."""
+    for brut in ({"contient_un_de": ["a"]}, {"mot_entier_un_de": ["REI"]}, {"exact": 3}):
+        regle = RegleArgument.model_validate(brut)
+        relue = RegleArgument.model_validate(regle.model_dump())
+        assert relue.a_exact is regle.a_exact
+        assert relue.model_dump() == regle.model_dump()
+    assert not RegleArgument.model_validate({"contient_un_de": ["a"], "exact": None}).a_exact
+    assert RegleArgument.model_validate(
+        {"exact": None}
+    ).a_exact  # `exact: null` seul reste une règle
+    with pytest.raises(ValueError, match="exclut"):
+        RegleArgument.model_validate({"contient_un_de": ["a"], "exact": "x"})
+
+
 EMPREINTE_DUMP_V1_0 = "80a820709e81f8efd217167b8083e4399b00f4e8c611a3a4d969e37d9ff9bd7a"
 """SHA-256 des `model_dump(mode="json")` canoniques des 225 items de `eval/jeu/v1.0`, calculé
 avant l'ajout de `mot_entier_un_de` : la clé du cache des verdicts (`judge/cache.py`) en
@@ -668,6 +683,28 @@ def test_lire_jeu_strict(tmp_path: Path) -> None:
     assert jeu.cle(jeu.items[0]) == "v1.0/Q-001"
     with pytest.raises(KeyError):
         jeu.item("Q-999")
+
+
+def test_lire_jeu_fichier_vide(tmp_path: Path) -> None:
+    """Un jeu sans item ne protégerait rien : refusé plutôt que lu comme vide."""
+    chemin = tmp_path / "eval" / "jeu" / "v1.0" / "items.jsonl"
+    chemin.parent.mkdir(parents=True)
+    chemin.write_text("\n\n", encoding="utf-8")
+    assert lire_items(chemin, strict=True) == []
+    with pytest.raises(ItemInvalide, match="aucun item"):
+        lire_jeu("v1.0", tmp_path)
+
+
+def test_json_trop_profond_ou_entier_demesure_agrege(tmp_path: Path) -> None:
+    chemin = tmp_path / "items.jsonl"
+    chemin.write_text(
+        "[" * 100_000 + "\n" + '{"id": ' + "9" * 5_000 + "}\n" + json.dumps(item("Q")) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ItemInvalide) as info:
+        lire_items(chemin, strict=True)
+    assert len(info.value.erreurs) == 2
+    assert all("JSON illisible" in e and "ligne" in e for e in info.value.erreurs)
 
 
 def test_lire_jeu_absent(tmp_path: Path) -> None:

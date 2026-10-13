@@ -120,20 +120,29 @@ def _indentation_interdite(ligne: str) -> bool:
 
 
 def _verifier_contenu(lignes: list[str], fautes: list[str]) -> None:
-    """Règles de contenu, appliquées à toutes les lignes du fichier."""
+    """Règles de contenu, appliquées à toutes les lignes du fichier.
+
+    Les tests de forme (backtick, accolade, JSON, citation) portent sur la ligne en NFKC,
+    pour que les formes pleine chasse (« ｀ », « ＞ », « ｛ ») ne les contournent pas. Un
+    caractère de format invisible (catégorie Unicode `Cf`, espace de largeur nulle…) est
+    refusé : il couperait un mot interdit sans le rendre illisible pour le modèle.
+    """
     for numero, ligne in enumerate(lignes, start=1):
         lieu = f"ligne {numero}"
-        if "`" in ligne:
+        pliee = unicodedata.normalize("NFKC", ligne)
+        if any(unicodedata.category(c) == "Cf" for c in ligne):
+            fautes.append(f"{lieu} : caractère de format invisible interdit")
+        if "`" in pliee:
             fautes.append(f"{lieu} : caractère backtick interdit (bloc ou code en ligne)")
         if _indentation_interdite(ligne):
             fautes.append(f"{lieu} : bloc indenté (4 espaces ou tabulation) interdit")
-        if _RE_CLOTURE_TILDE.match(ligne):
+        if _RE_CLOTURE_TILDE.match(pliee):
             fautes.append(f"{lieu} : bloc de code « ~~~ » interdit")
-        if "{" in _RE_IDENTIFIANT.sub("", ligne) or "}" in _RE_IDENTIFIANT.sub("", ligne):
+        if "{" in _RE_IDENTIFIANT.sub("", pliee) or "}" in _RE_IDENTIFIANT.sub("", pliee):
             fautes.append(f"{lieu} : accolade interdite hors emplacement {{identifiant}}")
-        if ligne.strip() and _decode_en_json(ligne.strip()):
+        if pliee.strip() and _decode_en_json(pliee.strip()):
             fautes.append(f"{lieu} : ligne qui se décode en JSON")
-        if ligne.lstrip().startswith(">"):
+        if pliee.lstrip().startswith(">"):
             fautes.append(f"{lieu} : citation « > » interdite")
         normalisee = _sans_accent(ligne)
         for libelle, motif in _MOTS_INTERDITS:
@@ -141,6 +150,13 @@ def _verifier_contenu(lignes: list[str], fautes: list[str]) -> None:
                 fautes.append(f"{lieu} : mot interdit {libelle}")
         if _RE_JETON_CHAT.search(normalisee):
             fautes.append(f"{lieu} : jeton de chat interdit")
+    # Un mot interdit coupé par un retour à la ligne (« few- » puis « shot ») : repéré sur le
+    # texte aplati, seulement s'il n'est trouvé sur aucune ligne prise seule.
+    normalisees = [_sans_accent(ligne) for ligne in lignes]
+    aplati = " ".join(normalisees)
+    for libelle, motif in _MOTS_INTERDITS:
+        if motif.search(aplati) and not any(motif.search(ligne) for ligne in normalisees):
+            fautes.append(f"mot interdit {libelle} coupé par un retour à la ligne")
 
 
 def _lire_front_matter(

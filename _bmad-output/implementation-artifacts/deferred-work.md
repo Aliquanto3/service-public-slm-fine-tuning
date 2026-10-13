@@ -41,3 +41,15 @@ Trois relectures indépendantes (Haiku, Sonnet et Opus) ont été faites pendant
 - **W6. `evaluation/modele_ref.py` joint `gguf.fichier` complet** (`src/slmsp/evaluation/modele_ref.py:74`). C'est le même écart que P1 du lot 3b : un GGUF rangé dans un sous-dossier du dépôt serait déclaré absent.
   - Piste : reprendre `PurePosixPath(config.gguf.fichier).name`, ou mieux, `ServeurLlama(config, slug=…).gguf`.
   - Motif du report : fichier hors de la cible du lot 3b (lot 2). Aucun TOML actuel n'est concerné.
+
+## Deferred from: code review of lots 3c et 4, lecteur d'items, gabarits, CLI index et mcp (2026-10-13)
+
+- **W7. Le Générateur n'applique pas à l'exécution l'interdiction de `?`, de « » et de `"` dans les gabarits** (`src/slmsp/mistral/generateur.py`, `_gabarit`).
+  - Constat : la spec 9.2 (AC4) l'exige des 11 gabarits de `config/prompts/generateur/`, mais seul `tests/mistral/test_gabarits_generateur.py` la tient. Un gabarit édité avec une réponse citée passerait `valider_gabarit` au runtime, et seul son SHA-256 serait journalisé. `medium`, non vérifié sur un cas réel.
+  - Piste : appliquer la même liste d'interdits dans `Generateur._gabarit`, après `valider_gabarit`. Elle ne peut pas aller dans `valider_gabarit`, qui sert aussi aux gabarits de Tâche, où ces caractères sont permis.
+  - Motif du report : fichier hors de la cible du lot 3c et 4.
+- **W8. Trois angles de l'anti-fuite ne sont pas couverts** (`src/slmsp/core/items.py` : `_feuilles_texte`, `identifiants_proteges`).
+  - Les valeurs numériques (`valeurs_attendues` en entiers ou flottants) ne produisent aucune empreinte.
+  - Les URL protégées sont comparées brutes (casse, `/` final, `http` ou `https`, ordre des paramètres).
+  - Les `dataset_id` et `resource_id` donnés par des règles `contient_un_de` ou `mot_entier_un_de`, ou par un `exact` en liste, ne sont pas collectés.
+  - `low` à `medium`, non vérifié : l'effet dépend du comparateur de la story 9.3. À traiter avec lui (voir D2 du rapport `revue-code-lots-3c-4.md`).

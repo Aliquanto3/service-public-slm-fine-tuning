@@ -81,7 +81,8 @@ def _erreur_usage(message: str) -> int:
 
 def _lire_appels(chemin: Path) -> list[tuple[str, dict[str, Any]]]:
     try:
-        donnees = json.loads(chemin.read_text(encoding="utf-8"))
+        # `utf-8-sig` : PowerShell 5.1 (`Set-Content -Encoding utf8`) écrit un BOM.
+        donnees = json.loads(chemin.read_text(encoding="utf-8-sig"))
     except OSError as exc:
         raise _FichierAppelsInvalide(
             f"{chemin} : fichier d'appels illisible ({type(exc).__name__})"
@@ -91,6 +92,10 @@ def _lire_appels(chemin: Path) -> list[tuple[str, dict[str, Any]]]:
     except json.JSONDecodeError as exc:
         raise _FichierAppelsInvalide(
             f"{chemin} : JSON invalide (ligne {exc.lineno}, colonne {exc.colno})"
+        ) from None
+    except (RecursionError, ValueError):
+        raise _FichierAppelsInvalide(
+            f"{chemin} : JSON invalide (imbrication ou entier excessif)"
         ) from None
     if not isinstance(donnees, list) or not donnees:
         raise _FichierAppelsInvalide(f"{chemin} : une liste d'appels non vide est attendue")

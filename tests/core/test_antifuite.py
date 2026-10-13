@@ -56,6 +56,7 @@ ITEMS_FACTICES = [
         sources_attendues=["https://www.service-public.gouv.fr/particuliers/vosdroits/F9999"],
         sans_reponse=False,
         mention_obligatoire="mention factice jamais hachee tango uniform victor",
+        orientation_attendue="orientation factice bb cc dd ee ff",
     ),
     _item(
         "RD",
@@ -74,6 +75,8 @@ ITEMS_FACTICES = [
         ],
         cassettes=["../../cassettes/RD-001/s.json"],
         reponse_reference={"texte": "reference factice trois quatre cinq six sept"},
+        valeurs_attendues={"cle": ["valeur attendue factice gg hh ii jj"]},
+        criteres=["critere rd factice kk ll mm nn oo"],
         mode="connecte",
     ),
     _item(
@@ -154,6 +157,12 @@ REFERENCES = [
     ("CT-001", "element obligatoire factice zz ab ac"),
     ("CT-001", "Champ factice ad ae af ag"),
     ("CT-001", "valeur interdite factice ah ai aj"),
+    ("Q-001", "element factice papa quebec romeo sierra"),
+    ("Q-001", "orientation factice bb cc dd ee ff"),
+    ("RD-001", "reference factice trois quatre cinq six sept"),
+    ("RD-001", "valeur attendue factice gg hh ii jj"),
+    ("RD-001", "critere rd factice kk ll mm nn oo"),
+    ("NR-001", "critere factice m n o p q"),
 ]
 
 
@@ -282,6 +291,23 @@ def test_vecteurs_entree_et_reference(racine: Path) -> None:
         assert f"v1.0/{identifiant}#reference" in vecteurs.cles
     assert "calibrage/CR-001#entree" in vecteurs.cles
     assert all(c.endswith(("#entree", "#reference")) for c in vecteurs.cles)
+
+
+def test_vecteurs_cle_et_texte_appaires(racine: Path) -> None:
+    """Chaque ligne de la matrice est celle du texte de sa clé (entrée ou référence)."""
+    embedder = EmbedderFactice()
+    vecteurs = vecteurs_antifuite(VERSIONS, embedder, racine=racine)
+    (envoyes,) = embedder.appels
+    attendus = EmbedderFactice().vectoriser(envoyes)
+    assert np.array_equal(vecteurs.matrice, attendus)
+    jeu = lire_jeu("v1.0", racine)
+    for identifiant in ("Q-001", "RD-001", "CO-001"):
+        item = jeu.item(identifiant)
+        pour_cle = dict(zip(vecteurs.cles, envoyes, strict=True))
+        assert pour_cle[f"v1.0/{identifiant}#entree"] == "\n".join(textes_entree(item))
+        assert pour_cle[f"v1.0/{identifiant}#reference"] == "\n".join(textes_reference(item))
+    entree_q1 = pour_cle["v1.0/Q-001#entree"]
+    assert "amorce factice golf" in entree_q1 and "reponse factice kilo" not in entree_q1
 
 
 @pytest.mark.parametrize("forme", [(3,), (3, 4, 1), (2, 4), (11, 3)])
