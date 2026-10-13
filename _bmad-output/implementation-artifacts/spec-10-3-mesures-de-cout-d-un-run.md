@@ -76,3 +76,11 @@ deferred:
 - `ConfigEntrainement` porte la seule table `couts` ; 10.4 ajoute les siennes. À confirmer par Anaël : la VRAM « NVML » est la mémoire utilisée de tout le GPU (bureau et autres processus compris), pas celle du seul processus.
 
 **Reports :** branchement et reprise dans le Run (10.4, voir `deferred`) ; mesure réelle (RTX 3050, `nvidia-ml-py` déjà dans les dépendances) à faire lors du premier Run réel.
+
+## Revue
+
+- Low, rejeté : run interrompu (exception dans le Trainer) : `on_train_end` n'est pas appelé, le fil NVML (daemon) n'est pas arrêté et `couts.json` n'est pas écrit ; le callback n'est branché qu'en 10.4, qui devra appeler `fin()` dans un `finally`.
+- Low, rejeté : `couts.json` déjà présent (reprise) : `ecrire` lève `ArtefactExistant` après l'ajout de la ligne `couts` à `metriques.jsonl` ; cas déjà reporté à 10.4 (`deferred`), la politique de reprise (fichier daté ou fusion) y relève.
+- Low, rejeté : `max_memory_reserved` inclut le chargement du modèle (pas de `reset_peak_memory_stats` au début) et NVML mesure tout le GPU ; voulu pour un maximum comparable, déjà signalé dans la spec.
+- Low, rejeté : `import torch` absent dans `fin()` lèverait `ImportError` ; l'extra `train` est requis pour entraîner, aucune perte réaliste.
+- Aucun défaut medium ou high : débit hors padding et hors chauffe (compté depuis le début du callback, donc correct à la reprise malgré `global_step` non nul), énergie trapézoïdale, VRAM max des deux sources, NVML/GPU absents sans exception, écriture dans les deux fichiers, imports différés et pas d'import de `measure` conformes.
