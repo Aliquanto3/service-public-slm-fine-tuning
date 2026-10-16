@@ -19,7 +19,8 @@ from __future__ import annotations
 import inspect
 import json
 import logging
-from collections.abc import Mapping, Sequence
+import webbrowser
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Final, Protocol
 
 from slmsp.app.pont.conversation import Conversation, reponse_erreur
@@ -57,9 +58,11 @@ class Pont:
         service: AssistantService,
         fenetre: Fenetre,
         liste_blanche: ConfigListeBlanche | None = None,
+        ouvreur: Callable[[str], Any] = webbrowser.open,
     ) -> None:
         # Attributs privés : pywebview n'expose pas les noms en `_`.
         self._fenetre = fenetre
+        self._ouvreur = ouvreur  # navigateur du système (injecté dans les tests)
         self._liste_blanche = liste_blanche  # lue dans `config/` au premier `ouvrir_lien`
         self._conversation = Conversation(service, self._pousser)
         self._domaines: dict[str, Any] = {
@@ -110,12 +113,19 @@ class Pont:
         """Confie `url` au navigateur du système (Q1 : la WebView ne navigue jamais).
 
         Seule une URL `https` (port 443, sans identifiants) dont l'hôte figure exactement dans la
-        Liste blanche est acceptée ; sinon `lien-refuse`. Bouchon : l'ouverture elle-même revient à
-        la story 12.6 et répond `non-implementee` d'ici là (l'interface copie alors le lien).
+        Liste blanche est acceptée ; sinon `lien-refuse`. Succès : `{"ok": true}`. Si le navigateur
+        ne s'ouvre pas : `ouverture-impossible` (l'interface copie alors le lien).
         """
         if not self._lien_autorise(url):
             return reponse_erreur(CODE_LIEN_REFUSE, "Ce lien ne peut pas être ouvert.")
-        return reponse_erreur(CODE_NON_IMPLEMENTEE, "ouvrir_lien : non implémentée")
+        try:
+            ouvert = self._ouvreur(url)
+        except Exception as exc:
+            LOGGER.error("ouvrir_lien : %s", type(exc).__name__)
+            ouvert = False
+        if ouvert is False:
+            return reponse_erreur("ouverture-impossible", "Le lien n'a pas pu être ouvert.")
+        return {"ok": True}
 
     def _lien_autorise(self, url: object) -> bool:
         if not isinstance(url, str) or len(url) > 2048:

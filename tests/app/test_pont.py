@@ -344,14 +344,30 @@ def test_ouvrir_lien_refuse_hors_liste_blanche(banc: Any, url: str) -> None:
     assert fenetre.scripts == []
 
 
-def test_ouvrir_lien_accepte_la_liste_blanche_bouchon_jusqu_a_12_6(banc: Any) -> None:
+def test_ouvrir_lien_confie_l_url_au_navigateur_systeme(banc: Any) -> None:
     pont, _ = banc(FakeLlm(script(mots(1, "j"))))
-    for url in (
+    ouverts: list[str] = []
+    pont._ouvreur = lambda url: ouverts.append(url) or True  # type: ignore[assignment]
+    urls = (
         "https://www.service-public.fr/particuliers/vosdroits/F1",
         "https://WWW.DATA.GOUV.FR./datasets/x",
         "https://www.legifrance.gouv.fr:443/loda",
-    ):
-        reponse = pont.appeler("ouvrir_lien", url)
-        assert reponse["erreur"]["code"] == "non-implementee", url
+    )
+    for url in urls:
+        assert pont.appeler("ouvrir_lien", url) == {"ok": True}
+    assert ouverts == list(urls)
     assert pont.appeler("ouvrir_lien")["erreur"]["code"] == "methode-inconnue"
     assert pont.ouvrir_lien(123)["erreur"]["code"] == "lien-refuse"  # type: ignore[arg-type]
+
+
+def test_ouvrir_lien_echec_du_navigateur(banc: Any) -> None:
+    pont, _ = banc(FakeLlm(script(mots(1, "j"))))
+
+    def casse(url: str) -> bool:
+        raise OSError("<erreur-factice>")
+
+    pont._ouvreur = casse  # type: ignore[assignment]
+    url = "https://www.service-public.fr/x"
+    assert pont.ouvrir_lien(url)["erreur"]["code"] == "ouverture-impossible"
+    pont._ouvreur = lambda u: False  # type: ignore[assignment]
+    assert pont.ouvrir_lien(url)["erreur"]["code"] == "ouverture-impossible"
