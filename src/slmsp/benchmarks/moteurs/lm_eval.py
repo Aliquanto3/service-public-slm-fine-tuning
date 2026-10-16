@@ -77,12 +77,12 @@ def dossier_poids_hf(slug: str) -> Path | None:
 def modele_hf(poids: Path) -> str:
     """Modèle lm-eval des poids : adaptateur dédié selon `architectures`, sinon `hf`."""
     try:
-        donnees = json.loads((poids / "config.json").read_text(encoding="utf-8"))
+        donnees = json.loads((poids / "config.json").read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         return MODELE_HF_DEFAUT
     architectures = donnees.get("architectures") if isinstance(donnees, dict) else None
     for architecture in architectures if isinstance(architectures, list) else []:
-        if architecture in MODELES_PAR_ARCHITECTURE:
+        if isinstance(architecture, str) and architecture in MODELES_PAR_ARCHITECTURE:
             return MODELES_PAR_ARCHITECTURE[architecture]
     return MODELE_HF_DEFAUT
 

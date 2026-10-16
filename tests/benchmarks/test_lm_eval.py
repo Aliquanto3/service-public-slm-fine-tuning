@@ -436,6 +436,8 @@ def test_env_outil_force_utf8_et_hf_hors_ligne():
         ("{}", "hf"),
         ('{"architectures": "Mistral3ForConditionalGeneration"}', "hf"),
         ("pas du json", "hf"),
+        ('{"architectures": [["X"], {"a": 1}]}', "hf"),
+        ('﻿{"architectures": ["Mistral3ForConditionalGeneration"]}', "hf-mistral3"),
     ],
 )
 def test_modele_hf_selon_l_architecture(tmp_path, contenu, attendu):
