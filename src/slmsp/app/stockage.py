@@ -5,8 +5,9 @@ les Retours, les réglages et le journal des Requêtes sortantes de l'applicatio
 est le seul propriétaire de cette base : aucune autre story ne l'ouvre.
 
 Suppression (FR-4, UX-DR17) : la ligne est effacée immédiatement de la base ; son contenu
-reste seulement en mémoire du processus, 5 secondes, pour `annuler_suppression`. Passé ce
-délai, plus rien n'existe nulle part (rien n'est conservé sur disque).
+reste seulement en mémoire du processus, 5 secondes, pour `annuler_suppression`. Il est oublié
+à l'échéance par un minuteur (thread démon) et, par sécurité, à chaque accès au stockage.
+Rien n'est conservé sur disque.
 """
 
 from __future__ import annotations
@@ -116,6 +117,7 @@ class Stockage:
         self._monotone = monotone
         self._verrou = threading.Lock()
         self._supprimees: dict[str, tuple[float, dict[str, Any]]] = {}
+        self._minuteurs: set[threading.Timer] = set()
         with self._connexion() as connexion:
             (version,) = connexion.execute("PRAGMA user_version").fetchone()
             if version not in (0, VERSION_SCHEMA):
@@ -180,12 +182,17 @@ class Stockage:
         return "Sans titre"
 
     def lire_conversation(self, identifiant: str) -> dict[str, Any] | None:
+        self._oublier_expirees()
         with self._connexion() as connexion:
-            ligne = connexion.execute(
-                "SELECT id, tache, titre, cree_le, modifie_le, messages, sources"
-                " FROM conversations WHERE id = ?",
-                (identifiant,),
-            ).fetchone()
+            return self._lire(connexion, identifiant)
+
+    @staticmethod
+    def _lire(connexion: Any, identifiant: str) -> dict[str, Any] | None:
+        ligne = connexion.execute(
+            "SELECT id, tache, titre, cree_le, modifie_le, messages, sources"
+            " FROM conversations WHERE id = ?",
+            (identifiant,),
+        ).fetchone()
         if ligne is None:
             return None
         cles = ("id", "tache", "titre", "cree_le", "modifie_le", "messages", "sources")
@@ -196,6 +203,7 @@ class Stockage:
 
     def lister_conversations(self) -> list[dict[str, Any]]:
         """Conversations de la plus récente à la plus ancienne, sans les messages."""
+        self._oublier_expirees()
         with self._connexion() as connexion:
             lignes = connexion.execute(
                 "SELECT id, tache, titre, cree_le, modifie_le FROM conversations"
@@ -206,18 +214,27 @@ class Stockage:
 
     def supprimer_conversation(self, identifiant: str) -> bool:
         """Efface la ligne tout de suite ; `annuler_suppression` la restaure sous 5 s."""
-        conversation = self.lire_conversation(identifiant)
-        if conversation is None:
-            return False
         with self._connexion() as connexion:
+            connexion.execute("BEGIN IMMEDIATE")  # lecture et suppression d'un seul tenant
+            conversation = self._lire(connexion, identifiant)
+            if conversation is None:
+                return False
             connexion.execute("DELETE FROM conversations WHERE id = ?", (identifiant,))
         with self._verrou:
             self._purger_annulations()
             self._supprimees[identifiant] = (self._monotone() + DELAI_ANNULATION, conversation)
+            minuteur = threading.Timer(DELAI_ANNULATION, self._oublier_expirees)
+            minuteur.daemon = True
+            self._minuteurs.add(minuteur)
+            minuteur.start()
         return True
 
     def annuler_suppression(self, identifiant: str) -> bool:
-        """Restaure la conversation si moins de 5 s se sont écoulées ; sinon `False`."""
+        """Restaure la conversation si moins de 5 s se sont écoulées ; sinon `False`.
+
+        Si une conversation du même identifiant a été réenregistrée entre-temps, elle est
+        conservée telle quelle (rien n'est écrasé) et le résultat est `False`.
+        """
         with self._verrou:
             self._purger_annulations()
             entree = self._supprimees.pop(identifiant, None)
@@ -225,9 +242,9 @@ class Stockage:
             return False
         c = entree[1]
         with self._connexion() as connexion:
-            connexion.execute(
-                "INSERT OR REPLACE INTO conversations (id, tache, titre, cree_le, modifie_le,"
-                " messages, sources) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            curseur = connexion.execute(
+                "INSERT INTO conversations (id, tache, titre, cree_le, modifie_le,"
+                " messages, sources) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
                 (
                     c["id"],
                     c["tache"],
@@ -238,12 +255,18 @@ class Stockage:
                     json.dumps(c["sources"], ensure_ascii=False),
                 ),
             )
-        return True
+            return curseur.rowcount == 1
+
+    def _oublier_expirees(self) -> None:
+        with self._verrou:
+            self._purger_annulations()
 
     def _purger_annulations(self) -> None:
+        """Oublie les contenus échus (appelé verrou pris)."""
         maintenant = self._monotone()
         for cle in [k for k, (limite, _) in self._supprimees.items() if limite <= maintenant]:
             del self._supprimees[cle]
+        self._minuteurs = {m for m in self._minuteurs if m.is_alive()}
 
     # -- Retours -------------------------------------------------------------------------
 
@@ -317,6 +340,9 @@ class Stockage:
         """
         with self._verrou:
             self._supprimees.clear()
+            for minuteur in self._minuteurs:
+                minuteur.cancel()
+            self._minuteurs.clear()
         with self._connexion() as connexion:
             connexion.execute("DELETE FROM conversations")
             connexion.execute("DELETE FROM retours")

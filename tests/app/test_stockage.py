@@ -12,9 +12,15 @@ from typing import Any
 
 import pytest
 
-from slmsp.app.stockage import DELAI_ANNULATION, JournalApplication, Stockage
+from slmsp.app.stockage import (
+    DELAI_ANNULATION,
+    LONGUEUR_TITRE,
+    JournalApplication,
+    Stockage,
+    dossier_donnees,
+)
 from slmsp.core.erreurs import SlmspError
-from slmsp.core.evenements import Fin
+from slmsp.core.evenements import AppelOutil, Fin, ResultatOutil
 from slmsp.core.schemas.journal_requetes import EntreeJournalRequetes
 from slmsp.harness.taches import charger_taches
 
@@ -129,17 +135,86 @@ def test_reglage_relu_apres_redemarrage(tmp_path: Path) -> None:
 
 
 def test_effacer_historique_conversations_et_retours(tmp_path: Path) -> None:
-    s = _stockage(tmp_path)
-    identifiant, _ = _conversation(s)
-    s.supprimer_conversation(_conversation(s)[0])
+    h = Horloge()
+    s = _stockage(tmp_path, h)
+    _conversation(s)
+    identifiant, texte = _conversation(s)
+    assert s.supprimer_conversation(identifiant)  # annulation en attente
     s.enregistrer_retour(
         tache="Q", question=_aleatoire(), reponse=_aleatoire(), sources=[], pouce="bas"
     )
     s.ecrire_reglage("plus_deplie", True)
+    j = JournalApplication(s)
+    j.inscrire(_entree(h.instant))
     s.effacer_historique()
     assert s.lister_conversations() == [] and s.lister_retours() == []
-    assert s.lire_reglage("plus_deplie") is True
+    assert s.lire_reglage("plus_deplie") is True and len(j.lister()) == 1
+    # l'annulation en attente a ete oubliee : rien n'est restaure, dans le delai de 5 s
     assert not s.annuler_suppression(identifiant)
+    assert s.lire_conversation(identifiant) is None
+    # le contenu n'existe plus dans aucun fichier de la base
+    for fichier in tmp_path.iterdir():
+        assert texte.encode() not in fichier.read_bytes()
+
+
+def test_vacuum_reduit_le_fichier(tmp_path: Path) -> None:
+    s = _stockage(tmp_path)
+    gros = "x" * 200_000
+    for _ in range(5):
+        s.enregistrer_conversation(tache="Q", messages=[{"role": "user", "content": gros}])
+    avant = s.chemin.stat().st_size
+    s.effacer_historique()
+    assert s.chemin.stat().st_size < avant / 2
+
+
+def test_contenu_oublie_a_l_echeance_sans_nouvelle_suppression(tmp_path: Path) -> None:
+    h = Horloge()
+    s = _stockage(tmp_path, h)
+    identifiant, _ = _conversation(s)
+    s.supprimer_conversation(identifiant)
+    assert identifiant in s._supprimees
+    h.monotone = DELAI_ANNULATION + 0.1
+    s.lister_conversations()  # simple acces : la purge a lieu
+    assert s._supprimees == {}
+
+
+def test_annulation_n_ecrase_pas_une_conversation_reenregistree(tmp_path: Path) -> None:
+    s = _stockage(tmp_path)
+    identifiant, _ = _conversation(s)
+    s.supprimer_conversation(identifiant)
+    nouveau = _aleatoire()
+    s.enregistrer_conversation(
+        tache="Q", messages=[{"role": "user", "content": nouveau}], identifiant=identifiant
+    )
+    assert not s.annuler_suppression(identifiant)
+    lue = s.lire_conversation(identifiant)
+    assert lue is not None and lue["messages"][0]["content"] == nouveau
+
+
+def test_contenu_non_ascii_et_titre_tronque(tmp_path: Path) -> None:
+    s = _stockage(tmp_path)
+    texte = "Éléonore à l'œuvre : 日本語 😀 " * 10
+    identifiant = s.enregistrer_conversation(
+        tache="Q", messages=[{"role": "user", "content": texte}], sources=[{"t": "é"}]
+    )
+    lue = s.lire_conversation(identifiant)
+    assert lue is not None
+    assert lue["messages"][0]["content"] == texte and lue["sources"] == [{"t": "é"}]
+    assert lue["titre"] == " ".join(texte.split())[:LONGUEUR_TITRE]
+    assert len(lue["titre"]) == LONGUEUR_TITRE
+    s.enregistrer_retour(tache="Q", question="é", reponse="日本", sources=[], pouce="haut")
+    assert s.lister_retours()[0]["reponse"] == "日本"
+
+
+def test_emplacement_dans_le_profil_jamais_le_depot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "profil"))
+    assert dossier_donnees() == tmp_path / "profil" / "AssistantSP"
+    s = Stockage()
+    assert s.chemin == tmp_path / "profil" / "AssistantSP" / "assistant.sqlite"
+    assert s.chemin.is_file()
+    assert Path(__file__).parents[2] not in s.chemin.parents
 
 
 def test_retour_enregistre(tmp_path: Path) -> None:
@@ -170,28 +245,91 @@ def test_version_de_schema_inconnue_sans_ecrasement(tmp_path: Path) -> None:
     connexion = sqlite3.connect(chemin)
     tables = connexion.execute("SELECT name FROM sqlite_master").fetchall()
     connexion.close()
+    # SQLite passe le fichier en WAL a l'ouverture (octets 18-19 de l'en-tete) : on verifie
+    # le fond, c'est-a-dire ni table creee ni `user_version` modifiee.
     assert tables == [] and chemin.read_bytes()[:16] == avant[:16]
+    connexion = sqlite3.connect(chemin)
+    (version,) = connexion.execute("PRAGMA user_version").fetchone()
+    connexion.close()
+    assert version == 99
 
 
-def test_document_temoin_avec_journal_application(tmp_path: Path) -> None:
+def _assembler_avec(journal: JournalApplication, code: str, llm: Any, requete: Any) -> list[Any]:
     import httpx2  # noqa: TID251 (tests : transport interne)
 
     from slmsp.cli._assemblage import assembler
 
     f: Any = _factices()
-    journal = JournalApplication(_stockage(tmp_path))
-    marqueur = "MARQUEUR-" + _aleatoire()
-    llm = f.FakeLlm(f.script(f.mots(4, "sortie")))
+    transport = httpx2.MockTransport(requete)
     with assembler(
         "base:x",
-        charger_taches().tache("CR"),
+        charger_taches().tache(code),
         journal=journal,
-        transport_interne=httpx2.MockTransport(lambda r: pytest.fail("requête sortante")),
+        transport_interne=transport,
         llm=llm,
         embedder=f.FakeEmbedder(),
         vector_store=f.FakeVectorStore(),
     ) as a:
-        evenements = list(a.service.repondre("CR", [{"role": "user", "content": marqueur}]))
+        if code == "RD":
+            a.service.outils = _OutilsViaPasserelle(a.passerelle, transport)
+        messages = [{"role": "user", "content": "MARQUEUR-" + _aleatoire()}]
+        return list(a.service.repondre(code, messages))
+
+
+class _OutilsViaPasserelle:
+    """`ToolPort` de test : l'appel passe par la vraie passerelle, qui ecrit au journal."""
+
+    def __init__(self, passerelle: Any, transport: Any) -> None:
+        self.passerelle, self.transport = passerelle, transport
+
+    def lister_outils(self) -> list[dict[str, Any]]:
+        from slmsp.mcp.outils import charger_outils
+
+        return charger_outils()
+
+    def appeler(self, nom: str, arguments: Any) -> dict[str, Any]:
+        corps = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {"name": nom, "arguments": dict(arguments)},
+        }
+        with self.passerelle.client("assistant", transport_interne=self.transport) as http:
+            return http.post("https://mcp.data.gouv.fr/mcp", json=corps).json()
+
+
+def test_document_temoin_aucune_requete_sortante_journal_vide(tmp_path: Path) -> None:
+    f: Any = _factices()
+    journal = JournalApplication(_stockage(tmp_path))
+    llm = f.FakeLlm(f.script(f.mots(4, "sortie")))
+    evenements = _assembler_avec(journal, "CR", llm, lambda r: pytest.fail("requete sortante"))
     assert isinstance(evenements[-1], Fin)
-    assert marqueur in json.dumps(llm.appels[0]["messages"])
     assert journal.lister() == []
+
+
+def test_requete_autorisee_inscrite_dans_le_journal_application(tmp_path: Path) -> None:
+    import httpx2  # noqa: TID251 (tests : transport interne)
+
+    f: Any = _factices()
+    journal = JournalApplication(_stockage(tmp_path))
+    termes = f.mots(2, "termes")
+    appel = AppelOutil(id="c1", nom="search_datasets", arguments={"query": termes})
+    llm = f.FakeLlm(
+        [appel, Fin(raison="terminee", usage={"prompt_tokens": 1, "completion_tokens": 1})],
+        f.script(f.mots(5, "finale")),
+    )
+    contenu = [{"type": "text", "text": f.mots(6, "resultat-outil")}]
+
+    def repondre(requete: Any) -> Any:
+        return httpx2.Response(
+            200, json={"jsonrpc": "2.0", "id": 1, "result": {"content": contenu}}
+        )
+
+    evenements = _assembler_avec(journal, "RD", llm, repondre)
+    assert any(isinstance(e, ResultatOutil) and not e.erreur for e in evenements), evenements
+    (entree,) = [e for e in journal.lister() if e.outil == "search_datasets"]
+    assert entree.hote == "mcp.data.gouv.fr"
+    assert json.loads(entree.termes or "{}") == {"query": termes}
+    # persiste : un nouveau Stockage sur le meme fichier relit l'entree
+    relu = JournalApplication(Stockage(journal._stockage.chemin)).lister()
+    assert [e.outil for e in relu] == [e.outil for e in journal.lister()]

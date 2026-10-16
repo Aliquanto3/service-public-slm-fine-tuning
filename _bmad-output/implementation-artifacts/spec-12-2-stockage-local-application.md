@@ -62,3 +62,16 @@ Points à confirmer par Anaël :
 1. Annulation en mémoire seulement (décision 1) : acceptable, ou corbeille persistée 5 s ?
 2. `effacer_historique` ne touche pas au journal ni aux réglages.
 3. Pas de chiffrement de la base (profil Windows de l'Agent).
+
+## Revue
+
+- medium, second avis (stockage.py:243) : contenu supprimé gardé en mémoire au-delà de 5 s, docstring fausse. Corrigé : purge à chaque lecture/liste, minuteur démon à l'échéance, annulé par `effacer_historique` ; docstring corrigée ; test d'oubli sans nouvelle suppression.
+- medium, second avis (test effacement) : `identifiant` jamais supprimé, assertion vide. Corrigé : la conversation à annulation en attente est celle testée, et son contenu est absent de tous les fichiers après effacement.
+- medium, second avis (test critère 6) : journal toujours vide quoi qu'il arrive. Corrigé : test RD connecté, la requête autorisée vers `mcp.data.gouv.fr` figure dans `JournalApplication.lister()` (termes compris) et est relue après réouverture ; le test CR garde l'assertion « journal vide ».
+- low (WAL avant contrôle de version) : confirmé mais inévitable (`ouvrir_sqlite` du noyau active le WAL avant toute lecture) ; test précisé (`user_version` toujours 99, aucune table). Rejeté côté code, test corrigé.
+- low (INSERT OR REPLACE) : corrigé, `ON CONFLICT DO NOTHING`, `annuler_suppression` renvoie `False` et garde la version réenregistrée ; test ajouté.
+- low (lecture puis suppression hors verrou) : corrigé, `BEGIN IMMEDIATE` dans une seule connexion.
+- low (AD-23 non testé) : corrigé, test de `dossier_donnees` et du chemin par défaut avec `LOCALAPPDATA` simulé (local à ce module, pas de duplication de 12.1).
+- low (VACUUM non vérifié) : corrigé, test de réduction de taille du fichier.
+- low (non-ASCII, troncature du titre) : corrigé, test ajouté.
+- Reporté : l'annulation reste en mémoire seulement (points à confirmer par Anaël, inchangé).
