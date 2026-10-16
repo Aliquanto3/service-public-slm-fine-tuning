@@ -37,7 +37,7 @@ from typing import Any, Final, Literal
 from pydantic import BaseModel, ValidationError
 
 from slmsp.core.canonique import json_canonique, sha256_fichier
-from slmsp.core.config import dossier_modeles, env_sous_processus, racine_projet
+from slmsp.core.config import dossier_modeles, env_sous_processus, racine_ecriture, racine_projet
 from slmsp.core.erreurs import LectureInterdite, ManifesteInvalide, SlmspError
 from slmsp.core.schemas.run import (
     MOTIF_RUN_ID,
@@ -329,7 +329,8 @@ class Run:
 
 
 def _racine(racine: str | Path | None) -> Path:
-    return (Path(racine) if racine is not None else racine_projet()).resolve()
+    # `runs/` s'écrit sous la racine d'écriture : jamais sous `sys._MEIPASS` (AD-23).
+    return (Path(racine) if racine is not None else racine_ecriture()).resolve()
 
 
 def nouveau_run(

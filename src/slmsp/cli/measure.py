@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from slmsp.core.config import racine_projet
+from slmsp.core.config import racine_ecriture, racine_projet
 from slmsp.core.erreurs import CodeSortie
 
 
@@ -69,6 +69,8 @@ def _run(args: argparse.Namespace) -> int:
         return int(CodeSortie.USAGE)
     config = charger_config_mesures()
     racine = (args.racine if args.racine is not None else racine_projet()).resolve()
+    # Index lu sous les ressources ; le run s'écrit sous la racine d'écriture (AD-23).
+    ecriture = (args.racine if args.racine is not None else racine_ecriture()).resolve()
     versions = versions_disponibles(racine)
     version = versions[-1] if versions else None
     fiche = charger_taches().defaut
@@ -100,7 +102,7 @@ def _run(args: argparse.Namespace) -> int:
             quantification=args.quantification,
             serveurs=[s.description() for s in assemblage.serveurs],
             composants=_composants(assemblage.serveurs, racine, version),
-            racine=racine,
+            racine=ecriture,
             index_version=version,
         )
     valeurs = resultat.valeurs
