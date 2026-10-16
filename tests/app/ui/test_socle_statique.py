@@ -95,7 +95,7 @@ def test_couleurs_d_etat_jamais_en_texte() -> None:
         assert not motif.search(css.read_text(encoding="utf-8")), css.name
 
 
-VUES_REALISEES = {"mode", "question", "recherche"}  # livrées par les stories 12.7 et 12.9
+VUES_REALISEES = {"mode", "question", "recherche", "redaction"}  # stories 12.7, 12.8 et 12.9
 
 
 def test_modules_de_vue_declares_d_avance() -> None:
