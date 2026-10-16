@@ -375,20 +375,28 @@ def creer_callback(
     return classe(config, torch=torch, nvml=nvml, horloge=horloge)
 
 
-def _json(mesures: MesuresCout, segment: int) -> str:
+def _json(mesures: MesuresCout, segment: int, contexte: Mapping[str, Any] | None = None) -> str:
     donnees = mesures.model_dump(mode="json")
     donnees["segment"] = segment
+    for cle, valeur in (contexte or {}).items():
+        if cle in donnees:
+            raise ValueError(f"clé de contexte en conflit avec une mesure : {cle}")
+        donnees[cle] = valeur
     for valeur in donnees.values():
         if isinstance(valeur, float) and not math.isfinite(valeur):
             raise ValueError("mesure de coût non finie")
     return json.dumps(donnees, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False)
 
 
-def ecrire_mesures(run: Run, mesures: MesuresCout) -> Path:
+def ecrire_mesures(
+    run: Run, mesures: MesuresCout, contexte: Mapping[str, Any] | None = None
+) -> Path:
     """Écrit les mesures dans `metriques.jsonl` et `couts.json` du run, pour toute méthode.
 
-    Une reprise sur checkpoint écrit `couts-2.json`, `couts-3.json`… : un fichier existant
-    n'est jamais écrasé. Renvoie le chemin du fichier créé.
+    `contexte` (configuration, graine, environnement du Run : story 10.4) est ajouté à
+    `couts.json` seulement, pour que le fichier se lise seul. Une reprise sur checkpoint
+    écrit `couts-2.json`, `couts-3.json`… : un fichier existant n'est jamais écrasé.
+    Renvoie le chemin du fichier créé.
     """
     segment = 1
     while True:
@@ -396,7 +404,7 @@ def ecrire_mesures(run: Run, mesures: MesuresCout) -> Path:
         if not (run.dossier / nom).exists():
             break
         segment += 1
-    chemin = run.ecrire(nom, _json(mesures, segment) + "\n")
+    chemin = run.ecrire(nom, _json(mesures, segment, contexte) + "\n")
     ligne = {"evenement": EVENEMENT_COUTS, "segment": segment, **mesures.model_dump(mode="json")}
     run.ajouter_jsonl(NOM_METRIQUES, ligne)
     return chemin

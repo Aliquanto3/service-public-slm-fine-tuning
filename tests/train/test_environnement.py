@@ -875,16 +875,6 @@ def test_cli_unsloth_uv_introuvable(
     assert "uv introuvable" in _json(run / "unsloth.json")["erreur"]
 
 
-@pytest.mark.parametrize(
-    "arguments", [[], ["config/runs/m1.toml"], ["--config", "x", "--reprendre"]]
-)
-def test_cli_train_run_non_implemente(
-    arguments: list[str], capsys: pytest.CaptureFixture[str]
-) -> None:
-    assert main(["train", "run", *arguments]) == CodeSortie.USAGE
-    assert "non implémentée : train run (story 10.4)" in capsys.readouterr().err
-
-
 # --- Tests réels (GPU) -------------------------------------------------------------------------
 
 

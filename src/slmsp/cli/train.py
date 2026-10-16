@@ -13,7 +13,9 @@ que `git_modifie` de `run.json` ignore), et aucun artefact ne contient de chemin
 de la machine (`environnement.chemin_portable`). L'entrée du sous-processus Unsloth, qui
 a besoin de chemins absolus, est écrite sous `SLMSP_VAR_DIR/unsloth/`.
 
-`run` est déclaré non implémenté jusqu'à la story 10.4 (code 2).
+`run --config <toml> [--reprendre <run_id>]` lance un Run d'entraînement (story 10.4,
+`slmsp.train.run`) : code 0 complet, 1 bloqué (jeu absent) ou en échec, 4 jeu ou manifeste
+invalide, 5 GPU occupé.
 """
 
 from __future__ import annotations
@@ -32,6 +34,7 @@ from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide
 from slmsp.core.var import verrou_gpu
 from slmsp.inference.serveur import charger_config_modele
 from slmsp.train import environnement
+from slmsp.train.run import executer as executer_run
 
 TYPE_RUN = "train-sonde"
 NOM_SONDE = "sonde.json"
@@ -114,10 +117,27 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     p.set_defaults(func=_sonde_env)
 
-    p = cibles.add_parser("run", help="Run d'entraînement (story 10.4, non implémenté)")
-    p.add_argument("arguments", nargs=argparse.REMAINDER)
-    # Toute invocation, options comprises, répond « non implémentée » (voir cli.main).
-    p.set_defaults(func=_run, _remplacement=True)
+    p = cibles.add_parser(
+        "run",
+        help="Run d'entraînement décrit par un TOML (config/runs/<nom>.toml)",
+        description="Lance un Run d'entraînement (méthode, modèle, hyperparamètres, graine "
+        "et version du jeu fixés par le TOML) sous gpu.lock, ou le reprend sur son dernier "
+        "checkpoint.",
+    )
+    p.add_argument("--config", type=Path, required=True, metavar="TOML", help="TOML du Run")
+    p.add_argument(
+        "--reprendre",
+        default=None,
+        metavar="RUN_ID",
+        help="reprendre ce run sur son dernier checkpoint (même configuration résolue)",
+    )
+    p.add_argument(
+        "--racine",
+        type=Path,
+        default=None,
+        help="racine des lectures data/train/ et des écritures runs/ (défaut : racine du projet)",
+    )
+    p.set_defaults(func=_run)
 
 
 def _longueurs(texte: str) -> list[int]:
@@ -130,9 +150,8 @@ def _longueurs(texte: str) -> list[int]:
     return valeurs
 
 
-def _run(_args: argparse.Namespace) -> int:
-    print("slmsp : commande non implémentée : train run (story 10.4)", file=sys.stderr)
-    return int(CodeSortie.USAGE)
+def _run(args: argparse.Namespace) -> int:
+    return executer_run(args.config, reprendre_run=args.reprendre, racine=args.racine)
 
 
 def _racine(args: argparse.Namespace) -> Path:

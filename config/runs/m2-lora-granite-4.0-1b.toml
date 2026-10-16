@@ -1,0 +1,23 @@
+# Run M2, LoRA bf16 (plus petit candidat), Granite 4.0 1B (story 10.4, AD-18).
+# Gabarit de campagne : les quatre TOML m1 à m4 ne diffèrent que par `methode` (et
+# `sft_run_id` pour ORPO). Le modèle de l'essai est fixé par la story 11.2.
+# Lancement : uv run --extra train slmsp train run --config config/runs/m2-lora-granite-4.0-1b.toml
+
+campagne = "granite-4.0-1b-v1"
+modele = "granite-4.0-1b"
+methode = "lora"
+jeu_version = "v1"
+graine = 1234
+longueur_max = 2048 # sonde H-WIN-TRAIN : 2048 sans débordement sur la RTX 3050 (story 10.1)
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
