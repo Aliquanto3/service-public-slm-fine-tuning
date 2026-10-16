@@ -11,7 +11,8 @@ Chaque méthode rend `{"ok": true, ...}` ou lève ; le pont convertit l'exceptio
   [{"type": "texte"|"emplacement", "texte": str}, ...], "champs_en_valeur": [str, ...]}` (story
   13.3). `champs_non_fournis` : parmi `objet`, `type_courrier`, `elements_connus` ;
   seul `objet` a une ligne d'intitulé contrôlable. `champs_en_valeur` liste ceux dont la ligne
-  porte une valeur au lieu d'un emplacement. Refus `requete-invalide` si les arguments ont un autre type.
+  porte une valeur au lieu d'un emplacement.
+  Refus `requete-invalide` si les arguments ont un autre type.
 """
 
 from __future__ import annotations
