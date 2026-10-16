@@ -1,1 +1,50 @@
-/* Vue « courrier » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vue Courrier type : formulaire et emplacements à compléter (story 13.3, UX-DR14). */
+.courrier-champ {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.courrier-etiquette {
+  font-family: var(--police-etiquette);
+  font-size: var(--t-label);
+  line-height: var(--lh-label);
+  color: var(--ink-soft);
+}
+.courrier-type,
+.courrier-objet {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+}
+.courrier-type:focus-visible,
+.courrier-objet:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+/* Emplacement : lisible sans la couleur (cadre en pointillés, et « à compléter » pour les lecteurs d'écran). */
+.letter-placeholder {
+  padding: 0 var(--sp-1);
+  border: 2px dashed var(--ink-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+.letter-placeholder:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.courrier-compte {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.courrier-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}

@@ -102,10 +102,15 @@ VUES_REALISEES = {
     "redaction",
     "parametres",
     "correction",
+<<<<<<< HEAD
     "historique",
     "retours",
     "resume",
 }  # stories 12.7 à 12.11, 13.1 et 13.2
+=======
+    "courrier",
+}  # stories 12.7 à 12.10, 13.1 et 13.3
+>>>>>>> 9647900 (feat(app): vue Courrier type, formulaire et emplacements (story 13.3))
 
 
 def test_modules_de_vue_declares_d_avance() -> None:
