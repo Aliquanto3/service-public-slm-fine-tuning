@@ -101,7 +101,7 @@ development_status:
   9-2-générateur-mistral-prouvé-gabarits-sans-exemple-journal-d-ap: done
   9-3-étape-seed-amorces-publiques-ou-mistral-exclusion-anti-fuite: done
   9-4-étape-generate-génération-idempotente-et-traces-d-outils: done
-  9-5-étapes-validate-et-filter: backlog
+  9-5-étapes-validate-et-filter: done
   9-6-étape-build-re-dérivation-jeu-versionné-et-suite-des-verrous: backlog
   9-7-paires-de-préférence-orpo: backlog
   9-8-campagne-de-génération-de-la-nuit-jeu-v1: backlog
