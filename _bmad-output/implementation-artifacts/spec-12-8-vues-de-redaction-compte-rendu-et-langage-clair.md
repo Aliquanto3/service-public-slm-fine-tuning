@@ -58,3 +58,25 @@ deferred: []
 - Format réel de la section finale de LC : la règle (Q11) est calée sur la consigne de `LC.md`, pas sur des sorties réelles ; à relire sur une sortie du vrai modèle (un test réel est hors périmètre : pas de génération).
 - « Affiner » (UX) et le Retour : stories ultérieures.
 - Le pont 12.5 transmet le seul dernier message `user` ; pour LC la consigne de l'Agent (emplacement `consigne`) n'a pas de champ dédié dans cette vue.
+
+## Revue
+
+Revue Opus 5.5 du commit 8671ba4, avec le second avis (Haiku). Corrections dans le commit de revue.
+
+| Sév. | Source | Constat | Statut |
+|---|---|---|---|
+| medium | second avis | Sans vraie section, une ligne du corps (« Les termes… ont été conservés ») était prise pour la section et tronquait le corps | Corrigé : la section doit être la dernière partie, introduite par un intitulé (titre, gras ou « … : ») et suivie d'une liste à puces ou numérotée (ou de passages entre guillemets sur la même ligne) ; sinon rien n'est coupé. Tests : phrase du corps, phrase de clôture |
+| medium | second avis | Envoi ou régénération LC pendant une génération CR : refus du pont, composeur réactivé et état global à `false` | Corrigé : refus local à la vue (« Une génération est en cours. », `role=status`), aucun appel au pont, état global intact. Détection par `generationEnCours` ajouté au contexte de vue (`app.js`) et par `generation:debut` d'une autre Tâche. 12.7 n'a pas ce cas (le composeur global bloque l'envoi) : aucune règle à reprendre, seul le traitement de `generation:erreur` est aligné. Test ajouté |
+| medium | second avis | « Effacer » ignorait le retour `{ok:false}` de `nouvelle_conversation` | Corrigé : arrêt d'abord, puis lecture des deux retours ; un refus affiche « L'effacement n'a pas abouti côté assistant. Réessayez. ». Deux tests (refus, ordre) |
+| low | second avis | `arreter` : résultat non lu | Corrigé (`exigerOk`) |
+| low | second avis | Régénération refusée après édition : `dernierEnvoi` et `sale` incohérents | Corrigé : rétablis à l'état d'avant tant qu'aucun évènement n'a été reçu. Test ajouté |
+| low | second avis | Phrase de clôture prise pour un passage | Corrigé (liste bornée aux puces/numéros ; une clôture après la liste annule la détection) |
+| low | second avis | Décalage d'index avec « İ » | Corrigé : recherche par RegExp insensible à la casse, sans `toLowerCase`. Test ajouté |
+| low | second avis | Regex `\s+$` quadratiques | Corrigé : `trimEnd` et rognage par boucle |
+| low | second avis | `annoncer()` lisait tout le texte | Corrigé : « Rédaction terminée. » (ou interrompue) et nombre de passages signalés |
+| low | second avis | `aria-label` sur une div sans rôle | Corrigé : `role="region"` |
+| low | second avis | Infobulle lue deux fois | Corrigé : `aria-describedby` retiré (l'infobulle fait partie du contenu du passage) |
+| low | second avis | Duplication `el` / `exigerOk` | Rejeté : ces utilitaires sont privés à `conversation.js` (12.7, fusionné) et à chaque vue ; les mutualiser demande un module commun et de toucher au code de 12.7, pour quatre lignes |
+| low | second avis | Invite LC (« Les montants et les dates restent identiques. ») | Texte laissé : à valider par Anaël |
+
+Limite connue (reportée) : si une génération d'une autre Tâche démarre avant le montage de la vue LC, la détection repose sur `etat.generation` (via `generationEnCours`), pas sur `generation:debut`. Les autres vues (12.7) n'ont pas ce garde local : leur envoi dépend du composeur global. À vérifier avec le vrai pont : un envoi LC pendant une génération CR doit afficher le refus local, sans réactiver le composeur.

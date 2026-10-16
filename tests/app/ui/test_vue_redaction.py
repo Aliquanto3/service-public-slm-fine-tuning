@@ -143,8 +143,7 @@ def test_resultat_au_fil_de_l_eau_puis_copier_texte_brut(page) -> None:
     visibles = page.locator("#vue-CR .bouton-primaire:visible")
     assert visibles.count() == 1 and visibles.inner_text() == "Copier"
     page.wait_for_function(
-        "() => document.getElementById('annonces').textContent"
-        " === 'Résultat terminé. <compte-rendu-factice>'",
+        "() => document.getElementById('annonces').textContent === 'Rédaction terminée.'",
         polling=50,
     )
     visibles.click()
@@ -202,7 +201,7 @@ def test_passages_signales_surlignes_avec_infobulle_au_survol_et_au_focus(page) 
     infobulle = passage.locator(".infobulle")
     assert infobulle.get_attribute("role") == "tooltip"
     assert infobulle.inner_text() == INFOBULLE or infobulle.text_content() == INFOBULLE
-    assert passage.get_attribute("aria-describedby") == infobulle.get_attribute("id")
+    assert passage.get_attribute("aria-describedby") is None  # contenu du passage : lue une fois
     assert not infobulle.is_visible()
     passage.hover()
     assert infobulle.is_visible()
@@ -355,3 +354,127 @@ def test_aucune_requete_externe(page) -> None:
     _lancer(page, "LC")
     _termine(page, "LC")
     assert all(u.startswith("http://127.0.0.1") or u.startswith("data:") for u in page.requetes)
+
+
+# -- Revue de la story 12.8 --
+
+
+def _rendu_lc(page, brut: str) -> None:
+    _ouvrir(page, "LC", [{"type": "jeton", "texte": brut}, FIN], "<texte-administratif>")
+    _lancer(page, "LC")
+    _termine(page, "LC")
+
+
+def test_phrase_du_corps_n_est_pas_prise_pour_la_section(page) -> None:
+    brut = "<debut>\nLes termes <juridique-factice> ont été conservés.\n<fin-du-corps>"
+    _rendu_lc(page, brut)
+    assert page.locator("#vue-LC .flagged-passage").count() == 0
+    assert page.locator("#vue-LC .resultat").inner_text() == brut
+    page.locator("#vue-LC .resultat-actions .bouton-primaire").click()
+    assert page.evaluate("window.__copies") == [brut]
+
+
+def test_phrase_de_cloture_apres_la_liste_ne_coupe_rien(page) -> None:
+    brut = f"{SORTIE_LC}\nMerci de votre lecture."
+    _rendu_lc(page, brut)
+    assert page.locator("#vue-LC .flagged-passage").count() == 0
+    assert page.locator("#vue-LC .resultat").inner_text() == brut
+
+
+def test_majuscule_a_point_n_a_pas_de_decalage_d_index(page) -> None:
+    # « İ » change de longueur en minuscules : l'index du passage doit rester juste.
+    brut = "İİİ <terme-conserve-1> suite\n\nPassages conservés tels quels :\n- <TERME-CONSERVE-1>"
+    _rendu_lc(page, brut)
+    passage = page.locator("#vue-LC .resultat-texte .flagged-passage")
+    assert passage.count() == 1
+    assert passage.evaluate("e => e.firstChild.textContent") == "<terme-conserve-1>"
+
+
+def test_resultat_est_une_region_nommee_et_annonce_sans_le_texte(page) -> None:
+    _rendu_lc(page, SORTIE_LC)
+    assert page.get_attribute("#vue-LC .resultat", "role") == "region"
+    page.wait_for_function(
+        "() => document.getElementById('annonces').textContent.includes('1 passage signalé')"
+    )
+    assert "<texte-clair-1>" not in page.inner_text("#annonces")
+
+
+def test_envoi_pendant_la_generation_d_une_autre_tache_est_refuse_localement(page) -> None:
+    _ouvrir(page, "CR", [])
+    _lancer(page, "CR")  # génération CR en cours, aucun évènement encore
+    page.evaluate("(t) => window.slmsp.activer(t)", "LC")
+    page.fill("#redaction-saisie-LC", "<texte-administratif>")
+    _lancer(page, "LC")
+    refus = page.locator("#vue-LC .mention-refus")
+    assert refus.inner_text() == "Une génération est en cours."
+    envois = [a for a in page.evaluate("window.__appels") if a[0] == "envoyer"]
+    assert [a[1] for a in envois] == ["CR"]  # LC n'a rien envoyé au pont
+    assert page.evaluate("window.slmsp.etat.generation") is True  # état global intact
+    assert page.locator("#erreur-interne").is_hidden()
+    assert page.input_value("#redaction-saisie-LC") == "<texte-administratif>"
+    # La génération CR se termine normalement ; LC peut ensuite envoyer.
+    page.evaluate(
+        "window.slmspRecevoir([{type: 'jeton', texte: '<cr>'},"
+        " {type: 'fin', raison: 'terminee', usage: null, urls_inventees: []}])"
+    )
+    _termine(page, "CR")
+    page.evaluate(
+        "window.__flux = [{type: 'jeton', texte: '<lc>'},"
+        " {type: 'fin', raison: 'terminee', usage: null, urls_inventees: []}]"
+    )
+    _lancer(page, "LC")
+    _termine(page, "LC")
+    assert page.locator("#vue-LC .mention-refus").is_hidden()
+
+
+def test_regeneration_refusee_apres_edition_garde_l_etat_d_avant(page) -> None:
+    _ouvrir(page, "CR", [{"type": "jeton", "texte": "<resultat-1>"}, FIN])
+    _lancer(page, "CR")
+    _termine(page, "CR")
+    page.fill("#redaction-saisie-CR", "<notes-modifiees>")  # l'entrée change : « Rédiger » revient
+    page.evaluate("window.__refus = 'generation-en-cours'")
+    _lancer(page, "CR")
+    page.wait_for_selector("#vue-CR .resultat-actions:visible")
+    page.evaluate("window.__refus = null")
+    # Le refus n'a rien accepté : l'entrée reste modifiée, « Rédiger » reste proposé.
+    assert page.locator("#vue-CR .volet-pied .bouton-primaire").is_visible()
+    page.get_by_role("button", name="Régénérer").click()
+    _termine(page, "CR")
+    envois = [a for a in page.evaluate("window.__appels") if a[0] == "envoyer"]
+    assert envois[-1][2] == envois[0][2]  # Régénérer rejoue le dernier envoi accepté
+
+
+def test_effacer_lit_le_refus_de_nouvelle_conversation(page) -> None:
+    _ouvrir(page, "CR", [{"type": "jeton", "texte": "<resultat-1>"}, FIN])
+    _lancer(page, "CR")
+    _termine(page, "CR")
+    page.evaluate(
+        """() => {
+          window.slmsp.pont.appeler = async (nom) => {
+            window.__appels.push([nom]);
+            return { ok: false, erreur: { code: 'generation-en-cours', message: '<refus>' } };
+          };
+        }"""
+    )
+    page.click("#bouton-nouvelle")
+    page.wait_for_selector("#vue-CR .mention-refus:visible")
+    assert "n'a pas abouti" in page.inner_text("#vue-CR .mention-refus")
+    assert page.input_value("#redaction-saisie-CR") == ""
+
+
+def test_effacer_en_cours_arrete_avant_d_oublier_l_envoi(page) -> None:
+    _ouvrir(page, "CR", [])
+    _lancer(page, "CR")
+    page.evaluate("window.__ordre = []")
+    page.evaluate(
+        """() => {
+          const pont = window.slmsp.pont;
+          const arreter = pont.arreter;
+          pont.arreter = async () => { window.__ordre.push('arreter'); return arreter(); };
+          pont.appeler = async (nom) => { window.__ordre.push(nom); return { ok: true }; };
+        }"""
+    )
+    page.click("#bouton-nouvelle")
+    page.wait_for_function("() => window.__ordre.length === 2")
+    assert page.evaluate("window.__ordre") == ["arreter", "nouvelle_conversation"]
+    assert page.locator("#vue-CR .mention-refus").is_hidden()

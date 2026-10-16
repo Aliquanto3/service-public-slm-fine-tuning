@@ -107,7 +107,8 @@
 }
 .volet-resultat .avertissement,
 .volet-resultat .mention-interrompue,
-.volet-resultat .mention-echec {
+.volet-resultat .mention-echec,
+.volet-entree .mention-refus {
   margin: 0;
   color: var(--ink-soft);
   font-size: var(--t-small);

@@ -32,7 +32,7 @@ function exigerOk(reponse) {
 /**
  * @param {HTMLElement} conteneur Conteneur de la vue.
  * @param {object} pont Client du pont (`envoyer`, `arreter`, `appeler`).
- * @param {{bus: object, tache: string}} contexte
+ * @param {{bus: object, tache: string, generationEnCours?: () => boolean}} contexte
  * @param {object} options
  *   `action` : libellé du bouton principal (« Rédiger ») ; `invite` : phrase d'aide du volet Entrée ;
  *   `etiquetteEntree`, `etiquetteResultat` : titres des volets (défaut « Entrée », « Résultat ») ;
@@ -42,7 +42,7 @@ function exigerOk(reponse) {
  *   texte brut à copier (défaut : texte simple, copié tel quel) ; `dir` : `"rtl"` pour un volet
  *   de Résultat de droite à gauche.
  */
-export function monterRedaction(conteneur, pont, { bus, tache }, options) {
+export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours }, options) {
   const id = (nom) => `redaction-${nom}-${tache}`;
   const racine = el("div", "redaction");
 
@@ -68,7 +68,11 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
   arreter.hidden = true;
   const pied = el("div", "volet-pied");
   pied.append(compteur, principal, arreter);
-  entree.append(titreEntree, invite, ...(options.controles ?? []), saisie, pied);
+  // Refus local à la vue (autre génération en cours, effacement refusé) : l'état global n'est pas touché.
+  const refus = el("p", "mention-refus");
+  refus.setAttribute("role", "status");
+  refus.hidden = true;
+  entree.append(titreEntree, invite, ...(options.controles ?? []), saisie, pied, refus);
 
   // -- Volet Résultat -------------------------------------------------------------------------
   const sortie = el("section", "editor-pane volet-resultat");
@@ -84,6 +88,7 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
   zone.id = id("resultat");
   zone.tabIndex = 0;
   zone.setAttribute("data-reponse", ""); // Échap interrompt la génération quand le focus est ici
+  zone.setAttribute("role", "region");
   zone.setAttribute("aria-label", options.etiquetteResultat ?? "Résultat");
   if (options.dir) zone.dir = options.dir;
   const attente = el("p", "resultat-vide", "Le résultat s'affichera ici.");
@@ -113,6 +118,8 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
   let rejeu = null; // résultat précédent, rétabli si le pont refuse une régénération
   let sale = false; // l'entrée a changé depuis le dernier envoi
   let vide = true; // aucun évènement reçu pour la génération en cours
+  let avant = null; // { dernierEnvoi, sale } avant l'envoi en cours, rétablis s'il est refusé
+  let autre = false; // une génération d'une autre Tâche est en cours (le pont n'en admet qu'une)
 
   zone.replaceChildren(attente);
 
@@ -149,8 +156,22 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
     zone.replaceChildren(attente);
   }
 
+  function signaler(message) {
+    refus.textContent = message;
+    refus.hidden = false;
+    annoncer(message);
+  }
+
   function lancer(envoi) {
     if (enCours) return;
+    if (autre || generationEnCours?.() === true) {
+      // Le pont refuserait (`generation-en-cours`) et l'état global passerait à tort à « libre » :
+      // le refus est local, rien n'est envoyé et rien n'est modifié.
+      signaler("Une génération est en cours.");
+      return;
+    }
+    refus.hidden = true;
+    avant = { dernierEnvoi, sale };
     rejeu = termine
       ? { brut, aCopier, contenu: [...zone.childNodes], notes: [...notes.childNodes] }
       : null;
@@ -201,8 +222,10 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
     }
     copier.hidden = !aCopier;
     rafraichir();
-    const entete = fin?.raison === "interrompue" ? "Résultat interrompu." : "Résultat terminé.";
-    annoncer(aCopier ? `${entete} ${aCopier}` : entete);
+    // On n'annonce pas le texte entier (long) : l'état et le nombre de passages signalés.
+    const n = zone.querySelectorAll(".flagged-passage").length;
+    const entete = fin?.raison === "interrompue" ? "Rédaction interrompue" : "Rédaction terminée";
+    annoncer(n ? `${entete}. ${n} passage${n > 1 ? "s" : ""} signalé${n > 1 ? "s" : ""}.` : `${entete}.`);
   }
 
   // -- Actions --------------------------------------------------------------------------------
@@ -210,6 +233,7 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
   arreter.addEventListener("click", () => {
     Promise.resolve()
       .then(() => pont.arreter())
+      .then(exigerOk)
       .catch(() => bus.emettre("generation:erreur", { tache }));
   });
   regenerer.addEventListener("click", () => {
@@ -234,6 +258,21 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
 
   // -- Évènements du bus (format `core.evenements.vers_dict`) ---------------------------------
   // Seule la vue qui a lancé la génération les reçoit.
+  bus.abonner("generation:debut", ({ tache: t }) => {
+    if (t !== tache) autre = true;
+  });
+  const liberer = () => {
+    if (autre) refus.hidden = true;
+    autre = false;
+  };
+  bus.abonner("evenement:fin", liberer);
+  bus.abonner("evenement:erreur", liberer);
+  bus.abonner("generation:erreur", (charge) => {
+    if (charge?.tache && charge.tache !== tache) liberer();
+  });
+  bus.abonner("nouvelle", ({ tache: t }) => {
+    if (t !== tache) liberer();
+  });
   bus.abonner("evenement:progression", (e) => {
     if (!enCours) return;
     debutFlux();
@@ -278,6 +317,8 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
     if (!enCours || (charge?.tache && charge.tache !== tache)) return;
     enCours = false;
     avancement.hidden = true;
+    if (vide && avant) ({ dernierEnvoi, sale } = avant); // refus : rien n'a été accepté
+    avant = null;
     if (vide && rejeu) {
       brut = rejeu.brut;
       aCopier = rejeu.aCopier;
@@ -306,10 +347,14 @@ export function monterRedaction(conteneur, pont, { bus, tache }, options) {
     reinitialiserResultat();
     majCompteur();
     rafraichir();
+    refus.hidden = true;
+    // D'abord l'arrêt, puis l'oubli du dernier envoi côté pont : un refus est signalé, pas ignoré.
     Promise.resolve()
       .then(() => (interrompre ? pont.arreter() : null))
+      .then(exigerOk)
       .then(() => pont.appeler("nouvelle_conversation"))
-      .catch(() => {});
+      .then(exigerOk)
+      .catch(() => signaler("L'effacement n'a pas abouti côté assistant. Réessayez."));
   });
   bus.abonner("copier-dernier", async ({ tache: t }) => {
     if (t !== tache || !aCopier) return;

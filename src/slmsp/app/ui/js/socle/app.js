@@ -39,7 +39,8 @@ const $ = (id) => document.getElementById(id);
 const tache = (id = etat.tache) => TACHES.find((t) => t.id === id);
 
 function contexteVue(t) {
-  return { bus, tache: t.id };
+  // `generationEnCours` : une génération (de n'importe quelle Tâche) est en cours côté pont.
+  return { bus, tache: t.id, generationEnCours: () => etat.generation === true };
 }
 
 function construireNavigation() {
