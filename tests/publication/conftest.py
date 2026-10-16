@@ -24,7 +24,6 @@ def racine(tmp_path: Path) -> Path:
     shutil.copy(DEPOT / "config" / "modeles" / f"{SLUG}.toml", r / "config" / "modeles")
     shutil.copy(DEPOT / "data" / "registre-licences.toml", r / "data")
     config = (DEPOT / "config" / "publication.toml").read_text(encoding="utf-8")
-    config = config.replace('jeux_proteges = ["v1.0", "v1.1"]', "jeux_proteges = []")
     config = config.replace(
         f'[modeles."{SLUG}"]\n', f'[modeles."{SLUG}"]\nverifie_le = 2026-10-17\n'
     )

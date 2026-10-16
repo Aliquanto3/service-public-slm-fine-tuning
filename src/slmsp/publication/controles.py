@@ -6,14 +6,15 @@ Fonctions pures : chacune renvoie la liste des constats bloquants (vide si le do
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
 from pathlib import Path
 
 from slmsp.core.canonique import sha256_fichier
-from slmsp.core.items import N_DEFAUT, _empreintes_texte
+from slmsp.core.items import N_DEFAUT, empreintes_texte
 from slmsp.publication.config import ConfigPublication
 
-SUFFIXES_TEXTE = frozenset({".md", ".txt", ".json", ".toml", ".yaml", ".yml"})
+SUFFIXES_BINAIRES = frozenset({".gguf"})
+"""Binaires connus, jamais lus. Tout autre fichier est lu s'il ressemble à du texte."""
+OCTETS_SONDE = 8192
 NOM_SOMMES = "SHA256SUMS"
 RACINES_INTERDITES = (("eval",), ("data", "train"))
 """Préfixes (relatifs à la racine du projet ou au dossier) dont aucun fichier ne sort."""
@@ -22,7 +23,23 @@ MIN_EMPREINTES_COMMUNES = 3
 
 
 def _est_texte(chemin: Path) -> bool:
-    return chemin.suffix.lower() in SUFFIXES_TEXTE or chemin.name == NOM_SOMMES
+    """Détecte le contenu (ni octet nul, UTF-8 valide) plutôt que l'extension."""
+    if chemin.suffix.lower() in SUFFIXES_BINAIRES:
+        return False
+    try:
+        with chemin.open("rb") as f:
+            debut = f.read(OCTETS_SONDE)
+    except OSError:
+        return False
+    if b"\x00" in debut:
+        return False
+    try:
+        debut.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        # Une coupure au milieu d'un caractère en fin de sonde n'est pas un binaire.
+        if exc.start < len(debut) - 3:
+            return False
+    return True
 
 
 def _sous_prefixe(parties: tuple[str, ...], prefixe: tuple[str, ...]) -> bool:
@@ -53,25 +70,29 @@ def controle_fichiers(dossier: Path) -> list[str]:
     return constats
 
 
-def _phrases(texte: str) -> Iterable[str]:
-    return (p for p in re.split(r"[.;!?\n]+", texte) if p.strip())
+def _motif_admis(mentions: list[str]) -> re.Pattern[str] | None:
+    """Mentions admises, éventuellement suivies de « ISO 42001 » (« non certifié ISO 42001 »)."""
+    if not mentions:
+        return None
+    alternatives = "|".join(re.escape(m) for m in sorted(mentions, key=len, reverse=True))
+    return re.compile(rf"(?:{alternatives})(?:\s+ISO\s*/?\s*(?:IEC\s*)?42001)?", re.IGNORECASE)
 
 
 def controle_formulations(texte: str, config: ConfigPublication, nom: str = "fiche") -> list[str]:
-    """Refuse une formulation de certification, sauf dans une phrase de non-certification."""
+    """Refuse toute formulation de certification, titres compris.
+
+    Seules les occurrences des mentions de non-certification sont retirées avant la recherche :
+    le reste de la phrase reste contrôlé.
+    """
     interdites = [re.compile(m, re.IGNORECASE) for m in config.formulations_interdites]
-    admises = [m.lower() for m in config.mentions_non_certification]
+    admis = _motif_admis(config.mentions_non_certification)
+    nettoye = admis.sub(" ", texte) if admis else texte
     constats: list[str] = []
-    for phrase in _phrases(texte):
-        if phrase.lstrip().startswith("#"):
-            continue
-        bas = phrase.lower()
-        if any(m in bas for m in admises):
-            continue
-        for motif in interdites:
-            trouve = motif.search(phrase)
-            if trouve:
-                constats.append(f"{nom} : formulation de certification « {trouve.group(0)} »")
+    for motif in interdites:
+        constats += [
+            f"{nom} : formulation de certification « {m.group(0)} »"
+            for m in motif.finditer(nettoye)
+        ]
     return constats
 
 
@@ -94,17 +115,33 @@ def controle_secrets(dossier: Path, config: ConfigPublication) -> list[str]:
     return constats
 
 
-def controle_fuite(dossier: Path, empreintes: frozenset[str]) -> list[str]:
-    """Refuse un fichier texte qui partage des n-grammes avec le Jeu d'évaluation (AD-11)."""
+def empreintes_dossier(dossier: Path) -> frozenset[str]:
+    """Empreintes (par ligne) de tous les fichiers texte d'un dossier, ex. `data/train/`."""
+    resultat: set[str] = set()
+    for chemin in sorted(p for p in dossier.rglob("*") if p.is_file() and _est_texte(p)):
+        texte = chemin.read_text(encoding="utf-8", errors="replace")
+        for ligne in texte.splitlines():
+            resultat.update(empreintes_texte(ligne, N_DEFAUT))
+    return frozenset(resultat)
+
+
+def controle_fuite(
+    dossier: Path, empreintes: frozenset[str], libelle: str = "Jeu d'évaluation"
+) -> list[str]:
+    """Refuse un fichier texte qui partage des n-grammes avec `empreintes` (AD-11).
+
+    Une liste vide est refusée : elle ne protégerait rien. Le seuil porte sur le fichier entier ;
+    les n-grammes sont pris ligne par ligne (aucun n-gramme à cheval sur deux lignes).
+    """
     if not empreintes:
-        return []
+        return [f"contrôle de fuite impossible : aucune empreinte de {libelle}"]
     constats: list[str] = []
     for chemin in sorted(p for p in dossier.rglob("*") if p.is_file() and _est_texte(p)):
         texte = chemin.read_text(encoding="utf-8", errors="replace")
-        communes = {e for ligne in texte.splitlines() for e in _empreintes_texte(ligne, N_DEFAUT)}
+        communes = {e for ligne in texte.splitlines() for e in empreintes_texte(ligne, N_DEFAUT)}
         if len(communes & empreintes) >= MIN_EMPREINTES_COMMUNES:
             constats.append(
-                f"{chemin.relative_to(dossier).as_posix()} : texte du Jeu d'évaluation détecté"
+                f"{chemin.relative_to(dossier).as_posix()} : texte du {libelle} détecté"
             )
     return constats
 

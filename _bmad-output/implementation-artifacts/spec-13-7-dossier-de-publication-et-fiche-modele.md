@@ -46,3 +46,20 @@ deferred: []
 - Commandes `hf` de la procédure (`hf repo create`, `hf upload`) : à vérifier avec la version installée.
 - Texte de la mention de non-certification (`config/publication.toml`).
 - Les sources réellement utilisées à l'entraînement ne sont pas lisibles dans le run d'export : à préciser à la main, ou à consigner dans le run d'entraînement (report).
+
+## Revue
+
+Sources : S = second avis (Haiku), R = relecteur.
+
+- medium, S, corrigé : une mention admise court-circuitait toute la phrase. Seules les occurrences des mentions sont désormais retirées (avec un « ISO 42001 » qui les suit) avant la recherche ; test « certifié ISO 42001, non certifié par un tiers » (2 constats).
+- medium, S, corrigé : titres `#` désormais contrôlés ; motifs élargis (certifie, conformité, attesté/attestation, homologué, labellisé, certified) ; mentions admises complétées (« aucune attestation de conformité », « non-certification ») pour que la mention de la fiche et son titre passent ; tests paramétrés.
+- medium, S, corrigé : un `.refuse` existant n'est plus bloquant ni écrasé ; le suivant prend le suffixe `.refuse.2`, `.refuse.3`. Testé.
+- medium, S, corrigé : écriture dans `<sortie>.part`, renommé seulement si tout passe ; une exception supprime le `.part` (testé en forçant une erreur) ; un `.part` résiduel est purgé.
+- medium, S, corrigé : `jeux_proteges` vide refusé (préparation et `controle_fuite` sur liste vide) ; toutes les versions de `eval/jeu/` et le calibrage (lecture seule) doivent figurer dans la liste, sinon refus ; `calibrage` ajouté à `config/publication.toml`. Testé, dont sur le dépôt réel.
+- low, S, corrigé : tout fichier est lu s'il est du texte (sonde : pas d'octet nul, UTF-8 valide), sauf `.gguf`.
+- low, S, corrigé : seuil calculé sur le fichier entier (n-grammes toujours pris ligne par ligne).
+- low, S, corrigé : `verifie_le` futur refusé.
+- low, S, corrigé : `empreintes_texte` publique dans `core.items`, alias `_empreintes_texte` conservé.
+- low, S, corrigé : assertions précisées (constat exact, noms de fichiers, exceptions typées). Les 13 skips sont les 13 gardes de `tests/test_cli.py:88` pour les modules de sous-commandes déjà présents (« le module … existe ») : attendus, sans lien avec cette story.
+- low, S, corrigé : fuite contre `data/train/` contrôlée quand le dossier existe ; il n'existe pas encore dans le dépôt, donc non exercé en réel (test sur dossier factice).
+- Report : exécution sur un export et un GGUF réels (service indisponible) ; la formulation exacte des motifs reste un choix de départ à relire par Anaël (faux positifs possibles sur « conformité » dans un texte légitime).

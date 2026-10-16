@@ -4,7 +4,7 @@
 schema_version = 1
 
 # Versions du Jeu d'évaluation maison dont aucun texte ne doit figurer dans le dossier (AD-11).
-jeux_proteges = ["v1.0", "v1.1"]
+jeux_proteges = ["v1.0", "v1.1", "calibrage"]
 
 # Licences de sortie, de la plus permissive à la moins permissive. Le texte de chacune est
 # `config/licences/<id>.txt` ; une licence sans texte fait échouer la préparation.
@@ -21,16 +21,24 @@ mention_non_certification = "Ce modèle ne bénéficie d'aucune certification ni
 
 # Formulations de certification refusées (expressions régulières, insensibles à la casse).
 formulations_interdites = [
-    '\bcertifi(?:é|ée|és|ées|cation|cations)\b',
+    '\bcertifi(?:e|é|ée|és|ées|er|ent|ons|cation|cations)\b',
+    '\bcertified\b',
     '\bISO\s*/?\s*(?:IEC\s*)?42001\b',
-    '\bconforme?s?\s+(?:à|au|aux)\b',
-    '\blabellis',
+    '\bconform(?:e|es|é|ée|és|ées|ité|ités)\b',
+    '\batteste?(?:r|nt|é|ée|és|ées)?\b',
+    '\battestations?\b',
+    '\bhomologu(?:e|er|é|ée|és|ées|ation|ations)\b',
+    '\blabel+is',
 ]
-# Une phrase contenant l'une de ces mentions (sous-chaînes, insensibles à la casse) est admise.
+# Chaque occurrence de l'une de ces mentions (insensible à la casse) est retirée du texte avant la
+# recherche des formulations interdites ; seule la mention est admise, pas le reste de la phrase.
+# Une mention de « certifié » peut être suivie de « ISO 42001 » (« n'est pas certifié ISO 42001 »).
 mentions_non_certification = [
     "aucune certification",
+    "aucune attestation de conformité",
     "n'est pas certifié",
     "non certifié",
+    "non-certification",
 ]
 
 # Motifs de secrets refusés dans les fichiers texte du dossier.

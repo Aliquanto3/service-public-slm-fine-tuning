@@ -3,15 +3,18 @@
 Entrées : Modèle de base (`config/modeles/<slug>.toml`), run `export` complet (GGUF),
 Comparatif (`comparatif.md`), Registre des licences. Sortie : un dossier local avec
 `README.md`, `LICENSE`, le GGUF, `COMPARATIF.md` et `SHA256SUMS`. Aucun réseau, aucun envoi.
-Un dossier qui échoue aux contrôles est renommé `<sortie>.refuse`.
+Écriture dans `<sortie>.part`, renommé en `<sortie>` si tout passe, sinon en `<sortie>.refuse`
+(suffixe numéroté si un refus existe déjà) ; une erreur supprime le dossier partiel.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import tomllib
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 from slmsp.core.artefacts import ouvrir_run
@@ -52,6 +55,10 @@ def choisir_licence(slug: str, config: ConfigPublication) -> str:
         raise ConfigurationInvalide(
             f"publication : licence du Modèle de base {slug} non relue "
             "(renseigner verifie_le dans config/publication.toml après lecture de sa fiche)"
+        )
+    if modele.verifie_le > date.today():
+        raise ConfigurationInvalide(
+            f"publication : verifie_le de {slug} est dans le futur ({modele.verifie_le})"
         )
     for licence in config.ordre_permissivite:
         if licence in modele.licences_compatibles:
@@ -110,9 +117,33 @@ def _lire_registre(racine: Path) -> tuple[tuple[fiche.SourceRegistre, ...], str]
     return sources, sha256_hex(octets)
 
 
+def versions_du_jeu(racine: Path) -> list[str]:
+    """Toutes les versions présentes sous `eval/jeu/` (`vN[.M]`), plus le calibrage s'il existe."""
+    jeu = racine / "eval" / "jeu"
+    versions = (
+        sorted(
+            d.name for d in jeu.iterdir() if d.is_dir() and re.fullmatch(r"v\d+(\.\d+)?", d.name)
+        )
+        if jeu.is_dir()
+        else []
+    )
+    if (racine / "eval" / "calibrage" / "echantillon-calibrage.jsonl").is_file():
+        versions.append("calibrage")
+    return versions
+
+
 def _empreintes_protegees(racine: Path, config: ConfigPublication) -> frozenset[str]:
+    """Empreintes de `jeux_proteges` ; refuse une liste vide ou qui omet une version présente."""
     if not config.jeux_proteges:
-        return frozenset()
+        raise ConfigurationInvalide(
+            "publication : jeux_proteges est vide (config/publication.toml) ; "
+            "le contrôle de fuite ne protégerait rien"
+        )
+    omises = [v for v in versions_du_jeu(racine) if v not in config.jeux_proteges]
+    if omises:
+        raise ConfigurationInvalide(
+            "publication : jeux_proteges ne couvre pas " + ", ".join(omises)
+        )
     from slmsp.core.items import empreintes_antifuite
 
     return empreintes_antifuite(config.jeux_proteges, racine=racine).toutes()
@@ -149,8 +180,74 @@ def preparer(
     if empreintes is None:
         empreintes = _empreintes_protegees(racine, config)
     sources, sha_registre = _lire_registre(racine)
+    train = racine / "data" / "train"
+    empreintes_train = controles.empreintes_dossier(train) if train.is_dir() else None
 
-    sortie.mkdir(parents=True, exist_ok=True)
+    partiel = sortie.with_name(sortie.name + ".part")
+    if partiel.exists():
+        shutil.rmtree(partiel)  # reste d'une préparation interrompue
+    partiel.mkdir(parents=True)
+    try:
+        rapport = _assembler(
+            partiel,
+            config,
+            empreintes,
+            empreintes_train,
+            gguf,
+            comparatif,
+            texte_licence,
+            licence,
+            modele,
+            config_modele,
+            export_run,
+            quantification,
+            tag,
+            sha_gabarit,
+            sources,
+            sha_registre,
+        )
+    except BaseException:
+        shutil.rmtree(partiel, ignore_errors=True)
+        raise
+    if rapport.bloquants:
+        cible = _nom_refuse(sortie)
+    else:
+        if sortie.exists():
+            sortie.rmdir()  # dossier vide, vérifié plus haut
+        cible = sortie
+    partiel.replace(cible)
+    rapport.dossier = cible
+    return rapport
+
+
+def _nom_refuse(sortie: Path) -> Path:
+    """`<sortie>.refuse`, ou `<sortie>.refuse.N` si un dossier refusé précédent existe."""
+    cible = sortie.with_name(sortie.name + ".refuse")
+    n = 1
+    while cible.exists():
+        n += 1
+        cible = sortie.with_name(f"{sortie.name}.refuse.{n}")
+    return cible
+
+
+def _assembler(
+    sortie: Path,
+    config: ConfigPublication,
+    empreintes: frozenset[str],
+    empreintes_train: frozenset[str] | None,
+    gguf: Path,
+    comparatif: Path,
+    texte_licence: Path,
+    licence: str,
+    modele: str,
+    config_modele: ConfigModele,
+    export_run: str,
+    quantification: str,
+    tag: str,
+    sha_gabarit: str,
+    sources: tuple[fiche.SourceRegistre, ...],
+    sha_registre: str,
+) -> Rapport:
     shutil.copyfile(gguf, sortie / gguf.name)
     shutil.copyfile(comparatif, sortie / NOM_COMPARATIF)
     shutil.copyfile(texte_licence, sortie / NOM_LICENCE)
@@ -186,12 +283,10 @@ def preparer(
     rapport.bloquants += controles.controle_formulations(comparatif_texte, config, NOM_COMPARATIF)
     rapport.bloquants += controles.controle_secrets(sortie, config)
     rapport.bloquants += controles.controle_fuite(sortie, empreintes)
+    if empreintes_train is not None:
+        rapport.bloquants += controles.controle_fuite(
+            sortie, empreintes_train, "jeu d'entraînement (data/train/)"
+        )
     rapport.bloquants += controles.controle_sommes(sortie)
     rapport.emplacements = fiche.emplacements_restants(texte_fiche)
-    if rapport.bloquants:
-        refuse = sortie.with_name(sortie.name + ".refuse")
-        if refuse.exists():
-            raise ConfigurationInvalide(f"publication : {refuse} existe déjà ; dossier laissé")
-        sortie.replace(refuse)
-        rapport.dossier = refuse
     return rapport
