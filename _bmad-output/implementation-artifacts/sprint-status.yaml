@@ -124,7 +124,7 @@ development_status:
   # Epics 12 (J4) et 13 (J5) : découpage validé par Anaël le 2026-10-16 (lots L1 à L8, epics.md)
   epic-12: in-progress
   12-1-racine-de-composition-partagee-et-ressources-en-mode-install: backlog
-  12-2-stockage-local-de-l-application-app-stockage: backlog
+  12-2-stockage-local-de-l-application-app-stockage: done
   12-3-anonymisation-de-l-export-des-retours-app-anonymisation: backlog
   12-4-socle-de-l-interface-jetons-disposition-navigation-zone-de-s: backlog
   12-5-pont-js-api-et-flux-d-evenements: backlog
