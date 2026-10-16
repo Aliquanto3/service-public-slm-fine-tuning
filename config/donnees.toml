@@ -11,14 +11,14 @@ schema_version = 1
 # Générateur refuse de démarrer si elle n'est pas égale au jour même. Chaîne vide tant que
 # la vérification n'a pas été faite : la génération est alors refusée. Renseignée si et
 # seulement si `conditions_sha256` l'est aussi.
-conditions_verifiees_le = ""
+conditions_verifiees_le = 2026-10-17
 # Méthode de vérification des conditions (texte libre consigné au MANIFEST).
 methode_verification = "GET de la page des conditions par slmsp.net.client('outillage'), SHA-256 des octets reçus"
 # Page des conditions commerciales relue (seule URL admise par le profil `outillage`).
 conditions_url = "https://legal.mistral.ai/terms/commercial-terms-of-service/"
 # SHA-256 (64 caractères hexadécimaux) de la page relue ; chaîne vide tant qu'elle ne l'a pas été.
 # Renseigné si et seulement si `conditions_verifiees_le` l'est aussi.
-conditions_sha256 = ""
+conditions_sha256 = "08ee882d26552c28006ebb288772fad817a6e6dea7cd8aed771480123cd0d94e"
 # Modèles Mistral stables admis comme générateur (même liste que `modeles_autorises` de
 # `config/mistral.toml`) : ni modèle Labs, ni préversion.
 modeles_stables = ["mistral-large-latest", "mistral-large-2411", "mistral-large-2512"]
