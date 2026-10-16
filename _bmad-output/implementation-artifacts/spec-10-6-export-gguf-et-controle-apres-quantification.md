@@ -2,7 +2,7 @@
 title: 'Story 10.6 — Export GGUF et contrôle après quantification'
 type: 'feature'
 created: '2026-10-16'
-status: 'review'
+status: 'done'
 baseline_revision: 'b839f3b'
 context:
   - '{project-root}/_bmad-output/implementation-artifacts/epic-10-context.md'
@@ -39,7 +39,7 @@ deferred:
 ## À confirmer par Anaël
 
 1. Les écarts de métadonnées avec le GGUF officiel restent une alerte et ne bloquent pas l'export (la note C5 les disait bloquants). Granite (`granitemoehybrid` vers `granite`) pourrait différer légitimement.
-2. Une sonde non valide sur le Q4 rend le code 1, mais le run d'export reste `complet` : le résultat est consigné, sans passage en `degrade`.
+2. Une sonde non valide sur le Q4 rend le code 1 et fait passer le run d'export en `degrade` (revue). `evaluation.modele_ref` refuse alors `ft:<id>`, sauf `accepter_degrade=True` passé par l'appelant ; aucune CLI ne l'expose encore. `degrade` désignait jusqu'ici un résultat obtenu avec une doublure : extension de sens à confirmer, ou statut dédié.
 3. ORPO : un seul adaptateur est fusionné (voir Décisions).
 4. Ministral 3 3B : le chargement `AutoModelForCausalLM` de `hf/` (poids multimodaux) et la double source du template (`tokenizer_config.json` et `chat_template.jinja`) restent à vérifier au premier export réel. Le contrôle du CA2 le détectera.
 5. Le dossier HF fusionné est conservé (`hf-f16/`, CA1) : il occupe environ 7 Go pour un 3B.
@@ -53,3 +53,18 @@ deferred:
 ## Auto Run Result
 
 Statut : review. Zone touchée : `train/export.py`, `cli/export.py`, `tests/train/test_export.py`. Hors zone, sur décision ou par nécessité : `core/artefacts.py` (A1), `train/run.py` et `tests/train/test_run.py` (retrait du refus de 10.4), `evaluation/sonde_outils.py` et `tests/evaluation/test_sonde_outils.py` (sonde sur `ft:`), `tests/core/test_lecteur.py`. Aucun appel d'API, aucun téléchargement, aucune conversion réelle.
+
+## Revue
+
+Revue Opus du 2026-10-16, sur les commits a76a1e7 et cca9e09, avec les constats du second avis (Haiku).
+
+- **medium**, second avis 1 : ORPO acceptait l'adaptateur SFT d'un run non `complet`. **Corrigé** : `train.run._exiger_sft_complet` exige un run `train` lisible au statut `complet` avant la lecture de l'adaptateur. Tests paramétrés dans `tests/train/test_run.py` (illisible, sans adaptateur, `partiel-erreur`, `interrompu`, type `export`).
+- **medium**, second avis 2 : une sonde non valide laissait le run d'export `complet` et `ft:` résolvable. **Corrigé** : passage en `degrade` avec motif, et refus par `modele_ref` sans `accepter_degrade=True`. Choix à confirmer (voir point 2 ci-dessus).
+- **medium**, second avis 3 : la conversion et la quantification n'avaient pas de délai, donc un processus bloqué gardait `gpu.lock`. **Corrigé** : `delai_outils` = max(30 min, poids de la base / 2 Mio/s), option `--delai`, valeur consignée dans `run.json` (`delai_outils_s`) et transmise aux lanceurs. À l'échéance, `processus.executer` tue l'arbre, le run passe en `partiel-erreur` et le verrou est libéré (test).
+- **low**, second avis 4 : `controles=None` donnait `complet` sans contrôle du CA2. **Corrigé** : `controles` devient un paramètre obligatoire de `exporter`.
+- **low**, second avis 5 : les fichiers de l'adaptateur n'étaient contrôlés que par `is_file`. **Corrigé** : chaque fichier repasse par `chemin_autorise`. Tests : espion, jonction NTFS vers `eval/`, lien symbolique (ignoré si le système refuse les liens).
+- **low**, second avis 6 : `metadonnees(officiel)` était appelé hors du `try`. **Corrigé** : un GGUF officiel illisible produit une alerte (test).
+- **low**, second avis 7 : tests de bout en bout manquants. **Corrigé** : la sonde réelle tourne sur `ft:<export>` avec un harnais factice (CA3, `tests/evaluation/test_sonde_outils.py`), et `exporter` passe par les vrais lanceurs de `serveur` avec un llama.cpp factice (CA4 : `env_sous_processus`, sans secret, `PYTHONUTF8=1`, délai transmis).
+- **low**, revue : `benchmarks.moteurs.lm_eval.resoudre_gguf` résout `ft:` sans vérifier le statut du run d'export, ce qui était déjà le cas avant cette story. **Reporté** : l'aligner sur `modele_ref` (refus de `partiel-erreur` et de `degrade`) dans la story du banc.
+- **low**, revue : une exception de la sonde (par exemple le GPU occupé en `cuda`) laisse l'export `complet` sans `sonde-outils.json`, comme `--sans-sonde`. **Rejeté** : l'absence du bilan se voit, et la sonde peut être relancée par `slmsp eval sonde-outils --modele ft:<id>`.
+- **Reporté (service réel)** : le premier export réel (GPU libre, `vendor/` présent) doit vérifier que le délai par défaut suffit sur CPU pour un 3B, que le SHA du template survit à la conversion (Ministral) et que la sonde passe sur le Q4 réel.

@@ -7,9 +7,12 @@ métadonnées (format GGUF v3), avec un template factice.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
+import os
 import struct
+import sys
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import Any
@@ -19,7 +22,12 @@ import pytest
 from slmsp.cli import export as cli_export
 from slmsp.cli import main
 from slmsp.core.artefacts import nouveau_run, ouvrir_run
-from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, RessourceOccupee
+from slmsp.core.erreurs import (
+    CodeSortie,
+    ConfigurationInvalide,
+    LectureInterdite,
+    RessourceOccupee,
+)
 from slmsp.core.var import verrou_gpu
 from slmsp.evaluation import modele_ref, sonde_outils
 from slmsp.inference import serveur
@@ -205,6 +213,7 @@ def gguf_officiel(projet: Any, **metadonnees: Any) -> Path:
 
 
 def exporter(projet: Any, source: Any, outils: Outils, pile: PileExport, **options: Any) -> Any:
+    options.setdefault("controles", cli_export.controler_format(SLUG))
     return module_export.exporter(
         source,
         racine=projet.racine,
@@ -301,10 +310,107 @@ def test_echec_de_conversion_termine_le_run(projet) -> None:
             racine=projet.racine,
             pile=PileExport(),
             convertir=echouer,
+            controles=cli_export.controler_format(SLUG),
             sortie=lambda _m: None,
         )
     (run,) = (projet.racine / "runs" / "export").iterdir()
     assert ouvrir_run(run.name, racine=projet.racine).statut_courant() == "partiel-erreur"
+
+
+def test_controles_obligatoires(projet) -> None:
+    """CA2 : sans contrôle du template embarqué, aucun export ne peut finir `complet`."""
+    with pytest.raises(TypeError, match="controles"):
+        module_export.exporter(  # type: ignore[call-arg]
+            module_export.source_temoin(SLUG), racine=projet.racine, pile=PileExport()
+        )
+    assert not (projet.racine / "runs" / "export").exists()
+
+
+def test_delai_des_outils_proportionne_aux_poids(projet) -> None:
+    outils = Outils()
+    exporter(projet, module_export.source_temoin(SLUG), outils, PileExport())
+    attendu = [module_export.DELAI_MIN_OUTIL] * 2
+    assert [options["delai"] for _, options in outils.appels] == attendu
+    # Base de 8 Gio : au-delà du plancher, proportionnel (débit minimal de 2 Mio/s).
+    octets = 8 * 1024**3
+    assert module_export.delai_outils(octets) == octets / module_export.DEBIT_MIN_OUTIL > 3600
+    assert module_export.delai_outils(0) == module_export.DELAI_MIN_OUTIL
+    outils = Outils()
+    run = exporter(projet, module_export.source_temoin(SLUG), outils, PileExport(), delai=12.5)
+    assert [options["delai"] for _, options in outils.appels] == [12.5, 12.5]
+    assert run.manifeste.config["delai_outils_s"] == 12.5
+    with pytest.raises(ConfigurationInvalide, match="délai"):
+        exporter(projet, module_export.source_temoin(SLUG), Outils(), PileExport(), delai=0)
+
+
+def test_delai_depasse_libere_le_verrou(projet) -> None:
+    """Un outil bloqué est tué à l'échéance : run `partiel-erreur`, `gpu.lock` libéré."""
+
+    def bloque(*_a: Any, delai: float, **_k: Any) -> Path:
+        raise serveur.ErreurInference(f"llama-quantize : délai de {delai:g} s dépassé")
+
+    outils = Outils()
+    with pytest.raises(serveur.ErreurInference, match="délai de 3 s"):
+        module_export.exporter(
+            module_export.source_temoin(SLUG),
+            racine=projet.racine,
+            pile=PileExport(),
+            convertir=outils.convertir,
+            quantifier=bloque,
+            controles=cli_export.controler_format(SLUG),
+            delai=3,
+            sortie=lambda _m: None,
+        )
+    (run,) = (projet.racine / "runs" / "export").iterdir()
+    assert ouvrir_run(run.name, racine=projet.racine).statut_courant() == "partiel-erreur"
+    with verrou_gpu(commande="suivant"):
+        pass
+
+
+def test_lanceurs_reels_recoivent_env_sous_processus_et_delai(projet, monkeypatch) -> None:
+    """CA4 : par les vrais lanceurs de `serveur` (llama.cpp factice), chaque sous-processus
+    reçoit `env_sous_processus()` (sans secret, `PYTHONUTF8=1`) et le délai de l'export."""
+    reelle = serveur.charger_config_llamacpp()
+    vendor = projet.racine / "vendor"
+    tag = vendor / "llama.cpp" / reelle.tag
+    binaires = {}
+    for relatif in ("bin-cpu/llama-quantize.exe", "src/convert_hf_to_gguf.py"):
+        (tag / relatif).parent.mkdir(parents=True, exist_ok=True)
+        (tag / relatif).write_bytes(b"factice")
+        binaires[relatif] = hashlib.sha256(b"factice").hexdigest()
+    (tag / "src" / "gguf-py").mkdir()
+    monkeypatch.setenv("SLMSP_VENDOR_DIR", str(vendor))
+    monkeypatch.setenv("FAUX_API_KEY", "secret-factice")
+    monkeypatch.delenv("PYTHONUTF8", raising=False)
+    monkeypatch.setattr(serveur, "_empreintes_verifiees", set())
+    config = reelle.model_copy(update={"binaires": binaires})
+    lancements: list[tuple[list[str], dict[str, Any]]] = []
+
+    def executer(arguments: list[str], **options: Any) -> tuple[int, str]:
+        lancements.append((list(arguments), options))
+        sortie = arguments[arguments.index("--outfile") + 1] if "--outfile" in arguments else None
+        ecrire_gguf(Path(sortie or arguments[2]), meta())
+        return 0, ""
+
+    monkeypatch.setattr(serveur.processus, "executer", executer)
+    run = module_export.exporter(
+        module_export.source_temoin(SLUG),
+        racine=projet.racine,
+        pile=PileExport(),
+        convertir=functools.partial(serveur.convertir_hf_vers_gguf, config=config),
+        quantifier=functools.partial(serveur.quantifier, config=config),
+        controles=cli_export.controler_format(SLUG),
+        delai=77,
+        sortie=lambda _m: None,
+    )
+    assert run.statut_courant() == "complet"
+    assert len(lancements) == 2
+    for _arguments, options in lancements:
+        assert options["delai"] == 77
+        assert "FAUX_API_KEY" not in options["env"] and options["env"]["PYTHONUTF8"] == "1"
+    (conversion, _), (quantification, _) = lancements
+    assert conversion[conversion.index("--outtype") + 1] == "f16"
+    assert quantification[-1] == "Q4_K_M" and "bin-cpu" in quantification[0]
 
 
 # --- Source : run d'entraînement ---------------------------------------------------------
@@ -320,6 +426,52 @@ def test_source_refuse_un_run_incomplet(projet) -> None:
 def test_source_refuse_un_adaptateur_absent(projet) -> None:
     with pytest.raises(ConfigurationInvalide, match="adaptateur incomplet"):
         module_export.source_depuis_run(run_train(projet, adaptateur=False), racine=projet.racine)
+
+
+def test_source_refuse_un_poids_lie_hors_liste(projet) -> None:
+    """`adapter_model.safetensors` passe par le lecteur : un lien vers `eval/` est refusé."""
+    train_id = run_train(projet)
+    cible = projet.racine / "eval" / "secret.safetensors"
+    cible.parent.mkdir(parents=True, exist_ok=True)
+    cible.write_bytes(b"x")
+    adaptateur = projet.racine / "runs" / "train" / train_id / "adaptateur"
+    poids = adaptateur / "adapter_model.safetensors"
+    poids.unlink()
+    try:
+        os.symlink(cible, poids)
+    except (OSError, NotImplementedError):
+        pytest.skip("création de lien symbolique refusée par le système")
+    with pytest.raises(LectureInterdite):
+        module_export.source_depuis_run(train_id, racine=projet.racine)
+
+
+def test_chaque_fichier_de_l_adaptateur_passe_par_le_lecteur(projet, monkeypatch) -> None:
+    train_id = run_train(projet)
+    vus: list[str] = []
+    autorise = module_export.chemin_autorise
+
+    def espion(chemin: Any, lecteur: str, **options: Any) -> Path:
+        vus.append(Path(chemin).name)
+        return autorise(chemin, lecteur, **options)
+
+    monkeypatch.setattr(module_export, "chemin_autorise", espion)
+    module_export.adaptateur_du_run(train_id, racine=projet.racine)
+    assert vus == ["adaptateur", *module_export.FICHIERS_ADAPTATEUR]
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="jonction NTFS : Windows seulement")
+def test_source_refuse_un_adaptateur_en_jonction(projet) -> None:
+    import _winapi
+
+    train_id = run_train(projet, adaptateur=False)
+    cible = projet.racine / "eval" / "jeu"
+    cible.mkdir(parents=True, exist_ok=True)
+    for nom in module_export.FICHIERS_ADAPTATEUR:
+        (cible / nom).write_bytes(b"{}")
+    lien = projet.racine / "runs" / "train" / train_id / "adaptateur"
+    _winapi.CreateJunction(str(cible), str(lien))
+    with pytest.raises(LectureInterdite):
+        module_export.source_depuis_run(train_id, racine=projet.racine)
 
 
 @pytest.mark.parametrize(
@@ -382,6 +534,15 @@ def test_metadonnees_differentes_en_alerte(projet) -> None:
     assert "GGUF officiel" in controles["alertes"][0]
 
 
+def test_gguf_officiel_illisible_en_alerte(projet) -> None:
+    gguf_officiel(projet).write_bytes(b"pas un GGUF")
+    run = exporter(projet, module_export.source_temoin(SLUG), Outils(), PileExport())
+    assert run.statut_courant() == "complet"
+    controles = json.loads((run.dossier / "export.json").read_text(encoding="utf-8"))["controles"]
+    assert controles["bloquants"] == []
+    assert "non comparées" in controles["alertes"][0]
+
+
 # --- CLI -------------------------------------------------------------------------------
 
 
@@ -426,6 +587,22 @@ def test_cli_export_puis_sonde_sur_q4(projet, cli, monkeypatch, capsys, valide, 
     assert bilan["valide"] is valide
     sortie = capsys.readouterr().out
     assert f"ft:{dossier.name} f16" in sortie and f"ft:{dossier.name} q4_k_m" in sortie
+    # Sonde non valide : `degrade`, et l'évaluation refuse `ft:` sans choix explicite.
+    statut = ouvrir_run(dossier.name, racine=projet.racine).statut_courant()
+    assert statut == ("complet" if valide else "degrade")
+    if not valide:
+        with pytest.raises(ConfigurationInvalide, match="degrade"):
+            modele_ref.resoudre(f"ft:{dossier.name}", "q4_k_m", racine=projet.racine)
+        resolu = modele_ref.resoudre(
+            f"ft:{dossier.name}", "q4_k_m", racine=projet.racine, accepter_degrade=True
+        )
+        assert resolu.gguf == dossier / "modele-q4_k_m.gguf"
+
+
+def test_cli_transmet_le_delai(projet, cli, monkeypatch) -> None:
+    commande = ["export", "--base", SLUG, "--sans-sonde", "--delai", "42", "--racine"]
+    assert main([*commande, str(projet.racine)]) == CodeSortie.SUCCES
+    assert [options["delai"] for _, options in cli.outils.appels] == [42.0, 42.0]
 
 
 def test_cli_temoin_sans_sonde(projet, cli, monkeypatch) -> None:

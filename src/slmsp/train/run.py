@@ -120,6 +120,19 @@ def _complet(dossier: Path, fichiers: tuple[str, ...]) -> bool:
     return all((dossier / nom).is_file() for nom in fichiers)
 
 
+def _exiger_sft_complet(run_id: str, racine: Path) -> None:
+    """Le run `sft_run_id` d'ORPO est un run `train` au statut `complet`."""
+    try:
+        run = ouvrir_run(run_id, racine=racine)
+    except ManifesteInvalide as exc:
+        raise ConfigurationInvalide(f"sft_run_id {run_id} : run illisible ({exc})") from None
+    if run.type != TYPE_RUN:
+        raise ConfigurationInvalide(f"sft_run_id {run_id} : run de type {run.type}, pas train")
+    statut = run.statut_courant()
+    if statut != "complet":
+        raise ConfigurationInvalide(f"sft_run_id {run_id} : run SFT {statut}, pas complet")
+
+
 def dernier_checkpoint(dossier: Path) -> Path | None:
     """Sous-dossier `checkpoint-<N>` complet de plus grand N, ou `None`.
 
@@ -224,7 +237,9 @@ def executer(
         chargement.recontroler_rejected(jeu.lignes, racine=racine)
     adaptateur_sft = None
     if config.sft_run_id is not None:
-        # AD-24 étendu (A1, 2026-10-16) : seul `runs/train/<id>/adaptateur/` est lisible.
+        # AD-24 étendu (A1, 2026-10-16) : seul `runs/train/<id>/adaptateur/` est lisible ;
+        # le run SFT doit être `complet` (comme pour l'export, `source_depuis_run`).
+        _exiger_sft_complet(config.sft_run_id, racine)
         adaptateur_sft = chemin_autorise(
             racine / "runs" / TYPE_RUN / config.sft_run_id / DOSSIER_ADAPTATEUR,
             "train",

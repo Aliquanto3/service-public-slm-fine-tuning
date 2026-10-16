@@ -22,7 +22,8 @@ from evaluation_factices import SLUG, FakeLlmDeterministe, harnais_factice
 from harness_factices import mots
 
 from slmsp.cli import main
-from slmsp.core.erreurs import CodeSortie
+from slmsp.core.artefacts import nouveau_run
+from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.core.items import lire_jeu
 from slmsp.core.schemas.generation import Generation
@@ -161,6 +162,30 @@ def test_natif_valide_une_seule_passe(depot_eval: Path, modeles: Path) -> None:
     assert natif["verdict"] == "valide" and natif["items_valides"] == 2
     assert (natif["appels_valides"], natif["appels_attendus"]) == (2, 5)
     assert natif["taux_appels_valides"] == pytest.approx(0.4)
+
+
+@pytest.mark.parametrize("statut", ["complet", "degrade"])
+def test_sonde_sur_un_export_ft(depot_eval: Path, modeles: Path, statut: str) -> None:
+    """Story 10.6, CA3 : la sonde passe sur le Q4_K_M de `ft:<export_run_id>` ; un export
+    `degrade` (sonde déjà non valide) est refusé avant tout run."""
+    export = nouveau_run("export", f"ft-{SLUG}", {}, racine=depot_eval, modele_ref=f"base:{SLUG}")
+    (export.dossier / "modele-q4_k_m.gguf").write_bytes(b"GGUF-factice")
+    export.terminer(statut)
+    fabrique = FabriqueProtocoles({NATIF: FakeLlmSonde(), JSON: FakeLlmSonde()})
+    ref = f"ft:{export.run_id}"
+    if statut == "degrade":
+        with pytest.raises(ConfigurationInvalide, match="degrade"):
+            sonder(ref, racine=depot_eval, fabrique=fabrique)
+        assert fabrique.appels == []
+        return
+    rapport = sonder(ref, racine=depot_eval, fabrique=fabrique)
+    assert rapport.valide is True and rapport.run.statut_courant() == "complet"
+    ((modele, variante, _),) = fabrique.appels
+    assert (modele.ref, modele.genre, modele.quantification) == (ref, "ft", "q4_k_m")
+    assert modele.gguf == export.dossier / "modele-q4_k_m.gguf" and variante == "cpu"
+    assert modele.config.chat_template_force is False
+    assert rapport.run.manifeste.modele_ref == ref
+    assert [ligne["item_id"] for ligne in lignes(rapport.run)] == list(ITEMS_SONDE)
 
 
 def test_natif_invalide_puis_json_valide(depot_eval: Path, modeles: Path) -> None:

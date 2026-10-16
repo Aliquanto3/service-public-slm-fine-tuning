@@ -68,6 +68,10 @@ MAX_F16: Final = 65504.0
 SEUIL_VERIFICATION_ESPACE: Final = 1024**3
 FACTEUR_ESPACE: Final = 2.4
 """Écriture prévue ≈ 2,4 × les poids bf16 : HF F16 (1), GGUF F16 (1), Q4_K_M (~0,3)."""
+DELAI_MIN_OUTIL: Final = 1800.0
+"""Délai minimal (s) de la conversion et de la quantification, chacune (CPU)."""
+DEBIT_MIN_OUTIL: Final = 2 * 1024**2
+"""Débit plancher (octets de poids de la base par seconde) : au-delà, l'outil est jugé bloqué."""
 
 Convertir = Callable[..., Path]
 Quantifier = Callable[..., Path]
@@ -102,7 +106,12 @@ def adaptateur_du_run(run_id: str, *, racine: str | Path | None = None) -> Path:
     dossier = chemin_autorise(
         base / "runs" / TYPE_RUN_TRAIN / run_id / DOSSIER_ADAPTATEUR, "train", racine=base
     )
-    absents = [nom for nom in FICHIERS_ADAPTATEUR if not (dossier / nom).is_file()]
+    # Chaque fichier repasse par le lecteur : un lien qui sort de la liste d'accès est refusé.
+    absents = [
+        nom
+        for nom in FICHIERS_ADAPTATEUR
+        if not chemin_autorise(dossier / nom, "train", racine=base).is_file()
+    ]
     if absents:
         raise ConfigurationInvalide(
             f"run {run_id} : adaptateur incomplet sous {dossier} (absent : {', '.join(absents)})"
@@ -171,10 +180,22 @@ def source_temoin(slug: str) -> Source:
     return Source(slug=slug, nom=f"base-{slug}")
 
 
+def octets_poids(dossier_base: Path) -> int:
+    """Taille des poids safetensors de la base."""
+    return sum(f.stat().st_size for f in dossier_base.glob("*.safetensors") if f.is_file())
+
+
 def octets_prevus(dossier_base: Path) -> int:
     """Écriture prévue de l'export, d'après la taille des poids de la base."""
-    poids = sum(f.stat().st_size for f in dossier_base.glob("*.safetensors") if f.is_file())
-    return int(poids * FACTEUR_ESPACE)
+    return int(octets_poids(dossier_base) * FACTEUR_ESPACE)
+
+
+def delai_outils(octets: int) -> float:
+    """Délai de la conversion et de la quantification, proportionné aux poids de la base.
+
+    Un processus bloqué est tué à l'échéance (`ErreurInference`), ce qui libère `gpu.lock`.
+    """
+    return max(DELAI_MIN_OUTIL, octets / DEBIT_MIN_OUTIL)
 
 
 def controler_plage(torch: Any, modele: Any) -> dict[str, Any]:
@@ -227,7 +248,8 @@ def exporter(
     convertir: Convertir | None = None,
     quantifier: Quantifier | None = None,
     python: str | os.PathLike[str] | None = None,
-    controles: Controles | None = None,
+    controles: Controles,
+    delai: float | None = None,
     sortie: Callable[[str], None] = print,
 ) -> Run:
     """Exporte `source` sous `runs/export/<run_id>/` ; renvoie le run terminé.
@@ -235,6 +257,8 @@ def exporter(
     Statut : `complet`, ou `partiel-erreur` si un contrôle bloquant échoue (template) ou
     sur exception (relancée). `pile`, `convertir`, `quantifier` : injectés par les tests
     (défaut : pile importée, `serveur.convertir_hf_vers_gguf` et `serveur.quantifier`).
+    `controles` est obligatoire : sans lui, le SHA du template embarqué (CA2) ne serait pas
+    contrôlé. `delai` : délai (s) de chaque outil llama.cpp (défaut : `delai_outils`).
     """
     convertir = convertir if convertir is not None else serveur.convertir_hf_vers_gguf
     quantifier = quantifier if quantifier is not None else serveur.quantifier
@@ -247,6 +271,10 @@ def exporter(
     details_adaptateurs = [controler_adaptateur(a, racine=base) for a in source.adaptateurs]
     config_llamacpp = serveur.charger_config_llamacpp()
     prevus = octets_prevus(dossier_base)
+    if delai is None:
+        delai = delai_outils(octets_poids(dossier_base))
+    if delai <= 0:
+        raise ConfigurationInvalide(f"export : délai des outils invalide ({delai} s)")
     dossier_export = base / "runs" / TYPE_RUN
     if prevus > SEUIL_VERIFICATION_ESPACE:
         verifier_espace(dossier_export, prevus)
@@ -272,6 +300,7 @@ def exporter(
         "conversion": {"outtype": TYPE_SORTIE_CONVERSION},
         "quantification": {"type": TYPE_QUANTIFICATION, "imatrix": False, "variante": "cpu"},
         "octets_prevus": prevus,
+        "delai_outils_s": delai,
     }
     commande = f"slmsp export {source.nom or source.slug}"
     with verrou_gpu(commande=commande):
@@ -288,7 +317,16 @@ def exporter(
         sortie(f"run {run.run_id} : {run.dossier}")
         try:
             statut, motif = _executer(
-                run, source, pile, dossier_base, convertir, quantifier, python, controles, sortie
+                run,
+                source,
+                pile,
+                dossier_base,
+                convertir,
+                quantifier,
+                python,
+                controles,
+                delai,
+                sortie,
             )
         except KeyboardInterrupt:
             run.terminer("interrompu", "arrêt demandé")
@@ -308,7 +346,8 @@ def _executer(
     convertir: Convertir,
     quantifier: Quantifier,
     python: str | os.PathLike[str] | None,
-    controles: Controles | None,
+    controles: Controles,
+    delai: float,
     sortie: Callable[[str], None],
 ) -> tuple[str, str | None]:
     def journal(evenement: str, **details: Any) -> None:
@@ -322,6 +361,7 @@ def _executer(
         run.dossier / NOM_F16,
         type_sortie=TYPE_SORTIE_CONVERSION,
         python=python,
+        delai=delai,
         journal=run.dossier / NOM_LOG_CONVERSION,
     )
     journal("conversion", fichier=NOM_F16)
@@ -330,6 +370,7 @@ def _executer(
         run.dossier / NOM_Q4,
         TYPE_QUANTIFICATION,
         variante="cpu",
+        delai=delai,
         journal=run.dossier / NOM_LOG_QUANTIFICATION,
     )
     journal("quantification", fichier=NOM_Q4)
@@ -348,7 +389,7 @@ def _executer(
         "fusion": fusion,
     }
     resultat: dict[str, Any] = {"bloquants": [], "alertes": []}
-    if controles is not None and not bloquants:
+    if not bloquants:
         resultat = dict(controles(run, export))
     bloquants += list(resultat.get("bloquants", []))
     export["controles"] = {**resultat, "bloquants": bloquants}
@@ -367,6 +408,7 @@ __all__ = [
     "adaptateur_du_run",
     "controler_adaptateur",
     "controler_plage",
+    "delai_outils",
     "exporter",
     "fusionner",
     "octets_prevus",

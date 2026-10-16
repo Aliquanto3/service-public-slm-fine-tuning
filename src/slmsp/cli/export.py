@@ -16,6 +16,9 @@ Une fois le run `complet` (CA3) : `ft:<run_id>` est résolu par `evaluation.mode
 d'H-TOOLS) passe sur le Q4_K_M ; son bilan va dans `sonde-outils.json` du run d'export.
 La sonde reprend `gpu.lock` elle-même en variante `cuda`, après la libération par l'export.
 
+Une sonde non valide fait passer le run d'export en `degrade` (motif consigné) :
+`evaluation.modele_ref` refuse alors `ft:<run_id>`, sauf `accepter_degrade=True` explicite.
+
 Codes : 0 export complet et sonde valide (ou `--sans-sonde`), 1 contrôle bloquant ou sonde
 non valide, 5 GPU occupé.
 """
@@ -71,6 +74,14 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         type=Path,
         default=None,
         help="interpréteur du convertisseur (défaut : le courant, environnement train)",
+    )
+    p.add_argument(
+        "--delai",
+        type=float,
+        default=None,
+        metavar="SECONDES",
+        help="délai de la conversion et de la quantification, chacune (défaut : "
+        "proportionné aux poids de la base, 30 min au moins)",
     )
     p.add_argument(
         "--racine",
@@ -133,8 +144,17 @@ def controler_format(slug: str) -> Any:
         if officiel is None:
             alertes.append(f"GGUF officiel de {slug} absent : métadonnées non comparées")
         elif not bloquants:
-            exporte = metadonnees(run.dossier / export["fichiers"]["q4_k_m"])
-            reference = metadonnees(officiel)
+            try:
+                exporte = metadonnees(run.dossier / export["fichiers"]["q4_k_m"])
+                reference = metadonnees(officiel)
+            except (GgufInvalide, OSError) as exc:
+                alertes.append(f"métadonnées non comparées au GGUF officiel ({exc})")
+                return {
+                    "bloquants": bloquants,
+                    "alertes": alertes,
+                    "templates": templates,
+                    "metadonnees": comparaison,
+                }
             ecarts = {
                 cle: {"export": exporte.get(cle), "officiel": reference.get(cle)}
                 for cle in sorted(exporte.keys() | reference.keys())
@@ -172,6 +192,7 @@ def _exporter(args: argparse.Namespace) -> int:
         racine=racine,
         python=args.python,
         controles=controler_format(source.slug),
+        delai=args.delai,
     )
     statut = run.statut_courant()
     print(f"export : run {run.run_id} {statut}")
@@ -205,6 +226,9 @@ def _sonder(run: Run, ref: str, variante: str, racine: Path) -> int:
     etat = "valide" if rapport.valide else f"non valide ({rapport.motif})"
     print(f"sonde d'outils sur {ref} q4_k_m : {etat} ; run {rapport.run.run_id}")
     if not rapport.valide:
+        # Un Q4 dont le tool calling échoue ne doit pas être évalué par mégarde.
+        run.terminer("degrade", f"sonde d'outils non valide sur q4_k_m ({rapport.motif})"[:500])
+        print(f"slmsp : export {run.run_id} degrade : ft:{run.run_id} refusé par l'évaluation")
         return int(CodeSortie.ERREUR)
     return int(CodeSortie.SUCCES)
 
