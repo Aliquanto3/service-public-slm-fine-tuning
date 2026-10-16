@@ -668,6 +668,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7d/e8/e90272ef920d5a77c91bf0473e325113950f37bfeaca2fa3b98e16142961/lm_eval-0.4.13-py3-none-any.whl", hash = "sha256:5daaa1973bf874005f64f28d3834b875f6886f0d6475878e6a6c821994a5286a", size = 9149387, upload-time = "2026-08-31T20:42:37.071Z" },
 ]
 
+[package.optional-dependencies]
+api = [
+    { name = "aiohttp" },
+    { name = "requests" },
+    { name = "tenacity" },
+    { name = "tiktoken" },
+    { name = "tqdm" },
+]
+
 [[package]]
 name = "lxml"
 version = "6.1.3"
@@ -1439,7 +1448,7 @@ app = [
 bench = [
     { name = "immutabledict" },
     { name = "langdetect" },
-    { name = "lm-eval" },
+    { name = "lm-eval", extra = ["api"] },
     { name = "nltk" },
     { name = "sacrebleu" },
 ]
@@ -1479,7 +1488,7 @@ requires-dist = [
     { name = "immutabledict", marker = "extra == 'bench'", specifier = "==4.2.1" },
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "langdetect", marker = "extra == 'bench'", specifier = "==1.0.9" },
-    { name = "lm-eval", marker = "extra == 'bench'", specifier = "==0.4.13" },
+    { name = "lm-eval", extras = ["api"], marker = "extra == 'bench'", specifier = "==0.4.13" },
     { name = "mcp", specifier = "==2.3.0" },
     { name = "mistralai", marker = "extra == 'data'", specifier = "==3.2.0" },
     { name = "nltk", marker = "extra == 'bench'", specifier = "==3.10.3" },
@@ -1590,12 +1599,34 @@ wheels = [
 ]
 
 [[package]]
+name = "tenacity"
+version = "9.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/9e/497c1c8ebe5a5b5d1d4a7511aea22c0bb1a97e3170d98abdef0e1b34265a/tenacity-9.2.1.tar.gz", hash = "sha256:a606b5c808d0cded4a359d5b9932d867ff2a6a6b64d37350260fd01bbdf83839", size = 58261, upload-time = "2026-10-07T12:13:01.633Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/26/1ff2b0721ac66a3ec5b1402b333110b352ab0a8724052ac279a7b82d40c4/tenacity-9.2.1-py3-none-any.whl", hash = "sha256:9e56f17539296baab7beabb08b92f6ee3d7be92d8be72d763360677c2ad6580e", size = 32310, upload-time = "2026-10-07T12:13:00.102Z" },
+]
+
+[[package]]
 name = "threadpoolctl"
 version = "3.7.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/00/dc/6c58154c1c65f758ea979e7139cb76993a9cfc662d14e9be3c4a667cfb77/threadpoolctl-3.7.0.tar.gz", hash = "sha256:61348cfb77d53b9242e0017029244b559b810c142ced65b4e21eeca1843959a7", size = 31961, upload-time = "2026-09-15T15:46:20.263Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/43/3f/f88a53f60a472b46f4023f56d204dd7de33d34c5d2acbfa0d70a674e639e/threadpoolctl-3.7.0-py3-none-any.whl", hash = "sha256:cd8b60b5641b45c67bbf73c64c843235fc2d8a480c87389f52f5dbee893b86be", size = 26362, upload-time = "2026-09-15T15:46:19.168Z" },
+]
+
+[[package]]
+name = "tiktoken"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "regex" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/66/62/167a842aa0429d45f5e797354fd4343a96f6043d67d0513c675c7b8d36e6/tiktoken-0.14.0.tar.gz", hash = "sha256:231dec90efcdccf1b565a1416107736f1e09b1a08fe736ef9d6363e626d03874", size = 38898, upload-time = "2026-08-17T19:49:49.514Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/bd/a2e884fb1402cba5be08836590320012b2d8ada0e2eef9911a64df4bcd2d/tiktoken-0.14.0-cp312-cp312-win_amd64.whl", hash = "sha256:087538c080e5ff421abd3a0785ed63c5111d06af98e6cd0d374dbe5969147ca3", size = 941208, upload-time = "2026-08-17T19:48:56.938Z" },
 ]
 
 [[package]]
