@@ -59,6 +59,9 @@ ARGUMENTS_WEBVIEW2: Final = (
 VARIABLE_ARGUMENTS: Final = "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"
 ERREUR_DEMARRAGE: Final = "demarrage"
 MESSAGE_DEMARRAGE: Final = "L'assistant n'a pas pu démarrer. Fermez-le puis relancez-le."
+MESSAGE_SANS_GARDE: Final = (
+    "L'assistant s'est arrêté : le contrôle de navigation n'a pas pu être activé."
+)
 SW_RESTORE: Final = 9
 ERROR_ALREADY_EXISTS: Final = 183
 
@@ -169,8 +172,8 @@ def geometrie_initiale(memorisee: Any, ecrans: Sequence[Ecran]) -> dict[str, int
         ref = ecrans[0]
         largeur = max(min(largeur, ref[2]), min(MIN_LARGEUR, ref[2]))
         hauteur = max(min(hauteur, ref[3]), min(MIN_HAUTEUR, ref[3]))
-    elif x is None or y is None:
-        x = y = None
+    else:
+        x = y = None  # écrans illisibles : position non vérifiable, le système centre
     return {"largeur": largeur, "hauteur": hauteur, "x": x, "y": y}
 
 
@@ -202,7 +205,9 @@ def decider_navigation(url: str, origine: str | None, hotes: frozenset[str]) -> 
     if parties.scheme == "about" and url == "about:blank":
         return "autoriser"
     if parties.scheme == "http" and hote in HOTES_LOCAUX:
-        return "autoriser" if origine is None or parties.netloc.lower() == origine else "refuser"
+        # Origine inconnue (ne devrait pas arriver : pywebview fixe `real_url` avant la
+        # WebView) : tout refuser plutôt qu'autoriser n'importe quel port local.
+        return "autoriser" if origine and parties.netloc.lower() == origine else "refuser"
     if (
         parties.scheme == "https"
         and port in (None, 443)
@@ -220,11 +225,11 @@ class GardeNavigation:
         self,
         origine: Callable[[], str | None],
         hotes: frozenset[str],
-        ouvrir: Callable[[str], Any] = webbrowser.open,
+        ouvrir: Callable[[str], Any] | None = None,
     ) -> None:
         self._origine = origine
         self._hotes = hotes
-        self._ouvrir = ouvrir
+        self._ouvrir = ouvrir if ouvrir is not None else (lambda url: webbrowser.open(url))
 
     def __call__(self, _expediteur: Any, args: Any) -> None:
         try:
@@ -329,11 +334,14 @@ class Demarrage:
         self._fil = threading.Thread(target=self._travail, name="assemblage", daemon=True)
         self._fil.start()
 
-    def arreter(self, delai_s: float = 20.0) -> None:
-        """Quitte l'assemblage (arrêt des serveurs) et attend le fil."""
+    def arreter(self, delai_s: float = 20.0) -> bool:
+        """Quitte l'assemblage (arrêt des serveurs) et attend le fil. Rend False si le fil
+        tourne encore après `delai_s` (serveurs peut-être encore actifs)."""
         self._arret.set()
         if self._fil is not None:
             self._fil.join(delai_s)
+            return not self._fil.is_alive()
+        return True
 
     def _travail(self) -> None:
         try:
@@ -346,7 +354,7 @@ class Demarrage:
                 journal=JournalApplication(self._stockage),
                 threads=config.threads,
             ) as assemblage:
-                pont = Pont(assemblage.service, self._fenetre)
+                pont = Pont(assemblage.service, self._fenetre, stockage=self._stockage)
                 self._differe.brancher(pont)
                 if self._page_prete():
                     pont.signaler_pret()
@@ -413,6 +421,15 @@ def ecrans_webview(webview: Any) -> list[Ecran]:
         return []
 
 
+def durcir_webview(webview: Any) -> None:
+    """Réglages pywebview (Q1). `NewWindowRequested` (`target=_blank`, `window.open`) : pywebview
+    ferait `webbrowser.open` sans filtre ; avec `OPEN_EXTERNAL_LINKS_IN_BROWSER` à False, il
+    charge l'URI dans la fenêtre, ce qui passe par `NavigationStarting`, donc par la garde.
+    `ALLOW_FILE_URLS` à False : l'interface est servie en HTTP, `file://` n'a pas lieu d'être."""
+    webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = False
+    webview.settings["ALLOW_FILE_URLS"] = False
+
+
 def memoriser_fenetre(stockage: Stockage, fenetre: Any) -> None:
     """Enregistre taille et position (réglage `fenetre`) ; sans effet si illisibles."""
     try:
@@ -440,11 +457,13 @@ def lancer(
     instance = instance if instance is not None else InstanceUnique()
     if not instance.acquerir():
         return 0
+    liberer = True
     try:
         if webview is None:
             import webview as webview_reel
 
             webview = webview_reel
+        durcir_webview(webview)
         dossier = dossier_donnees()
         dossier.mkdir(parents=True, exist_ok=True)
         stockage = stockage if stockage is not None else Stockage()
@@ -476,7 +495,16 @@ def lancer(
                 return urlsplit(url).netloc.lower() if url else None
 
             garde = GardeNavigation(origine, hotes)
-            fenetre.events.shown += lambda: brancher_garde(fenetre, garde)
+            sans_garde = threading.Event()
+
+            def brancher() -> None:
+                # Q1 : sans garde de navigation, l'application ne tourne pas.
+                if not brancher_garde(fenetre, garde):
+                    sans_garde.set()
+                    LOGGER.critical(MESSAGE_SANS_GARDE)
+                    fenetre.destroy()
+
+            fenetre.events.shown += brancher
             fenetre.events.shown += lambda: chrono.fenetre()
             fenetre.events.loaded += demarrage.page_chargee
             fenetre.events.closing += lambda: memoriser_fenetre(stockage, fenetre)
@@ -488,10 +516,18 @@ def lancer(
                     storage_path=str(dossier / "webview"),
                 )
             finally:
-                demarrage.arreter()
+                if not demarrage.arreter():
+                    # Mutex gardé : relâché à la fin du processus, qui emporte les serveurs
+                    # (JobObject). Une nouvelle instance ne démarre pas de serveur en double.
+                    liberer = False
+                    LOGGER.error("arrêt : l'assemblage ne s'est pas terminé à temps")
+        if sans_garde.is_set():
+            print(MESSAGE_SANS_GARDE, file=sys.stderr)  # noqa: T201
+            return 1
         return 0
     finally:
-        instance.liberer()
+        if liberer:
+            instance.liberer()
 
 
 def main(argv: Sequence[str] | None = None) -> int:

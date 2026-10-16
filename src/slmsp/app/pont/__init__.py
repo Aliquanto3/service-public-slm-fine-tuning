@@ -21,7 +21,7 @@ import json
 import logging
 import webbrowser
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Final, Protocol
+from typing import TYPE_CHECKING, Any, Final, Protocol
 
 from slmsp.app.pont.conversation import Conversation, reponse_erreur
 from slmsp.app.pont.erreurs import NonImplementee
@@ -34,6 +34,9 @@ from slmsp.core.erreurs import SlmspError
 from slmsp.harness.service import AssistantService
 from slmsp.net.config import ConfigListeBlanche, charger_liste_blanche
 from slmsp.net.profils import analyser_url
+
+if TYPE_CHECKING:
+    from slmsp.app.stockage import Stockage
 
 LOGGER: Final = logging.getLogger("slmsp.app.pont")
 CODE_NON_IMPLEMENTEE: Final = "non-implementee"
@@ -59,10 +62,14 @@ class Pont:
         fenetre: Fenetre,
         liste_blanche: ConfigListeBlanche | None = None,
         ouvreur: Callable[[str], Any] = webbrowser.open,
+        stockage: Stockage | None = None,
     ) -> None:
         # Attributs privés : pywebview n'expose pas les noms en `_`.
         self._fenetre = fenetre
         self._ouvreur = ouvreur  # navigateur du système (injecté dans les tests)
+        # Stockage de l'application, le même que le `JournalApplication` de l'assemblage
+        # (story 12.6) : la vue Mode (12.9) y lira le journal des Requêtes sortantes.
+        self._stockage = stockage
         self._liste_blanche = liste_blanche  # lue dans `config/` au premier `ouvrir_lien`
         self._conversation = Conversation(service, self._pousser)
         self._domaines: dict[str, Any] = {

@@ -3,7 +3,7 @@ title: 'Story 12.6 — Lancement de l''application'
 type: 'feature'
 created: '2026-10-16'
 status: 'review'
-review_loop_iteration: 0
+review_loop_iteration: 1
 followup_review_recommended: false
 context:
   - '{project-root}/_bmad-output/implementation-artifacts/consignes-sous-agents-nuit.md'
@@ -44,7 +44,23 @@ deferred: []
 ## À confirmer par Anaël / reports
 
 - Les noms de commutateurs WebView2 (`msSmartScreenProtection`, `--no-pings`…) sont à valider par la capture réseau de 12.14 ; ils ne sont pas vérifiables sans trace.
-- Le chemin `NewWindowRequested` (pywebview ouvre l'URI avec `webbrowser.open` sans filtre, `OPEN_EXTERNAL_LINKS_IN_BROWSER`) n'est pas filtré par `GardeNavigation` ; l'interface n'ouvre aucune fenêtre (pas de `target=_blank`, liens via `ouvrir_lien`). À durcir si une vue en ajoute.
+- ~~`NewWindowRequested` non filtré~~ : corrigé en revue (voir ci-dessous).
 - 12.12 : exclure aussi `pont-factice.js` du paquet et inclure `app/ui/` en données PyInstaller.
 - Durée de démarrage réelle (< 10 s) et absence de `llama-server` après fermeture/kill : non mesurées ici (GPU occupé, pas de Modèle lancé) ; à mesurer au premier lancement réel.
 - Pas de mémorisation de l'état maximisé.
+
+## Revue
+
+Revue Opus (2026-10-16), avec la liste du second avis (Haiku). Contournement de la Liste blanche prouvé sur une vraie WebView2 : sans correctif, `window.open('https://exemple.invalid/…')` partait dans `webbrowser.open`.
+
+- **high** (second avis n° 2, confirmé) — `NewWindowRequested` contournait la garde (`webbrowser.open` sans filtre). **Corrigé** : `durcir_webview` pose `OPEN_EXTERNAL_LINKS_IN_BROWSER = False` (pywebview fait alors `load_url`, donc `NavigationStarting`, donc la garde) et `ALLOW_FILE_URLS = False`. Tests factice et réel (`window.open`).
+- **medium** (n° 1, confirmé) — garde non branchée : l'application continuait. **Corrigé** : fenêtre détruite, message sur stderr et au logger, code 1. Test.
+- **medium** (n° 3, confirmé) — tests sans le câblage de `lancer()`. **Corrigé** : test non `lent` du câblage (garde abonnée, nouvelles fenêtres, `private_mode=False`, `storage_path`) ; le test `lent` passe désormais par `lancer()` avec le vrai pywebview (fenêtre cachée, assemblage factice).
+- **low** (n° 4) — `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` transmise à `llama-server`. **Corrigé** : `env_sous_processus` retire les `WEBVIEW2_*`. Test.
+- **low** (n° 5) — écrans illisibles : position mémorisée gardée telle quelle. **Corrigé** : position abandonnée (fenêtre centrée). Test.
+- **low** (n° 6) — mutex relâché alors que l'assemblage tourne encore. **Corrigé** : `arreter()` rend False si le fil vit encore ; le mutex est alors gardé jusqu'à la fin du processus, qui emporte les serveurs (JobObject). Test.
+- **low** (n° 7) — `FindWindowW("Assistant")` et course au démarrage. **Rejeté** : `CreateMutexW` est atomique (jamais deux instances) ; au pire la seconde instance sort sans restaurer une première pas encore affichée, ou passe au premier plan une autre fenêtre intitulée « Assistant ». Sans conséquence de sécurité ; un titre propre changerait le libellé UX.
+- **low** (n° 8) — `Stockage` sans fermeture. **Rejeté** : chaque opération ouvre et ferme sa connexion (`_connexion`, `closing`) ; rien ne reste ouvert.
+- **low** (n° 9) — origine inconnue autorisait tout `http://127.0.0.1`. **Corrigé** : refus (pywebview fixe `real_url` dans `_initialize`, avant la WebView). Test.
+- **anticipation 12.9** — l'assemblage recevait déjà `journal=JournalApplication(stockage)` ; le `Pont` reçoit désormais le même `stockage` (paramètre `stockage`, attribut `_stockage`). Test.
+- **report** — durée de démarrage réelle et absence de `llama-server` après fermeture : toujours à mesurer au premier lancement avec un Modèle (GPU occupé).
