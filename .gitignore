@@ -38,3 +38,4 @@ var/
 
 # Réglages Claude Code personnels
 .claude/settings.local.json
+.claude/cost-kit/.blocages

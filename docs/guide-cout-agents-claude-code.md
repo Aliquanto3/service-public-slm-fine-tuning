@@ -87,7 +87,7 @@ Une écriture dans le cache coûte 1,25 fois le prix d'entrée avec un TTL de 5 
 4. **La revue de code multi-agents est le poste le plus cher** (convergent).
    - Dans slm, une revue de lot à 4 relecteurs sur Opus coûte environ 4,20 $ pour l'orchestrateur seul, à cause de 10 M de tokens relus.
    - Dans jira, passer à une seule passe de revue a fait baisser le coût par story d'environ 40 %, sans perte de qualité visible.
-5. **Le cache expire pendant les tests** (convergent). Une suite pytest de 4 à 5 minutes dépasse le TTL par défaut des sous-agents (5 minutes). Le contexte est alors relu au prix fort. Le remède est de lancer la suite complète une seule fois et de régler le TTL du cache des sous-agents à 1 h.
+5. **Le cache expire pendant les tests** (convergent). Une suite pytest de 4 à 5 minutes dépasse le TTL par défaut des sous-agents (5 minutes). Le contexte est alors relu au prix fort. Le remède est de lancer la suite complète une seule fois. Le TTL d'une heure ne paie qu'à partir d'environ une expiration par agent : mesure du 2026-10-16, médiane de 0 expiration sur 322 agents (+31 % de coût pour un agent sans expiration). Il n'est donc pas retenu.
 6. **Les sous-agents partis en arrière-plan coûtent des reprises** (convergent). Un agent de story qui lance ses propres sous-agents s'arrête parfois avant leur résultat. Dans jira, environ 300 k tokens ont été perdus sur 3 stories. Dans slm, des rapports « intermédiaires » ont imposé des relances.
 7. **Le parallélisme accélère la dépense sans la grossir** (observé dans slm). Jusqu'à 11 agents simultanés n'ont pas augmenté le coût par tâche. Limiter le parallélisme protège un plafond de dépense par période, pas le coût total.
 8. **Le contexte fixe se paie à chaque tour, dans chaque sous-agent** (documenté et observé) : liste des skills, serveurs MCP, CLAUDE.md, snapshot git. Les skills synchronisés depuis claude.ai et les MCP sans rapport avec le projet sont du poids mort.
@@ -129,7 +129,7 @@ Une écriture dans le cache coûte 1,25 fois le prix d'entrée avec un TTL de 5 
 2. **Router les modèles par rôle** (tableau du § 4.2) : Sonnet pour coder et relire, Opus pour décider, Haiku pour chercher dans le dépôt.
 3. **Des agents de story qui ne peuvent pas lancer de sous-agents** (`disallowedTools: Agent, Workflow`). L'orchestrateur enchaîne `dev-story` puis `reviewer`, chacun par un appel qui attend le résultat.
 4. **La suite de tests complète une seule fois**, juste avant l'intégration. Pendant le développement, seulement les tests ciblés, en `-q --tb=short`, et un contrôle rapide (lint, format, architecture, environ 10 s) dans un hook `Stop`.
-5. **Cache des sous-agents à 1 h** (`subagentPromptCacheTtl`).
+5. **Pas de cache des sous-agents à 1 h** (`subagentPromptCacheTtl`), sauf si `mesurer_couts.py` montre une médiane d'au moins 1 expiration par agent.
 6. **Contexte fixe minimal pour chaque projet** : désactiver les MCP sans rapport (`/mcp`), masquer les skills claude.ai (`syncClaudeAiSkills: false`), garder un CLAUDE.md court.
 7. **Rapports de sous-agent courts**, de 5 à 8 lignes. Seul le rapport final revient à l'orchestrateur, mais il y revient en entier.
 8. **Un plafond de tokens par run, et un fichier d'état** : l'orchestrateur tient le décompte et s'arrête proprement après la story en cours. On reprend dans une session neuve à partir du fichier d'état, plutôt que de recharger la conversation.
@@ -145,7 +145,7 @@ Les fichiers de référence sont dans ce dépôt :
 | `.claude/agents/dev-story.md` | Sonnet, effort medium, sans sous-agents, hook `Stop` de contrôle rapide |
 | `.claude/agents/reviewer.md` | Sonnet, effort medium, sans sous-agents ; corrige les constats medium et high |
 | `.claude/agents/lookup.md` | Haiku, effort low, lecture seule (`tools: Read, Grep, Glob, Bash`) |
-| `.claude/settings.json` | `"subagentPromptCacheTtl": "1h"` et `env.CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "2"` |
+| `~/.claude/settings.json` (global, posé par le cost-kit) | `env.CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH = "1"` ; pas de `subagentPromptCacheTtl` |
 | `.claude/settings.local.json` (non versionné) | `"syncClaudeAiSkills": false` |
 | `outils/controle_rapide.py` | contrôle de quelques secondes, n'affiche que les erreurs, sort en code 2 pour le hook, bloque au plus deux fois par agent |
 | `outils/cout_sous_agents.py` | coût réel par catégorie de tokens |
