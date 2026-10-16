@@ -150,3 +150,51 @@ def test_prenoms_depuis_csv_et_lecture(tmp_path):
 @pytest.mark.parametrize("texte", ["", "Rien à masquer."])
 def test_texte_vide_ou_neutre(texte):
     assert anonymiser(texte)[0] == texte
+
+
+@pytest.mark.parametrize("espace", [" ", " "])
+def test_espaces_insecables(espace):
+    """Espaces insécables et fines : NIR, IBAN, téléphone, adresse, civilité, Prénom Nom."""
+    rng = random.Random(6)
+    nir, iban, tel = _nir(rng), _iban(rng), _tel_fr(rng)
+    texte = " ; ".join(
+        [
+            nir.replace(" ", espace),
+            iban.replace(" ", espace),
+            tel.replace(" ", espace),
+            "12 rue des Tests 75001 Villefictive".replace(" ", espace),
+            f"Mme{espace}Zorglubar",
+            f"Alphaprenom{espace}Zorglub",
+        ]
+    )
+    masque, comptes = anonymiser(texte, prenoms=PRENOMS)
+    assert masque == " ; ".join([MASQUE] * 6)
+    assert sum(comptes.values()) == 6
+
+
+def test_numero_de_dossier_00_n_est_pas_un_telephone():
+    for texte in ("dossier 0012345678", "dossier n° 00123456789", "réf 004521987"):
+        assert anonymiser(texte, prenoms=PRENOMS)[0] == texte
+    # Un 00 avec indicatif pays plausible reste masqué, collé ou séparé.
+    assert anonymiser("0044791112345", prenoms=PRENOMS)[0] == MASQUE
+    assert anonymiser("0017025550123", prenoms=PRENOMS)[0] == MASQUE
+    assert anonymiser("0044 7911 123456", prenoms=PRENOMS)[0] == MASQUE
+
+
+def test_adresse_code_postal_suivi_d_une_unite_monetaire():
+    for texte in ("2 place de la gare 12345 euros", "3 rue Test, 10 000 € ou 4 avenue X 54321 EUR"):
+        assert anonymiser(texte, prenoms=PRENOMS)[0] == texte
+    assert anonymiser("2 place de la gare 12345 Ville", prenoms=PRENOMS)[0] == MASQUE
+
+
+def test_faux_positifs_cas_complementaires():
+    """Critère 2 élargi : insécables dans les montants et dates, dossiers 00…, « n place … »."""
+    rng = random.Random(7)
+    for _ in range(200):
+        texte = (
+            f"Montant de {rng.randint(1, 99)} {_chiffres(rng, 3)},{_chiffres(rng, 2)} € "
+            f"dossier 00{rng.choice('5689')}{_chiffres(rng, rng.randint(4, 8))} ; "
+            f"{rng.randint(1, 9)} place{' '}à réserver pour {_chiffres(rng, 5)} euros"
+        )
+        masque = anonymiser(texte, prenoms=PRENOMS)[0]
+        assert masque == texte.replace(" ", " ").replace(" ", " ")  # seules les espaces

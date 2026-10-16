@@ -13,7 +13,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Protocol
 
-from slmsp.app.anonymisation import anonymiser
+from slmsp.app.anonymisation import anonymiser, prenoms_actifs
 from slmsp.core.erreurs import SlmspError
 
 CHAMPS_TEXTE = ("question", "reponse", "commentaire", "sources")
@@ -28,6 +28,12 @@ class Export:
     contenu: str
     nom_fichier: str
     comptes: dict[str, int] = field(default_factory=dict)
+    avertissements: tuple[str, ...] = ()
+
+
+AVERTISSEMENT_PRENOMS = (
+    "détection des prénoms inactive : fichier INSEE absent (seules les civilités sont masquées)"
+)
 
 
 def nom_fichier(jour: date) -> str:
@@ -60,12 +66,14 @@ def construire_export(
                 sortie[champ] = _masquer(sortie[champ], comptes, prenoms)
         retours.append(sortie)
     contenu = json.dumps({"retours": retours}, ensure_ascii=False, indent=2)
-    return Export(contenu, nom_fichier(jour or date.today()), comptes)
+    avertissements = () if prenoms_actifs(prenoms) else (AVERTISSEMENT_PRENOMS,)
+    return Export(contenu, nom_fichier(jour or date.today()), comptes, avertissements)
 
 
 def apercu(export: Export) -> str:
-    """Texte présenté à l'Agent avant l'enregistrement (identique au fichier écrit)."""
-    return export.contenu
+    """Texte présenté à l'Agent avant l'enregistrement : avertissements, puis le contenu écrit."""
+    entete = "".join(f"AVERTISSEMENT : {a}\n" for a in export.avertissements)
+    return f"{entete}\n{export.contenu}" if entete else export.contenu
 
 
 def ecrire(export: Export, destination: Path, *, confirme: bool) -> Path:

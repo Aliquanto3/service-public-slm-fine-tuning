@@ -20,6 +20,8 @@ MASQUE = "[masqué]"
 FICHIER_PRENOMS = Path(__file__).parent / "ressources" / "prenoms.txt"
 OCCURRENCES_MINIMALES = 20  # prénoms INSEE retenus : au moins autant de naissances cumulées
 
+ESPACES_INSECABLES = re.compile("[\u00a0\u202f]")  # usage courant en français (NIR, IBAN, tél.)
+
 _MAJ = "A-ZÀ-ÖØ-Þ"
 _MIN = "a-zà-öø-ÿ"
 
@@ -78,7 +80,8 @@ _VOIES = (
 )
 _ADRESSE = re.compile(
     rf"(?<!\w)\d{{1,4}}(?: ?(?:bis|ter|quater))?,? +(?:{_VOIES}) +[^\n,;]{{1,60}}?,? *"
-    rf"\b\d{{5}}\b(?: +[{_MAJ}][\w'’-]*(?: +[{_MAJ}][\w'’-]*){{0,3}})?",
+    rf"\b\d{{5}}\b(?!\s*(?:€|\$|%|euros?\b|eur\b|dollars?\b))"
+    rf"(?: +[{_MAJ}][\w'’-]*(?: +[{_MAJ}][\w'’-]*){{0,3}})?",
     re.IGNORECASE,
 )
 _MOT_NOM = rf"[{_MAJ}][{_MIN}{_MAJ}'’-]+"
@@ -102,6 +105,11 @@ def lire_prenoms(chemin: Path | None = None) -> frozenset[str]:
         return frozenset()
     lignes = source.read_text(encoding="utf-8").splitlines()
     return frozenset(_plier(ligne.strip()) for ligne in lignes if ligne.strip() and ligne[0] != "#")
+
+
+def prenoms_actifs(prenoms: frozenset[str] | None = None) -> bool:
+    """Vrai si la détection Prénom Nom dispose d'une liste de prénoms non vide."""
+    return bool(_prenoms_embarques() if prenoms is None else prenoms)
 
 
 @cache
@@ -157,8 +165,22 @@ def _masquer_iban(texte: str) -> tuple[str, int]:
     return _IBAN.sub(_sub, texte), compte
 
 
+# Indicatifs pays admis pour un « 00 » sans séparateur (sinon un numéro de dossier « 00… »
+# serait pris pour un téléphone).
+_INDICATIFS_00 = ("32", "33", "34", "39", "41", "44", "49", "212", "213", "216", "352")
+_INDICATIFS_00_UN_CHIFFRE = ("1", "7")  # ambigus : exigent la longueur exacte (00 + 1 + 10)
+
+
 def _telephone_plausible(candidat: str) -> bool:
-    return 8 <= len(re.sub(r"\D", "", candidat)) <= 15
+    chiffres = re.sub(r"\D", "", candidat)
+    if not 8 <= len(chiffres) <= 15:
+        return False
+    if candidat.startswith("00") and candidat.isdigit():
+        reste = chiffres[2:]
+        if reste.startswith(_INDICATIFS_00_UN_CHIFFRE):
+            return len(chiffres) == 13
+        return reste.startswith(_INDICATIFS_00) and len(chiffres) >= 10
+    return True
 
 
 def _masquer_telephones(texte: str) -> tuple[str, int]:
@@ -194,10 +216,12 @@ def _masquer_noms(texte: str, prenoms: frozenset[str]) -> tuple[str, int]:
 def anonymiser(texte: str, *, prenoms: frozenset[str] | None = None) -> tuple[str, dict[str, int]]:
     """Masque les données personnelles de `texte` ; rend aussi le nombre de masques par motif.
 
+    Les espaces insécables (U+00A0, U+202F) sont ramenées à l'espace ASCII avant détection.
     `prenoms` remplace la liste INSEE embarquée (tests). L'ordre compte : les motifs les plus
     spécifiques (IBAN, NIR) passent avant le téléphone, qui couvre des suites de chiffres.
     """
     liste = _prenoms_embarques() if prenoms is None else prenoms
+    texte = ESPACES_INSECABLES.sub(" ", texte)  # même longueur : seules les espaces changent
     comptes: dict[str, int] = {}
     etapes: list[tuple[str, Callable[[str], tuple[str, int]]]] = [
         ("iban", _masquer_iban),

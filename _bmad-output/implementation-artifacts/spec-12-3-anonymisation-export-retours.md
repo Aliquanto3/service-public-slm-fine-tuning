@@ -60,3 +60,13 @@ deferred: []
 1. **Téléchargement du fichier INSEE** : il faut étendre la passerelle `fetch` (sous-commande `prenoms`, URL data.gouv/INSEE + SHA-256 épinglés dans `config/`), puis générer `prenoms.txt` via `prenoms_depuis_csv_insee` et inscrire le SHA-256 au registre. Aucune commande de fetch n'existe encore pour cela. Accord pour l'ajouter ?
 2. Seuil de 20 naissances et exclusion des prénoms de moins de 3 lettres (compromis rappel / faux positifs).
 3. L'heuristique laisse passer un prénom isolé et un nom sans prénom ni civilité : l'aperçu reste le filet (Q5).
+
+## Revue
+
+- medium, second avis : espaces insécables (U+00A0, U+202F) non reconnues (NIR, IBAN, téléphone, adresse, civilité, Prénom Nom) : corrigé. `anonymiser` ramène ces espaces à l'espace ASCII avant détection (même longueur, positions conservées) ; le texte exporté contient donc des espaces ordinaires. Tests ajoutés pour chaque motif.
+- medium, second avis : `prenoms.txt` sans prénoms, donc détection Prénom Nom inactive en production : corrigé côté visibilité. `Export.avertissements` et l'aperçu portent « détection des prénoms inactive : fichier INSEE absent » ; le fichier écrit n'est pas modifié. Testé (liste vide, liste présente, fichier embarqué du dépôt). Rien n'est téléchargé. Décision à prendre par Anaël : ajouter la sous-commande `fetch prenoms` et inscrire l'hôte data.gouv/INSEE à la liste blanche (voir « À confirmer », point 1).
+- low, second avis : numéro de dossier `00…` pris pour un téléphone : corrigé. Un `00` sans séparateur n'est masqué que si un indicatif pays plausible suit (liste courte, longueur bornée ; `001`/`007` exigent 13 chiffres). Avec séparateurs, le motif international est inchangé.
+- low, second avis : « 2 place … 12345 euros » pris pour une adresse : corrigé. Un code postal suivi d'une unité monétaire (€, $, %, euro, EUR, dollar) n'est plus accepté.
+- low, second avis : IBAN avec insécables : corrigé par la normalisation du premier point (testé).
+- low, second avis : corpus de faux positifs trop étroit : corrigé. Cas insécables dans les montants, dossiers `00…`, « n place … euros » (200 phrases aléatoires, 0 modifiée hors normalisation des espaces).
+- Limite connue, reportée : un `00` collé avec un indicatif rare hors liste n'est pas masqué ; l'aperçu reste le filet.

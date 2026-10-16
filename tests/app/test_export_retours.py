@@ -9,7 +9,13 @@ from datetime import date
 import pytest
 
 from slmsp.app.anonymisation import MASQUE
-from slmsp.app.export_retours import apercu, construire_export, ecrire, nom_fichier
+from slmsp.app.export_retours import (
+    AVERTISSEMENT_PRENOMS,
+    apercu,
+    construire_export,
+    ecrire,
+    nom_fichier,
+)
 from slmsp.app.stockage import Stockage
 from slmsp.core.erreurs import SlmspError
 
@@ -34,6 +40,9 @@ class FauxStockage:
         ]
 
 
+PRENOMS_FACTICES = frozenset({"alphaprenom"})
+
+
 @pytest.fixture(autouse=True)
 def _sans_reseau(monkeypatch):
     def interdit(*_a, **_k):
@@ -43,7 +52,7 @@ def _sans_reseau(monkeypatch):
 
 
 def test_export_anonymise_et_nomme():
-    export = construire_export(FauxStockage(), jour=date(2026, 10, 16), prenoms=frozenset())
+    export = construire_export(FauxStockage(), jour=date(2026, 10, 16), prenoms=PRENOMS_FACTICES)
     assert export.nom_fichier == nom_fichier(date(2026, 10, 16))
     assert export.nom_fichier == "retours-assistant-2026-10-16.json"
     assert EMAIL not in export.contenu and MASQUE in export.contenu
@@ -53,7 +62,7 @@ def test_export_anonymise_et_nomme():
 
 
 def test_aucune_ecriture_sans_confirmation(tmp_path):
-    export = construire_export(FauxStockage(), prenoms=frozenset())
+    export = construire_export(FauxStockage(), prenoms=PRENOMS_FACTICES)
     with pytest.raises(SlmspError):
         ecrire(export, tmp_path / "sortie", confirme=False)
     assert not (tmp_path / "sortie").exists()
@@ -66,5 +75,24 @@ def test_stockage_reel_branche(tmp_path):
     stockage.enregistrer_retour(
         tache="CR", question=f"<q> {EMAIL}", reponse="<r>", sources=[], pouce="haut"
     )
-    export = construire_export(stockage, prenoms=frozenset())
+    export = construire_export(stockage, prenoms=PRENOMS_FACTICES)
     assert EMAIL not in export.contenu
+
+
+def test_avertissement_si_prenoms_absents():
+    """Sans liste de prénoms, l'aperçu le dit explicitement (le fichier n'est pas modifié)."""
+    export = construire_export(FauxStockage(), prenoms=frozenset())
+    assert export.avertissements == (AVERTISSEMENT_PRENOMS,)
+    assert apercu(export).startswith("AVERTISSEMENT : détection des prénoms inactive")
+    assert "AVERTISSEMENT" not in export.contenu
+
+
+def test_pas_d_avertissement_si_prenoms_presents():
+    export = construire_export(FauxStockage(), prenoms=PRENOMS_FACTICES)
+    assert export.avertissements == ()
+    assert "AVERTISSEMENT" not in apercu(export)
+
+
+def test_avertissement_avec_fichier_embarque_vide():
+    """Le dépôt ne contient aujourd'hui que des commentaires : l'avertissement doit apparaître."""
+    assert AVERTISSEMENT_PRENOMS in construire_export(FauxStockage()).avertissements
