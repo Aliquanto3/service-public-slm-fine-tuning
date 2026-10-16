@@ -45,6 +45,16 @@ function attendrePywebview() {
   });
 }
 
+/** Contrat 12.5 : un refus synchrone du pont est `{ok: false, erreur: {code, message}}` ; il devient un rejet. */
+function refuserSiErreur(reponse) {
+  if (reponse && reponse.ok === false) {
+    throw Object.assign(new Error(reponse.erreur?.message ?? "refus du pont"), {
+      erreur: reponse.erreur,
+    });
+  }
+  return reponse;
+}
+
 /**
  * Ouvre le pont : factice si `?pont=factice`, sinon pywebview (attente indéfinie : tant que le pont
  * n'est pas là, l'interface reste dans l'état « Préparation… »).
@@ -61,10 +71,13 @@ export async function ouvrirPont(bus) {
   return {
     factice: Boolean(moteur.factice),
     /** Appel générique d'une méthode du pont (contrat fixé par la story 12.5). */
-    appeler: (nom, ...args) => moteur.appeler?.(nom, ...args) ?? moteur[nom](...args),
+    appeler: (nom, ...args) =>
+      nom === "envoyer"
+        ? Promise.resolve(moteur.appeler?.(nom, ...args) ?? moteur[nom](...args)).then(refuserSiErreur)
+        : moteur.appeler?.(nom, ...args) ?? moteur[nom](...args),
     envoyer(tache, messages, options = {}) {
       bus.emettre("generation:debut", { tache });
-      return moteur.envoyer(tache, messages, options);
+      return Promise.resolve(moteur.envoyer(tache, messages, options)).then(refuserSiErreur);
     },
     arreter: () => moteur.arreter(),
   };
