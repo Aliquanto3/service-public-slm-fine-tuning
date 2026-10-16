@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "statut": "provisoire",
+  "note": "Fichier minimal versionné, à valider. Les licences sourcées renvoient à un fichier du dépôt ; les autres sont marquées « à vérifier » (aucun fichier du dépôt ne les atteste). Il est remplacé au build par la story 12.12.",
+  "composants": [
+    {"nom": "Index : AgentPublic/service-public", "licence": "Licence Ouverte Etalab 2.0 (attribution obligatoire)", "source": "registre:AgentPublic/service-public"},
+    {"nom": "Index : AgentPublic/data-gouv-datasets-catalog", "licence": "Licence Ouverte Etalab 2.0 (attribution obligatoire)", "source": "registre:AgentPublic/data-gouv-datasets-catalog"},
+    {"nom": "llama.cpp", "licence": "à vérifier", "source": null},
+    {"nom": "Granite 4.0 (modèle embarqué)", "licence": "à vérifier", "source": null},
+    {"nom": "BGE-M3 (recherche dans l'Index)", "licence": "à vérifier", "source": null},
+    {"nom": "pywebview", "licence": "à vérifier", "source": null},
+    {"nom": "PyInstaller", "licence": "à vérifier (GPL avec exception, selon la documentation du projet)", "source": null},
+    {"nom": "Microsoft Edge WebView2 (composant du système)", "licence": "à vérifier", "source": null}
+  ]
+}

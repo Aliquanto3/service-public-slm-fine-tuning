@@ -136,6 +136,11 @@ class Conversation:
             self._dernier = None
         return {"ok": True}
 
+    def oublier_dernier(self) -> None:
+        """Oublie le dernier envoi (après l'effacement de l'historique)."""
+        with self._verrou:
+            self._dernier = None
+
     # --- Fil de travail ------------------------------------------------------------------
 
     def _consommer(self, flux: Any, arret: threading.Event, tache: str) -> None:
