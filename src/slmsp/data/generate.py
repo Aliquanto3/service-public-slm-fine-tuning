@@ -140,7 +140,13 @@ class ResultatGeneration:
 # --- Plan ------------------------------------------------------------------------------------
 
 
-def _origine(amorce: Amorce) -> tuple[Any, ...]:
+def _origine(amorce: Amorce, par_id: Mapping[str, Amorce]) -> tuple[Any, ...]:
+    if amorce.auteur_contenu == "config":
+        # Paramètre tiré par graine : même groupe que l'amorce à laquelle il est lié.
+        liee = par_id.get(amorce.lie_a or "")
+        if liee is None or liee.auteur_contenu == "config":
+            return ("config", amorce.lie_a)
+        return _origine(liee, par_id)
     if amorce.auteur_contenu == "public":
         return ("public", amorce.jeu, amorce.revision, amorce.ligne)
     return (amorce.auteur_contenu, amorce.appel_id)
@@ -155,9 +161,10 @@ def _groupes(
     utiles = [amorce for amorce in amorces if amorce.emplacement in attendus]
     if len(attendus) == 1:
         return [[amorce] for amorce in utiles], 0, ignorees
+    par_id = {amorce.amorce_id: amorce for amorce in amorces}
     par_origine: dict[tuple[Any, ...], list[Amorce]] = {}
     for amorce in utiles:
-        par_origine.setdefault(_origine(amorce), []).append(amorce)
+        par_origine.setdefault(_origine(amorce, par_id), []).append(amorce)
     complets: list[list[Amorce]] = []
     incomplets = 0
     for groupe in par_origine.values():

@@ -46,7 +46,7 @@ from slmsp.core.artefacts import Run, lire, nouveau_run, ouvrir_run
 from slmsp.core.canonique import json_canonique, sha256_fichier, sha256_hex
 from slmsp.core.erreurs import ManifesteInvalide, ProvenanceInvalide, SlmspError
 from slmsp.core.messages import ConversationInvalide, valider_conversation
-from slmsp.core.schemas.amorce import Amorce
+from slmsp.core.schemas.amorce import Amorce, texte_mistral_conforme
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.entrainement import (
     TYPE_RUN_BUILD,
@@ -148,11 +148,11 @@ def _amorce(ctx: ContexteBuild, amorce_id: str) -> Amorce:
     if amorce.auteur_contenu == "mistral":
         assert amorce.appel_id is not None  # garanti par le schéma Amorce
         ligne = _appel(ctx, amorce.appel_id)
-        if extraire_contenu(ligne.reponse_brute) != amorce.texte:
+        if not texte_mistral_conforme(extraire_contenu(ligne.reponse_brute), amorce):
             raise ProvenanceInvalide(
                 f"amorce {amorce_id} : texte différent de la réponse journalisée {amorce.appel_id}"
             )
-    elif amorce.auteur_contenu != "public":
+    elif amorce.auteur_contenu not in ("public", "config"):
         raise ProvenanceInvalide(f"amorce {amorce_id} : auteur_contenu {amorce.auteur_contenu!r}")
     return amorce
 
@@ -244,6 +244,8 @@ def sources_de(ctx: ContexteBuild, brut: SessionBrute) -> list[str]:
     ids = {SOURCE_MISTRAL}
     for amorce_id in [*brut.amorce_ids, *brut.amorces_derivees]:
         amorce = _amorce(ctx, amorce_id)
+        if amorce.auteur_contenu == "config":
+            continue  # paramètre tiré par graine : aucune source de contenu
         ids.add(amorce.jeu if amorce.auteur_contenu == "public" and amorce.jeu else SOURCE_MISTRAL)
     if brut.cassettes:
         ids.add(SOURCE_OUTILS)

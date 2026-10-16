@@ -841,6 +841,7 @@ def test_regles_reelles_coherentes_avec_les_sources_et_les_volumes() -> None:
         ("service-public", "text", "CO", "texte"),
         ("service-public", "text", "RE", "texte"),
         ("piaf", "question", "generique", "demande"),
+        ("service-public", "title", "CT", "sujet"),
     }
     assert {(r.jeu, r.colonne, r.tache, r.emplacement) for r in REGLES} == attendu
     for regle in REGLES:
@@ -857,3 +858,284 @@ def test_regles_sans_texte_d_amorce() -> None:
         for valeur in (regle.jeu, regle.colonne, regle.tache, regle.emplacement, regle.sous_cle):
             assert valeur is None or len(valeur) <= 40
             assert valeur is None or " " not in valeur
+
+
+# --- Amorces CT par Mistral (décision A2b) et longueurs RE ---------------------------------
+
+REGLES_CT_RE = (
+    RegleAmorce("service-public", "title", "CT", "sujet", 5, 100),
+    RegleAmorce("service-public", "text", "RE", "texte", 5, 100),
+)
+
+
+def contenu_ct(i: int, **champs: Any) -> str:
+    """Contenu JSON factice d'une réponse Mistral (aucun texte réaliste, D1.1)."""
+    valeurs = {
+        "type_courrier": f"<type-factice-{i}>",
+        "objet": f"<objet-factice-{i}>",
+        "elements_connus": f"<elements-connus-factice-{i}>",
+    } | champs
+    return json.dumps({k: v for k, v in valeurs.items() if v is not None})
+
+
+class FabriqueCT:
+    def __init__(self, contenus: Sequence[str] | None = None, *, budget: int | None = None):
+        self.contenus = list(contenus or [])
+        self.budget = budget
+        self.appels: list[tuple[str, str, str]] = []
+        self.ids: list[str] = []
+
+    def __call__(self, seed_run_id: str, sujet_id: str, session_id: str) -> tuple[str, str]:
+        if self.budget is not None and len(self.appels) >= self.budget:
+            raise BudgetEpuise("plafond factice")
+        self.appels.append((seed_run_id, sujet_id, session_id))
+        self.ids.append(secrets.token_hex(16))
+        rang = len(self.appels)
+        contenu = self.contenus[rang - 1] if rang <= len(self.contenus) else contenu_ct(rang)
+        return self.ids[-1], contenu
+
+
+def executer_ct(monde: Monde, **options: Any):
+    return monde.executer(regles=REGLES_CT_RE, config=config_petite(CT=5, RE=5), **options)
+
+
+def test_courriers_mistral_trois_amorces_par_appel(monde: Monde) -> None:
+    fabrique = FabriqueCT()
+    resultat = executer_ct(monde, nb_courriers=2, fabrique_courriers=fabrique)
+    assert resultat.statut == "complet"
+    amorces = monde.amorces(resultat.run_id)
+    sujets = [Amorce.model_validate(a) for a in amorces if a["emplacement"] == "sujet"]
+    ct = [a for a in amorces if a["auteur_contenu"] == "mistral"]
+    assert len(ct) == 6
+    for rang, (sujet, appel_id) in enumerate(zip(sujets, fabrique.ids, strict=False), start=1):
+        suffixe = sujet.amorce_id.removeprefix("ct.sujet.")
+        groupe = [a for a in ct if a["appel_id"] == appel_id]
+        assert {a["amorce_id"] for a in groupe} == {
+            f"ct.type_courrier.{suffixe}",
+            f"ct.objet.{suffixe}",
+            f"ct.elements_connus.{suffixe}",
+        }
+        assert {a["emplacement"]: a["texte"] for a in groupe} == json.loads(contenu_ct(rang))
+        assert all(a["tache"] == "CT" and a["sha_texte"] == sha256_hex(a["texte"]) for a in groupe)
+    # Session stable d'un run à l'autre : la fabrique peut réutiliser le journal.
+    assert [a[2] for a in fabrique.appels] == [seed_module.session_courrier(s) for s in sujets[:2]]
+    comptes = monde.comptes(resultat.run_id)["courriers"]
+    assert (comptes["appels"], comptes["produits"]) == (2, 2)
+    assert verifier_amorces(
+        monde.racine, resultat.run_id, monde.jeux_standard(), decodeur_json, regles=REGLES_CT_RE
+    )
+
+
+def test_courriers_session_stable_entre_deux_runs(monde: Monde) -> None:
+    premiere, seconde = FabriqueCT(), FabriqueCT()
+    executer_ct(monde, nb_courriers=2, fabrique_courriers=premiere)
+    executer_ct(monde, nb_courriers=2, fabrique_courriers=seconde)
+    assert [a[2] for a in premiere.appels] == [a[2] for a in seconde.appels]
+    assert premiere.appels[0][0] != seconde.appels[0][0]  # deux runs distincts
+
+
+@pytest.mark.parametrize(
+    "contenu",
+    [
+        "<pas-du-json-factice>",
+        "[1, 2]",
+        contenu_ct(1, objet=None),
+        contenu_ct(1, objet="<court>"),
+        contenu_ct(1, elements_connus=["<liste-factice>"]),
+    ],
+)
+def test_courrier_hors_schema_compte_sans_amorce(monde: Monde, contenu: str) -> None:
+    resultat = executer_ct(monde, nb_courriers=1, fabrique_courriers=FabriqueCT([contenu]))
+    assert not any(a["auteur_contenu"] == "mistral" for a in monde.amorces(resultat.run_id))
+    assert monde.comptes(resultat.run_id)["courriers"]["schema_invalide"] == 1
+
+
+def test_courrier_en_cloture_de_code_admis(monde: Monde) -> None:
+    contenu = "```json\n" + contenu_ct(1) + "\n```"
+    resultat = executer_ct(monde, nb_courriers=1, fabrique_courriers=FabriqueCT([contenu]))
+    assert monde.comptes(resultat.run_id)["courriers"]["produits"] == 1
+
+
+def test_courrier_doublon_par_objet(monde: Monde) -> None:
+    contenus = [contenu_ct(1), contenu_ct(2, objet="<OBJET-factice-1>")]
+    resultat = executer_ct(monde, nb_courriers=2, fabrique_courriers=FabriqueCT(contenus))
+    comptes = monde.comptes(resultat.run_id)["courriers"]
+    assert (comptes["produits"], comptes["doublons"]) == (1, 1)
+
+
+def test_courrier_qui_recoupe_le_jeu_d_evaluation_est_exclu(monde: Monde) -> None:
+    protection = protection_de(amorces=["<elements-connus-factice-1>"])
+    resultat = executer_ct(
+        monde, protection=protection, nb_courriers=2, fabrique_courriers=FabriqueCT()
+    )
+    comptes = monde.comptes(resultat.run_id)["courriers"]
+    assert (comptes["produits"], comptes["exclus"]) == (1, 1)
+    assert comptes["exclusions"]["amorce_usager"] == 1
+    textes = {a["texte"] for a in monde.amorces(resultat.run_id)}
+    assert "<objet-factice-1>" not in textes  # tout le courrier est écarté
+
+
+def test_courriers_budget_epuise_run_partiel(monde: Monde) -> None:
+    resultat = executer_ct(monde, nb_courriers=3, fabrique_courriers=FabriqueCT(budget=1))
+    assert resultat.statut == "partiel-budget"
+    assert monde.statut(resultat.run_id) == "partiel-budget"
+    amorces = monde.amorces(resultat.run_id)
+    assert sum(a["auteur_contenu"] == "mistral" for a in amorces) == 3
+    assert sum(a["emplacement"] == "sujet" for a in amorces) == 4  # publiques conservées
+
+
+def test_courriers_limites_par_nb_et_par_les_sujets(monde: Monde) -> None:
+    fabrique = FabriqueCT()
+    resultat = executer_ct(monde, nb_courriers=50, fabrique_courriers=fabrique)
+    assert len(fabrique.appels) == 4  # 4 sujets disponibles
+    assert monde.comptes(resultat.run_id)["courriers"]["sujets_disponibles"] == 4
+
+
+def test_courriers_exigent_fabrique_et_source_mistral(tmp_path: Path) -> None:
+    monde = Monde(tmp_path)
+    resultat = executer_ct(monde, nb_courriers=0, fabrique_courriers=FabriqueCT())
+    assert not any(a["auteur_contenu"] == "mistral" for a in monde.amorces(resultat.run_id))
+    with pytest.raises(ValueError, match="fabrique"):
+        executer_ct(monde, nb_courriers=1)
+    texte = TOML_REGISTRE.split('[[sources]]\nid = "mistral')[0]
+    (tmp_path / "data" / "registre-licences.toml").write_text(texte, encoding="utf-8")
+    monde.registre = RegistreLicences.charger(racine=tmp_path)
+    with pytest.raises(SourceSansLicence, match="mistral"):
+        executer_ct(monde, nb_courriers=1, fabrique_courriers=FabriqueCT())
+
+
+def jeux_re(monde: Monde, nb: int) -> list[JeuPublic]:
+    lignes = [ligne_sp(i, text=f"<texte-re-factice-{i}>") for i in range(nb)]
+    return [monde.jeu("service-public", "Org/service-public", REV_SP, [lignes])]
+
+
+def test_longueurs_re_tirees_dans_la_configuration(monde: Monde) -> None:
+    jeux = jeux_re(monde, 6)
+    config = config_petite(RE=6)
+    resultat = monde.executer(jeux, regles=REGLES_CT_RE, config=config)
+    amorces = monde.amorces(resultat.run_id)
+    textes = {a["amorce_id"] for a in amorces if a["emplacement"] == "texte"}
+    longueurs = [Amorce.model_validate(a) for a in amorces if a["auteur_contenu"] == "config"]
+    assert len(longueurs) == len(textes) == 6
+    admises = {f"{n} mots" for n in config.seed.re_longueurs_mots}
+    for longueur in longueurs:
+        assert longueur.lie_a in textes
+        assert longueur.texte in admises
+        assert longueur.amorce_id == longueur.lie_a.replace("re.texte.", "re.longueur_demandee.")
+    assert monde.comptes(resultat.run_id)["longueurs_re"]["produites"] == 6
+    # Tirage reproductible : un second run donne les mêmes longueurs.
+    autre = monde.amorces(monde.executer(jeux, regles=REGLES_CT_RE, config=config).run_id)
+    assert [a for a in autre if a["auteur_contenu"] == "config"] == [
+        a for a in amorces if a["auteur_contenu"] == "config"
+    ]
+    verifier_amorces(monde.racine, resultat.run_id, jeux, decodeur_json, regles=REGLES_CT_RE)
+
+
+def test_verifier_refuse_une_longueur_sans_amorce_liee(monde: Monde) -> None:
+    longueur = {
+        "schema_version": 1,
+        "amorce_id": "re.longueur_demandee.x",
+        "tache": "RE",
+        "emplacement": "longueur_demandee",
+        "texte": "80 mots",
+        "sha_texte": sha256_hex("80 mots"),
+        "auteur_contenu": "config",
+        "lie_a": "re.texte.absente",
+    }
+    monde.ecrire_amorces([longueur], RUN_FACTICE)
+    with pytest.raises(ProvenanceInvalide, match="liée"):
+        verifier_amorces(monde.racine, RUN_FACTICE, [], decodeur_json)
+
+
+@pytest.mark.parametrize(
+    ("champs", "admis"),
+    [
+        ({}, True),
+        ({"texte": "<longueur-factice>"}, False),
+        ({"texte": "5 mots"}, False),
+        ({"emplacement": "texte"}, False),
+        ({"lie_a": None}, False),
+        ({"appel_id": "a" * 32}, False),
+    ],
+)
+def test_schema_amorce_config(champs: dict[str, Any], admis: bool) -> None:
+    valeurs = {
+        "schema_version": 1,
+        "amorce_id": "re.longueur_demandee.x",
+        "tache": "RE",
+        "emplacement": "longueur_demandee",
+        "texte": "150 mots",
+        "auteur_contenu": "config",
+        "lie_a": "re.texte.x",
+    } | champs
+    valeurs["sha_texte"] = sha256_hex(valeurs["texte"])
+    if admis:
+        Amorce.model_validate(valeurs)
+    else:
+        with pytest.raises(ValueError):
+            Amorce.model_validate(valeurs)
+
+
+def test_lie_a_reserve_aux_amorces_config() -> None:
+    with pytest.raises(ValueError, match="lie_a"):
+        Amorce.model_validate(
+            {
+                "schema_version": 1,
+                "amorce_id": "q.question.x",
+                "tache": "Q",
+                "emplacement": "question",
+                "texte": "<q-factice>",
+                "sha_texte": sha256_hex("<q-factice>"),
+                "auteur_contenu": "public",
+                "jeu": "j",
+                "revision": "r",
+                "ligne": 0,
+                "lie_a": "q.question.y",
+            }
+        )
+
+
+def test_texte_de_reponse_et_conformite() -> None:
+    from slmsp.core.schemas.amorce import texte_de_reponse, texte_mistral_conforme
+
+    contenu = contenu_ct(3, objet="  <objet-factice-3>  ")
+    assert texte_de_reponse(contenu, "objet") == "<objet-factice-3>"
+    assert texte_de_reponse("```\n" + contenu + "\n```", "objet") == "<objet-factice-3>"
+    assert texte_de_reponse(contenu, "absente") is None
+    assert texte_de_reponse(None, "objet") is None
+    amorce = Amorce.model_validate(
+        {
+            "schema_version": 1,
+            "amorce_id": "ct.objet.x",
+            "tache": "CT",
+            "emplacement": "objet",
+            "texte": "<objet-factice-3>",
+            "sha_texte": sha256_hex("<objet-factice-3>"),
+            "auteur_contenu": "mistral",
+            "appel_id": "a" * 32,
+        }
+    )
+    assert texte_mistral_conforme(contenu, amorce)
+    assert texte_mistral_conforme("<objet-factice-3>", amorce)
+    assert not texte_mistral_conforme(contenu_ct(4), amorce)
+
+
+def test_generate_groupe_longueur_avec_son_texte_et_courrier_par_appel(monde: Monde) -> None:
+    from slmsp.data.generate import _groupes
+
+    resultat = monde.executer(
+        jeux_re(monde, 3),
+        regles=REGLES_CT_RE,
+        config=config_petite(RE=3, CT=3),
+        nb_courriers=2,
+        fabrique_courriers=FabriqueCT(),
+    )
+    amorces = [Amorce.model_validate(a) for a in monde.amorces(resultat.run_id)]
+    re_ = [a for a in amorces if a.tache == "RE"]
+    complets, incomplets, _ = _groupes(re_, ["longueur_demandee", "texte"])
+    assert (len(complets), incomplets) == (3, 0)
+    assert all(g[0].lie_a == g[1].amorce_id for g in complets)
+    ct = [a for a in amorces if a.tache == "CT"]
+    complets, incomplets, ignorees = _groupes(ct, ["type_courrier", "objet", "elements_connus"])
+    assert (len(complets), incomplets, ignorees) == (2, 0, 3)  # sujets publics ignorés
+    assert all(len({a.appel_id for a in g}) == 1 for g in complets)

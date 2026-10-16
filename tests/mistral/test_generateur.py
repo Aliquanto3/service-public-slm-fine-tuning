@@ -950,3 +950,91 @@ def test_precedents_de_plusieurs_cassettes_par_tour(monde: Monde) -> None:
     ]
     monde.generateur().generer("traces-rd", ["d"], "session-rd", "RD", precedents)
     assert len(monde.banc.faux.requetes) == 1
+
+
+# --- Amorces CT tirées d'un objet JSON et longueurs RE de configuration ---------------------
+
+
+def contenu_json_ct() -> tuple[str, dict[str, str]]:
+    valeurs = {
+        "type_courrier": factice("type"),
+        "objet": factice("objet"),
+        "elements_connus": factice("elements"),
+    }
+    return json.dumps(valeurs), valeurs
+
+
+def test_amorces_ct_tirees_des_cles_json_de_la_reponse(monde: Monde) -> None:
+    contenu, valeurs = contenu_json_ct()
+    appel_id = monde.journaliser("s-ct", {"role": "assistant", "content": contenu})
+    monde.ecrire_seed(
+        [
+            amorce(f"ct.{cle}.1", "CT", cle, auteur="mistral", texte=texte, appel_id=appel_id)
+            for cle, texte in valeurs.items()
+        ]
+    )
+    generation = monde.generateur().generer(
+        "ct", [f"ct.{cle}.1" for cle in valeurs], "session-ct", "CT"
+    )
+    consigne_envoyee = generation.messages[0]["content"]
+    assert all(texte in consigne_envoyee for texte in valeurs.values())
+
+
+def test_amorce_ct_absente_de_la_reponse_refusee(monde: Monde) -> None:
+    contenu, valeurs = contenu_json_ct()
+    appel_id = monde.journaliser("s-ct", {"role": "assistant", "content": contenu})
+    valeurs["objet"] = factice("autre-objet")
+    monde.ecrire_seed(
+        [
+            amorce(f"ct.{cle}.1", "CT", cle, auteur="mistral", texte=texte, appel_id=appel_id)
+            for cle, texte in valeurs.items()
+        ]
+    )
+    with pytest.raises(ProvenanceInvalide, match="réponse journalisée"):
+        monde.generateur().generer("ct", [f"ct.{cle}.1" for cle in valeurs], "s", "CT")
+    monde.rien_n_est_parti()
+
+
+def longueur_re(lie_a: str) -> dict[str, Any]:
+    return amorce(
+        "re.longueur_demandee.1",
+        "RE",
+        "longueur_demandee",
+        auteur="config",
+        texte="150 mots",
+        lie_a=lie_a,
+    )
+
+
+def test_longueur_re_de_configuration_admise_avec_son_texte(monde: Monde) -> None:
+    monde.ecrire_seed([amorce("re.texte.1", "RE", "texte"), longueur_re("re.texte.1")])
+    generation = monde.generateur().generer(
+        "re", ["re.longueur_demandee.1", "re.texte.1"], "session-re", "RE"
+    )
+    assert "150 mots" in generation.messages[0]["content"]
+
+
+def test_longueur_re_sans_son_texte_dans_l_appel_refusee(monde: Monde) -> None:
+    monde.ecrire_seed(
+        [
+            amorce("re.texte.1", "RE", "texte"),
+            amorce("re.texte.2", "RE", "texte"),
+            longueur_re("re.texte.1"),
+        ]
+    )
+    with pytest.raises(ProvenanceInvalide, match="liée"):
+        monde.generateur().generer("re", ["re.longueur_demandee.1", "re.texte.2"], "s", "RE")
+    monde.rien_n_est_parti()
+
+
+def test_reponse_journalisee_reutilisee_par_session(monde: Monde) -> None:
+    monde.ecrire_seed([amorce("ct.sujet.1", "CT", "sujet")])
+    generateur = monde.generateur()
+    assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT") is None
+    generation = generateur.generer("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT")
+    ligne = generateur.reponse_journalisee("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT")
+    assert ligne is not None and ligne.appel_id == generation.appel_id
+    # Autre session, autres amorces ou autre gabarit : aucune réutilisation.
+    assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.1"], "autre", "CT") is None
+    assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.2"], "seed-ct-1", "CT") is None
+    assert generateur.reponse_journalisee("ct", ["ct.sujet.1"], "seed-ct-1", "CT") is None

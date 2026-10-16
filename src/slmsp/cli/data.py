@@ -3,11 +3,15 @@
 Les étapes `seed` (9.3), `generate` (9.4), `validate`, `filter` (9.5) et `build` (9.6) sont
 implémentées.
 
-`seed [--racine DIR] [--facteur N] [--scenarios N]` constitue `runs/data-seed/<run_id>/`
-(`amorces.jsonl`, `comptes.json`) depuis les jeux publics de `config/sources.toml`, déjà
-téléchargés sous `<racine>/data/raw/mediatech/` par `slmsp fetch sources` (extra `data` :
-pyarrow). Les scénarios de réunion Mistral sont opt-in : `--scenarios N` (0 par défaut)
-exige le gel commité du Jeu d'évaluation v1.1 (code 4 sinon) et fait appel à Mistral.
+`seed [--racine DIR] [--facteur N] [--scenarios N] [--courriers {N,auto}]` constitue
+`runs/data-seed/<run_id>/` (`amorces.jsonl`, `comptes.json`) depuis les jeux publics de
+`config/sources.toml`, déjà téléchargés sous `<racine>/data/raw/mediatech/` par
+`slmsp fetch sources` (extra `data` : pyarrow). Les longueurs RE sont tirées dans
+`[seed].re_longueurs_mots` de `config/donnees.toml`. Les scénarios de réunion (`--scenarios N`)
+et les amorces de courrier type (`--courriers N`, ou `auto` = volume CT x facteur) sont
+générés par Mistral, opt-in (0 par défaut) : ils exigent le gel commité du Jeu d'évaluation
+v1.1 (code 4 sinon). Les amorces CT d'une session déjà journalisée sont réutilisées sans
+nouvel appel (relance idempotente).
 
 `generate (--depuis SEED_RUN_ID | --reprendre RUN_ID) [--racine DIR] [--surplus X]` produit
 `runs/data-generate/<run_id>/` par le Générateur Mistral (`slmsp.data.generate`). Il exige
@@ -56,8 +60,10 @@ from slmsp.data.config import charger_config_donnees
 from slmsp.data.licences import RegistreLicences
 from slmsp.data.seed import (
     FACTEUR_DEFAUT,
+    GABARIT_AMORCES_CT,
     GABARIT_SCENARIO,
     Decodeur,
+    FabriqueCourrier,
     FabriqueScenario,
     FichierJeu,
     JeuPublic,
@@ -90,6 +96,13 @@ def _entier_positif_ou_nul(valeur: str) -> int:
     if nombre < 0:
         raise argparse.ArgumentTypeError("entier positif ou nul attendu")
     return nombre
+
+
+def _courriers(valeur: str) -> int | str:
+    """`auto` ou entier positif ou nul (nombre d'appels Mistral pour les amorces CT)."""
+    if valeur == "auto":
+        return valeur
+    return _entier_positif_ou_nul(valeur)
 
 
 def _fraction(valeur: str) -> float:
@@ -135,6 +148,14 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         default=0,
         metavar="N",
         help="scénarios de réunion à faire écrire par Mistral (défaut : 0, aucun appel d'API)",
+    )
+    p.add_argument(
+        "--courriers",
+        type=_courriers,
+        default=0,
+        metavar="{N,auto}",
+        help="appels Mistral pour les amorces de courrier type CT (auto : volume CT x "
+        "facteur ; défaut : 0, aucun appel d'API)",
     )
     p.set_defaults(func=_seed)
 
@@ -281,8 +302,31 @@ def _fabrique_depuis(creer_generateur: Callable[[str], Any]) -> FabriqueScenario
     return fabrique
 
 
-def _fabrique_scenarios(racine: Path) -> FabriqueScenario:
-    """Fabrique réelle (appels Mistral payants) ; préalables D1.2 vérifiés dès maintenant."""
+def _fabrique_courriers_depuis(creer_generateur: Callable[[str], Any]) -> FabriqueCourrier:
+    """Fabrique des amorces CT : réponse déjà journalisée pour la session (reprise sans
+    appel), sinon `Generateur(seed_run_id).generer("amorces-ct", [sujet])`. Renvoie le contenu
+    du message `assistant`, objet JSON que `slmsp.data.seed` découpe et vérifie."""
+    from slmsp.mistral.generateur import message_assistant
+
+    def fabrique(seed_run_id: str, sujet_id: str, session_id: str) -> tuple[str, str]:
+        generateur = creer_generateur(seed_run_id)
+        ligne = generateur.reponse_journalisee(GABARIT_AMORCES_CT, [sujet_id], session_id, "CT")
+        if ligne is not None:
+            appel_id, brut = ligne.appel_id, ligne.reponse_brute
+        else:
+            generation = generateur.generer(GABARIT_AMORCES_CT, [sujet_id], session_id, "CT")
+            appel_id, brut = generation.appel_id, generation.reponse_brute
+        contenu = message_assistant(brut).get("content")
+        if not isinstance(contenu, str) or not contenu:
+            raise ProvenanceInvalide(f"appel {appel_id} : réponse sans contenu texte")
+        return appel_id, contenu
+
+    return fabrique
+
+
+def _createur_generateur(racine: Path) -> Callable[[str], Any]:
+    """`seed_run_id -> Generateur` réel (appels Mistral payants) ; préalables D1.2 vérifiés
+    dès maintenant."""
     from slmsp.budget.registre import RegistreBudget
     from slmsp.mistral.client import ClientMistral, fabriquer_sdk
     from slmsp.mistral.config import charger_mistral
@@ -303,7 +347,17 @@ def _fabrique_scenarios(racine: Path) -> FabriqueScenario:
             dossier_gabarits=dossier / "prompts" / "generateur",
         )
 
-    return _fabrique_depuis(creer)
+    return creer
+
+
+def _fabrique_scenarios(racine: Path) -> FabriqueScenario:
+    """Fabrique réelle de scénarios (appels Mistral payants)."""
+    return _fabrique_depuis(_createur_generateur(racine))
+
+
+def _fabrique_courriers(racine: Path) -> FabriqueCourrier:
+    """Fabrique réelle des amorces CT (appels Mistral payants, reprise par le journal)."""
+    return _fabrique_courriers_depuis(_createur_generateur(racine))
 
 
 # --- seed --------------------------------------------------------------------------------
@@ -323,12 +377,18 @@ def _seed(args: argparse.Namespace) -> int:
     config_sources = charger_config_sources()
     config = charger_config_donnees()
     registre = RegistreLicences.charger(racine=racine)
-    fabrique = None
-    if args.scenarios > 0:
+    fabrique = fabrique_ct = None
+    courriers = (
+        config.volumes.CT * args.facteur if args.courriers == "auto" else int(args.courriers)
+    )
+    if args.scenarios > 0 or courriers > 0:
         from slmsp.evaluation.gel import jeu_gele_et_commite
 
         jeu_gele_et_commite("v1.1", racine)  # ManifesteInvalide (code 4) avant toute génération
+    if args.scenarios > 0:
         fabrique = _fabrique_scenarios(racine)
+    if courriers > 0:
+        fabrique_ct = _fabrique_courriers(racine)
     protection = construire_protection(versions_protegees(racine), config, racine)
     try:
         resultat = executer_seed(
@@ -341,6 +401,8 @@ def _seed(args: argparse.Namespace) -> int:
             facteur=args.facteur,
             nb_scenarios=args.scenarios,
             fabrique_scenarios=fabrique,
+            nb_courriers=courriers,
+            fabrique_courriers=fabrique_ct,
             consigner=_consigner,
         )
     except ProvenanceInvalide as exc:
@@ -355,6 +417,13 @@ def _seed(args: argparse.Namespace) -> int:
     scenarios = resultat.comptes["scenarios"]
     if scenarios["demandes"]:
         print(f"scénarios : {scenarios['produits']}/{scenarios['demandes']}")
+    bilan_ct = resultat.comptes["courriers"]
+    if bilan_ct["demandes"]:
+        print(
+            f"amorces CT : {bilan_ct['produits']} courrier(s) sur {bilan_ct['appels']} appel(s) "
+            f"(schéma invalide {bilan_ct['schema_invalide']}, doublons {bilan_ct['doublons']}, "
+            f"anti-fuite {bilan_ct['exclus']})"
+        )
     print(f"run {resultat.run_id} ({resultat.statut}) : {resultat.dossier}")
     if resultat.statut == "partiel-budget":
         return int(CodeSortie.BUDGET_EPUISE)
