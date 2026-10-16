@@ -53,3 +53,13 @@ Libellés proposés (rédigés par l'agent, non officiels), à valider par Anaë
 - Libellés de l'interface (onglets, « Sites que l'assistant peut contacter », « Ce que l'assistant ne contrôle pas », « Effacer tout l'historique »).
 - Les raccourcis Ctrl +/−/0 ne sont répercutés au pont qu'après la première ouverture de Paramètres (la vue est montée à ce moment-là) ; `localStorage` garde la valeur dans tous les cas. Faire monter la vue au démarrage demanderait de toucher `app.js` (12.4).
 - Aucun hachage du GGUF installé : on affiche l'empreinte attendue de la configuration, pas celle du fichier présent.
+
+## Revue
+
+- medium, second avis : licences incomplètes. Corrigé. Index (2 sources Etalab 2.0, attribution) et PyInstaller ajoutés ; chaque entrée porte une `source` (registre des licences) ou est marquée « à vérifier » (aucun fichier du dépôt n'atteste les licences de llama.cpp, Granite, BGE-M3, pywebview, WebView2 ; `config/modeles/*.toml` et `pyproject.toml` n'en déclarent pas). Reporté : valider ces licences à la source (story 12.12).
+- low, `reglages.py` : `112.0` accepté. Corrigé (entier strict, booléens exclus), test ajouté.
+- low, « Rester hors ligne » dupliqué de `mode.js`. Écarté : le contrôle est un onglet distinct du menu de la pastille ; même commande `mode.forcer_hors_ligne`, documenté en commentaire.
+- low, focus après « Annuler » et après l'effacement effectif. Corrigé (focus sur le bouton déclencheur), test ajouté.
+- low, `Conversation._dernier` après effacement. Corrigé (`oublier_dernier`, branché par le Pont), test ajouté.
+- low, `VUES_REALISEES` sans `parametres`. Corrigé.
+- low, test des licences trop faible. Corrigé : confrontation au registre, `pyproject.toml` et règle « à vérifier ».

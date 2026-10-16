@@ -137,6 +137,9 @@ export function monter(conteneur, pont, contexte = {}) {
     Promise.resolve(pont.appeler("reglages.ecrire", "taille_texte", t)).catch(() => {});
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
 
+  // Même commande que la pastille (`mode.forcer_hors_ligne`, vues/mode.js) : le contrôle est
+  // volontairement dupliqué (case à cocher d'un onglet, hors du menu de la pastille) ; les deux
+  // sont relus depuis `mode.etat` à l'ouverture de la vue.
   const horsLigne = el("input", { type: "checkbox", id: "parametres-hors-ligne" });
   const etiquetteHL = el("label", { for: "parametres-hors-ligne" }, "Rester hors ligne");
   const aideHL = el(
@@ -197,6 +200,7 @@ export function monter(conteneur, pont, contexte = {}) {
         annoncer("L'historique n'a pas pu être effacé.");
       }
       annuler.hidden = true;
+      effacer.focus(); // le bouton « Annuler » vient de disparaître
       setTimeout(() => {
         arreterEffacement();
         annuler.hidden = false;

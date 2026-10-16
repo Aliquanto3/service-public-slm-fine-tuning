@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -64,7 +65,13 @@ def test_lire_defaut_et_ecrire_taille(stockage: Stockage) -> None:
 
 @pytest.mark.parametrize(
     ("cle", "valeur"),
-    [("taille_texte", 130), ("taille_texte", True), ("taille_texte", "125"), ("fenetre", 100)],
+    [
+        ("taille_texte", 130),
+        ("taille_texte", True),
+        ("taille_texte", 112.0),
+        ("taille_texte", "125"),
+        ("fenetre", 100),
+    ],
 )
 def test_ecrire_refuse_cle_ou_valeur_invalide(stockage: Stockage, cle: str, valeur: object) -> None:
     reponse = PontReglages(stockage).ecrire(cle, valeur)
@@ -138,7 +145,45 @@ def test_a_propos_manifeste_corrompu_ignore(tmp_path: Path) -> None:
     assert PontReglages(racine=racine).a_propos()["index"] is None
 
 
-def test_licences_versionnees_lisibles() -> None:
+def test_licences_versionnees_confrontees_au_depot() -> None:
+    racine = Path(__file__).resolve().parents[2]
     licences = PontReglages().a_propos()["licences"]
     assert licences["statut"] == "provisoire"
-    assert licences["composants"]
+    brut = json.loads(
+        (racine / "src/slmsp/app/ressources/licences-tierces.json").read_text(encoding="utf-8")
+    )
+    registre = {
+        s["id"]: s
+        for s in tomllib.loads((racine / "data/registre-licences.toml").read_text("utf-8"))[
+            "sources"
+        ]
+    }
+    pyproject = (racine / "pyproject.toml").read_text(encoding="utf-8")
+    noms = {c["nom"] for c in brut["composants"]}
+    for attendu in ("llama.cpp", "Granite", "BGE-M3", "pywebview", "PyInstaller", "WebView2"):
+        assert any(attendu in n for n in noms), attendu
+    assert "pywebview" in pyproject and "pyinstaller" in pyproject
+    sourcees = 0
+    for c in brut["composants"]:
+        if c["source"] is None:  # aucune attestation dans le dépôt : jamais présenté comme certain
+            assert c["licence"].startswith("à vérifier"), c["nom"]
+            continue
+        sourcees += 1
+        source = registre[c["source"].removeprefix("registre:")]
+        assert source["licence"] == "etalab-2.0"
+        assert "Etalab 2.0" in c["licence"] and "attribution" in c["licence"]
+    ids = {c["source"] for c in brut["composants"]}
+    assert {
+        "registre:AgentPublic/service-public",
+        "registre:AgentPublic/data-gouv-datasets-catalog",
+    } <= ids
+    # le pont expose bien ce contenu
+    assert {c["nom"] for c in licences["composants"]} == noms
+    assert sourcees == 2
+
+
+def test_effacer_historique_oublie_le_dernier_envoi(stockage: Stockage) -> None:
+    oublies: list[bool] = []
+    pont = PontReglages(stockage, apres_effacement=lambda: oublies.append(True))
+    pont.effacer_historique()
+    assert oublies == [True]

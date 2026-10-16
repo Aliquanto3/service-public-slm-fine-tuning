@@ -66,7 +66,7 @@ HORS_PASSERELLE: Final = (
 
 def _taille(valeur: Any) -> int:
     """Cran enregistré ; « normale » (valeur par défaut du stockage) et l'inconnu valent 100."""
-    ok = isinstance(valeur, int) and not isinstance(valeur, bool) and valeur in CRANS_TAILLE
+    ok = _est_cran(valeur)
     return int(valeur) if ok else CRANS_TAILLE[0]
 
 
@@ -75,6 +75,11 @@ def _lire_json(chemin: Path) -> Any:
         return json.loads(chemin.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+
+
+def _est_cran(valeur: Any) -> bool:
+    """Entier strict : ni booléen ni flottant (`112.0`)."""
+    return type(valeur) is int and valeur in CRANS_TAILLE
 
 
 def _version_application() -> str | None:
@@ -93,7 +98,9 @@ class PontReglages:
         racine: Path | None = None,
         ressources: Path | None = None,
         version: Callable[[], str | None] | None = None,
+        apres_effacement: Callable[[], None] | None = None,
     ) -> None:
+        self._apres_effacement = apres_effacement
         self._stockage = stockage
         self._racine = racine
         self._ressources = ressources or RESSOURCES
@@ -116,7 +123,7 @@ class PontReglages:
 
     def ecrire(self, cle: str, valeur: Any) -> dict[str, Any]:
         stock = self._stock()
-        if cle != "taille_texte" or isinstance(valeur, bool) or valeur not in CRANS_TAILLE:
+        if cle != "taille_texte" or not _est_cran(valeur):
             return {
                 "ok": False,
                 "erreur": {"code": CODE_INVALIDE, "message": "Ce réglage n'est pas modifiable."},
@@ -126,6 +133,8 @@ class PontReglages:
 
     def effacer_historique(self) -> dict[str, Any]:
         self._stock().effacer_historique()
+        if self._apres_effacement is not None:
+            self._apres_effacement()  # `regenerer` ne doit pas rejouer l'envoi effacé
         return {"ok": True}
 
     # -- À propos ------------------------------------------------------------------------

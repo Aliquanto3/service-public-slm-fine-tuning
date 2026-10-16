@@ -13,6 +13,7 @@ import pytest
 from harness_factices import FakeEmbedder, FakeLlm, FakeVectorStore, mots, script
 
 from slmsp.app.pont import Pont
+from slmsp.app.pont.reglages import PontReglages
 from slmsp.core.evenements import Fin, Jeton
 from slmsp.harness.assemblage import assembler
 from slmsp.net.journal import JournalMemoire
@@ -371,3 +372,16 @@ def test_ouvrir_lien_echec_du_navigateur(banc: Any) -> None:
     assert pont.ouvrir_lien(url)["erreur"]["code"] == "ouverture-impossible"
     pont._ouvreur = lambda u: False  # type: ignore[assignment]
     assert pont.ouvrir_lien(url)["erreur"]["code"] == "ouverture-impossible"
+
+
+def test_effacer_historique_empeche_regenerer(banc: Any, tmp_path: Any) -> None:
+    from slmsp.app.stockage import Stockage
+
+    pont, _ = banc(FakeLlm(script(mots(3, "k"))))
+    pont._domaines["reglages"] = PontReglages(
+        Stockage(tmp_path / "a.sqlite"), apres_effacement=pont._conversation.oublier_dernier
+    )
+    pont.envoyer("Q", _user(mots(3, "l")), {})
+    pont._conversation.attendre(5)
+    assert pont.appeler("reglages.effacer_historique") == {"ok": True}
+    assert pont.regenerer()["erreur"]["code"] == "rien-a-regenerer"

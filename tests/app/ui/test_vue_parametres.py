@@ -197,6 +197,7 @@ def test_effacer_historique_annule_ne_vide_rien(page) -> None:
     _ouvrir(page)
     page.click("#parametres-effacer")
     page.click("#parametres-effacer-annuler")
+    assert page.evaluate("document.activeElement.id") == "parametres-effacer"
     page.wait_for_timeout(5500)
     assert _appels(page, "reglages.effacer_historique") == []
     assert page.locator("#parametres-effacer").is_enabled()
