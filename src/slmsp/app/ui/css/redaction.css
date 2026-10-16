@@ -1,1 +1,149 @@
-/* Vue « redaction » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vues de rédaction : volets Entrée et Résultat, passages signalés (story 12.8). */
+.redaction {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+@media (max-width: 1199px) {
+  .redaction {
+    grid-template-columns: minmax(0, 1fr); /* les volets s'empilent sous 1 200 px */
+  }
+}
+.editor-pane {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.volet-titre {
+  margin: 0;
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+}
+.volet-invite {
+  margin: 0;
+  color: var(--ink-soft);
+}
+.redaction-saisie {
+  width: 100%;
+  min-height: 16rem;
+  box-sizing: border-box;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  line-height: var(--lh-body);
+  color: var(--ink);
+  background: var(--surface);
+  resize: vertical;
+}
+.redaction-saisie:focus-visible,
+.resultat:focus-visible,
+.flagged-passage:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.volet-pied {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.compteur-mots {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.volet-pied [hidden],
+.resultat-actions[hidden],
+.volet-resultat [hidden] {
+  display: none;
+}
+.avancement {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+}
+.avancement p {
+  margin: 0;
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.avancement-etape {
+  font-weight: 600;
+}
+.resultat {
+  min-height: 16rem;
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  line-height: var(--lh-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.resultat-vide {
+  margin: 0;
+  color: var(--ink-soft);
+}
+.resultat-passages {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.resultat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.volet-resultat .avertissement,
+.volet-resultat .mention-interrompue,
+.volet-resultat .mention-echec {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.inline-confirmation {
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.flagged-passage {
+  position: relative;
+  background: var(--surface);
+  text-decoration: underline dotted 2px var(--warning);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+.flagged-passage .infobulle {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  z-index: 10;
+  display: none;
+  width: max-content;
+  max-width: 18rem;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--surface);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+  white-space: normal;
+  text-decoration: none;
+}
+.flagged-passage:hover .infobulle,
+.flagged-passage:focus .infobulle {
+  display: block;
+}
+.flagged-passage[data-ferme] .infobulle {
+  display: none;
+}

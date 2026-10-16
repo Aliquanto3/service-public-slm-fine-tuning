@@ -100,7 +100,7 @@ def test_modules_de_vue_declares_d_avance() -> None:
         assert (UI / "css" / f"{vue}.css").is_file(), vue
         module = (UI / "js" / "vues" / f"{vue}.js").read_text(encoding="utf-8")
         assert "export function monter" in module, vue
-        if vue not in ("question", "recherche"):  # livrées par la story 12.7
+        if vue not in ("question", "recherche", "redaction"):  # stories 12.7 et 12.8
             assert "non disponible" in module, vue
         assert f'href="css/{vue}.css"' in (UI / "index.html").read_text(encoding="utf-8")
 
