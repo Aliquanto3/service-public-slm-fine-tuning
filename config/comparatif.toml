@@ -1,0 +1,19 @@
+# Seuils du Comparatif (SM-1, PRD §10) et Tâches prioritaires. Lus par `slmsp compare comparatif`.
+
+schema_version = 1
+
+taches_prioritaires = ["Q", "RD", "CR", "LC"]
+gain_min_points = 10.0                # gain par rapport à la meilleure Baseline
+taches_gagnantes_min = 2              # nombre de Tâches prioritaires à gain suffisant
+regression_max_points = 3.0           # perte maximale en non-régression (Tâche NR)
+regression_benchmarks_max_points = 3.0  # perte moyenne maximale sur les Benchmarks
+
+# Métrique de chaque Benchmark : clé exacte de `ResultatBench.scores`, la même pour la Baseline
+# et le fine-tuné ; `echelle` convertit en points sur 100 (100 pour une fraction de 0 à 1) ;
+# `sens` vaut "haut" (plus grand est meilleur) ou "bas". Un Benchmark absent d'ici est affiché
+# « non comparable » et laisse SM-1 indéterminé. À renseigner après un premier run réel
+# (à confirmer par Anaël), par exemple :
+#   [benchmarks.mmlu]
+#   metrique = "mmlu.acc"
+#   echelle = 100.0
+#   sens = "haut"
