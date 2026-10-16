@@ -127,7 +127,9 @@ def controler_adaptateur(dossier: Path, *, racine: str | Path | None = None) -> 
             "(path_initial_model_for_weight_conversion de PEFT)"
         )
     cibles = config.get("target_modules") or []
-    interdites = sorted({"embed_tokens", "lm_head"} & set(cibles if isinstance(cibles, list) else []))
+    interdites = sorted(
+        {"embed_tokens", "lm_head"} & set(cibles if isinstance(cibles, list) else [])
+    )
     if interdites or config.get("modules_to_save"):
         raise ConfigurationInvalide(
             f"{dossier} : l'export refuse un adaptateur qui modifie embeddings ou tête "
@@ -222,8 +224,8 @@ def exporter(
     *,
     racine: str | Path | None = None,
     pile: environnement.Pile | None = None,
-    convertir: Convertir = serveur.convertir_hf_vers_gguf,
-    quantifier: Quantifier = serveur.quantifier,
+    convertir: Convertir | None = None,
+    quantifier: Quantifier | None = None,
     python: str | os.PathLike[str] | None = None,
     controles: Controles | None = None,
     sortie: Callable[[str], None] = print,
@@ -231,8 +233,11 @@ def exporter(
     """Exporte `source` sous `runs/export/<run_id>/` ; renvoie le run terminé.
 
     Statut : `complet`, ou `partiel-erreur` si un contrôle bloquant échoue (template) ou
-    sur exception (relancée). `pile`, `convertir`, `quantifier` : injectés par les tests.
+    sur exception (relancée). `pile`, `convertir`, `quantifier` : injectés par les tests
+    (défaut : pile importée, `serveur.convertir_hf_vers_gguf` et `serveur.quantifier`).
     """
+    convertir = convertir if convertir is not None else serveur.convertir_hf_vers_gguf
+    quantifier = quantifier if quantifier is not None else serveur.quantifier
     appliquer_environnement_impose()
     os.environ.setdefault("PYTHONUTF8", "1")  # journaux du convertisseur (cp1252 sinon)
     base = _racine(racine)

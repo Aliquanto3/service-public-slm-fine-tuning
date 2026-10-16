@@ -269,9 +269,10 @@ def sonder(
     base = _racine(racine)
     if variante not in VARIANTES:
         raise ValueError(f"variante inconnue : {variante!r} (attendu : {', '.join(VARIANTES)})")
-    if not isinstance(modele_ref, str) or not modele_ref.startswith("base:"):
+    if not isinstance(modele_ref, str) or not modele_ref.startswith(("base:", "ft:")):
         raise ValueError(
-            f"référence de modèle invalide : {modele_ref!r} (la sonde porte sur base:<slug>)"
+            f"référence de modèle invalide : {modele_ref!r} "
+            "(la sonde porte sur base:<slug> ou ft:<export_run_id>, story 10.6)"
         )
     _verifier_jeu(jeu, base)
     reglages = (config if config is not None else cfg.charger_evaluation()).generation

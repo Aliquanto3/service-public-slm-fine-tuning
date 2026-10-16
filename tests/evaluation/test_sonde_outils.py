@@ -339,7 +339,7 @@ def test_usage_sans_run(
     [
         [],
         ["--modele", "pas-un-ref"],
-        ["--modele", "ft:20261012-000000-granite-4.0-1b-abcd"],
+        ["--modele", "ft:pas-un-run-id"],
         ["--modele", MODELE, "--items", "ZZ-001"],
         ["--modele", MODELE, "--items", "Q-001,RD-001"],
     ],

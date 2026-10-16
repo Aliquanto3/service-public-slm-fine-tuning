@@ -15,8 +15,9 @@ Lecteur contrôlé (AD-24, D-nuit-A2-18). `data` et `train` ne lisent des fichie
 `lire`, `lire_texte` ou `ouvrir_sqlite_lecture`, qui résolvent le chemin (liens et `..`)
 puis appliquent un refus explicite (`eval/`, `runs/eval/`, `runs/eval-*`, cache des
 verdicts) et enfin la liste d'accès du lecteur (`train` lit aussi l'adaptateur d'un run
-`train`, `runs/train/<run_id>/adaptateur/`, décision A1 du 2026-10-16). Les bases de comparaison sont résolues
-elles aussi (jonctions, liens). La comparaison des chemins ignore la casse sous Windows.
+`train`, `runs/train/<run_id>/adaptateur/`, décision A1 du 2026-10-16). Les bases de
+comparaison sont résolues elles aussi (jonctions, liens). La comparaison des chemins
+ignore la casse sous Windows.
 """
 
 from __future__ import annotations
