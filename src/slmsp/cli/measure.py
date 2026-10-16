@@ -35,6 +35,13 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         default=None,
         help="quantification attendue : refusée si le GGUF de config/modeles en porte une autre",
     )
+    p.add_argument(
+        "--contexte",
+        type=int,
+        default=None,
+        help="taille de contexte (tokens) du serveur de génération, au plus celle de "
+        "config/modeles/<slug>.toml ; consignée dans run.json et resultat.json",
+    )
     p.add_argument("--racine", type=Path, default=None, help="racine de index/ et runs/")
     p.set_defaults(func=_run)
 
@@ -57,16 +64,29 @@ def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[
 
 def _run(args: argparse.Namespace) -> int:
     from slmsp.cli._assemblage import ModeleInvalide, assembler, slug_modele
+    from slmsp.core.erreurs import ConfigurationInvalide
     from slmsp.harness.taches import charger_taches
     from slmsp.index.lecture import versions_disponibles
+    from slmsp.inference.serveur import charger_config_modele
     from slmsp.measure.config import charger_config_mesures
-    from slmsp.measure.protocole import mesurer, verrou_mesure
+    from slmsp.measure.protocole import ContexteInsuffisant, mesurer, verrou_mesure
 
     try:
-        slug_modele(args.modele)
-    except ModeleInvalide as exc:
+        slug = slug_modele(args.modele)
+        maximum = charger_config_modele(slug).contexte
+    except (ModeleInvalide, ConfigurationInvalide) as exc:
         print(f"slmsp : {exc}", file=sys.stderr)
         return int(CodeSortie.USAGE)
+    if args.contexte is not None and not 0 < args.contexte <= maximum:
+        print(
+            f"slmsp : --contexte {args.contexte} invalide : entier de 1 à {maximum} "
+            f"(contexte de config/modeles/{slug}.toml)",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
+    # Sans --contexte : comportement inchangé (contexte du modèle, aucune vérification ajoutée),
+    # le contexte effectif est seulement consigné.
+    contexte = maximum if args.contexte is None else args.contexte
     config = charger_config_mesures()
     racine = (args.racine if args.racine is not None else racine_projet()).resolve()
     # Index lu sous les ressources ; le run s'écrit sous la racine d'écriture (AD-23).
@@ -77,7 +97,12 @@ def _run(args: argparse.Namespace) -> int:
     with (
         verrou_mesure(),
         assembler(
-            args.modele, fiche, variante="cpu", racine=racine, threads=config.plafond_threads
+            args.modele,
+            fiche,
+            variante="cpu",
+            racine=racine,
+            threads=config.plafond_threads,
+            contexte=args.contexte,
         ) as assemblage,
     ):
         if args.quantification is not None:
@@ -95,17 +120,30 @@ def _run(args: argparse.Namespace) -> int:
         def repondre(question: str) -> Any:
             return assemblage.service.repondre(fiche, [{"role": "user", "content": question}])
 
-        resultat = mesurer(
-            repondre,
-            config,
-            modele=args.modele,
-            quantification=args.quantification,
-            serveurs=[s.description() for s in assemblage.serveurs],
-            composants=_composants(assemblage.serveurs, racine, version),
-            racine=ecriture,
-            index_version=version,
-        )
+        try:
+            resultat = mesurer(
+                repondre,
+                config,
+                modele=args.modele,
+                quantification=args.quantification,
+                serveurs=[s.description() for s in assemblage.serveurs],
+                composants=_composants(assemblage.serveurs, racine, version),
+                racine=ecriture,
+                index_version=version,
+                contexte=contexte,
+                verifier_contexte=args.contexte is not None,
+            )
+        except ContexteInsuffisant as exc:
+            print(f"slmsp : {exc}", file=sys.stderr)
+            return int(CodeSortie.USAGE)
     valeurs = resultat.valeurs
+    print(f"contexte effectif : {contexte} tokens (modèle : {maximum})")
+    if resultat.details.get("verification_contexte") == "non-verifiee":
+        print(
+            "slmsp : avertissement : le serveur n'a pas renvoyé usage.prompt_tokens, la tenue "
+            "du prompt dans --contexte n'a PAS pu être vérifiée (troncature possible)",
+            file=sys.stderr,
+        )
     print(f"{resultat.hypothese} ({args.modele}) : {resultat.verdict}")
     for nom, valeur in valeurs.items():
         print(f"  {nom} : {'n/d' if valeur is None else f'{valeur:.3f}'}")
