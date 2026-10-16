@@ -385,3 +385,10 @@ def test_effacer_historique_empeche_regenerer(banc: Any, tmp_path: Any) -> None:
     pont._conversation.attendre(5)
     assert pont.appeler("reglages.effacer_historique") == {"ok": True}
     assert pont.regenerer()["erreur"]["code"] == "rien-a-regenerer"
+
+
+def test_domaine_redaction_outils(banc: Any) -> None:
+    pont, _ = banc(FakeLlm(script(mots(1, "m"))))
+    r = pont.appeler("redaction_outils.differences", "<a> <b>", "<a> <c>")
+    assert r["ok"] is True and r["identiques"] is False
+    assert pont.appeler("redaction_outils.autre")["erreur"]["code"] == "non-implementee"
