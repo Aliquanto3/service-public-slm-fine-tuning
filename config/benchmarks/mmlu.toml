@@ -3,11 +3,11 @@
 # Le jeu est figé par ce cache ; les révisions (SHA de commit) qu'il contient sont consignées dans
 # [options.jeux_hf] (pas de [[jeux]] : `slmsp fetch` ne télécharge pas ces jeux).
 nom = "mmlu"
-description = "MMLU (57 sous-tâches), limite de 500 questions par sous-tâche (≈ 14 000 au total, la plupart des sous-tâches en ont moins)"
+description = "MMLU (57 sous-tâches), limite de 50 questions par sous-tâche (≈ 2 850 au total)"
 moteur = "lm_eval"
 tache = "mmlu"
 fewshot = 0
-limite = 500  # `--limit` de lm-eval s'applique à CHAQUE sous-tâche, pas globalement
+limite = 50  # par sous-tâche (`--limit` de lm-eval) ; 500 (≈ 14 000 q.) dépassait 10 h par modèle en bf16 débordant de la VRAM (décision A5 d'Anaël, 2026-10-17)
 cible = "hf"
 quantification = "avant"
 socle = true
