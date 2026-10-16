@@ -20,11 +20,11 @@ deferred: []
 
 ## Code Map
 
-- `src/slmsp/app/differences.py` -- `calculer(avant, apres)` : segments `egal|ajout|suppression`, NFC, `difflib` sans autojunk. Coût borné : préfixe et suffixe communs retirés, puis si le produit des tailles dépasse 4 000 000 le milieu devient un bloc supprimé + un bloc ajouté.
+- `src/slmsp/app/differences.py` -- `calculer(avant, apres)` : segments `egal|ajout|suppression`, NFC, `difflib` sans autojunk, approche hiérarchique : phrases et lignes d'abord, puis mots (avec l'espace qui les précède) dans les seuls blocs modifiés. Marques combinantes, séquences emoji ZWJ et drapeaux restent collés. Espaces horizontales (dont NBSP) ignorées à la comparaison, un segment « égal » garde l'espacement de `avant` ; les retours à la ligne comptent. Coût borné : par bloc, préfixe et suffixe communs retirés, puis si le produit des tailles dépasse 25 000 000 (~5 000 éléments par côté) le bloc devient un bloc supprimé + un bloc ajouté.
 - `src/slmsp/app/pont/redaction_outils.py` -- domaine `redaction_outils` (`differences`, refus `requete-invalide` au-delà de 500 000 caractères) ; branché dans `pont/__init__.py` (une ligne d'import, une entrée de domaine, le docstring).
 - `js/vues/correction.js`, `css/correction.css` -- marques lisibles sans la couleur : soulignement (ajout), barré (suppression), texte `sr-only` « [ajout : … ] » / « [suppression : … ] », résumé `role=status` (« N ajouts, M suppressions. » ou « Aucune correction »).
 - `js/vues/redaction.js` -- extension minimale : `rendreResultat(brut, zone, envoi, fin)` reçoit deux arguments de plus (compatible, LC les ignore).
-- Tests : `tests/app/test_differences.py` (8), `tests/app/test_pont.py` (+1), `tests/app/ui/test_vue_correction.py` (7, `ui`) ; `test_socle*.py` ajustés (CO n'est plus « non disponible »).
+- Tests : `tests/app/test_differences.py` (12), `tests/app/test_pont.py` (+1), `tests/app/ui/test_vue_correction.py` (7, `ui`) ; `test_socle*.py` ajustés (CO n'est plus « non disponible »).
 
 ## Acceptation (état)
 
@@ -46,6 +46,17 @@ deferred: []
 
 - Anaël : phrase d'aide, bouton « Corriger », libellés des résumés.
 - Anaël : ajout de deux arguments à `rendreResultat` dans `redaction.js` (zone de 12.8, changement rétro-compatible).
-- Anaël : seuil de repli grossier (4 000 000 = environ 2 000 mots par côté après retrait du préfixe/suffixe) ; au-delà, un seul bloc supprimé et un seul ajouté.
+- Anaël : seuil de repli grossier (25 000 000 par bloc modifié, environ 5 000 mots par côté sans ponctuation) ; au-delà, un seul bloc supprimé et un seul ajouté.
 - Format réel des sorties de CO (le modèle ajoute-t-il un préambule ?) : à vérifier sur une sortie réelle ; hors périmètre (aucune génération).
 - Ajouter `pont/redaction_outils.py` à la liste de la spec 12.5 §3.
+
+## Revue
+
+Commit relu : 49cf346. Second avis (Haiku) puis relecture Opus.
+
+- medium, second avis : repli grossier dès ~1 000 mots, corrections dispersées noyées. Confirmé (mesuré), corrigé : diff hiérarchique phrases puis mots, limite portée à 25 000 000 par bloc. Mesures (30 corrections dispersées) : 3 000 mots 0,004 s avec ponctuation, 0,03 s sans ; 5 000 mots 0,005 s et 0,05 s ; 30 ajouts isolés dans chaque cas.
+- medium, second avis : test de précision trivial. Confirmé, corrigé : test de 30 corrections dispersées sur 3 000 et 5 000 mots (ajouts isolés, reconstruction exacte, moins de 1 s) et test de latence sur un pire cas répétitif (6 000 mots, 5 mots distincts, moins de 3 s).
+- low, second avis : marques combinantes et emoji ZWJ séparés. Corrigé : regroupement en graphèmes simples via `unicodedata` (`regex` n'est pas une dépendance du projet), avec test.
+- low, second avis : NBSP remplacée par une espace vue comme correction. Corrigé : comparaison sans espaces horizontales, affichage inchangé, avec test.
+- low, second avis : `.sr-only` dans `correction.css`. Écarté : absent du socle (seule définition du dépôt), conservé.
+- low, relecture : le pire cas adversarial reste borné par `LIMITE_PRODUIT` (0,15 s à 2 000 éléments, 2,7 s à 7 000 avec 5 mots distincts) ; accepté.
