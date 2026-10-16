@@ -277,6 +277,19 @@ textarea {
 .callout-danger {
   border-left: 3px solid var(--danger);
 }
+/* Garde de démarrage : n'apparaît qu'après 2 s, pour ne pas clignoter avant que app.js le masque.
+   Durée nulle : ce n'est pas une animation, d'où le `!important` face à « réduire les animations ». */
+.demarrage-echec {
+  animation: demarrage-reveler 0s linear 2s both !important;
+}
+@keyframes demarrage-reveler {
+  from {
+    visibility: hidden;
+  }
+  to {
+    visibility: visible;
+  }
+}
 .callout-danger .icone {
   background-color: var(--danger);
 }

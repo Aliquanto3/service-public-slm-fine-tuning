@@ -12,9 +12,11 @@ export function installerClavier(actions) {
     if (e.defaultPrevented) return;
     if (e.ctrlKey && !e.altKey && !e.metaKey) {
       const touche = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-      if (!e.shiftKey && /^[1-4]$/.test(touche)) {
+      // Chiffres lus par `e.code` (position physique) : en AZERTY, Ctrl+1 donne `e.key === "&"`.
+      const chiffre = /^(Digit|Numpad)([0-9])$/.exec(e.code ?? "")?.[2] ?? (/^[0-9]$/.test(touche) ? touche : null);
+      if (!e.shiftKey && chiffre !== null && chiffre >= "1" && chiffre <= "4") {
         e.preventDefault();
-        actions.prioritaire(Number(touche) - 1);
+        actions.prioritaire(Number(chiffre) - 1);
       } else if (!e.shiftKey && touche === "n") {
         e.preventDefault();
         actions.nouvelle();
@@ -27,7 +29,7 @@ export function installerClavier(actions) {
       } else if (touche === "-") {
         e.preventDefault();
         actions.taille(-1);
-      } else if (!e.shiftKey && touche === "0") {
+      } else if (!e.shiftKey && chiffre === "0") {
         e.preventDefault();
         actions.taille(0);
       }

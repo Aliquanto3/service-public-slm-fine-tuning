@@ -326,5 +326,106 @@ def test_aucune_ressource_externe_et_csp_effective(page, base) -> None:
     for url in page.requetes:
         assert url.startswith(racine) or url.startswith(("data:", "blob:")), url
     assert "default-src 'self'" in page.get_attribute("meta[http-equiv]", "content")
-    bloque = page.evaluate("fetch('https://exemple.invalid/x').then(() => false, () => true)")
-    assert bloque is True
+
+
+class _AutreOrigine(_Silencieux):
+    """Serveur local d'une autre origine, qui accepterait un `fetch` sans la CSP (CORS ouvert)."""
+
+    visites: list[str] = []
+
+    def do_GET(self) -> None:  # noqa: N802 (nom imposé par http.server)
+        _AutreOrigine.visites.append(self.path)
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", "2")
+        self.end_headers()
+        self.wfile.write(b"ok")
+
+
+@pytest.fixture
+def autre_origine() -> Iterator[str]:
+    _AutreOrigine.visites = []
+    serveur = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _AutreOrigine)
+    fil = threading.Thread(target=serveur.serve_forever, daemon=True)
+    fil.start()
+    yield f"http://127.0.0.1:{serveur.server_port}/x"
+    serveur.shutdown()
+    serveur.server_close()
+
+
+def test_csp_bloque_un_fetch_vers_une_autre_origine(page, autre_origine) -> None:
+    # Témoin hors CSP (client Playwright) : le serveur répond, un échec ne viendrait pas du réseau.
+    assert page.context.request.get(autre_origine).body() == b"ok"
+    _AutreOrigine.visites.clear()
+    resultat = page.evaluate(
+        """(url) => new Promise((fini) => {
+          const violations = [];
+          document.addEventListener('securitypolicyviolation', (e) => violations.push({
+            uri: e.blockedURI, directive: e.effectiveDirective,
+          }));
+          fetch(url).then(
+            () => setTimeout(() => fini({ bloque: false, violations }), 100),
+            () => setTimeout(() => fini({ bloque: true, violations }), 100),
+          );
+        })""",
+        autre_origine,
+    )
+    assert resultat["bloque"] is True
+    assert {"uri": autre_origine, "directive": "connect-src"} in resultat["violations"]
+    assert _AutreOrigine.visites == []
+
+
+def test_ctrl_chiffre_en_azerty_par_position_physique(page) -> None:
+    # En AZERTY, Ctrl+1 produit `key === "&"` et `code === "Digit1"` ; Ctrl+2 donne « é ».
+    for cle, code, tache in (("é", "Digit2", "RD"), ("&", "Digit1", "Q"), ("'", "Digit4", "LC")):
+        page.evaluate(
+            """([key, code]) => document.dispatchEvent(new KeyboardEvent('keydown', {
+              key, code, ctrlKey: true, bubbles: true, cancelable: true,
+            }))""",
+            [cle, code],
+        )
+        assert page.get_attribute(f"#tache-{tache}", "aria-current") == "true", cle
+
+
+def test_echec_du_pont_a_l_envoi_conserve_le_texte(page) -> None:
+    page.evaluate(
+        """() => {
+          const pont = window.slmsp.pont;
+          pont.envoyer = () => {
+            window.slmsp.bus.emettre('generation:debut', {});
+            return Promise.reject(new Error('<erreur-factice>'));
+          };
+        }"""
+    )
+    page.fill("#saisie", "<texte-factice-5>")
+    page.keyboard.press("Enter")
+    page.wait_for_function("() => !document.getElementById('erreur-interne').hidden", polling=50)
+    assert page.input_value("#saisie") == "<texte-factice-5>"
+    assert page.inner_text("#envoyer") == "Envoyer"
+    assert "<erreur-factice>" not in page.inner_text("body")
+
+
+def test_garde_de_demarrage(navigateur, base) -> None:
+    page = _ouvrir(navigateur, base)
+    try:
+        assert page.is_hidden("#demarrage-echec")
+    finally:
+        page.context.close()
+    contexte = navigateur.new_context()
+    try:
+        page = contexte.new_page()
+        page.route("**/js/socle/app.js", lambda route: route.abort())
+        page.goto(base + "?pont=factice")
+        page.locator("#demarrage-echec").wait_for(state="visible", timeout=10_000)
+        assert "n'a pas pu s'afficher" in page.inner_text("#demarrage-echec")
+    finally:
+        contexte.close()
+
+
+def test_noms_accessibles_quand_la_colonne_se_reduit(navigateur, base) -> None:
+    page = _ouvrir(navigateur, base, viewport={"width": 900, "height": 640})
+    try:
+        for id_, nom in (("tache-Q", "Question"), ("plus-bascule", "Plus")):
+            assert page.get_by_role("button", name=nom, exact=True).get_attribute("id") == id_
+    finally:
+        page.context.close()

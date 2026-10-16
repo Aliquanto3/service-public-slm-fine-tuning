@@ -50,6 +50,8 @@ function construireNavigation() {
     bouton.className = "tache";
     bouton.id = `tache-${t.id}`;
     bouton.dataset.tache = t.id;
+    bouton.title = t.libelle; // nom visible au survol quand la colonne se réduit aux icônes
+    bouton.setAttribute("aria-label", t.libelle);
     const icone = document.createElement("span");
     icone.className = `icone icone-${t.icone}`;
     icone.setAttribute("aria-hidden", "true");
@@ -166,12 +168,14 @@ bus.abonner("evenement:fin", () => {
   etat.generation = false;
   composer.rafraichir();
 });
-bus.abonner("evenement:erreur", () => {
+function signalerErreur() {
   etat.generation = false;
   $("erreur-interne").hidden = false;
   composer.restaurer();
   annoncer("Un problème est survenu. Votre texte est conservé.");
-});
+}
+bus.abonner("evenement:erreur", signalerErreur);
+bus.abonner("generation:erreur", signalerErreur); // l'appel au pont a lui-même échoué
 bus.abonner("sources:ouvrir", () => ouvrirSources(true));
 bus.abonner("sources:fermer", () => ouvrirSources(false));
 bus.abonner("sources:disponibles", (disponibles) => {
@@ -180,6 +184,7 @@ bus.abonner("sources:disponibles", (disponibles) => {
 });
 
 async function demarrer() {
+  $("demarrage-echec").hidden = true; // garde de index.html : le JS a bien démarré
   construireNavigation();
   appliquerTaille(memoire.lire("echelle", 100));
   etat.bienvenue = !memoire.lire("bienvenue-vue", false);
@@ -210,12 +215,19 @@ async function demarrer() {
     echap: () => {
       if ($("dialogue-parametres").open) return; // fermé nativement
       if (etat.sources) ouvrirSources(false);
-      else if (etat.generation && document.activeElement?.closest("[data-reponse]")) pont.arreter();
+      else if (etat.generation && document.activeElement?.closest("[data-reponse]")) {
+        Promise.resolve().then(() => pont.arreter()).catch(signalerErreur);
+      }
     },
   });
   // L'interface est utilisable (saisie, navigation) avant que le pont ne réponde.
   activer("Q", { annonce: false });
-  pont = await ouvrirPont(bus);
+  try {
+    pont = await ouvrirPont(bus);
+  } catch {
+    $("demarrage-echec").hidden = false; // pont introuvable : l'utilisateur le voit, sans détail
+    return;
+  }
   ancrerVuesTransverses();
   activer(etat.tache, { annonce: false }); // monte la vue active, maintenant que le pont existe
   window.slmsp = { bus, pont, etat, activer, ouvrirSources, TACHES };
@@ -228,4 +240,6 @@ function nouvelle() {
   bus.emettre("nouvelle", { tache: etat.tache });
 }
 
-demarrer();
+demarrer().catch(() => {
+  $("demarrage-echec").hidden = false;
+});

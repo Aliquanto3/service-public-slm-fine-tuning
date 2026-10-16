@@ -30,13 +30,20 @@ export function monterComposer({ bus, getPont, etat }) {
     saisie.value = "";
     brouillons.delete(etat.tache);
     bus.emettre("envoi", dernier);
-    getPont().envoyer(dernier.tache, [{ role: "user", content: texte }], {});
+    appelSur(() => getPont().envoyer(dernier.tache, [{ role: "user", content: texte }], {}));
     rafraichir();
+  }
+
+  /** Un appel au pont qui échoue (rejet ou exception) devient `generation:erreur` : rien n'est perdu. */
+  function appelSur(appel) {
+    Promise.resolve()
+      .then(appel)
+      .catch(() => bus.emettre("generation:erreur", { tache: etat.tache }));
   }
 
   formulaire.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (etat.generation) getPont().arreter();
+    if (etat.generation) appelSur(() => getPont().arreter());
     else envoyerSaisie();
   });
   saisie.addEventListener("input", rafraichir);

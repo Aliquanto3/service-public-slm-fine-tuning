@@ -64,3 +64,18 @@ Décisions prises seul (réversibles) :
 - `Échap` arrête la génération seulement si le focus est dans un élément `[data-reponse]` (à poser par la vue Question).
 
 **Reports :** écran « Question vide » et ses trois exemples (UX-DR19), erreurs propres à chaque vue, panneau Sources lui-même (le socle n'en fournit que le conteneur et les évènements `sources:ouvrir`, `sources:fermer`, `sources:disponibles`).
+
+**Exigences reportées à 12.6 (empaquetage) :**
+- Servir l'interface en HTTP local (`webview.start(http_server=True)` de pywebview), jamais en `file://` : WebView2 refuse les modules ES (`<script type="module">`) et les masques CSS en `file://`. Vérification : lancer l'application installée et constater que la colonne des Tâches s'affiche ; sinon la garde `#demarrage-echec` apparaît au bout de 2 s.
+- Exclure `js/socle/pont-factice.js` de l'application installée (PyInstaller) : `?pont=factice` ne doit être activable que dans les tests et le développement. Sans ce fichier, `ouvrirPont` échoue et la garde s'affiche, au lieu de fausses réponses.
+
+## Revue
+
+- medium, second avis 1 (test CSP prouvant seulement l'échec DNS) : corrigé. `test_csp_bloque_un_fetch_vers_une_autre_origine` vise un serveur local d'une autre origine qui répond (CORS ouvert, témoin `urllib`) ; il exige l'évènement `securitypolicyviolation` (`connect-src`) et aucune visite côté serveur. Échoue si la CSP est retirée (vérifié).
+- medium, second avis 2 (Ctrl+1 à 4 inopérants en AZERTY) : corrigé. Chiffres lus par `e.code` (`Digit`/`Numpad`), repli sur `e.key` ; Ctrl+0 aussi. Test `test_ctrl_chiffre_en_azerty_par_position_physique` (échoue sur l'ancien code).
+- medium, second avis 3 (rejet de `envoyer` non capturé) : corrigé. `composer` enveloppe `envoyer` et `arreter` (rejet ou exception) et émet `generation:erreur`, traité comme `evenement:erreur` (encart, texte restauré, annonce) ; Échap → `arreter` aussi. Test `test_echec_du_pont_a_l_envoi_conserve_le_texte` (échoue sur l'ancien code).
+- medium, second avis 4 (modules ES refusés en `file://`) : corrigé en partie, reste reporté à 12.6. Garde `#demarrage-echec` visible au bout de 2 s si `app.js` ne démarre pas ou si `ouvrirPont` échoue, masquée au lancement. Test `test_garde_de_demarrage` (app.js bloqué). Le service HTTP local est consigné ci-dessus pour 12.6.
+- low, second avis 5 (aucun nom accessible sous 1 024 px) : corrigé. `aria-label` et `title` sur les boutons de Tâche et « Plus » ; test à 900 px.
+- low, second avis 6 (pas de try/catch sur `ouvrirPont`) : corrigé, avec la garde de démarrage.
+- low, second avis 7 (`?pont=factice` activable une fois installé) : reporté à 12.6 (exclure `pont-factice.js` du paquet). Le pont factice ne renvoie que des chaînes factices et n'ouvre aucun accès : pas de risque de sécurité, seulement de confusion.
+- info, reviewer : rebase sur main (12.1, 12.2, `lm-eval[api]`) sans conflit ; `uv lock --check` cohérent.

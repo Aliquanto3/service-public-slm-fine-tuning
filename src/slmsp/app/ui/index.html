@@ -28,7 +28,7 @@
         <p class="etiquette" id="etiquette-taches">Tâches</p>
         <ul class="taches" id="taches-prioritaires" aria-labelledby="etiquette-taches"></ul>
         <button type="button" id="plus-bascule" class="tache plus" aria-expanded="false"
-                aria-controls="taches-secondaires">
+                aria-controls="taches-secondaires" aria-label="Plus" title="Plus">
           <span class="icone icone-plus" aria-hidden="true"></span><span>Plus</span>
         </button>
         <ul class="taches" id="taches-secondaires" aria-label="Autres tâches" hidden></ul>
@@ -56,6 +56,10 @@
     </header>
 
     <main id="principal" class="principal" aria-label="Zone de travail">
+      <!-- Garde : affiché si le JS ne démarre pas (app.js le masque dès son lancement). -->
+      <div id="demarrage-echec" class="callout callout-danger demarrage-echec" role="alert">
+        <p>L'assistant n'a pas pu s'afficher. Fermez-le puis relancez-le. Si le problème persiste, contactez votre support informatique.</p>
+      </div>
       <p id="bandeau-preparation" class="bandeau" role="status" hidden>Préparation de l'assistant…</p>
       <div id="erreur-interne" class="callout callout-danger" role="alert" hidden>
         <span class="icone icone-attention" aria-hidden="true"></span>
