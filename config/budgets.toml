@@ -17,15 +17,15 @@ marge_eur = 0.5
 majoration_entree = 1.25
 
 [postes.anthropic]
-plafond_eur = 7.5
+plafond_eur = 10.0
 
 [postes.mistral]
-plafond_eur = 1.0
+plafond_eur = 30.0
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
-generation = 0.0
-juge = 1.0
+generation = 25.0
+juge = 5.0
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]

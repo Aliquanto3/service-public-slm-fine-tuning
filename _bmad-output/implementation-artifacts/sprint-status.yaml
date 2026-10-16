@@ -103,7 +103,7 @@ development_status:
   9-4-étape-generate-génération-idempotente-et-traces-d-outils: done
   9-5-étapes-validate-et-filter: done
   9-6-étape-build-re-dérivation-jeu-versionné-et-suite-des-verrous: done
-  9-7-paires-de-préférence-orpo: backlog
+  9-7-paires-de-préférence-orpo: done
   9-8-campagne-de-génération-de-la-nuit-jeu-v1: backlog
   epic-9-retrospective: optional
 
