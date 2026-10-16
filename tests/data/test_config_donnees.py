@@ -57,11 +57,11 @@ def _generateur() -> ModuleType:
 
 
 def _date_du_jour() -> tuple[str, str]:
-    return (r'^conditions_verifiees_le = .*$', f"conditions_verifiees_le = {date.today()}")
+    return (r"^conditions_verifiees_le = .*$", f"conditions_verifiees_le = {date.today()}")
 
 
 def _sha_factice() -> tuple[str, str]:
-    return (r'^conditions_sha256 = .*$', f'conditions_sha256 = "{SHA_FACTICE}"')
+    return (r"^conditions_sha256 = .*$", f'conditions_sha256 = "{SHA_FACTICE}"')
 
 
 # --- Configuration réelle -----------------------------------------------------------------
@@ -145,7 +145,7 @@ def test_date_veille_refusee_par_le_generateur(tmp_path: Path) -> None:
     generateur = _generateur()
     chemin = _variante(
         tmp_path,
-        (r'^conditions_verifiees_le = .*$', "conditions_verifiees_le = 2026-01-01"),
+        (r"^conditions_verifiees_le = .*$", "conditions_verifiees_le = 2026-01-01"),
         _sha_factice(),
     )
     assert charger_config_donnees(chemin).mistral.conditions_verifiees_le == date(2026, 1, 1)
@@ -176,12 +176,12 @@ def test_sha_sans_date_refuse(tmp_path: Path) -> None:
 @pytest.mark.parametrize("sha", ["abc", SHA_FACTICE.upper(), "g" * 64, SHA_FACTICE + "0"])
 def test_sha_invalide(tmp_path: Path, sha: str) -> None:
     with pytest.raises(ConfigurationInvalide, match="conditions_sha256"):
-        _charger(tmp_path, (r'^conditions_sha256 = .*$', f'conditions_sha256 = "{sha}"'))
+        _charger(tmp_path, (r"^conditions_sha256 = .*$", f'conditions_sha256 = "{sha}"'))
 
 
 def test_date_chaine_non_vide_refusee(tmp_path: Path) -> None:
     with pytest.raises(ConfigurationInvalide, match="conditions_verifiees_le"):
-        _charger(tmp_path, (r'^conditions_verifiees_le = .*$', 'conditions_verifiees_le = "hier"'))
+        _charger(tmp_path, (r"^conditions_verifiees_le = .*$", 'conditions_verifiees_le = "hier"'))
 
 
 def test_modeles_stables_vides(tmp_path: Path) -> None:
