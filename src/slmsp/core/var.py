@@ -61,6 +61,26 @@ def dossier_var() -> Path:
     return dossier.resolve()
 
 
+def _activer_wal(connexion: sqlite3.Connection) -> str:
+    """Passe en WAL ; le basculement concurrent ignore `busy_timeout` : on réessaie.
+
+    Deux processus qui ouvrent une base neuve en même temps peuvent recevoir
+    `database is locked` immédiatement sur ce PRAGMA. Une fois la base en WAL,
+    le PRAGMA est un no-op ; la nouvelle tentative suffit donc.
+    """
+    fin = time.monotonic() + BUSY_TIMEOUT_MS / 1000
+    while True:
+        try:
+            (mode,) = connexion.execute("PRAGMA journal_mode = WAL").fetchone()
+            return str(mode)
+        except sqlite3.OperationalError as exc:
+            if "locked" not in str(exc) and "busy" not in str(exc):
+                raise
+            if time.monotonic() >= fin:
+                raise
+            time.sleep(0.01)
+
+
 def ouvrir_sqlite(chemin: str | Path) -> sqlite3.Connection:
     """Ouvre la base `chemin` en mode WAL avec un `busy_timeout` de 30 000 ms."""
     chemin = Path(chemin)
@@ -68,7 +88,7 @@ def ouvrir_sqlite(chemin: str | Path) -> sqlite3.Connection:
     connexion = sqlite3.connect(chemin, timeout=BUSY_TIMEOUT_MS / 1000)
     try:
         connexion.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MS}")
-        (mode,) = connexion.execute("PRAGMA journal_mode = WAL").fetchone()
+        mode = _activer_wal(connexion)
         if str(mode).lower() != "wal":
             raise SlmspError(f"{chemin} : mode WAL refusé par SQLite (mode {mode})")
     except BaseException:
