@@ -15,7 +15,7 @@ import pytest
 
 from slmsp.cli import main
 from slmsp.core.artefacts import ouvrir_run
-from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, LectureInterdite, RessourceOccupee
+from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, RessourceOccupee
 from slmsp.core.var import verrou_gpu
 from slmsp.train import run as module_run
 
@@ -134,10 +134,11 @@ def test_gpu_occupe(projet, pile) -> None:
     assert not (projet.racine / "runs" / "train").exists()
 
 
-def test_orpo_lecture_de_l_adaptateur_sft_interdite(projet, pile, factices) -> None:
+def test_orpo_adaptateur_sft_absent(projet, pile, factices) -> None:
+    """AD-24 étendu (A1) : l'adaptateur SFT est lisible, mais doit exister en entier."""
     projet.ecrire_jeu(lignes=[factices.paire(i) for i in range(1, 3)], fichier="preferences.jsonl")
     toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id="20261016-120000-m1-qlora-abcd")
-    with pytest.raises(LectureInterdite, match="adaptateur"):
+    with pytest.raises(ConfigurationInvalide, match="adaptateur SFT absent"):
         module_run.executer(toml, racine=projet.racine, pile=pile)
 
 
@@ -197,7 +198,6 @@ def test_orpo_meme_campagne_que_sft(projet, pile, factices, monkeypatch) -> None
         fichier="preferences.jsonl",
         manifeste={"sha256_train": sha_train},
     )
-    monkeypatch.setattr(module_run, "chemin_autorise", lambda chemin, *a, **kw: chemin)
     monkeypatch.setitem(sys.modules, "trl.experimental.orpo", pile.orpo)
     toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id=m1)
     m4 = _executer(projet, pile, toml)

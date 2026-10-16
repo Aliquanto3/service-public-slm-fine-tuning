@@ -224,12 +224,17 @@ def executer(
         chargement.recontroler_rejected(jeu.lignes, racine=racine)
     adaptateur_sft = None
     if config.sft_run_id is not None:
-        # AD-24 : `train` ne lit pas `runs/train/` (amendement à trancher, note 10.6).
+        # AD-24 étendu (A1, 2026-10-16) : seul `runs/train/<id>/adaptateur/` est lisible.
         adaptateur_sft = chemin_autorise(
             racine / "runs" / TYPE_RUN / config.sft_run_id / DOSSIER_ADAPTATEUR,
             "train",
             racine=racine,
         )
+        if not _complet(adaptateur_sft, FICHIERS_ADAPTATEUR):
+            raise ConfigurationInvalide(
+                f"sft_run_id {config.sft_run_id} : adaptateur SFT absent ou incomplet "
+                f"({adaptateur_sft})"
+            )
 
     if pile is None:
         try:
