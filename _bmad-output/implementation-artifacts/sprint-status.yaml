@@ -116,8 +116,8 @@ development_status:
   10-6-export-gguf-et-contrôle-après-quantification: backlog
   epic-10-retrospective: optional
 
-  epic-11: backlog
-  11-1-squelette-du-comparatif: backlog
+  epic-11: in-progress
+  11-1-squelette-du-comparatif: done
   11-2-essai-m1-qlora-de-la-nuit-et-mini-rapport: backlog
   epic-11-retrospective: optional
 
