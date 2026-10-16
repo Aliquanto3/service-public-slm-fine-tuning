@@ -75,8 +75,8 @@ class TorchSimule:
     def __init__(self, alloue: int = 3 * GO, reserve: int = 4 * GO, cuda: bool = True) -> None:
         self.cuda = SimpleNamespace(
             is_available=lambda: cuda,
-            max_memory_allocated=lambda: alloue,
-            max_memory_reserved=lambda: reserve,
+            max_memory_allocated=lambda dev=None: alloue,
+            max_memory_reserved=lambda dev=None: reserve,
         )
 
 
@@ -365,7 +365,7 @@ def test_le_module_n_importe_aucune_bibliotheque_lourde() -> None:
         "assert not lourds & set(sys.modules), lourds & set(sys.modules)"
     )
     resultat = subprocess.run(
-        [sys.executable, "-I", "-c", code],
+        [sys.executable, "-s", "-c", code],
         capture_output=True,
         text=True,
         cwd=RACINE,

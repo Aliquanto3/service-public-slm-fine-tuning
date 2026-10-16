@@ -99,3 +99,12 @@ deferred:
 - `indice_gpu` ajouté au protocole (défaut 0), faute de quoi NVML interrogerait une carte arbitraire sur une machine multi-GPU.
 
 **Reports :** câblage dans `train run` et vérification du compteur de tokens avec transformers 5.17.0 (story 10.4, voir `deferred`).
+
+## Revue
+
+- low, corrigé : test d'hygiène d'import dépendait de l'install éditable du venv (`-I` ignore PYTHONPATH) ; remplacé par `-s` (PYTHONPATH honoré, src du checkout prioritaire).
+- low, corrigé : `_importer("torch")` n'attrapait que ImportError ; il attrape désormais toute exception (OSError de DLL CUDA) et le callback dégrade en avertissement.
+- low, corrigé : VRAM torch lue sur `indice_gpu` (et non le device courant), cohérente avec NVML.
+- low, rejeté : énergie/VRAM NVML de la carte entière, déjà documenté (docstring et décisions prises seul).
+- low, rejeté : trapèze à travers des relevés de puissance absents ; l'intégrale reste correcte sur les instants valides et les erreurs NVML sont déjà signalées en avertissement.
+- low, consigné : `couts.json` ne porte ni configuration, ni graine, ni environnement (ils vivent dans le Run) ; `ecrire_mesures` n'est pas câblé dans un Run, reporté en 10.4.

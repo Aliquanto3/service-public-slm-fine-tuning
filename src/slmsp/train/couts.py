@@ -177,7 +177,7 @@ class EchantillonneurNvml:
 def _importer(nom: str) -> Any | None:
     try:
         return importlib.import_module(nom)
-    except ImportError:
+    except Exception:  # ImportError, mais aussi OSError (DLL CUDA introuvable)
         return None
 
 
@@ -284,8 +284,8 @@ class CallbackCouts:
                 self._avertissements.append("CUDA indisponible : VRAM torch non mesurée")
                 return None, None
             return (
-                int(torch.cuda.max_memory_allocated()),
-                int(torch.cuda.max_memory_reserved()),
+                int(torch.cuda.max_memory_allocated(self.config.indice_gpu)),
+                int(torch.cuda.max_memory_reserved(self.config.indice_gpu)),
             )
         except Exception as exc:
             self._avertissements.append(f"VRAM torch illisible ({type(exc).__name__})")
