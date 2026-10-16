@@ -187,3 +187,11 @@ def test_effacer_historique_oublie_le_dernier_envoi(stockage: Stockage) -> None:
     pont = PontReglages(stockage, apres_effacement=lambda: oublies.append(True))
     pont.effacer_historique()
     assert oublies == [True]
+
+
+def test_langues_traduction_lues_dans_la_configuration(stockage: Stockage) -> None:
+    """Story 13.4 : les langues de la vue Traduction viennent de `config/application.toml`."""
+    from slmsp.core.schemas.config_application import charger_config_application
+
+    reponse = PontReglages(stockage).appeler("langues_traduction")
+    assert reponse == {"ok": True, "langues": charger_config_application().langues_traduction}

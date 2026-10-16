@@ -136,9 +136,18 @@ def test_slug_mal_forme_refuse_sans_echo(
         assert slug not in str(erreur.value).replace(str(tmp_path), "")
 
 
-@pytest.mark.parametrize("langues", [[], ["en", "en"], ["EN"], ["e"]])
+@pytest.mark.parametrize("langues", [[], ["en", "en"], ["EN"], ["e"], ["it"], ["en", "zh"]])
 def test_langues_invalides_refusees(langues: list[str]) -> None:
     with pytest.raises(ValueError):
         app.ConfigApplication(
             modele="granite-4.0-1b", dossier_donnees="d", langues_traduction=langues
         )
+
+
+def test_langues_acceptees_sont_celles_de_la_tache_tr() -> None:
+    from slmsp.core.langues import LANGUES
+
+    config = app.ConfigApplication(
+        modele="granite-4.0-1b", dossier_donnees="d", langues_traduction=list(LANGUES)
+    )
+    assert config.langues_traduction == list(LANGUES)

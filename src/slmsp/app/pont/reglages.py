@@ -7,6 +7,8 @@ Chaque méthode rend `{"ok": true, ...}` ou lève ; le pont convertit l'exceptio
   "hors_ligne_force": bool}}`.
 - `ecrire(cle, valeur)` -> `{"ok": true}`. Seule `taille_texte` est modifiable ici (un des cinq
   crans) ; le Mode se règle par `mode.forcer_hors_ligne`. Autre clé ou valeur : `reglage-invalide`.
+- `langues_traduction()` -> `{"ok": true, "langues": ["en", "es", ...]}` : codes de
+  `config/application.toml` (`langues_traduction`, Q9), proposés par la vue Traduction.
 - `effacer_historique()` -> `{"ok": true}` : vide conversations et Retours (réglages et journal
   conservés). La confirmation de 5 s (UX-DR18) est tenue par l'interface.
 - `a_propos()` -> `{"ok": true, "application": {"version": str|None, "empreinte": str|None},
@@ -40,7 +42,9 @@ CRANS_TAILLE: Final = (100, 112, 125, 137, 150)
 RESSOURCES: Final = Path(__file__).resolve().parents[1] / "ressources"
 FICHIER_LICENCES: Final = "licences-tierces.json"
 FICHIER_EMPREINTE: Final = "empreinte-application.txt"  # produit au build (12.12), optionnel
-METHODES: Final = frozenset({"lire", "ecrire", "effacer_historique", "a_propos"})
+METHODES: Final = frozenset(
+    {"lire", "ecrire", "effacer_historique", "a_propos", "langues_traduction"}
+)
 CODE_INVALIDE: Final = "reglage-invalide"
 
 # Libellés proposés (à valider par Anaël ; Q1, Q6, UX-DR22).
@@ -130,6 +134,11 @@ class PontReglages:
             }
         stock.ecrire_reglage(cle, valeur)
         return {"ok": True}
+
+    def langues_traduction(self) -> dict[str, Any]:
+        from slmsp.core.schemas.config_application import charger_config_application
+
+        return {"ok": True, "langues": list(charger_config_application().langues_traduction)}
 
     def effacer_historique(self) -> dict[str, Any]:
         self._stock().effacer_historique()

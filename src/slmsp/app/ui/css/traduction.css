@@ -1,1 +1,43 @@
-/* Vue « traduction » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vue Traduction : choix des langues et isolement bidirectionnel (story 13.4). */
+.choix-langues {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin: 0 0 var(--sp-3);
+}
+.choix-langue {
+  color: var(--ink);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+.choix-langues select {
+  min-height: 2.25rem;
+}
+/* Saisie et sortie isolées : un texte arabe ne retourne pas la ponctuation de la page. */
+#vue-TR .redaction-saisie,
+#vue-TR .resultat,
+#vue-TR .traduction-texte {
+  unicode-bidi: isolate;
+}
+.traduction-texte {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mention-traduction {
+  margin: var(--sp-3) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+
+.message-langues {
+  flex-basis: 100%;
+  margin: 0;
+  padding-left: var(--sp-2);
+  border-left: 3px solid var(--danger);
+}
+
+.message-langues[hidden] {
+  display: none;
+}
