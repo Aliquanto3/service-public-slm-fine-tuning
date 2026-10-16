@@ -113,7 +113,7 @@ development_status:
   10-3-mesures-de-coût-d-un-run-fr-33: done
   10-4-runs-d-entraînement-configurables-slmsp-train-run: done
   10-5-variante-qlora-unsloth-en-environnement-isolé: done
-  10-6-export-gguf-et-contrôle-après-quantification: backlog
+  10-6-export-gguf-et-contrôle-après-quantification: done
   epic-10-retrospective: optional
 
   epic-11: in-progress
