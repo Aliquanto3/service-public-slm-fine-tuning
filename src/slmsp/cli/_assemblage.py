@@ -29,7 +29,7 @@ from slmsp.harness.modes import ModeFixe, ModeSonde
 from slmsp.harness.service import AssistantService
 from slmsp.harness.taches import Tache, charger_taches
 from slmsp.net.client import Passerelle
-from slmsp.net.journal import JournalSqlite
+from slmsp.net.journal import JournalMemoire, JournalSqlite
 
 PREFIXE_BASE = "base:"
 
@@ -134,8 +134,13 @@ def assembler(
         return plafonner_threads(config_modele, threads)
 
     with ExitStack() as pile:
+        if "passages" in fiche.prompt.emplacements and vector_store is None:
+            from slmsp.index.lecture import ouvrir_index
+
+            vector_store = pile.enter_context(ouvrir_index(racine))  # échec avant les serveurs
         if journal is None:
-            journal = JournalSqlite()
+            # Hors ligne forcé, aucune requête n'est émise : pas de fichier SQLite à ouvrir.
+            journal = JournalMemoire() if hors_ligne else JournalSqlite()
         mode = ModeSonde(
             config.modes,
             hors_ligne_force=hors_ligne,
@@ -164,10 +169,6 @@ def assembler(
                 )
                 serveurs.append(embedding)
                 embedder = embedding.embedder()
-            if vector_store is None:
-                from slmsp.index.lecture import ouvrir_index
-
-                vector_store = pile.enter_context(ouvrir_index(racine))
         else:
             embedder = vector_store = None
         if fiche.outils_autorises and not hors_ligne and outils is None:

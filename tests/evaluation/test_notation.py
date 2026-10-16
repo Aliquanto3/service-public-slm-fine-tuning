@@ -16,7 +16,13 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from evaluation_factices import ITEMS_8, Fabrique, JugeFactice, verdict_factice
+from evaluation_factices import (
+    ITEMS_8,
+    Fabrique,
+    FakeLlmDeterministe,
+    JugeFactice,
+    verdict_factice,
+)
 
 from slmsp.cli import main
 from slmsp.core.artefacts import Run, nouveau_run, ouvrir_run
@@ -557,6 +563,33 @@ def test_cli_toutes(
     (run,) = runs_notation(depot_eval)
     scores = json.loads((run / FICHIER_SCORES).read_text(encoding="utf-8"))
     assert len(scores["taches"]) == 8
+
+
+def test_cli_toutes_apres_generation_partiel_erreur(
+    depot_eval: Path,
+    modeles: Path,
+    juges_cli: list[Any],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """W1 : un item en erreur n'empêche pas la notation ; la commande sort en code 1."""
+    entree = lire_jeu("v1.0", depot_eval).item("NR-001").entree
+
+    def lever(messages: Any) -> BaseException | None:
+        if any(entree in str(m.get("content")) for m in messages):
+            return RuntimeError("<panne-factice>")
+        return None
+
+    monkeypatch.setattr(assemblage, "ouvrir_harnais", Fabrique(FakeLlmDeterministe(lever)))
+    commande = [
+        "eval", "run", "--modele", MODELE, "--quantification", "q4_k_m", "--jeu", "v1.0",
+        "--items", ",".join(ITEMS_8), "--racine", str(depot_eval),
+    ]  # fmt: skip
+    assert main(commande) == CodeSortie.ERREUR
+    assert "Run de notation : " in capsys.readouterr().out
+    (run,) = runs_notation(depot_eval)
+    assert ouvrir_run(run.name, racine=depot_eval).statut_courant() != "en_cours"
+    assert juges_cli != []
 
 
 def test_second_juge_seulement_apres_verdict_principal_valide(

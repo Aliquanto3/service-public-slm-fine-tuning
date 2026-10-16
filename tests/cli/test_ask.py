@@ -167,3 +167,50 @@ def test_reel_ask_de_bout_en_bout() -> None:
         )
     assert isinstance(evenements[-1], Fin)
     assert "".join(e.texte for e in evenements if isinstance(e, Jeton)).strip()
+
+
+def test_appel_non_conforme_affiche_en_mode_texte(capsys) -> None:
+    from slmsp.cli.ask import _afficher
+    from slmsp.core.evenements import AppelNonConforme
+
+    evenement = AppelNonConforme(nom="<outil-factice>", arguments_bruts="{}", motif="<motif>")
+    _afficher(evenement, [])
+    erreur = capsys.readouterr().err
+    assert "non conforme" in erreur and "<outil-factice>" in erreur and "<motif>" in erreur
+
+
+def test_index_ouvert_avant_les_serveurs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Une Tâche à passages échoue sur l'Index avant de démarrer le moindre serveur."""
+    import slmsp.inference.serveur as serveur
+    from slmsp.index import lecture
+
+    def index_absent(racine: Any = None) -> Any:
+        raise FileNotFoundError("<index-absent-factice>")
+
+    def serveur_interdit(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("serveur démarré avant l'Index")
+
+    monkeypatch.setattr(lecture, "ouvrir_index", index_absent)
+    monkeypatch.setattr(serveur, "ServeurLlama", serveur_interdit)
+    with (
+        pytest.raises(FileNotFoundError),
+        assemblage.assembler(MODELE, journal=JournalMemoire(), hors_ligne=True),
+    ):
+        pass
+
+
+def test_hors_ligne_n_ouvre_pas_le_journal_sqlite(
+    banc, monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
+    def interdit(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("JournalSqlite ouvert en hors ligne")
+
+    monkeypatch.setattr(assemblage, "JournalSqlite", interdit)
+    with assemblage.assembler(
+        MODELE,
+        hors_ligne=True,
+        llm=banc.llm,
+        embedder=F.FakeEmbedder(),
+        vector_store=banc.store,
+    ) as assemble:
+        assert assemble.journal.lister() == []

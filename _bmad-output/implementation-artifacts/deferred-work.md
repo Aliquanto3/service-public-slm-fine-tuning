@@ -2,7 +2,8 @@
 
 ## Deferred from: code review of lot 2, évaluation (2026-10-12)
 
-- **W1. `eval run --phase toutes` après une génération `partiel-erreur` : aucun test n'atteint la notation** (`src/slmsp/cli/eval.py:309`). Ajouter un cas paramétré à `test_cli_toutes`, avec un `FakeLlm` qui échoue sur un item. Il vérifie qu'un run `eval-notation` est créé et que la commande sort en code 1.
+- **W1. TRAITÉ (dette/lot-1)** : `test_cli_toutes_apres_generation_partiel_erreur` couvre `eval run --phase toutes` après une génération `partiel-erreur` (run `eval-notation` créé, code 1) ; aucun défaut du code.
+- **W-ask. `slmsp ask --journal` filtré par horodatage seul** (`cli/ask.py`) : le journal SQLite ne porte aucun identifiant de session ou d'exécution (schéma figé à 8 colonnes, AD-4) ; des `ask` concurrents peuvent se mêler. Un filtre exact demande une colonne `session` (nouvelle version de schéma) : décision à confirmer par Anaël. Les trois autres points mineurs de la 4.5 sont corrigés (AppelNonConforme affiché, Index ouvert avant les serveurs, pas de JournalSqlite en `--hors-ligne`).
 - **W3. Jeu v1.1 : déclarer `valeurs_attendues.colonnes` sur les 5 items RD de la méthode `valeurs`, puis geler** (issu de D1, option 1). Le correctif P8 lit la liste. Sans elle, le jeu v1.0 garde un biais : RD-017, RD-010 et RD-039 peuvent être notés faux sur une réponse exacte. Colonnes proposées : RD-010 `Nbre_bailleurs` et `Nbre_logements` ; RD-017 `Nombre` ; RD-023 `Année` et `Note Index` ; RD-030 `REG` et `CHEFLIEU` ; RD-039 `Effectifs` et `IPS`. Il faut une nouvelle version, l'export de revue, une relecture humaine et `gel --statut relu`, à faire avant la Baseline complète.
 
 ## Deferred from: revues croisées du commit 793bd33, story 10.1 (2026-10-13)

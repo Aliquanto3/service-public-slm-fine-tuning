@@ -24,6 +24,7 @@ from typing import Any
 
 from slmsp.core.erreurs import CodeSortie
 from slmsp.core.evenements import (
+    AppelNonConforme,
     Avertissement,
     Erreur,
     Evenement,
@@ -103,6 +104,10 @@ def _afficher(evenement: Evenement, resultats: list[ResultatOutil]) -> None:
         print(f"\n{evenement.etape} {evenement.fait}{total}", file=sys.stderr)
     elif isinstance(evenement, Repli):
         print(f"\n{evenement.motif}", file=sys.stderr)
+    elif isinstance(evenement, AppelNonConforme):
+        print(
+            f"\nAppel d'outil non conforme ({evenement.nom}) : {evenement.motif}", file=sys.stderr
+        )
 
 
 def _ask(args: argparse.Namespace) -> int:
