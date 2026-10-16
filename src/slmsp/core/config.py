@@ -10,6 +10,7 @@ par un modèle pydantic dérivé de `ModeleConfig` (`extra="forbid"`).
 from __future__ import annotations
 
 import os
+import sys
 import tomllib
 from collections.abc import Mapping
 from pathlib import Path
@@ -34,7 +35,19 @@ _SUFFIXES_SECRET = ("_API_KEY", "_TOKEN", "_KEY", "_PASSWORD")
 
 
 def racine_projet() -> Path:
-    """Racine du dépôt (installation éditable d'uv : `src/slmsp/core/config.py`)."""
+    """Racine du projet : `SLMSP_RACINE`, sinon l'installation si le processus est gelé.
+
+    Ordre : variable `SLMSP_RACINE` ; exécutable gelé (`sys.frozen`), où la racine est
+    `sys._MEIPASS` (ou le dossier de l'exécutable) et porte `config/`, `vendor/`, `models/` ;
+    sinon le dépôt (installation éditable d'uv : `src/slmsp/core/config.py`).
+    """
+    valeur = os.environ.get("SLMSP_RACINE", "").strip()
+    if valeur:
+        return Path(valeur).expanduser().resolve()
+    if getattr(sys, "frozen", False):
+        meipass = getattr(sys, "_MEIPASS", None)
+        base = Path(meipass) if meipass else Path(sys.executable).parent
+        return base.resolve()
     return Path(__file__).resolve().parents[3]
 
 

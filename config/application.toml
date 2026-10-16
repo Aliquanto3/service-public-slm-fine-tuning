@@ -1,0 +1,11 @@
+# Application Windows de l'Agent (J4, story 12.1, Q13). Lue par `slmsp.app` et par la CLI.
+# L'application est indépendante du Modèle : changer de Modèle = changer `modele`.
+
+schema_version = 1
+modele = "granite-4.0-1b"  # slug de config/modeles/ (jamais « base:<slug> »)
+variante = "cpu"           # variante llama.cpp du Modèle embarqué
+threads = 4                # plafond de threads des serveurs (poste cible sans GPU)
+dossier_donnees = '%LOCALAPPDATA%\AssistantSP'  # historique, Retours, journal J4
+
+# Langues proposées par la vue Traduction (story 13.4, Q9 : l'arabe se retire par une ligne).
+langues_traduction = ["en", "es", "ar", "pt", "de"]
