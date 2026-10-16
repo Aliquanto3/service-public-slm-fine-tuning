@@ -78,3 +78,10 @@ Commande réelle à lancer plus tard (verrou libre, modèle et Index présents, 
 - low, consigné : RAM = working set, non USS (surestime légèrement, prudent) ; le pic du chargement du modèle est capté seulement si l'échantillonneur couvre le démarrage (non) ; p95 sur 10 valeurs = quasi le maximum.
 - low, consigné : code de sortie 0 si un NFR est infirmé, cohérent avec `index mesurer` ; le verdict est dans le résultat.
 - low, corrigé : tests ajoutés pour `_conformite` (bornes, valeurs None), la taille absente et `plafonner_threads` (extrait de `assembler`).
+
+## Complément : `measure run --contexte N` (correctif fix/measure-contexte)
+
+- `--contexte N` surcharge le contexte du seul serveur de génération (`assembler(contexte=…)`, `avec_contexte`) ; l'embedding garde le sien. Valeur validée : entier de 1 au contexte de `config/modeles/<slug>.toml` (sinon code 2).
+- Contexte effectif (surcharge ou contexte du modèle) consigné dans `run.json` (`config.contexte`), `resultat.json` (`parametres.contexte`, `details.contexte_effectif`) et affiché par la commande.
+- Refus sans troncature (`ContexteInsuffisant`, code 2) si `prompt_tokens + completion_tokens >= contexte` (usage du serveur) ou si le serveur signale un dépassement de contexte ; le run est alors `partiel-erreur`.
+- Choix : le prompt n'est pas estimé avant lancement (pas de tokenizer côté harnais) ; le refus survient dès la question d'échauffement. À confirmer par Anaël : un contexte réduit invalide la comparaison NFR-1 avec les mesures à 8 192.

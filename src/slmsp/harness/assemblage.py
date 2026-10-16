@@ -104,6 +104,13 @@ def plafonner_threads(config_modele: Any, threads: int | None) -> Any:
     )
 
 
+def avec_contexte(config_modele: Any, contexte: int | None) -> Any:
+    """Config du Modèle avec le contexte `contexte` (None : inchangée)."""
+    if contexte is None:
+        return config_modele
+    return config_modele.model_copy(update={"contexte": contexte})
+
+
 @contextmanager
 def assembler(
     modele: str,
@@ -119,13 +126,15 @@ def assembler(
     vector_store: VectorStore | None = None,
     outils: ToolPort | None = None,
     threads: int | None = None,
+    contexte: int | None = None,
 ) -> Iterator[Assemblage]:
     """Assemble l'Assistant pour `modele` (`base:<slug>`) et la Tâche `tache` (Q par défaut).
 
     `transport_interne` est transmis à la sonde et aux outils MCP. Les serveurs ne sont
     démarrés que pour les ports non injectés ; l'embedder et l'Index seulement si le prompt
     de la Tâche a un emplacement `passages`. `threads` plafonne ceux des deux serveurs
-    (jamais au-dessus de la valeur de leur configuration).
+    (jamais au-dessus de la valeur de leur configuration). `contexte` remplace le contexte du
+    seul serveur de génération (mesure à contexte réduit) ; l'appelant l'a validé.
     """
     slug = slug_modele(modele)
     table = charger_taches()
@@ -155,7 +164,11 @@ def assembler(
             from slmsp.inference.serveur import ServeurLlama, charger_config_modele
 
             serveur = pile.enter_context(
-                ServeurLlama(plafonner(charger_config_modele(slug)), variante, slug=slug)  # type: ignore[arg-type]
+                ServeurLlama(
+                    avec_contexte(plafonner(charger_config_modele(slug)), contexte),
+                    variante,
+                    slug=slug,
+                )  # type: ignore[arg-type]
             )
             serveurs.append(serveur)
             llm = serveur.client()

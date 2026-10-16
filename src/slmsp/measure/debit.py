@@ -31,6 +31,7 @@ class MesureQuestion:
     duree_generation_s: float
     debit_tps: float | None
     tokens_estimes: bool
+    prompt_tokens: int | None = None
 
 
 def mesurer_question(
@@ -41,6 +42,7 @@ def mesurer_question(
     premier: float | None = None
     jetons = 0
     usage: int | None = None
+    prompt: int | None = None
     for evenement in evenements:
         if isinstance(evenement, Erreur):
             raise MesureEchouee(f"{evenement.code} : {evenement.message}")
@@ -51,6 +53,8 @@ def mesurer_question(
         elif isinstance(evenement, Fin) and evenement.usage:
             valeur = evenement.usage.get("completion_tokens")
             usage = valeur if isinstance(valeur, int) and valeur > 0 else None
+            brut = evenement.usage.get("prompt_tokens")
+            prompt = brut if isinstance(brut, int) and brut > 0 else None
     fin = horloge()
     if premier is None:
         raise MesureEchouee("aucun jeton généré")
@@ -58,7 +62,7 @@ def mesurer_question(
     duree = fin - premier
     # Un seul token ou une durée nulle ne donne pas de débit.
     debit = (tokens - 1) / duree if tokens > 1 and duree > 0 else None
-    return MesureQuestion(premier - debut, tokens, duree, debit, usage is None)
+    return MesureQuestion(premier - debut, tokens, duree, debit, usage is None, prompt)
 
 
 def mediane_p95(valeurs: list[float]) -> tuple[float, float]:

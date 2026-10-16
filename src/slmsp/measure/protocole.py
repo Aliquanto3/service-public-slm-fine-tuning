@@ -27,7 +27,7 @@ from slmsp.core.evenements import Evenement
 from slmsp.core.schemas.mesure import ResultatMesure
 from slmsp.core.var import verrou_gpu
 from slmsp.measure.config import ConfigMesures
-from slmsp.measure.debit import MesureQuestion, mediane_p95, mesurer_question
+from slmsp.measure.debit import MesureEchouee, MesureQuestion, mediane_p95, mesurer_question
 from slmsp.measure.ram import EchantillonneurRam
 from slmsp.measure.taille import tailles_composants
 
@@ -55,6 +55,21 @@ def verrou_mesure() -> Iterator[Path]:
         yield chemin
 
 
+class ContexteInsuffisant(MesureEchouee):
+    """Le prompt du protocole ne tient pas dans le contexte demandé (jamais tronqué)."""
+
+
+def _verifier_contexte(mesure: MesureQuestion, contexte: int | None) -> None:
+    """Refuse si le prompt (ou prompt + réponse) remplit le contexte : risque de troncature."""
+    if contexte is None or mesure.prompt_tokens is None:
+        return
+    if mesure.prompt_tokens + mesure.tokens >= contexte:
+        raise ContexteInsuffisant(
+            f"contexte {contexte} trop petit : le prompt du protocole fait "
+            f"{mesure.prompt_tokens} tokens et la réponse {mesure.tokens} ; augmenter --contexte"
+        )
+
+
 def _conformite(valeurs: dict[str, float | None], config: ConfigMesures) -> dict[str, bool]:
     seuils = config.seuils
     ram, debit = valeurs["ram_max_go"], valeurs["debit_tps_mediane"]
@@ -77,6 +92,7 @@ def mesurer(
     composants: Mapping[str, Path] | None = None,
     racine: str | Path | None = None,
     index_version: str | None = None,
+    contexte: int | None = None,
     echantillonneur: Callable[..., EchantillonneurRam] = EchantillonneurRam,
     horloge: Callable[[], float] = time.perf_counter,
 ) -> ResultatMesure:
@@ -95,6 +111,8 @@ def mesurer(
         "periode_ms": config.periode_ms,
         "serveurs": serveurs or [],
     }
+    if contexte is not None:
+        parametres["contexte"] = contexte
     seuils = config.seuils.model_dump()
     run = nouveau_run(
         "measure",
@@ -110,7 +128,16 @@ def mesurer(
         with echantillonneur(periode_s=config.periode_ms / 1000) as ram:
             for rang in range(config.echauffement + config.repetitions):
                 question = questions[rang % len(questions)]
-                mesure = mesurer_question(repondre(question), horloge)
+                try:
+                    mesure = mesurer_question(repondre(question), horloge)
+                except MesureEchouee as exc:
+                    if contexte is not None and "context" in str(exc).lower():
+                        raise ContexteInsuffisant(
+                            f"contexte {contexte} trop petit pour le prompt du protocole "
+                            f"({exc}) ; augmenter --contexte"
+                        ) from exc
+                    raise
+                _verifier_contexte(mesure, contexte)
                 if rang >= config.echauffement:
                     mesures.append(mesure)
         premiers = [m.premier_token_s for m in mesures]
@@ -143,6 +170,7 @@ def mesurer(
             details={
                 "echantillons_ram": ram.nb_echantillons,
                 "tailles_octets": tailles,
+                "contexte_effectif": contexte,
                 "tokens_par_repetition": [m.tokens for m in mesures],
                 "tokens_estimes_par_jetons": any(m.tokens_estimes for m in mesures),
                 "unite": "Go = 1024³ octets ; ram = pic de la somme des working sets de l'arbre",
