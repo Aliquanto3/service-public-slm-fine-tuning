@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+    <title>Assistant</title>
+    <link rel="stylesheet" href="css/jetons.css">
+    <link rel="stylesheet" href="css/socle.css">
+    <link rel="stylesheet" href="css/question.css">
+    <link rel="stylesheet" href="css/recherche.css">
+    <link rel="stylesheet" href="css/redaction.css">
+    <link rel="stylesheet" href="css/correction.css">
+    <link rel="stylesheet" href="css/resume.css">
+    <link rel="stylesheet" href="css/courrier.css">
+    <link rel="stylesheet" href="css/traduction.css">
+    <link rel="stylesheet" href="css/mode.css">
+    <link rel="stylesheet" href="css/parametres.css">
+    <link rel="stylesheet" href="css/historique.css">
+    <link rel="stylesheet" href="css/retours.css">
+    <link rel="stylesheet" href="css/verification.css">
+    <script type="module" src="js/socle/app.js"></script>
+  </head>
+  <body>
+    <aside id="colonne" class="colonne" aria-label="Colonne de gauche">
+      <p class="marque">Assistant</p>
+      <nav aria-label="Tâches">
+        <p class="etiquette" id="etiquette-taches">Tâches</p>
+        <ul class="taches" id="taches-prioritaires" aria-labelledby="etiquette-taches"></ul>
+        <button type="button" id="plus-bascule" class="tache plus" aria-expanded="false"
+                aria-controls="taches-secondaires">
+          <span class="icone icone-plus" aria-hidden="true"></span><span>Plus</span>
+        </button>
+        <ul class="taches" id="taches-secondaires" aria-label="Autres tâches" hidden></ul>
+      </nav>
+      <section class="historique" aria-labelledby="etiquette-historique">
+        <p class="etiquette" id="etiquette-historique">Historique</p>
+        <div id="ancre-historique"></div>
+      </section>
+      <div class="pied-colonne">
+        <button type="button" id="bouton-parametres" class="bouton-icone" aria-label="Paramètres"
+                aria-haspopup="dialog">
+          <span class="icone icone-parametres" aria-hidden="true"></span>
+        </button>
+      </div>
+    </aside>
+
+    <header id="barre" class="barre">
+      <h1 id="titre-tache" tabindex="-1">Question</h1>
+      <div class="barre-actions">
+        <button type="button" id="bouton-nouvelle" class="bouton-secondaire">Nouvelle conversation</button>
+        <button type="button" id="bouton-sources" class="bouton-secondaire" aria-controls="sources"
+                aria-expanded="false" hidden>Sources</button>
+        <div id="ancre-mode"></div>
+      </div>
+    </header>
+
+    <main id="principal" class="principal" aria-label="Zone de travail">
+      <p id="bandeau-preparation" class="bandeau" role="status" hidden>Préparation de l'assistant…</p>
+      <div id="erreur-interne" class="callout callout-danger" role="alert" hidden>
+        <span class="icone icone-attention" aria-hidden="true"></span>
+        <p>Un problème est survenu. Votre texte est conservé.</p>
+        <button type="button" id="erreur-reessayer" class="bouton-secondaire">Réessayer</button>
+      </div>
+      <section id="bienvenue" class="bienvenue" aria-labelledby="bienvenue-titre" hidden>
+        <h2 id="bienvenue-titre">Bienvenue</h2>
+        <p>Cet assistant utilise l'intelligence artificielle. Ses réponses peuvent contenir des erreurs : vérifiez les sources citées.</p>
+        <p>N'indiquez pas de nom, de numéro de sécurité sociale ou d'autre donnée personnelle.</p>
+        <p class="legal">Ne vaut pas avis juridique.</p>
+        <button type="button" id="bienvenue-commencer" class="bouton-primaire">Commencer</button>
+      </section>
+      <div id="vues"></div>
+      <div id="ancre-verification"></div>
+      <form id="composer" class="composer" hidden>
+        <label for="saisie" class="visuellement-cache">Votre demande</label>
+        <textarea id="saisie" rows="2"
+                  placeholder="N'indiquez pas de nom, de numéro de sécurité sociale ou d'autre donnée personnelle."></textarea>
+        <button type="submit" id="envoyer" class="bouton-primaire" disabled>Envoyer</button>
+      </form>
+    </main>
+
+    <aside id="sources" class="sources" aria-label="Sources" hidden>
+      <div class="sources-tete">
+        <h2>Sources</h2>
+        <button type="button" id="sources-fermer" class="bouton-icone" aria-label="Fermer le panneau Sources">
+          <span class="icone icone-fermer" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div id="sources-corps"></div>
+    </aside>
+
+    <dialog id="dialogue-parametres" aria-labelledby="dialogue-titre">
+      <div class="dialogue-tete">
+        <h2 id="dialogue-titre">Paramètres</h2>
+        <button type="button" id="dialogue-fermer" class="bouton-icone" aria-label="Fermer">
+          <span class="icone icone-fermer" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div id="ancre-parametres"></div>
+      <div id="ancre-retours"></div>
+    </dialog>
+
+    <div id="annonces" class="visuellement-cache" role="status" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>

@@ -41,7 +41,11 @@ app = ["pywebview==6.2.1", "pyinstaller==6.22.3"]
 slmsp = "slmsp.cli:main"
 
 [dependency-groups]
-dev = ["pytest==9.1.1", "ruff==0.17.0"]
+dev = [
+    "playwright==1.64.0",
+    "pytest==9.1.1",
+    "ruff==0.17.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13"]
@@ -121,10 +125,11 @@ addopts = [
     "--import-mode=importlib",
     "--strict-markers",
     "-m",
-    "not reseau and not gpu and not lent",
+    "not reseau and not gpu and not lent and not ui",
 ]
 markers = [
     "reseau: accède au réseau hors boucle locale (exclu par défaut)",
     "gpu: exige un GPU CUDA (exclu par défaut)",
     "lent: test long (exclu par défaut)",
+    "ui: test d'interface dans Edge via Playwright (exclu par défaut ; `-m ui` pour le lancer)",
 ]
