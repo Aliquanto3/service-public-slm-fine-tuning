@@ -54,7 +54,10 @@ seuil_jaccard = 0.8
 [anti_fuite]
 # Taille des n-grammes hachés (même valeur que `slmsp.core.items.N_DEFAUT`).
 n_ngrammes = 5
-# Jaccard de n-grammes hachés au-delà duquel un exemple est exclu, dans ]0, 1].
+# Seuil de recouvrement de n-grammes hachés au-delà duquel un exemple est exclu, dans ]0, 1].
+# Malgré le nom de la clé, `seed` et `filter` calculent le coefficient d'inclusion
+# |A ∩ B| / min(|A|, |B|) (`Protection.recouvrement`), pas le Jaccard : plus strict pour les
+# textes courts (sur-rejet assumé côté anti-fuite). Calibration sur le jeu réel à faire (9.8).
 seuil_jaccard = 0.5
 # Cosinus BGE-M3 au-delà duquel un exemple est exclu, dans ]0, 1].
 seuil_cosinus = 0.9

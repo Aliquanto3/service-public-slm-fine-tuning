@@ -1,7 +1,7 @@
 """`slmsp data {seed, generate, validate, filter, build}` : pipeline des Données (AD-17).
 
-Les étapes `seed` (story 9.3) et `generate` (story 9.4) sont implémentées ; les trois
-autres répondent « commande non implémentée » (code 2) en attendant leurs stories.
+Les étapes `seed` (9.3), `generate` (9.4), `validate` et `filter` (9.5) sont implémentées ;
+`build` répond « commande non implémentée » (code 2) en attendant sa story.
 
 `seed [--racine DIR] [--facteur N] [--scenarios N]` constitue `runs/data-seed/<run_id>/`
 (`amorces.jsonl`, `comptes.json`) depuis les jeux publics de `config/sources.toml`, déjà
@@ -15,6 +15,14 @@ d'abord le gel commité du Jeu d'évaluation v1.0 (D1.3, code 4), puis les préa
 du jour (D1.2, code 1), avant toute écriture. Les passages des sessions Q viennent de l'Index
 local (BGE-M3 démarré à la première recherche) ; les traces RD passent par `McpEnDirect`
 (profil `outillage`). Appels Mistral payants : commande réservée à la campagne (9.8).
+
+`validate --depuis GENERATE_RUN_ID [--racine DIR] [--controle-mistral]` rejoue les traces RD
+sur le Bac à sable et vérifie URL et valeurs de chaque exemple contre ses sources
+(`slmsp.data.validate`) ; `--controle-mistral` ajoute un contrôle de fidélité des Tâches CR, LC
+et RE par Mistral (`usage = validation`, appels payants, jamais le Juge Claude).
+`filter --depuis VALIDATE_RUN_ID [--racine DIR]` retire doublons et fuites du Jeu d'évaluation
+(v1.0, v1.1, calibrage) par n-grammes hachés et cosinus BGE-M3 (`slmsp.data.filter`). Chacune
+imprime exemples et taux de rejet par motif et par Tâche (FR-30).
 
 Codes de sortie : 0 run complet ; 1 erreur ou run partiel ; 3 budget Mistral épuisé ;
 4 gel absent, provenance invalide ou manifeste incohérent.
@@ -57,8 +65,6 @@ TAILLE_LOT = 8192
 """Lignes décodées par lot de lecture parquet."""
 
 ETAPES_A_VENIR: dict[str, str] = {
-    "validate": "validation contre les sources et le Bac à sable",
-    "filter": "doublons et fuites du Jeu d'évaluation",
     "build": "jeu versionné et verrous AD-3",
 }
 
@@ -151,6 +157,29 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         help="part de sessions planifiées en plus des volumes, dans [0, 1] (défaut : 0)",
     )
     g.set_defaults(func=_generate)
+
+    v = actions.add_parser(
+        "validate",
+        help="valider les exemples contre leurs sources et le Bac à sable",
+        description="Étape validate : rejeu des traces, URL et valeurs, fidélité.",
+    )
+    v.add_argument("--depuis", required=True, metavar="GENERATE_RUN_ID", help="run data-generate")
+    v.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
+    v.add_argument(
+        "--controle-mistral",
+        action="store_true",
+        help="contrôle de fidélité CR, LC, RE par Mistral (appels payants, usage validation)",
+    )
+    v.set_defaults(func=_validate)
+
+    f = actions.add_parser(
+        "filter",
+        help="retirer doublons et fuites du Jeu d'évaluation",
+        description="Étape filter : doublons, anti-fuite par n-grammes et cosinus BGE-M3.",
+    )
+    f.add_argument("--depuis", required=True, metavar="VALIDATE_RUN_ID", help="run data-validate")
+    f.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
+    f.set_defaults(func=_filter)
 
     for nom, aide in ETAPES_A_VENIR.items():
         autre = actions.add_parser(nom, help=aide, description=aide)
@@ -429,3 +458,98 @@ def _afficher_generation(resultat: Any) -> int:
     if resultat.statut == "partiel-budget":
         return int(CodeSortie.BUDGET_EPUISE)
     return int(CodeSortie.SUCCES if resultat.statut == "complet" else CodeSortie.ERREUR)
+
+
+# --- validate et filter ------------------------------------------------------------------
+
+
+def _journal_lecture() -> Any:
+    from slmsp.core.var import dossier_var
+    from slmsp.mistral.config import charger_mistral
+    from slmsp.mistral.journal import USAGE_GENERATION, journal_pour
+
+    return journal_pour(USAGE_GENERATION, charger_mistral(), dossier_var(), lecteur="data")
+
+
+def _afficher_rapport(rapport: Mapping[str, Any], run_id: str, statut: str, dossier: Path) -> int:
+    for tache, ligne in rapport["taches"].items():
+        motifs = ", ".join(f"{m} {n}" for m, n in ligne["rejets"].items()) or "aucun rejet"
+        print(
+            f"{tache} : {ligne['retenus']}/{ligne['exemples']} retenus, "
+            f"taux de rejet {ligne['taux_rejet']:.1%} ({motifs})"
+        )
+    print(f"run {run_id} ({statut}) : {dossier}")
+    if statut == "partiel-budget":
+        return int(CodeSortie.BUDGET_EPUISE)
+    return int(CodeSortie.SUCCES if statut == "complet" else CodeSortie.ERREUR)
+
+
+def _validate(args: argparse.Namespace) -> int:
+    from slmsp.data.validate import ControleMistral, lancer_validation
+
+    racine = _racine(args)
+    journal = _journal_lecture()
+    controle = None
+    if args.controle_mistral:
+        from slmsp.budget.registre import RegistreBudget
+        from slmsp.mistral.client import ClientMistral, fabriquer_sdk
+        from slmsp.mistral.config import charger_mistral
+        from slmsp.mistral.generateur import charger_prealables
+
+        config_mistral = charger_mistral()
+        dossier = racine_projet() / "config"
+        # Préalables D1.2 (code 1) avant d'ouvrir le registre de budget.
+        charger_prealables(
+            dossier / "donnees.toml", modele=config_mistral.modele, aujourd_hui=date.today()
+        )
+        client = ClientMistral(config_mistral, RegistreBudget(), fabriquer_sdk(config_mistral))
+        controle = ControleMistral(
+            client, journal, dossier_gabarits=dossier / "prompts" / "generateur"
+        )
+    resultat = lancer_validation(
+        racine=racine,
+        generate_run_id=args.depuis,
+        journal=journal,
+        controle=controle,
+        chemin_outils=racine_projet() / "config" / "outils-mcp.toml",
+        consigner=_consigner,
+    )
+    return _afficher_rapport(
+        resultat.rapport, resultat.run.run_id, resultat.statut, resultat.run.dossier
+    )
+
+
+def _filter(args: argparse.Namespace) -> int:
+    from slmsp.core.items import vecteurs_antifuite
+    from slmsp.data.filter import lancer_filtre
+    from slmsp.inference.serveur import (
+        ServeurLlama,
+        charger_config_llamacpp,
+        charger_config_modele,
+    )
+
+    racine = _racine(args)
+    config = charger_config_donnees()
+    versions = versions_protegees(racine)
+    protection = construire_protection(versions, config, racine)
+    with ServeurLlama(
+        charger_config_modele("bge-m3"),
+        "cpu",
+        slug="bge-m3",
+        config_llamacpp=charger_config_llamacpp(),
+        prendre_verrou_gpu=False,
+    ) as serveur:
+        embedder = serveur.embedder()
+        resultat = lancer_filtre(
+            racine=racine,
+            validate_run_id=args.depuis,
+            journal=_journal_lecture(),
+            protection=protection,
+            vecteurs=vecteurs_antifuite(versions, embedder, racine=racine),
+            embedder=embedder,
+            config=config,
+            consigner=_consigner,
+        )
+    return _afficher_rapport(
+        resultat.rapport, resultat.run.run_id, resultat.statut, resultat.run.dossier
+    )

@@ -295,7 +295,7 @@ def test_arguments_invalides_code_2(option: list[str]) -> None:
     assert main(["data", "seed", *option]) == CodeSortie.USAGE
 
 
-@pytest.mark.parametrize("etape", ["validate", "filter", "build"])
+@pytest.mark.parametrize("etape", ["build"])
 def test_etapes_a_venir_non_implementees(etape: str, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["data", etape]) == CodeSortie.USAGE
     assert f"non implémentée : data {etape}" in capsys.readouterr().err
@@ -373,3 +373,8 @@ def test_fabrique_depuis_le_generateur(monkeypatch: pytest.MonkeyPatch) -> None:
     sans_contenu = cli_data._fabrique_depuis(lambda seed: Generateur(seed, reponse("")))
     with pytest.raises(ProvenanceInvalide):
         sans_contenu("seed-1", "cr.theme.x.1", "session-2")
+
+
+@pytest.mark.parametrize("etape", ["validate", "filter"])
+def test_validate_et_filter_exigent_un_run_parent(etape: str) -> None:
+    assert main(["data", etape]) == CodeSortie.USAGE
