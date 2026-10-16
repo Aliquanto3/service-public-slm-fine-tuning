@@ -139,8 +139,8 @@ development_status:
   12-14-mesures-fr-26-avec-webview2-et-recette-sur-pc-cible: backlog
   epic-12-retrospective: optional
 
-  epic-13: backlog
-  13-1-vue-correction-avec-differences-visibles: backlog
+  epic-13: in-progress
+  13-1-vue-correction-avec-differences-visibles: done
   13-2-vue-resume-a-trois-longueurs: backlog
   13-3-vue-courrier-type-formulaire-et-emplacements: backlog
   13-4-vue-traduction-cinq-langues-arabe-en-rtl: backlog
