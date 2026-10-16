@@ -236,3 +236,35 @@ def test_voisins_excluent_le_chunk_lui_meme(fabrique_index) -> None:
         vecteur = np.array(index.vecteurs()[3], dtype=np.float32)
         voisins = _voisins(index, vecteur, 5, 3)
     assert 3 not in voisins and len(voisins) == 5
+
+
+def test_config_modele_repli_f16_valide() -> None:
+    from slmsp.inference.serveur import charger_config_modele
+
+    config = charger_config_modele("bge-m3-f16")
+    assert config.embedding is True and config.pooling == "cls"
+    assert config.gguf.fichier.endswith(".gguf") and len(config.gguf.sha256) == 64
+
+
+def test_cli_modele_f16_accepte(fabrique_index, monkeypatch) -> None:
+    factice = fabrique_index((30, 20))
+    demandes = []
+
+    def ouvrir(modele: str, variante: str):
+        demandes.append(modele)
+        return contextlib.nullcontext((EmbedderBruite(factice, 0.01), {"gguf": "x.gguf"}))
+
+    monkeypatch.setattr(cli_index, "_ouvrir_embedder", ouvrir)
+    code = main(
+        [
+            "index",
+            "verifier-embedding",
+            "--racine",
+            str(factice.racine),
+            "--echantillon",
+            "10",
+            "--modele",
+            "bge-m3-f16",
+        ]
+    )
+    assert code == int(CodeSortie.SUCCES) and demandes == ["bge-m3-f16"]

@@ -1,0 +1,18 @@
+# BGE-M3 en GGUF F16 : repli de la mesure H-EMB (story 2.4), le Q8_0 ayant infirmé H-EMB.
+# Servi par `llama-server --embedding --pooling cls`. Valeurs relevées le 2026-10-16.
+# ggml-org ne publie que le Q8_0 ; gpustack/bge-m3-GGUF est le dépôt GGUF bge-m3 le plus téléchargé.
+
+schema_version = 1
+depot_hf = "gpustack/bge-m3-GGUF"
+revision = "2d48f1737679ad900d5c26c5aad5410e9c70fdca"
+fichiers = []
+contexte = 8192
+embedding = true
+pooling = "cls"
+# Sans objet pour un modèle d'embedding, mais exigé par le schéma.
+protocole_outils = "natif"
+
+[gguf] # 1 157 671 200 octets
+depot = "gpustack/bge-m3-GGUF"
+fichier = "bge-m3-FP16.gguf"
+sha256 = "daec91ffb5dd0c27411bd71f29932917c49cf529a641d0168496c3a501e3062c"
