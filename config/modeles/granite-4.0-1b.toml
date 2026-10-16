@@ -43,3 +43,12 @@ revision = "b27c2fe3f211b7f44e80fa620177aea371099aaa"
 fichier = "granite-4.0-1b-Q4_K_M.gguf"
 sha256 = "22ec0f9cc99a90185312de3c882c84e7bd6789bdd050389844380a01a831d7f1"
 source = "officielle"
+
+# GGUF F16 de base pour la variante `avant` du banc (ajouté le 2026-10-16, révision et SHA-256
+# relevés via l'API Hugging Face). Téléchargé par `slmsp fetch modeles granite-4.0-1b --f16`.
+[gguf_f16] # 3 267 401 472 octets, BF16 (pas de F16 publié)
+depot = "ibm-granite/granite-4.0-1b-GGUF"
+revision = "b27c2fe3f211b7f44e80fa620177aea371099aaa"
+fichier = "granite-4.0-1b-bf16.gguf"
+sha256 = "551fc8b33f100c13d056e114b4e352bd4f2763240b68283076110203da8f5843"
+source = "officielle"

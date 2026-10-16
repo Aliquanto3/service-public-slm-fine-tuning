@@ -86,6 +86,48 @@ def test_etag_different_de_la_config(banc, outils, tmp_path: Path) -> None:
     assert not (tmp_path / "emb").exists()
 
 
+GGUF_F16 = b"GGUF f16 factice " * 40
+
+
+def test_gguf_f16_telecharge_seulement_avec_l_option(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils,
+        gguf_f16={
+            "depot": "org/modele-GGUF",
+            "fichier": "m-f16.gguf",
+            "sha256": outils.sha(GGUF_F16),
+        },
+    )
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF, REV)
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-f16.gguf"), GGUF_F16, REV)
+    modeles.executer(banc.telechargeur(), [("base", config)], tmp_path)
+    assert not (tmp_path / "base" / "gguf" / "m-f16.gguf").exists()
+    lignes = []
+    modeles.executer(
+        banc.telechargeur(), [("base", config)], tmp_path, f16=True, consigner=lignes.append
+    )
+    assert (tmp_path / "base" / "gguf" / "m-f16.gguf").read_bytes() == GGUF_F16
+    assert [ligne["fichier"] for ligne in lignes] == ["m-q8_0.gguf", "m-f16.gguf"]
+
+
+def test_gguf_f16_sha_different_de_la_config(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils,
+        gguf_f16={"depot": "org/modele-GGUF", "fichier": "m-f16.gguf", "sha256": "0" * 64},
+    )
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF, REV)
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-f16.gguf"), GGUF_F16, REV)
+    with pytest.raises(ShaInvalide):
+        modeles.executer(banc.telechargeur(), [("base", config)], tmp_path, f16=True)
+
+
+@pytest.mark.parametrize("slug", ["granite-4.0-1b", "ministral-3-3b", "qwen-4b", "smollm3-3b"])
+def test_configs_reelles_declarent_un_gguf_f16_epingle(slug: str) -> None:
+    config = charger_config_modele(slug)
+    assert config.gguf_f16 is not None
+    assert config.gguf_f16.revision is not None and config.gguf_f16.source is not None
+
+
 def test_gguf_d_un_autre_depot(banc, outils, tmp_path: Path) -> None:
     config = _config(
         outils,

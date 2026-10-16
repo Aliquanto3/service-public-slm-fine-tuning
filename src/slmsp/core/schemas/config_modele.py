@@ -55,6 +55,8 @@ class ConfigModele(SchemaBase):
     sha256_fichiers: dict[str, Sha256] = Field(default_factory=dict)
     """SHA-256 attendu de fichiers de `fichiers` (indispensable pour un fichier non LFS)."""
     gguf: FichierGguf
+    gguf_f16: FichierGguf | None = None
+    """GGUF F16 (ou BF16 à défaut) du modèle de base : variante `avant` du banc (optionnel)."""
     contexte: int = Field(gt=0)
     cache_kv: Literal["f16", "q8_0", "q4_0"] = "f16"
     threads: int | None = Field(default=None, gt=0)
@@ -78,6 +80,10 @@ class ConfigModele(SchemaBase):
         ):
             raise ValueError("gguf.revision diffère de revision pour le même dépôt")
         return self
+
+    def gguf_pour(self, quantification: str) -> FichierGguf | None:
+        """GGUF de base de la quantification (`q4_k_m` : `gguf`, `f16` : `gguf_f16`)."""
+        return self.gguf_f16 if quantification == "f16" else self.gguf
 
     @model_validator(mode="after")
     def _pooling_si_embedding(self) -> ConfigModele:

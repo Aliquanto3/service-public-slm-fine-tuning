@@ -90,6 +90,11 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         action="store_true",
         help="contrôles sans démarrer llama-server (contrôle serveur sans objet)",
     )
+    p.add_argument(
+        "--f16",
+        action="store_true",
+        help="télécharge aussi le GGUF F16 de base (`gguf_f16`), variante `avant` du banc",
+    )
     p.set_defaults(func=_modeles)
 
     p = cibles.add_parser(
@@ -254,7 +259,7 @@ def _modeles(args: argparse.Namespace) -> int:
     poids = dossier_modeles()
 
     def pilote(telechargeur: Telechargeur, consigner: Any, run: Run) -> int:
-        modeles.executer(telechargeur, configs, poids, consigner=consigner)
+        modeles.executer(telechargeur, configs, poids, f16=args.f16, consigner=consigner)
         return _controler(configs, poids, run, sans_serveur=args.sans_serveur)
 
     return _executer(
@@ -264,6 +269,7 @@ def _modeles(args: argparse.Namespace) -> int:
             "slugs": slugs,
             "candidats": args.candidats,
             "sans_serveur": args.sans_serveur,
+            "f16": args.f16,
             "dossier_modeles": str(poids),
         },
         entrees={

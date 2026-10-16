@@ -275,9 +275,16 @@ def test_charger_jeu_exige_la_variable(monkeypatch):
         utils.charger_jeu()
 
 
-def test_resoudre_gguf_base_avant_n_a_pas_de_f16(banc):
-    with pytest.raises(ConfigurationInvalide, match="F16"):
+def test_resoudre_gguf_base_avant_exige_le_f16_telecharge(banc):
+    with pytest.raises(ConfigurationInvalide, match="fetch modeles granite-4.0-1b --f16"):
         lm_eval.resoudre_gguf(banc.contexte("base:granite-4.0-1b", "avant"))
+    from slmsp.inference.serveur import charger_config_modele
+
+    gguf = banc.modeles / "granite-4.0-1b" / "gguf"
+    gguf.mkdir(parents=True)
+    (gguf / charger_config_modele("granite-4.0-1b").gguf_f16.fichier).write_bytes(b"x")
+    slug, _config, chemin = lm_eval.resoudre_gguf(banc.contexte("base:granite-4.0-1b", "avant"))
+    assert (slug, chemin.parent) == ("granite-4.0-1b", gguf)
 
 
 def test_resoudre_gguf_base_apres_exige_le_fichier(banc):
