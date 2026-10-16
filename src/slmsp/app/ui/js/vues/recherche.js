@@ -1,15 +1,18 @@
-// Vue « recherche » : module vide déclaré d'avance (story 12.4).
-// La story de la vue remplace ce fichier et css/recherche.css, sans toucher à index.html.
+// Vue « Recherche de données » (story 12.7) : cartes de jeux de données et tableaux sourcés,
+// construits depuis les `ResultatOutil` (jamais depuis le texte de la réponse).
+
+import { monterConversation } from "../composants/conversation.js";
 
 /**
- * Monte la vue dans son conteneur.
  * @param {HTMLElement} conteneur Élément réservé à la vue.
  * @param {object} pont Client du pont (appeler, envoyer, arreter).
- * @param {object} [contexte] `{ bus, tache }` : bus d'évènements et Tâche servie par ce conteneur.
+ * @param {{bus: object, tache: string}} contexte
  */
 export function monter(conteneur, pont, contexte) {
-  const p = document.createElement("p");
-  p.className = "non-disponible";
-  p.textContent = "non disponible";
-  conteneur.replaceChildren(p);
+  monterConversation(conteneur, pont, contexte, {
+    titre: "Recherchez des données publiques",
+    intro: "Décrivez le sujet : je cherche dans le catalogue data.gouv.fr.",
+    juridique: false,
+    infoHorsLigne: "Hors ligne : catalogue installé uniquement, sans chiffres à jour.",
+  });
 }

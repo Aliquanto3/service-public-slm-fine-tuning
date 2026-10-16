@@ -143,7 +143,7 @@ def test_ordre_de_tabulation_focus_visible_et_libelles(page) -> None:
         "() => { const m = document.querySelector('.marque'); m.tabIndex = -1; m.focus(); }"
     )
     vus = []
-    for _ in range(12):
+    for _ in range(14):
         page.keyboard.press("Tab")
         info = page.evaluate(
             """() => {
@@ -171,6 +171,9 @@ def test_ordre_de_tabulation_focus_visible_et_libelles(page) -> None:
         "plus-bascule",
         "bouton-parametres",
         "bouton-nouvelle",
+        "exemple-Q-1",  # les trois exemples de l'écran « Question vide » (story 12.7)
+        "exemple-Q-2",
+        "exemple-Q-3",
         "saisie",
         "envoyer",
         "sources-fermer",
@@ -213,6 +216,11 @@ def test_travail_conserve_par_tache_et_vues_non_disponibles(page) -> None:
     assert page.input_value("#saisie") == "<texte-factice-2>"
     for tache in TACHES:
         page.evaluate("(t) => window.slmsp.activer(t)", tache)
+        if tache in ("Q", "RD"):  # vues livrées par la story 12.7 : écran vide disponible
+            vue = page.locator(f"#vue-{tache}")
+            assert vue.locator(".conversation .vide h2").is_visible(), tache
+            assert "non disponible" not in vue.inner_text(), tache
+            continue
         assert page.inner_text(f"#vue-{tache}") == "non disponible", tache
 
 
@@ -248,6 +256,7 @@ def test_zone_de_saisie_entree_envoie_maj_entree_ligne(page) -> None:
 
 
 def test_arreter_pendant_la_generation(page) -> None:
+    page.wait_for_function("() => window.slmsp.etat.pret", polling=50)  # `pret` du pont factice
     page.evaluate("window.slmsp.bus.emettre('generation:debut', {})")
     assert page.inner_text("#envoyer") == "Arrêter"
     assert page.is_enabled("#envoyer")
@@ -396,6 +405,9 @@ def test_echec_du_pont_a_l_envoi_conserve_le_texte(page) -> None:
             return Promise.reject(new Error('<erreur-factice>'));
           };
         }"""
+    )
+    page.wait_for_function(  # l'envoi est refusé tant que le pont n'a pas signalé `pret`
+        "() => document.getElementById('envoyer').textContent !== 'Préparation…'", polling=50
     )
     page.fill("#saisie", "<texte-factice-5>")
     page.keyboard.press("Enter")

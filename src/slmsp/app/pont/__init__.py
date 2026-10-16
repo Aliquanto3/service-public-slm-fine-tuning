@@ -8,8 +8,8 @@ Contrat JSON, valable pour toutes les méthodes :
 - évènements : poussés par lots (liste) via `fenetre.evaluate_js("window.slmspRecevoir(<lot>)")`,
   au format `core.evenements.vers_dict`, plus `{"type": "pret"}` (`signaler_pret`) ;
 - `appeler(nom, *args)` : appel générique ; `nom` est `envoyer`, `arreter`, `regenerer`,
-  `nouvelle_conversation`, ou `<domaine>.<methode>` (domaines : `mode`, `reglages`,
-  `historique`, `retours`, `verification`).
+  `nouvelle_conversation`, `ouvrir_lien`, ou `<domaine>.<methode>` (domaines : `mode`,
+  `reglages`, `historique`, `retours`, `verification`).
 
 L'interface pywebview n'est vue qu'à travers le port `Fenetre`.
 """
@@ -29,13 +29,17 @@ from slmsp.app.pont.mode import PontMode
 from slmsp.app.pont.reglages import PontReglages
 from slmsp.app.pont.retours import PontRetours
 from slmsp.app.pont.verification import PontVerification
+from slmsp.core.erreurs import SlmspError
 from slmsp.harness.service import AssistantService
+from slmsp.net.config import ConfigListeBlanche, charger_liste_blanche
+from slmsp.net.profils import analyser_url
 
 LOGGER: Final = logging.getLogger("slmsp.app.pont")
 CODE_NON_IMPLEMENTEE: Final = "non-implementee"
 CODE_INCONNUE: Final = "methode-inconnue"
-METHODES_CONVERSATION: Final = frozenset(
-    {"envoyer", "arreter", "regenerer", "nouvelle_conversation"}
+CODE_LIEN_REFUSE: Final = "lien-refuse"
+METHODES_DIRECTES: Final = frozenset(
+    {"envoyer", "arreter", "regenerer", "nouvelle_conversation", "ouvrir_lien"}
 )
 
 
@@ -48,9 +52,15 @@ class Fenetre(Protocol):
 class Pont:
     """Classe exposée en `js_api` ; délègue à un module par domaine."""
 
-    def __init__(self, service: AssistantService, fenetre: Fenetre) -> None:
+    def __init__(
+        self,
+        service: AssistantService,
+        fenetre: Fenetre,
+        liste_blanche: ConfigListeBlanche | None = None,
+    ) -> None:
         # Attributs privés : pywebview n'expose pas les noms en `_`.
         self._fenetre = fenetre
+        self._liste_blanche = liste_blanche  # lue dans `config/` au premier `ouvrir_lien`
         self._conversation = Conversation(service, self._pousser)
         self._domaines: dict[str, Any] = {
             "mode": PontMode(),
@@ -96,6 +106,34 @@ class Pont:
         """Oublie le dernier envoi (donc `regenerer`). Refus : `generation-en-cours`."""
         return self._conversation.nouvelle_conversation()
 
+    def ouvrir_lien(self, url: str) -> dict[str, Any]:
+        """Confie `url` au navigateur du système (Q1 : la WebView ne navigue jamais).
+
+        Seule une URL `https` (port 443, sans identifiants) dont l'hôte figure exactement dans la
+        Liste blanche est acceptée ; sinon `lien-refuse`. Bouchon : l'ouverture elle-même revient à
+        la story 12.6 et répond `non-implementee` d'ici là (l'interface copie alors le lien).
+        """
+        if not self._lien_autorise(url):
+            return reponse_erreur(CODE_LIEN_REFUSE, "Ce lien ne peut pas être ouvert.")
+        return reponse_erreur(CODE_NON_IMPLEMENTEE, "ouvrir_lien : non implémentée")
+
+    def _lien_autorise(self, url: object) -> bool:
+        if not isinstance(url, str) or len(url) > 2048:
+            return False
+        try:
+            cible = analyser_url(url)
+        except ValueError:
+            return False
+        if cible.schema != "https" or cible.identifiants or cible.port not in (None, 443):
+            return False
+        if self._liste_blanche is None:
+            try:
+                self._liste_blanche = charger_liste_blanche()
+            except SlmspError:
+                LOGGER.error("ouvrir_lien : Liste blanche illisible")
+                return False
+        return cible.hote in self._liste_blanche.hotes
+
     def appeler(self, nom: str, *args: Any) -> dict[str, Any]:
         """Appelle `nom` (voir le docstring du module). Jamais d'exception vers l'interface."""
         try:
@@ -105,7 +143,7 @@ class Pont:
                 if cible is None:
                     return reponse_erreur(CODE_INCONNUE, f"méthode inconnue : {nom}")
                 return cible.appeler(methode, *args)
-            if nom in METHODES_CONVERSATION:
+            if nom in METHODES_DIRECTES:
                 cible_locale = getattr(self, nom)
                 try:
                     inspect.signature(cible_locale).bind(*args)
