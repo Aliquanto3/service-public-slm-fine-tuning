@@ -335,3 +335,134 @@ def test_compter_tokens_json_generique_sans_outils(
 def test_protocole_inconnu() -> None:
     with pytest.raises(ValueError, match="protocole"):
         ClientLlama(8080, protocole_outils="xml")
+
+
+# --- balises-tool-call (SmolLM3) ----------------------------------------------------------------
+
+BALISES = "balises-tool-call"
+
+
+@pytest.fixture
+def client_balises(serveur_factice: Any) -> Any:
+    with ClientLlama(serveur_factice.port, protocole_outils=BALISES) as instance:
+        yield instance
+
+
+def _decouper(texte: str, taille: int) -> list[str]:
+    return [texte[i : i + taille] for i in range(0, len(texte), taille)]
+
+
+# Format observé (run eval-generation 20261016-193650-smollm3-3b-8a06, items RD) : appel en
+# balises dans le texte, parfois suivi de texte ; valeurs factices.
+SORTIE_BALISES = (
+    '\n<tool_call>\n{"name": "chercher", "arguments": {"q": "<requete-factice>"}}\n</tool_call>'
+    "\n\n<suite-factice>"
+)
+
+
+@pytest.mark.parametrize("taille", [1, 3, 7, len(SORTIE_BALISES)])
+def test_balises_appel_et_texte(
+    client_balises: ClientLlama, serveur_factice: Any, factice, taille: int
+) -> None:
+    serveur_factice.scenario.chat = factice.flux_texte(*_decouper(SORTIE_BALISES, taille))
+    evenements = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    (corps,) = serveur_factice.corps("/v1/chat/completions")
+    assert corps["tools"] == OUTILS and "response_format" not in corps
+    appels = [e for e in evenements if isinstance(e, AppelOutil)]
+    texte = "".join(e.texte for e in evenements if isinstance(e, Jeton))
+    assert [(a.nom, a.arguments) for a in appels] == [("chercher", {"q": "<requete-factice>"})]
+    assert re.fullmatch(r"appel-[0-9a-f]{32}", appels[0].id)
+    assert texte == "\n\n\n<suite-factice>"
+    assert "<" not in texte.replace("<suite-factice>", "")
+    assert evenements[-1].raison == "terminee"
+
+
+def test_balises_plusieurs_appels_et_arguments_en_chaine(
+    client_balises: ClientLlama, serveur_factice: Any, factice
+) -> None:
+    sortie = (
+        '<tool_call>{"name": "heure", "arguments": {}}</tool_call>'
+        '<tool_call>{"name": "chercher", "arguments": "{\\"q\\": \\"x\\"}"}</tool_call>'
+    )
+    serveur_factice.scenario.chat = factice.flux_texte(*_decouper(sortie, 5))
+    evenements = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert [(e.nom, e.arguments) for e in evenements[:-1]] == [
+        ("heure", {}),
+        ("chercher", {"q": "x"}),
+    ]
+
+
+def test_balises_non_conformes(client_balises: ClientLlama, serveur_factice: Any, factice) -> None:
+    sortie = (
+        "<tool_call>pas du json</tool_call>"
+        '<tool_call>{"arguments": {}}</tool_call>'
+        '<tool_call>{"name": "heure", "arguments": [1]}</tool_call>'
+    )
+    serveur_factice.scenario.chat = factice.flux_texte(sortie)
+    evenements = list(client_balises.generer(MESSAGES, tools=OUTILS))[:-1]
+    assert all(isinstance(e, AppelNonConforme) for e in evenements)
+    assert [e.motif for e in evenements] == [
+        "<tool_call> : JSON illisible",
+        "nom d'outil absent",
+        "arguments : objet JSON attendu",
+    ]
+    assert evenements[0].arguments_bruts == "pas du json"
+
+
+def test_balise_non_fermee(client_balises: ClientLlama, serveur_factice: Any, factice) -> None:
+    """Arrêt avant `</tool_call>` : JSON complet accepté, JSON coupé non conforme."""
+    serveur_factice.scenario.chat = factice.flux_texte(
+        '<tool_call>\n{"name": "heure", "arguments": {}}\n'
+    )
+    (appel, fin) = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert isinstance(appel, AppelOutil) and appel.nom == "heure" and fin.raison == "terminee"
+
+    serveur_factice.scenario.chat = factice.flux_texte('<tool_call>{"name": "he', raison="length")
+    (appel, fin) = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert isinstance(appel, AppelNonConforme) and "non fermée" in appel.motif
+    assert fin.raison == "longueur"
+
+
+def test_balises_texte_sans_appel_et_debut_de_balise_inacheve(
+    client_balises: ClientLlama, serveur_factice: Any, factice
+) -> None:
+    serveur_factice.scenario.chat = factice.flux_texte("a <to", " <tool", "_c")
+    evenements = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert all(isinstance(e, Jeton) for e in evenements[:-1])
+    assert "".join(e.texte for e in evenements[:-1]) == "a <to <tool_c"
+    assert evenements[0] == Jeton(texte="a ")  # « <to » retenu tant qu'il peut ouvrir une balise
+
+
+def test_balises_historique_reecrit(client_balises: ClientLlama, serveur_factice: Any) -> None:
+    """Le template ignore `tool_calls` : l'appel passé est réécrit en balises dans `content`."""
+    appel = AppelOutil(id="appel-1", nom="chercher", arguments={"q": "<requete-factice>"})
+    historique = [
+        *MESSAGES,
+        {"role": "assistant", "content": "", "tool_calls": [appel_canonique(appel)]},
+        {"role": "tool", "tool_call_id": "appel-1", "content": "<resultat-factice>"},
+    ]
+    list(client_balises.generer(historique, tools=OUTILS))
+    client_balises.compter_tokens(historique, OUTILS)
+    (corps,) = serveur_factice.corps("/v1/chat/completions")
+    (gabarit,) = serveur_factice.corps("/apply-template")
+    for envoye in (corps["messages"], gabarit["messages"]):
+        assert envoye[:2] == MESSAGES and envoye[3] == historique[3]
+        assert envoye[2] == {
+            "role": "assistant",
+            "content": '<tool_call>\n{"name": "chercher", "arguments": '
+            '{"q": "<requete-factice>"}}\n</tool_call>',
+        }
+    assert gabarit["tools"] == OUTILS
+    assert "tool_calls" in historique[2]  # l'original n'est pas modifié
+
+
+def test_messages_balises_garde_le_contenu() -> None:
+    message = {
+        "role": "assistant",
+        "content": "<texte-factice>",
+        "tool_calls": [{"function": {"name": "heure", "arguments": "{}"}}],
+    }
+    (reecrit,) = client_module.messages_balises([message])
+    assert reecrit["content"] == (
+        '<texte-factice>\n<tool_call>\n{"name": "heure", "arguments": {}}\n</tool_call>'
+    )

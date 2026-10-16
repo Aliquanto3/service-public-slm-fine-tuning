@@ -42,6 +42,7 @@ from slmsp.inference.serveur import charger_config_modele
 MODELE = f"base:{SLUG}"
 NATIF = "natif"
 JSON = "json-generique"
+BALISES = "balises-tool-call"
 
 
 # --- Doublures ---------------------------------------------------------------------------------
@@ -104,7 +105,8 @@ class FabriqueProtocoles:
     """Fabrique de Harnais factice : le `LlmPort` dépend du protocole imposé au modèle."""
 
     def __init__(self, llms: Mapping[str, Any]) -> None:
-        self.llms = dict(llms)
+        # Sans doublure dédiée, `balises-tool-call` reprend celle de `json-generique`.
+        self.llms = {BALISES: llms.get(JSON), **llms}
         self.appels: list[tuple[Any, str, Path]] = []
 
     @property
@@ -214,6 +216,19 @@ def test_natif_invalide_puis_json_valide(depot_eval: Path, modeles: Path) -> Non
     assert reco["protocoles"][JSON]["verdict"] == "valide"
     # Le TOML versionné n'est jamais réécrit.
     assert charger_config_modele(SLUG).protocole_outils == NATIF
+
+
+def test_natif_et_json_invalides_puis_balises_valide(depot_eval: Path, modeles: Path) -> None:
+    """Correctif SmolLM3 : troisième passe en `balises-tool-call`, recommandée si valide."""
+    invalide = FakeLlmSonde(valide=False)
+    fabrique = FabriqueProtocoles({NATIF: invalide, JSON: invalide, BALISES: FakeLlmSonde()})
+    rapport = lancer(depot_eval, fabrique)
+
+    assert fabrique.protocoles == [NATIF, JSON, BALISES]
+    assert (rapport.protocole_recommande, rapport.valide) == (BALISES, True)
+    reco = recommandation(rapport.run)
+    assert set(reco["protocoles"]) == {NATIF, JSON, BALISES}
+    assert reco["protocoles"][BALISES]["verdict"] == "valide"
 
 
 def test_appel_valide_et_non_conforme_invalide(depot_eval: Path, modeles: Path) -> None:

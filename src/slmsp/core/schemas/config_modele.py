@@ -76,7 +76,7 @@ class ConfigModele(SchemaBase):
     threads: int | None = Field(default=None, gt=0)
     reasoning: Literal["off", "on", "auto"] = "off"
     chat_template_kwargs: dict[str, Any] = Field(default_factory=dict)
-    protocole_outils: Literal["natif", "json-generique"]
+    protocole_outils: Literal["natif", "json-generique", "balises-tool-call"]
     exclure_vision: bool = False
     chat_template_force: bool = False
     embedding: bool = False

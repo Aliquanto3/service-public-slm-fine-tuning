@@ -644,7 +644,7 @@ def test_toml_candidat(slug: str) -> None:
     assert config.gguf.revision is not None and config.gguf.source is not None
     assert config.gguf.fichier.endswith("Q4_K_M.gguf")
     assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
-    assert config.protocole_outils in ("natif", "json-generique")
+    assert config.protocole_outils in ("natif", "json-generique", "balises-tool-call")
     assert not config.embedding
 
 

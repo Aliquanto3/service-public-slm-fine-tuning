@@ -10,7 +10,13 @@ Protocoles d'outils (`protocole_outils` de `ConfigModele`) :
   sortie est contrainte par `response_format` (`schema_json_generique`) puis reconvertie :
   `{"tool_calls": [...]}` donne des `AppelOutil`, `{"content": ...}` un `Jeton`, un JSON
   illisible un `Jeton` du texte brut. Décrire les outils dans le prompt reste l'affaire
-  du Harnais.
+  du Harnais ;
+- `balises-tool-call` (SmolLM3) : `tools` est transmis et rendu par le template du tokenizer
+  (AD-13), qui demande au modèle des appels `<tool_call>{"name", "arguments"}</tool_call>`
+  dans le texte. Le template ne lit pas `message.tool_calls`, si bien que llama-server ne
+  construit aucun parseur d'outils : le client analyse les balises du flux de texte (le texte
+  hors balises reste en `Jeton`, émis au fil de l'eau) et réécrit les `tool_calls` des
+  messages `assistant` de l'historique en balises dans `content`.
 
 Le flux se termine par un seul `Fin` : `terminee` (`finish_reason` `stop`/`tool_calls`, ou
 `[DONE]`), `longueur` (`length`) ou `interrompue` (flux coupé). `usage` porte
@@ -33,7 +39,9 @@ from slmsp.net import client_local
 OPTIONS_AUTORISEES: Final = frozenset(
     {"temperature", "seed", "max_tokens", "top_p", "top_k", "stop", "chat_template_kwargs"}
 )
-PROTOCOLES: Final = ("natif", "json-generique")
+PROTOCOLES: Final = ("natif", "json-generique", "balises-tool-call")
+BALISE_OUVRANTE: Final = "<tool_call>"
+BALISE_FERMANTE: Final = "</tool_call>"
 CLES_USAGE: Final = ("prompt_tokens", "completion_tokens", "total_tokens")
 TAILLE_EXTRAIT: Final = 500
 """Caractères du corps d'une réponse HTTP en erreur cités dans `ErreurInference`."""
@@ -147,6 +155,114 @@ def _sortie_json_generique(texte: str) -> list[Evenement]:
     return [Jeton(texte=texte)]
 
 
+def _appel_balise(contenu: str, *, fermee: bool = True) -> AppelOutil | AppelNonConforme:
+    """Appel lu entre `<tool_call>` et `</tool_call>` : `{"name": ..., "arguments": {...}}`."""
+    try:
+        objet = json.loads(contenu)
+    except json.JSONDecodeError:
+        motif = "<tool_call> : JSON illisible" + ("" if fermee else " (balise non fermée)")
+        return AppelNonConforme(nom=None, arguments_bruts=contenu, motif=motif)
+    if not isinstance(objet, dict):
+        return AppelNonConforme(
+            nom=None, arguments_bruts=contenu, motif="<tool_call> : objet JSON attendu"
+        )
+    arguments = objet.get("arguments")
+    if isinstance(arguments, str):  # arguments en chaîne JSON (format OpenAI)
+        try:
+            arguments = json.loads(arguments)
+        except json.JSONDecodeError:
+            pass
+    bruts = json.dumps(arguments, ensure_ascii=False)
+    return _appel(nouvel_identifiant(), objet.get("name"), arguments, bruts)
+
+
+def _prefixe_en_attente(texte: str, balise: str) -> int:
+    """Longueur du plus long suffixe de `texte` qui commence `balise` (à retenir)."""
+    for taille in range(min(len(texte), len(balise) - 1), 0, -1):
+        if balise.startswith(texte[-taille:]):
+            return taille
+    return 0
+
+
+class LecteurBalises:
+    """Analyse incrémentale des `<tool_call>…</tool_call>` d'un flux de texte.
+
+    Le texte hors balises est rendu en `Jeton` dès qu'il ne peut plus commencer une balise ;
+    chaque balise fermée donne un `AppelOutil` ou un `AppelNonConforme`. `finir` rend le
+    reste : une balise non fermée (arrêt sur `<|im_end|>` ou longueur) est analysée quand
+    même, et son JSON illisible donne un `AppelNonConforme`.
+    """
+
+    def __init__(self) -> None:
+        self._tampon = ""
+        self._dans_appel = False
+
+    def lire(self, morceau: str) -> list[Evenement]:
+        self._tampon += morceau
+        sortie: list[Evenement] = []
+        while True:
+            if self._dans_appel:
+                fin = self._tampon.find(BALISE_FERMANTE)
+                if fin < 0:
+                    return sortie
+                sortie.append(_appel_balise(self._tampon[:fin].strip()))
+                self._tampon = self._tampon[fin + len(BALISE_FERMANTE) :]
+                self._dans_appel = False
+                continue
+            debut = self._tampon.find(BALISE_OUVRANTE)
+            if debut >= 0:
+                if debut:
+                    sortie.append(Jeton(texte=self._tampon[:debut]))
+                self._tampon = self._tampon[debut + len(BALISE_OUVRANTE) :]
+                self._dans_appel = True
+                continue
+            garde = _prefixe_en_attente(self._tampon, BALISE_OUVRANTE)
+            emis = self._tampon[: len(self._tampon) - garde]
+            if emis:
+                sortie.append(Jeton(texte=emis))
+            self._tampon = self._tampon[len(emis) :]
+            return sortie
+
+    def finir(self) -> list[Evenement]:
+        reste, self._tampon = self._tampon, ""
+        if self._dans_appel:
+            self._dans_appel = False
+            return [_appel_balise(reste.strip(), fermee=False)]
+        return [Jeton(texte=reste)] if reste else []
+
+
+def messages_balises(messages: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Messages où les `tool_calls` d'un tour `assistant` sont réécrits en balises.
+
+    Le template de SmolLM3 ignore `tool_calls` : sans réécriture, l'appel disparaîtrait de
+    l'historique rendu. Chaque appel devient `<tool_call>\n{"name", "arguments"}\n</tool_call>`
+    (le format que le template prescrit au modèle), ajouté au `content`.
+    """
+    resultat: list[dict[str, Any]] = []
+    for message in messages:
+        copie = dict(message)
+        appels = copie.get("tool_calls")
+        if copie.get("role") == "assistant" and appels:
+            blocs = []
+            for appel in appels:
+                fonction = appel.get("function") or {}
+                arguments = fonction.get("arguments")
+                if isinstance(arguments, str):
+                    try:
+                        arguments = json.loads(arguments)
+                    except json.JSONDecodeError:
+                        pass
+                objet = json.dumps(
+                    {"name": fonction.get("name"), "arguments": arguments}, ensure_ascii=False
+                )
+                blocs.append(f"{BALISE_OUVRANTE}\n{objet}\n{BALISE_FERMANTE}")
+            contenu = copie.get("content") or ""
+            copie["content"] = "\n".join(([contenu] if contenu else []) + blocs)
+            del copie["tool_calls"]
+        resultat.append(copie)
+    return resultat
+
+
 class ClientLlama:
     """`LlmPort` d'un `llama-server` de génération sur `127.0.0.1:<port>`.
 
@@ -195,6 +311,11 @@ class ClientLlama:
             )
         return reponse.json()
 
+    def _messages(self, messages: Sequence[Mapping[str, Any]]) -> list[Any]:
+        if self.protocole_outils == "balises-tool-call":
+            return messages_balises(messages)
+        return list(messages)
+
     def _kwargs_template(self, options: Mapping[str, Any]) -> dict[str, Any]:
         return {**self.chat_template_kwargs, **(options.get("chat_template_kwargs") or {})}
 
@@ -205,11 +326,12 @@ class ClientLlama:
     ) -> int:
         """Tokens de l'entrée rendue par le chat template (`/apply-template`, `/tokenize`).
 
-        Avec `json-generique`, `tools` n'est pas rendu par le template (comme dans
+        Avec `json-generique`, `tools` n'est pas rendu par le template ; avec
+        `balises-tool-call`, les `tool_calls` de l'historique sont réécrits (comme dans
         `generer`).
         """
-        corps: dict[str, Any] = {"messages": list(messages)}
-        if tools and self.protocole_outils == "natif":
+        corps: dict[str, Any] = {"messages": self._messages(messages)}
+        if tools and self.protocole_outils != "json-generique":
             corps["tools"] = list(tools)
         kwargs = self._kwargs_template({})
         if kwargs:
@@ -238,7 +360,7 @@ class ClientLlama:
                 f"(permises : {', '.join(sorted(OPTIONS_AUTORISEES))})"
             )
         corps: dict[str, Any] = {
-            "messages": list(messages),
+            "messages": self._messages(messages),
             "stream": True,
             "stream_options": {"include_usage": True},
         }
@@ -249,7 +371,7 @@ class ClientLlama:
         if kwargs:
             corps["chat_template_kwargs"] = kwargs
         if tools:
-            if self.protocole_outils == "natif":
+            if self.protocole_outils != "json-generique":
                 corps["tools"] = list(tools)
             else:
                 corps["response_format"] = {
@@ -276,7 +398,8 @@ class ClientLlama:
         """
         corps = self.corps_generation(messages, tools=tools, options=options)
         json_generique = bool(tools) and self.protocole_outils == "json-generique"
-        return self._flux(corps, json_generique)
+        balises = LecteurBalises() if self.protocole_outils == "balises-tool-call" else None
+        return self._flux(corps, json_generique, balises)
 
     def _lignes(self, reponse: Any) -> Iterator[str]:
         """Lignes du flux ; une coupure de transport termine simplement l'itération."""
@@ -290,7 +413,9 @@ class ClientLlama:
                 return
             yield ligne
 
-    def _flux(self, corps: dict[str, Any], json_generique: bool) -> Iterator[Evenement]:
+    def _flux(
+        self, corps: dict[str, Any], json_generique: bool, balises: LecteurBalises | None = None
+    ) -> Iterator[Evenement]:
         debut = time.perf_counter()
         premier: float | None = None
         texte_json: list[str] = []
@@ -341,6 +466,8 @@ class ClientLlama:
                             premier = time.perf_counter()
                         if json_generique:
                             texte_json.append(contenu)
+                        elif balises is not None:
+                            yield from balises.lire(contenu)
                         else:
                             yield Jeton(texte=contenu)
                     for fragment in delta.get("tool_calls") or []:
@@ -360,6 +487,8 @@ class ClientLlama:
 
         if json_generique:
             yield from _sortie_json_generique("".join(texte_json))
+        if balises is not None:
+            yield from balises.finir()
         for index in sorted(appels):
             yield _appel_natif(appels[index])
 
@@ -376,7 +505,10 @@ class ClientLlama:
 
 __all__ = [
     "ClientLlama",
+    "LecteurBalises",
     "OPTIONS_AUTORISEES",
+    "PROTOCOLES",
     "appel_canonique",
+    "messages_balises",
     "schema_json_generique",
 ]
