@@ -1,0 +1,162 @@
+"""Protocole de mesure FR-26 : RAM, débit, délai au premier token, taille installée.
+
+`mesurer` pose `echauffement + repetitions` Questions à l'Assistant (fonction `repondre`
+fournie par l'appelant, qui l'assemble comme `slmsp ask`), sous l'échantillonneur RAM, puis
+écrit `runs/measure/<run_id>/resultat.json` (`ResultatMesure`, slug `h-ram`). Ce module
+n'importe jamais `slmsp.cli` (AD-1) ; l'exclusivité (`verrou_mesure`) est prise par l'appelant
+avant de démarrer les serveurs.
+
+Conformité : NFR-1 pic de RAM ≤ `ram_max_go` (la cible `ram_cible_go` est consignée à part),
+NFR-2 débit médian ≥ `debit_min_tps`, NFR-3 p95 du délai au premier token < `premier_token_max_s`,
+NFR-6 taille installée ≤ `taille_max_go`. La machine de développement n'est pas le PC cible.
+"""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Final
+
+from slmsp.core.artefacts import empreinte_environnement, nouveau_run
+from slmsp.core.canonique import json_canonique
+from slmsp.core.config import racine_projet
+from slmsp.core.evenements import Evenement
+from slmsp.core.schemas.mesure import ResultatMesure
+from slmsp.core.var import verrou_gpu
+from slmsp.measure.config import ConfigMesures
+from slmsp.measure.debit import MesureQuestion, mediane_p95, mesurer_question
+from slmsp.measure.ram import EchantillonneurRam
+from slmsp.measure.taille import tailles_composants
+
+MESURE: Final = "h-ram"
+HYPOTHESE: Final = "H-RAM"
+NOM_RESULTAT: Final = "resultat.json"
+GO: Final = 1024**3
+AVERTISSEMENT: Final = (
+    "Mesure faite sur la machine de développement, qui n'est pas le PC cible : les seuils "
+    "NFR-1 à NFR-3 et NFR-6 sont à reconfirmer sur le PC cible."
+)
+REPLI: Final = (
+    "réduire le contexte, la quantification ou le Modèle de base (candidat plus petit) ; "
+    "à étudier, non implémenté"
+)
+
+
+@contextmanager
+def verrou_mesure() -> Iterator[Path]:
+    """Exclusivité de la mesure : tient `gpu.lock` sans attente (AD-27).
+
+    Lève `RessourceOccupee` (code 5) si une autre commande `slmsp` le détient.
+    """
+    with verrou_gpu(commande="slmsp measure run") as chemin:
+        yield chemin
+
+
+def _conformite(valeurs: dict[str, float | None], config: ConfigMesures) -> dict[str, bool]:
+    seuils = config.seuils
+    ram, debit = valeurs["ram_max_go"], valeurs["debit_tps_mediane"]
+    return {
+        "nfr-1": ram is not None and ram <= seuils.ram_max_go,
+        "nfr-1-cible": ram is not None and ram <= seuils.ram_cible_go,
+        "nfr-2": debit is not None and debit >= seuils.debit_min_tps,
+        "nfr-3": (valeurs["premier_token_s_p95"] or float("inf")) < seuils.premier_token_max_s,
+        "nfr-6": (valeurs["taille_installee_go"] or 0.0) <= seuils.taille_max_go,
+    }
+
+
+def mesurer(
+    repondre: Callable[[str], Iterable[Evenement]],
+    config: ConfigMesures,
+    *,
+    modele: str,
+    quantification: str | None = None,
+    serveurs: list[dict[str, Any]] | None = None,
+    composants: Mapping[str, Path] | None = None,
+    racine: str | Path | None = None,
+    index_version: str | None = None,
+    echantillonneur: Callable[..., EchantillonneurRam] = EchantillonneurRam,
+    horloge: Callable[[], float] = time.perf_counter,
+) -> ResultatMesure:
+    """Mesure l'Assistant servi par `repondre(question)` et écrit le run `h-ram`.
+
+    En cas d'erreur, le run est terminé `partiel-erreur` et l'erreur relancée.
+    """
+    racine = (Path(racine) if racine is not None else racine_projet()).resolve()
+    parametres: dict[str, Any] = {
+        "modele": modele,
+        "quantification": quantification,
+        "questions": list(config.questions),
+        "repetitions": config.repetitions,
+        "echauffement": config.echauffement,
+        "plafond_threads": config.plafond_threads,
+        "periode_ms": config.periode_ms,
+        "serveurs": serveurs or [],
+    }
+    seuils = config.seuils.model_dump()
+    run = nouveau_run(
+        "measure",
+        MESURE,
+        {"hypothese": HYPOTHESE, **parametres, "seuils": seuils},
+        racine=racine,
+        index_version=index_version,
+        quantification=quantification,
+    )
+    try:
+        questions = config.questions
+        mesures: list[MesureQuestion] = []
+        with echantillonneur(periode_s=config.periode_ms / 1000) as ram:
+            for rang in range(config.echauffement + config.repetitions):
+                question = questions[rang % len(questions)]
+                mesure = mesurer_question(repondre(question), horloge)
+                if rang >= config.echauffement:
+                    mesures.append(mesure)
+        premiers = [m.premier_token_s for m in mesures]
+        debits = [m.debit_tps for m in mesures if m.debit_tps is not None]
+        premier_med, premier_p95 = mediane_p95(premiers)
+        debit_med = mediane_p95(debits)[0] if debits else None
+        tailles = tailles_composants(composants or {})
+        valeurs: dict[str, float | None] = {
+            "ram_max_go": ram.pic_octets / GO,
+            "debit_tps_mediane": debit_med,
+            "debit_tps_min": min(debits) if debits else None,
+            "premier_token_s_mediane": premier_med,
+            "premier_token_s_p95": premier_p95,
+            "taille_installee_go": sum(tailles.values()) / GO,
+        }
+        conformite = _conformite(valeurs, config)
+        exigences = ("nfr-1", "nfr-2", "nfr-3", "nfr-6")
+        echecs = [n for n in exigences if not conformite[n]]
+        resultat = ResultatMesure(
+            mesure=MESURE,
+            hypothese=HYPOTHESE,
+            run_id=run.run_id,
+            mesure_le=datetime.now().astimezone(),
+            index_version=index_version,
+            parametres=parametres,
+            valeurs=valeurs,
+            seuils=seuils,
+            verdict="infirmee" if echecs else "confirmee",
+            repli=f"{REPLI} (hors seuil : {', '.join(echecs)})" if echecs else None,
+            details={
+                "echantillons_ram": ram.nb_echantillons,
+                "tailles_octets": tailles,
+                "tokens_par_repetition": [m.tokens for m in mesures],
+                "tokens_estimes_par_jetons": any(m.tokens_estimes for m in mesures),
+                "unite": "Go = 1024³ octets ; ram = pic de la somme des working sets de l'arbre",
+            },
+            conformite=conformite,
+            environnement=empreinte_environnement(racine),
+            avertissement=AVERTISSEMENT,
+        )
+        run.ecrire(NOM_RESULTAT, json_canonique(resultat.model_dump(mode="json")) + b"\n")
+    except KeyboardInterrupt:
+        run.terminer("interrompu", "arrêt demandé")
+        raise
+    except Exception as exc:
+        run.terminer("partiel-erreur", f"{type(exc).__name__} : {exc}")
+        raise
+    run.terminer("complet")
+    return resultat

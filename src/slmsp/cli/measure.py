@@ -1,0 +1,114 @@
+"""Sous-commande `slmsp measure run` : mesures techniques FR-26 (NFR-1 à NFR-3, NFR-6).
+
+    slmsp measure run --modele base:<slug> [--quantification q4_k_m] [--racine DOSSIER]
+
+Assemble l'Assistant complet comme `slmsp ask` (deux `llama-server` en variante `cpu`,
+threads plafonnés par `config/mesures.toml`, Index local chargé), mesure des Questions avec
+recherche dans l'Index et écrit `runs/measure/<run_id>/resultat.json`. Refuse
+(`RessourceOccupee`, code 5) si une autre commande `slmsp` tient le verrou.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+from typing import Any
+
+from slmsp.core.config import racine_projet
+from slmsp.core.erreurs import CodeSortie
+
+
+def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
+    """Ajoute `measure` et son action `run`."""
+    parseur = sous_parseurs.add_parser(
+        "measure",
+        help="mesures techniques",
+        description="Mesures techniques de l'Assistant complet (RAM, débit, latence, taille).",
+    )
+    actions = parseur.add_subparsers(dest="action", metavar="<action>", required=True)
+    p = actions.add_parser("run", help="mesurer RAM, débit, premier token et taille installée")
+    p.add_argument("--modele", required=True, help="modèle : base:<slug>")
+    p.add_argument(
+        "--quantification",
+        choices=("f16", "q4_k_m"),
+        default=None,
+        help="quantification attendue : refusée si le GGUF de config/modeles en porte une autre",
+    )
+    p.add_argument("--racine", type=Path, default=None, help="racine de index/ et runs/")
+    p.set_defaults(func=_run)
+
+
+def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[str, Path]:
+    from slmsp.index.config import dossier_index
+    from slmsp.inference.serveur import dossier_llamacpp
+
+    composants: dict[str, Path] = {s.role: s.gguf for s in serveurs}
+    if version is not None:
+        composants["index"] = dossier_index(racine) / version
+    # NFR-6 : tous les binaires installés (bin-cpu et bin-cuda si présent), sans sous-estimer.
+    base = dossier_llamacpp()
+    for dossier in sorted(base.glob("bin-*")):
+        composants[f"binaires-{dossier.name.removeprefix('bin-')}"] = dossier
+    if not any(nom.startswith("binaires-") for nom in composants):
+        composants["binaires-cpu"] = base / "bin-cpu"
+    return composants
+
+
+def _run(args: argparse.Namespace) -> int:
+    from slmsp.cli._assemblage import ModeleInvalide, assembler, slug_modele
+    from slmsp.harness.taches import charger_taches
+    from slmsp.index.lecture import versions_disponibles
+    from slmsp.measure.config import charger_config_mesures
+    from slmsp.measure.protocole import mesurer, verrou_mesure
+
+    try:
+        slug_modele(args.modele)
+    except ModeleInvalide as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    config = charger_config_mesures()
+    racine = (args.racine if args.racine is not None else racine_projet()).resolve()
+    versions = versions_disponibles(racine)
+    version = versions[-1] if versions else None
+    fiche = charger_taches().defaut
+    with (
+        verrou_mesure(),
+        assembler(
+            args.modele, fiche, variante="cpu", racine=racine, threads=config.plafond_threads
+        ) as assemblage,
+    ):
+        if args.quantification is not None:
+            gguf = next((s.gguf for s in assemblage.serveurs if s.role != "embedding"), None)
+            etiquette = args.quantification.replace("_", "").lower()
+            if gguf is None or etiquette not in gguf.name.replace("_", "").replace("-", "").lower():
+                nom = "aucun" if gguf is None else gguf.name
+                print(
+                    f"slmsp : --quantification {args.quantification} ne correspond pas au GGUF "
+                    f"configuré ({nom})",
+                    file=sys.stderr,
+                )
+                return int(CodeSortie.USAGE)
+
+        def repondre(question: str) -> Any:
+            return assemblage.service.repondre(fiche, [{"role": "user", "content": question}])
+
+        resultat = mesurer(
+            repondre,
+            config,
+            modele=args.modele,
+            quantification=args.quantification,
+            serveurs=[s.description() for s in assemblage.serveurs],
+            composants=_composants(assemblage.serveurs, racine, version),
+            racine=racine,
+            index_version=version,
+        )
+    valeurs = resultat.valeurs
+    print(f"{resultat.hypothese} ({args.modele}) : {resultat.verdict}")
+    for nom, valeur in valeurs.items():
+        print(f"  {nom} : {'n/d' if valeur is None else f'{valeur:.3f}'}")
+    for nom, ok in resultat.conformite.items():
+        print(f"  {nom} : {'conforme' if ok else 'NON conforme'}")
+    print(resultat.avertissement)
+    print(f"run {resultat.run_id} : {racine / 'runs' / 'measure' / resultat.run_id}")
+    return int(CodeSortie.SUCCES)

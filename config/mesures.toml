@@ -1,0 +1,25 @@
+# Protocole de mesure technique FR-26 (story 6.4), versionné : `slmsp measure run`.
+# Les questions sont rédigées par le projet, distinctes du Jeu d'évaluation ; elles passent par
+# une recherche dans l'Index (Tâche Q). La machine de développement n'est pas le PC cible.
+
+schema_version = 1
+
+# Questions posées à tour de rôle (la répétition i prend la question i mod n).
+questions = [
+    "Quelles sont les démarches pour changer son adresse après un déménagement ?",
+    "Comment renouveler une carte d'identité qui arrive à expiration ?",
+    "Quel est le délai pour déclarer la naissance d'un enfant en mairie ?",
+    "Comment demander un extrait d'acte de mariage ?",
+    "Quelles pièces fournir pour inscrire un enfant à l'école primaire ?",
+]
+repetitions = 10     # mesurées (médiane et p95)
+echauffement = 1     # générations écartées des statistiques (chargement, caches)
+plafond_threads = 4  # threads de chaque llama-server (jamais au-dessus de config/modeles)
+periode_ms = 100     # période de l'échantillonneur RAM
+
+[seuils]
+ram_max_go = 5.0           # NFR-1 : RAM maximale
+ram_cible_go = 4.0         # NFR-1 : cible
+debit_min_tps = 8.0        # NFR-2 : tokens/s en génération
+premier_token_max_s = 5.0  # NFR-3 : délai au premier token
+taille_max_go = 4.0        # NFR-6 : taille installée

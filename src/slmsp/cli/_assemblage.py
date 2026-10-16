@@ -19,7 +19,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Iterator, Mapping
 from contextlib import ExitStack, contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +87,18 @@ class Assemblage:
     journal: JournalRequetes
     mode: ModeSonde | ModeFixe
     passerelle: Passerelle
+    serveurs: list[Any] = field(default_factory=list)
+    """`ServeurLlama` démarrés par l'assemblage (provenance : `description()`)."""
+
+
+def plafonner_threads(config_modele: Any, threads: int | None) -> Any:
+    """Config du Modèle avec threads plafonnés à `threads` (None : inchangée)."""
+    if threads is None:
+        return config_modele
+    courant = config_modele.threads
+    return config_modele.model_copy(
+        update={"threads": threads if courant is None else min(courant, threads)}
+    )
 
 
 @contextmanager
@@ -103,17 +115,24 @@ def assembler(
     embedder: EmbedderPort | None = None,
     vector_store: VectorStore | None = None,
     outils: ToolPort | None = None,
+    threads: int | None = None,
 ) -> Iterator[Assemblage]:
     """Assemble l'Assistant pour `modele` (`base:<slug>`) et la Tâche `tache` (Q par défaut).
 
     `transport_interne` est transmis à la sonde et aux outils MCP. Les serveurs ne sont
     démarrés que pour les ports non injectés ; l'embedder et l'Index seulement si le prompt
-    de la Tâche a un emplacement `passages`.
+    de la Tâche a un emplacement `passages`. `threads` plafonne ceux des deux serveurs
+    (jamais au-dessus de la valeur de leur configuration).
     """
     slug = slug_modele(modele)
     table = charger_taches()
     fiche = tache if tache is not None else table.defaut
     config = charger_config_harnais()
+    serveurs: list[Any] = []
+
+    def plafonner(config_modele: Any) -> Any:
+        return plafonner_threads(config_modele, threads)
+
     with ExitStack() as pile:
         if journal is None:
             journal = JournalSqlite()
@@ -128,8 +147,9 @@ def assembler(
             from slmsp.inference.serveur import ServeurLlama, charger_config_modele
 
             serveur = pile.enter_context(
-                ServeurLlama(charger_config_modele(slug), variante, slug=slug)  # type: ignore[arg-type]
+                ServeurLlama(plafonner(charger_config_modele(slug)), variante, slug=slug)  # type: ignore[arg-type]
             )
+            serveurs.append(serveur)
             llm = serveur.client()
         if "passages" in fiche.prompt.emplacements:
             if embedder is None:
@@ -137,11 +157,12 @@ def assembler(
 
                 embedding = pile.enter_context(
                     ServeurLlama(
-                        charger_config_modele("bge-m3"),
+                        plafonner(charger_config_modele("bge-m3")),
                         "cpu",
                         slug="bge-m3",
                     )
                 )
+                serveurs.append(embedding)
                 embedder = embedding.embedder()
             if vector_store is None:
                 from slmsp.index.lecture import ouvrir_index
@@ -158,7 +179,7 @@ def assembler(
         if hors_ligne:
             outils = None
         service = AssistantService(llm, embedder, vector_store, outils, mode, config, taches=table)
-        yield Assemblage(service, journal, mode, passerelle)
+        yield Assemblage(service, journal, mode, passerelle, serveurs)
 
 
 __all__ = [

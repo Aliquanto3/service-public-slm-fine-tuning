@@ -12,7 +12,7 @@ from typing import Annotated, Any, Literal, Self
 from pydantic import AwareDatetime, Field, StringConstraints, model_validator
 
 from slmsp.core.schemas import SchemaBase
-from slmsp.core.schemas.run import MOTIF_RUN_ID
+from slmsp.core.schemas.run import MOTIF_RUN_ID, Environnement
 
 Verdict = Literal["confirmee", "infirmee", "sans-objet"]
 
@@ -34,6 +34,12 @@ class ResultatMesure(SchemaBase):
     verdict: Verdict
     repli: str | None = None
     details: dict[str, Any] = Field(default_factory=dict)
+    conformite: dict[str, bool] = Field(default_factory=dict)
+    """Conformité à une exigence (`nfr-1`…) ; vide pour les mesures sans exigence (story 6.4)."""
+    environnement: Environnement | None = None
+    """Empreinte de la machine de mesure (story 6.4)."""
+    avertissement: str | None = None
+    """Réserve de lecture (la machine de développement n'est pas le PC cible)."""
 
     @model_validator(mode="after")
     def _repli_si_infirmee(self) -> Self:
