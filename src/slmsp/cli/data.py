@@ -26,6 +26,10 @@ imprime exemples et taux de rejet par motif et par Tâche (FR-30).
 `build --depuis FILTER_RUN_ID --variante {diffusable,recherche} [--racine DIR]` refabrique chaque
 ligne depuis les réponses Mistral journalisées, la compare octet par octet et écrit
 `data/train/vN/{train.jsonl,MANIFEST.json}` (`slmsp.data.build`, une version n'est jamais réécrite).
+`build --preferences --depuis BUILD_RUN_ID --modele base:SLUG [--llama {cpu,cuda}]` construit les
+paires ORPO (chosen : exemple SFT ; rejected : génération du Modèle de base local, journalisée
+dans `generations-locales.sqlite`) dans une nouvelle version `data/train/vN/preferences.jsonl`
+(`slmsp.data.preferences`, dérogation FR-34 au MANIFEST).
 
 Codes de sortie : 0 run complet ; 1 erreur ou run partiel ; 3 budget Mistral épuisé ;
 4 gel absent, provenance invalide ou manifeste incohérent.
@@ -185,13 +189,25 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         help="construire le jeu d'entraînement versionné (re-dérivation du journal)",
         description="Étape build : re-dérivation octet par octet, data/train/vN, MANIFEST.",
     )
-    b.add_argument("--depuis", required=True, metavar="FILTER_RUN_ID", help="run data-filter")
+    b.add_argument(
+        "--depuis",
+        required=True,
+        metavar="RUN_ID",
+        help="run data-filter ; avec --preferences, run data-build du jeu SFT",
+    )
     b.add_argument(
         "--variante",
-        required=True,
         choices=["diffusable", "recherche"],
-        help="diffusable : sources diffusables seules ; recherche : jeu marqué recherche",
+        help="diffusable : sources diffusables seules ; recherche : jeu marqué recherche "
+        "(requis sans --preferences)",
     )
+    b.add_argument(
+        "--preferences",
+        action="store_true",
+        help="construire les paires ORPO (chosen : exemple SFT ; rejected : Modèle de base local)",
+    )
+    b.add_argument("--modele", metavar="base:SLUG", help="Modèle de base local (--preferences)")
+    b.add_argument("--llama", choices=["cpu", "cuda"], default="cpu", help="variante llama.cpp")
     b.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
     b.set_defaults(func=_build)
 
@@ -560,11 +576,53 @@ def _filter(args: argparse.Namespace) -> int:
 # --- build -------------------------------------------------------------------------------
 
 
+def _preferences(args: argparse.Namespace, racine: Path) -> int:
+    from slmsp.cli._assemblage import ModeleInvalide, slug_modele
+    from slmsp.data.preferences import lancer_preferences
+    from slmsp.inference.serveur import ServeurLlama, charger_config_modele
+
+    if not args.modele or args.variante:
+        print(
+            "slmsp : --preferences exige --modele base:<slug> et exclut --variante", file=sys.stderr
+        )
+        return int(CodeSortie.USAGE)
+    try:
+        slug = slug_modele(args.modele)
+    except ModeleInvalide as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    config = charger_config_donnees()
+    with ServeurLlama(charger_config_modele(slug), args.llama, slug=slug) as serveur:  # type: ignore[arg-type]
+        resultat = lancer_preferences(
+            racine=racine,
+            build_run_id=args.depuis,
+            modele=args.modele,
+            llm=serveur.client(),
+            config=config.preferences,
+            consigner=_consigner,
+        )
+    for tache, nombre in resultat.rapport["comptes_par_tache"].items():
+        print(f"{tache} : {nombre} paires")
+    motifs = ", ".join(f"{m} {n}" for m, n in resultat.rapport["ecartees_par_motif"].items())
+    print(f"écartées : {motifs or 'aucune'}")
+    print(f"paires {resultat.version} : {resultat.dossier}")
+    print(f"run {resultat.run.run_id} (complet) : {resultat.run.dossier}")
+    return int(CodeSortie.SUCCES)
+
+
 def _build(args: argparse.Namespace) -> int:
     from slmsp.data.build import lancer_build
     from slmsp.harness.taches import charger_taches
 
     racine = _racine(args)
+    if args.preferences:
+        return _preferences(args, racine)
+    if not args.variante or args.modele:
+        print(
+            "slmsp : build exige --variante (et n'accepte --modele qu'avec --preferences)",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
     resultat = lancer_build(
         racine=racine,
         filter_run_id=args.depuis,

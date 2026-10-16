@@ -70,7 +70,7 @@ def ligne_factice(numero: int, *, appel_id: str | None = None, mots: int = 1) ->
 
 
 def paire_factice(numero: int, *, appel_id: str | None = None) -> dict[str, Any]:
-    """Paire de préférence ORPO factice (format provisoire de la story 9.7)."""
+    """Paire de préférence ORPO factice (contrat `EntetePaire` de la story 9.7)."""
     return {
         "prompt": [
             {"role": "system", "content": "<prompt-factice>"},
@@ -80,7 +80,11 @@ def paire_factice(numero: int, *, appel_id: str | None = None) -> dict[str, Any]
         "rejected": [{"role": "assistant", "content": f"<rejetee-factice-{numero}>"}],
         "tools": [{"type": "function", "function": {"name": "outil_factice"}}],
         "tache": "tache-factice",
-        "meta": {"appel_ids": [appel_id or f"appel-{numero}"]},
+        "meta": {
+            "appel_ids": [appel_id or f"appel-{numero}"],
+            "appel_local_id": f"local-{numero}",
+            "generateur_rejected": "slm:modele-factice",
+        },
     }
 
 
@@ -113,7 +117,33 @@ class Projet:
         (dossier / "MANIFEST.json").write_text(json.dumps(contenu), encoding="utf-8")
         ids = {a for ligne in lignes for a in ligne["meta"]["appel_ids"]}
         self.ecrire_journal({a: ("generation", "ok") for a in ids} | (usages or {}))
+        if fichier == "preferences.jsonl":
+            self.ecrire_journal_local(lignes)
         return dossier
+
+    def ecrire_journal_local(self, paires: list[dict[str, Any]]) -> Path:
+        """`generations-locales.sqlite` conforme aux réponses rejetées des `paires`."""
+        chemin = dossier_var() / "generations-locales.sqlite"
+        with sqlite3.connect(chemin) as connexion:
+            connexion.execute(
+                "CREATE TABLE IF NOT EXISTS appels (appel_id TEXT PRIMARY KEY, usage TEXT, "
+                "statut TEXT, generateur TEXT, sha256_reponse TEXT)"
+            )
+            connexion.executemany(
+                "INSERT OR REPLACE INTO appels VALUES (?, ?, ?, ?, ?)",
+                [
+                    (
+                        p["meta"]["appel_local_id"],
+                        "generation-locale",
+                        "ok",
+                        p["meta"]["generateur_rejected"],
+                        hashlib.sha256(p["rejected"][-1]["content"].encode()).hexdigest(),
+                    )
+                    for p in paires
+                ],
+            )
+        connexion.close()
+        return chemin
 
     def ecrire_journal(self, appels: dict[str, tuple[str, str]]) -> Path:
         chemin = dossier_var() / "appels-mistral.sqlite"

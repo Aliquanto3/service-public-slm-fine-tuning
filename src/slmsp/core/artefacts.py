@@ -58,6 +58,8 @@ NOM_MANIFESTE: Final = "run.json"
 NOM_ETAT: Final = "etat.jsonl"
 NOM_JOURNAL_MISTRAL: Final = "appels-mistral.sqlite"
 NOM_CACHE_VERDICTS: Final = "verdicts.sqlite"
+NOM_JOURNAL_LOCAL: Final = "generations-locales.sqlite"
+"""Journal des générations du Modèle de base local (story 9.7), lisible par `train`."""
 """Cache des verdicts du Juge (`slmsp.judge.cache.NOM_CACHE`), refusé à `data` et `train`."""
 ESSAIS_RUN_ID: Final = 20
 DELAI_GIT: Final = 10.0
@@ -519,6 +521,7 @@ def chemin_autorise(chemin: str | Path, lecteur: str, *, racine: str | Path | No
             _sous(resolu, base("data/train"))
             or _sous(resolu, dossier_modeles().resolve())
             or _egal(resolu, journal)
+            or _egal(resolu, (var / NOM_JOURNAL_LOCAL).resolve())
         )
     if not autorise:
         raise refuser("hors de la liste d'accès")

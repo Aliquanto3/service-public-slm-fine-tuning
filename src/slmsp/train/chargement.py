@@ -9,8 +9,9 @@ MANIFEST ; chaque `appel_id` est recontrôlé contre le journal (`usage = genera
 MANIFEST : `EnteteManifesteJeu` (`core.schemas.entrainement`, partagé avec la story 9.6)
 `{version, type_run = "data-build", run_id, sha256_<fichier>}` ; lignes
 `{messages, tools, tache, meta{appel_ids, …}}`. Les clés supplémentaires sont acceptées.
-Paires ORPO (`preferences.jsonl`, story 9.7, provisoire) : `{prompt, chosen, rejected, tools,
-tache, meta{appel_ids}}`, `prompt` étant la liste des messages avant la réponse, `chosen` et
+Paires ORPO (`preferences.jsonl`, story 9.7, `EntetePaire` partagé) :
+`{prompt, chosen, rejected, tools, tache, meta{appel_ids}}`, `prompt` étant la liste des messages
+avant la réponse, `chosen` et
 `rejected` les messages de la réponse retenue et de la réponse rejetée.
 
 La pré-tokenisation applique `train.masque` (implémentation unique) puis coupe `input_ids`
@@ -30,6 +31,7 @@ from typing import Any, Final
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from slmsp.core.artefacts import (
+    NOM_JOURNAL_LOCAL,
     NOM_JOURNAL_MISTRAL,
     chemin_autorise,
     lire,
@@ -38,7 +40,7 @@ from slmsp.core.artefacts import (
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspError
 from slmsp.core.schemas.config_modele import ConfigModele
-from slmsp.core.schemas.entrainement import EnteteManifesteJeu
+from slmsp.core.schemas.entrainement import EnteteManifesteJeu, EntetePaire
 from slmsp.core.var import dossier_var
 from slmsp.train import environnement
 from slmsp.train.masque import IGNORE, calculer_masque
@@ -47,7 +49,7 @@ from slmsp.train.rendu import apply_chat_template
 NOM_MANIFESTE_JEU: Final = "MANIFEST.json"
 NOM_TRAIN: Final = "train.jsonl"
 NOM_PREFERENCES: Final = "preferences.jsonl"
-"""Paires ORPO (story 9.7, format provisoire)."""
+"""Paires ORPO (story 9.7)."""
 TAILLE_REQUETE: Final = 500
 """`appel_id` par requête SQL (limite de variables de SQLite)."""
 
@@ -75,15 +77,8 @@ class _Ligne(_Libre):
     meta: _Meta
 
 
-class _Paire(_Libre):
-    """Paire de préférence ORPO (format provisoire, story 9.7)."""
-
-    prompt: list[dict[str, Any]] = Field(min_length=1)
-    chosen: list[dict[str, Any]] = Field(min_length=1)
-    rejected: list[dict[str, Any]] = Field(min_length=1)
-    tools: list[dict[str, Any]] | None = None
-    tache: str
-    meta: _Meta
+_Paire = EntetePaire
+"""Contrat partagé avec `data build --preferences` (`core.schemas.entrainement`)."""
 
 
 @dataclass
@@ -201,6 +196,65 @@ def recontroler_appel_ids(
             f"usage {usage}, statut {statut})"
         )
     return len(ids)
+
+
+def recontroler_rejected(
+    paires: Sequence[_Paire],
+    *,
+    journal: str | Path | None = None,
+    racine: str | Path | None = None,
+) -> int:
+    """Vérifie la réponse rejetée de chaque paire dans `generations-locales.sqlite` (9.7).
+
+    `meta.appel_local_id` doit exister dans le journal local avec `usage =
+    generation-locale`, `statut = ok`, `generateur = meta.generateur_rejected`, et le SHA-256
+    de sa réponse brute doit être celui du texte de `rejected`. Lève `ManifesteInvalide`
+    sinon (journal absent compris) ; renvoie le nombre de paires contrôlées.
+    """
+    chemin = Path(journal) if journal is not None else dossier_var() / NOM_JOURNAL_LOCAL
+    if not chemin_autorise(chemin, "train", racine=racine).is_file():
+        raise ManifesteInvalide(f"journal local absent : {chemin} (rejected non vérifiables)")
+    attendus: list[tuple[int, str, str, str]] = []
+    for numero, paire in enumerate(paires, start=1):
+        extra = paire.meta.model_extra or {}
+        appel_id, generateur = extra.get("appel_local_id"), extra.get("generateur_rejected")
+        contenu = paire.rejected[-1].get("content")
+        if not (isinstance(appel_id, str) and isinstance(generateur, str)):
+            raise ManifesteInvalide(
+                f"paire {numero} : meta.appel_local_id et meta.generateur_rejected requis"
+            )
+        if not isinstance(contenu, str):
+            raise ManifesteInvalide(f"paire {numero} : rejected sans texte")
+        attendus.append(
+            (numero, appel_id, generateur, hashlib.sha256(contenu.encode()).hexdigest())
+        )
+    vus: dict[str, tuple[str, str, str, str | None]] = {}
+    ids = sorted({a for _, a, _, _ in attendus})
+    connexion = ouvrir_sqlite_lecture(chemin, "train", racine=racine)
+    try:
+        for debut in range(0, len(ids), TAILLE_REQUETE):
+            lot = ids[debut : debut + TAILLE_REQUETE]
+            marques = ", ".join("?" * len(lot))
+            requete = (
+                "SELECT appel_id, usage, statut, generateur, sha256_reponse FROM appels "
+                f"WHERE appel_id IN ({marques})"
+            )
+            for appel_id, usage, statut, generateur, sha in connexion.execute(requete, lot):
+                vus[str(appel_id)] = (str(usage), str(statut), str(generateur), sha)
+    finally:
+        connexion.close()
+    for numero, appel_id, generateur, sha in attendus:
+        if appel_id not in vus:
+            raise ManifesteInvalide(
+                f"paire {numero} : appel_local_id {appel_id} absent du journal local"
+            )
+        if vus[appel_id] != ("generation-locale", "ok", generateur, sha):
+            usage, statut, journalise, _ = vus[appel_id]
+            raise ManifesteInvalide(
+                f"paire {numero} : appel_local_id {appel_id} non conforme (usage {usage}, "
+                f"statut {statut}, générateur {journalise}, ou SHA de rejected différent)"
+            )
+    return len(attendus)
 
 
 def controler_contraintes(

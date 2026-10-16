@@ -68,3 +68,12 @@ seuil_cosinus = 0.9
 taille_echantillon = 30
 # Graine du tirage, pour un échantillon reproductible.
 graine = 42
+
+# Paires ORPO (story 9.7) : génération locale de la réponse rejetée par le Modèle de base.
+[preferences]
+# Graine de base ; la paire de rang i utilise graine + i.
+graine = 42
+# Température d'échantillonnage du Modèle de base local.
+temperature = 0.8
+# Longueur maximale de la réponse rejetée, en tokens.
+max_tokens = 1024

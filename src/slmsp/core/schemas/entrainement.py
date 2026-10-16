@@ -117,3 +117,103 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     conditions_mistral: ConditionsMistral
     modeles_generateurs: list[str]
     version_extracteur: int = Field(ge=1)
+
+
+# --- Paires de préférence ORPO (story 9.7, FR-34, D-nuit-A1-21) ---------------------------------
+
+DEROGATION_ORPO: Final = (
+    "Dérogation FR-34 : les paires ORPO ne sont pas à données égales avec le SFT. La réponse "
+    "choisie est la réponse de l'exemple SFT validé ; la réponse rejetée est une génération "
+    "du Modèle de base local (slm:<slug>), journalisée dans generations-locales.sqlite. "
+    "Aucun verdict du Juge Claude n'est utilisé."
+)
+
+
+class EnteteMetaPaire(BaseModel):
+    """Contrat minimal de `meta` d'une paire, contrôlé par `train.chargement`."""
+
+    model_config = ConfigDict(extra="allow")
+
+    appel_ids: list[str] = Field(min_length=1)
+
+
+class EntetePaire(BaseModel):
+    """Contrat minimal d'une ligne de `preferences.jsonl`, contrôlé par `train.chargement`.
+
+    `PairePreference` l'étend : un seul contrat entre `data build --preferences` et
+    `train run`. `prompt` : messages avant la réponse ; `chosen`, `rejected` : messages de
+    la réponse retenue et de la réponse rejetée.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    prompt: list[dict[str, Any]] = Field(min_length=1)
+    chosen: list[dict[str, Any]] = Field(min_length=1)
+    rejected: list[dict[str, Any]] = Field(min_length=1)
+    tools: list[dict[str, Any]] | None = None
+    tache: str
+    meta: EnteteMetaPaire
+
+
+class MetaPaire(EnteteMetaPaire):
+    """Provenance d'une paire : `appel_ids` désigne les appels Mistral de la réponse choisie."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: SessionId
+    generateur_rejected: str
+    """`slm:<slug>` : Modèle de base local ayant produit la réponse rejetée."""
+    appel_local_id: str
+    """Appel du journal `generations-locales.sqlite` de la réponse rejetée."""
+    source: list[str] = Field(min_length=1)
+    licence: list[str] = Field(min_length=1)
+
+
+class PairePreference(EntetePaire, SchemaBase):
+    """Une ligne de `preferences.jsonl`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal[1] = 1
+    meta: MetaPaire  # type: ignore[assignment]
+
+    @model_validator(mode="after")
+    def _conversations(self) -> Self:
+        for cle in ("chosen", "rejected"):
+            reponse = getattr(self, cle)
+            try:
+                valider_conversation([*self.prompt, *reponse])
+            except ConversationInvalide as exc:
+                raise ValueError(f"{cle} : {exc}") from None
+            if reponse[-1].get("role") != "assistant":
+                raise ValueError(f"{cle} : le dernier message doit être « assistant »")
+        return self
+
+
+class ManifestePreferences(EnteteManifesteJeu, SchemaBase):
+    """`data/train/vN/MANIFEST.json` d'une version de paires (`sha256_preferences`)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal[1] = 1
+    type_run: Literal["data-build"] = TYPE_RUN_BUILD
+    variante: Variante
+    cree_le: Jour
+    statut: Literal["complet"] = "complet"
+    build_run_id: RunId
+    """Run `data-build` du jeu SFT dont viennent les réponses choisies."""
+    jeu_sft_version: VersionJeu
+    sha256_train: Sha256
+    sha256_preferences: Sha256
+    nb_paires: int = Field(ge=1)
+    comptes_par_tache: dict[str, int]
+    ecartees_par_motif: dict[str, int]
+    modele: Nom
+    """`base:<slug>`."""
+    generateur_rejected: Nom
+    """`slm:<slug>`."""
+    graine: int = Field(ge=0)
+    temperature: float = Field(ge=0)
+    max_tokens: int = Field(ge=1)
+    derogation_fr34: str
+    utilise_verdicts_juge: Literal[False] = False

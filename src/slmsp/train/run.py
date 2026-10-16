@@ -220,6 +220,8 @@ def executer(
             raise
         return _bloquer(nom, config, str(exc), racine=racine, sortie=sortie)
     appels = chargement.recontroler_appel_ids(jeu.lignes, journal=journal_mistral, racine=racine)
+    if plan.entraineur == "orpo":
+        chargement.recontroler_rejected(jeu.lignes, racine=racine)
     adaptateur_sft = None
     if config.sft_run_id is not None:
         # AD-24 : `train` ne lit pas `runs/train/` (amendement à trancher, note 10.6).

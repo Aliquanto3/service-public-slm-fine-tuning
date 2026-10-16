@@ -7,7 +7,9 @@
 - `[volumes]` : volumes cibles par Tâche, Traduction exclue ; part `generique` dans
   [0,10 ; 0,20] du total (D4) ;
 - `[deduplication]`, `[anti_fuite]` : n-grammes et seuils de l'étape `filter`, dans ]0, 1] ;
-- `[relecture]` : échantillon de relecture humaine.
+- `[relecture]` : échantillon de relecture humaine ;
+- `[preferences]` : génération locale de la réponse rejetée des paires ORPO (graine,
+  température, longueur maximale ; optionnelle, valeurs par défaut ci-dessous).
 
 Le fichier est lu par `slmsp.core.config.charger_toml` (clés inconnues refusées) : toute
 non-conformité lève `ConfigurationInvalide`, sans citer la valeur saisie.
@@ -136,6 +138,15 @@ class RelectureDonnees(ModeleConfig):
     graine: Annotated[StrictInt, Field(ge=0)]
 
 
+class PreferencesDonnees(ModeleConfig):
+    """Table `[preferences]` : génération de la réponse rejetée (story 9.7)."""
+
+    graine: Annotated[StrictInt, Field(ge=0)] = 42
+    """Graine de base ; la paire de rang `i` utilise `graine + i`."""
+    temperature: Annotated[float, Field(ge=0, le=2, allow_inf_nan=False)] = 0.8
+    max_tokens: Annotated[StrictInt, Field(ge=1)] = 1024
+
+
 class ConfigDonnees(ModeleConfig):
     """Contenu de `config/donnees.toml`."""
 
@@ -145,6 +156,7 @@ class ConfigDonnees(ModeleConfig):
     deduplication: DeduplicationDonnees
     anti_fuite: AntiFuiteDonnees
     relecture: RelectureDonnees
+    preferences: PreferencesDonnees = Field(default_factory=PreferencesDonnees)
 
     @property
     def total(self) -> int:
