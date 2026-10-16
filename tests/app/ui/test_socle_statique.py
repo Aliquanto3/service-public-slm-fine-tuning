@@ -95,12 +95,15 @@ def test_couleurs_d_etat_jamais_en_texte() -> None:
         assert not motif.search(css.read_text(encoding="utf-8")), css.name
 
 
+VUES_REALISEES = {"mode", "question", "recherche"}  # livrées par les stories 12.7 et 12.9
+
+
 def test_modules_de_vue_declares_d_avance() -> None:
     for vue in VUES:
         assert (UI / "css" / f"{vue}.css").is_file(), vue
         module = (UI / "js" / "vues" / f"{vue}.js").read_text(encoding="utf-8")
         assert "export function monter" in module, vue
-        if vue not in ("question", "recherche"):  # livrées par la story 12.7
+        if vue not in VUES_REALISEES:
             assert "non disponible" in module, vue
         assert f'href="css/{vue}.css"' in (UI / "index.html").read_text(encoding="utf-8")
 

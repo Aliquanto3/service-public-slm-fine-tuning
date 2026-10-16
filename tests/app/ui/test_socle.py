@@ -174,6 +174,7 @@ def test_ordre_de_tabulation_focus_visible_et_libelles(page) -> None:
         "exemple-Q-1",  # les trois exemples de l'écran « Question vide » (story 12.7)
         "exemple-Q-2",
         "exemple-Q-3",
+        "mode-pastille",
         "saisie",
         "envoyer",
         "sources-fermer",

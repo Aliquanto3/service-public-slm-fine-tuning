@@ -73,7 +73,7 @@ class Pont:
         self._liste_blanche = liste_blanche  # lue dans `config/` au premier `ouvrir_lien`
         self._conversation = Conversation(service, self._pousser)
         self._domaines: dict[str, Any] = {
-            "mode": PontMode(),
+            "mode": PontMode(service.mode, stockage, self._pousser),
             "reglages": PontReglages(),
             "historique": PontHistorique(),
             "retours": PontRetours(),
