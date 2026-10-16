@@ -139,7 +139,8 @@ export function creerReponse(opts) {
     }
   };
 
-  r.terminer = (fin) => {
+  /** `annonce: false` : réponse restaurée (rouverture de l'Historique), rien n'est lu. */
+  r.terminer = (fin, { annonce = true } = {}) => {
     r.etat = "fini";
     attente.hidden = true;
     racine.setAttribute("aria-busy", "false");
@@ -155,7 +156,7 @@ export function creerReponse(opts) {
     // Lecteur d'écran (EXPERIENCE.md) : la réponse est lue une fois terminée, jamais jeton par
     // jeton, par la région `aria-live="polite"` du socle (`#annonces`).
     const entete = fin.raison === "interrompue" ? "Réponse interrompue." : "Réponse terminée.";
-    annoncer(r.brut ? `${entete} ${r.brut}` : entete);
+    if (annonce) annoncer(r.brut ? `${entete} ${r.brut}` : entete);
   };
 
   r.echec = () => {

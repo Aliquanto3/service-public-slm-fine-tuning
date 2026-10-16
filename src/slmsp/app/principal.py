@@ -354,7 +354,12 @@ class Demarrage:
                 journal=JournalApplication(self._stockage),
                 threads=config.threads,
             ) as assemblage:
-                pont = Pont(assemblage.service, self._fenetre, stockage=self._stockage)
+                pont = Pont(
+                    assemblage.service,
+                    self._fenetre,
+                    stockage=self._stockage,
+                    choisir_fichier=dialogue_enregistrer(self._fenetre),
+                )
                 self._differe.brancher(pont)
                 if self._page_prete():
                     pont.signaler_pret()
@@ -428,6 +433,28 @@ def durcir_webview(webview: Any) -> None:
     `ALLOW_FILE_URLS` à False : l'interface est servie en HTTP, `file://` n'a pas lieu d'être."""
     webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = False
     webview.settings["ALLOW_FILE_URLS"] = False
+
+
+def dialogue_enregistrer(fenetre: Any) -> Callable[[str], str | None]:
+    """Port « Enregistrer sous » du pont (story 12.11) : rend le chemin choisi ou `None`."""
+
+    def choisir(nom: str) -> str | None:
+        import webview  # paresseux : présent seulement dans l'application installée
+
+        type_dialogue = getattr(getattr(webview, "FileDialog", None), "SAVE", None)
+        if type_dialogue is None:
+            type_dialogue = webview.SAVE_DIALOG
+        choix = fenetre.create_file_dialog(
+            type_dialogue,
+            directory=str(Path.home() / "Documents"),
+            save_filename=nom,
+            file_types=("Fichier JSON (*.json)",),
+        )
+        if isinstance(choix, (list, tuple)):
+            choix = choix[0] if choix else None
+        return str(choix) if choix else None
+
+    return choisir
 
 
 def memoriser_fenetre(stockage: Stockage, fenetre: Any) -> None:

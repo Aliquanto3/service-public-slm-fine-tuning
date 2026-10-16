@@ -82,13 +82,35 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
   racine.append(info, vide, fil);
   conteneur.replaceChildren(racine);
 
-  const tours = []; // { reponse, element, question }
+  // { reponse, element, question, fin } ; `fin` : null pendant la génération, sinon la raison
+  // de fin (`terminee`, `interrompue`, `longueur`…) ou `echec`.
+  const tours = [];
   let enCours = false; // une génération de cette vue est en cours
   let remplacement = null; // réponse à remplacer sur place, vidée au premier évènement reçu
   let actif = !conteneur.hidden && !conteneur.closest("[hidden]");
   let selection = null; // { reponse, numero }
 
   const derniere = () => tours.at(-1)?.reponse ?? null;
+  const tourDe = (r) => tours.find((t) => t.reponse === r) ?? null;
+
+  /**
+   * Modèle explicite des tours (question → réponse) publié sur le bus (`conversation:tours`) pour
+   * l'Historique (story 12.11), qui enregistre la conversation sans suivre lui-même les évènements.
+   * `origine` : `fin` (une réponse vient de se terminer) ou `rouverture`.
+   */
+  function publierTours(origine) {
+    bus.emettre("conversation:tours", {
+      tache,
+      origine,
+      tours: tours.map((t) => ({
+        question: t.question,
+        texte: t.reponse.brut,
+        sources: t.reponse.sources,
+        fin: t.fin,
+        element: t.reponse.el,
+      })),
+    });
+  }
 
   function rafraichirPanneau() {
     if (!actif) return;
@@ -134,7 +156,7 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     });
     element.append(reponse.el);
     fil.append(element);
-    tours.push({ reponse, element, question });
+    tours.push({ reponse, element, question, fin: null });
     majBoutons();
     return reponse;
   }
@@ -187,7 +209,9 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       remplacement.preparer(); // régénération : la réponse est vidée au premier évènement
     } else {
       remplacement = null;
-      (derniere() ?? creerTour(null)).debut();
+      const r = derniere() ?? creerTour(null);
+      r.debut();
+      tourDe(r).fin = null;
       selection = null;
     }
     majBoutons();
@@ -205,6 +229,7 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     if (r && r === remplacement) {
       remplacement = null;
       r.debut();
+      tourDe(r).fin = null;
       selection = null;
       rafraichirPanneau();
     }
@@ -225,14 +250,17 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     const r = courante();
     if (!r) return;
     r.terminer(e);
+    tourDe(r).fin = e?.raison ?? "terminee";
     enCours = false;
     majBoutons();
     rafraichirPanneau();
+    publierTours("fin");
   });
   bus.abonner("evenement:erreur", () => {
     const r = courante();
     if (!r) return;
     r.echec();
+    tourDe(r).fin = "echec";
     enCours = false;
     majBoutons();
     rafraichirPanneau();
@@ -244,8 +272,9 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     if (remplacement) {
       remplacement.retablir(); // la réponse précédente reste en place
       remplacement = null;
-    } else {
-      derniere()?.echec();
+    } else if (derniere()) {
+      derniere().echec();
+      tours.at(-1).fin = "echec";
     }
     majBoutons();
     rafraichirPanneau();
@@ -265,6 +294,37 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       .then(() => (arreter ? pont.arreter() : null))
       .then(() => pont.appeler("nouvelle_conversation"))
       .catch(() => {}); // seul l'oubli du dernier envoi côté pont est en jeu : rien à montrer
+  });
+  // Rouverture depuis l'Historique (story 12.11) : le fil affiché est remplacé par la conversation
+  // enregistrée. Chaque réponse reprend ses propres sources (à défaut, la dernière reçoit celles de
+  // la conversation). Rien n'est annoncé ici : l'Historique annonce la rouverture une seule fois.
+  bus.abonner("historique:rouvrir", ({ tache: t, messages, sources }) => {
+    if (t !== tache) return;
+    tours.length = 0;
+    fil.replaceChildren();
+    selection = null;
+    remplacement = null;
+    enCours = false;
+    let question = null;
+    const dernierIndex = messages.findLastIndex((m) => m.role === "assistant");
+    for (const [i, m] of messages.entries()) {
+      if (m.role === "user") {
+        question = m.content;
+        continue;
+      }
+      const r = creerTour(question);
+      question = null;
+      r.debut();
+      r.jeton(m.content);
+      if (Array.isArray(m.sources)) r.fixerSources(m.sources);
+      else if (i === dernierIndex) r.fixerSources(sources ?? []);
+      const raison = m.interrompue ? "interrompue" : "terminee";
+      r.terminer({ raison }, { annonce: false });
+      tours.at(-1).fin = raison;
+    }
+    majBoutons();
+    rafraichirPanneau();
+    publierTours("rouverture");
   });
   bus.abonner("copier-dernier", async ({ tache: t }) => {
     const r = derniere();
