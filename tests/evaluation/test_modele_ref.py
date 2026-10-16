@@ -48,6 +48,7 @@ def test_base_f16_present(modeles: Path) -> None:
     resolu = resoudre(f"base:{SLUG}", "f16")
     assert resolu.quantification == "f16"
     assert resolu.gguf == modeles / SLUG / "gguf" / fichier
+    assert resolu.precision == charger_config_modele(SLUG).gguf_f16.precision
 
 
 def test_base_f16_non_configure_refuse(modeles: Path, monkeypatch: pytest.MonkeyPatch) -> None:

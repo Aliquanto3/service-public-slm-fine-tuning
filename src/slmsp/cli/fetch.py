@@ -257,6 +257,13 @@ def _modeles(args: argparse.Namespace) -> int:
     slugs = list(verifications.CANDIDATS) if args.candidats else list(dict.fromkeys(args.slugs))
     configs = [(slug, config_fetch.charger_config_modele(slug)) for slug in slugs]
     poids = dossier_modeles()
+    if args.f16:
+        for slug, config in configs:
+            if config.gguf_f16 is None:
+                print(
+                    f"slmsp : avertissement : {slug} : pas de section gguf_f16, --f16 sans effet",
+                    file=sys.stderr,
+                )
 
     def pilote(telechargeur: Telechargeur, consigner: Any, run: Run) -> int:
         modeles.executer(telechargeur, configs, poids, f16=args.f16, consigner=consigner)

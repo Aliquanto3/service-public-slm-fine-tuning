@@ -310,6 +310,7 @@ def _nouveau_run(
         "items": [item.id for item in selection],
         "serveur": harnais.description,
         "chat_template_force": modele.config.chat_template_force,
+        "precision_gguf": modele.precision,
         "profil_reseau": PROFIL_RESEAU,
     }
     return nouveau_run(

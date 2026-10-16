@@ -90,5 +90,7 @@ class ResultatBench(SchemaBase):
     outil: str | None = None
     outil_version: str | None = None
     configuration: ConfigurationExecution
+    precision_gguf: str | None = None
+    """Précision réelle du GGUF servi (`f16`, `bf16`, `q4_k_m`) ; None pour la cible `hf`."""
     duree_s: float = Field(ge=0)
     details: dict[str, Any] = Field(default_factory=dict)

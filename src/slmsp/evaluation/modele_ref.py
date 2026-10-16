@@ -56,6 +56,8 @@ class ModeleResolu:
     slug_run: str
     config: ConfigModele
     gguf: Path
+    precision: str
+    """Précision réelle du GGUF servi : `q4_k_m`, `f16` ou `bf16` (`[gguf_f16].precision`)."""
 
 
 def _config_generation(slug: str) -> ConfigModele:
@@ -87,7 +89,8 @@ def _resoudre_base(ref: str, slug: str, quantification: Quantification) -> Model
             f"{ref} : template HF exporté ({exporte}) mais chat_template_force = false dans "
             f"config/modeles/{slug}.toml : le template du tokenizer doit être imposé (AD-13)"
         )
-    return ModeleResolu(ref, "base", quantification, slug, slug, config, gguf)
+    precision = config.precision_gguf(quantification) or quantification
+    return ModeleResolu(ref, "base", quantification, slug, slug, config, gguf, precision)
 
 
 def _resoudre_ft(
@@ -114,7 +117,7 @@ def _resoudre_ft(
     gguf = run.dossier / f"modele-{quantification}.gguf"
     if not gguf.is_file():
         raise ConfigurationInvalide(f"{ref} : GGUF absent du run d'export : {gguf}")
-    return ModeleResolu(ref, "ft", quantification, slug, f"ft-{slug}", config, gguf)
+    return ModeleResolu(ref, "ft", quantification, slug, f"ft-{slug}", config, gguf, quantification)
 
 
 def resoudre(ref: str, quantification: str, *, racine: str | Path | None = None) -> ModeleResolu:

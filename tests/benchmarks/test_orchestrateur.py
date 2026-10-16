@@ -258,3 +258,20 @@ def test_exception_hors_moteur_termine_le_run(banc, monkeypatch: pytest.MonkeyPa
     with pytest.raises(Exception):  # noqa: B017, PT011
         lancer_cli(banc, "--socle")
     assert etats(dossier_run(banc))[-1] == "partiel-erreur"
+
+
+def test_precision_gguf_reelle_consignee(banc) -> None:
+    """granite-4.0-1b ne publie qu'un BF16 : la variante `avant` le dit dans le résultat."""
+    ecrire(banc.dossier, "ok", quantification="les-deux")
+    ecrire(banc.dossier, "qcm", cible="hf", quantification="avant")
+    arguments = ["bench", "run", "--modele", "base:granite-4.0-1b", "--socle"]
+    assert main([*arguments, "--racine", str(banc.racine)]) == 0
+    dossier = dossier_run(banc)
+
+    def precision(nom: str) -> str | None:
+        texte = (dossier / f"{nom}.json").read_text(encoding="utf-8")
+        return ResultatBench.model_validate_json(texte).precision_gguf
+
+    assert precision("ok--avant") == "bf16"
+    assert precision("ok--apres") == "q4_k_m"
+    assert precision("qcm--avant") is None

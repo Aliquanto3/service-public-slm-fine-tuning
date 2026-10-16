@@ -93,6 +93,26 @@ def _jeu_version(config: BenchmarkConfig) -> str | None:
     return ", ".join(versions) or None
 
 
+def _precision_gguf(config: BenchmarkConfig, variante: Variante, modele_ref: str) -> str | None:
+    """Précision réelle du GGUF servi (`f16`, `bf16`, `q4_k_m`) ; None hors GGUF résolu.
+
+    La variante `avant` d'un `base:<slug>` sert `[gguf_f16]`, parfois en BF16 : la clé de
+    variante reste `avant`, la précision est consignée dans le résultat.
+    """
+    if config.cible != "gguf" or config.options.get("base_url"):
+        return None
+    quantification = "f16" if variante == "avant" else "q4_k_m"
+    genre, slug = modele_ref.split(":", 1)
+    if genre != "base":
+        return quantification
+    from slmsp.inference.serveur import charger_config_modele
+
+    try:
+        return charger_config_modele(slug).precision_gguf(quantification)
+    except Exception:  # métadonnée seulement : l'erreur éventuelle vient du moteur
+        return None
+
+
 def _gpu_requis(selection: Sequence[Selection], variante_llamacpp: str) -> bool:
     """Cible `hf`, ou GGUF servi par la variante llama.cpp CUDA."""
     return any(s.config.cible == "hf" for s in selection) or (
@@ -116,6 +136,7 @@ def _executer_un(
         "modele_ref": contexte.modele_ref,
         "variante": variante,
         "cible": config.cible,
+        "precision_gguf": _precision_gguf(config, variante, contexte.modele_ref),
     }
 
     def configuration(sortie: SortieMoteur | None = None) -> ConfigurationExecution:
