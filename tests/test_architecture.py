@@ -42,6 +42,7 @@ COUCHES: dict[str, int] = {
     "data": 4,
     "train": 4,
     "compare": 4,
+    "publication": 4,
     "cli": 5,
     "app": 5,
 }

@@ -1,0 +1,56 @@
+# Dossier de publication (story 13.7, FR-37, décision Q8). Lu par `slmsp publication preparer`.
+# Le code prépare un dossier hors ligne ; Anaël le téléverse lui-même (docs/procedure-publication.md).
+
+schema_version = 1
+
+# Versions du Jeu d'évaluation maison dont aucun texte ne doit figurer dans le dossier (AD-11).
+jeux_proteges = ["v1.0", "v1.1"]
+
+# Licences de sortie, de la plus permissive à la moins permissive. Le texte de chacune est
+# `config/licences/<id>.txt` ; une licence sans texte fait échouer la préparation.
+ordre_permissivite = ["apache-2.0"]
+
+# Fiche : sections qui doivent exister (titres de niveau 2) et mention de non-certification.
+sections_obligatoires = [
+    "Données utilisées et Registre des licences",
+    "Résultats d'évaluation",
+    "Limites et usages déconseillés",
+    "Non-certification",
+]
+mention_non_certification = "Ce modèle ne bénéficie d'aucune certification ni d'aucune attestation de conformité."
+
+# Formulations de certification refusées (expressions régulières, insensibles à la casse).
+formulations_interdites = [
+    '\bcertifi(?:é|ée|és|ées|cation|cations)\b',
+    '\bISO\s*/?\s*(?:IEC\s*)?42001\b',
+    '\bconforme?s?\s+(?:à|au|aux)\b',
+    '\blabellis',
+]
+# Une phrase contenant l'une de ces mentions (sous-chaînes, insensibles à la casse) est admise.
+mentions_non_certification = [
+    "aucune certification",
+    "n'est pas certifié",
+    "non certifié",
+]
+
+# Motifs de secrets refusés dans les fichiers texte du dossier.
+motifs_secrets = [
+    '\bsk-[A-Za-z0-9_-]{20,}',
+    '\bhf_[A-Za-z0-9]{20,}',
+    '(?i)\b(?:MISTRAL|ANTHROPIC|HF)_?(?:API_)?(?:KEY|TOKEN)\s*=',
+]
+
+# Licence du Modèle de base : licences de sortie compatibles, déclarées. `verifie_le` reste
+# absent tant qu'Anaël n'a pas relu la licence sur la fiche Hugging Face du modèle : la
+# préparation refuse alors le dossier. Valeurs de départ : À CONFIRMER PAR ANAËL.
+[modeles."granite-4.0-1b"]
+licences_compatibles = ["apache-2.0"]
+
+[modeles."ministral-3-3b"]
+licences_compatibles = ["apache-2.0"]
+
+[modeles."qwen-4b"]
+licences_compatibles = ["apache-2.0"]
+
+[modeles."smollm3-3b"]
+licences_compatibles = ["apache-2.0"]
