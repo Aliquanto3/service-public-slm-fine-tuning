@@ -73,9 +73,9 @@ development_status:
   5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: done
   epic-5-retrospective: optional
 
-  epic-6: backlog
-  6-1-orchestrateur-déclaratif-de-benchmarks-et-téléchargement-des: backlog
-  6-2-moteur-lm-eval-qcm-sur-poids-hf-et-ifeval-contre-llama-serve: backlog
+  epic-6: in-progress
+  6-1-orchestrateur-déclaratif-de-benchmarks-et-téléchargement-des: done
+  6-2-moteur-lm-eval-qcm-sur-poids-hf-et-ifeval-contre-llama-serve: done
   6-3-moteurs-de-traduction-sacrebleu-et-bfcl-vérificateur-isolé: backlog
   6-4-mesures-techniques-fr-26-slmsp-measure: backlog
   epic-6-retrospective: optional
@@ -109,7 +109,7 @@ development_status:
 
   epic-10: in-progress
   10-1-environnement-d-entraînement-windows-et-mesure-h-win-train: done
-  10-2-rendu-en-tokens-et-masque-de-perte-h-masque: backlog
+  10-2-rendu-en-tokens-et-masque-de-perte-h-masque: done
   10-3-mesures-de-coût-d-un-run-fr-33: done
   10-4-runs-d-entraînement-configurables-slmsp-train-run: backlog
   10-5-variante-qlora-unsloth-en-environnement-isolé: backlog
