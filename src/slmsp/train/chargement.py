@@ -37,6 +37,7 @@ from slmsp.core.artefacts import (
     lire,
     ouvrir_sqlite_lecture,
 )
+from slmsp.core.balises import PROTOCOLE_BALISES, messages_balises
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspError
 from slmsp.core.schemas.config_modele import ConfigModele
@@ -294,6 +295,24 @@ def sha_chat_template(tokenizer: Any) -> str:
     return hashlib.sha256(texte.encode("utf-8")).hexdigest()
 
 
+def _messages_rendus(
+    messages: Sequence[Mapping[str, Any]], config_modele: ConfigModele
+) -> list[dict[str, Any]]:
+    """Messages passés au template : `tool_calls` réécrits en balises pour `balises-tool-call`.
+
+    Même réécriture qu'à l'inférence (`inference.client`), sans quoi le template de SmolLM3
+    ferait disparaître les appels des tours `assistant` supervisés.
+    """
+    if config_modele.protocole_outils == PROTOCOLE_BALISES:
+        return messages_balises(messages)
+    return [dict(message) for message in messages]
+
+
+def _avec_tools(config_modele: ConfigModele) -> bool:
+    """`tools` est rendu par le template en `natif` et en `balises-tool-call`."""
+    return config_modele.protocole_outils in ("natif", PROTOCOLE_BALISES)
+
+
 def pretokeniser(
     tokenizer: Any,
     lignes: Sequence[_Ligne],
@@ -303,17 +322,18 @@ def pretokeniser(
 ) -> tuple[list[dict[str, list[int]]], dict[str, int]]:
     """`input_ids` et `labels` de chaque ligne, coupés ensemble à `longueur_max`.
 
-    `tools` n'est transmis au template qu'avec le protocole `natif`. `ErreurMasque` est
-    propagée : un masque non prouvé refuse le Run plutôt que d'entraîner sur un faux masque.
+    `tools` est transmis au template avec les protocoles `natif` et `balises-tool-call` (ce
+    dernier réécrit aussi les `tool_calls` en balises). `ErreurMasque` est propagée : un
+    masque non prouvé refuse le Run plutôt que d'entraîner sur un faux masque.
     """
-    natif = config_modele.protocole_outils == "natif"
+    outils = _avec_tools(config_modele)
     exemples: list[dict[str, list[int]]] = []
     tronques = ecartes = 0
     for ligne in lignes:
         rendu = calculer_masque(
             tokenizer,
-            ligne.messages,
-            tools=ligne.tools if natif else None,
+            _messages_rendus(ligne.messages, config_modele),
+            tools=ligne.tools if outils else None,
             config=config_modele,
         )
         ids, labels = rendu.input_ids[:longueur_max], rendu.labels[:longueur_max]
@@ -343,22 +363,24 @@ def preparer_preferences(
 ) -> tuple[list[dict[str, str]], dict[str, int]]:
     """Paires `{prompt, chosen, rejected}` en texte, rendues par le chat template du Modèle.
 
-    Le rendu est fait ici (`train.rendu`, `tools` avec le protocole `natif`,
+    Le rendu est fait ici (`train.rendu`, `tools` en `natif` et `balises-tool-call`,
     `chat_template_kwargs` du Modèle) : `ORPOTrainer` ne transmet ni l'un ni l'autre au
     template. Il reçoit donc des textes, qu'il tokenise et tronque lui-même à `max_length`.
     Lève `ManifesteInvalide` si le rendu complet ne commence pas par celui du prompt.
     """
-    natif = config_modele.protocole_outils == "natif"
+    outils = _avec_tools(config_modele)
     exemples: list[dict[str, str]] = []
     for numero, paire in enumerate(paires, start=1):
         options: dict[str, Any] = {
-            "tools": paire.tools if natif else None,
+            "tools": paire.tools if outils else None,
             "config": config_modele,
         }
-        prompt = apply_chat_template(tokenizer, paire.prompt, add_generation_prompt=True, **options)
+        debut = _messages_rendus(paire.prompt, config_modele)
+        prompt = apply_chat_template(tokenizer, debut, add_generation_prompt=True, **options)
         exemple = {"prompt": prompt}
         for cle in ("chosen", "rejected"):
-            complet = apply_chat_template(tokenizer, paire.prompt + getattr(paire, cle), **options)
+            suite = _messages_rendus(getattr(paire, cle), config_modele)
+            complet = apply_chat_template(tokenizer, debut + suite, **options)
             if not complet.startswith(prompt) or len(complet) == len(prompt):
                 raise ManifesteInvalide(
                     f"paire {numero} : le rendu de « {cle} » ne prolonge pas celui du prompt"

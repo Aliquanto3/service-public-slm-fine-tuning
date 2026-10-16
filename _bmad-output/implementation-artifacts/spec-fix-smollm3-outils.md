@@ -7,8 +7,7 @@ review_loop_iteration: 0
 followup_review_recommended: false
 context: []
 warnings: []
-deferred:
-  - 'Entraînement SmolLM3 sur RD : `train.chargement` ne transmet `tools` et ne réécrit les `tool_calls` qu''en protocole `natif` (à confirmer par Anaël).'
+deferred: []
 ---
 
 <intent-contract>
@@ -47,4 +46,17 @@ deferred:
 - Constat (lecture du run, sans regénération) : 40/40 items RD au format `<tool_call>` avec un JSON valide, et 0 `appels_outils` canoniques.
 - Décision : voie (b), le parsing côté client (couche `inference`, à côté de `json-generique`), plutôt qu'un template modifié. AD-13 est tenu, la provenance du template reste inchangée, et c'est réversible : il suffit de remettre `natif` dans le TOML.
 - La sonde passe désormais jusqu'à trois protocoles : `natif`, puis `json-generique`, puis `balises-tool-call`.
-- Report (à confirmer par Anaël) : le fine-tuning de SmolLM3 sur des exemples RD. `train/chargement.py` ne transmet `tools` qu'en `natif`, et le template ignore `tool_calls`. Il faudrait réutiliser `messages_balises` (et donc le déplacer dans `core`) et transmettre `tools` pour ce protocole. Le code d'entraînement n'est pas touché ici.
+- Entraînement : traité en revue (`core.balises`, voir ci-dessous).
+
+## Revue
+
+Revue Opus du 2026-10-16, après rebase sur `main` (22600ab), avec les constats du second avis (Haiku).
+
+- **medium**, second avis 1 : texte après `</tool_call>` émis et second appel exécuté. **Corrigé.** `LecteurBalises` passe à l'état « après appel » : seuls d'autres appels séparés par des blancs sont lus (le template de SmolLM3 dit « For each function call… », plusieurs appels sont légitimes), et le premier texte non blanc arrête le tour, sans rien émettre ni exécuter. Le client ajoute aussi `</tool_call>` aux `stop` de la requête (avec des `tools`, en fusionnant les `stop` demandés) : llama-server s'arrête au premier appel fermé, la balise est retirée, et `finir` analyse l'appel non fermé (`terminee`). Tests : `test_balises_appel_et_texte` (résultat inventé puis second appel ignorés), `test_balises_mots_d_arret`, `test_balises_arret_serveur`, `test_balises_appels_consecutifs`.
+- **medium**, second avis 2 : ordre texte/appel perdu dans `messages_balises`. **Corrigé par construction et documenté** : avec le point 1, un tour `assistant` n'a jamais de texte après ses appels, donc « contenu, puis appels » est l'ordre réel.
+- **medium**, second avis 3 : appel tronqué suivi d'un appel valide. **Corrigé.** Un `<tool_call>` rouvert avant `</tool_call>` clôt le premier en `AppelNonConforme` (« balise non fermée avant la suivante »), puis lit le second. Test : `test_balises_appel_tronque_puis_appel_valide`.
+- **medium**, second avis 4 : `</tool_call>` dans une chaîne JSON coupe l'appel. **Corrigé côté client** (`_balise_dans_appel` suit guillemets et échappements ; un `<tool_call>` reste reconnu partout, pour le point 3). Test : `test_balises_fermante_dans_une_chaine_json`. Limite : le mot d'arrêt de llama-server coupe, lui, sans tenir compte des chaînes ; un tel argument donnerait un `AppelNonConforme`, cas jugé bien plus rare que le résultat inventé que le `stop` évite.
+- **medium**, second avis 5 : `train` ne rendait ni `tools` ni `tool_calls` en `balises-tool-call`. **Corrigé.** `messages_balises` passe dans `core/balises.py` (couche 0, importé par `inference.client` et `train.chargement`) ; `pretokeniser` et `preparer_preferences` réécrivent les messages et transmettent `tools` pour ce protocole. Tests : `test_pretokenisation_balises_garde_les_appels`, `test_preferences_balises_reecrit_les_appels`. Prouvé sur le vrai tokenizer de SmolLM3 (CPU, sans génération) : en `natif`, le tour d'appel supervisé se réduit à `<|im_end|>` ; en `balises-tool-call`, il contient `<tool_call>\n{"name": "chercher", …}\n</tool_call><|im_end|>`, masque accepté.
+- **low**, second avis 6 : JSON complet sans `</tool_call>` exécuté sur un flux `interrompue`. **Corrigé.** `finir(raison)` ne l'analyse qu'en `terminee` ou `longueur` ; sinon `AppelNonConforme` (« flux interrompu »). Test : `test_balise_non_fermee_flux_interrompu`.
+- **low**, revue : sans `tools`, le lecteur de balises était actif et aurait pu produire des appels. **Corrigé** : lecteur et `stop` seulement avec des `tools`.
+- **report**, revue : effet réel du `stop` `</tool_call>` sur le flux. llama-server retient le texte qui pourrait commencer un mot d'arrêt (un `<` ou `</…` en fin de morceau) jusqu'à le lever ; l'effet attendu sur le délai du premier token est nul, l'économie de tokens est celle du résultat inventé. À vérifier avec la sonde 8.2 et le RD v1.1 ci-dessus (GPU libre) : appels appariés, `finish_reason` `stop`, `completion_tokens` en baisse par rapport au run 20261016-193650.

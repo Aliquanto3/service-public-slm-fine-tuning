@@ -353,10 +353,12 @@ def _decouper(texte: str, taille: int) -> list[str]:
 
 
 # Format observé (run eval-generation 20261016-193650-smollm3-3b-8a06, items RD) : appel en
-# balises dans le texte, parfois suivi de texte ; valeurs factices.
+# balises dans le texte, parfois suivi d'un résultat inventé, puis d'un autre appel ; valeurs
+# factices.
 SORTIE_BALISES = (
     '\n<tool_call>\n{"name": "chercher", "arguments": {"q": "<requete-factice>"}}\n</tool_call>'
-    "\n\n<suite-factice>"
+    "\n\n<resultat-invente-factice>\n"
+    '<tool_call>\n{"name": "heure", "arguments": {}}\n</tool_call>'
 )
 
 
@@ -368,20 +370,81 @@ def test_balises_appel_et_texte(
     evenements = list(client_balises.generer(MESSAGES, tools=OUTILS))
     (corps,) = serveur_factice.corps("/v1/chat/completions")
     assert corps["tools"] == OUTILS and "response_format" not in corps
+    assert corps["stop"] == ["</tool_call>"]
     appels = [e for e in evenements if isinstance(e, AppelOutil)]
     texte = "".join(e.texte for e in evenements if isinstance(e, Jeton))
+    # Le texte qui suit le premier </tool_call> arrête le tour : ni résultat inventé émis, ni
+    # second appel exécuté.
     assert [(a.nom, a.arguments) for a in appels] == [("chercher", {"q": "<requete-factice>"})]
     assert re.fullmatch(r"appel-[0-9a-f]{32}", appels[0].id)
-    assert texte == "\n\n\n<suite-factice>"
-    assert "<" not in texte.replace("<suite-factice>", "")
-    assert evenements[-1].raison == "terminee"
+    assert texte == "\n"
+    assert len(evenements) == 3 and evenements[-1].raison == "terminee"
+
+
+def test_balises_mots_d_arret(client_balises: ClientLlama, serveur_factice: Any, factice) -> None:
+    """`</tool_call>` s'ajoute aux mots d'arrêt demandés, seulement avec des outils."""
+    serveur_factice.scenario.chat = factice.flux_texte("ok")
+    list(client_balises.generer(MESSAGES, tools=OUTILS, options={"stop": "<fin>"}))
+    list(client_balises.generer(MESSAGES, tools=OUTILS, options={"stop": ["</tool_call>"]}))
+    list(client_balises.generer(MESSAGES, options={"stop": ["<fin>"]}))
+    arrets = [c.get("stop") for c in serveur_factice.corps("/v1/chat/completions")]
+    assert arrets == [["<fin>", "</tool_call>"], ["</tool_call>"], ["<fin>"]]
+
+
+def test_balises_arret_serveur(client_balises: ClientLlama, serveur_factice: Any, factice) -> None:
+    """Arrêt de llama-server sur `</tool_call>` (balise retirée) : l'appel est lu."""
+    serveur_factice.scenario.chat = factice.flux_texte(
+        "Je cherche.\n<tool_call>\n", '{"name": "heure", "arguments": {}}\n'
+    )
+    (jeton, appel, fin) = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert jeton == Jeton(texte="Je cherche.\n") and appel.nom == "heure"
+    assert fin.raison == "terminee"
+
+
+def test_balises_appels_consecutifs(
+    client_balises: ClientLlama, serveur_factice: Any, factice
+) -> None:
+    """Appels séparés par des blancs : tous lus ; le texte qui suit est ignoré."""
+    sortie = (
+        '<tool_call>{"name": "heure", "arguments": {}}</tool_call>\n \n'
+        '<tool_call>{"name": "chercher", "arguments": {"q": "x"}}</tool_call>\n<invente>'
+    )
+    serveur_factice.scenario.chat = factice.flux_texte(*_decouper(sortie, 2))
+    evenements = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert [(e.nom, e.arguments) for e in evenements[:-1]] == [
+        ("heure", {}),
+        ("chercher", {"q": "x"}),
+    ]
+
+
+def test_balises_appel_tronque_puis_appel_valide(
+    client_balises: ClientLlama, serveur_factice: Any, factice
+) -> None:
+    sortie = '<tool_call>{"name": "he<tool_call>{"name": "heure", "arguments": {}}</tool_call>'
+    serveur_factice.scenario.chat = factice.flux_texte(*_decouper(sortie, 3))
+    (tronque, appel, _) = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert isinstance(tronque, AppelNonConforme) and "avant la suivante" in tronque.motif
+    assert tronque.arguments_bruts == '{"name": "he'
+    assert isinstance(appel, AppelOutil) and appel.nom == "heure"
+
+
+@pytest.mark.parametrize("taille", [1, 4])
+def test_balises_fermante_dans_une_chaine_json(
+    client_balises: ClientLlama, serveur_factice: Any, factice, taille: int
+) -> None:
+    sortie = (
+        '<tool_call>{"name": "chercher", "arguments": {"q": "a</tool_call>b \\" c"}}</tool_call>'
+    )
+    serveur_factice.scenario.chat = factice.flux_texte(*_decouper(sortie, taille))
+    (appel, _) = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert isinstance(appel, AppelOutil) and appel.arguments == {"q": 'a</tool_call>b " c'}
 
 
 def test_balises_plusieurs_appels_et_arguments_en_chaine(
     client_balises: ClientLlama, serveur_factice: Any, factice
 ) -> None:
     sortie = (
-        '<tool_call>{"name": "heure", "arguments": {}}</tool_call>'
+        '<tool_call>{"name": "heure", "arguments": {}}</tool_call>\n'
         '<tool_call>{"name": "chercher", "arguments": "{\\"q\\": \\"x\\"}"}</tool_call>'
     )
     serveur_factice.scenario.chat = factice.flux_texte(*_decouper(sortie, 5))
@@ -421,6 +484,18 @@ def test_balise_non_fermee(client_balises: ClientLlama, serveur_factice: Any, fa
     (appel, fin) = list(client_balises.generer(MESSAGES, tools=OUTILS))
     assert isinstance(appel, AppelNonConforme) and "non fermée" in appel.motif
     assert fin.raison == "longueur"
+
+
+def test_balise_non_fermee_flux_interrompu(
+    client_balises: ClientLlama, serveur_factice: Any, factice
+) -> None:
+    """Flux coupé avant `</tool_call>` : même un JSON complet n'est pas exécutable."""
+    serveur_factice.scenario.chat = [
+        factice.morceau('<tool_call>{"name": "heure", "arguments": {}}')
+    ]
+    (appel, fin) = list(client_balises.generer(MESSAGES, tools=OUTILS))
+    assert fin.raison == "interrompue"
+    assert isinstance(appel, AppelNonConforme) and "interrompu" in appel.motif
 
 
 def test_balises_texte_sans_appel_et_debut_de_balise_inacheve(
