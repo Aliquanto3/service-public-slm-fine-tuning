@@ -6,8 +6,8 @@ si son `MANIFEST.json` déclare un run `data-build` et si le SHA-256 du fichier 
 MANIFEST ; chaque `appel_id` est recontrôlé contre le journal (`usage = generation`,
 `statut = ok`). Sans jeu construit, `JeuAbsent` : aucun jeu de dépannage, jamais.
 
-Contrat provisoire, en attendant `LigneEntrainement` et `ManifesteJeuEntrainement` de la
-story 9.6 : MANIFEST `{version, type_run = "data-build", run_id, sha256_<fichier>}` ; lignes
+MANIFEST : `EnteteManifesteJeu` (`core.schemas.entrainement`, partagé avec la story 9.6)
+`{version, type_run = "data-build", run_id, sha256_<fichier>}` ; lignes
 `{messages, tools, tache, meta{appel_ids, …}}`. Les clés supplémentaires sont acceptées.
 Paires ORPO (`preferences.jsonl`, story 9.7, provisoire) : `{prompt, chosen, rejected, tools,
 tache, meta{appel_ids}}`, `prompt` étant la liste des messages avant la réponse, `chosen` et
@@ -25,9 +25,9 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Annotated, Any, Final, Literal
+from typing import Any, Final
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from slmsp.core.artefacts import (
     NOM_JOURNAL_MISTRAL,
@@ -38,7 +38,7 @@ from slmsp.core.artefacts import (
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspError
 from slmsp.core.schemas.config_modele import ConfigModele
-from slmsp.core.schemas.run import MOTIF_RUN_ID
+from slmsp.core.schemas.entrainement import EnteteManifesteJeu
 from slmsp.core.var import dossier_var
 from slmsp.train import environnement
 from slmsp.train.masque import IGNORE, calculer_masque
@@ -60,10 +60,8 @@ class _Libre(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class _Manifeste(_Libre):
-    version: str
-    type_run: Literal["data-build"]
-    run_id: Annotated[str, StringConstraints(pattern=MOTIF_RUN_ID)]
+_Manifeste = EnteteManifesteJeu
+"""Contrat partagé avec `data build` (`core.schemas.entrainement`)."""
 
 
 class _Meta(_Libre):

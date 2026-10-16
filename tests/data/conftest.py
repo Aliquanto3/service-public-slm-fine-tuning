@@ -95,8 +95,14 @@ juge-principal = "anthropic"
 """
 
 
+SANS_CHIFFRES = str.maketrans("0123456789", "ghijklmnop")
+
+
 def factice(prefixe: str = "texte") -> str:
-    return f"<{prefixe}-factice-{secrets.token_hex(4)}>"
+    """Jeton artificiel unique, sans chiffre : un hex comme « 4821 » serait lu comme une
+    valeur notable par `validate` (règles `infidele` et `valeur_absente`) et rendrait les
+    tests instables."""
+    return f"<{prefixe}-factice-{secrets.token_hex(4).translate(SANS_CHIFFRES)}>"
 
 
 def appel_outil(nom: str, arguments: Any) -> dict[str, Any]:

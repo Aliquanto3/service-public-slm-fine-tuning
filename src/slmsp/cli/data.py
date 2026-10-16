@@ -1,7 +1,7 @@
 """`slmsp data {seed, generate, validate, filter, build}` : pipeline des Données (AD-17).
 
-Les étapes `seed` (9.3), `generate` (9.4), `validate` et `filter` (9.5) sont implémentées ;
-`build` répond « commande non implémentée » (code 2) en attendant sa story.
+Les étapes `seed` (9.3), `generate` (9.4), `validate`, `filter` (9.5) et `build` (9.6) sont
+implémentées.
 
 `seed [--racine DIR] [--facteur N] [--scenarios N]` constitue `runs/data-seed/<run_id>/`
 (`amorces.jsonl`, `comptes.json`) depuis les jeux publics de `config/sources.toml`, déjà
@@ -23,6 +23,9 @@ et RE par Mistral (`usage = validation`, appels payants, jamais le Juge Claude).
 `filter --depuis VALIDATE_RUN_ID [--racine DIR]` retire doublons et fuites du Jeu d'évaluation
 (v1.0, v1.1, calibrage) par n-grammes hachés et cosinus BGE-M3 (`slmsp.data.filter`). Chacune
 imprime exemples et taux de rejet par motif et par Tâche (FR-30).
+`build --depuis FILTER_RUN_ID --variante {diffusable,recherche} [--racine DIR]` refabrique chaque
+ligne depuis les réponses Mistral journalisées, la compare octet par octet et écrit
+`data/train/vN/{train.jsonl,MANIFEST.json}` (`slmsp.data.build`, une version n'est jamais réécrite).
 
 Codes de sortie : 0 run complet ; 1 erreur ou run partiel ; 3 budget Mistral épuisé ;
 4 gel absent, provenance invalide ou manifeste incohérent.
@@ -63,10 +66,6 @@ from slmsp.fetch.sources import dossier_jeu
 
 TAILLE_LOT = 8192
 """Lignes décodées par lot de lecture parquet."""
-
-ETAPES_A_VENIR: dict[str, str] = {
-    "build": "jeu versionné et verrous AD-3",
-}
 
 
 def _entier_positif(valeur: str) -> int:
@@ -181,17 +180,20 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     f.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
     f.set_defaults(func=_filter)
 
-    for nom, aide in ETAPES_A_VENIR.items():
-        autre = actions.add_parser(nom, help=aide, description=aide)
-        autre.set_defaults(func=_non_implementee(nom))
-
-
-def _non_implementee(nom: str) -> Callable[[argparse.Namespace], int]:
-    def executer(_args: argparse.Namespace) -> int:
-        print(f"slmsp : commande non implémentée : data {nom}", file=sys.stderr)
-        return int(CodeSortie.USAGE)
-
-    return executer
+    b = actions.add_parser(
+        "build",
+        help="construire le jeu d'entraînement versionné (re-dérivation du journal)",
+        description="Étape build : re-dérivation octet par octet, data/train/vN, MANIFEST.",
+    )
+    b.add_argument("--depuis", required=True, metavar="FILTER_RUN_ID", help="run data-filter")
+    b.add_argument(
+        "--variante",
+        required=True,
+        choices=["diffusable", "recherche"],
+        help="diffusable : sources diffusables seules ; recherche : jeu marqué recherche",
+    )
+    b.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
+    b.set_defaults(func=_build)
 
 
 # --- Lecture parquet et jeux -------------------------------------------------------------
@@ -553,3 +555,34 @@ def _filter(args: argparse.Namespace) -> int:
     return _afficher_rapport(
         resultat.rapport, resultat.run.run_id, resultat.statut, resultat.run.dossier
     )
+
+
+# --- build -------------------------------------------------------------------------------
+
+
+def _build(args: argparse.Namespace) -> int:
+    from slmsp.data.build import lancer_build
+    from slmsp.harness.taches import charger_taches
+
+    racine = _racine(args)
+    resultat = lancer_build(
+        racine=racine,
+        filter_run_id=args.depuis,
+        variante=args.variante,
+        journal=_journal_lecture(),
+        registre=RegistreLicences.charger(racine=racine),
+        config=charger_config_donnees(),
+        taches=charger_taches(),
+        chemin_outils=racine_projet() / "config" / "outils-mcp.toml",
+        consigner=_consigner,
+    )
+    for tache, nombre in resultat.rapport["comptes_par_tache"].items():
+        print(f"{tache} : {nombre} lignes")
+    motifs = ", ".join(f"{m} {n}" for m, n in resultat.rapport["rejets_par_motif"].items())
+    print(f"rejets en amont : {motifs or 'aucun'}")
+    print(f"échantillon de relecture : {resultat.rapport['echantillon_relecture']} lignes")
+    print(f"jeu {resultat.version} ({args.variante}) : {resultat.dossier}")
+    print(f"run {resultat.run.run_id} ({resultat.statut}) : {resultat.run.dossier}")
+    if resultat.statut == "partiel-budget":
+        return int(CodeSortie.BUDGET_EPUISE)
+    return int(CodeSortie.SUCCES if resultat.statut == "complet" else CodeSortie.ERREUR)

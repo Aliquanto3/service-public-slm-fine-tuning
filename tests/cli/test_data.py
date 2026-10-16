@@ -295,10 +295,9 @@ def test_arguments_invalides_code_2(option: list[str]) -> None:
     assert main(["data", "seed", *option]) == CodeSortie.USAGE
 
 
-@pytest.mark.parametrize("etape", ["build"])
-def test_etapes_a_venir_non_implementees(etape: str, capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["data", etape]) == CodeSortie.USAGE
-    assert f"non implémentée : data {etape}" in capsys.readouterr().err
+def test_build_exige_depuis_et_variante() -> None:
+    assert main(["data", "build"]) == CodeSortie.USAGE
+    assert main(["data", "build", "--depuis", "x", "--variante", "autre"]) == CodeSortie.USAGE
 
 
 def test_data_sans_action_code_2() -> None:
