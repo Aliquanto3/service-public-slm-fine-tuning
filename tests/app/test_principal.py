@@ -213,7 +213,7 @@ def assemblage_factice(appels: list[dict[str, Any]], echec: bool = False) -> Any
         appels.append({"modele": modele, **options})
         if echec:
             raise RuntimeError("<erreur-factice>")
-        yield SimpleNamespace(service=SimpleNamespace())
+        yield SimpleNamespace(service=SimpleNamespace(mode=None))
 
     return fabrique
 
@@ -303,6 +303,8 @@ def test_arreter_n_est_pas_bloque_par_un_evaluate_js_lent() -> None:
     from slmsp.app.pont import Pont
 
     class Service:
+        mode = None
+
         def repondre(self, *a: Any, **k: Any) -> Any:
             def flux() -> Any:
                 threading.Event().wait(0.3)
@@ -593,3 +595,41 @@ def test_fenetre_reelle_cachee(
     assert resultat["fonction"] == "function"
     assert resultat["apres"].startswith("http://127.0.0.1:")  # navigations externes annulées
     assert ouverts == []
+
+
+def test_lancer_la_requete_de_la_passerelle_apparait_dans_la_vue_mode(
+    stockage: Stockage, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Bout en bout (story 12.9) : une vraie `Passerelle` écrit dans le journal reçu de
+    `lancer()` ; `mode.journal()` du pont la lit, et « Effacer » vide ce même journal."""
+    from slmsp.core.erreurs import HoteBloque
+    from slmsp.harness.modes import ModeFixe
+    from slmsp.net.client import Passerelle
+
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.delenv(principal.VARIABLE_ARGUMENTS, raising=False)
+    mode = ModeFixe("connecte")
+
+    @contextlib.contextmanager
+    def fabrique(modele: str, **options: Any) -> Any:
+        passerelle = Passerelle(mode, options["journal"])
+        with pytest.raises(HoteBloque):
+            passerelle.verifier("assistant", "GET", "https://hote-hors-liste.invalid/x")
+        yield SimpleNamespace(service=SimpleNamespace(mode=mode))
+
+    web = WebviewFactice()
+    code = principal.lancer(
+        webview=web,
+        stockage=stockage,
+        instance=InstanceUnique(ApiFausse()),
+        fabrique_assemblage=fabrique,
+    )
+    assert code == 0
+    domaine_mode = web.creations[0]["js_api"]._pont._domaines["mode"]
+    entrees = domaine_mode.journal(None)["entrees"]
+    assert [(e["hote"], e["statut"]) for e in entrees] == [
+        ("hote-hors-liste.invalid", "bloquee-liste")
+    ]
+    assert domaine_mode.effacer_journal() == {"ok": True}
+    assert domaine_mode.journal(None)["entrees"] == []
+    assert JournalApplication(stockage).lister() == []

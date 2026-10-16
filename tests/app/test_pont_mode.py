@@ -130,3 +130,34 @@ def test_sans_stockage_journal_vide_et_methode_inconnue() -> None:
     assert pont.forcer_hors_ligne(True)["force"] is True
     with pytest.raises(NonImplementee):
         pont.appeler("inconnue")
+
+
+def test_journal_retention_30_jours_glissants_avec_horloge_injectee(tmp_path: Path) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from slmsp.core.schemas.journal_requetes import EntreeJournalRequetes
+
+    maintenant = [datetime(2026, 10, 1, 12, 0, tzinfo=UTC)]
+    stockage = Stockage(tmp_path / "r.sqlite", horloge=lambda: maintenant[0])
+    journal = JournalApplication(stockage)
+
+    def entree(hote: str, instant: datetime) -> EntreeJournalRequetes:
+        return EntreeJournalRequetes(
+            horodatage=instant,
+            profil="assistant",
+            hote=hote,
+            methode="GET",
+            statut="envoyee",
+            mode="connecte",
+        )
+
+    journal.inscrire(entree("a.invalid", maintenant[0]))
+    maintenant[0] += timedelta(days=29, hours=23)
+    journal.inscrire(entree("b.invalid", maintenant[0]))
+    pont = PontMode(ModeFixe("connecte"), stockage)
+    assert [e["hote"] for e in pont.journal(None)["entrees"]] == ["b.invalid", "a.invalid"]
+    # 30 jours + 1 h après a : filtré à la lecture, avant toute purge
+    maintenant[0] += timedelta(hours=2)
+    assert [e["hote"] for e in pont.journal(None)["entrees"]] == ["b.invalid"]
+    assert [e.hote for e in journal.lister(1)] == ["b.invalid"]
+    assert journal.purger() == 1  # la purge supprime physiquement la même entrée

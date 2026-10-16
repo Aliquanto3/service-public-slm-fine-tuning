@@ -172,3 +172,18 @@ def test_journal_vide_puis_rempli_puis_efface(page) -> None:
         "() => document.querySelector('.mode-journal').textContent.includes('Aucune requête')"
     )
     assert ["mode.effacer_journal"] in page.evaluate("window.__appels")
+
+
+def test_echec_du_forcage_est_annonce_et_l_interrupteur_retabli(page) -> None:
+    page.evaluate(
+        """() => {
+          const api = window.pywebview.api, appeler = api.appeler;
+          api.appeler = async (nom, ...a) => nom === 'mode.forcer_hors_ligne'
+            ? { ok: false, erreur: { code: 'x', message: 'refus' } } : appeler(nom, ...a);
+        }"""
+    )
+    page.click("#mode-pastille")
+    page.click("text=Rester hors ligne")
+    page.wait_for_function("() => document.body.textContent.includes('a échoué')")
+    page.click("#mode-pastille")
+    assert page.get_attribute("#mode-menu [role=menuitemcheckbox]", "aria-checked") == "false"

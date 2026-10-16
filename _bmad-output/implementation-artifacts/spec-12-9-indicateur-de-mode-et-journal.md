@@ -50,3 +50,13 @@ Décisions prises seul :
 - 12.7 : consommer `mode:change` (ou `mode.etat`) ; conflits probables sur `test_socle.py` / `test_socle_statique.py` (une ligne chacun) avec 12.6 et 12.7.
 - Le sondage JS toutes les 30 s est une simplification ; un rappel Python après sonde (`rafraichir`) pourrait le remplacer.
 - Test `-m ui` `test_arreter_pendant_la_generation` intermittent (course avec le `pret` du pont factice, préexistant, déjà noté en 12.5).
+
+## Revue
+
+- high, second avis : journal de la passerelle différent de celui lu par la vue Mode. Corrigé : sur main, `Demarrage` passe `JournalApplication(stockage)` à l'assemblage et `Pont(..., stockage=stockage)` ; test de bout en bout `test_lancer_la_requete_de_la_passerelle_apparait_dans_la_vue_mode` (vraie `Passerelle`, `lancer()` réel, `mode.journal()` puis `effacer_journal()` sur le même journal).
+- medium, second avis : purge de 30 jours sur le journal écrit. Confirmé : `JournalApplication.inscrire` purge à chaque écriture, le `Stockage` à l'ouverture ; testé (`purger()` supprime l'entrée expirée).
+- medium, second avis : `lister()` sans fenêtre. Corrigé : filtre glissant `horodatage >= maintenant - 30 j` (horloge du `Stockage`) ; test avec horloge injectée.
+- low, second avis : `rafraichir()` hors verrou. Corrigé : lecture et poussée sous le verrou.
+- low, second avis : `{ok:false}` de `forcer_hors_ligne` ignoré. Corrigé : annonce de l'échec, interrupteur rétabli ; test `ui`.
+- Intégration (rebase) : `service.mode` ajouté aux doublures de `test_principal.py` ; ordre de tabulation `mode-pastille` avant les exemples de 12.7.
+- Reporté : sonde réelle et rendu dans la vraie WebView2 (non couverts : Edge/Playwright seulement).

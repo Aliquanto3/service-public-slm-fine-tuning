@@ -384,17 +384,17 @@ class JournalApplication:
         self.purger()
 
     def lister(self, limite: int | None = None) -> list[EntreeJournalRequetes]:
-        """Entrées du plus récent au plus ancien."""
+        """Entrées des 30 derniers jours glissants, du plus récent au plus ancien."""
         requete = (
             "SELECT horodatage, profil, hote, methode, outil, termes, statut, mode"
-            " FROM journal_requetes ORDER BY id DESC"
+            " FROM journal_requetes WHERE horodatage >= ? ORDER BY id DESC"
         )
-        parametres: tuple[Any, ...] = ()
+        parametres: tuple[Any, ...] = (_iso(self._stockage._horloge() - RETENTION_JOURNAL),)
         if limite is not None:
             if limite < 0:
                 raise ValueError("limite doit être positive ou nulle")
             requete += " LIMIT ?"
-            parametres = (limite,)
+            parametres += (limite,)
         with self._stockage._connexion() as connexion:
             lignes = connexion.execute(requete, parametres).fetchall()
         return [

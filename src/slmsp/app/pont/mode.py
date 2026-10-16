@@ -91,22 +91,24 @@ class PontMode:
 
     def rafraichir(self) -> dict[str, Any]:
         """Lit le Mode et pousse `{"type": "mode", ...}` s'il a changé depuis la dernière fois."""
-        etat = self._etat()
-        cle = (etat["mode"], etat["force"])
+        # Lecture et poussée sous le verrou : deux rafraîchissements concurrents ne peuvent pas
+        # pousser des états dans le désordre (le dernier poussé est le dernier lu).
         with self._verrou:
+            etat = self._etat()
+            cle = (etat["mode"], etat["force"])
             change = cle != self._dernier
             self._dernier = cle
-        if change and self._pousser is not None:
-            self._pousser(
-                [
-                    {
-                        "type": "mode",
-                        "mode": etat["mode"],
-                        "hors_ligne": etat["hors_ligne"],
-                        "force": etat["force"],
-                    }
-                ]
-            )
+            if change and self._pousser is not None:
+                self._pousser(
+                    [
+                        {
+                            "type": "mode",
+                            "mode": etat["mode"],
+                            "hors_ligne": etat["hors_ligne"],
+                            "force": etat["force"],
+                        }
+                    ]
+                )
         return {"ok": True, **etat}
 
     def etat(self) -> dict[str, Any]:

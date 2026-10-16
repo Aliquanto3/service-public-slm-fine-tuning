@@ -149,8 +149,11 @@ export function monter(conteneur, pont, contexte = {}) {
     ouvrirMenu(false);
     pastille.focus();
     try {
-      appliquer(await pont.appeler("mode.forcer_hors_ligne", cible));
+      const reponse = await pont.appeler("mode.forcer_hors_ligne", cible);
+      if (!reponse || reponse.ok === false) throw new Error("refus");
+      appliquer(reponse);
     } catch {
+      afficher(); // rétablit l'interrupteur sur l'état réel
       annoncer("Le changement de mode a échoué.");
     }
   });
