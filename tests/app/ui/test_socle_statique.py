@@ -18,7 +18,6 @@ VUES = [
     "redaction",
     "correction",
     "resume",
-    "resume",
     "courrier",
     "traduction",
     "mode",
@@ -103,14 +102,10 @@ VUES_REALISEES = {
     "redaction",
     "parametres",
     "correction",
-<<<<<<< HEAD
     "historique",
     "retours",
-}  # stories 12.7 à 12.11 et 13.1
-=======
     "resume",
-}  # stories 12.7 à 12.10, 13.1 et 13.2
->>>>>>> a3fc643 (feat(app): vue Résumé à trois longueurs (story 13.2))
+}  # stories 12.7 à 12.11, 13.1 et 13.2
 
 
 def test_modules_de_vue_declares_d_avance() -> None:

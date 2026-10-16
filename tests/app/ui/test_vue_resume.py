@@ -116,18 +116,43 @@ def test_longueur_choisie_dans_l_entree_du_harnais(page, libelle: str, valeur: s
     assert page.locator("#vue-RE .resultat").inner_text() == RESUME
 
 
-def test_refus_du_harnais_affiche_le_message_entree_trop_longue(page) -> None:
-    page.evaluate(
-        "window.__refus = {ok: false, erreur: {code: 'requete-invalide', message: '<refus>'}}"
-    )
-    _resumer(page)
-    message = page.locator("#vue-RE .mention-trop-longue")
-    message.wait_for(state="visible")
-    assert "trop long" in message.inner_text()
-    # Un envoi accepté ensuite efface le message.
-    page.evaluate("window.__refus = null")
+def _message_visible(page) -> bool:
+    return page.locator("#vue-RE .mention-trop-longue").is_visible()
+
+
+def test_document_au_dessus_du_plafond_affiche_le_message_sans_envoi(page) -> None:
+    page.fill("#redaction-saisie-RE", "mot " * 4001)
+    page.locator("#vue-RE .volet-pied .bouton-primaire").click()
+    page.locator("#vue-RE .mention-trop-longue").wait_for(state="visible")
+    assert "trop long" in page.locator("#vue-RE .mention-trop-longue").inner_text()
+    assert page.evaluate("window.__appels.length") == 0
+    # Un document ramené sous le plafond est envoyé et efface le message.
+    page.fill("#redaction-saisie-RE", "mot " * 4000)
     page.locator("#vue-RE .volet-pied .bouton-primaire").click()
     page.wait_for_selector("#vue-RE .mention-trop-longue", state="hidden")
+    assert page.evaluate("window.__appels.length") == 1
+
+
+@pytest.mark.parametrize("code", ["requete-invalide", "generation-en-cours"])
+def test_refus_du_pont_n_affiche_pas_le_message_trop_long(page, code: str) -> None:
+    page.evaluate(
+        "(c) => { window.__refus = {ok: false, erreur: {code: c, message: '<refus>'}}; }", code
+    )
+    _resumer(page)
+    page.wait_for_function("() => window.__appels.length === 1", polling=50)
+    assert not _message_visible(page)
+
+
+def test_rejet_de_envoyer_affiche_le_message_generique(page) -> None:
+    page.evaluate(
+        """() => {
+          window.slmsp.pont.envoyer = async () => { throw new Error('<rejet-factice>'); };
+        }"""
+    )
+    _resumer(page)
+    page.locator("#vue-RE .mention-echec").wait_for(state="visible")
+    assert "pas pu être produit" in page.locator("#vue-RE .mention-echec").inner_text()
+    assert not _message_visible(page)
 
 
 def test_aucune_ressource_externe(page) -> None:

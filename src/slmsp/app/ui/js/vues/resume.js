@@ -11,7 +11,12 @@ export const LONGUEURS = [
   ["moyenne", "Moyen"],
   ["detaillee", "Détaillé"],
 ];
-const CODE_EN_COURS = "generation-en-cours";
+// Plafond d'entrée : contexte de 8192 tokens des modèles (config/modeles/*.toml), moins ~1024 de
+// sortie et la consigne, soit ~6000 tokens de document ; à ~1,5 token par mot français, 4000 mots.
+// Le Harnais ne découpe pas pour RE (seul CR découpe) et ne refuse pas sur la longueur.
+export const PLAFOND_MOTS = 4000;
+const CODE_TROP_LONG = "entree-trop-longue";
+const compterMots = (t) => (String(t).trim().match(/\S+/g) ?? []).length;
 const MESSAGE_TROP_LONG =
   "Ce document est trop long pour être résumé tel quel. Raccourcissez-le, ou résumez-le en plusieurs parties.";
 
@@ -44,26 +49,25 @@ export function monter(conteneur, pont, contexte) {
   });
   const longueur = () => radios.find((r) => r.checked)?.value ?? "moyenne";
 
-  // Message d'entrée trop longue (UX-DR19) quand le Harnais refuse la requête.
+  // Message d'entrée trop longue (UX-DR19) : uniquement quand le document dépasse le plafond
+  // contrôlé ici, avant l'envoi. Tout autre refus ou échec garde le message générique du volet.
   const trop = el("p", "mention-trop-longue", MESSAGE_TROP_LONG);
   trop.setAttribute("role", "status");
   trop.hidden = true;
-  const refuse = (reponse) => {
-    if (reponse?.ok === false && reponse.erreur?.code !== CODE_EN_COURS) trop.hidden = false;
-  };
   const pontEcoute = {
     appeler: (...a) => pont.appeler(...a),
     arreter: (...a) => pont.arreter(...a),
-    envoyer: async (...a) => {
-      trop.hidden = true;
-      try {
-        const reponse = await pont.envoyer(...a);
-        refuse(reponse);
-        return reponse;
-      } catch (e) {
+    envoyer: (tache, messages, options) => {
+      const document = options?.entree?.document ?? "";
+      if (compterMots(document) > PLAFOND_MOTS) {
         trop.hidden = false;
-        throw e;
+        return Promise.resolve({
+          ok: false,
+          erreur: { code: CODE_TROP_LONG, message: MESSAGE_TROP_LONG },
+        });
       }
+      trop.hidden = true;
+      return pont.envoyer(tache, messages, options);
     },
   };
   contexte.bus.abonner("nouvelle", ({ tache }) => {
