@@ -24,30 +24,46 @@ export function urlOuvrable(url) {
 }
 
 /**
- * Lien « Ouvrir ». Connecté : lien https que l'application confie au navigateur du système.
- * Hors ligne : copie le lien et affiche « Lien copié… ».
+ * Bouton « Ouvrir » (Q1 : la WebView ne navigue jamais). C'est un bouton, pas un lien : ni clic
+ * milieu, ni Ctrl+clic, ni glisser ne peuvent ouvrir l'URL dans l'application.
+ * Connecté : `pont.appeler("ouvrir_lien", url)` confie l'URL au navigateur du système (contrôle
+ * de la Liste blanche côté Python ; bouchon jusqu'à 12.6). Hors ligne, ou si le pont refuse :
+ * copie le lien et le dit.
  * @param {() => boolean} horsLigne Lu au moment du clic.
  */
-export function creerLienOuvrir(url, horsLigne, libelle = "Ouvrir") {
-  const lien = document.createElement("a");
-  lien.className = "bouton-secondaire";
-  lien.textContent = libelle;
-  lien.href = url;
-  lien.target = "_blank";
-  lien.rel = "noopener noreferrer";
-  lien.addEventListener("click", async (e) => {
-    if (!horsLigne()) return;
-    e.preventDefault();
+export function creerLienOuvrir(url, horsLigne, pont, libelle = "Ouvrir") {
+  const bouton = document.createElement("button");
+  bouton.type = "button";
+  bouton.className = "bouton-secondaire";
+  bouton.textContent = libelle;
+  bouton.title = url;
+  bouton.addEventListener("click", async () => {
+    const parent = bouton.parentElement ?? bouton;
+    const hors = horsLigne();
+    if (!hors) {
+      try {
+        const reponse = await pont?.appeler("ouvrir_lien", url);
+        if (reponse?.ok === true) {
+          confirmer(parent, "Lien ouvert dans votre navigateur.");
+          return;
+        }
+      } catch {
+        /* repli : copie du lien */
+      }
+    }
     const ok = await copierTexte(url);
-    confirmer(
-      lien.parentElement ?? lien,
-      ok ? "Lien copié. Il s'ouvrira quand vous serez connecté." : "Copie impossible : sélectionnez le lien à la main.",
-    );
+    let message = "Copie impossible : sélectionnez le lien à la main.";
+    if (ok) {
+      message = hors
+        ? "Lien copié. Il s'ouvrira quand vous serez connecté."
+        : "Lien copié. Collez-le dans votre navigateur.";
+    }
+    confirmer(parent, message);
   });
-  return lien;
+  return bouton;
 }
 
-function creerCarte(source, { horsLigne, courante }) {
+function creerCarte(source, { horsLigne, pont, courante }) {
   const carte = document.createElement("article");
   carte.className = "source-card";
   if (source.numero != null) carte.dataset.numero = String(source.numero);
@@ -74,7 +90,7 @@ function creerCarte(source, { horsLigne, courante }) {
   if (urlOuvrable(source.url)) {
     const actions = document.createElement("div");
     actions.className = "source-actions";
-    actions.append(creerLienOuvrir(source.url, horsLigne));
+    actions.append(creerLienOuvrir(source.url, horsLigne, pont));
     carte.append(actions);
   }
   return carte;
@@ -83,10 +99,13 @@ function creerCarte(source, { horsLigne, courante }) {
 /**
  * Remplit le panneau.
  * @param {Array} sources Sources de la réponse sélectionnée.
- * @param {{horsLigne: () => boolean, numero?: number|null}} options `numero` : source mise en avant.
+ * @param {{horsLigne: () => boolean, pont: object, numero?: number|null}} options `numero` : source
+ *   mise en avant.
  */
-export function rendrePanneauSources(corps, sources, { horsLigne, numero = null }) {
-  const cartes = sources.map((s) => creerCarte(s, { horsLigne, courante: numero != null && s.numero === numero }));
+export function rendrePanneauSources(corps, sources, { horsLigne, pont, numero = null }) {
+  const cartes = sources.map((s) =>
+    creerCarte(s, { horsLigne, pont, courante: numero != null && s.numero === numero }),
+  );
   corps.replaceChildren(...cartes);
   corps.querySelector("[aria-current]")?.scrollIntoView?.({ block: "nearest" });
 }

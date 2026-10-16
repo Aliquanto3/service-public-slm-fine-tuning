@@ -13,13 +13,25 @@ function el(balise, classe, texte) {
   return e;
 }
 
-/** Lit un état de Mode dans une charge : `true` hors ligne, `false` connecté, `null` si inconnu. */
+/**
+ * Lit un état de Mode : `true` hors ligne, `false` connecté, `null` si inconnu.
+ * Formes reconnues : `mode.etat()` du pont 12.5 (`{ok, mode: "connecte"|"hors_ligne"}`) et
+ * l'évènement de bus `mode:change` (`{hors_ligne: bool}`). Un refus (`ok: false`) est inconnu.
+ */
 export function lireMode(charge) {
-  if (typeof charge?.hors_ligne === "boolean") return charge.hors_ligne;
-  const mode = typeof charge?.mode === "string" ? charge.mode.toLowerCase() : "";
-  if (mode.startsWith("hors")) return true;
-  if (mode.startsWith("connect")) return false;
+  if (!charge || charge.ok === false) return null;
+  if (typeof charge.hors_ligne === "boolean") return charge.hors_ligne;
+  if (charge.mode === "hors_ligne") return true;
+  if (charge.mode === "connecte") return false;
   return null;
+}
+
+/** Contrat 12.5 : un refus du pont (`{ok: false, erreur}`) devient un rejet. */
+function exigerOk(reponse) {
+  if (reponse && reponse.ok === false) {
+    throw Object.assign(new Error(reponse.erreur?.message ?? "refus du pont"), { erreur: reponse.erreur });
+  }
+  return reponse;
 }
 
 /**
@@ -47,10 +59,11 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
   if (options.intro) vide.append(el("p", "vide-intro", options.intro));
   if (options.exemples?.length) {
     const liste = el("ul", "exemples");
-    for (const exemple of options.exemples) {
+    for (const [i, exemple] of options.exemples.entries()) {
       const item = document.createElement("li");
       const bouton = el("button", "exemple", exemple);
       bouton.type = "button";
+      bouton.id = `exemple-${tache}-${i + 1}`;
       bouton.addEventListener("click", () => {
         const saisie = document.getElementById("saisie");
         if (!saisie) return;
@@ -69,16 +82,11 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
   racine.append(info, vide, fil);
   conteneur.replaceChildren(racine);
 
-  const tours = []; // { reponse, element }
+  const tours = []; // { reponse, element, question }
   let enCours = false; // une génération de cette vue est en cours
+  let remplacement = null; // réponse à remplacer sur place, vidée au premier évènement reçu
   let actif = !conteneur.hidden && !conteneur.closest("[hidden]");
-  let derniereQuestion = null;
   let selection = null; // { reponse, numero }
-
-  const appel = (fonction) =>
-    Promise.resolve()
-      .then(fonction)
-      .catch(() => bus.emettre("generation:erreur", { tache }));
 
   const derniere = () => tours.at(-1)?.reponse ?? null;
 
@@ -92,12 +100,17 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       bus.emettre("sources:disponibles", false);
       return;
     }
-    if (corps) rendrePanneauSources(corps, reponse.sources, { horsLigne, numero: choisie?.numero ?? null });
+    if (corps) rendrePanneauSources(corps, reponse.sources, { horsLigne, pont, numero: choisie?.numero ?? null });
     bus.emettre("sources:disponibles", true);
   }
 
   function majBoutons() {
-    for (const t of tours) t.reponse.regenerer.hidden = t.reponse !== derniere();
+    // Régénérer et Réessayer ne portent que sur la dernière réponse, qui a une question à rejouer.
+    for (const t of tours) {
+      const relancable = t.reponse === derniere() && t.question != null;
+      t.reponse.regenerer.hidden = !relancable;
+      t.reponse.reessayer.hidden = !relancable;
+    }
     vide.hidden = tours.length > 0;
   }
 
@@ -116,26 +129,30 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
         rafraichirPanneau();
         bus.emettre("sources:ouvrir");
       },
-      surRegenerer: regenerer,
-      surReessayer: reessayer,
+      surRegenerer: relancer,
+      surReessayer: relancer,
     });
     element.append(reponse.el);
     fil.append(element);
-    tours.push({ reponse, element });
+    tours.push({ reponse, element, question });
     majBoutons();
     return reponse;
   }
 
-  function regenerer() {
-    if (enCours) return;
-    bus.emettre("generation:debut", { tache });
-    appel(() => pont.appeler("regenerer"));
-  }
-
-  function reessayer() {
-    if (enCours) return;
-    if (derniereQuestion == null) return regenerer();
-    appel(() => pont.envoyer(tache, [{ role: "user", content: derniereQuestion }], {}));
+  /**
+   * Régénérer et Réessayer : renvoie la question du dernier tour par `envoyer` (même Tâche) et
+   * remplace sa réponse sur place. `pont.regenerer()` n'est pas utilisé : il rejoue le dernier
+   * envoi du pont, qui peut venir d'une autre Tâche. La réponse n'est vidée qu'au premier
+   * évènement : un refus du pont la laisse intacte.
+   */
+  function relancer() {
+    const tour = tours.at(-1);
+    if (enCours || !tour || tour.question == null) return;
+    remplacement = tour.reponse;
+    Promise.resolve()
+      .then(() => pont.envoyer(tache, [{ role: "user", content: tour.question }], {}))
+      .then(exigerOk)
+      .catch(() => bus.emettre("generation:erreur", { tache }));
   }
 
   function appliquerMode(hors) {
@@ -157,28 +174,41 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
   });
   bus.abonner("envoi", ({ tache: t, texte }) => {
     if (t !== tache) return;
-    derniereQuestion = texte;
+    remplacement = null;
     creerTour(texte);
   });
   bus.abonner("generation:debut", ({ tache: t }) => {
     enCours = t === tache;
-    if (!enCours) return;
-    let r = derniere();
-    if (!r) r = creerTour(null);
-    r.debut(); // une nouvelle réponse (état « attente ») ou une régénération sur place
-    selection = null;
+    if (!enCours) {
+      remplacement = null;
+      return;
+    }
+    if (remplacement && remplacement === derniere()) {
+      remplacement.preparer(); // régénération : la réponse est vidée au premier évènement
+    } else {
+      remplacement = null;
+      (derniere() ?? creerTour(null)).debut();
+      selection = null;
+    }
     majBoutons();
     rafraichirPanneau();
   });
 
-  /** Réponse qui reçoit les évènements ; un flux sans `generation:debut` ouvre une réponse. */
+  /**
+   * Réponse qui reçoit les évènements, ou `null`. Seule la vue qui a lancé la génération les
+   * reçoit : aucun tour n'est créé pour un flux sans `generation:debut` (flux d'une autre Tâche,
+   * évènements tardifs après « Nouvelle conversation »).
+   */
   function courante() {
-    if (!enCours) {
-      if (!actif) return null;
-      enCours = true;
-      creerTour(null).debut();
+    if (!enCours) return null;
+    const r = derniere();
+    if (r && r === remplacement) {
+      remplacement = null;
+      r.debut();
+      selection = null;
+      rafraichirPanneau();
     }
-    return derniere();
+    return r;
   }
 
   bus.abonner("evenement:jeton", (e) => courante()?.jeton(e.texte));
@@ -192,32 +222,49 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
   bus.abonner("evenement:repli", () => courante()?.signalerRepli());
   bus.abonner("evenement:resultat-outil", (e) => courante()?.outil(e));
   bus.abonner("evenement:fin", (e) => {
-    if (!enCours) return;
-    derniere()?.terminer(e);
+    const r = courante();
+    if (!r) return;
+    r.terminer(e);
     enCours = false;
     majBoutons();
     rafraichirPanneau();
   });
-  const surEchec = () => {
-    if (!enCours) return;
-    derniere()?.echec();
+  bus.abonner("evenement:erreur", () => {
+    const r = courante();
+    if (!r) return;
+    r.echec();
     enCours = false;
     majBoutons();
     rafraichirPanneau();
-  };
-  bus.abonner("evenement:erreur", surEchec);
-  bus.abonner("generation:erreur", surEchec);
+  });
+  // L'appel au pont a échoué ou a été refusé (`generation-en-cours`…) : aucun évènement ne suivra.
+  bus.abonner("generation:erreur", (charge) => {
+    if (!enCours || (charge?.tache && charge.tache !== tache)) return;
+    enCours = false;
+    if (remplacement) {
+      remplacement.retablir(); // la réponse précédente reste en place
+      remplacement = null;
+    } else {
+      derniere()?.echec();
+    }
+    majBoutons();
+    rafraichirPanneau();
+  });
 
   bus.abonner("nouvelle", ({ tache: t }) => {
     if (t !== tache) return;
+    const arreter = enCours;
     tours.length = 0;
     fil.replaceChildren();
     selection = null;
-    derniereQuestion = null;
-    enCours = false;
+    remplacement = null;
+    enCours = false; // les évènements tardifs de la génération arrêtée sont ignorés
     majBoutons();
     rafraichirPanneau();
-    appel(() => pont.appeler("nouvelle_conversation"));
+    Promise.resolve()
+      .then(() => (arreter ? pont.arreter() : null))
+      .then(() => pont.appeler("nouvelle_conversation"))
+      .catch(() => {}); // seul l'oubli du dernier envoi côté pont est en jeu : rien à montrer
   });
   bus.abonner("copier-dernier", async ({ tache: t }) => {
     const r = derniere();
@@ -226,9 +273,9 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     confirmer(r.el, ok ? "Copié" : "Copie impossible");
   });
 
-  // Mode initial : lu auprès du pont s'il le sait (contrat de 12.5), sinon hors ligne.
+  // Mode initial : `mode.etat()` du pont (contrat 12.5, bouchon jusqu'à 12.9), sinon hors ligne.
   Promise.resolve()
-    .then(() => pont.appeler("mode"))
+    .then(() => pont.appeler("mode.etat"))
     .then((valeur) => {
       const hors = lireMode(valeur);
       if (hors !== null) appliquerMode(hors);

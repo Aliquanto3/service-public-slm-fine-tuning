@@ -58,6 +58,7 @@ export function creerReponse(opts) {
     sources: [],
     etat: "attente", // attente | en-cours | fini
     regenerer,
+    reessayer,
   };
   const vus = new Set(); // identifiants d'appels d'outil déjà rendus
 
@@ -74,6 +75,20 @@ export function creerReponse(opts) {
     reessayer.disabled = true;
     copier.hidden = false;
     attente.hidden = false;
+    racine.setAttribute("aria-busy", "false");
+  };
+
+  /** Régénération demandée : la réponse reste lisible, ses actions sont retirées en attendant. */
+  r.preparer = () => {
+    actions.hidden = true;
+    reessayer.disabled = true;
+    racine.setAttribute("aria-busy", "true");
+  };
+
+  /** Régénération refusée par le pont : la réponse précédente retrouve ses actions. */
+  r.retablir = () => {
+    actions.hidden = false;
+    reessayer.disabled = false;
     racine.setAttribute("aria-busy", "false");
   };
 
@@ -137,7 +152,10 @@ export function creerReponse(opts) {
     }
     reessayer.disabled = false;
     actions.hidden = false;
-    annoncer(fin.raison === "interrompue" ? "Réponse interrompue." : "Réponse terminée.");
+    // Lecteur d'écran (EXPERIENCE.md) : la réponse est lue une fois terminée, jamais jeton par
+    // jeton, par la région `aria-live="polite"` du socle (`#annonces`).
+    const entete = fin.raison === "interrompue" ? "Réponse interrompue." : "Réponse terminée.";
+    annoncer(r.brut ? `${entete} ${r.brut}` : entete);
   };
 
   r.echec = () => {

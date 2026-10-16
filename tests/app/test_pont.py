@@ -320,3 +320,38 @@ def test_appeler_ne_masque_pas_les_typeerror_internes(banc: Any) -> None:
 
     pont.arreter = casse  # type: ignore[method-assign]
     assert pont.appeler("arreter")["erreur"]["code"] == "erreur-interne"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://www.service-public.fr/particuliers",  # pas https
+        "https://exemple.invalid/page",  # hôte hors Liste blanche
+        "https://www.service-public.fr.exemple.invalid/",  # suffixe trompeur
+        "https://www.service-public.fr:8443/",  # port
+        "https://utilisateur:secret@www.service-public.fr/",  # identifiants
+        "https://203.0.113.7/",  # adresse IP
+        "javascript:alert(1)",
+        "file:///C:/Windows/win.ini",
+        "",
+        "pas une url",
+    ],
+)
+def test_ouvrir_lien_refuse_hors_liste_blanche(banc: Any, url: str) -> None:
+    pont, fenetre = banc(FakeLlm(script(mots(1, "j"))))
+    assert pont.ouvrir_lien(url)["erreur"]["code"] == "lien-refuse"
+    assert pont.appeler("ouvrir_lien", url)["erreur"]["code"] == "lien-refuse"
+    assert fenetre.scripts == []
+
+
+def test_ouvrir_lien_accepte_la_liste_blanche_bouchon_jusqu_a_12_6(banc: Any) -> None:
+    pont, _ = banc(FakeLlm(script(mots(1, "j"))))
+    for url in (
+        "https://www.service-public.fr/particuliers/vosdroits/F1",
+        "https://WWW.DATA.GOUV.FR./datasets/x",
+        "https://www.legifrance.gouv.fr:443/loda",
+    ):
+        reponse = pont.appeler("ouvrir_lien", url)
+        assert reponse["erreur"]["code"] == "non-implementee", url
+    assert pont.appeler("ouvrir_lien")["erreur"]["code"] == "methode-inconnue"
+    assert pont.ouvrir_lien(123)["erreur"]["code"] == "lien-refuse"  # type: ignore[arg-type]

@@ -160,11 +160,6 @@
   color: var(--ink-soft);
   font-size: var(--t-small);
 }
-a.bouton-secondaire {
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-}
 
 /* Panneau Sources */
 #sources-corps {

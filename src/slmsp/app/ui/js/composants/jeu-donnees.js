@@ -1,9 +1,11 @@
-// Carte de jeu de données (`dataset-card`) : titre, producteur · date de mise à jour, « Ouvrir »,
-// « Voir les données » (Mode connecté seulement). Les cartes viennent d'un `ResultatOutil`.
+// Carte de jeu de données (`dataset-card`) : titre, producteur · date de mise à jour, « Ouvrir ».
+// Les cartes viennent d'un `ResultatOutil`. « Voir les données » n'est pas affiché : le pont 12.5
+// n'expose aucune méthode pour lire les lignes d'un jeu (décision de revue 12.7). Les tableaux
+// arrivent par les `ResultatOutil` tabulaires de la réponse (`tableau.js`).
 
-import { confirmer, dateLisible } from "./copie.js";
+import { dateLisible } from "./copie.js";
 import { creerLienOuvrir, urlOuvrable } from "./sources.js";
-import { creerTableau, extraireTableau, texteDuResultat } from "./tableau.js";
+import { texteDuResultat } from "./tableau.js";
 
 const CHAMPS_DATE = ["Last update", "Last modified", "Updated", "Date"];
 
@@ -36,8 +38,7 @@ export function extraireJeux(resultat) {
 
 /**
  * Construit la carte d'un jeu.
- * @param {object} deps `{ pont, horsLigne }` ; « Voir les données » appelle `pont.appeler("voir_donnees", id)`
- *   et attend `{resultat}` (un `ResultatOutil.resultat` tabulaire).
+ * @param {object} deps `{ pont, horsLigne }` (bouton « Ouvrir »).
  */
 export function creerCarteJeu(jeu, { pont, horsLigne }) {
   const carte = document.createElement("article");
@@ -52,31 +53,7 @@ export function creerCarteJeu(jeu, { pont, horsLigne }) {
   meta.hidden = !meta.textContent;
   const actions = document.createElement("div");
   actions.className = "dataset-actions";
-  if (jeu.url && urlOuvrable(jeu.url)) actions.append(creerLienOuvrir(jeu.url, horsLigne));
-  const dessous = document.createElement("div");
-  dessous.className = "dataset-donnees";
-  if (jeu.id) {
-    const voir = document.createElement("button");
-    voir.type = "button";
-    voir.className = "bouton-secondaire voir-donnees"; // masqué hors ligne par la feuille de style
-    voir.textContent = "Voir les données";
-    voir.addEventListener("click", async () => {
-      voir.disabled = true;
-      dessous.setAttribute("aria-busy", "true");
-      let tableau = null;
-      try {
-        const reponse = await pont.appeler("voir_donnees", jeu.id);
-        tableau = extraireTableau(reponse?.resultat ?? null);
-      } catch {
-        tableau = null;
-      }
-      dessous.removeAttribute("aria-busy");
-      voir.disabled = false;
-      if (tableau) dessous.replaceChildren(creerTableau(tableau));
-      else confirmer(actions, "Les données ne sont pas disponibles pour le moment.", 6000);
-    });
-    actions.append(voir);
-  }
-  carte.append(titre, meta, actions, dessous);
+  if (jeu.url && urlOuvrable(jeu.url)) actions.append(creerLienOuvrir(jeu.url, horsLigne, pont));
+  carte.append(titre, meta, actions);
   return carte;
 }

@@ -99,7 +99,10 @@ def page(navigateur, base) -> Iterator[object]:
     p.goto(base + "?pont=factice")
     p.wait_for_function("() => window.slmsp !== undefined", polling=50)
     p.wait_for_function("() => !document.getElementById('envoyer').disabled || true")
-    # Presse-papiers capturé, pont qui rejoue le flux `window.__flux` à chaque envoi / régénération.
+    # Presse-papiers capturé, pont qui rejoue le flux `window.__flux` à chaque envoi. Comme le
+    # vrai client (`pont-client.js`), `envoyer` émet `generation:debut` avant l'appel ; un refus
+    # (`window.__refus` = code) est rejeté, ou rendu `{ok: false}` si `window.__refusResolu`.
+    # `mode.etat` rend `window.__mode` (contrat 12.5) ; `ouvrir_lien` rend `window.__ouvrir`.
     p.evaluate(
         """() => {
           window.__copies = [];
@@ -109,17 +112,26 @@ def page(navigateur, base) -> Iterator[object]:
           window.__appels = [];
           const pont = window.slmsp.pont;
           const rejouer = () => setTimeout(() => window.slmspRecevoir(window.__flux), 20);
+          const refus = (code) => ({ ok: false, erreur: { code, message: '<refus-factice>' } });
           pont.envoyer = async (tache, messages) => {
             window.__appels.push(['envoyer', tache, messages]);
             window.slmsp.bus.emettre('generation:debut', { tache });
+            if (window.__refus) {
+              if (window.__refusResolu) return refus(window.__refus);
+              throw Object.assign(new Error('refus'), { erreur: refus(window.__refus).erreur });
+            }
             rejouer();
             return { ok: true };
           };
           const ancien = pont.appeler;
           pont.appeler = async (nom, ...args) => {
             window.__appels.push([nom, ...args]);
-            if (nom === 'regenerer') { rejouer(); return { ok: true }; }
-            if (nom === 'voir_donnees') return { resultat: window.__donnees };
+            if (nom === 'mode.etat') {
+              return window.__mode
+                ? { ok: true, mode: window.__mode, force: false }
+                : refus('non-implementee');
+            }
+            if (nom === 'ouvrir_lien') return window.__ouvrir ?? refus('non-implementee');
             return ancien(nom, ...args);
           };
           pont.arreter = async () => {
@@ -239,16 +251,38 @@ def test_ouvrir_hors_ligne_copie_le_lien(page) -> None:
     )
 
 
-def test_ouvrir_connecte_est_un_lien_https_externe(page) -> None:
+def test_ouvrir_connecte_passe_par_le_pont_sans_navigation(page) -> None:
     _poser(page, "Q", FLUX_Q)
     _termine(page)
     page.evaluate("window.slmsp.bus.emettre('mode:change', {hors_ligne: false})")
     page.locator(".citation-chip").nth(0).click()
-    lien = page.locator("#sources-corps .source-card").nth(0).get_by_text("Ouvrir")
-    assert lien.get_attribute("href") == SOURCE_1["url"]
-    assert lien.get_attribute("target") == "_blank"
-    assert "noopener" in lien.get_attribute("rel")
+    assert page.locator("#vues a[href], #sources a[href]").count() == 0
+    carte = page.locator("#sources-corps .source-card").nth(0)
+    ouvrir = carte.get_by_role("button", name="Ouvrir")
+    # Clic milieu et Ctrl+clic : un bouton n'ouvre ni onglet ni navigation (Q1).
+    ouvrir.click(button="middle")
+    ouvrir.click(modifiers=["Control"])
+    page.evaluate("window.__ouvrir = {ok: true}")
+    ouvrir.click()
+    page.wait_for_function(
+        "(u) => window.__appels.filter((a) => a[0] === 'ouvrir_lien' && a[1] === u).length === 2",
+        arg=SOURCE_1["url"],
+    )
+    page.wait_for_selector("#sources-corps :text('Lien ouvert dans votre navigateur.')")
+    assert len(page.context.pages) == 1
+    assert page.url.startswith("http://127.0.0.1")
     assert not any("exemple.invalid" in u for u in page.requetes)
+
+
+def test_ouvrir_connecte_refuse_par_le_pont_copie_le_lien(page) -> None:
+    _poser(page, "Q", FLUX_Q)
+    _termine(page)
+    page.evaluate("window.slmsp.bus.emettre('mode:change', {hors_ligne: false})")
+    page.locator(".citation-chip").nth(0).click()
+    page.locator("#sources-corps .source-card").nth(0).get_by_text("Ouvrir").click()
+    page.wait_for_function("() => window.__copies.length === 1")
+    assert page.evaluate("window.__copies") == [SOURCE_1["url"]]
+    page.wait_for_selector("#sources-corps :text('Lien copié. Collez-le dans votre navigateur.')")
 
 
 # -- Critère 3 : cartes et tableaux de la Recherche ----------------------------------------------
@@ -280,29 +314,23 @@ def test_recherche_cartes_sans_avertissement_juridique_et_information_hors_ligne
     assert cartes.count() == 2
     assert "<producteur-factice>" in cartes.nth(0).inner_text()
     assert cartes.nth(0).get_by_text("Ouvrir").is_visible()
-    assert not cartes.nth(0).get_by_text("Voir les données").is_visible()
+    # « Voir les données » : aucune méthode du pont 12.5 ne lit les lignes d'un jeu (masqué).
+    assert page.locator("#vue-RD").get_by_text("Voir les données").count() == 0
     page.evaluate("window.slmsp.bus.emettre('mode:change', {hors_ligne: false})")
-    assert cartes.nth(0).get_by_text("Voir les données").is_visible()
+    assert page.locator("#vue-RD").get_by_text("Voir les données").count() == 0
     assert not page.locator("#vue-RD .info-mode").is_visible()
 
 
-def test_voir_les_donnees_tableau_plafonne_a_50_lignes_et_copie_tabulee(page) -> None:
-    flux = [
-        {"type": "jeton", "texte": "<réponse-factice-1>"},
-        _resultat_outil("a1", {"content": [{"type": "text", "text": RESULTAT_JEUX}]}),
-        FIN,
-    ]
-    page.evaluate(
-        """() => { window.__donnees = {
-          colonnes: ['col_a', 'col_b'], jeu: '<jeu-factice-1>',
-          lignes: Array.from({length: 60}, (_, i) => ['a' + i, 'b\\t' + i]),
-        }; }"""
-    )
+def test_tableau_d_outil_plafonne_a_50_lignes_et_copie_tabulee(page) -> None:
+    tableau = {
+        "colonnes": ["col_a", "col_b"],
+        "jeu": "<jeu-factice-1>",
+        "lignes": [[f"a{i}", f"b\t{i}"] for i in range(60)],
+    }
+    flux = [{"type": "jeton", "texte": "<réponse-factice-1>"}, _resultat_outil("t60", tableau), FIN]
     _poser(page, "RD", flux)
     _termine(page)
-    page.evaluate("window.slmsp.bus.emettre('mode:change', {hors_ligne: false})")
-    carte = page.locator("#vue-RD .dataset-card").nth(0)
-    carte.get_by_text("Voir les données").click()
+    carte = page.locator("#vue-RD .reponse-pieces")
     page.wait_for_selector("#vue-RD .data-table")
     assert page.locator("#vue-RD .data-table tbody tr").count() == 50
     assert "Extrait : 50 premières lignes" in carte.inner_text()
@@ -360,6 +388,28 @@ def test_repli_encart_et_reessayer(page) -> None:
     assert messages == [{"role": "user", "content": "<question-repli>"}]
     _termine(page)
     assert page.locator("#vue-RD .reponse").count() == 1  # remplacée sur place
+
+
+def test_reessayer_seulement_sur_la_derniere_reponse(page) -> None:
+    flux = [{"type": "repli", "motif": "m", "vers": "index"}, {"type": "jeton", "texte": "r"}, FIN]
+    _poser(page, "RD", flux, "<question-1>")
+    _termine(page)
+    page.fill("#saisie", "<question-2>")
+    page.keyboard.press("Enter")
+    page.wait_for_function(
+        "() => document.querySelectorAll('#vue-RD .reponse-actions:not([hidden])').length === 2"
+    )
+    encarts = page.locator("#vue-RD .callout-warning")
+    assert encarts.count() == 2
+    assert not encarts.nth(0).get_by_text("Réessayer").is_visible()
+    encarts.nth(1).get_by_text("Réessayer").click()
+    page.wait_for_function("() => window.__appels.filter((a) => a[0] === 'envoyer').length === 3")
+    messages = page.evaluate("window.__appels.filter((a) => a[0] === 'envoyer')[2][2]")
+    assert messages == [{"role": "user", "content": "<question-2>"}]
+    page.wait_for_function(
+        "() => document.querySelectorAll('#vue-RD .reponse-actions:not([hidden])').length === 2"
+    )
+    assert page.locator("#vue-RD .tour").count() == 2
 
 
 # -- Critère 5 : arrêt et régénération -----------------------------------------------------------
@@ -460,3 +510,110 @@ def test_aucune_ressource_externe_chargee(page) -> None:
     _termine(page)
     externes = [u for u in page.requetes if not u.startswith("http://127.0.0.1")]
     assert externes == []
+
+
+# -- Revue 12.7 : refus du pont, Mode, flux tardifs, lecteur d'écran ------------------------------
+
+
+@pytest.mark.parametrize("resolu", [False, True], ids=["rejet", "ok-false"])
+def test_regenerer_refuse_par_le_pont_retablit_l_etat(page, resolu: bool) -> None:
+    flux = [{"type": "jeton", "texte": "<réponse-factice-1>"}, FIN]
+    _poser(page, "Q", flux, "<question-1>")
+    _termine(page)
+    page.evaluate(
+        "(r) => { window.__refus = 'generation-en-cours'; window.__refusResolu = r; }", resolu
+    )
+    page.get_by_role("button", name="Régénérer").click()
+    page.wait_for_function("() => !document.getElementById('erreur-interne').hidden", polling=50)
+    assert page.inner_text("#envoyer") == "Envoyer"  # ni « Arrêter » figé ni état bloqué
+    assert page.input_value("#saisie") == "<question-1>"  # texte restauré
+    assert page.locator("#vue-Q .reponse-texte").inner_text() == "<réponse-factice-1>"
+    assert page.locator("#vue-Q .reponse-actions").is_visible()
+    assert page.locator("#vue-Q .mention-echec").is_hidden()
+    # Le pont redevient disponible : un nouvel envoi passe normalement.
+    page.evaluate("window.__refus = null")
+    page.press("#saisie", "Enter")
+    page.wait_for_function(
+        "() => document.querySelectorAll('#vue-Q .reponse-actions:not([hidden])').length === 2"
+    )
+    assert page.inner_text("#envoyer") == "Envoyer"
+
+
+def test_envoi_refuse_par_le_pont_debloque_l_envoi(page) -> None:
+    page.evaluate("window.__refus = 'generation-en-cours'")
+    _poser(page, "Q", [FIN], "<question-refusée>")
+    page.wait_for_function("() => !document.getElementById('erreur-interne').hidden", polling=50)
+    page.wait_for_selector("#vue-Q .mention-echec:visible")
+    assert page.inner_text("#envoyer") == "Envoyer"
+    assert page.input_value("#saisie") == "<question-refusée>"
+
+
+@pytest.mark.parametrize(("mode", "connecte"), [("connecte", True), ("hors_ligne", False)])
+def test_mode_initial_lu_par_mode_etat(page, mode: str, connecte: bool) -> None:
+    page.evaluate("(m) => { window.__mode = m; }", mode)
+    _pret(page)
+    page.evaluate("window.slmsp.activer('RD')")  # RD est montée maintenant : elle lit le Mode
+    page.wait_for_function("() => window.__appels.some((a) => a[0] === 'mode.etat')")
+    attendu = "connecte" if connecte else "hors-ligne"
+    page.wait_for_function(
+        "(m) => document.querySelector('#vue-RD .conversation').dataset.mode === m", arg=attendu
+    )
+    assert page.locator("#vue-RD .info-mode").is_visible() is (not connecte)
+
+
+def test_mode_inconnu_reste_hors_ligne(page) -> None:
+    _pret(page)
+    page.evaluate("window.slmsp.activer('RD')")  # `mode.etat` répond `non-implementee`
+    page.wait_for_function("() => window.__appels.some((a) => a[0] === 'mode.etat')")
+    assert page.get_attribute("#vue-RD .conversation", "data-mode") == "hors-ligne"
+    assert page.locator("#vue-RD .info-mode").is_visible()
+
+
+def test_nouvelle_conversation_pendant_le_flux_arrete_et_ignore_la_suite(page) -> None:
+    _pret(page)
+    page.evaluate("window.slmsp.activer('Q')")
+    page.evaluate("window.__flux = []")
+    page.fill("#saisie", "<question-factice>")
+    page.keyboard.press("Enter")
+    page.evaluate("window.slmspRecevoir({type: 'jeton', texte: '<début-factice>'})")
+    page.click("#bouton-nouvelle")
+    page.wait_for_function(
+        "() => window.__appels.map((a) => a[0]).join() .includes('arreter,nouvelle_conversation')"
+    )
+    page.evaluate("window.slmspRecevoir([{type: 'jeton', texte: '<tardif>'}])")
+    assert page.locator("#vues .tour").count() == 0
+    assert "<tardif>" not in page.inner_text("#vues")
+    assert page.locator("#vue-Q .vide").is_visible()
+    assert page.inner_text("#envoyer") != "Arrêter"
+
+
+def test_flux_d_une_tache_n_ouvre_aucun_tour_dans_une_autre(page) -> None:
+    _pret(page)
+    page.evaluate("window.slmsp.activer('Q')")
+    page.evaluate("window.__flux = []")
+    page.fill("#saisie", "<question-factice>")
+    page.keyboard.press("Enter")
+    page.evaluate("window.slmsp.activer('RD')")
+    page.evaluate(f"window.slmspRecevoir([{{type: 'jeton', texte: '<suite>'}}, {json.dumps(FIN)}])")
+    assert page.locator("#vue-RD .tour").count() == 0
+    assert page.locator("#vue-Q .tour").count() == 1
+    assert page.locator("#vue-Q .reponse-texte").inner_text() == "<suite>"
+
+
+def test_reponse_annoncee_une_fois_terminee_jamais_jeton_par_jeton(page) -> None:
+    _pret(page)
+    page.evaluate("window.slmsp.activer('Q')")
+    page.evaluate("window.__flux = []")
+    page.fill("#saisie", "<question-factice>")
+    page.keyboard.press("Enter")
+    page.evaluate("window.slmspRecevoir({type: 'jeton', texte: '<jeton-annonce>'})")
+    page.wait_for_timeout(400)
+    assert "<jeton-annonce>" not in page.inner_text("#annonces")
+    assert page.get_attribute("#vue-Q .reponse", "aria-live") is None
+    page.evaluate(f"window.slmspRecevoir({json.dumps(FIN)})")
+    page.wait_for_function(
+        "() => document.getElementById('annonces').textContent"
+        " === 'Réponse terminée. <jeton-annonce>'",
+        polling=50,
+    )
+    assert page.get_attribute("#annonces", "aria-live") == "polite"

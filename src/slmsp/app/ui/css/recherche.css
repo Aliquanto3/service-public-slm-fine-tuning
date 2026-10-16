@@ -30,13 +30,6 @@
   align-items: center;
   gap: var(--sp-2);
 }
-/* « Voir les données » : Mode connecté seulement. */
-.conversation[data-mode="hors-ligne"] .voir-donnees {
-  display: none;
-}
-.dataset-donnees {
-  min-width: 0;
-}
 .tableau-donnees {
   margin: 0;
   min-width: 0;
