@@ -1,0 +1,449 @@
+/* Socle : disposition (UX-DR2), navigation, zone de saisie, accessibilité (UX-DR21). */
+html {
+  font-size: var(--echelle, 100%);
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) auto;
+  grid-template-rows: minmax(var(--topbar-height), auto) minmax(0, 1fr);
+  grid-template-areas:
+    "colonne barre sources"
+    "colonne principal sources";
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--police);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+button,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Icônes locales : masque sur un fichier SVG, couleur héritée du texte. */
+.icone {
+  display: inline-block;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: var(--icone) center / contain no-repeat;
+  mask: var(--icone) center / contain no-repeat;
+}
+.icone-question { --icone: url("../icones/question.svg"); }
+.icone-recherche { --icone: url("../icones/recherche.svg"); }
+.icone-compte-rendu { --icone: url("../icones/compte-rendu.svg"); }
+.icone-langage-clair { --icone: url("../icones/langage-clair.svg"); }
+.icone-correction { --icone: url("../icones/correction.svg"); }
+.icone-resume { --icone: url("../icones/resume.svg"); }
+.icone-courrier { --icone: url("../icones/courrier.svg"); }
+.icone-traduction { --icone: url("../icones/traduction.svg"); }
+.icone-parametres { --icone: url("../icones/parametres.svg"); }
+.icone-attention { --icone: url("../icones/attention.svg"); }
+.icone-fermer { --icone: url("../icones/fermer.svg"); }
+.icone-plus { --icone: url("../icones/plus.svg"); }
+
+/* Colonne de gauche */
+.colonne {
+  grid-area: colonne;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-alt);
+  border-right: 1px solid var(--line);
+  padding: var(--sp-4) var(--sp-3);
+  gap: var(--sp-3);
+}
+.marque {
+  margin: 0;
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--primary);
+}
+.etiquette {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--police-etiquette);
+  font-size: var(--t-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.taches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-1);
+}
+.tache {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.tache:hover {
+  background: var(--primary-soft);
+}
+.tache[aria-current="true"] {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+}
+.tache[aria-current="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--sp-1);
+  bottom: var(--sp-1);
+  width: 3px;
+  border-radius: var(--r-full);
+  background: var(--primary);
+}
+.plus {
+  margin-top: var(--sp-2);
+}
+.plus .icone {
+  transition: transform 0.15s;
+}
+.plus[aria-expanded="true"] .icone {
+  transform: rotate(45deg);
+}
+.historique {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.pied-colonne {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Boutons */
+.bouton-primaire,
+.bouton-secondaire,
+.bouton-icone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.bouton-primaire {
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.bouton-primaire:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+.bouton-primaire:disabled {
+  border-color: var(--line);
+  background: var(--line);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+.bouton-secondaire {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--primary);
+}
+.bouton-secondaire:hover {
+  background: var(--primary-soft);
+}
+.bouton-icone {
+  padding: var(--sp-2);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+}
+.bouton-icone:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* Barre supérieure */
+.barre {
+  grid-area: barre;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-2) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.barre h1 {
+  margin: 0;
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.barre-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+/* Zone centrale */
+.principal {
+  grid-area: principal;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-5);
+  gap: var(--sp-4);
+}
+.principal > * {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+}
+.vue {
+  min-width: 0;
+}
+.non-disponible {
+  margin: 0;
+  color: var(--ink-soft);
+}
+.bandeau {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.callout {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+.callout p {
+  margin: 0;
+  flex: 1 1 12rem;
+}
+.callout-danger {
+  border-left: 3px solid var(--danger);
+}
+/* Garde de démarrage : n'apparaît qu'après 2 s, pour ne pas clignoter avant que app.js le masque.
+   Durée nulle : ce n'est pas une animation, d'où le `!important` face à « réduire les animations ». */
+.demarrage-echec {
+  animation: demarrage-reveler 0s linear 2s both !important;
+}
+@keyframes demarrage-reveler {
+  from {
+    visibility: hidden;
+  }
+  to {
+    visibility: visible;
+  }
+}
+.callout-danger .icone {
+  background-color: var(--danger);
+}
+.callout-warning {
+  border-left: 3px solid var(--warning);
+}
+.legal {
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-alt);
+  border-left: 3px solid var(--warning);
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.bienvenue h2 {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--t-display);
+  line-height: var(--lh-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.bienvenue p {
+  margin: 0 0 var(--sp-3);
+}
+
+/* Zone de saisie (composer) */
+.composer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-alt);
+}
+.composer:focus-within {
+  border: 2px solid var(--focus-ring);
+  padding: calc(var(--sp-3) - 1px);
+}
+.composer textarea {
+  width: 100%;
+  min-height: 3.2rem;
+  max-height: 40vh;
+  resize: none;
+  field-sizing: content;
+  border: 0;
+  background: transparent;
+  line-height: var(--lh-body);
+}
+.composer textarea:focus-visible {
+  outline: none;
+}
+.composer textarea::placeholder {
+  color: var(--ink-soft);
+  opacity: 1;
+}
+.composer .bouton-primaire {
+  align-self: flex-end;
+}
+
+/* Volets de rédaction : deux colonnes égales, empilées sous 1 200 px (UX-DR2). */
+.volets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+@media (max-width: 1199px) {
+  .volets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Panneau Sources : pousse la zone centrale dès 1 280 px, la recouvre en dessous. */
+.sources {
+  grid-area: sources;
+  width: var(--sources-width);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  background: var(--surface-alt);
+  border-left: 1px solid var(--line);
+}
+.sources-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.sources-tete h2 {
+  margin: 0;
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+}
+@media (max-width: 1279px) {
+  .sources {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    width: min(var(--sources-width), 100%);
+    box-shadow: var(--ombre);
+  }
+}
+
+/* Boîte de dialogue */
+dialog {
+  width: min(640px, calc(100% - 2 * var(--sp-4)));
+  max-height: calc(100% - 2 * var(--sp-4));
+  padding: var(--sp-5);
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--ombre);
+}
+dialog::backdrop {
+  background: var(--scrim);
+}
+.dialogue-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+.dialogue-tete h2 {
+  margin: 0;
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+}
+
+/* Sous 1 024 px (non visé) : la colonne se réduit aux icônes. */
+@media (max-width: 1023px) {
+  :root {
+    --sidebar-width: 64px;
+  }
+  .tache span:not(.icone),
+  .marque,
+  .etiquette,
+  .plus > span:not(.icone),
+  .historique {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

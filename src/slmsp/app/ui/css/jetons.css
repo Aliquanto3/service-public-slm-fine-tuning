@@ -1,0 +1,52 @@
+/* Jetons de DESIGN.md (UX-DR1). Tailles de texte en rem, espacements et rayons en px (base 4). */
+:root {
+  --primary: #451dc7;
+  --primary-hover: #250f6b;
+  --primary-soft: #ede7fe;
+  --on-primary: #ffffff;
+  --accent: #04f06a;
+  --accent-soft: #cafee0;
+  --ink: #0a0a14;
+  --ink-soft: #4a4a5e;
+  --gray: #8a8a9e;
+  --line: #e6e6ec;
+  --surface: #ffffff;
+  --surface-alt: #f6f5fa;
+  --warning: #ffca4a;
+  --danger: #ff2a49;
+  --focus-ring: #451dc7;
+  --scrim: rgba(10, 10, 20, 0.32);
+
+  --police: Aptos, Inter, "Segoe UI", sans-serif;
+  --police-etiquette: Manrope, Inter, sans-serif;
+  --police-mono: "Cascadia Mono", Consolas, monospace;
+  --t-display: 1.75rem;
+  --t-title: 1.25rem;
+  --t-body: 1rem;
+  --t-small: 0.875rem;
+  --t-label: 0.78rem;
+  --lh-display: 1.2;
+  --lh-title: 1.3;
+  --lh-body: 1.6;
+  --lh-small: 1.5;
+  --lh-label: 1.4;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sidebar-width: 264px;
+  --sources-width: 360px;
+  --topbar-height: 56px;
+  --content-max: 820px;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 9999px;
+
+  --ombre: 0 8px 24px rgba(10, 10, 20, 0.08);
+}
