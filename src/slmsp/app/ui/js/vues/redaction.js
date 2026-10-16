@@ -38,7 +38,7 @@ function exigerOk(reponse) {
  *   `etiquetteEntree`, `etiquetteResultat` : titres des volets (défaut « Entrée », « Résultat ») ;
  *   `controles` : éléments DOM ajoutés au volet Entrée avant la zone de saisie (choix de langue,
  *   de longueur…) ; `construireEnvoi(texte)` : `{messages, options}` envoyés au pont (défaut : le
- *   texte seul) ; `rendreResultat(brut, zone)` : rend le Résultat final dans `zone` et renvoie le
+ *   texte seul) ; `rendreResultat(brut, zone, envoi, fin)` : rend le Résultat final dans `zone` et renvoie le
  *   texte brut à copier (défaut : texte simple, copié tel quel) ; `dir` : `"rtl"` pour un volet
  *   de Résultat de droite à gauche.
  */
@@ -212,7 +212,7 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
     vide = true;
     aCopier = brut;
     if (brut) {
-      const rendu = options.rendreResultat?.(brut, zone);
+      const rendu = options.rendreResultat?.(brut, zone, dernierEnvoi, fin);
       if (typeof rendu === "string") aCopier = rendu;
       else zone.textContent = brut;
     }
