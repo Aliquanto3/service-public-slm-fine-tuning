@@ -330,6 +330,7 @@ def _pyz_factice(travail: Path, modules: list[str]) -> None:
 
 
 def test_fermeture_runtime_lit_le_pyz_et_les_pyd(tmp_path: Path) -> None:
+    pytest.importorskip("PyInstaller", reason="extra app (PyInstaller) non installé")
     dossier, travail = tmp_path / "dist", tmp_path / "travail"
     interne = dossier / "_internal"
     interne.mkdir(parents=True)
