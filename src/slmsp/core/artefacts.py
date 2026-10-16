@@ -14,8 +14,10 @@ Un fichier JSONL n'a qu'un seul écrivain à la fois : aucun verrou entre proces
 Lecteur contrôlé (AD-24, D-nuit-A2-18). `data` et `train` ne lisent des fichiers que par
 `lire`, `lire_texte` ou `ouvrir_sqlite_lecture`, qui résolvent le chemin (liens et `..`)
 puis appliquent un refus explicite (`eval/`, `runs/eval/`, `runs/eval-*`, cache des
-verdicts) et enfin la liste d'accès du lecteur. Les bases de comparaison sont résolues
-elles aussi (jonctions, liens). La comparaison des chemins ignore la casse sous Windows.
+verdicts) et enfin la liste d'accès du lecteur (`train` lit aussi l'adaptateur d'un run
+`train`, `runs/train/<run_id>/adaptateur/`, décision A1 du 2026-10-16). Les bases de
+comparaison sont résolues elles aussi (jonctions, liens). La comparaison des chemins
+ignore la casse sous Windows.
 """
 
 from __future__ import annotations
@@ -64,6 +66,10 @@ NOM_JOURNAL_LOCAL: Final = "generations-locales.sqlite"
 ESSAIS_RUN_ID: Final = 20
 DELAI_GIT: Final = 10.0
 """Délai maximal de chaque appel `git` de l'empreinte (secondes)."""
+
+TYPE_RUN_TRAIN: Final = "train"
+DOSSIER_ADAPTATEUR: Final = "adaptateur"
+"""`runs/train/<run_id>/adaptateur/` : seule partie d'un run `train` lisible par `train`."""
 
 Lecteur = Literal["data", "train"]
 LECTEURS: Final = ("data", "train")
@@ -474,6 +480,24 @@ def _premier_niveau_runs(chemin: Path, racine: Path) -> str | None:
     return _cle(chemin).relative_to(_cle(runs)).parts[0]
 
 
+def _adaptateur_train(chemin: Path, racine: Path) -> bool:
+    """`runs/train/<run_id>/adaptateur/` ou un fichier dessous (AD-24 étendu, décision A1).
+
+    Autorise l'export (10.6) et ORPO (10.4, adaptateur SFT) ; le reste du run `train`
+    (`run.json`, checkpoints, journaux) reste hors de la liste d'accès.
+    """
+    runs = (racine / "runs").resolve()
+    if not _sous(chemin, runs):
+        return False
+    parties = _cle(chemin).relative_to(_cle(runs)).parts
+    return (
+        len(parties) >= 3
+        and parties[0] == TYPE_RUN_TRAIN
+        and _MOTIF_RUN_ID.fullmatch(parties[1]) is not None
+        and parties[2] == DOSSIER_ADAPTATEUR
+    )
+
+
 def chemin_autorise(chemin: str | Path, lecteur: str, *, racine: str | Path | None = None) -> Path:
     """Chemin résolu de `chemin` s'il est lisible par `lecteur` (AD-24).
 
@@ -523,6 +547,7 @@ def chemin_autorise(chemin: str | Path, lecteur: str, *, racine: str | Path | No
             or _sous(resolu, dossier_modeles().resolve())
             or _egal(resolu, journal)
             or _egal(resolu, (var / NOM_JOURNAL_LOCAL).resolve())
+            or _adaptateur_train(resolu, racine)
         )
     if not autorise:
         raise refuser("hors de la liste d'accès")

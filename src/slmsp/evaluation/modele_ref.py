@@ -11,7 +11,8 @@
 - `ft:<export_run_id>` : run `runs/export/<id>/` (sous `racine`), `complet`, dont le
   `run.json` porte `modele_ref = base:<slug>` ; GGUF `modele-<quantification>.gguf` du
   run ; configuration de `<slug>` avec `chat_template_force = false` (le GGUF exporté
-  porte le template du tokenizer).
+  porte le template du tokenizer). Un run `degrade` (sonde d'outils non valide sur le
+  Q4_K_M, story 10.6) est refusé, sauf `accepter_degrade=True` explicite.
 
 Toute incohérence lève `ConfigurationInvalide` ; une référence ou une quantification mal
 formée lève `ValueError` (erreur d'usage).
@@ -94,7 +95,7 @@ def _resoudre_base(ref: str, slug: str, quantification: Quantification) -> Model
 
 
 def _resoudre_ft(
-    ref: str, run_id: str, quantification: Quantification, racine: Path
+    ref: str, run_id: str, quantification: Quantification, racine: Path, accepter_degrade: bool
 ) -> ModeleResolu:
     try:
         run = ouvrir_run(run_id, racine=racine)
@@ -105,7 +106,12 @@ def _resoudre_ft(
             f"{ref} : le run {run_id} est de type {run.manifeste.type!r}, pas {TYPE_RUN_EXPORT!r}"
         )
     statut = run.statut_courant()
-    if statut != "complet":
+    if statut == "degrade" and not accepter_degrade:
+        raise ConfigurationInvalide(
+            f"{ref} : run d'export degrade (sonde d'outils non valide, voir sonde-outils.json) ; "
+            "refusé sans accepter_degrade explicite"
+        )
+    if statut not in ("complet", "degrade"):
         raise ConfigurationInvalide(f"{ref} : run d'export {statut}, pas complet")
     base = run.manifeste.modele_ref
     if base is None or not base.startswith("base:"):
@@ -120,11 +126,18 @@ def _resoudre_ft(
     return ModeleResolu(ref, "ft", quantification, slug, f"ft-{slug}", config, gguf, quantification)
 
 
-def resoudre(ref: str, quantification: str, *, racine: str | Path | None = None) -> ModeleResolu:
+def resoudre(
+    ref: str,
+    quantification: str,
+    *,
+    racine: str | Path | None = None,
+    accepter_degrade: bool = False,
+) -> ModeleResolu:
     """Résout `ref` (`base:<slug>` ou `ft:<export_run_id>`) × `quantification`.
 
     Lève `ValueError` pour une référence ou une quantification mal formée,
     `ConfigurationInvalide` pour un modèle introuvable ou incohérent (voir le module).
+    `accepter_degrade` : accepte un run d'export `degrade` (choix explicite de l'appelant).
     """
     if not isinstance(ref, str) or not _MOTIF_REF.fullmatch(ref):
         raise ValueError(f"référence de modèle invalide : {ref!r} (base:<slug> ou ft:<run_id>)")
@@ -136,7 +149,7 @@ def resoudre(ref: str, quantification: str, *, racine: str | Path | None = None)
     if genre == "base":
         return _resoudre_base(ref, valeur, quantification)  # type: ignore[arg-type]
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
-    return _resoudre_ft(ref, valeur, quantification, base)  # type: ignore[arg-type]
+    return _resoudre_ft(ref, valeur, quantification, base, accepter_degrade)  # type: ignore[arg-type]
 
 
 __all__ = ["QUANTIFICATIONS", "ModeleResolu", "Quantification", "resoudre"]

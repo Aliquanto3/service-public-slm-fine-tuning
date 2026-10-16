@@ -128,6 +128,38 @@ def test_train_refuse(racine: Path, relatif: str) -> None:
         lire(relatif, "train", racine=racine)
 
 
+RUN_TRAIN = "runs/train/20261016-120000-m1-qlora-abcd"
+
+
+def test_train_lit_l_adaptateur_d_un_run_train(racine: Path) -> None:
+    """AD-24 étendu (décision A1 du 2026-10-16) : export et ORPO lisent l'adaptateur."""
+    fichier = racine / RUN_TRAIN / "adaptateur" / "adapter_config.json"
+    fichier.parent.mkdir(parents=True)
+    fichier.write_bytes(b"{}")
+    assert lire(fichier, "train", racine=racine) == b"{}"
+    assert chemin_autorise(fichier.parent, "train", racine=racine) == fichier.parent.resolve()
+
+
+@pytest.mark.parametrize(
+    "relatif",
+    [
+        f"{RUN_TRAIN}/run.json",
+        f"{RUN_TRAIN}/checkpoints/checkpoint-1/x.bin",
+        f"{RUN_TRAIN}/adaptateur/../run.json",
+        "runs/train/pas-un-run-id/adaptateur/a.json",
+        "runs/export/20261016-120000-m1-qlora-abcd/adaptateur/a.json",
+    ],
+)
+def test_train_refuse_le_reste_des_runs(racine: Path, relatif: str) -> None:
+    with pytest.raises(LectureInterdite, match="« train »"):
+        chemin_autorise(relatif, "train", racine=racine)
+
+
+def test_data_ne_lit_pas_l_adaptateur(racine: Path) -> None:
+    with pytest.raises(LectureInterdite, match="« data »"):
+        chemin_autorise(f"{RUN_TRAIN}/adaptateur/a.json", "data", racine=racine)
+
+
 @pytest.mark.parametrize("lecteur", ["data", "train"])
 def test_refus_explicite_du_cache_verdicts(racine: Path, lecteur: str) -> None:
     # Le motif prouve le refus explicite, pas un simple « hors de la liste d'accès ».
