@@ -305,7 +305,8 @@ def _fabrique_depuis(creer_generateur: Callable[[str], Any]) -> FabriqueScenario
 def _fabrique_courriers_depuis(creer_generateur: Callable[[str], Any]) -> FabriqueCourrier:
     """Fabrique des amorces CT : réponse déjà journalisée pour la session (reprise sans
     appel), sinon `Generateur(seed_run_id).generer("amorces-ct", [sujet])`. Renvoie le contenu
-    du message `assistant`, objet JSON que `slmsp.data.seed` découpe et vérifie."""
+    du message `assistant`, objet JSON que `slmsp.data.seed` découpe et vérifie (chaîne vide si
+    la réponse n'a pas de texte : `seed` la compte en `schema_invalide` et poursuit)."""
     from slmsp.mistral.generateur import message_assistant
 
     def fabrique(seed_run_id: str, sujet_id: str, session_id: str) -> tuple[str, str]:
@@ -316,10 +317,11 @@ def _fabrique_courriers_depuis(creer_generateur: Callable[[str], Any]) -> Fabriq
         else:
             generation = generateur.generer(GABARIT_AMORCES_CT, [sujet_id], session_id, "CT")
             appel_id, brut = generation.appel_id, generation.reponse_brute
-        contenu = message_assistant(brut).get("content")
-        if not isinstance(contenu, str) or not contenu:
-            raise ProvenanceInvalide(f"appel {appel_id} : réponse sans contenu texte")
-        return appel_id, contenu
+        try:
+            contenu = message_assistant(brut).get("content")
+        except ProvenanceInvalide:
+            contenu = None  # réponse vide ou illisible : comptée en schéma invalide par seed
+        return appel_id, contenu if isinstance(contenu, str) else ""
 
     return fabrique
 

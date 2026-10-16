@@ -490,3 +490,37 @@ def test_fabrique_courriers_reutilise_le_journal() -> None:
     neuve = cli_data._fabrique_courriers_depuis(lambda seed: Generateur(False))
     assert neuve("seed-1", "ct.sujet.x.1", "seed-ct-1") == ("c" * 32, valeurs)
     assert appels == ["seed-ct-1"]
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        {"role": "assistant", "content": ""},
+        {"role": "assistant", "content": None},
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [
+                {"id": "t1", "type": "function", "function": {"name": "f", "arguments": "{}"}}
+            ],
+        },
+    ],
+)
+def test_fabrique_courriers_reponse_sans_texte_chaine_vide(message: dict[str, Any]) -> None:
+    """Réponse sans texte : chaîne vide (comptée en schéma invalide par seed), pas d'erreur."""
+    pytest.importorskip("mistralai")
+    brut = json.dumps({"choices": [{"index": 0, "message": message}]}).encode()
+
+    class Generation:
+        appel_id = "c" * 32
+        reponse_brute = brut
+
+    class Generateur:
+        def reponse_journalisee(self, *_args: Any) -> None:
+            return None
+
+        def generer(self, *_args: Any) -> Generation:
+            return Generation()
+
+    fabrique = cli_data._fabrique_courriers_depuis(lambda seed: Generateur())
+    assert fabrique("seed-1", "ct.sujet.x.1", "seed-ct-1") == ("c" * 32, "")

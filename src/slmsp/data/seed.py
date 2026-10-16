@@ -68,7 +68,7 @@ from slmsp.core.items import (
     empreintes_antifuite,
     identifiants_proteges,
 )
-from slmsp.core.schemas.amorce import Amorce, texte_de_reponse
+from slmsp.core.schemas.amorce import Amorce, objet_de_reponse, texte_de_reponse
 from slmsp.core.schemas.run import MOTIF_RUN_ID
 from slmsp.core.texte import ngrammes, normaliser
 from slmsp.data.config import ConfigDonnees
@@ -688,6 +688,7 @@ def _remplir(
     # 2. Sélection déterministe et écriture en ajout.
     taches: dict[str, dict[str, Any]] = {}
     conservees: dict[tuple[str, str], list[Amorce]] = {}
+    provenances: dict[str, tuple[Sequence[str], Sequence[str]]] = {}
     for groupe_cle, candidats in groupes.items():
         tache, emplacement = groupe_cle
         cible = volumes[tache] * facteur
@@ -710,6 +711,7 @@ def _remplir(
             amorce = _amorce_publique(candidat)
             _ecrire_amorce(run, amorce)
             retenues.append(amorce)
+            provenances[amorce.amorce_id] = (candidat.urls, candidat.ids)
         conservees[groupe_cle] = retenues
         taches.setdefault(tache, {})[emplacement] = {
             "cible": cible,
@@ -741,6 +743,7 @@ def _remplir(
         nb_courriers=nb_courriers,
         fabrique=fabrique_courriers,
         protection=protection,
+        provenances=provenances,
         consigner=consigner,
     )
     epuise = scenarios.pop("budget_epuise") | courriers.pop("budget_epuise")
@@ -852,8 +855,12 @@ def _longueurs_re(
     }
 
 
-def _champs_courrier(contenu: str) -> dict[str, str] | None:
-    """Valeurs des clés de `CHAMPS_CT` dans l'objet JSON de `contenu`, bornes comprises."""
+def _champs_courrier(contenu: Any) -> dict[str, str] | None:
+    """Valeurs des clés de `CHAMPS_CT` dans l'objet JSON de `contenu`, bornes comprises ;
+    `None` si l'objet n'a pas exactement ces trois clés."""
+    objet = objet_de_reponse(contenu)
+    if objet is None or set(objet) != {champ for champ, _, _ in CHAMPS_CT}:
+        return None
     valeurs: dict[str, str] = {}
     for champ, minimum, maximum in CHAMPS_CT:
         valeur = texte_de_reponse(contenu, champ)
@@ -870,9 +877,12 @@ def _courriers(
     nb_courriers: int,
     fabrique: FabriqueCourrier | None,
     protection: Protection,
+    provenances: Mapping[str, tuple[Sequence[str], Sequence[str]]],
     consigner: Callable[[str], None],
 ) -> dict[str, Any]:
-    """Amorces CT d'au plus `nb_courriers` appels Mistral, un par sujet conservé."""
+    """Amorces CT d'au plus `nb_courriers` appels Mistral, un par sujet conservé. L'anti-fuite
+    teste chaque valeur avec les URL et identifiants de la ligne source du sujet
+    (`provenances`), comme pour les candidats publics."""
     bilan: dict[str, Any] = {
         "demandes": nb_courriers,
         "sujets_disponibles": len(sujets),
@@ -904,7 +914,12 @@ def _courriers(
         if objet in objets_vus:
             bilan["doublons"] += 1
             continue
-        motifs = {motif for valeur in valeurs.values() for motif in protection.motifs(valeur)}
+        urls, ids = provenances.get(sujet.amorce_id, ((), ()))
+        motifs = {
+            motif
+            for valeur in valeurs.values()
+            for motif in protection.motifs(valeur, urls=urls, ids=ids)
+        }
         if motifs:
             bilan["exclus"] += 1
             for motif in motifs:

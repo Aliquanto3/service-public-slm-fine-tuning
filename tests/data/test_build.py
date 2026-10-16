@@ -27,6 +27,7 @@ from slmsp.data.build import (  # noqa: E402
     ContexteBuild,
     lancer_build,
     rederiver_ligne,
+    sources_de,
     verifier_octets,
 )
 from slmsp.data.config import charger_config_donnees  # noqa: E402
@@ -418,3 +419,50 @@ def test_jeu_construit_lu_par_train_run(monde: Any, doublures: Any) -> None:
     assert jeu.sha256 == resultat.rapport["sha256_train"]
     assert len(jeu.lignes) == len(TACHES)
     assert {ligne.tache for ligne in jeu.lignes} == set(TACHES)
+
+
+def test_longueur_config_exige_son_amorce_liee_dans_la_session() -> None:
+    """Une amorce `config` ne compte aucune source mais doit voir son amorce liée dans la
+    session (sinon `ProvenanceInvalide`)."""
+    from types import SimpleNamespace
+
+    from slmsp.core.schemas.amorce import Amorce
+
+    longueur = Amorce(
+        schema_version=1,
+        amorce_id="re.longueur_demandee.1",
+        tache="RE",
+        emplacement="longueur_demandee",
+        texte="150 mots",
+        sha_texte=sha256_hex("150 mots"),
+        auteur_contenu="config",
+        lie_a="re.texte.1",
+    )
+    ctx = SimpleNamespace(lecteur=SimpleNamespace(amorces={longueur.amorce_id: longueur}))
+
+    def session(amorce_ids: list[str]) -> SessionBrute:
+        return SessionBrute(
+            session_id="re-" + "0" * 24,
+            tache="RE",
+            appel_ids=["a" * 32],
+            amorce_ids=amorce_ids,
+            appels_nouveaux=1,
+            appels_reutilises=0,
+        )
+
+    with pytest.raises(ProvenanceInvalide, match="liée"):
+        sources_de(ctx, session(["re.longueur_demandee.1", "re.texte.2"]))  # type: ignore[arg-type]
+    ctx.lecteur.amorces["re.texte.1"] = Amorce(
+        schema_version=1,
+        amorce_id="re.texte.1",
+        tache="RE",
+        emplacement="texte",
+        texte="<texte-factice>",
+        sha_texte=sha256_hex("<texte-factice>"),
+        auteur_contenu="public",
+        jeu="jeu-factice",
+        revision="r1",
+        ligne=0,
+    )
+    session_liee = session(["re.longueur_demandee.1", "re.texte.1"])
+    assert sources_de(ctx, session_liee) == sorted({"jeu-factice", "mistral/reponses-generateur"})  # type: ignore[arg-type]

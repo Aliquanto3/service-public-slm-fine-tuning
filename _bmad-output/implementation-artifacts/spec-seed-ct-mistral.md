@@ -109,3 +109,16 @@ deferred: []
 ## Auto Run Result
 
 **Statut :** review (2026-10-16). Décisions prises seul (« la plus simple et la plus réversible ») : les points 1 à 6 ci-dessus. Touché hors de `seed` : `core/schemas/amorce.py`, `mistral/generateur.py`, `data/generate.py`, `data/build.py` (acceptation des deux nouvelles formes d'amorce).
+
+## Revue
+
+Revue Opus du 2026-10-16, après rebase sur `main` (12.1, 12.2), avec la liste du second avis (Haiku).
+
+- **medium**, second avis 1, corrigé : une réponse Mistral sans texte (vide, non-chaîne, `tool_calls` seuls) levait `ProvenanceInvalide` dans la fabrique du CLI et interrompait le run (`partiel-erreur`). La fabrique renvoie maintenant une chaîne vide, comptée en `schema_invalide`, et le traitement continue. Tests : `test_fabrique_courriers_reponse_sans_texte_chaine_vide`, `test_courrier_sans_texte_n_interrompt_pas_les_suivants`.
+- **medium**, second avis 2, corrigé : l'anti-fuite des amorces CT appelait `Protection.motifs` sans `urls` ni `ids`. Elle reçoit maintenant les URL et identifiants de la ligne source du sujet. Ce contrôle est redondant, puisqu'un sujet dont la provenance est protégée n'est jamais conservé, mais il aligne la règle sur celle des candidats publics. Test : `test_anti_fuite_des_courriers_avec_la_provenance_du_sujet`.
+- **low**, second avis 3, corrigé : un objet JSON doit porter exactement les trois clés, sinon il est compté en `schema_invalide` (`objet_de_reponse` dans `core/schemas/amorce.py`).
+- **low**, second avis 4, corrigé : `build.sources_de` exige que le `lie_a` d'une amorce `config` figure dans `amorce_ids` de la session. Test : `test_longueur_config_exige_son_amorce_liee_dans_la_session`.
+- **low**, second avis 5, consigné : `importorskip("mistralai")` masque des tests si l'extra manque. Le dépôt n'a pas de CI. Avec `uv sync --extra data --extra bench --extra judge`, aucun test de `tests/cli`, `tests/data` ou `tests/mistral` n'est sauté.
+- **info**, relecteur, vérifié : la relance est idempotente avec le vrai `Generateur` et le vrai client (doublure SDK seulement). Un second run `seed` réutilise la réponse journalisée de la session `seed-ct-<sha>`, sans nouvelle requête ni réservation. Test : `test_fabrique_courriers_relance_sans_second_appel`. Le test de l'implémenteur ne s'appuyait que sur une doublure.
+- **info**, relecteur, vérifié : la réservation du budget précède chaque appel (`ClientMistral._appeler`). Avec `BudgetEpuise`, le run passe en `partiel-budget` et la commande sort en code 3. Sans gel v1.1 commité, elle sort en code 4 avant toute fabrique. Le méta-prompt `amorces-ct.md` ne contient aucun exemple ni aucune valeur.
+- **info**, relecteur, reporté (exploitation) : `generer` lève `PrealableNonSatisfait` si le jour change après `conditions_verifiees_le`. Une campagne qui passe minuit s'arrête donc en `partiel-erreur`. La relance du lendemain, après une nouvelle vérification des conditions, ne refacture pas les courriers déjà journalisés. Il faut aussi savoir qu'une erreur d'API (`ErreurApiMistral`) ou `ModeleMistralRefuse` interrompt le run de la même façon. À vérifier pendant la campagne réelle : `budget etat` avant et après une relance, qui doit afficher une dépense identique pour les courriers.

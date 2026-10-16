@@ -942,6 +942,8 @@ def test_courriers_session_stable_entre_deux_runs(monde: Monde) -> None:
         contenu_ct(1, objet=None),
         contenu_ct(1, objet="<court>"),
         contenu_ct(1, elements_connus=["<liste-factice>"]),
+        "",  # réponse sans texte (vide ou appels d'outil seuls) : chaîne vide de la fabrique
+        contenu_ct(1, signature="<cle-en-trop-factice>"),  # exactement trois clés
     ],
 )
 def test_courrier_hors_schema_compte_sans_amorce(monde: Monde, contenu: str) -> None:
@@ -973,6 +975,33 @@ def test_courrier_qui_recoupe_le_jeu_d_evaluation_est_exclu(monde: Monde) -> Non
     assert comptes["exclusions"]["amorce_usager"] == 1
     textes = {a["texte"] for a in monde.amorces(resultat.run_id)}
     assert "<objet-factice-1>" not in textes  # tout le courrier est écarté
+
+
+def test_courrier_sans_texte_n_interrompt_pas_les_suivants(monde: Monde) -> None:
+    fabrique = FabriqueCT(["", contenu_ct(2)])
+    resultat = executer_ct(monde, nb_courriers=2, fabrique_courriers=fabrique)
+    assert resultat.statut == "complet"
+    comptes = monde.comptes(resultat.run_id)["courriers"]
+    assert (comptes["appels"], comptes["schema_invalide"], comptes["produits"]) == (2, 1, 1)
+
+
+def test_anti_fuite_des_courriers_avec_la_provenance_du_sujet(
+    monde: Monde, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vus: dict[str, tuple[list[str], list[str]]] = {}
+    origine = seed_module.Protection.motifs
+
+    def espion(self: Any, texte: str, *, urls: Iterable[str] = (), ids: Iterable[str] = ()):
+        vus[texte] = (list(urls), list(ids))
+        return origine(self, texte, urls=urls, ids=ids)
+
+    monkeypatch.setattr(seed_module.Protection, "motifs", espion)
+    resultat = executer_ct(monde, nb_courriers=1, fabrique_courriers=FabriqueCT())
+    sujet = next(a for a in monde.amorces(resultat.run_id) if a["emplacement"] == "sujet")
+    urls, ids = vus["<objet-factice-1>"]
+    assert urls and ids  # mêmes URL et identifiants que la ligne source du sujet
+    assert vus[sujet["texte"]] == (urls, ids)
+    assert vus["<type-factice-1>"] == vus["<elements-connus-factice-1>"] == (urls, ids)
 
 
 def test_courriers_budget_epuise_run_partiel(monde: Monde) -> None:

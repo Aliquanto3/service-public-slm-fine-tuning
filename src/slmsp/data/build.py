@@ -245,6 +245,10 @@ def sources_de(ctx: ContexteBuild, brut: SessionBrute) -> list[str]:
     for amorce_id in [*brut.amorce_ids, *brut.amorces_derivees]:
         amorce = _amorce(ctx, amorce_id)
         if amorce.auteur_contenu == "config":
+            if amorce.lie_a not in brut.amorce_ids:
+                raise ProvenanceInvalide(
+                    f"amorce {amorce_id} : paramètre sans son amorce liée dans la session"
+                )
             continue  # paramètre tiré par graine : aucune source de contenu
         ids.add(amorce.jeu if amorce.auteur_contenu == "public" and amorce.jeu else SOURCE_MISTRAL)
     if brut.cassettes:

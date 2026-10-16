@@ -90,9 +90,9 @@ class Amorce(SchemaBase):
         return self
 
 
-def texte_de_reponse(contenu: Any, emplacement: str) -> str | None:
-    """Valeur (chaîne non vide, sans espaces de bord) de la clé `emplacement` de l'objet JSON
-    porté par `contenu`, éventuellement entouré d'une clôture de code ; `None` sinon."""
+def objet_de_reponse(contenu: Any) -> dict[str, Any] | None:
+    """Objet JSON porté par `contenu`, éventuellement entouré d'une clôture de code ; `None`
+    si `contenu` n'est pas une chaîne portant un objet JSON."""
     if not isinstance(contenu, str):
         return None
     texte = contenu.strip()
@@ -103,7 +103,14 @@ def texte_de_reponse(contenu: Any, emplacement: str) -> str | None:
         objet = json.loads(texte)
     except ValueError:
         return None
-    valeur = objet.get(emplacement) if isinstance(objet, dict) else None
+    return objet if isinstance(objet, dict) else None
+
+
+def texte_de_reponse(contenu: Any, emplacement: str) -> str | None:
+    """Valeur (chaîne non vide, sans espaces de bord) de la clé `emplacement` de l'objet JSON
+    porté par `contenu`, éventuellement entouré d'une clôture de code ; `None` sinon."""
+    objet = objet_de_reponse(contenu)
+    valeur = objet.get(emplacement) if objet is not None else None
     if not isinstance(valeur, str) or not valeur.strip():
         return None
     return valeur.strip()

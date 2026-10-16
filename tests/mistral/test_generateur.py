@@ -1038,3 +1038,17 @@ def test_reponse_journalisee_reutilisee_par_session(monde: Monde) -> None:
     assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.1"], "autre", "CT") is None
     assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.2"], "seed-ct-1", "CT") is None
     assert generateur.reponse_journalisee("ct", ["ct.sujet.1"], "seed-ct-1", "CT") is None
+
+
+def test_fabrique_courriers_relance_sans_second_appel(monde: Monde) -> None:
+    """Fabrique du CLI sur le vrai Générateur : un nouveau run `seed` réutilise la réponse
+    journalisée de la même session (aucune seconde requête, aucune seconde réservation)."""
+    from slmsp.cli.data import _fabrique_courriers_depuis
+
+    for run_id in (SEED, SEED_2):
+        monde.ecrire_seed([amorce("ct.sujet.1", "CT", "sujet")], run_id=run_id)
+    fabrique = _fabrique_courriers_depuis(lambda run_id: monde.generateur(run_id))
+    premier = fabrique(SEED, "ct.sujet.1", "seed-ct-1")
+    assert len(monde.banc.faux.requetes) == 1
+    assert fabrique(SEED_2, "ct.sujet.1", "seed-ct-1") == premier
+    assert len(monde.banc.faux.requetes) == 1
