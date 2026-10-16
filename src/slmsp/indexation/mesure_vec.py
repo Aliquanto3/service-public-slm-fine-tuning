@@ -86,7 +86,7 @@ def tirer_requetes(index: IndexLocal, nombre: int, graine: int) -> NDArray[np.fl
     return np.array(index.vecteurs()[rangs], dtype=np.float32)
 
 
-def _version(racine: Path, version: str | None) -> str:
+def version_index(racine: Path, version: str | None) -> str:
     if version is not None:
         if not version_valide(version) or not (dossier_index(racine) / version).is_dir():
             connues = ", ".join(versions_disponibles(racine)) or "aucune"
@@ -139,7 +139,7 @@ def mesurer_h_vec(
     `ManifesteInvalide` si l'Index est absent ou incohérent.
     """
     racine = (Path(racine) if racine is not None else racine_projet()).resolve()
-    version = _version(racine, version)
+    version = version_index(racine, version)
     dossier = dossier_index(racine) / version
     mesure = config.mesure
 

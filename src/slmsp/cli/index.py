@@ -6,6 +6,8 @@
 - `info` affiche la version, la date du snapshot et les comptes par source ; `--verifier`
   recalcule les SHA-256 des fichiers.
 - `mesurer` mesure H-VEC (latence p50/p95, RAM ajoutée) dans un run `runs/measure/`.
+- `verifier-embedding` mesure H-EMB (cosinus et recall@k des chunks revectorisés par
+  `llama-server` contre les vecteurs MediaTech) dans un run `runs/measure/`.
 
 `--racine` désigne la racine des écritures et lectures `data/`, `index/` et `runs/` (défaut :
 racine du projet) ; `config/index.toml` est toujours lu sous la racine du projet. Ce module
@@ -15,10 +17,14 @@ n'importe pas pyarrow au chargement : `index info` reste disponible sans l'extra
 from __future__ import annotations
 
 import argparse
+import contextlib
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import CodeSortie
+from slmsp.core.ports import EmbedderPort
 from slmsp.index.config import charger_config_index, dossier_index
 from slmsp.index.lecture import IndexLocal, ouvrir_index
 
@@ -65,6 +71,23 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "mesurer", parents=[commun, version], help="mesurer H-VEC (latence et RAM de recherche)"
     )
     p.set_defaults(func=_mesurer)
+
+    p = actions.add_parser(
+        "verifier-embedding",
+        parents=[commun, version],
+        help="mesurer H-EMB (embedding de requête contre les vecteurs MediaTech)",
+        description="Revectorise un échantillon de chunks par llama-server et compare aux "
+        "vecteurs MediaTech (cosinus, recall@k). Démarre le serveur d'embedding.",
+    )
+    p.add_argument("--echantillon", type=int, default=None, help="chunks tirés (défaut : config)")
+    p.add_argument("--graine", type=int, default=None, help="graine du tirage (défaut : config)")
+    p.add_argument(
+        "--modele",
+        default="bge-m3",
+        help="modèle d'embedding de config/modeles (bge-m3-f16 : repli)",
+    )
+    p.add_argument("--variante", choices=("cpu", "cuda"), default="cpu", help="llama.cpp")
+    p.set_defaults(func=_verifier_embedding)
 
 
 def _racine(args: argparse.Namespace) -> Path:
@@ -120,6 +143,65 @@ def _mesurer(args: argparse.Namespace) -> int:
     )
     print(
         f"RAM ajoutée {valeurs['ram_ajoutee_mo']:.1f} Mio (seuil {resultat.seuils['ram_mo']:g} Mio)"
+    )
+    if resultat.repli:
+        print(f"repli : {resultat.repli}")
+    print(f"run {resultat.run_id} : {racine / 'runs' / 'measure' / resultat.run_id}")
+    return int(CodeSortie.SUCCES)
+
+
+def _ouvrir_embedder(
+    modele: str, variante: str
+) -> contextlib.AbstractContextManager[tuple[EmbedderPort, dict[str, Any]]]:
+    """Démarre `llama-server --embedding` pour `modele` ; fermé à la sortie du contexte.
+
+    Rend l'embedder et la provenance du serveur (`description()` + sha256 du GGUF).
+    """
+    from slmsp.core.canonique import sha256_fichier
+    from slmsp.core.erreurs import ConfigurationInvalide
+    from slmsp.inference.serveur import ServeurLlama, charger_config_modele
+
+    if not (racine_projet() / "config" / "modeles" / f"{modele}.toml").is_file():
+        raise ConfigurationInvalide(
+            f"modèle d'embedding inconnu : config/modeles/{modele}.toml est absent "
+            "(bge-m3-f16 reste à créer si H-EMB est infirmée)"
+        )
+
+    @contextlib.contextmanager
+    def ouvrir() -> Iterator[tuple[EmbedderPort, dict[str, Any]]]:
+        with ServeurLlama(charger_config_modele(modele), variante, slug=modele) as serveur:  # type: ignore[arg-type]
+            description = serveur.description()
+            description["gguf_sha256"] = sha256_fichier(serveur.gguf)
+            yield serveur.embedder(), description
+
+    return ouvrir()
+
+
+def _verifier_embedding(args: argparse.Namespace) -> int:
+    from slmsp.indexation.verification_embedding import verifier_embedding
+
+    config = charger_config_index()
+    racine = _racine(args)
+    with _ouvrir_embedder(args.modele, args.variante) as (embedder, serveur):
+        resultat = verifier_embedding(
+            racine,
+            args.version_index,
+            config,
+            embedder,
+            modele=args.modele,
+            echantillon=args.echantillon,
+            graine=args.graine,
+            serveur=serveur,
+        )
+    valeurs = resultat.valeurs
+    print(f"{resultat.hypothese} sur l'Index {resultat.index_version} : {resultat.verdict}")
+    print(
+        f"cosinus moyen {valeurs['cosinus_moyen']:.5f} "
+        f"(seuil {resultat.seuils['cosinus_moyen']:g}), minimum {valeurs['cosinus_min']:.5f}"
+    )
+    print(
+        f"recall@{resultat.parametres['k']} moyen {valeurs['recall_moyen']:.4f} "
+        f"(seuil {resultat.seuils['recall_min']:g})"
     )
     if resultat.repli:
         print(f"repli : {resultat.repli}")

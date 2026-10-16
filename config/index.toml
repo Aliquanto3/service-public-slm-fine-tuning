@@ -43,3 +43,13 @@ graine = 42
 k = 10
 seuil_p95_ms = 300
 seuil_ram_mo = 350
+
+# Mesure H-EMB : revectorisation d'un échantillon de chunks par le serveur d'embedding.
+# Confirmée si le cosinus moyen >= seuil et si le recall@k ne baisse pas de plus de
+# `baisse_recall_max` (0,02 = 2 points) par rapport à la recherche avec le vecteur MediaTech.
+[verification_embedding]
+echantillon = 200
+graine = 42
+k = 10
+seuil_cosinus_moyen = 0.99
+baisse_recall_max = 0.02

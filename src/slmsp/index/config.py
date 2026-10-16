@@ -61,6 +61,17 @@ class ConfigMesureVec(ModeleConfig):
     seuil_ram_mo: float = Field(gt=0)
 
 
+class ConfigVerifEmbedding(ModeleConfig):
+    """Paramètres et seuils de la mesure H-EMB (`slmsp index verifier-embedding`)."""
+
+    echantillon: int = Field(default=200, gt=0)
+    graine: int = 42
+    k: int = Field(default=10, gt=0)
+    seuil_cosinus_moyen: float = Field(default=0.99, gt=0, le=1)
+    baisse_recall_max: float = Field(default=0.02, ge=0, le=1)
+    """Baisse maximale tolérée du recall@k, en fraction (0,02 = 2 points)."""
+
+
 class ConfigIndex(ModeleConfig):
     """Contenu de `config/index.toml`."""
 
@@ -74,6 +85,7 @@ class ConfigIndex(ModeleConfig):
     taille_lot_lecture: int = Field(gt=0)
     sources: list[SourceIndex] = Field(min_length=1)
     mesure: ConfigMesureVec
+    verification_embedding: ConfigVerifEmbedding = Field(default_factory=ConfigVerifEmbedding)
 
     @field_validator("sources")
     @classmethod
@@ -118,6 +130,7 @@ __all__ = [
     "ColonnesSource",
     "ConfigIndex",
     "ConfigMesureVec",
+    "ConfigVerifEmbedding",
     "SourceIndex",
     "charger_config_index",
     "chemin_config_index",
