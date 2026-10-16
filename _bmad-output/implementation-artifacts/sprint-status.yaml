@@ -76,7 +76,7 @@ development_status:
   epic-6: in-progress
   6-1-orchestrateur-déclaratif-de-benchmarks-et-téléchargement-des: done
   6-2-moteur-lm-eval-qcm-sur-poids-hf-et-ifeval-contre-llama-serve: done
-  6-3-moteurs-de-traduction-sacrebleu-et-bfcl-vérificateur-isolé: backlog
+  6-3-moteurs-de-traduction-sacrebleu-et-bfcl-vérificateur-isolé: done
   6-4-mesures-techniques-fr-26-slmsp-measure: backlog
   epic-6-retrospective: optional
 
