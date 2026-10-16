@@ -4,7 +4,9 @@
 `env_outil()` (HF hors ligne, sans secret). Deux backends :
 
 - cible `hf` : `--model hf` sur `<models>/<slug>/hf-bf16` ou `hf` ; sauté si les deux sont
-  absents (modèle GGUF seul, ex. Ministral 3 8B) ;
+  absents (modèle GGUF seul, ex. Ministral 3 8B). Une architecture qu'`AutoModelForCausalLM`
+  ne charge pas prend l'adaptateur lm-eval dédié (`MODELES_PAR_ARCHITECTURE`, lu dans le
+  `config.json` des poids : `Mistral3ForConditionalGeneration` → `hf-mistral3`) ;
 - cible `gguf` : `--model local-chat-completions` vers le `llama-server` du GGUF, sur
   `127.0.0.1` (serveur démarré ici, ou `options.base_url` s'il est déjà servi).
 
@@ -45,6 +47,10 @@ SEED_DEFAUT = 1234
 BATCH_DEFAUT = "auto"
 HOTE = "127.0.0.1"
 HOTES_LOCAUX = frozenset({"127.0.0.1", "localhost", "::1"})
+MODELE_HF_DEFAUT = "hf"
+MODELES_PAR_ARCHITECTURE = {"Mistral3ForConditionalGeneration": "hf-mistral3"}
+"""Adaptateurs lm-eval des architectures multimodales évaluées en texte seul (lm-eval 0.4.13 :
+`lm_eval/models/mistral3.py` charge `Mistral3ForConditionalGeneration`, backend causal)."""
 
 
 class LmEvalEchoue(RuntimeError):
@@ -66,6 +72,19 @@ def dossier_poids_hf(slug: str) -> Path | None:
         if dossier.is_dir() and any(dossier.iterdir()):
             return dossier
     return None
+
+
+def modele_hf(poids: Path) -> str:
+    """Modèle lm-eval des poids : adaptateur dédié selon `architectures`, sinon `hf`."""
+    try:
+        donnees = json.loads((poids / "config.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return MODELE_HF_DEFAUT
+    architectures = donnees.get("architectures") if isinstance(donnees, dict) else None
+    for architecture in architectures if isinstance(architectures, list) else []:
+        if architecture in MODELES_PAR_ARCHITECTURE:
+            return MODELES_PAR_ARCHITECTURE[architecture]
+    return MODELE_HF_DEFAUT
 
 
 def graine(config: BenchmarkConfig) -> int:
@@ -98,7 +117,7 @@ def arguments_communs(config: BenchmarkConfig, sortie: Path) -> list[str]:
 def arguments_hf(poids: Path, batch_size: str = BATCH_DEFAUT) -> list[str]:
     return [
         "--model",
-        "hf",
+        modele_hf(poids),
         "--model_args",
         f"pretrained={poids},dtype=bfloat16",
         "--device",

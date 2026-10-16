@@ -426,3 +426,33 @@ def test_env_outil_force_utf8_et_hf_hors_ligne():
     assert env["PYTHONUTF8"] == "1"
     assert env["HF_HUB_OFFLINE"] == "1"
     assert "HF_TOKEN" not in env
+
+
+@pytest.mark.parametrize(
+    ("contenu", "attendu"),
+    [
+        ('{"architectures": ["Mistral3ForConditionalGeneration"]}', "hf-mistral3"),
+        ('{"architectures": ["Qwen3ForCausalLM"]}', "hf"),
+        ("{}", "hf"),
+        ('{"architectures": "Mistral3ForConditionalGeneration"}', "hf"),
+        ("pas du json", "hf"),
+    ],
+)
+def test_modele_hf_selon_l_architecture(tmp_path, contenu, attendu):
+    (tmp_path / "config.json").write_text(contenu, encoding="utf-8")
+    assert lm_eval.modele_hf(tmp_path) == attendu
+
+
+def test_modele_hf_sans_config_json(tmp_path):
+    assert lm_eval.modele_hf(tmp_path) == "hf"
+
+
+def test_hf_mistral3_lance_l_adaptateur_dedie(banc):
+    poids = poser_poids(banc)
+    (poids / "config.json").write_text(
+        '{"architectures": ["Mistral3ForConditionalGeneration"]}', encoding="utf-8"
+    )
+    assert lm_eval.executer(config(), banc.contexte()).saute is None
+    argv = banc.appel()["argv"]
+    assert option(argv, "--model") == "hf-mistral3"
+    assert option(argv, "--model_args") == f"pretrained={poids},dtype=bfloat16"
