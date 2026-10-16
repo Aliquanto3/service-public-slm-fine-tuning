@@ -266,6 +266,32 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       .then(() => pont.appeler("nouvelle_conversation"))
       .catch(() => {}); // seul l'oubli du dernier envoi côté pont est en jeu : rien à montrer
   });
+  // Rouverture depuis l'Historique (story 12.11) : le fil affiché est remplacé par la conversation
+  // enregistrée. Les sources stockées sont celles de la dernière réponse.
+  bus.abonner("historique:rouvrir", ({ tache: t, messages, sources }) => {
+    if (t !== tache) return;
+    tours.length = 0;
+    fil.replaceChildren();
+    selection = null;
+    remplacement = null;
+    enCours = false;
+    let question = null;
+    const dernierIndex = messages.findLastIndex((m) => m.role === "assistant");
+    for (const [i, m] of messages.entries()) {
+      if (m.role === "user") {
+        question = m.content;
+        continue;
+      }
+      const r = creerTour(question);
+      question = null;
+      r.debut();
+      r.jeton(m.content);
+      if (i === dernierIndex) r.fixerSources(sources ?? []);
+      r.terminer({ raison: "terminee" });
+    }
+    majBoutons();
+    rafraichirPanneau();
+  });
   bus.abonner("copier-dernier", async ({ tache: t }) => {
     const r = derniere();
     if (t !== tache || !r?.brut) return;

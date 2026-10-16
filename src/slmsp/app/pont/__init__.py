@@ -63,6 +63,7 @@ class Pont:
         liste_blanche: ConfigListeBlanche | None = None,
         ouvreur: Callable[[str], Any] = webbrowser.open,
         stockage: Stockage | None = None,
+        choisir_fichier: Callable[[str], str | None] | None = None,
     ) -> None:
         # Attributs privés : pywebview n'expose pas les noms en `_`.
         self._fenetre = fenetre
@@ -75,8 +76,8 @@ class Pont:
         self._domaines: dict[str, Any] = {
             "mode": PontMode(service.mode, stockage, self._pousser),
             "reglages": PontReglages(stockage, apres_effacement=self._conversation.oublier_dernier),
-            "historique": PontHistorique(),
-            "retours": PontRetours(),
+            "historique": PontHistorique(stockage),
+            "retours": PontRetours(stockage, choisir_fichier),
             "verification": PontVerification(),
         }
 

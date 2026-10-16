@@ -1,1 +1,82 @@
 /* Vue « retours » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Pouces sous une réponse */
+.retour {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.retour-pouce {
+  padding: var(--sp-2);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.retour-bas svg {
+  transform: rotate(180deg);
+}
+.retour-pouce[aria-pressed="true"] {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.retour-pouce:disabled {
+  cursor: default;
+}
+.retour-message {
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+}
+.retour-commentaire {
+  flex-basis: 100%;
+  display: grid;
+  gap: var(--sp-2);
+}
+.retour-commentaire[hidden] {
+  display: none;
+}
+.retour-commentaire textarea {
+  width: 100%;
+  padding: var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+}
+.retour-facultatif {
+  color: var(--ink-soft);
+}
+
+/* Export, onglet Retours des Paramètres */
+.retours {
+  display: grid;
+  gap: var(--sp-3);
+}
+.retours-etat {
+  margin: 0;
+  color: var(--ink-soft);
+}
+.retours-apercu {
+  display: grid;
+  gap: var(--sp-3);
+}
+.retours-apercu[hidden] {
+  display: none;
+}
+.retours-texte {
+  max-height: 40vh;
+  margin: 0;
+  padding: var(--sp-3);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  font-family: var(--police-mono);
+  font-size: var(--t-small);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.retours-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
