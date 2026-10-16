@@ -52,6 +52,7 @@ from slmsp.core.items import (
 from slmsp.core.schemas.generation import Generation
 from slmsp.core.texte import compter_mots, extraire_nombres, kandel_moles, normaliser
 from slmsp.harness.citations import extraire_urls, normaliser_url, urls_inventees
+from slmsp.harness.emplacements import libelles_presents
 
 DECIMALES: Final = 4
 """Arrondi des valeurs décimales des contrôles (taux, indices)."""
@@ -425,7 +426,7 @@ def controle_ct(item: ItemCT, generation: Generation) -> dict[str, Any]:
     libelles = item.champs_a_laisser_en_emplacement
     if libelles is None:
         return {"emplacements": {}, "emplacements_reussis": None}
-    presents = {libelle: libelle in texte for libelle in libelles}
+    presents = libelles_presents(texte, libelles)
     return {"emplacements": presents, "emplacements_reussis": all(presents.values())}
 
 

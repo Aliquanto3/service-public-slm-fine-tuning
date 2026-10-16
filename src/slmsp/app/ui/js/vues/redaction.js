@@ -41,6 +41,7 @@ function exigerOk(reponse) {
  *   texte seul) ; `rendreResultat(brut, zone, envoi, fin)` : rend le Résultat final dans `zone` et renvoie le
  *   texte brut à copier (défaut : texte simple, copié tel quel) ; `dir` : `"rtl"` pour un volet
  *   de Résultat de droite à gauche.
+ *   `peutEnvoyer()` : si fournie, remplace « la saisie n'est pas vide » comme condition d'envoi ;
  */
 export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours }, options) {
   const id = (nom) => `redaction-${nom}-${tache}`;
@@ -129,7 +130,7 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
     // changé), « Arrêter » pendant, « Copier » ensuite.
     const peutRediger = !termine || sale;
     principal.hidden = enCours || !peutRediger;
-    principal.disabled = saisieVide;
+    principal.disabled = options.peutEnvoyer ? !options.peutEnvoyer() : saisieVide;
     arreter.hidden = !enCours;
     copier.className = peutRediger ? "bouton-secondaire" : "bouton-primaire";
     regenerer.disabled = enCours || !dernierEnvoi;
@@ -189,7 +190,8 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
 
   function envoyerSaisie() {
     const texte = saisie.value;
-    if (enCours || texte.trim() === "") return;
+    const envoyable = options.peutEnvoyer ? options.peutEnvoyer() : texte.trim() !== "";
+    if (enCours || !envoyable) return;
     lancer(
       options.construireEnvoi?.(texte) ?? {
         messages: [{ role: "user", content: texte }],
@@ -246,6 +248,17 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
   });
   saisie.addEventListener("input", () => {
     majCompteur();
+    if (termine) sale = true;
+    rafraichir();
+  });
+  // Contrôles ajoutés par la vue (`options.controles`) : ils comptent comme une modification de l'entrée.
+  entree.addEventListener("input", (e) => {
+    if (e.target === saisie) return;
+    if (termine) sale = true;
+    rafraichir();
+  });
+  entree.addEventListener("change", (e) => {
+    if (e.target === saisie) return;
     if (termine) sale = true;
     rafraichir();
   });
