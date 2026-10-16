@@ -63,13 +63,12 @@ Filename: "{tmp}\webview2-setup.exe"; Parameters: "/silent /install"; StatusMsg:
 #endif
 Filename: "{app}\AssistantSP.exe"; Description: "Lancer l'assistant"; Flags: nowait postinstall skipifsilent
 
-[UninstallDelete]
-Type: filesandordirs; Name: "{app}"
+; Aucune suppression récursive de {app} à la désinstallation : le désinstallateur retire ses propres fichiers, et un /DIR=
+; pointant vers un dossier existant ne doit jamais être vidé récursivement.
 
 [Code]
 const
-  GuidWebView2 = '{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
-  CleWebView2 = 'EdgeUpdate\Clients\' + GuidWebView2;
+  CleWebView2 = 'EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
 
 function VersionValide(const Valeur: String): Boolean;
 begin
@@ -87,12 +86,37 @@ begin
     (RegQueryStringValue(HKCU, 'Software\Microsoft\' + CleWebView2, 'pv', Version) and VersionValide(Version));
 end;
 
+{ /DIR= (installation silencieuse) : refusé hors de %LOCALAPPDATA%\Programs. }
+function DossierAutorise: Boolean;
+var
+  Demande, Racine: String;
+begin
+  Demande := ExpandConstant('{param:DIR|}');
+  Result := Demande = '';
+  if not Result then
+  begin
+    Racine := Lowercase(ExpandConstant('{localappdata}\Programs\'));
+    Result := Copy(Lowercase(Demande), 1, Length(Racine)) = Racine;
+  end;
+end;
+
+{ Sortie 1 (échec d'initialisation) si /DIR= est hors de %LOCALAPPDATA%\Programs, ou si WebView2
+  est absent (installation sans pack complet) ; le motif est écrit dans le journal (/LOG). }
 function InitializeSetup: Boolean;
 begin
   Result := True;
+  if not DossierAutorise then
+  begin
+    Log('Refus : /DIR= hors de %LOCALAPPDATA%\Programs.');
+    SuppressibleMsgBox('Le dossier d''installation doit se trouver dans %LOCALAPPDATA%\Programs.',
+      mbError, MB_OK, IDOK);
+    Result := False;
+    Exit;
+  end;
 #ifndef PackComplet
   if not WebView2Installe then
   begin
+    Log('Refus : Microsoft Edge WebView2 Runtime absent.');
     SuppressibleMsgBox(
       'Le composant Microsoft Edge WebView2 Runtime est absent de ce poste.' + #13#10 +
       'L''Assistant ne peut pas s''installer sans lui.' + #13#10#13#10 +

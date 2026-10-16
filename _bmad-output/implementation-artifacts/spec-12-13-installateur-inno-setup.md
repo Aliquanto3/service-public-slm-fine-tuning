@@ -26,7 +26,7 @@ Commande de build (après `construire_application.py`) :
 `uv run --no-sync python outils/construire_installateur.py [--iscc <chemin>\ISCC.exe] [--pack-complet <webview2>.exe]`
 
 ## Tests
-`tests/packaging/test_installateur.py` (16) : valeurs du `.iss` (privilèges, dossier, AppId, écrans, lancement coché, WebView2, question de désinstallation, découpage et pack conditionnels), commande ISCC, seuil de découpage, build avec compilateur factice, empreintes des tranches, échecs (ISCC, sortie, paquet, pack), ordre de recherche d'ISCC.
+`tests/packaging/test_installateur.py` (24) : valeurs du `.iss` (privilèges, dossier, AppId, écrans, lancement coché, WebView2, question de désinstallation, découpage et pack conditionnels), commande ISCC, seuil de découpage, build avec compilateur factice, empreintes des tranches, échecs (ISCC, sortie, paquet, pack), ordre de recherche d'ISCC (explicite absent = échec), pack résolu en absolu, nettoyage des tranches obsolètes, OSError de ISCC, /DIR= limité à Programs, aucun `[UninstallDelete]` sur `{app}`.
 
 ## État d'Inno Setup
 **Non téléchargé** : `jrsoftware.org` n'est dans aucun profil de `config/reseau.toml`, rien n'a été contourné. Donc `.iss` jamais compilé, installation et désinstallation silencieuses non essayées (AC1 à AC4 non vérifiés). L'étape manuelle est dans `docs/installation-dsi.md`.
@@ -48,3 +48,14 @@ Commande de build (après `construire_application.py`) :
 
 ## Auto Run Result
 Statut : partiel (script, outillage et tests faits ; compilation et essais d'installation non réalisés faute d'ISCC).
+
+## Revue
+- medium, second avis : `[UninstallDelete]` récursif sur `{app}` : corrigé (entrée retirée) ; `/DIR=` limité à `%LOCALAPPDATA%\Programs` dans `InitializeSetup` ; tests sur le contenu du `.iss`.
+- medium, second avis : `--pack-complet` relatif : corrigé (`resolve()`), test.
+- medium, second avis : tranches `.bin` obsolètes dans le `.sha256` : corrigé (nettoyage de la version avant ISCC), test.
+- low, second avis : `--iscc`/`SLMSP_ISCC` explicite absent : corrigé, échec net, test.
+- low, second avis : `OSError` de `subprocess` : corrigé (ECHEC propre, code 2), test.
+- low, second avis : silencieux sans WebView2 : corrigé (`Log`, sortie 1 documentée dans `docs/installation-dsi.md`).
+- low, second avis : concaténation dans `const` : corrigé (constante littérale), test.
+- low, second avis : tests superficiels : complétés (8 tests ajoutés, sans ISCC).
+- Reporté : compilation réelle du `.iss` (`{param:DIR|}`, `Copy`/`Lowercase`, `Log`), à valider au premier ISCC ; effet réel du refus de `/DIR=` en silencieux.

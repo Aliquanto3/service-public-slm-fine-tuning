@@ -49,8 +49,10 @@ def trouver_iscc(explicite: str | None = None, env: dict[str, str] | None = None
     env = dict(os.environ) if env is None else env
     candidats: list[Path] = []
     for valeur in (explicite, env.get("SLMSP_ISCC")):
-        if valeur:
-            candidats.append(Path(valeur))
+        if valeur:  # chemin demandé explicitement : absent = échec, pas de repli silencieux
+            if not Path(valeur).is_file():
+                raise ErreurInstallateur(f"ISCC.exe explicite introuvable : {valeur}")
+            return Path(valeur)
     candidats.append(DEPOT / "vendor" / "innosetup" / "ISCC.exe")
     local = env.get("LOCALAPPDATA")
     if local:
@@ -114,7 +116,18 @@ def ecrire_empreintes(fichiers: list[Path]) -> Path:
 
 
 def _executer(cmd: list[str]) -> int:
-    return subprocess.run(cmd, check=False).returncode
+    try:
+        return subprocess.run(cmd, check=False).returncode
+    except OSError as exc:
+        raise ErreurInstallateur(f"ISCC non exécutable : {exc}") from exc
+
+
+def nettoyer_anciens(sortie: Path, version: str) -> None:
+    """Supprime exe, tranches et `.sha256` d'un build précédent de la même version."""
+    base = f"{NOM_SORTIE}-{version}"
+    anciens = [*sortie.glob(f"{base}-*.bin"), sortie / f"{base}.exe", sortie / f"{base}.exe.sha256"]
+    for ancien in anciens:
+        ancien.unlink(missing_ok=True)
 
 
 def construire(args: argparse.Namespace, executer: Callable[[list[str]], int] = _executer) -> Path:
@@ -124,13 +137,14 @@ def construire(args: argparse.Namespace, executer: Callable[[list[str]], int] = 
             f"paquet absent : {source / 'AssistantSP.exe'} "
             "(lancer outils/construire_application.py)"
         )
-    pack = Path(args.pack_complet) if args.pack_complet else None
+    pack = Path(args.pack_complet).resolve() if args.pack_complet else None
     if pack is not None and not pack.is_file():
         raise ErreurInstallateur(f"pack WebView2 introuvable : {pack}")
     iscc = trouver_iscc(args.iscc)
     sortie = Path(args.sortie)
     sortie.mkdir(parents=True, exist_ok=True)
     version = args.version or version_application()
+    nettoyer_anciens(sortie, version)
     cmd = commande_iscc(
         iscc,
         source=source.resolve(),

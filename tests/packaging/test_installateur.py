@@ -188,3 +188,92 @@ def test_pack_complet_introuvable(tmp_path: Path) -> None:
 
 def test_version_depuis_pyproject() -> None:
     assert re.fullmatch(r"\d+\.\d+\.\d+", CI.version_application())
+
+
+def test_iss_sans_suppression_recursive_de_app() -> None:
+    assert "[UninstallDelete]" not in ISS
+    assert not re.search(r"filesandordirs", ISS)
+    assert 'Name: "{app}"' not in ISS
+
+
+def test_iss_dir_limite_a_programs_et_journal() -> None:
+    assert "{param:DIR|}" in ISS and r"{localappdata}\Programs" + "\\'" in ISS
+    assert "DossierAutorise" in ISS
+    assert ISS.count("Log('Refus") == 2  # /DIR= hors zone et WebView2 absent
+
+
+def test_iss_constantes_pascal_litterales() -> None:
+    bloc = ISS.split("const", 1)[1].split("function", 1)[0]
+    assert "+" not in bloc
+    assert r"'EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'" in bloc
+
+
+def test_iss_defines_utilises_sont_fournis_par_le_script() -> None:
+    utilises = set(re.findall(r"\{#(\w+)\}", ISS))
+    definis = set(re.findall(r"^\s*#define (\w+)", ISS, re.M))
+    fournis_par_ligne_de_commande = {"VersionApp", "DossierSource", "DossierSortie", "PackComplet"}
+    assert utilises <= definis | fournis_par_ligne_de_commande
+
+
+def test_pack_complet_resolu_en_absolu(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "wv2.exe").write_bytes(b"x")
+    monkeypatch.chdir(tmp_path)
+    args = _args(tmp_path, _paquet(tmp_path), _iscc_factice(tmp_path), pack_complet="wv2.exe")
+    appels: list[list[str]] = []
+
+    def factice(cmd: list[str]) -> int:
+        appels.append(cmd)
+        (tmp_path / "sortie" / "AssistantSP-Setup-1.2.3.exe").write_bytes(b"i")
+        return 0
+
+    CI.construire(args, factice)
+    valeur = next(a for a in appels[0] if a.startswith("/DPackComplet=")).split("=", 1)[1]
+    assert Path(valeur).is_absolute() and Path(valeur) == (tmp_path / "wv2.exe").resolve()
+
+
+def test_tranches_obsoletes_nettoyees(tmp_path: Path) -> None:
+    sortie = tmp_path / "sortie"
+    sortie.mkdir()
+    for nom in ("AssistantSP-Setup-1.2.3-1.bin", "AssistantSP-Setup-1.2.3-2.bin"):
+        (sortie / nom).write_bytes(b"vieux")
+    (sortie / "AssistantSP-Setup-1.2.3.exe.sha256").write_text("vieux", encoding="utf-8")
+    (sortie / "AssistantSP-Setup-9.9.9-1.bin").write_bytes(b"autre-version")
+
+    def factice(_cmd: list[str]) -> int:
+        (sortie / "AssistantSP-Setup-1.2.3.exe").write_bytes(b"neuf")
+        (sortie / "AssistantSP-Setup-1.2.3-1.bin").write_bytes(b"neuf")
+        return 0
+
+    args = _args(tmp_path, _paquet(tmp_path), _iscc_factice(tmp_path))
+    lignes = CI.construire(args, factice).read_text(encoding="utf-8").splitlines()
+    assert [ln.split(" *")[1] for ln in lignes] == [
+        "AssistantSP-Setup-1.2.3.exe",
+        "AssistantSP-Setup-1.2.3-1.bin",
+    ]
+    assert (sortie / "AssistantSP-Setup-9.9.9-1.bin").is_file()
+
+
+def test_iscc_explicite_absent_echoue_meme_si_un_autre_existe(tmp_path: Path) -> None:
+    existant = _iscc_factice(tmp_path)
+    with pytest.raises(CI.ErreurInstallateur, match="explicite introuvable"):
+        CI.trouver_iscc(str(tmp_path / "absent.exe"), {"SLMSP_ISCC": str(existant)})
+    with pytest.raises(CI.ErreurInstallateur, match="explicite introuvable"):
+        CI.trouver_iscc(None, {"SLMSP_ISCC": str(tmp_path / "absent.exe")})
+
+
+def test_oserror_du_sous_processus_devient_echec_propre(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def leve(*_a, **_k):
+        raise PermissionError("refusé")
+
+    monkeypatch.setattr(CI.subprocess, "run", leve)
+    with pytest.raises(CI.ErreurInstallateur, match="non exécutable"):
+        CI._executer(["ISCC.exe"])
+    code = CI.main(
+        [
+            "--source", str(_paquet(tmp_path)), "--sortie", str(tmp_path / "s"),
+            "--iscc", str(_iscc_factice(tmp_path)), "--version", "1.2.3",
+        ]
+    )  # fmt: skip
+    assert code == 2 and "ECHEC" in capsys.readouterr().err
