@@ -27,16 +27,26 @@ PONT_SIMULE = """
 () => {
   window.__appels = [];
   window.__magasin = { conversations: [], retours: 0, seq: 0, supprimees: {} };
+  window.__script = []; // issue des prochains envois : 'erreur', 'interrompue' (défaut : terminée)
+  window.__annonces = [];
+  new MutationObserver(() => {
+    const t = document.getElementById('annonces').textContent;
+    if (t) window.__annonces.push(t);
+  }).observe(document.getElementById('annonces'), { childList: true, characterData: true, subtree: true });
   const pont = window.slmsp.pont;
   const m = window.__magasin;
   pont.envoyer = async (tache, messages) => {
     window.__appels.push(['envoyer', tache, messages]);
     window.slmsp.bus.emettre('generation:debut', { tache });
-    setTimeout(() => window.slmspRecevoir([
-      { type: 'jeton', texte: '<réponse-factice-' + (++m.seq) + '>' },
-      { type: 'sources', sources: [{ numero: 1, titre: '<titre-factice>', url: 'https://exemple.invalid/s', origine: 'index', date: null, extrait: null }] },
-      { type: 'fin', raison: 'terminee', usage: null, urls_inventees: [] },
-    ]), 20);
+    const issue = window.__script.shift();
+    const n = ++m.seq;
+    setTimeout(() => window.slmspRecevoir(issue === 'erreur'
+      ? [{ type: 'erreur', code: 'factice', message: '<erreur-factice>' }]
+      : [
+        { type: 'jeton', texte: '<réponse-factice-' + n + '>' },
+        { type: 'sources', sources: [{ numero: 1, titre: '<titre-factice-' + n + '>', url: 'https://exemple.invalid/s', origine: 'index', date: null, extrait: null }] },
+        { type: 'fin', raison: issue === 'interrompue' ? 'interrompue' : 'terminee', usage: null, urls_inventees: [] },
+      ]), 20);
     return { ok: true };
   };
   pont.appeler = async (nom, ...args) => {
@@ -45,6 +55,7 @@ PONT_SIMULE = """
       return { ok: true, conversations: m.conversations.map(c => ({ id: c.id, titre: c.titre, tache: c.tache, date: c.date })) };
     }
     if (nom === 'historique.enregistrer') {
+      if (window.__echecEnregistrer) return { ok: false, erreur: { code: 'conversation-invalide', message: '' } };
       const [tache, messages, sources, id] = args;
       let c = m.conversations.find(x => x.id === id);
       if (!c) {
@@ -138,6 +149,105 @@ def _appels(page, nom: str) -> list[list]:
     return page.evaluate("(n) => window.__appels.filter(a => a[0] === n)", nom)
 
 
+def _textes(messages: list[dict]) -> list[tuple[str, str]]:
+    return [(m["role"], m["content"]) for m in messages]
+
+
+def _attendre_enregistrements(page, nombre: int) -> list[list]:
+    page.wait_for_function(
+        "(n) => window.__appels.filter(a => a[0] === 'historique.enregistrer').length >= n",
+        arg=nombre,
+    )
+    page.wait_for_timeout(100)
+    return _appels(page, "historique.enregistrer")
+
+
+def _envoyer(page, question: str, issue: str | None = None) -> None:
+    if issue:
+        page.evaluate("(i) => window.__script.push(i)", issue)
+    page.fill("#saisie", question)
+    page.press("#saisie", "Enter")
+
+
+def test_relancer_apres_erreur_au_premier_echange(page) -> None:
+    # Après une erreur, la relance passe par « Régénérer » ; « Réessayer » (repli data.gouv) appelle
+    # la même fonction `relancer` de `composants/conversation.js`.
+    _envoyer(page, "<question-factice-1>", "erreur")
+    page.wait_for_selector(
+        "#vue-Q .tour:last-child .reponse-actions:not([hidden]) button:has-text('Régénérer')"
+    )
+    assert _appels(page, "historique.enregistrer") == []  # pas de réponse : rien à enregistrer
+    page.click("#vue-Q .tour:last-child .reponse-actions button:has-text('Régénérer')")
+    (enregistrement,) = _attendre_enregistrements(page, 1)
+    assert _textes(enregistrement[2]) == [
+        ("user", "<question-factice-1>"),
+        ("assistant", "<réponse-factice-2>"),
+    ]
+
+
+def test_relancer_apres_erreur_au_second_echange(page) -> None:
+    _poser(page, "<question-factice-1>")
+    _attendre_enregistrements(page, 1)
+    _envoyer(page, "<question-factice-2>", "erreur")
+    page.wait_for_selector(
+        "#vue-Q .tour:nth-child(2) .reponse-actions:not([hidden]) button:has-text('Régénérer')"
+    )
+    page.click("#vue-Q .tour:nth-child(2) .reponse-actions button:has-text('Régénérer')")
+    second = _attendre_enregistrements(page, 2)[1]
+    assert second[4] == "conv1"
+    assert _textes(second[2]) == [
+        ("user", "<question-factice-1>"),
+        ("assistant", "<réponse-factice-1>"),
+        ("user", "<question-factice-2>"),
+        ("assistant", "<réponse-factice-3>"),
+    ]
+    page.wait_for_selector("#vue-Q .tour:nth-child(2) .retour")
+    page.click("#vue-Q .tour:nth-child(2) .retour-haut")
+    page.wait_for_selector("#vue-Q .tour:nth-child(2) .retour-message:not(:empty)")
+    assert _appels(page, "retours.noter") == [["retours.noter", "conv1", 3, "pouce_haut", None]]
+
+
+def test_regenerer_remplace_la_derniere_reponse(page) -> None:
+    _poser(page, "<question-factice-1>")
+    _attendre_enregistrements(page, 1)
+    page.click("#vue-Q .tour:last-child button:has-text('Régénérer')")
+    second = _attendre_enregistrements(page, 2)[1]
+    assert second[4] == "conv1"
+    assert _textes(second[2]) == [
+        ("user", "<question-factice-1>"),
+        ("assistant", "<réponse-factice-2>"),
+    ]
+    assert page.locator("#vue-Q .retour").count() == 1
+
+
+def test_reponse_interrompue_enregistree_et_marquee(page) -> None:
+    _envoyer(page, "<question-factice-1>", "interrompue")
+    (enregistrement,) = _attendre_enregistrements(page, 1)
+    assert enregistrement[2][1]["interrompue"] is True
+
+
+def test_changement_de_tache_puis_retour_met_a_jour_la_meme_entree(page) -> None:
+    _poser(page, "<question-factice-1>")
+    _attendre_enregistrements(page, 1)
+    page.evaluate("() => window.slmsp.activer('RD')")
+    page.evaluate("() => window.slmsp.activer('Q')")
+    _envoyer(page, "<question-factice-2>")
+    second = _attendre_enregistrements(page, 2)[1]
+    assert second[4] == "conv1"
+    assert len(second[2]) == 4
+    assert page.locator(".historique-entree").count() == 1
+
+
+def test_echec_d_enregistrement_signale_discretement(page) -> None:
+    page.evaluate("() => { window.__echecEnregistrer = true; }")
+    _poser(page, "<question-factice-1>")
+    page.wait_for_selector(".historique-echec:not([hidden])")
+    assert "n'a pas pu être enregistrée" in page.inner_text(".historique-echec")
+    page.evaluate("() => { window.__echecEnregistrer = false; }")
+    _envoyer(page, "<question-factice-2>")
+    page.wait_for_selector(".historique-echec", state="hidden")
+
+
 def test_etat_vide(page) -> None:
     assert page.inner_text(".historique-vide") == (
         "Vos conversations apparaîtront ici. Elles restent sur ce poste."
@@ -152,10 +262,11 @@ def test_premier_envoi_cree_une_entree_groupee_par_jour_puis_la_met_a_jour(page)
     assert page.locator(".historique-vide").is_hidden()
     (enregistrement,) = _appels(page, "historique.enregistrer")
     assert enregistrement[1] == "Q"
-    assert enregistrement[2] == [
-        {"role": "user", "content": "<question-factice-1>"},
-        {"role": "assistant", "content": "<réponse-factice-1>"},
+    assert _textes(enregistrement[2]) == [
+        ("user", "<question-factice-1>"),
+        ("assistant", "<réponse-factice-1>"),
     ]
+    assert enregistrement[2][1]["sources"][0]["titre"] == "<titre-factice-1>"
     assert enregistrement[4] is None
     _poser_deuxieme_tour(page)
     assert page.locator(".historique-entree").count() == 1  # même entrée, mise à jour
@@ -238,12 +349,22 @@ def test_rouvrir_reactive_la_tache_d_origine(page) -> None:
         ".historique-jour-titre"
     )  # un jour passé : date en toutes lettres
     assert page.get_attribute("#tache-Q", "aria-current") == "true"
+    page.evaluate("() => { window.__annonces = []; }")
     page.click(".historique-ouvrir")
     page.wait_for_selector("#vue-RD .message-utilisateur")
     assert page.get_attribute("#tache-RD", "aria-current") == "true"
     assert page.inner_text("#vue-RD .message-utilisateur") == "<question-ancienne>"
     assert "<réponse-ancienne>" in page.inner_text("#vue-RD .reponse-texte")
     assert page.locator("#vue-RD .retour").count() == 1
+    page.wait_for_timeout(600)  # file des annonces
+    annonces = page.evaluate("() => window.__annonces")
+    assert annonces.count("Conversation rouverte, 1 échange.") == 1
+    assert not [a for a in annonces if "réponse" in a.lower()]  # réponses restaurées non lues
+    # La suite de la conversation rouverte met à jour la même entrée.
+    _envoyer(page, "<question-factice-2>")
+    (enregistrement,) = _attendre_enregistrements(page, 1)
+    assert enregistrement[4] == "ancienne"
+    assert len(enregistrement[2]) == 4
 
 
 def _ouvrir_retours(page) -> None:

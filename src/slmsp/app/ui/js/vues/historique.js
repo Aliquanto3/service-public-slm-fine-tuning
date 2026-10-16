@@ -1,7 +1,8 @@
 // Vue « historique » (story 12.11, FR-4, UX-DR17) : liste groupée par jour dans la colonne de
 // gauche, rouverture, suppression annulable 5 s. Cette vue est montée au démarrage : c'est aussi
 // elle qui enregistre les conversations des Tâches de dialogue (Question, Recherche de données)
-// à la fin de chaque réponse, puis pose les pouces (vue « retours ») sous la réponse enregistrée.
+// à la fin de chaque réponse, d'après le modèle des tours publié par `composants/conversation.js`
+// (`conversation:tours`), puis pose les pouces (vue « retours ») sous les réponses enregistrées.
 // Contrat du pont : voir `app/pont/historique.py`. Tout texte entre dans le DOM par `textContent`.
 
 import { annoncer } from "../socle/annonces.js";
@@ -11,6 +12,29 @@ const DELAI_ANNULATION_MS = 5000;
 // Libellés : EXPERIENCE.md (état vide, « Supprimer », « Annuler »). Les autres sont des
 // propositions, à valider par Anaël (spec 12.11, « À confirmer »).
 const VIDE = "Vos conversations apparaîtront ici. Elles restent sur ce poste.";
+const ECHEC_ENREGISTREMENT = "Cette conversation n'a pas pu être enregistrée dans l'historique.";
+
+/**
+ * Messages à enregistrer d'après les tours d'une conversation. Un tour en cours ou en échec
+ * (sans réponse) n'est pas enregistré ; une réponse interrompue l'est, marquée `interrompue`.
+ * Rend aussi, pour chaque tour, l'indice de sa réponse dans `messages` (ou `null`).
+ */
+export function messagesDesTours(tours) {
+  const messages = [];
+  const indices = [];
+  for (const t of tours) {
+    if (!t.fin || t.fin === "echec" || !t.texte) {
+      indices.push(null);
+      continue;
+    }
+    if (t.question != null) messages.push({ role: "user", content: t.question });
+    const m = { role: "assistant", content: t.texte, sources: t.sources ?? [] };
+    if (t.fin === "interrompue") m.interrompue = true;
+    indices.push(messages.length);
+    messages.push(m);
+  }
+  return { messages, indices };
+}
 
 function el(balise, classe, texte) {
   const e = document.createElement(balise);
@@ -63,7 +87,10 @@ export function monter(conteneur, pont, contexte) {
   const annuler = el("div", "historique-annuler");
   annuler.setAttribute("role", "status");
   annuler.hidden = true;
-  racine.append(liste, vide, annuler);
+  const echec = el("p", "historique-echec");
+  echec.setAttribute("role", "status");
+  echec.hidden = true;
+  racine.append(liste, vide, annuler, echec);
   conteneur.replaceChildren(racine);
 
   // -- Liste -----------------------------------------------------------------------------------
@@ -125,7 +152,8 @@ export function monter(conteneur, pont, contexte) {
       annoncer("La conversation n'a pas pu être supprimée.");
       return;
     }
-    if (courant?.id === c.id) courant = null;
+    // La session reste liée à l'id : « Annuler » la rétablit ; sinon, le prochain enregistrement
+    // crée une nouvelle conversation (id inconnu côté pont).
     await actualiser();
     if (!r?.supprimee) return;
     masquerAnnulation();
@@ -167,99 +195,81 @@ export function monter(conteneur, pont, contexte) {
       await actualiser();
       return;
     }
-    suivi = null;
-    courant = { id: c.id, tache: c.tache, messages: c.messages, sources: c.sources };
-    window.slmsp?.activer?.(c.tache);
+    sessions.set(c.tache, { id: c.id });
+    window.slmsp?.activer?.(c.tache, { annonce: false });
     bus.emettre("historique:rouvrir", { id: c.id, tache: c.tache, messages: c.messages, sources: c.sources });
-    for (const [k, index] of indicesReponses(c.messages).entries()) poserPouces(c.tache, k, c.id, index);
+    const n = c.messages.filter((m) => m.role === "assistant").length;
+    annoncer(`Conversation rouverte, ${n} échange${n > 1 ? "s" : ""}.`);
   }
 
   // -- Enregistrement des conversations ----------------------------------------------------------
 
-  let courant = null; // { id, tache, messages, sources } : conversation en cours d'enregistrement
-  let suivi = null; // { texte, sources } : réponse en train d'arriver
-  let chaine = Promise.resolve(); // sérialise les enregistrements (l'id du premier sert au suivant)
+  // Une session par Tâche de dialogue : `{ id }`, id de la conversation enregistrée (null avant le
+  // premier enregistrement). Lu au moment de l'appel : les enregistrements sont sérialisés et le
+  // second reprend l'id rendu au premier.
+  const sessions = new Map();
+  const poses = new WeakMap(); // pouces -> texte de la réponse notée
+  let chaine = Promise.resolve();
 
-  const indicesReponses = (messages) =>
-    messages.flatMap((m, i) => (m.role === "assistant" ? [i] : []));
-
-  function retirerQuestionOrpheline() {
-    if (courant && courant.messages.at(-1)?.role === "user") courant.messages.pop();
-  }
-
-  bus.abonner("envoi", ({ tache, texte }) => {
-    if (!courant || courant.tache !== tache) courant = { id: null, tache, messages: [], sources: [] };
-    courant.messages.push({ role: "user", content: texte });
-  });
-  bus.abonner("generation:debut", ({ tache }) => {
-    suivi = null;
-    if (!courant || courant.tache !== tache) return; // Tâche non enregistrée (rédaction…)
-    if (courant.messages.at(-1)?.role === "assistant") courant.messages.pop(); // régénération
-    if (courant.messages.at(-1)?.role === "user") suivi = { texte: "", sources: [] };
-  });
-  bus.abonner("evenement:jeton", (e) => {
-    if (suivi) suivi.texte += e.texte ?? "";
-  });
-  bus.abonner("evenement:sources", (e) => {
-    if (suivi) suivi.sources = Array.isArray(e.sources) ? e.sources : [];
-  });
-  bus.abonner("evenement:erreur", () => {
-    suivi = null;
-    retirerQuestionOrpheline();
-  });
-  bus.abonner("generation:erreur", () => {
-    if (suivi) retirerQuestionOrpheline();
-    suivi = null;
-  });
-  bus.abonner("evenement:fin", () => {
-    if (!suivi || !courant) return;
-    const { texte, sources } = suivi;
-    suivi = null;
-    if (!texte) {
-      retirerQuestionOrpheline();
+  bus.abonner("conversation:tours", ({ tache, origine, tours }) => {
+    const { messages, indices } = messagesDesTours(tours);
+    const elements = tours.map((t) => t.element);
+    if (origine === "rouverture") {
+      const session = sessions.get(tache);
+      if (session?.id) poserPouces(elements, indices, session.id, tours);
       return;
     }
-    courant.messages.push({ role: "assistant", content: texte });
-    courant.sources = sources;
-    const instantane = { ...courant, messages: courant.messages.map((m) => ({ ...m })) };
-    const cible = courant;
-    chaine = chaine.then(() => enregistrer(instantane, cible)).catch(() => {});
+    if (!messages.length) return;
+    let session = sessions.get(tache);
+    if (!session) {
+      session = { id: null };
+      sessions.set(tache, session);
+    }
+    const sources = messages.at(-1).sources;
+    chaine = chaine
+      .then(() => enregistrer(session, tache, messages, sources, { elements, indices, tours }))
+      .catch(() => {});
   });
-  bus.abonner("nouvelle", ({ tache }) => {
-    if (courant?.tache === tache) courant = null;
-    suivi = null;
-  });
+  bus.abonner("nouvelle", ({ tache }) => sessions.delete(tache));
   bus.abonner("historique:efface", () => {
-    courant = null;
-    suivi = null;
+    sessions.clear();
     actualiser();
   });
 
-  async function enregistrer(c, cible) {
+  async function enregistrer(session, tache, messages, sources, affichage) {
     let r;
     try {
-      r = await pont.appeler("historique.enregistrer", c.tache, c.messages, c.sources, c.id);
+      r = await pont.appeler("historique.enregistrer", tache, messages, sources, session.id);
     } catch {
-      return; // l'historique est une commodité : la réponse reste affichée
+      r = null;
     }
-    if (!r || r.ok === false || typeof r.id !== "string") return;
-    if (courant === cible) cible.id = r.id;
+    if (!r || r.ok === false || typeof r.id !== "string") {
+      // L'historique est une commodité : la réponse reste affichée, l'Agent est prévenu.
+      echec.textContent = ECHEC_ENREGISTREMENT;
+      echec.hidden = false;
+      return;
+    }
+    echec.hidden = true;
+    session.id = r.id;
     await actualiser();
-    if (courant === cible) {
-      const reponses = indicesReponses(c.messages);
-      poserPouces(c.tache, reponses.length - 1, r.id, reponses.at(-1));
+    if (sessions.get(tache) === session) poserPouces(affichage.elements, affichage.indices, r.id, affichage.tours);
+  }
+
+  /** Pose les pouces sous chaque réponse enregistrée, sauf ceux déjà posés pour le même texte. */
+  function poserPouces(elements, indices, id, tours) {
+    for (const [k, element] of elements.entries()) {
+      const index = indices[k];
+      const actions = element?.querySelector(":scope > .reponse-actions");
+      if (index == null || !actions) continue;
+      const cle = `${id}:${index}`;
+      const present = actions.querySelector(":scope > .retour");
+      if (present && present.dataset.cle === cle && poses.get(present) === tours[k].texte) continue;
+      present?.remove();
+      const pouces = creerPouces(pont, { bus, id, index });
+      pouces.dataset.cle = cle;
+      poses.set(pouces, tours[k].texte);
+      actions.append(pouces);
     }
   }
-
-  /** Pose les pouces sous la `rang`-ième réponse affichée de la Tâche (la dernière si `rang` est -1). */
-  function poserPouces(tache, rang, id, index) {
-    const reponses = document.querySelectorAll(`#vue-${CSS.escape(tache)} article.reponse`);
-    const reponse = reponses[rang];
-    const actions = reponse?.querySelector(":scope > .reponse-actions");
-    if (!actions) return;
-    actions.querySelector(":scope > .retour")?.remove();
-    actions.append(creerPouces(pont, { bus, id, index }));
-  }
-
   actualiser();
 }

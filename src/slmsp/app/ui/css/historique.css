@@ -62,7 +62,8 @@
   color: var(--ink);
   text-decoration: underline;
 }
-.historique-vide {
+.historique-vide,
+.historique-echec {
   margin: 0;
   color: var(--ink-soft);
   font-size: var(--t-small);
@@ -75,6 +76,7 @@
   font-size: var(--t-small);
 }
 .historique-annuler[hidden],
+.historique-echec[hidden],
 .historique-vide[hidden] {
   display: none;
 }

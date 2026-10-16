@@ -70,6 +70,9 @@ def test_identifiant_inconnu_cree_une_nouvelle_conversation(stockage: Stockage) 
     "args",
     [
         ("", _messages("a"), [], None),
+        ("XX", _messages("a"), [], None),  # Tâche inconnue
+        ("Q", [{"role": "assistant", "content": "x", "sources": "pas-une-liste"}], [], None),
+        ("Q", [{"role": "assistant", "content": "x", "interrompue": "oui"}], [], None),
         ("Q", [], [], None),
         ("Q", [{"role": "system", "content": "x"}], [], None),
         ("Q", [{"role": "user", "content": 3}], [], None),
@@ -92,6 +95,20 @@ def test_supprimer_puis_annuler_sous_5_secondes(stockage: Stockage) -> None:
     assert h.appeler("annuler_suppression", identifiant) == {"ok": True, "restauree": True}
     assert [c["id"] for c in h.appeler("lister")["conversations"]] == [identifiant]
     assert h.appeler("supprimer", "absente") == {"ok": True, "supprimee": False}
+    for invalide in ("../x", "", None, 3, "a" * 65):
+        assert h.appeler("supprimer", invalide) == {"ok": True, "supprimee": False}
+        assert h.appeler("annuler_suppression", invalide) == {"ok": True, "restauree": False}
+        assert _code(h.appeler("ouvrir", invalide)) == "conversation-introuvable"
+
+
+def test_enregistrer_garde_sources_par_message_et_marque_interrompue(stockage: Stockage) -> None:
+    h = PontHistorique(stockage)
+    messages = [
+        {"role": "user", "content": "<q>"},
+        {"role": "assistant", "content": "<r>", "sources": [{"titre": "<s>"}], "interrompue": True},
+    ]
+    identifiant = h.appeler("enregistrer", "RD", messages, [{"titre": "<s>"}], None)["id"]
+    assert h.appeler("ouvrir", identifiant)["conversation"]["messages"] == messages
 
 
 def test_annulation_apres_delai_refusee(tmp_path: Path) -> None:
@@ -153,7 +170,10 @@ def test_noter_refuse_le_invalide(stockage: Stockage) -> None:
     identifiant = _conversation(stockage, "a")
     retours = PontRetours(stockage)
     assert _code(retours.appeler("noter", identifiant, 1, "neutre")) == "jugement-invalide"
-    assert _code(retours.appeler("noter", "absente", 1, "pouce_haut")) == "conversation-introuvable"
+    for absente in ("absente", "../x", "", None, 3):
+        assert _code(retours.appeler("noter", absente, 1, "pouce_haut")) == (
+            "conversation-introuvable"
+        )
     for indice in (0, 5, -1, True, "1"):  # 0 est un message de l'Agent
         assert _code(retours.appeler("noter", identifiant, indice, "pouce_haut")) == (
             "message-invalide"
@@ -182,11 +202,75 @@ def test_exporter_exige_l_apercu_puis_ecrit_l_apercu_valide(
     assert apercu["nom_fichier"].startswith("retours-assistant-")
     assert "<commentaire-factice>" in apercu["apercu"]
     assert not cible.parent.exists()  # rien n'est écrit avant « Enregistrer sous »
-    # Un Retour ajouté après l'aperçu n'entre pas dans le fichier : on écrit ce qui a été relu.
-    retours.appeler("noter", identifiant, 1, "pouce_haut")
     assert retours.appeler("exporter") == {"ok": True, "enregistre": True, "nom": cible.name}
     assert demandes == [apercu["nom_fichier"]]
     assert len(json.loads(cible.read_text(encoding="utf-8"))["retours"]) == 1
+
+
+def test_un_nouveau_retour_invalide_l_apercu(stockage: Stockage, tmp_path: Path) -> None:
+    identifiant = _conversation(stockage, "a")
+    retours = PontRetours(stockage, lambda nom: str(tmp_path / nom))
+    retours.appeler("noter", identifiant, 1, "pouce_bas", None)
+    retours.appeler("apercu_export")
+    retours.appeler("noter", identifiant, 1, "pouce_haut")
+    assert _code(retours.appeler("exporter")) == "apercu-requis"
+    assert list(tmp_path.glob("*.json")) == []
+
+
+def test_historique_efface_apres_l_apercu_rien_n_est_ecrit(
+    stockage: Stockage, tmp_path: Path
+) -> None:
+    identifiant = _conversation(stockage, "a")
+    retours = PontRetours(stockage, lambda nom: str(tmp_path / nom))
+    retours.appeler("noter", identifiant, 1, "pouce_bas", "<commentaire-factice>")
+    retours.appeler("apercu_export")
+    stockage.effacer_historique()  # « Effacer l'historique » des Paramètres (autre domaine)
+    assert _code(retours.appeler("exporter")) == "apercu-perime"
+    assert _code(retours.appeler("exporter")) == "apercu-requis"
+    assert list(tmp_path.glob("*.json")) == []
+
+
+def test_exporter_n_ecrase_jamais_un_fichier(stockage: Stockage, tmp_path: Path) -> None:
+    identifiant = _conversation(stockage, "a")
+    cible = tmp_path / "existant.json"
+    cible.write_text("<contenu-factice>", encoding="utf-8")
+    retours = PontRetours(stockage, lambda nom: str(cible))
+    retours.appeler("noter", identifiant, 1, "pouce_haut")
+    retours.appeler("apercu_export")
+    assert _code(retours.appeler("exporter")) == "fichier-existant"
+    assert cible.read_text(encoding="utf-8") == "<contenu-factice>"
+
+
+def test_noter_prend_les_sources_de_la_reponse_notee(stockage: Stockage) -> None:
+    messages = [
+        {"role": "user", "content": "<q1>"},
+        {"role": "assistant", "content": "<r1>", "sources": [{"titre": "<s1>"}]},
+        {"role": "user", "content": "<q2>"},
+        {"role": "assistant", "content": "<r2>", "sources": [{"titre": "<s2>"}]},
+    ]
+    identifiant = PontHistorique(stockage).appeler(
+        "enregistrer", "Q", messages, [{"titre": "<s2>"}], None
+    )["id"]
+    retours = PontRetours(stockage)
+    assert retours.appeler("noter", identifiant, 1, "pouce_haut") == {"ok": True}
+    assert retours.appeler("noter", identifiant, 3, "pouce_haut") == {"ok": True}
+    par_reponse = {r["reponse"]: (r["question"], r["sources"]) for r in stockage.lister_retours()}
+    assert par_reponse == {
+        "<r1>": ("<q1>", [{"titre": "<s1>"}]),
+        "<r2>": ("<q2>", [{"titre": "<s2>"}]),
+    }
+
+
+def test_noter_sans_sources_par_message(stockage: Stockage) -> None:
+    """Conversation sans sources par message : seule la dernière réponse prend celles stockées."""
+    identifiant = PontHistorique(stockage).appeler(
+        "enregistrer", "Q", _messages("a") + _messages("b"), [{"titre": "<s>"}], None
+    )["id"]
+    retours = PontRetours(stockage)
+    retours.appeler("noter", identifiant, 1, "pouce_haut")
+    retours.appeler("noter", identifiant, 3, "pouce_haut")
+    par_reponse = {r["reponse"]: r["sources"] for r in stockage.lister_retours()}
+    assert par_reponse == {"<réponse-factice-a>": [], "<réponse-factice-b>": [{"titre": "<s>"}]}
 
 
 def test_exporter_annule_ou_dialogue_absent(stockage: Stockage, tmp_path: Path) -> None:

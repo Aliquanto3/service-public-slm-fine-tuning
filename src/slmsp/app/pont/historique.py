@@ -10,7 +10,9 @@ Chaque méthode rend `{"ok": true, ...}` ou un refus `{"ok": false, "erreur": {"
   Refus : `conversation-introuvable`.
 - `enregistrer(tache, messages, sources, id | null)` -> `{"ok": true, "id": str}` : crée la
   conversation au premier échange, la remplace aux suivants. `messages` : liste de
-  `{role: "user"|"assistant", content: str}`. Un `id` inconnu (supprimée entre-temps) crée une
+  `{role: "user"|"assistant", content: str}` ; un message de l'Assistant peut porter ses propres
+  `sources` (liste) et `interrompue: true`. `tache` : une Tâche connue (`core.items.CODES`). Un
+  `id` inconnu (supprimée entre-temps) crée une
   nouvelle conversation. Refus : `conversation-invalide`.
 - `supprimer(id)` -> `{"ok": true, "supprimee": bool}` : sans confirmation, effacée tout de suite.
 - `annuler_suppression(id)` -> `{"ok": true, "restauree": bool}` : possible pendant 5 s.
@@ -24,6 +26,7 @@ from typing import TYPE_CHECKING, Any, Final
 
 from slmsp.app.pont.conversation import reponse_erreur
 from slmsp.app.pont.erreurs import NonImplementee
+from slmsp.core.items import CODES
 
 if TYPE_CHECKING:
     from slmsp.app.stockage import Stockage
@@ -38,21 +41,34 @@ CODE_INVALIDE: Final = "conversation-invalide"
 CODE_INDISPONIBLE: Final = "stockage-indisponible"
 
 
-def _identifiant_valide(valeur: object) -> bool:
+def identifiant_valide(valeur: object) -> bool:
     return isinstance(valeur, str) and 0 < len(valeur) <= 64 and valeur.isalnum()
+
+
+def _sources_valides(sources: object) -> bool:
+    return (
+        isinstance(sources, list)
+        and len(sources) <= MAX_SOURCES
+        and all(isinstance(s, dict) for s in sources)
+    )
+
+
+def _message_valide(m: object) -> bool:
+    return (
+        isinstance(m, dict)
+        and m.get("role") in ROLES
+        and isinstance(m.get("content"), str)
+        and len(m["content"]) <= MAX_CONTENU
+        and ("sources" not in m or _sources_valides(m["sources"]))
+        and isinstance(m.get("interrompue", False), bool)
+    )
 
 
 def _messages_valides(messages: object) -> bool:
     return (
         isinstance(messages, list)
         and 0 < len(messages) <= MAX_MESSAGES
-        and all(
-            isinstance(m, dict)
-            and m.get("role") in ROLES
-            and isinstance(m.get("content"), str)
-            and len(m["content"]) <= MAX_CONTENU
-            for m in messages
-        )
+        and all(_message_valide(m) for m in messages)
     )
 
 
@@ -81,7 +97,11 @@ class PontHistorique:
 
     def ouvrir(self, identifiant: str) -> dict[str, Any]:
         assert self._stockage is not None
-        c = self._stockage.lire_conversation(identifiant) if isinstance(identifiant, str) else None
+        c = (
+            self._stockage.lire_conversation(identifiant)
+            if identifiant_valide(identifiant)
+            else None
+        )
         if c is None:
             return reponse_erreur(CODE_INTROUVABLE, "Cette conversation n'existe plus.")
         cles = ("id", "titre", "tache", "messages", "sources")
@@ -93,13 +113,10 @@ class PontHistorique:
         assert self._stockage is not None
         sources = [] if sources is None else sources
         if (
-            not isinstance(tache, str)
-            or not 0 < len(tache) <= 16
+            tache not in CODES
             or not _messages_valides(messages)
-            or not isinstance(sources, list)
-            or len(sources) > MAX_SOURCES
-            or not all(isinstance(s, dict) for s in sources)
-            or (id is not None and not _identifiant_valide(id))
+            or not _sources_valides(sources)
+            or (id is not None and not identifiant_valide(id))
         ):
             return reponse_erreur(CODE_INVALIDE, "Conversation invalide.")
         existant = id if id is not None and self._stockage.lire_conversation(id) else None
@@ -110,10 +127,12 @@ class PontHistorique:
 
     def supprimer(self, identifiant: str) -> dict[str, Any]:
         assert self._stockage is not None
-        faite = isinstance(identifiant, str) and self._stockage.supprimer_conversation(identifiant)
+        faite = identifiant_valide(identifiant) and self._stockage.supprimer_conversation(
+            identifiant
+        )
         return {"ok": True, "supprimee": bool(faite)}
 
     def annuler_suppression(self, identifiant: str) -> dict[str, Any]:
         assert self._stockage is not None
-        faite = isinstance(identifiant, str) and self._stockage.annuler_suppression(identifiant)
+        faite = identifiant_valide(identifiant) and self._stockage.annuler_suppression(identifiant)
         return {"ok": True, "restauree": bool(faite)}

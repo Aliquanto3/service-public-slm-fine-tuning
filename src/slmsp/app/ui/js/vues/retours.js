@@ -157,10 +157,10 @@ export function monter(conteneur, pont, contexte = {}) {
     }
   }
 
-  function fermerApercu() {
+  function fermerApercu({ focus = true } = {}) {
     apercu.hidden = true;
     apercu.replaceChildren();
-    exporter.focus();
+    if (focus) exporter.focus();
   }
 
   async function ouvrirApercu() {
@@ -211,18 +211,27 @@ export function monter(conteneur, pont, contexte = {}) {
       }
       enregistrer.disabled = false;
       let message;
-      if (s?.ok === false) message = "Le fichier n'a pas pu être enregistré.";
+      const code = s?.erreur?.code;
+      if (code === "fichier-existant") message = "Un fichier porte déjà ce nom. Choisissez un autre nom.";
+      else if (code === "apercu-perime") message = "Vos retours ont changé : ouvrez de nouveau l'aperçu.";
+      else if (s?.ok === false) message = "Le fichier n'a pas pu être enregistré.";
       else if (s?.enregistre) message = `Fichier enregistré : ${s.nom}.`;
       else message = "Enregistrement annulé. Rien n'a été écrit.";
       etat.textContent = message;
       annoncer(message);
-      if (s?.enregistre) fermerApercu();
+      if (s?.enregistre || code === "apercu-perime") fermerApercu();
     });
   }
 
   exporter.addEventListener("click", ouvrirApercu);
-  bus?.abonner("retours:change", actualiser);
-  bus?.abonner("historique:efface", actualiser);
+  // L'aperçu affiché ne correspond plus aux Retours enregistrés : il est fermé (le pont le refuse
+  // de toute façon, `apercu-perime`).
+  const invalider = () => {
+    if (!apercu.hidden) fermerApercu({ focus: false });
+    actualiser();
+  };
+  bus?.abonner("retours:change", invalider);
+  bus?.abonner("historique:efface", invalider);
   document.getElementById("bouton-parametres")?.addEventListener("click", actualiser);
   actualiser();
 }
