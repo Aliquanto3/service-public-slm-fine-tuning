@@ -54,3 +54,14 @@ Trois relectures indépendantes (Haiku, Sonnet et Opus) ont été faites pendant
   - Les URL protégées sont comparées brutes (casse, `/` final, `http` ou `https`, ordre des paramètres).
   - Les `dataset_id` et `resource_id` donnés par des règles `contient_un_de` ou `mot_entier_un_de`, ou par un `exact` en liste, ne sont pas collectés.
   - `low` à `medium`, non vérifié : l'effet dépend du comparateur de la story 9.3. À traiter avec lui (voir D2 du rapport `revue-code-lots-3c-4.md`).
+
+## Revue : GGUF F16 de base pour la variante `avant` (a44b0fc, 2026-10-16)
+
+- **medium, second avis n° 1, corrigé** : granite-4.0-1b et ministral-3-3b n'ont qu'un BF16. `[gguf_f16]` exige désormais `precision = "f16" | "bf16"` (`FichierGgufF16`). La précision réelle est consignée dans `ResultatBench.precision_gguf` (banc) et dans `config.precision_gguf` de `run.json` (évaluation). La clé de variante `f16` ne change pas.
+- **low, second avis n° 2, corrigé** : `fetch modeles --f16` avertit sur stderr pour un modèle sans `gguf_f16`.
+- **low, second avis n° 3, corrigé** : `_coherence` refuse un `gguf_f16.revision` différent de `revision` pour le même dépôt.
+- **low, second avis n° 4, rejeté** : le SHA-256 est vérifié au téléchargement, comme pour le q4. Le recalculer à chaque usage coûterait de 3 à 8 Go de lecture par lancement.
+- **low, second avis n° 5, rejeté** : le contrôle serveur de `fetch` reste sur le GGUF q4 servi en production. Démarrer llama-server sur 8 Go pour un contrôle serait coûteux, et un F16 absent ou illisible fait échouer le banc avec un message clair.
+- **low, second avis n° 6, corrigé** : ajout des tests lm_eval « gguf_f16 non configuré » et CLI `--f16` (téléchargement et avertissement), ainsi que des tests de la précision dans le banc, la résolution et les configurations réelles.
+- **low, revue, reporté** : `slmsp compare` met dans la même colonne `avant` une base BF16 et un export `ft:` F16, sans afficher `precision_gguf`. Afficher la précision quand les deux côtés diffèrent.
+- **low, revue, reporté (service réel)** : servir les GGUF BF16 avec le llama.cpp épinglé n'a pas encore été vérifié, ni en CPU ni en CUDA. À faire : `slmsp fetch modeles granite-4.0-1b --f16`, puis `slmsp bench run --modele base:granite-4.0-1b --quantification avant` sur BFCL. Il faut vérifier que llama-server démarre, que les scores ne sont pas nuls et que `precision_gguf` vaut `bf16`.

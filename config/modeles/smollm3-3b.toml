@@ -48,3 +48,13 @@ revision = "4965cb60b150737b68a0408c36aeefb65078f894"
 fichier = "SmolLM3-Q4_K_M.gguf"
 sha256 = "8334b850b7bd46238c16b0c550df2138f0889bf433809008cc17a8b05761863e"
 source = "officielle"
+
+# GGUF F16 de base pour la variante `avant` du banc (ajouté le 2026-10-16, révision et SHA-256
+# relevés via l'API Hugging Face). Téléchargé par `slmsp fetch modeles smollm3-3b --f16`.
+[gguf_f16] # 6 158 339 424 octets
+depot = "ggml-org/SmolLM3-3B-GGUF"
+revision = "4965cb60b150737b68a0408c36aeefb65078f894"
+fichier = "SmolLM3-f16.gguf"
+sha256 = "8e6ad54cf7426bd8318df06597357deef1bd758e27fbed2ed87ef39ed96e6f74"
+source = "officielle"
+precision = "f16"

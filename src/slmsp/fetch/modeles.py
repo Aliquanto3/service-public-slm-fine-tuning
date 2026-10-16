@@ -3,6 +3,7 @@
 - GGUF : `<models>/<slug>/gguf/<nom du fichier>`, SHA-256 de la configuration. Pris à
   `gguf.revision` si elle est donnée ; sinon à la révision `revision` s'il vient de
   `depot_hf`, et d'un autre dépôt à la révision `main` résolue en commit (`X-Repo-Commit`).
+- GGUF F16 de base (`gguf_f16`, option `--f16`) : même dossier, mêmes vérifications.
 - `fichiers` : `<models>/<slug>/hf/<chemin>`, à la révision `revision`. SHA-256 attendu
   lu dans `sha256_fichiers`, sinon dans `X-Linked-Etag` (fichiers LFS) ; un fichier sans
   SHA connu est refusé, un `X-Linked-Etag` différent du SHA de la configuration aussi.
@@ -19,7 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from slmsp.core.schemas.config_modele import ConfigModele
+from slmsp.core.schemas.config_modele import ConfigModele, FichierGguf
 from slmsp.fetch.config import chemin_config
 from slmsp.fetch.hf import (
     ResultatFichier,
@@ -47,8 +48,10 @@ class FichierPrevu:
     """`gguf` ou `hf`."""
 
 
-def _gguf(telechargeur: Telechargeur, config: ConfigModele, base: Path) -> FichierPrevu:
-    gguf = config.gguf
+def _gguf(
+    telechargeur: Telechargeur, config: ConfigModele, base: Path, gguf: FichierGguf | None = None
+) -> FichierPrevu:
+    gguf = gguf or config.gguf
     chemin = chemin_config(gguf.fichier, f"modèle {config.depot_hf} : gguf.fichier")
     destination = base / "gguf" / PurePosixPath(chemin).name
     meme_depot = gguf.depot == config.depot_hf
@@ -117,11 +120,21 @@ def _fichier_hf(
 
 
 def planifier(
-    telechargeur: Telechargeur, slug: str, config: ConfigModele, dossier_modeles: str | Path
+    telechargeur: Telechargeur,
+    slug: str,
+    config: ConfigModele,
+    dossier_modeles: str | Path,
+    *,
+    f16: bool = False,
 ) -> list[FichierPrevu]:
-    """Fichiers du modèle `slug` : GGUF puis `fichiers` HF (requêtes `HEAD` si besoin)."""
+    """Fichiers du modèle `slug` : GGUF puis `fichiers` HF (requêtes `HEAD` si besoin).
+
+    `f16` ajoute le GGUF `gguf_f16` s'il est configuré (variante `avant` du banc).
+    """
     base = Path(dossier_modeles) / slug
     plan = [_gguf(telechargeur, config, base)]
+    if f16 and config.gguf_f16 is not None:
+        plan.append(_gguf(telechargeur, config, base, config.gguf_f16))
     plan.extend(_fichier_hf(telechargeur, config, base, chemin) for chemin in config.fichiers)
     return plan
 
@@ -131,13 +144,14 @@ def executer(
     modeles: list[tuple[str, ConfigModele]],
     dossier_modeles: str | Path,
     *,
+    f16: bool = False,
     consigner: Callable[[dict[str, Any]], None] = lambda _ligne: None,
 ) -> list[ResultatFichier]:
     """Télécharge les fichiers de chaque `(slug, config)` ; une ligne par fichier."""
     plans = [
         (slug, prevu)
         for slug, config in modeles
-        for prevu in planifier(telechargeur, slug, config, dossier_modeles)
+        for prevu in planifier(telechargeur, slug, config, dossier_modeles, f16=f16)
     ]
     telechargeur.verifier_espace_total((p.destination, p.taille) for _, p in plans)
     resultats = []

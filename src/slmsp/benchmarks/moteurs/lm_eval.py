@@ -279,8 +279,8 @@ def _lancer(
 def resoudre_gguf(contexte: ContexteBench) -> tuple[str, Any, Path]:
     """`(slug, ConfigModele, GGUF)` de la variante ; `ConfigurationInvalide` si introuvable.
 
-    `base:<slug>` : seul le GGUF q4_k_m (variante `apres`) existe. `ft:<export>` : GGUF
-    `modele-f16.gguf` ou `modele-q4_k_m.gguf` du run d'export.
+    `base:<slug>` : GGUF q4_k_m (`apres`) ou `gguf_f16` (`avant`, `fetch modeles --f16`).
+    `ft:<export>` : GGUF `modele-f16.gguf` ou `modele-q4_k_m.gguf` du run d'export.
     """
     from slmsp.core.artefacts import ouvrir_run
     from slmsp.inference.serveur import charger_config_modele
@@ -288,10 +288,18 @@ def resoudre_gguf(contexte: ContexteBench) -> tuple[str, Any, Path]:
     quantification = "f16" if contexte.variante == "avant" else "q4_k_m"
     genre, valeur = contexte.modele_ref.split(":", 1)
     if genre == "base":
-        if quantification != "q4_k_m":
-            raise ConfigurationInvalide(f"aucun GGUF F16 de base pour {contexte.modele_ref}")
         config = charger_config_modele(valeur)
-        gguf = dossier_modeles() / valeur / "gguf" / config.gguf.fichier
+        fichier = config.gguf_pour(quantification)
+        if fichier is None:
+            raise ConfigurationInvalide(
+                f"aucun GGUF F16 de base pour {contexte.modele_ref} "
+                "(section gguf_f16 absente de la configuration du modèle)"
+            )
+        gguf = dossier_modeles() / valeur / "gguf" / Path(fichier.fichier).name
+        if quantification == "f16" and not gguf.is_file():
+            raise ConfigurationInvalide(
+                f"GGUF F16 de base absent : {gguf} (`slmsp fetch modeles {valeur} --f16`)"
+            )
         slug = valeur
     else:
         run = ouvrir_run(valeur, racine=contexte.racine)

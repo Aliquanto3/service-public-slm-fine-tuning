@@ -55,3 +55,13 @@ revision = "eb599d408350ea2bb60452cb86be7c7b2fc28227"
 fichier = "Ministral-3-3B-Instruct-2512-Q4_K_M.gguf"
 sha256 = "9ed150d4367e68df0ac8e1540f6ddc65b42d0ee26378329d1ecbca60f93fc5f8"
 source = "officielle"
+
+# GGUF F16 de base pour la variante `avant` du banc (ajouté le 2026-10-16, révision et SHA-256
+# relevés via l'API Hugging Face). Téléchargé par `slmsp fetch modeles ministral-3-3b --f16`.
+[gguf_f16] # 6 866 745 504 octets, BF16 (pas de F16 publié)
+depot = "mistralai/Ministral-3-3B-Instruct-2512-GGUF"
+revision = "eb599d408350ea2bb60452cb86be7c7b2fc28227"
+fichier = "Ministral-3-3B-Instruct-2512-BF16.gguf"
+sha256 = "17ef932bea952e007f9dad63151da5699132ec513d1033d618df7382e24aa3ee"
+source = "officielle"
+precision = "bf16"

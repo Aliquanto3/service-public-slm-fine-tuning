@@ -37,8 +37,26 @@ def test_base_q4_k_m(modeles: Path) -> None:
     assert resolu.config == config
 
 
-def test_base_f16_refuse(modeles: Path) -> None:
-    with pytest.raises(ConfigurationInvalide, match="F16"):
+def test_base_f16_absent_indique_la_commande_de_fetch(modeles: Path) -> None:
+    with pytest.raises(ConfigurationInvalide, match=f"fetch modeles {SLUG} --f16"):
+        resoudre(f"base:{SLUG}", "f16")
+
+
+def test_base_f16_present(modeles: Path) -> None:
+    fichier = charger_config_modele(SLUG).gguf_f16.fichier
+    (modeles / SLUG / "gguf" / fichier).write_bytes(b"GGUF-factice")
+    resolu = resoudre(f"base:{SLUG}", "f16")
+    assert resolu.quantification == "f16"
+    assert resolu.gguf == modeles / SLUG / "gguf" / fichier
+    assert resolu.precision == charger_config_modele(SLUG).gguf_f16.precision
+
+
+def test_base_f16_non_configure_refuse(modeles: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import slmsp.evaluation.modele_ref as module
+
+    sans = charger_config_modele(SLUG).model_copy(update={"gguf_f16": None})
+    monkeypatch.setattr(module, "charger_config_modele", lambda _slug: sans)
+    with pytest.raises(ConfigurationInvalide, match="gguf_f16 absente"):
         resoudre(f"base:{SLUG}", "f16")
 
 

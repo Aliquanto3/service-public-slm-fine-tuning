@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from slmsp.cli import main
 from slmsp.core.config import dossier_modeles
@@ -84,6 +85,85 @@ def test_etag_different_de_la_config(banc, outils, tmp_path: Path) -> None:
         modeles.executer(banc.telechargeur(), [("emb", _config(outils))], tmp_path)
     assert [r.method for r in banc.serveur.requetes] == ["HEAD"]
     assert not (tmp_path / "emb").exists()
+
+
+GGUF_F16 = b"GGUF f16 factice " * 40
+
+
+def test_gguf_f16_telecharge_seulement_avec_l_option(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils,
+        gguf_f16={
+            "depot": "org/modele-GGUF",
+            "fichier": "m-f16.gguf",
+            "sha256": outils.sha(GGUF_F16),
+            "precision": "f16",
+        },
+    )
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF, REV)
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-f16.gguf"), GGUF_F16, REV)
+    modeles.executer(banc.telechargeur(), [("base", config)], tmp_path)
+    assert not (tmp_path / "base" / "gguf" / "m-f16.gguf").exists()
+    lignes = []
+    modeles.executer(
+        banc.telechargeur(), [("base", config)], tmp_path, f16=True, consigner=lignes.append
+    )
+    assert (tmp_path / "base" / "gguf" / "m-f16.gguf").read_bytes() == GGUF_F16
+    assert [ligne["fichier"] for ligne in lignes] == ["m-q8_0.gguf", "m-f16.gguf"]
+
+
+def test_gguf_f16_sha_different_de_la_config(banc, outils, tmp_path: Path) -> None:
+    config = _config(
+        outils,
+        gguf_f16={
+            "depot": "org/modele-GGUF",
+            "fichier": "m-f16.gguf",
+            "sha256": "0" * 64,
+            "precision": "f16",
+        },
+    )
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF, REV)
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-f16.gguf"), GGUF_F16, REV)
+    with pytest.raises(ShaInvalide):
+        modeles.executer(banc.telechargeur(), [("base", config)], tmp_path, f16=True)
+
+
+@pytest.mark.parametrize(
+    ("slug", "precision"),
+    [
+        ("granite-4.0-1b", "bf16"),
+        ("ministral-3-3b", "bf16"),
+        ("qwen-4b", "f16"),
+        ("smollm3-3b", "f16"),
+    ],
+)
+def test_configs_reelles_declarent_un_gguf_f16_epingle(slug: str, precision: str) -> None:
+    config = charger_config_modele(slug)
+    assert config.gguf_f16 is not None
+    assert config.gguf_f16.revision is not None and config.gguf_f16.source is not None
+    # Précision relevée sur Hugging Face (nom du fichier publié), pas recalculée.
+    assert config.gguf_f16.precision == precision
+    assert precision in config.gguf_f16.fichier.lower()
+    assert config.precision_gguf("f16") == precision
+
+
+def test_gguf_f16_precision_obligatoire(outils) -> None:
+    with pytest.raises(ValidationError, match="precision"):
+        _config(outils, gguf_f16={"depot": "o/d", "fichier": "m-f16.gguf", "sha256": "0" * 64})
+
+
+def test_gguf_f16_revision_differente_du_meme_depot(outils) -> None:
+    with pytest.raises(ValidationError, match="gguf_f16.revision"):
+        _config(
+            outils,
+            gguf_f16={
+                "depot": "org/modele-GGUF",
+                "fichier": "m-f16.gguf",
+                "sha256": "0" * 64,
+                "revision": "b" * 40,
+                "precision": "bf16",
+            },
+        )
 
 
 def test_gguf_d_un_autre_depot(banc, outils, tmp_path: Path) -> None:
@@ -288,6 +368,25 @@ def test_cli_modeles_de_bout_en_bout(banc, outils, cli) -> None:
     banc.serveur.requetes.clear()
     assert main(["fetch", "modeles", "emb-test", "--racine", str(cli.racine)]) == 0
     assert banc.serveur.requetes == []
+
+
+def test_cli_modeles_f16(banc, outils, cli, capsys) -> None:
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-q8_0.gguf"), GGUF, REV)
+    _servir_lfs(banc, outils, _url("org/modele-GGUF", REV, "m-bf16.gguf"), GGUF_F16, REV)
+    toml = MODELE_TOML.format(rev=REV, sha=outils.sha(GGUF))
+    (cli.config / "modeles" / "sans-f16.toml").write_text(toml, encoding="utf-8")
+    (cli.config / "modeles" / "avec-f16.toml").write_text(
+        toml
+        + '\n[gguf_f16]\ndepot = "org/modele-GGUF"\nfichier = "m-bf16.gguf"\n'
+        + f'sha256 = "{outils.sha(GGUF_F16)}"\nprecision = "bf16"\n',
+        encoding="utf-8",
+    )
+    racine = ["--racine", str(cli.racine)]
+    assert main(["fetch", "modeles", "avec-f16", "sans-f16", "--f16", *racine]) == 0
+    assert (cli.models / "avec-f16" / "gguf" / "m-bf16.gguf").read_bytes() == GGUF_F16
+    assert not (cli.models / "sans-f16" / "gguf" / "m-bf16.gguf").exists()
+    assert "sans-f16 : pas de section gguf_f16" in capsys.readouterr().err
+    assert outils.lire_run(cli.racine).manifeste["config"]["f16"] is True
 
 
 def test_cli_modele_inconnu(cli, capsys) -> None:
