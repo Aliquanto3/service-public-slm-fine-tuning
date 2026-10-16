@@ -56,7 +56,7 @@ from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ProvenanceInvalide, SlmspError
 from slmsp.core.gabarits import GabaritInvalide, GabaritValide, valider_gabarit
 from slmsp.core.messages import ConversationInvalide, valider_conversation
-from slmsp.core.schemas.amorce import Amorce
+from slmsp.core.schemas.amorce import Amorce, texte_mistral_conforme
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.run import MOTIF_RUN_ID
 from slmsp.mistral.client import ClientMistral, ModeleMistralRefuse, ReponseMistral
@@ -444,6 +444,10 @@ class Generateur:
             if amorce.auteur_contenu == "mistral":
                 journal = journal or self._journal()
                 self._verifier_amorce_mistral(amorce, journal)
+            if amorce.auteur_contenu == "config" and amorce.lie_a not in ids:
+                raise ProvenanceInvalide(
+                    f"amorce {amorce_id!r} : paramètre sans son amorce liée dans l'appel"
+                )
             if amorce.emplacement not in gabarit.emplacements:
                 raise GabaritInvalide(
                     f"amorce {amorce_id!r} : emplacement {amorce.emplacement!r} non déclaré "
@@ -478,10 +482,33 @@ class Generateur:
                 f"amorce {amorce.amorce_id!r} : appel Mistral absent du journal, non « ok » "
                 "ou d'un modèle hors modeles_stables"
             )
-        if message_assistant(ligne.reponse_brute).get("content") != amorce.texte:
+        contenu = message_assistant(ligne.reponse_brute).get("content")
+        if not texte_mistral_conforme(contenu, amorce):
             raise ProvenanceInvalide(
                 f"amorce {amorce.amorce_id!r} : texte différent de la réponse journalisée"
             )
+
+    def reponse_journalisee(
+        self, gabarit_id: str, amorce_ids: Sequence[str], session_id: str, tache: str
+    ) -> LigneAppel | None:
+        """Première ligne admise du journal de `session_id` pour ce gabarit (identifiant,
+        version, SHA) et ces amorces, sans message précédent : la reprise la réutilise au
+        lieu d'appeler Mistral. `None` s'il n'y en a pas."""
+        gabarit = self._gabarit(gabarit_id, tache)[0]
+        journal = self._journal()
+        if not journal.chemin.is_file():
+            return None
+        ids = json_canonique(list(amorce_ids)).decode("utf-8")
+        for ligne in journal.appels_session(session_id):
+            if (
+                self._ligne_admise(ligne)
+                and (ligne.gabarit_id, ligne.version_gabarit, ligne.sha256_gabarit)
+                == (gabarit.id, gabarit.version, gabarit.sha256)
+                and ligne.amorce_ids == ids
+                and ligne.reponse_brute is not None
+            ):
+                return ligne
+        return None
 
     def deriver_amorce(
         self, appel_id: str, *, amorce_id: str, tache: str, emplacement: str

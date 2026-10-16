@@ -175,7 +175,8 @@ def test_seed_de_bout_en_bout(monde: SimpleNamespace, capsys: pytest.CaptureFixt
         "LC/texte": 6,
         "CO/texte": 6,
         "generique/demande": 6,
-    }  # RE/texte : aucun texte assez long
+        "CT/sujet": 6,
+    }  # RE/texte : aucun texte assez long, donc aucune longueur RE
     assert all(ligne["auteur_contenu"] == "public" for ligne in lignes)
     assert {ligne["jeu"] for ligne in lignes} <= {"Org/service-public", "Org/catalogue", "Org/piaf"}
     assert "run" in sortie.out and "complet" in sortie.out
@@ -377,3 +378,149 @@ def test_fabrique_depuis_le_generateur(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.parametrize("etape", ["validate", "filter"])
 def test_validate_et_filter_exigent_un_run_parent(etape: str) -> None:
     assert main(["data", etape]) == CodeSortie.USAGE
+
+
+# --- Amorces CT par Mistral (--courriers) ----------------------------------------------------
+
+
+class FabriqueCourriers:
+    def __init__(self, budget: int | None = None) -> None:
+        self.appels = 0
+        self.budget = budget
+
+    def __call__(self, seed_run_id: str, sujet_id: str, session_id: str) -> tuple[str, str]:
+        if self.budget is not None and self.appels >= self.budget:
+            raise BudgetEpuise("plafond factice")
+        self.appels += 1
+        valeurs = {
+            "type_courrier": f"<type-factice-{self.appels}>",
+            "objet": f"<objet-factice-{self.appels}>",
+            "elements_connus": f"<elements-connus-factice-{self.appels}>",
+        }
+        return secrets.token_hex(16), json.dumps(valeurs)
+
+
+def test_courriers_auto_volume_ct_fois_facteur(
+    monde: SimpleNamespace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fabrique = FabriqueCourriers()
+    gels: list[str] = []
+    monkeypatch.setattr(
+        "slmsp.evaluation.gel.jeu_gele_et_commite", lambda version, racine: gels.append(version)
+    )
+    monkeypatch.setattr(cli_data, "_fabrique_courriers", lambda racine: fabrique)
+    code = main(["data", "seed", "--racine", str(monde.racine), "--courriers", "auto"])
+    assert code == CodeSortie.SUCCES
+    assert gels == ["v1.1"]
+    [dossier] = dossiers_seed(monde.racine)
+    comptes = json.loads((dossier / "comptes.json").read_text("utf-8"))
+    from slmsp.data.config import charger_config_donnees
+
+    cible = charger_config_donnees().volumes.CT * 3  # facteur par défaut
+    assert comptes["courriers"]["demandes"] == cible
+    assert fabrique.appels == min(cible, comptes["courriers"]["sujets_disponibles"])
+    ct = [a for a in amorces(dossier) if a["auteur_contenu"] == "mistral"]
+    assert len(ct) == 3 * fabrique.appels
+    assert "amorces CT" in capsys.readouterr().out
+
+
+def test_courriers_refuses_sans_gel_code_4(
+    monde: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def non_gele(version: str, racine: Path) -> None:
+        raise ManifesteInvalide("jeu v1.1 non commité")
+
+    def interdit(*_args: Any) -> Any:
+        raise AssertionError("pas de fabrique Mistral sans gel")
+
+    monkeypatch.setattr("slmsp.evaluation.gel.jeu_gele_et_commite", non_gele)
+    monkeypatch.setattr(cli_data, "_fabrique_courriers", interdit)
+    code = main(["data", "seed", "--racine", str(monde.racine), "--courriers", "2"])
+    assert code == CodeSortie.MANIFESTE_INVALIDE
+    assert dossiers_seed(monde.racine) == []
+
+
+def test_courriers_budget_epuise_code_3(
+    monde: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("slmsp.evaluation.gel.jeu_gele_et_commite", lambda version, racine: None)
+    monkeypatch.setattr(cli_data, "_fabrique_courriers", lambda racine: FabriqueCourriers(1))
+    code = main(["data", "seed", "--racine", str(monde.racine), "--courriers", "3"])
+    assert code == CodeSortie.BUDGET_EPUISE
+    [dossier] = dossiers_seed(monde.racine)
+    assert sum(a["auteur_contenu"] == "mistral" for a in amorces(dossier)) == 3
+
+
+@pytest.mark.parametrize("valeur", ["-1", "x", "AUTO"])
+def test_courriers_invalides_code_2(valeur: str) -> None:
+    assert main(["data", "seed", "--courriers", valeur]) == CodeSortie.USAGE
+
+
+def test_fabrique_courriers_reutilise_le_journal() -> None:
+    pytest.importorskip("mistralai")
+    appels: list[str] = []
+    valeurs = json.dumps({"objet": "<objet-factice-1>"})
+    brut = json.dumps(
+        {"choices": [{"index": 0, "message": {"role": "assistant", "content": valeurs}}]}
+    ).encode()
+
+    class Ligne:
+        appel_id = "b" * 32
+        reponse_brute = brut
+
+    class Generation:
+        appel_id = "c" * 32
+        reponse_brute = brut
+
+    class Generateur:
+        def __init__(self, journalisee: bool) -> None:
+            self.journalisee = journalisee
+
+        def reponse_journalisee(self, gabarit_id: str, ids: list[str], session: str, tache: str):
+            assert (gabarit_id, ids, tache) == ("amorces-ct", ["ct.sujet.x.1"], "CT")
+            return Ligne() if self.journalisee else None
+
+        def generer(self, gabarit_id: str, ids: list[str], session: str, tache: str):
+            appels.append(session)
+            return Generation()
+
+    reprise = cli_data._fabrique_courriers_depuis(lambda seed: Generateur(True))
+    assert reprise("seed-1", "ct.sujet.x.1", "seed-ct-1") == ("b" * 32, valeurs)
+    assert appels == []  # réponse déjà journalisée : aucun appel Mistral
+    neuve = cli_data._fabrique_courriers_depuis(lambda seed: Generateur(False))
+    assert neuve("seed-1", "ct.sujet.x.1", "seed-ct-1") == ("c" * 32, valeurs)
+    assert appels == ["seed-ct-1"]
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        {"role": "assistant", "content": ""},
+        {"role": "assistant", "content": None},
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [
+                {"id": "t1", "type": "function", "function": {"name": "f", "arguments": "{}"}}
+            ],
+        },
+    ],
+)
+def test_fabrique_courriers_reponse_sans_texte_chaine_vide(message: dict[str, Any]) -> None:
+    """Réponse sans texte : chaîne vide (comptée en schéma invalide par seed), pas d'erreur."""
+    pytest.importorskip("mistralai")
+    brut = json.dumps({"choices": [{"index": 0, "message": message}]}).encode()
+
+    class Generation:
+        appel_id = "c" * 32
+        reponse_brute = brut
+
+    class Generateur:
+        def reponse_journalisee(self, *_args: Any) -> None:
+            return None
+
+        def generer(self, *_args: Any) -> Generation:
+            return Generation()
+
+    fabrique = cli_data._fabrique_courriers_depuis(lambda seed: Generateur())
+    assert fabrique("seed-1", "ct.sujet.x.1", "seed-ct-1") == ("c" * 32, "")

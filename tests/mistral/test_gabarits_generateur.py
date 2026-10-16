@@ -28,6 +28,7 @@ GABARITS = (
     "ct",
     "generique",
     "validation",
+    "amorces-ct",
 )
 TACHES = ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "generique", "validation")
 INTERDITS = ("?", "«", "»", '"', "“", "”")

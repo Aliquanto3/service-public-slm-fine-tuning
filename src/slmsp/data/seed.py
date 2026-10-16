@@ -26,6 +26,15 @@ révision et SHA-256 (le CLI les convertit en `JeuPublic`).
 - **Scénarios** (opt-in, `nb_scenarios > 0`) : pour les premiers thèmes `CR/theme` conservés,
   une fabrique injectée appelle Mistral et renvoie `(appel_id, texte)` ; l'amorce
   `CR/scenario` correspondante porte `auteur_contenu = "mistral"` et cet `appel_id`.
+- **Courriers types** (opt-in, `nb_courriers > 0`, décision A2b) : pour les premiers sujets
+  `CT/sujet` conservés, une fabrique injectée appelle Mistral sur le gabarit `amorces-ct`
+  (consignes seules, D1.1) et renvoie `(appel_id, contenu)`. Le contenu est un objet JSON dont
+  les clés `type_courrier`, `objet` et `elements_connus` deviennent trois amorces `mistral`
+  de même `appel_id` (un groupe pour `generate`), après contrôle du schéma, déduplication
+  par objet normalisé et anti-fuite de chaque valeur.
+- **Longueurs RE** : chaque texte `RE/texte` conservé reçoit une amorce `config`
+  `RE/longueur_demandee` (`<n> mots`, `lie_a` = l'amorce du texte), `n` tiré par graine dans
+  `[seed].re_longueurs_mots` de `config/donnees.toml` : un paramètre, pas un contenu.
 
 Le run `data-seed` contient `amorces.jsonl` (écrit en ajout) et `comptes.json`.
 `verifier_amorces` relit un `amorces.jsonl` : schéma (provenance complète), `sha_texte`,
@@ -36,6 +45,7 @@ par le Générateur lors de son utilisation.
 from __future__ import annotations
 
 import json
+import random
 import re
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
@@ -58,7 +68,7 @@ from slmsp.core.items import (
     empreintes_antifuite,
     identifiants_proteges,
 )
-from slmsp.core.schemas.amorce import Amorce
+from slmsp.core.schemas.amorce import Amorce, objet_de_reponse, texte_de_reponse
 from slmsp.core.schemas.run import MOTIF_RUN_ID
 from slmsp.core.texte import ngrammes, normaliser
 from slmsp.data.config import ConfigDonnees
@@ -72,6 +82,7 @@ __all__ = [
     "SANS_SOURCE_PUBLIQUE",
     "VERSIONS_OBLIGATOIRES",
     "Decodeur",
+    "FabriqueCourrier",
     "FabriqueScenario",
     "FichierJeu",
     "JeuPublic",
@@ -79,6 +90,7 @@ __all__ = [
     "RegleAmorce",
     "ResultatSeed",
     "construire_protection",
+    "session_courrier",
     "executer_seed",
     "verifier_amorces",
     "versions_protegees",
@@ -107,14 +119,27 @@ SCENARIO: Final = ("CR", "scenario")
 GABARIT_SCENARIO: Final = "scenario-reunion"
 """Gabarit du Générateur qui produit un scénario de réunion (utilisé par le CLI)."""
 
+SUJET_CT: Final = ("CT", "sujet")
+GABARIT_AMORCES_CT: Final = "amorces-ct"
+"""Gabarit du Générateur qui produit les amorces d'un courrier type (utilisé par le CLI)."""
+CHAMPS_CT: Final[tuple[tuple[str, int, int], ...]] = (
+    ("type_courrier", 3, 200),
+    ("objet", 10, 300),
+    ("elements_connus", 20, 3000),
+)
+"""Clés de l'objet JSON renvoyé par Mistral (emplacements du gabarit `ct`) et bornes de
+longueur, en caractères."""
+LONGUEUR_RE: Final = ("RE", "longueur_demandee")
+TEXTE_RE: Final = ("RE", "texte")
+
 SANS_SOURCE_PUBLIQUE: Final[tuple[tuple[str, str], ...]] = (
     ("Q", "passages"),
     ("CT", "type_courrier"),
     ("CT", "objet"),
     ("CT", "elements_connus"),
-    ("RE", "longueur_demandee"),
 )
-"""Emplacements de gabarit sans source publique retenue (listés dans `comptes.json`)."""
+"""Emplacements de gabarit sans source publique retenue (listés dans `comptes.json`) ; ceux
+de CT sont remplis par Mistral quand `nb_courriers > 0`."""
 
 
 # --- Jeux et règles -----------------------------------------------------------------------
@@ -163,6 +188,7 @@ REGLES: Final[tuple[RegleAmorce, ...]] = (
     RegleAmorce("service-public", "text", "CO", "texte", 150, 800),
     RegleAmorce("service-public", "text", "RE", "texte", 800, 4000),
     RegleAmorce("piaf", "question", "generique", "demande", 10, 300),
+    RegleAmorce("service-public", "title", "CT", "sujet", 10, 200),
 )
 """Table de règles (aucun texte d'amorce : seulement des noms de colonnes et des bornes)."""
 
@@ -181,6 +207,16 @@ Injecté : `slmsp.data` ne décode pas le parquet lui-même (AD-24)."""
 
 FabriqueScenario = Callable[[str, str, str], tuple[str, str]]
 """`(seed_run_id, amorce_id du thème, session_id) -> (appel_id, texte du scénario)`."""
+
+FabriqueCourrier = Callable[[str, str, str], tuple[str, str]]
+"""`(seed_run_id, amorce_id du sujet, session_id) -> (appel_id, contenu JSON de la réponse)`.
+La session est stable d'un run à l'autre (`session_courrier`) : la fabrique réutilise une
+réponse déjà journalisée au lieu de rappeler Mistral."""
+
+
+def session_courrier(sujet: Amorce) -> str:
+    """Session Mistral d'un sujet CT, stable d'un run à l'autre (reprise sans nouvel appel)."""
+    return "seed-ct-" + sha256_hex(f"{sujet.amorce_id}\0{sujet.sha_texte}")[:24]
 
 
 # --- Protection anti-fuite ----------------------------------------------------------------
@@ -452,11 +488,14 @@ def _config_run(
     registre: RegistreLicences,
     facteur: int,
     nb_scenarios: int,
+    nb_courriers: int,
 ) -> dict[str, Any]:
     utilises = {r.jeu for r in regles}
     return {
         "facteur": facteur,
         "nb_scenarios": nb_scenarios,
+        "nb_courriers": nb_courriers,
+        "seed": config.seed.model_dump(mode="json"),
         "volumes": config.volumes.par_tache(),
         "protection": {
             "versions": list(protection.versions),
@@ -501,6 +540,8 @@ def executer_seed(
     facteur: int = FACTEUR_DEFAUT,
     nb_scenarios: int = 0,
     fabrique_scenarios: FabriqueScenario | None = None,
+    nb_courriers: int = 0,
+    fabrique_courriers: FabriqueCourrier | None = None,
     consigner: Callable[[str], None] | None = None,
 ) -> ResultatSeed:
     """Constitue `runs/data-seed/<run_id>/{amorces.jsonl, comptes.json}`.
@@ -510,7 +551,8 @@ def executer_seed(
     SHA-256 différent lève `ProvenanceInvalide` (run `partiel-erreur`). `BudgetEpuise`
     pendant les scénarios donne un run `partiel-budget` dont les amorces déjà écrites sont
     conservées (le résultat est renvoyé, rien n'est levé). `nb_scenarios > 0` exige
-    `fabrique_scenarios` ; sans scénario, la fabrique n'est jamais appelée.
+    `fabrique_scenarios` ; sans scénario, la fabrique n'est jamais appelée. De même,
+    `nb_courriers > 0` exige `fabrique_courriers`, appelée au plus `nb_courriers` fois.
     """
     if not isinstance(facteur, int) or isinstance(facteur, bool) or facteur < 1:
         raise ValueError(f"facteur doit être un entier positif (reçu {facteur!r})")
@@ -518,6 +560,10 @@ def executer_seed(
         raise ValueError(f"nb_scenarios doit être un entier positif ou nul (reçu {nb_scenarios!r})")
     if nb_scenarios > 0 and fabrique_scenarios is None:
         raise ValueError("nb_scenarios > 0 exige une fabrique de scénarios")
+    if not isinstance(nb_courriers, int) or isinstance(nb_courriers, bool) or nb_courriers < 0:
+        raise ValueError(f"nb_courriers doit être un entier positif ou nul (reçu {nb_courriers!r})")
+    if nb_courriers > 0 and fabrique_courriers is None:
+        raise ValueError("nb_courriers > 0 exige une fabrique de courriers")
     consigner = consigner or (lambda _message: None)
     base = Path(racine).resolve()
     par_nom = {jeu.nom: jeu for jeu in jeux}
@@ -528,7 +574,7 @@ def executer_seed(
     utilises = [jeu for jeu in jeux if any(r.jeu == jeu.nom for r in regles)]
     for jeu in utilises:
         registre.exiger(jeu.depot, "recherche")
-    if nb_scenarios > 0:
+    if nb_scenarios > 0 or nb_courriers > 0:
         registre.exiger("mistral/reponses-generateur", "recherche")
     for jeu in utilises:
         for fichier in jeu.fichiers:
@@ -553,6 +599,7 @@ def executer_seed(
             registre=registre,
             facteur=facteur,
             nb_scenarios=nb_scenarios,
+            nb_courriers=nb_courriers,
         ),
         entrees=entrees,
         racine=base,
@@ -570,6 +617,10 @@ def executer_seed(
             facteur=facteur,
             nb_scenarios=nb_scenarios,
             fabrique=fabrique_scenarios,
+            longueurs_re=tuple(config.seed.re_longueurs_mots),
+            graine=config.seed.graine,
+            nb_courriers=nb_courriers,
+            fabrique_courriers=fabrique_courriers,
             consigner=consigner,
         )
     except KeyboardInterrupt:
@@ -596,6 +647,10 @@ def _remplir(
     facteur: int,
     nb_scenarios: int,
     fabrique: FabriqueScenario | None,
+    longueurs_re: Sequence[int],
+    graine: int,
+    nb_courriers: int,
+    fabrique_courriers: FabriqueCourrier | None,
     consigner: Callable[[str], None],
 ) -> dict[str, Any]:
     """Collecte, sélection et écriture des amorces ; renvoie le contenu de `comptes.json`."""
@@ -633,6 +688,7 @@ def _remplir(
     # 2. Sélection déterministe et écriture en ajout.
     taches: dict[str, dict[str, Any]] = {}
     conservees: dict[tuple[str, str], list[Amorce]] = {}
+    provenances: dict[str, tuple[Sequence[str], Sequence[str]]] = {}
     for groupe_cle, candidats in groupes.items():
         tache, emplacement = groupe_cle
         cible = volumes[tache] * facteur
@@ -655,6 +711,7 @@ def _remplir(
             amorce = _amorce_publique(candidat)
             _ecrire_amorce(run, amorce)
             retenues.append(amorce)
+            provenances[amorce.amorce_id] = (candidat.urls, candidat.ids)
         conservees[groupe_cle] = retenues
         taches.setdefault(tache, {})[emplacement] = {
             "cible": cible,
@@ -677,7 +734,20 @@ def _remplir(
         protection=protection,
         consigner=consigner,
     )
-    statut = "partiel-budget" if scenarios.pop("budget_epuise") else "complet"
+    # 4. Longueurs RE (paramètre de configuration tiré par graine).
+    longueurs = _longueurs_re(run, conservees.get(TEXTE_RE, []), longueurs_re, graine)
+    # 5. Amorces CT par Mistral (opt-in).
+    courriers = _courriers(
+        run,
+        sujets=conservees.get(SUJET_CT, []),
+        nb_courriers=nb_courriers,
+        fabrique=fabrique_courriers,
+        protection=protection,
+        provenances=provenances,
+        consigner=consigner,
+    )
+    epuise = scenarios.pop("budget_epuise") | courriers.pop("budget_epuise")
+    statut = "partiel-budget" if epuise else "complet"
     return {
         "schema_version": 1,
         "run_id": run.run_id,
@@ -691,6 +761,8 @@ def _remplir(
         },
         "taches": taches,
         "scenarios": scenarios,
+        "courriers": courriers,
+        "longueurs_re": longueurs,
         "sans_source_publique": [
             {"tache": tache, "emplacement": emplacement}
             for tache, emplacement in SANS_SOURCE_PUBLIQUE
@@ -754,6 +826,132 @@ def _scenarios(
     return bilan
 
 
+def _longueurs_re(
+    run: Run, textes: Sequence[Amorce], longueurs: Sequence[int], graine: int
+) -> dict[str, Any]:
+    """Une amorce `config` `RE/longueur_demandee` par texte RE, tirée par graine."""
+    tirees: Counter[int] = Counter()
+    for texte in textes:
+        mots = random.Random(f"{graine}\0{texte.amorce_id}").choice(list(longueurs))
+        valeur = f"{mots} mots"
+        suffixe = texte.amorce_id.removeprefix(f"{TEXTE_RE[0].lower()}.{TEXTE_RE[1]}.")
+        _ecrire_amorce(
+            run,
+            Amorce(
+                schema_version=1,
+                amorce_id=f"{LONGUEUR_RE[0].lower()}.{LONGUEUR_RE[1]}.{suffixe}",
+                tache=LONGUEUR_RE[0],
+                emplacement=LONGUEUR_RE[1],
+                texte=valeur,
+                sha_texte=sha256_hex(valeur),
+                auteur_contenu="config",
+                lie_a=texte.amorce_id,
+            ),
+        )
+        tirees[mots] += 1
+    return {
+        "produites": sum(tirees.values()),
+        "par_longueur": {str(mots): n for mots, n in sorted(tirees.items())},
+    }
+
+
+def _champs_courrier(contenu: Any) -> dict[str, str] | None:
+    """Valeurs des clés de `CHAMPS_CT` dans l'objet JSON de `contenu`, bornes comprises ;
+    `None` si l'objet n'a pas exactement ces trois clés."""
+    objet = objet_de_reponse(contenu)
+    if objet is None or set(objet) != {champ for champ, _, _ in CHAMPS_CT}:
+        return None
+    valeurs: dict[str, str] = {}
+    for champ, minimum, maximum in CHAMPS_CT:
+        valeur = texte_de_reponse(contenu, champ)
+        if valeur is None or not minimum <= len(valeur) <= maximum:
+            return None
+        valeurs[champ] = valeur
+    return valeurs
+
+
+def _courriers(
+    run: Run,
+    *,
+    sujets: Sequence[Amorce],
+    nb_courriers: int,
+    fabrique: FabriqueCourrier | None,
+    protection: Protection,
+    provenances: Mapping[str, tuple[Sequence[str], Sequence[str]]],
+    consigner: Callable[[str], None],
+) -> dict[str, Any]:
+    """Amorces CT d'au plus `nb_courriers` appels Mistral, un par sujet conservé. L'anti-fuite
+    teste chaque valeur avec les URL et identifiants de la ligne source du sujet
+    (`provenances`), comme pour les candidats publics."""
+    bilan: dict[str, Any] = {
+        "demandes": nb_courriers,
+        "sujets_disponibles": len(sujets),
+        "appels": 0,
+        "produits": 0,
+        "schema_invalide": 0,
+        "doublons": 0,
+        "exclus": 0,
+        "exclusions": dict.fromkeys(MOTIFS_EXCLUSION, 0),
+        "budget_epuise": False,
+    }
+    if nb_courriers == 0 or fabrique is None:
+        return bilan
+    prefixe = f"{SUJET_CT[0].lower()}.{SUJET_CT[1]}."
+    objets_vus: set[str] = set()
+    for sujet in sujets[:nb_courriers]:
+        try:
+            appel_id, contenu = fabrique(run.run_id, sujet.amorce_id, session_courrier(sujet))
+        except BudgetEpuise:
+            bilan["budget_epuise"] = True
+            consigner("budget épuisé : amorces CT interrompues")
+            break
+        bilan["appels"] += 1
+        valeurs = _champs_courrier(contenu)
+        if valeurs is None:
+            bilan["schema_invalide"] += 1
+            continue
+        objet = sha256_hex(normaliser(valeurs["objet"]))
+        if objet in objets_vus:
+            bilan["doublons"] += 1
+            continue
+        urls, ids = provenances.get(sujet.amorce_id, ((), ()))
+        motifs = {
+            motif
+            for valeur in valeurs.values()
+            for motif in protection.motifs(valeur, urls=urls, ids=ids)
+        }
+        if motifs:
+            bilan["exclus"] += 1
+            for motif in motifs:
+                bilan["exclusions"][motif] += 1
+            continue
+        objets_vus.add(objet)
+        suffixe = sujet.amorce_id.removeprefix(prefixe)
+        try:
+            amorces = [
+                Amorce(
+                    schema_version=1,
+                    amorce_id=f"{SUJET_CT[0].lower()}.{champ}.{suffixe}",
+                    tache=SUJET_CT[0],
+                    emplacement=champ,
+                    texte=valeur,
+                    sha_texte=sha256_hex(valeur),
+                    auteur_contenu="mistral",
+                    appel_id=appel_id,
+                )
+                for champ, valeur in valeurs.items()
+            ]
+        except ValidationError:
+            raise ProvenanceInvalide(
+                f"courrier du sujet {sujet.amorce_id!r} : réponse de la fabrique non conforme"
+            ) from None
+        for amorce in amorces:
+            _ecrire_amorce(run, amorce)
+        bilan["produits"] += 1
+    consigner(f"amorces CT : {bilan['produits']} courrier(s) sur {bilan['appels']} appel(s)")
+    return bilan
+
+
 # --- Vérification -------------------------------------------------------------------------
 
 
@@ -803,6 +1001,9 @@ def verifier_amorces(
                 f"amorce {amorce.amorce_id!r} : auteur_contenu « anael » refusé"
             )
         amorces.append(amorce)
+    for amorce in amorces:
+        if amorce.auteur_contenu == "config" and amorce.lie_a not in vus:
+            raise ProvenanceInvalide(f"amorce {amorce.amorce_id!r} : amorce liée absente")
 
     attendues: dict[str, dict[int, list[Amorce]]] = {}
     for amorce in amorces:

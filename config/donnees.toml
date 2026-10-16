@@ -69,6 +69,14 @@ taille_echantillon = 30
 # Graine du tirage, pour un échantillon reproductible.
 graine = 42
 
+# Étape `seed` : paramètres sans contenu (aucune amorce n'est écrite ici, D1.1).
+[seed]
+# Longueurs de résumé, en mots (10 à 9999), proposées à l'emplacement RE/longueur_demandee :
+# chaque texte RE reçoit une longueur tirée dans cette liste (texte de l'amorce : « <n> mots »).
+re_longueurs_mots = [80, 150, 250]
+# Graine du tirage (une même amorce de texte reçoit toujours la même longueur).
+graine = 42
+
 # Paires ORPO (story 9.7) : génération locale de la réponse rejetée par le Modèle de base.
 [preferences]
 # Graine de base ; la paire de rang i utilise graine + i.
