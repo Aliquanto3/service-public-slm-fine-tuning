@@ -1,5 +1,4 @@
-# Benchmark du socle (addendum §E). Les jeux sont à épingler au premier fetch réel
-# (revision + SHA-256 des fichiers) ; sans cela, `slmsp fetch benchmarks` les saute.
+# Benchmark du socle (addendum §E). Jeu épinglé (révision + SHA-256) : `slmsp fetch benchmarks`.
 nom = "bfcl"
 description = "Tool calling BFCL : simple, multiple et irrelevance sous-échantillonnés"
 moteur = "bfcl"
@@ -15,4 +14,31 @@ categories = ["simple", "multiple", "irrelevance"]
 [[jeux]]
 nom = "bfcl"
 depot = "gorilla-llm/Berkeley-Function-Calling-Leaderboard"
+revision = "61fc0608cfd831fcfbbaa676ebdfef0ed963eeda"
 acces = "libre"
+licence = "apache-2.0"
+
+[[jeux.fichiers]]
+chemin = "BFCL_v3_simple.json"
+sha256 = "fbc37b2ad252bf9af985582e0e07b456173fe627d957491472ea9cef5fb83158"
+taille = 280474
+
+[[jeux.fichiers]]
+chemin = "BFCL_v3_multiple.json"
+sha256 = "aef168155ebd74b7ac2401198b201343bc7d16d7a3d7e0d4e6d8ee82c6969b2a"
+taille = 316583
+
+[[jeux.fichiers]]
+chemin = "BFCL_v3_irrelevance.json"
+sha256 = "975f51c51f688649fd190078efd87081241e0a326f9114a2ea3c1ca2440d8690"
+taille = 160114
+
+[[jeux.fichiers]]
+chemin = "possible_answer/BFCL_v3_simple.json"
+sha256 = "2911a2bc00df82c4f999ffa64fedb0164cb88e96212ffa5972087eb91fd496ee"
+taille = 60809
+
+[[jeux.fichiers]]
+chemin = "possible_answer/BFCL_v3_multiple.json"
+sha256 = "244e00ce9395df948bcafc7bee64e8f9c87ef70887587d83cae45b13699f3047"
+taille = 32254

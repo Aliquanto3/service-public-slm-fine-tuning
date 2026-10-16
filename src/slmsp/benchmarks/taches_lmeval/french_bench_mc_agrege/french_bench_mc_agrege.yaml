@@ -1,0 +1,14 @@
+# Groupe lm-eval : les 4 tâches QCM de French Bench (tag `french_bench_mc` de lm-eval, qui ne
+# produit aucun score agrégé), agrégées en moyenne simple de `acc` (une valeur pour le Comparatif).
+# hellaswag (9 338 items) ne doit pas écraser grammaire et vocabulaire (119 items chacun).
+group: french_bench_mc_agrege
+task:
+  - french_bench_arc_challenge
+  - french_bench_grammar
+  - french_bench_hellaswag
+  - french_bench_vocab
+aggregate_metric_list:
+  - metric: acc
+    weight_by_size: false
+metadata:
+  version: 1.0

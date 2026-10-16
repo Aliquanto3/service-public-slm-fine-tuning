@@ -1,5 +1,5 @@
-# Benchmark du socle (addendum §E). Les jeux sont à épingler au premier fetch réel
-# (revision + SHA-256 des fichiers) ; sans cela, `slmsp fetch benchmarks` les saute.
+# Benchmark du socle (addendum §E). Jeux épinglés (révision + SHA-256) : `slmsp fetch benchmarks`.
+# WMT14 fr-en (test, 3003 phrases) sert les deux sens ; FLORES-200 devtest, une langue par fichier.
 nom = "traduction"
 description = "Traduction (chrF) : WMT14 en-fr et fr-en, FLORES-200 FR vers ES, AR, PT, DE"
 moteur = "traduction"
@@ -16,9 +16,21 @@ paires_flores = ["fr-es", "fr-ar", "fr-pt", "fr-de"]
 [[jeux]]
 nom = "flores-200"
 depot = "facebook/flores"
+revision = "71abf77d8b7beb5cfef59898d6b24d92ab7654fc"
 acces = "conditionnel"
+licence = "cc-by-sa-4.0"
+# NON ÉPINGLÉ (fichiers) : accès conditionnel, 401 sans HF_TOKEN autorisé (2026-10-16). Après
+# acceptation des conditions sur la page du jeu et HF_TOKEN dans .env, épingler les 5 fichiers
+# data/language/{fra_Latn,spa_Latn,arb_Arab,por_Latn,deu_Latn}/devtest-00000-of-00001.parquet
+# (SHA-256 = oid LFS de l'API Hub, taille 124-141 Ko chacun) en [[jeux.fichiers]].
 
 [[jeux]]
 nom = "wmt14"
 depot = "wmt/wmt14"
+revision = "b199e406369ec1b7634206d3ded5ba45de2fe696"
 acces = "libre"
+
+[[jeux.fichiers]]
+chemin = "fr-en/test-00000-of-00001.parquet"
+sha256 = "8b9f62543c776b5e992d15524f76f9fe589d838c1dcb04a8738c21e8c42269f1"
+taille = 535966

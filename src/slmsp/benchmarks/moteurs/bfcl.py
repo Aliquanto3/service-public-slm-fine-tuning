@@ -3,8 +3,9 @@
 `bfcl-eval` vit dans l'environnement uv `envs/bfcl/` ; `slmsp` ne l'importe jamais. Ce moteur :
 
 1. lit les questions des catégories `simple`, `multiple` et `irrelevance` sous
-   `<jeu bfcl>/<revision>/` (`<cat>.jsonl`, format BFCL : `id`, `question`, `function` ;
-   `reponses/<cat>.jsonl` : `id`, `ground_truth`) et les sous-échantillonne
+   `<jeu bfcl>/<revision>/` (`BFCL_v3_<cat>.json`, une ligne JSON par item : `id`, `question`,
+   `function` ; `possible_answer/BFCL_v3_<cat>.json` : `id`, `ground_truth`)
+   et les sous-échantillonne
    (`options.effectif`, 50 par catégorie par défaut, graine fixe) ;
 2. envoie chaque question avec les `tools` natifs à `LlmPort.generer` (le client applique la
    voie `json-generique` du modèle si sa configuration la demande) ;
@@ -12,7 +13,8 @@
    vérificateur en sous-processus, `uv run --project envs/bfcl python envs/bfcl/verifier.py
    <sorties> <verdicts>`, avec `env_sous_processus()` (`SLMSP_BFCL_VERIFIER_CMD` le remplace).
 
-Scores : `<categorie>.precision` et `<categorie>.n_items` dans un seul `ResultatBench`.
+Scores : `<categorie>.precision`, `<categorie>.n_items` et `moyenne.precision` (moyenne simple
+des catégories) dans un seul `ResultatBench`.
 """
 
 from __future__ import annotations
@@ -33,6 +35,8 @@ from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Jeton
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from slmsp.benchmarks.config import BenchmarkConfig
     from slmsp.core.ports import LlmPort
 
@@ -102,13 +106,13 @@ def charger_categorie(
     dossier: Path, categorie: str, effectif: int
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Questions sous-échantillonnées (graine fixe, triées par id) et réponses attendues."""
-    questions = lire_jsonl(dossier / f"{categorie}.jsonl")
+    questions = lire_jsonl(dossier / f"BFCL_v3_{categorie}.json")
     choisies = sorted(
         random.Random(SEED).sample(questions, min(effectif, len(questions))),
         key=lambda q: str(q["id"]),
     )
     reponses: dict[str, Any] = {}
-    fichier = dossier / "reponses" / f"{categorie}.jsonl"
+    fichier = dossier / "possible_answer" / f"BFCL_v3_{categorie}.json"
     if categorie != "irrelevance":
         if not fichier.is_file():
             raise ConfigurationInvalide(
@@ -180,8 +184,12 @@ def verifier(entree: Path, sortie: Path) -> dict[str, Any]:
         raise BfclEchoue(f"verdicts BFCL illisibles ({sortie}) : {exc}") from exc
 
 
-def analyser(verdicts: dict[str, Any]) -> SortieMoteur:
-    """Verdicts -> précision et effectif par catégorie."""
+def analyser(verdicts: dict[str, Any], attendues: Sequence[str] | None = None) -> SortieMoteur:
+    """Verdicts -> précision et effectif par catégorie.
+
+    `moyenne.precision` : moyenne simple des précisions de TOUTES les catégories attendues
+    (simple, multiple et irrelevance par défaut). Une catégorie attendue absente ou sans
+    précision supprime l'agrégat, pour que le Comparatif ne mélange pas des compositions."""
     categories = verdicts.get("categories")
     if not isinstance(categories, dict) or not categories:
         raise BfclEchoue("verdicts BFCL sans section `categories`")
@@ -189,6 +197,10 @@ def analyser(verdicts: dict[str, Any]) -> SortieMoteur:
     for categorie, bilan in categories.items():
         scores[f"{categorie}.precision"] = bilan["precision"]
         scores[f"{categorie}.n_items"] = bilan["n_items"]
+    attendues = list(attendues) if attendues is not None else list(CATEGORIES)
+    precisions = [(categories.get(c) or {}).get("precision") for c in attendues]
+    if attendues and all(p is not None for p in precisions):  # métrique unique du Comparatif
+        scores["moyenne.precision"] = sum(precisions) / len(precisions)  # type: ignore[arg-type]
     version = verdicts.get("bfcl_eval_version")
     return SortieMoteur(
         scores=scores,
@@ -248,7 +260,7 @@ def executer(
     sortie_dir.mkdir(parents=True, exist_ok=True)
     entree, verdicts_json = sortie_dir / "sorties.json", sortie_dir / "verdicts.json"
     entree.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
-    resultat = analyser(verifier(entree, verdicts_json))
+    resultat = analyser(verifier(entree, verdicts_json), categories)
     resultat.seed = SEED
     resultat.batch_size = "1"
     resultat.details["sorties_json"] = str(entree)

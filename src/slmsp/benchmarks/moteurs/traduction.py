@@ -1,13 +1,20 @@
 """Moteur de traduction (AD-16, FR-18) : chrF sacrebleu sur WMT14 et FLORES-200.
 
 Chaque paire `src-tgt` lit `<jeu>/<revision>/<src>-<tgt>.jsonl` (lignes `{"source", "reference"}`)
-sous `data/raw/benchmarks/`. La traduction est générée par `LlmPort.generer` avec le prompt de
-la Tâche TR (`construire_messages`, AD-7), température 0. Une paire dont le jeu est absent,
+sous `data/raw/benchmarks/`, ou, à défaut, les fichiers parquet du jeu tels que `slmsp fetch` les
+dépose : WMT14 `<autre>-en/test-00000-of-00001.parquet` (colonne `translation`, un fichier pour les
+deux sens) et FLORES-200 `data/language/<code>/devtest-00000-of-00001.parquet` (colonne `sentence`,
+alignée par ligne ; format lu d'après la fiche du jeu, accès conditionnel non vérifié).
+La traduction est générée par `LlmPort.generer` avec le prompt de la Tâche TR
+(`construire_messages`, AD-7), température 0. Une paire dont le jeu est absent,
 non épinglé ou à accès conditionnel non obtenu est sautée et consignée (AC 2) ; sans aucune
 paire, le benchmark est sauté.
 
 Options : `wmt14_phrases` (sous-échantillon, 500 par défaut), `paires_wmt14` (défaut
-`["en-fr", "fr-en"]`), `paires_flores`. Scores : `<paire>.chrf` et `<paire>.n_items` ;
+`["en-fr", "fr-en"]`), `paires_flores`. Scores : `<paire>.chrf`, `<paire>.n_items` et
+`moyenne_wmt.chrf` (moyenne simple des paires WMT14 mesurées) et `moyenne.chrf` (moyenne de
+toutes les paires demandées, seulement si aucune n'est sautée : jamais une moyenne de composition
+variable). `details.paires_mesurees` / `paires_demandees` consignent la composition ;
 `details.signatures` archive la signature sacrebleu de chaque paire.
 """
 
@@ -39,6 +46,13 @@ LANGUES = {
     "pt": "portugais",
     "de": "allemand",
 }
+CODES_FLORES = {
+    "fr": "fra_Latn",
+    "es": "spa_Latn",
+    "ar": "arb_Arab",
+    "pt": "por_Latn",
+    "de": "deu_Latn",
+}
 OPTIONS_GENERATION = {"temperature": 0, "seed": 1234, "max_tokens": 512}
 SEED_DEFAUT = 1234
 
@@ -66,6 +80,59 @@ def lire_paire(chemin: Path, limite: int | None) -> list[tuple[str, str]]:
             if limite is not None and len(phrases) >= limite:
                 break
     return phrases
+
+
+def _lire_parquet(chemin: Path, colonne: str) -> list[Any]:
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    try:
+        return pq.read_table(chemin, columns=[colonne]).column(colonne).to_pylist()
+    except (pa.ArrowException, OSError, KeyError) as exc:
+        raise ConfigurationInvalide(
+            f"fichier parquet illisible ou sans colonne `{colonne}` : {chemin} ({exc!r})"
+        ) from exc
+
+
+def charger_paire(jeu: str, dossier: Path, paire: str, limite: int | None) -> list[tuple[str, str]]:
+    """`(source, référence)` d'une paire : `<paire>.jsonl` s'il existe, sinon le parquet du jeu.
+
+    Lève `FileNotFoundError` (nom du fichier attendu) si rien n'est lisible.
+    """
+    jsonl = dossier / f"{paire}.jsonl"
+    if jsonl.is_file():
+        return lire_paire(jsonl, limite)
+    source, cible = paire.split("-")
+    if jeu == "wmt14":
+        autre = cible if source == "en" else source
+        parquet = dossier / f"{autre}-en" / "test-00000-of-00001.parquet"
+        if not parquet.is_file():
+            raise FileNotFoundError(str(parquet))
+        lignes = _lire_parquet(parquet, "translation")
+        try:
+            phrases = [(str(ligne[source]), str(ligne[cible])) for ligne in lignes]
+        except (KeyError, TypeError) as exc:
+            raise ConfigurationInvalide(
+                f"WMT14 : colonne `translation` sans les langues {source}/{cible} ({exc!r})"
+            ) from exc
+    elif jeu == "flores-200":
+        fichiers = []
+        for langue in (source, cible):
+            code = CODES_FLORES.get(langue, langue)
+            fichier = dossier / "data" / "language" / code / "devtest-00000-of-00001.parquet"
+            if not fichier.is_file():
+                raise FileNotFoundError(str(fichier))
+            fichiers.append(fichier)
+        phrases = list(
+            zip(
+                map(str, _lire_parquet(fichiers[0], "sentence")),
+                map(str, _lire_parquet(fichiers[1], "sentence")),
+                strict=True,
+            )
+        )
+    else:
+        raise FileNotFoundError(str(jsonl))
+    return phrases[:limite] if limite is not None else phrases
 
 
 def _dossier_jeu(
@@ -123,6 +190,8 @@ def executer(
     calculer = calculer or calculer_chrf
     limite_wmt = int(config.options.get("wmt14_phrases", PHRASES_WMT14_DEFAUT))
     a_traiter: list[tuple[str, list[tuple[str, str]]]] = []
+    cles_wmt: set[str] = set()
+    chrf_wmt: list[float] = []
     sautees: dict[str, str] = {}
     demandees = paires_demandees(config)
     for _, paire in demandees:
@@ -132,15 +201,17 @@ def executer(
     doublons = {p for _, p in demandees if sum(1 for _, q in demandees if q == p) > 1}
     for jeu, paire in demandees:
         cle = f"{jeu}.{paire}" if paire in doublons else paire
+        if jeu == "wmt14":
+            cles_wmt.add(cle)
         dossier, motif = _dossier_jeu(config, contexte, jeu)
-        fichier = dossier / f"{paire}.jsonl" if dossier else None
-        if fichier is not None and not fichier.is_file():
-            motif = f"fichier absent : {fichier}"
-        if motif or fichier is None:
-            sautees[cle] = motif or "fichier absent"
-            continue
-        limite = config.limite or (limite_wmt if jeu == "wmt14" else None)
-        a_traiter.append((cle, lire_paire(fichier, limite)))
+        if dossier is not None:
+            limite = config.limite or (limite_wmt if jeu == "wmt14" else None)
+            try:
+                a_traiter.append((cle, charger_paire(jeu, dossier, paire, limite)))
+            except FileNotFoundError as exc:
+                motif = f"fichier absent : {exc}"
+        if motif:
+            sautees[cle] = motif
     if not a_traiter:
         detail = "; ".join(f"{p} ({m})" for p, m in sautees.items())
         return SortieMoteur(saute=f"aucune paire disponible : {detail}")
@@ -158,16 +229,36 @@ def executer(
             hypotheses = [traduire(llm, tache, source, cible, s) for s, _ in phrases]
             score, signature = calculer(hypotheses, [r for _, r in phrases])
             scores[f"{cle}.chrf"] = score
+            if cle in cles_wmt:
+                chrf_wmt.append(score)
             scores[f"{cle}.n_items"] = len(phrases)
             signatures[cle] = signature
+    cles_demandees = [f"{j}.{p}" if p in doublons else p for j, p in demandees]
+    if chrf_wmt:
+        scores["moyenne_wmt.chrf"] = sum(chrf_wmt) / len(chrf_wmt)  # métrique du Comparatif
+    if not sautees:  # composition complète seulement : sinon pas d'agrégat trompeur
+        chrfs = [v for k, v in scores.items() if k.endswith(".chrf") and v is not None]
+        scores["moyenne.chrf"] = sum(chrfs) / len(chrfs)
     return SortieMoteur(
         scores=scores,
         outil="sacrebleu",
         outil_version=_version_sacrebleu(),
         seed=SEED_DEFAUT,
         batch_size="1",
-        details={"signatures": signatures, "paires_sautees": sautees},
+        details={
+            "signatures": signatures,
+            "paires_sautees": sautees,
+            "paires_mesurees": [c for c, _ in a_traiter],
+            "paires_demandees": cles_demandees,
+        },
     )
 
 
-__all__ = ["calculer_chrf", "executer", "lire_paire", "paires_demandees", "traduire"]
+__all__ = [
+    "calculer_chrf",
+    "charger_paire",
+    "executer",
+    "lire_paire",
+    "paires_demandees",
+    "traduire",
+]

@@ -2,7 +2,9 @@
 
 Les jeux sont déclarés par `config/benchmarks/*.toml` (`[[jeux]]`). Chaque fichier est lu
 par l'URL `resolve/<revision>` et écrit sous
-`<racine>/data/raw/benchmarks/<jeu>/<revision>/<nom du fichier>`. Un jeu sans révision ou
+`<racine>/data/raw/benchmarks/<jeu>/<revision>/<chemin du fichier dans le dépôt>` (les chemins
+relatifs sont conservés : deux fichiers de même nom, comme `BFCL_v3_simple.json` et
+`possible_answer/BFCL_v3_simple.json`, ne se heurtent pas). Un jeu sans révision ou
 sans fichiers épinglés est signalé (`non-epingle`) et sauté ; un jeu à accès conditionnel
 dont le téléchargement est refusé est signalé (`acces-conditionnel`), consigné et sauté.
 """
@@ -86,7 +88,7 @@ def executer(
         else:
             a_obtenir.append(jeu)
     telechargeur.verifier_espace_total(
-        (dossier_jeu(racine, jeu) / PurePosixPath(f.chemin).name, f.taille)
+        (dossier_jeu(racine, jeu) / PurePosixPath(f.chemin), f.taille)
         for jeu in a_obtenir
         for f in jeu.fichiers
     )
@@ -97,7 +99,7 @@ def executer(
                 url = url_hf(jeu.depot, fichier.chemin, str(jeu.revision), type_depot="dataset")
                 resultat = telechargeur.telecharger(
                     url,
-                    dossier / PurePosixPath(fichier.chemin).name,
+                    dossier / PurePosixPath(fichier.chemin),
                     fichier.sha256,
                     fichier.taille,
                 )

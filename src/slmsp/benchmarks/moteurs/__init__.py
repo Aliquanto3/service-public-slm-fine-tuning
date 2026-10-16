@@ -30,6 +30,9 @@ MOTEURS: dict[str, str] = {
 """Moteurs livrés : nom -> module (stories 6.2 et 6.3)."""
 
 ENV_HORS_LIGNE = {"HF_HUB_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"}
+ENV_UTF8 = {"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+"""Sans cela, `lm_eval` plante sur Windows en affichant son tableau (flèches ↑↓, cp1252 sous
+tube) APRÈS avoir écrit ses résultats : code non nul, donc benchmark en erreur à tort."""
 
 _ENREGISTRES: dict[str, Callable[..., Any]] = {}
 
@@ -93,8 +96,10 @@ def charger_moteur(nom: str) -> Callable[..., SortieMoteur]:
 
 
 def env_outil(base: Mapping[str, str] | None = None) -> dict[str, str]:
-    """Environnement d'un outil tiers : `env_sous_processus()` plus HF hors ligne."""
-    return {**env_sous_processus(base), **ENV_HORS_LIGNE}
+    """Environnement d'un outil tiers : `env_sous_processus()`, HF hors ligne, sortie en UTF-8.
+
+    `HF_HOME` y est imposé à `<models>/.cache-hf` : c'est là que `lm_eval` lit ses jeux."""
+    return {**env_sous_processus(base), **ENV_HORS_LIGNE, **ENV_UTF8}
 
 
 def lancer_outil(

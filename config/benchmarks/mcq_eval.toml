@@ -1,5 +1,5 @@
-# Benchmark du socle (addendum §E). Les jeux sont à épingler au premier fetch réel
-# (revision + SHA-256 des fichiers) ; sans cela, `slmsp fetch benchmarks` les saute.
+# Benchmark du socle (addendum §E). Jeu épinglé (révision + SHA-256) : `slmsp fetch benchmarks`.
+# Seule la feuille QCM_version_albert_dedup de ce classeur est lue (42 questions).
 nom = "mcq_eval"
 description = "Domaine France services, AgentPublic/MCQ-eval"
 moteur = "lm_eval"
@@ -12,4 +12,11 @@ socle = true
 [[jeux]]
 nom = "mcq-eval"
 depot = "AgentPublic/MCQ-eval"
+revision = "d104aa4fef453abe9716e8866c68778a0804198c"
 acces = "libre"
+licence = "etalab-2.0"
+
+[[jeux.fichiers]]
+chemin = "HF_QCM_reconcilie_V1xlsx.xlsx"
+sha256 = "bb44495f98971e1f5ff5169100108c1ec6b89fc6bc6f6d6a2b0e58b02472c2b6"
+taille = 320030

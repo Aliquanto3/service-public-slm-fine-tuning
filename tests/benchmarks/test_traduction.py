@@ -71,7 +71,9 @@ def test_chrf_par_paire_avec_signature_et_prompt_tr(tmp_path):
         "en-fr.n_items": 2,
         "fr-en.chrf": 42.0,
         "fr-en.n_items": 2,
+        "moyenne_wmt.chrf": 42.0,
     }
+    assert sortie.details["paires_mesurees"] == ["en-fr", "fr-en"]
     assert sortie.outil == "sacrebleu"
     assert set(sortie.details["signatures"]) == {"en-fr", "fr-en"}
     premier = llm.appels[0]
@@ -80,6 +82,15 @@ def test_chrf_par_paire_avec_signature_et_prompt_tr(tmp_path):
     assert "Langue source :\nanglais" in utilisateur
     assert "Langue cible :\nfrançais" in utilisateur
     assert "<source-0>" in utilisateur
+
+
+def test_moyenne_complete_seulement_si_toutes_les_paires_sont_mesurees(tmp_path):
+    poser(tmp_path, "en-fr")
+    poser(tmp_path, "fr-en")
+    sortie = traduction.executer(
+        config(paires_flores=[]), contexte(tmp_path), llm=LlmFactice(), calculer=chrf_factice
+    )
+    assert sortie.scores["moyenne.chrf"] == sortie.scores["moyenne_wmt.chrf"] == 42.0
 
 
 def test_flores_conditionnel_indisponible_est_saute_et_consigne(tmp_path):
@@ -91,7 +102,10 @@ def test_flores_conditionnel_indisponible_est_saute_et_consigne(tmp_path):
         calculer=chrf_factice,
     )
     assert sortie.saute is None
-    assert list(sortie.scores) == ["en-fr.chrf", "en-fr.n_items"]
+    # FLORES sauté : seul l'agrégat WMT14 existe, jamais une `moyenne.chrf` de composition partielle
+    assert list(sortie.scores) == ["en-fr.chrf", "en-fr.n_items", "moyenne_wmt.chrf"]
+    assert sortie.details["paires_mesurees"] == ["en-fr"]
+    assert sortie.details["paires_demandees"] == ["en-fr", "fr-es", "fr-ar"]
     assert set(sortie.details["paires_sautees"]) == {"fr-es", "fr-ar"}
     assert "conditionnel" in sortie.details["paires_sautees"]["fr-es"]
 
@@ -114,6 +128,15 @@ def test_modele_non_servable_saute(tmp_path, monkeypatch):
     monkeypatch.setenv("SLMSP_MODELS_DIR", str(tmp_path / "models"))
     sortie = traduction.executer(config(), contexte(tmp_path, "avant"))
     assert sortie.saute is not None and "non servable" in sortie.saute
+
+
+def test_parquet_illisible_leve_une_erreur_explicite(tmp_path):
+    pytest.importorskip("pyarrow")
+    dossier = tmp_path / "wmt14"
+    (dossier / "de-en").mkdir(parents=True)
+    (dossier / "de-en" / "test-00000-of-00001.parquet").write_bytes(b"pas du parquet")
+    with pytest.raises(ConfigurationInvalide, match="parquet illisible"):
+        traduction.charger_paire("wmt14", dossier, "en-de", None)
 
 
 def test_moteur_enregistre():
@@ -142,3 +165,32 @@ def test_paire_commune_a_wmt_et_flores_a_des_cles_distinctes(tmp_path):
 def test_langue_inconnue_refusee(tmp_path):
     with pytest.raises(ConfigurationInvalide, match="paire de traduction invalide"):
         traduction.executer(config(paires_wmt14=["en-xx"]), contexte(tmp_path), llm=LlmFactice())
+
+
+def test_charger_paire_lit_les_parquet_wmt14_et_flores(tmp_path):
+    pq = pytest.importorskip("pyarrow.parquet")
+    pa = pytest.importorskip("pyarrow")
+    wmt = tmp_path / "wmt"
+    (wmt / "fr-en").mkdir(parents=True)
+    pq.write_table(
+        pa.table({"translation": [{"en": f"<en-{i}>", "fr": f"<fr-{i}>"} for i in range(3)]}),
+        wmt / "fr-en" / "test-00000-of-00001.parquet",
+    )
+    assert traduction.charger_paire("wmt14", wmt, "en-fr", 2) == [
+        ("<en-0>", "<fr-0>"),
+        ("<en-1>", "<fr-1>"),
+    ]
+    assert traduction.charger_paire("wmt14", wmt, "fr-en", None)[2] == ("<fr-2>", "<en-2>")
+    flores = tmp_path / "flores"
+    for code in ("fra_Latn", "spa_Latn"):
+        (flores / "data" / "language" / code).mkdir(parents=True)
+        pq.write_table(
+            pa.table({"sentence": [f"<{code}-{i}>" for i in range(2)]}),
+            flores / "data" / "language" / code / "devtest-00000-of-00001.parquet",
+        )
+    assert traduction.charger_paire("flores-200", flores, "fr-es", None)[1] == (
+        "<fra_Latn-1>",
+        "<spa_Latn-1>",
+    )
+    with pytest.raises(FileNotFoundError):
+        traduction.charger_paire("flores-200", flores, "fr-de", None)

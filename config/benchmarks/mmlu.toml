@@ -1,13 +1,16 @@
-# Benchmark du socle (addendum §E). Jeu non épinglé : aucun [[jeux]], donc `slmsp fetch benchmarks`
-# ne le télécharge pas. lm_eval tourne hors ligne (HF_*_OFFLINE=1) et lit le cache HF local : le
-# remplir avant (HF_HOME), sinon le benchmark est en erreur avec ce message. À épingler (dépôt,
-# révision, SHA-256) au premier fetch réel.
+# Benchmark du socle (addendum §E). lm_eval tourne hors ligne (HF_*_OFFLINE=1) et lit le cache HF
+# local, rempli une fois en ligne (voir _bmad-output/implementation-artifacts/preparation-benchmarks-2026-10-16.md).
+# Le jeu est figé par ce cache ; les révisions (SHA de commit) qu'il contient sont consignées dans
+# [options.jeux_hf] (pas de [[jeux]] : `slmsp fetch` ne télécharge pas ces jeux).
 nom = "mmlu"
-description = "MMLU limité"
+description = "MMLU (57 sous-tâches), limite de 500 questions par sous-tâche (≈ 14 000 au total, la plupart des sous-tâches en ont moins)"
 moteur = "lm_eval"
 tache = "mmlu"
 fewshot = 0
-limite = 500
+limite = 500  # `--limit` de lm-eval s'applique à CHAQUE sous-tâche, pas globalement
 cible = "hf"
 quantification = "avant"
 socle = true
+
+[options.jeux_hf]
+"cais/mmlu" = "c30699e8356da336a370243923dbaf21066bb9fe"

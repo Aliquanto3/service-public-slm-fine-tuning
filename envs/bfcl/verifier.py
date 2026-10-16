@@ -22,12 +22,18 @@ from typing import Any
 Controle = Callable[[dict[str, Any], str], tuple[bool, str | None]]
 
 
+MODELE_BFCL = "gorilla-openfunctions-v2"
+"""`model_name` d'`ast_checker` : clé de `MODEL_CONFIG_MAPPING` (un nom inconnu lève KeyError).
+Seul `underscore_to_dot` en dépend ; faux ici, car le moteur renvoie les noms de fonctions BFCL
+d'origine (avec points)."""
+
+
 class ErreurEnvironnement(RuntimeError):
     """Import ou signature de bfcl-eval en défaut : le vérificateur échoue, pas l'item."""
 
 
 def controle_ast(item: dict[str, Any], categorie: str) -> tuple[bool, str | None]:
-    """Contrôle AST de bfcl-eval d'une réponse (signature à confirmer au premier run réel)."""
+    """Contrôle AST de bfcl-eval d'une réponse (signature vérifiée sur bfcl-eval 2026.3.23)."""
     import inspect
 
     try:
@@ -35,7 +41,12 @@ def controle_ast(item: dict[str, Any], categorie: str) -> tuple[bool, str | None
         from bfcl_eval.eval_checker.ast_eval.ast_checker import ast_checker
 
         inspect.signature(ast_checker).bind(
-            item["fonctions"], item["appels"], item["reponse"], Language.PYTHON, categorie, "slmsp"
+            item["fonctions"],
+            item["appels"],
+            item["reponse"],
+            Language.PYTHON,
+            categorie,
+            MODELE_BFCL,
         )
     except (ImportError, AttributeError, TypeError) as exc:
         raise ErreurEnvironnement(f"bfcl-eval inutilisable : {type(exc).__name__} : {exc}") from exc
@@ -45,7 +56,7 @@ def controle_ast(item: dict[str, Any], categorie: str) -> tuple[bool, str | None
         item["reponse"],
         Language.PYTHON,
         categorie,
-        "slmsp",
+        MODELE_BFCL,
     )
     erreurs = verdict.get("error") or []
     return bool(verdict.get("valid")), "; ".join(map(str, erreurs)) or None

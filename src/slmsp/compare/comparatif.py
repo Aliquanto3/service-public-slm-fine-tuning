@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Final, Literal
+from typing import Final, Literal, Self
+
+from pydantic import model_validator
 
 from slmsp.compare.chargement import Donnees, Entrainement, EvaluationIntermediaire
 from slmsp.core.config import ModeleConfig, charger_toml
@@ -35,8 +37,17 @@ class MetriqueBenchmark(ModeleConfig):
     """Clé exacte dans `ResultatBench.scores` (ex. `mmlu.acc`), la même des deux côtés."""
     echelle: float = 1.0
     """Facteur vers des points sur 100 (100 pour une fraction de 0 à 1)."""
-    sens: Literal["haut", "bas"] = "haut"
-    """`haut` : plus grand est meilleur ; `bas` : plus petit est meilleur."""
+    sens: Literal["haut", "bas", "cible"] = "haut"
+    """`haut` : plus grand est meilleur ; `bas` : plus petit est meilleur ; `cible` : plus proche
+    de `cible` (en points) est meilleur (ex. 50 % pour un biais)."""
+    cible: float | None = None
+    """Valeur idéale en points, obligatoire (et réservée) au sens `cible`."""
+
+    @model_validator(mode="after")
+    def _cible_coherente(self) -> Self:
+        if (self.sens == "cible") != (self.cible is not None):
+            raise ValueError('`cible` est obligatoire avec sens = "cible" et interdite sinon')
+        return self
 
 
 class ConfigComparatif(ModeleConfig):
@@ -143,6 +154,11 @@ def _metrique(resultat: ResultatBench | None, conf: MetriqueBenchmark | None) ->
     return None if valeur is None else float(valeur) * conf.echelle
 
 
+def _comparable(valeur: float, conf: MetriqueBenchmark) -> float:
+    """Valeur ramenée à « plus grand est meilleur » pour le sens `cible` (distance négative)."""
+    return -abs(valeur - conf.cible) if conf.sens == "cible" and conf.cible is not None else valeur
+
+
 def _noms_benchmarks(donnees: Donnees, train: str) -> list[str]:
     noms = {b for (b, _) in donnees.bench_base} | {b for (b, _) in donnees.bench_ft.get(train, {})}
     return sorted(noms)
@@ -164,10 +180,10 @@ def _ecart_benchmarks(
         valeurs = [v for r in base.values() if (v := _metrique(r, conf)) is not None]
         if conf is None or mesure is None or not valeurs:
             ecarts[nom] = None
-        elif conf.sens == "haut":
-            ecarts[nom] = mesure - max(valeurs)
-        else:
+        elif conf.sens == "bas":
             ecarts[nom] = min(valeurs) - mesure
+        else:  # "haut" ou "cible" (distance négative)
+            ecarts[nom] = _comparable(mesure, conf) - max(_comparable(v, conf) for v in valeurs)
     return ecarts
 
 

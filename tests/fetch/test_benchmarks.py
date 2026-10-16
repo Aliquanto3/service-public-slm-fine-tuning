@@ -62,7 +62,9 @@ def test_telechargement_epingle_conditionnel_saute_et_consigne(cli, banc, decl, 
     banc.serveur.servir(URL_COND, b"", pannes=[], redirection=None)
     del banc.serveur.fichiers[URL_COND]  # 404 : accès refusé au jeu conditionnel
     assert main(["fetch", "benchmarks", "--racine", str(cli.racine)]) == 0
-    destination = cli.racine / "data" / "raw" / "benchmarks" / "jeu-libre" / REV / "train.parquet"
+    destination = (
+        cli.racine / "data" / "raw" / "benchmarks" / "jeu-libre" / REV / "data" / "train.parquet"
+    )
     assert destination.read_bytes() == CONTENU
     run = outils.lire_run(cli.racine)
     par_jeu = {ligne["jeu"]: ligne for ligne in run.fichiers}

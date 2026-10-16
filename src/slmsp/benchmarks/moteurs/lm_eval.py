@@ -228,6 +228,25 @@ def _jeu_mcq(config: BenchmarkConfig, contexte: ContexteBench) -> tuple[Path | N
     return dossier, None
 
 
+def verifier_cache_hf(config: BenchmarkConfig) -> None:
+    """Le cache HF local contient chaque révision épinglée dans `options.jeux_hf`.
+
+    lm_eval tourne hors ligne et lit ce cache : un jeu absent ou d'une autre révision fausserait
+    la mesure en silence. `ConfigurationInvalide` explicite en cas d'écart.
+    """
+    pins = config.options.get("jeux_hf", {})
+    hub = dossier_modeles() / ".cache-hf" / "hub"
+    for depot, revision in pins.items():
+        snapshots = hub / f"datasets--{depot.replace('/', '--')}" / "snapshots"
+        if (snapshots / str(revision)).is_dir():
+            continue
+        presentes = sorted(p.name for p in snapshots.iterdir()) if snapshots.is_dir() else []
+        raise ConfigurationInvalide(
+            f"cache HF : jeu {depot} attendu à la révision {revision}, "
+            f"présent : {', '.join(presentes) or 'absent'} ({hub})"
+        )
+
+
 INDICES_HORS_LIGNE = ("offline", "couldn't reach", "cannot find", "connectionerror", "not found")
 
 
@@ -332,12 +351,14 @@ def executer(config: BenchmarkConfig, contexte: ContexteBench) -> SortieMoteur:
             return SortieMoteur(
                 saute=f"poids HF absents ({slug} : ni hf-bf16 ni hf) : GGUF seul, QCM sautés"
             )
+        verifier_cache_hf(config)
         commande = [
             *commande_lm_eval(),
             *arguments_hf(poids, taille_lot(config)),
             *arguments_communs(config, sortie),
         ]
         return _lancer(commande, sortie, env, config)
+    verifier_cache_hf(config)
     try:
         with serveur_llama(config, contexte) as (url, nom):
             commande = [

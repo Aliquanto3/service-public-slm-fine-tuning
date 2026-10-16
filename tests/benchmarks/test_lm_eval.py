@@ -102,6 +102,23 @@ def test_hf_lance_les_poids_hf_avec_fewshot_limite_et_hors_ligne(banc):
     assert sortie.scores["tache_factice.acc"] == 0.5
 
 
+def poser_cache_hf(banc, depot, revision):
+    dossier = banc.modeles / ".cache-hf" / "hub" / f"datasets--{depot.replace('/', '--')}"
+    (dossier / "snapshots" / revision).mkdir(parents=True)
+
+
+def test_cache_hf_hors_pin_leve_avant_le_lancement(banc):
+    poser_poids(banc)
+    pins = {"jeux_hf": {"cais/mmlu": REVISION}}
+    with pytest.raises(ConfigurationInvalide, match="absent"):
+        lm_eval.executer(config(options=pins), banc.contexte())
+    poser_cache_hf(banc, "cais/mmlu", "b" * 40)
+    with pytest.raises(ConfigurationInvalide, match="b{40}"):
+        lm_eval.executer(config(options=pins), banc.contexte())
+    poser_cache_hf(banc, "cais/mmlu", REVISION)
+    assert lm_eval.executer(config(options=pins), banc.contexte()).saute is None
+
+
 def test_hf_prefere_hf_bf16_puis_hf(banc):
     poser_poids(banc, "hf")
     assert lm_eval.dossier_poids_hf("modele-factice").name == "hf"
@@ -319,3 +336,77 @@ def test_graine_et_lot_dans_arguments_et_sortie() -> None:
     args = arguments_communs(config, Path("x"))
     assert args[args.index("--seed") + 1] == "7"
     assert arguments_hf(Path("p"), "4")[-1] == "4"
+
+
+def _classeur(chemin: Path, feuille: str, lignes: list[list[str]]) -> None:
+    """Classeur xlsx minimal (chaînes en ligne), valeurs factices."""
+    import zipfile
+    from xml.sax.saxutils import escape
+
+    def cellule(i: int, j: int, texte: str) -> str:
+        return f'<c r="{chr(65 + j)}{i + 1}" t="inlineStr"><is><t>{escape(texte)}</t></is></c>'
+
+    corps = "".join(
+        f"<row>{''.join(cellule(i, j, t) for j, t in enumerate(ligne))}</row>"
+        for i, ligne in enumerate(lignes)
+    )
+    ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    with zipfile.ZipFile(chemin, "w") as z:
+        z.writestr(
+            "xl/workbook.xml",
+            f'<workbook xmlns="{ns}" xmlns:r="{rel}"><sheets>'
+            f'<sheet name="{feuille}" sheetId="1" r:id="rId1"/></sheets></workbook>',
+        )
+        z.writestr(
+            "xl/_rels/workbook.xml.rels",
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>',
+        )
+        z.writestr(
+            "xl/worksheets/sheet1.xml",
+            f'<worksheet xmlns="{ns}"><sheetData>{corps}</sheetData></worksheet>',
+        )
+
+
+def test_mcq_lit_la_feuille_xlsx_du_jeu_reel(tmp_path):
+    entete = ["Question", "A", "B", "C", "D", "E", "Number_best_rep"]
+    _classeur(
+        tmp_path / "jeu.xlsx",
+        utils.FEUILLE_XLSX,
+        [
+            entete,
+            ["<q1>", "A. <a1>", "B. <b1>", "C. <c1>", "D. <d1>", "E. <e1>", "E"],
+            ["<q2>", "A. <a2>", "B. <b2>", "", "", "E. <e2>", "Z"],
+        ],
+    )
+    with pytest.raises(ValueError, match=r"ligne 3.*illisible"):
+        utils.lire_lignes(tmp_path)
+    _classeur(
+        tmp_path / "jeu.xlsx",
+        utils.FEUILLE_XLSX,
+        [
+            entete,
+            ["<q1>", "A. <a1>", "B. <b1>", "C. <c1>", "D. <d1>", "E. <e1>", "E"],
+            ["<q2>", "A. <a2>", "B. <b2>", "", "", "E. <e2>", "E (la B aussi)"],
+        ],
+    )
+    _classeur(tmp_path / "autre.xlsx", "Sheet1", [["x"], ["y"]])
+    lignes = utils.lire_lignes(tmp_path)
+    assert lignes[0] == {
+        "question": "<q1>",
+        "choix": ["<a1>", "<b1>", "<c1>", "<d1>", "<e1>"],
+        "reponse": 4,
+    }
+    assert lignes[1]["choix"] == ["<a2>", "<b2>", "<e2>"]
+    assert lignes[1]["reponse"] == 2
+    assert len(lignes) == 2
+
+
+def test_env_outil_force_utf8_et_hf_hors_ligne():
+    from slmsp.benchmarks.moteurs import env_outil
+
+    env = env_outil({"HF_TOKEN": "<jeton-factice>"})
+    assert env["PYTHONUTF8"] == "1"
+    assert env["HF_HUB_OFFLINE"] == "1"
+    assert "HF_TOKEN" not in env

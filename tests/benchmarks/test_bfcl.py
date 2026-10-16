@@ -83,12 +83,12 @@ def poser_jeu(tmp_path):
             }
             for i in range(3)
         ]
-        (dossier / f"{categorie}.jsonl").write_text(
+        (dossier / f"BFCL_v3_{categorie}.json").write_text(
             "\n".join(json.dumps(x) for x in lignes), encoding="utf-8"
         )
         if categorie != "irrelevance":
-            (dossier / "reponses").mkdir(exist_ok=True)
-            (dossier / "reponses" / f"{categorie}.jsonl").write_text(
+            (dossier / "possible_answer").mkdir(exist_ok=True)
+            (dossier / "possible_answer" / f"BFCL_v3_{categorie}.json").write_text(
                 "\n".join(json.dumps({"id": x["id"], "ground_truth": [{}]}) for x in lignes),
                 encoding="utf-8",
             )
@@ -129,12 +129,23 @@ def test_outils_natifs_convertis_et_noms_sans_point():
     assert parametres["properties"]["x"]["type"] == "number"
 
 
+def test_moyenne_exige_toutes_les_categories_attendues():
+    bilan = {"precision": 1.0, "n_items": 2}
+    complet = bfcl.analyser({"categories": {c: bilan for c in bfcl.CATEGORIES}})
+    assert complet.scores["moyenne.precision"] == 1.0
+    partiel = bfcl.analyser({"categories": {"simple": bilan, "multiple": bilan}})
+    assert "moyenne.precision" not in partiel.scores
+    sans_score = {c: bilan for c in bfcl.CATEGORIES} | {"simple": {"precision": None, "n_items": 0}}
+    assert "moyenne.precision" not in bfcl.analyser({"categories": sans_score}).scores
+
+
 def test_bout_en_bout_par_categorie(banc):
     llm = LlmFactice()
     sortie = bfcl.executer(config(), contexte(banc), llm=llm)
     assert sortie.saute is None
     assert sortie.outil == "bfcl-eval"
     assert sortie.scores["irrelevance.precision"] == 1.0
+    assert sortie.scores["simple.precision"] == sortie.scores["moyenne.precision"] == 1.0
     assert sortie.scores["simple.precision"] == 1.0
     assert sortie.scores["multiple.n_items"] == 2
     assert all(a["tools"] and a["options"]["temperature"] == 0 for a in llm.appels)
@@ -213,7 +224,9 @@ def test_moteur_enregistre():
 
 
 def test_reponses_absentes_erreur_explicite(banc):
-    (banc / "data/raw/benchmarks/bfcl" / REVISION / "reponses" / "simple.jsonl").unlink()
+    (
+        banc / "data/raw/benchmarks/bfcl" / REVISION / "possible_answer" / "BFCL_v3_simple.json"
+    ).unlink()
     with pytest.raises(ConfigurationInvalide, match="réponses BFCL absentes"):
         bfcl.executer(config(categories=["simple"]), contexte(banc), llm=LlmFactice())
 

@@ -17,3 +17,57 @@ regression_benchmarks_max_points = 3.0  # perte moyenne maximale sur les Benchma
 #   metrique = "mmlu.acc"
 #   echelle = 100.0
 #   sens = "haut"
+
+# Métriques des Benchmarks du socle (2026-10-16), d'après les noms de métriques des tâches lm-eval
+# 0.4.13 et les clés des moteurs bfcl et traduction. À CONFIRMER PAR ANAËL : choix de la métrique,
+# de l'agrégat (moyenne simple des catégories BFCL et des paires de traduction) et du sens de
+# crows_pairs_french (sens « cible » : distance à l'idéal de 50 %).
+# Les clés lm-eval sont `<tâche>.<métrique>` (filtre `none` omis) ; vérifier après le premier run.
+
+[benchmarks.mmlu]
+metrique = "mmlu.acc"
+echelle = 100.0
+sens = "haut"
+
+[benchmarks.global_mmlu_fr]
+metrique = "global_mmlu_fr.acc"
+echelle = 100.0
+sens = "haut"
+
+[benchmarks.belebele_fra_latn]
+metrique = "belebele_fra_Latn.acc"
+echelle = 100.0
+sens = "haut"
+
+[benchmarks.french_bench_mc]
+metrique = "french_bench_mc_agrege.acc"
+echelle = 100.0
+sens = "haut"
+
+[benchmarks.ifeval]
+metrique = "ifeval.prompt_level_strict_acc"
+echelle = 100.0
+sens = "haut"
+
+[benchmarks.crows_pairs_french]
+metrique = "crows_pairs_french.pct_stereotype"
+echelle = 100.0
+sens = "cible"  # l'idéal est 50 % (aucun biais), pas 0 % : on compare la distance à la cible
+cible = 50.0
+
+[benchmarks.mcq_eval]
+metrique = "agentpublic_mcq.acc"
+echelle = 100.0
+sens = "haut"
+
+[benchmarks.bfcl]
+metrique = "moyenne.precision"
+echelle = 100.0
+sens = "haut"
+
+[benchmarks.traduction]
+# moyenne des seules paires WMT14 : la même composition tant que FLORES n'est pas mesuré
+# (`moyenne.chrf` n'existe que si toutes les paires demandées sont mesurées)
+metrique = "moyenne_wmt.chrf"
+echelle = 1.0  # chrF est déjà sur 0 à 100
+sens = "haut"

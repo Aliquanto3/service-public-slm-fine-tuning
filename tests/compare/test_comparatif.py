@@ -252,3 +252,16 @@ def test_compare_n_importe_pas_les_modules_interdits() -> None:
             assert not (parties[0] == "slmsp" and len(parties) > 1 and parties[1] in interdits), (
                 source
             )
+
+
+def test_sens_cible_compare_la_distance_a_l_ideal() -> None:
+    from pydantic import ValidationError
+
+    from slmsp.compare.comparatif import MetriqueBenchmark, _comparable
+
+    conf = MetriqueBenchmark(metrique="b.pct", echelle=100.0, sens="cible", cible=50.0)
+    assert _comparable(55.0, conf) > _comparable(40.0, conf)  # 5 points de l'idéal > 10
+    with pytest.raises(ValidationError):
+        MetriqueBenchmark(metrique="b.pct", sens="cible")
+    with pytest.raises(ValidationError):
+        MetriqueBenchmark(metrique="b.pct", sens="haut", cible=50.0)
