@@ -26,6 +26,7 @@ from datetime import datetime
 from pathlib import Path
 
 from slmsp.core.canonique import json_canonique
+from slmsp.core.config import dossier_donnees_application, processus_gele
 from slmsp.core.erreurs import RessourceOccupee, SlmspError
 
 BUSY_TIMEOUT_MS = 30_000
@@ -49,10 +50,17 @@ _detenu_par_ce_processus = False
 
 
 def dossier_var() -> Path:
-    """Dossier `SLMSP_VAR_DIR`, sinon `%LOCALAPPDATA%\\slmsp\\var` ; créé s'il manque."""
+    """Dossier `SLMSP_VAR_DIR`, sinon `%LOCALAPPDATA%\\slmsp\\var` ; créé s'il manque.
+
+    Dans l'exécutable gelé (12.12), le défaut est `<données de l'application>\\var`
+    (`%LOCALAPPDATA%\\AssistantSP\\var`) : l'état machine de l'exécutable (budget, `pids/`,
+    `gpu.lock`) ne se mêle pas à celui du développement, et la désinstallation (12.13) le retire.
+    """
     valeur = os.environ.get("SLMSP_VAR_DIR", "").strip()
     if valeur:
         dossier = Path(valeur)
+    elif processus_gele():
+        dossier = dossier_donnees_application() / "var"
     else:
         local = os.environ.get("LOCALAPPDATA", "").strip()
         base = Path(local) if local else Path.home() / "AppData" / "Local"
