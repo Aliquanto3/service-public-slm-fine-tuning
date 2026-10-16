@@ -141,7 +141,7 @@ development_status:
 
   epic-13: in-progress
   13-1-vue-correction-avec-differences-visibles: done
-  13-2-vue-resume-a-trois-longueurs: backlog
+  13-2-vue-resume-a-trois-longueurs: done
   13-3-vue-courrier-type-formulaire-et-emplacements: backlog
   13-4-vue-traduction-cinq-langues-arabe-en-rtl: backlog
   13-5-verification-en-ligne-d-une-page-officielle-cote-harnais-fr: backlog
