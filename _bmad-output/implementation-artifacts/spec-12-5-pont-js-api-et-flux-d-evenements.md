@@ -44,3 +44,14 @@ Reports / à confirmer par Anaël :
 - `Pont` ne persiste rien (historique) : l'enregistrement des conversations dans `Stockage` revient à 12.11.
 - 12.6 doit appeler `Pont.signaler_pret()` après `pywebviewready` et fournir la `Window` comme `Fenetre`.
 - Relecture de la fermeture : `arreter` pendant un LLM bloqué n'est effectif qu'au prochain jeton ; le délai de première tokenisation n'est pas interruptible.
+
+## Revue
+
+- medium, second avis (1) : `arreter` sans jeton ne libérait pas l'état, `envoyer` restait bloqué. Corrigé : `arreter` pousse `Fin(interrompue)` tout de suite, libère l'état et lève le drapeau de la génération ; le fil tardif ignore ses évènements (aucune poussée après l'arrêt) et ferme l'itérateur à son réveil. Fermeture de la réponse HTTP écartée (le client llama-server n'expose pas de fermeture depuis un autre fil) ; `llama-server` reste vivant. Test : LLM bloqué avant le premier jeton.
+- low, second avis (2) : `Fin`/`Erreur` libère l'état avant la poussée ; un `envoyer` juste après `Fin` est accepté. Corrigé, testé.
+- low, second avis (3) : `options["entree"]` (valeurs texte d'un dict, ou valeur) masqué dans les refus. Corrigé, testé.
+- low, second avis (4) : seul le `TypeError` de signature (`inspect.signature().bind`) devient `methode-inconnue` ; ceux levés à l'intérieur donnent `erreur-interne`. Corrigé, testé.
+- low, second avis (5) : `appeler("envoyer")` passe par `refuserSiErreur` dans `pont-client.js`. Corrigé.
+- low, second avis (6) : tests ajoutés (arrêt sans jeton, lotissement 16 jetons et 40 ms, injection guillemets/U+2028/`</script>`, document témoin en `hors_ligne=True`). Corrigé.
+- Constat de la revue : tests `-m ui` intermittents (3 échecs de timeout sur machine chargée), identiques sans ce commit. Rejeté (hors périmètre), à surveiller.
+- Reporté : un appel `evaluate_js` bloquant tient le verrou d'envoi ; à vérifier avec la vraie fenêtre pywebview (12.6).

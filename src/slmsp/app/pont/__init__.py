@@ -16,6 +16,7 @@ L'interface pywebview n'est vue qu'à travers le port `Fenetre`.
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 from collections.abc import Mapping, Sequence
@@ -105,12 +106,15 @@ class Pont:
                     return reponse_erreur(CODE_INCONNUE, f"méthode inconnue : {nom}")
                 return cible.appeler(methode, *args)
             if nom in METHODES_CONVERSATION:
-                return getattr(self, nom)(*args)
+                cible_locale = getattr(self, nom)
+                try:
+                    inspect.signature(cible_locale).bind(*args)
+                except TypeError:
+                    return reponse_erreur(CODE_INCONNUE, f"arguments invalides pour {nom}")
+                return cible_locale(*args)
             return reponse_erreur(CODE_INCONNUE, f"méthode inconnue : {nom}")
         except NonImplementee as exc:
             return reponse_erreur(CODE_NON_IMPLEMENTEE, str(exc))
-        except TypeError:
-            return reponse_erreur(CODE_INCONNUE, f"arguments invalides pour {nom}")
         except Exception as exc:
             LOGGER.error("appel %s : %s", nom, type(exc).__name__)
             return reponse_erreur("erreur-interne", "Un problème est survenu.")

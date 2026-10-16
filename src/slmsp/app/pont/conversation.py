@@ -2,9 +2,12 @@
 
 Une génération à la fois. Les évènements (`core.evenements.vers_dict`) sont poussés par lots :
 tout évènement autre qu'un `Jeton` vide le lot, les `Jeton` s'accumulent jusqu'à
-`JETONS_PAR_LOT` ou `DELAI_LOT_S`. `arreter()` rend la main tout de suite ; le fil ferme
-l'itérateur dès le prochain évènement (jamais depuis un autre fil : un générateur en cours
-d'exécution ne se ferme pas) puis pousse `Fin(raison="interrompue")`. Le texte saisi n'est
+`JETONS_PAR_LOT` ou `DELAI_LOT_S`. `arreter()` est effectif tout de suite, même si le LLM
+ne rend aucun jeton : il pousse `Fin(raison="interrompue")`, libère l'état (un nouvel `envoyer`
+est accepté) et lève le drapeau de la génération. Le fil de cette génération, éventuellement
+bloqué dans `next(flux)`, ignore ses évènements tardifs (aucun push après l'arrêt) et ferme
+l'itérateur à son réveil (jamais depuis un autre fil : un générateur en cours d'exécution ne se
+ferme pas). `llama-server` n'est pas touché. Le texte saisi n'est
 jamais journalisé (AD-23) : seuls la classe d'exception et la Tâche partent au logger.
 """
 
@@ -43,13 +46,25 @@ class Conversation:
     def __init__(self, service: AssistantService, pousser: Pousser) -> None:
         self._service = service
         self._pousser = pousser
-        self._verrou = threading.Lock()
+        self._verrou = threading.Lock()  # état (génération active, dernier envoi)
+        self._envoi = threading.RLock()  # sérialise les poussées et l'arrêt (ordre des évènements)
         self._fil: threading.Thread | None = None
-        self._arret = threading.Event()
+        self._courant: threading.Event | None = None  # drapeau d'arrêt de la génération active
         self._dernier: Envoi | None = None
 
     def _actif(self) -> bool:
-        return self._fil is not None and self._fil.is_alive()
+        return self._courant is not None
+
+    def _emettre(self, arret: threading.Event, lot: list[dict[str, Any]]) -> None:
+        """Pousse `lot` si la génération n'est pas arrêtée ; `Fin`/`Erreur` libère l'état."""
+        with self._envoi:
+            if arret.is_set():
+                return
+            if any(e.get("type") in ("fin", "erreur") for e in lot):
+                with self._verrou:
+                    if self._courant is arret:
+                        self._courant = None  # libre avant la poussée : `envoyer` suit `Fin`
+            self._pousser(lot)
 
     def attendre(self, delai: float | None = None) -> None:
         """Attend la fin du fil courant (tests)."""
@@ -75,23 +90,36 @@ class Conversation:
                 flux = self._service.repondre(tache, copy.deepcopy(messages), dict(options))
             except SlmspError as exc:
                 saisis = [str(m.get("content", "")) for m in messages]
+                entree = options.get("entree")
+                if isinstance(entree, Mapping):
+                    saisis.extend(str(v) for v in entree.values() if isinstance(v, str))
+                elif entree is not None:
+                    saisis.append(str(entree))
                 return reponse_erreur(CODE_REFUS, masquer(str(exc), saisis))
             except Exception as exc:
                 LOGGER.error("Tâche %s : refus %s", tache, type(exc).__name__)
                 return reponse_erreur(CODE_REFUS, "Requête invalide.")
             self._dernier = envoi
-            self._arret = threading.Event()
+            arret = threading.Event()
+            self._courant = arret
             self._fil = threading.Thread(
-                target=self._consommer, args=(flux, self._arret, tache), daemon=True
+                target=self._consommer, args=(flux, arret, tache), daemon=True
             )
             self._fil.start()
         return {"ok": True}
 
     def arreter(self) -> dict[str, Any]:
-        with self._verrou:
-            actif = self._actif()
-            if actif:
-                self._arret.set()
+        with self._envoi:
+            with self._verrou:
+                arret = self._courant
+                self._courant = None
+            actif = arret is not None
+            if arret is not None:
+                arret.set()
+                try:
+                    self._pousser([vers_dict(Fin(raison="interrompue"))])
+                except Exception as exc:
+                    LOGGER.error("arrêt : évènement non remis (%s)", type(exc).__name__)
         return {"ok": True, "en_cours": actif}
 
     def regenerer(self) -> dict[str, Any]:
@@ -118,7 +146,7 @@ class Conversation:
             nonlocal lot, debut_lot
             if lot:
                 envoi, lot = lot, []
-                self._pousser(envoi)
+                self._emettre(arret, envoi)
             debut_lot = time.monotonic()
 
         try:
@@ -131,18 +159,17 @@ class Conversation:
                     vider()
                 if isinstance(evenement, (Fin, Erreur)):
                     return
-            if arret.is_set():
-                vider()
-                self._pousser([vers_dict(Fin(raison="interrompue"))])
-            else:
-                vider()
+            vider()
         except Exception as exc:
             LOGGER.error("Tâche %s : échec du fil %s", tache, type(exc).__name__)
             try:
-                self._pousser([vers_dict(Erreur(code=CODE_ERREUR, message=MESSAGE_ERREUR))])
+                self._emettre(arret, [vers_dict(Erreur(code=CODE_ERREUR, message=MESSAGE_ERREUR))])
             except Exception:
                 LOGGER.error("Tâche %s : évènement d'erreur non remis", tache)
         finally:
+            with self._verrou:
+                if self._courant is arret:
+                    self._courant = None
             fermer = getattr(flux, "close", None)
             if callable(fermer):
                 fermer()

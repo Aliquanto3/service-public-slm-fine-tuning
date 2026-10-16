@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import time
 from collections.abc import Callable, Iterator
 from typing import Any
 
@@ -201,3 +202,121 @@ def test_signaler_pret_et_appeler(banc: Any) -> None:
     assert pont.appeler("nimporte")["erreur"]["code"] == "methode-inconnue"
     assert pont.appeler("arreter") == {"ok": True, "en_cours": False}
     assert pont.appeler("envoyer")["erreur"]["code"] == "methode-inconnue"
+
+
+class LlmSilencieux(FakeLlm):
+    """Ne rend aucun jeton tant que `libre` n'est pas levé (LLM bloqué avant le premier jeton)."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.entre, self.libre, self.ferme = (threading.Event() for _ in range(3))
+
+    def _jouer(self, elements: list[Any]) -> Iterator[Any]:
+        try:
+            self.entre.set()
+            assert self.libre.wait(10)
+            yield Jeton(texte="<tardif>")
+            yield Fin(raison="terminee")
+        except GeneratorExit:
+            self.ferme.set()
+            raise
+
+
+def test_arreter_sans_aucun_jeton_est_immediat(banc: Any) -> None:
+    llm = LlmSilencieux()
+    pont, fenetre = banc(llm)
+    assert pont.envoyer("Q", _user(mots(3, "s")), {}) == {"ok": True}
+    assert llm.entre.wait(5)
+    assert pont.arreter() == {"ok": True, "en_cours": True}
+    assert [e["type"] for e in fenetre.evenements()] == ["fin"]
+    assert fenetre.evenements()[0]["raison"] == "interrompue"
+    # L'état est libre sans attendre le fil : un nouvel envoi est accepté, puis arrêté de même.
+    assert pont.envoyer("Q", _user(mots(3, "t")), {}) == {"ok": True}
+    assert pont.arreter() == {"ok": True, "en_cours": True}
+    llm.libre.set()  # les deux fils se réveillent : leurs évènements tardifs sont ignorés
+    assert llm.ferme.wait(5)
+    pont._conversation.attendre(5)
+    time.sleep(0.1)
+    assert [(e["type"], e.get("raison")) for e in fenetre.evenements()] == [
+        ("fin", "interrompue")
+    ] * 2
+
+
+def test_etat_libre_des_que_fin_est_poussee(banc: Any) -> None:
+    pont, fenetre = banc(FakeLlm(script(mots(4, "l"))))
+
+    pont.envoyer("Q", _user(mots(2, "n")), {})
+    assert fenetre.fini.wait(5)
+    # Sans attendre la fin du fil : `Fin` est déjà poussé, l'état est libre.
+    assert pont.envoyer("Q", _user(mots(2, "m")), {}) == {"ok": True}
+    pont._conversation.attendre(5)
+
+
+class LlmRafale(FakeLlm):
+    def __init__(self, n: int, pause: float = 0.0) -> None:
+        super().__init__()
+        self.n, self.pause = n, pause
+
+    def _jouer(self, elements: list[Any]) -> Iterator[Any]:
+        for i in range(self.n):
+            yield Jeton(texte=f"j{i} ")
+            if self.pause:
+                time.sleep(self.pause)
+        yield Fin(raison="terminee")
+
+
+def _jetons_par_lot(fenetre: FenetreFactice) -> list[int]:
+    lots = [json.loads(c[len(PREFIXE) : -1]) for c in fenetre.scripts]
+    return [n for n in (sum(e["type"] == "jeton" for e in lot) for lot in lots) if n]
+
+
+def test_lotissement_par_16_jetons(banc: Any) -> None:
+    pont, fenetre = banc(LlmRafale(40))
+    pont.envoyer("Q", _user(mots(2, "o")), {})
+    assert fenetre.fini.wait(5)
+    tailles = _jetons_par_lot(fenetre)
+    assert tailles[:2] == [16, 16] and sum(tailles) == 40 and max(tailles) <= 16
+
+
+def test_lotissement_par_delai(banc: Any) -> None:
+    pont, fenetre = banc(LlmRafale(6, pause=0.03))
+    pont.envoyer("Q", _user(mots(2, "p")), {})
+    assert fenetre.fini.wait(5)
+    tailles = _jetons_par_lot(fenetre)
+    assert sum(tailles) == 6 and len(tailles) > 1 and max(tailles) < 16
+
+
+def test_injection_dans_le_script_poussee(banc: Any) -> None:
+    piege = "a\"b\\c\u2028d\u2029</script><img onerror=x>';alert(1)//"
+
+    class LlmPiege(FakeLlm):
+        def _jouer(self, elements: list[Any]) -> Iterator[Any]:
+            yield Jeton(texte=piege)
+            yield Fin(raison="terminee")
+
+    pont, fenetre = banc(LlmPiege())
+    pont.envoyer("Q", _user(mots(2, "q")), {})
+    assert fenetre.fini.wait(5)
+    for code in fenetre.scripts:
+        assert "\u2028" not in code and "\u2029" not in code and "\n" not in code
+    jetons = [e["texte"] for e in fenetre.evenements() if e["type"] == "jeton"]
+    assert jetons == [piege]
+
+
+def test_refus_masque_aussi_l_entree_des_options(banc: Any) -> None:
+    secret = "SECRET-" + mots(3, "e").replace(" ", "-")
+    pont, _ = banc(FakeLlm(script(mots(4, "r"))))
+    reponse = pont.envoyer("TR", _user(mots(2, "u")), {"entree": {"texte": secret}})
+    if not reponse["ok"]:
+        assert secret not in json.dumps(reponse)
+
+
+def test_appeler_ne_masque_pas_les_typeerror_internes(banc: Any) -> None:
+    pont, _ = banc(FakeLlm(script(mots(4, "v"))))
+    assert pont.appeler("envoyer")["erreur"]["code"] == "methode-inconnue"
+
+    def casse() -> None:
+        raise TypeError("interne")
+
+    pont.arreter = casse  # type: ignore[method-assign]
+    assert pont.appeler("arreter")["erreur"]["code"] == "erreur-interne"

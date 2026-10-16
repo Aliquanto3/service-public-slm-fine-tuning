@@ -50,6 +50,7 @@ def test_document_temoin_par_le_pont(code: str, tmp_path: Path) -> None:
     with assembler(
         "base:x",
         charger_taches().tache(code),
+        hors_ligne=True,
         journal=journal,
         transport_interne=httpx2.MockTransport(espion),
         llm=FakeLlm(script(mots(6, "sortie"))),
