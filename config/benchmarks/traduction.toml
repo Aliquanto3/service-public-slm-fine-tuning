@@ -1,0 +1,19 @@
+# Benchmark du socle (addendum §E). Les jeux sont à épingler au premier fetch réel
+# (revision + SHA-256 des fichiers) ; sans cela, `slmsp fetch benchmarks` les saute.
+nom = "traduction"
+description = "Traduction (chrF) : WMT14 en-fr et fr-en, FLORES-200 FR vers ES, AR, PT, DE"
+moteur = "traduction"
+tache = "wmt14_flores"
+fewshot = 0
+cible = "gguf"
+quantification = "les-deux"
+socle = true
+
+[options]
+wmt14_phrases = 500
+paires_flores = ["fr-es", "fr-ar", "fr-pt", "fr-de"]
+
+[[jeux]]
+nom = "flores-200"
+depot = "facebook/flores"
+acces = "conditionnel"

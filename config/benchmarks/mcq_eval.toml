@@ -1,0 +1,15 @@
+# Benchmark du socle (addendum §E). Les jeux sont à épingler au premier fetch réel
+# (revision + SHA-256 des fichiers) ; sans cela, `slmsp fetch benchmarks` les saute.
+nom = "mcq_eval"
+description = "Domaine France services, AgentPublic/MCQ-eval"
+moteur = "lm_eval"
+tache = "agentpublic_mcq"
+fewshot = 0
+cible = "hf"
+quantification = "avant"
+socle = true
+
+[[jeux]]
+nom = "mcq-eval"
+depot = "AgentPublic/MCQ-eval"
+acces = "libre"

@@ -1,0 +1,13 @@
+# Benchmark du socle (addendum §E). Les jeux sont à épingler au premier fetch réel
+# (revision + SHA-256 des fichiers) ; sans cela, `slmsp fetch benchmarks` les saute.
+nom = "bfcl"
+description = "Tool calling BFCL : simple, multiple et irrelevance sous-échantillonnés"
+moteur = "bfcl"
+tache = "bfcl_simple_multiple_irrelevance"
+fewshot = 0
+cible = "gguf"
+quantification = "les-deux"
+socle = true
+
+[options]
+categories = ["simple", "multiple", "irrelevance"]

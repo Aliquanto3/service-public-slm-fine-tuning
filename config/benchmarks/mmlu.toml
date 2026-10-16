@@ -1,0 +1,13 @@
+# Benchmark du socle (addendum §E). Jeu non épinglé : aucun [[jeux]], donc `slmsp fetch benchmarks`
+# ne le télécharge pas. lm_eval tourne hors ligne (HF_*_OFFLINE=1) et lit le cache HF local : le
+# remplir avant (HF_HOME), sinon le benchmark est en erreur avec ce message. À épingler (dépôt,
+# révision, SHA-256) au premier fetch réel.
+nom = "mmlu"
+description = "MMLU limité"
+moteur = "lm_eval"
+tache = "mmlu"
+fewshot = 0
+limite = 500
+cible = "hf"
+quantification = "avant"
+socle = true

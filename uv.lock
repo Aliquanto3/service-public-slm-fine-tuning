@@ -546,6 +546,15 @@ wheels = [
 ]
 
 [[package]]
+name = "immutabledict"
+version = "4.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/c5/4240186fbabc58fba41bbe17c5f0cd37ffd4c0b85a5029ab104f946df175/immutabledict-4.2.1.tar.gz", hash = "sha256:d91017248981c72eb66c8ff9834e99c2f53562346f23e7f51e7a5ebcf66a3bcc", size = 6228, upload-time = "2024-11-17T13:25:21.555Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/59/56/25ca7b848164b7d93dbd5fc97dd7751700c93e324fe854afbeb562ee2f98/immutabledict-4.2.1-py3-none-any.whl", hash = "sha256:c56a26ced38c236f79e74af3ccce53772827cef5c3bce7cab33ff2060f756373", size = 4700, upload-time = "2024-11-17T13:25:19.52Z" },
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -624,6 +633,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/19/74/a633ee74eb36c44aa
 wheels = [
     { url = "https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl", hash = "sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe", size = 18437, upload-time = "2025-09-08T01:34:57.871Z" },
 ]
+
+[[package]]
+name = "langdetect"
+version = "1.0.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/72/a3add0e4eec4eb9e2569554f7c70f4a3c27712f40e3284d483e88094cc0e/langdetect-1.0.9.tar.gz", hash = "sha256:cbc1fef89f8d062739774bd51eda3da3274006b3661d199c2655f6b3f6d605a0", size = 981474, upload-time = "2021-05-07T07:54:13.562Z" }
 
 [[package]]
 name = "lm-eval"
@@ -1419,7 +1437,10 @@ app = [
     { name = "pywebview" },
 ]
 bench = [
+    { name = "immutabledict" },
+    { name = "langdetect" },
     { name = "lm-eval" },
+    { name = "nltk" },
     { name = "sacrebleu" },
 ]
 data = [
@@ -1455,10 +1476,13 @@ requires-dist = [
     { name = "bitsandbytes", marker = "extra == 'train'", specifier = "==0.50.2" },
     { name = "duckdb", marker = "extra == 'data'", specifier = "==1.5.6" },
     { name = "huggingface-hub", marker = "extra == 'fetch'", specifier = "==2.2.0" },
+    { name = "immutabledict", marker = "extra == 'bench'", specifier = "==4.2.1" },
     { name = "jsonschema", specifier = "==4.26.0" },
+    { name = "langdetect", marker = "extra == 'bench'", specifier = "==1.0.9" },
     { name = "lm-eval", marker = "extra == 'bench'", specifier = "==0.4.13" },
     { name = "mcp", specifier = "==2.3.0" },
     { name = "mistralai", marker = "extra == 'data'", specifier = "==3.2.0" },
+    { name = "nltk", marker = "extra == 'bench'", specifier = "==3.10.3" },
     { name = "numpy", specifier = "==2.5.4" },
     { name = "nvidia-ml-py", specifier = "==13.615.71" },
     { name = "peft", marker = "extra == 'train'", specifier = "==0.21.2" },

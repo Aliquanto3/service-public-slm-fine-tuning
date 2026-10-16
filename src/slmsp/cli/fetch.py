@@ -21,7 +21,6 @@ taille et de même SHA-256 est lié en dur au lieu d'être téléchargé). Les p
 from __future__ import annotations
 
 import argparse
-import importlib
 import sys
 from collections import Counter
 from collections.abc import Callable
@@ -32,14 +31,13 @@ from slmsp import net
 from slmsp.core.artefacts import Run, nouveau_run
 from slmsp.core.config import dossier_modeles, racine_projet
 from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide
+from slmsp.fetch import benchmarks, llamacpp, modeles, sources, verifications
 from slmsp.fetch import config as config_fetch
-from slmsp.fetch import llamacpp, modeles, sources, verifications
 from slmsp.fetch.hf import Telechargeur, client_hf, jeton_hf, preparer_hf
 
 NOM_FICHIERS = "fichiers.jsonl"
 NOM_EXTRACTIONS = "extractions.jsonl"
 NOM_CONTROLES = "controles.jsonl"
-MODULE_BENCHMARKS = "slmsp.fetch.benchmarks"
 
 
 def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
@@ -94,8 +92,10 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     p.set_defaults(func=_modeles)
 
-    p = cibles.add_parser("benchmarks", parents=[commun], help="jeux des Benchmarks")
-    p.add_argument("arguments", nargs=argparse.REMAINDER)
+    p = cibles.add_parser(
+        "benchmarks", parents=[commun], help="jeux de config/benchmarks/*.toml (révision épinglée)"
+    )
+    p.add_argument("noms", nargs="*", metavar="BENCHMARK", help="benchmarks (défaut : tous)")
     p.set_defaults(func=_benchmarks)
 
 
@@ -279,13 +279,21 @@ def _modeles(args: argparse.Namespace) -> int:
 
 
 def _benchmarks(args: argparse.Namespace) -> int:
-    """Délègue à `slmsp.fetch.benchmarks.executer` (story 6.1) s'il existe."""
-    try:
-        module = importlib.import_module(MODULE_BENCHMARKS)
-    except ModuleNotFoundError as exc:
-        if exc.name != MODULE_BENCHMARKS:
-            raise
-        print("slmsp : commande non implémentée : fetch benchmarks", file=sys.stderr)
-        return int(CodeSortie.USAGE)
-    code = module.executer(list(args.arguments), _racine(args))
-    return int(CodeSortie.SUCCES if code is None else code)
+    preparer_hf()
+    dossier = config_fetch.dossier_config()
+    jeux = benchmarks.lire_jeux(dossier / "benchmarks", args.noms)
+
+    def pilote(telechargeur: Telechargeur, consigner: Any, _run: Run) -> None:
+        benchmarks.executer(telechargeur, jeux, _racine(args), consigner=consigner)
+
+    return _executer(
+        args,
+        config_run={
+            "sous_commande": "benchmarks",
+            "benchmarks": list(args.noms),
+            "jeux": [jeu.nom for jeu in jeux],
+        },
+        entrees={"config/fetch.toml": dossier / "fetch.toml"},
+        ouvrir_client=_client_hf,
+        pilote=pilote,
+    )

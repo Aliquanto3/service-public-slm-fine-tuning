@@ -234,23 +234,6 @@ def test_cli_configuration_invalide_sans_run(cli, capsys) -> None:
     assert not (cli.racine / "runs").exists()
 
 
-def test_cli_benchmarks_non_implementee(capsys) -> None:
-    assert main(["fetch", "benchmarks", "mmlu"]) == 2
-    assert "commande non implémentée : fetch benchmarks" in capsys.readouterr().err
-
-
-def test_cli_benchmarks_delegue(monkeypatch, tmp_path: Path) -> None:
-    import sys
-    import types
-
-    appels = []
-    module = types.ModuleType("slmsp.fetch.benchmarks")
-    module.executer = lambda arguments, racine: appels.append((arguments, racine)) or 0
-    monkeypatch.setitem(sys.modules, "slmsp.fetch.benchmarks", module)
-    assert main(["fetch", "benchmarks", "--racine", str(tmp_path), "mmlu", "--jeu", "x"]) == 0
-    assert appels == [(["mmlu", "--jeu", "x"], tmp_path.resolve())]
-
-
 # --- Configuration versionnée ----------------------------------------------------------
 
 
