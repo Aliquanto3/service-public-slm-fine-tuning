@@ -295,7 +295,7 @@ def test_arguments_invalides_code_2(option: list[str]) -> None:
     assert main(["data", "seed", *option]) == CodeSortie.USAGE
 
 
-@pytest.mark.parametrize("etape", ["generate", "validate", "filter", "build"])
+@pytest.mark.parametrize("etape", ["validate", "filter", "build"])
 def test_etapes_a_venir_non_implementees(etape: str, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["data", etape]) == CodeSortie.USAGE
     assert f"non implémentée : data {etape}" in capsys.readouterr().err

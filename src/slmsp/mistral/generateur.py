@@ -11,7 +11,18 @@ n'accepte aucun texte libre (verrou 3) :
   journalisée et `ok` dont le contenu est exactement le texte ; `anael` refusé) ;
 - un message `assistant` précédent n'est admis que s'il égale, en JSON canonique normalisé,
   une réponse `generation`/`ok` journalisée de la même session ; un message `tool` que s'il
-  vient de la cassette `data/cassettes/<session_id>.json` de la même session.
+  vient d'une cassette de la même session : `data/cassettes/<session_id>.json` ou les
+  segments `<session_id>.t1.json`, `<session_id>.t2.json`… (un par tour d'outils, 9.4).
+
+Extensions de la story 9.4, toujours sans texte libre :
+
+- une Tâche outillée (`RD`) reçoit à chaque appel les outils de `config/outils-mcp.toml`
+  (format `tools` d'OpenAI, `tool_choice = "auto"`, AD-8), lus par le Générateur lui-même ;
+- l'emplacement `passages` est réservé : aucune amorce ne le remplit, sa valeur est le
+  rendu `rendre_passages(session_id)` injecté à la construction (passages de l'Index
+  retenus au plan de `generate` et formatés par `harness.prompts`) ;
+- `deriver_amorce(appel_id, …)` fait d'une réponse journalisée de la session une amorce
+  `mistral` (transcription du CR en deux temps).
 
 La requête vaut `[{"role": "user", "content": consigne_rendue}] + messages_precedents` :
 aucun autre texte n'y entre. L'appel passe par `ClientMistral._appeler` avec le jeton de
@@ -26,6 +37,7 @@ demandé ; sinon `PrealableNonSatisfait` à la construction. Un modèle résolu 
 
 from __future__ import annotations
 
+import copy
 import json
 import math
 import re
@@ -41,7 +53,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from slmsp.core.artefacts import lire
 from slmsp.core.canonique import json_canonique, sha256_hex
 from slmsp.core.config import racine_projet
-from slmsp.core.erreurs import ProvenanceInvalide, SlmspError
+from slmsp.core.erreurs import ConfigurationInvalide, ProvenanceInvalide, SlmspError
 from slmsp.core.gabarits import GabaritInvalide, GabaritValide, valider_gabarit
 from slmsp.core.messages import ConversationInvalide, valider_conversation
 from slmsp.core.schemas.amorce import Amorce
@@ -57,6 +69,7 @@ __all__ = [
     "PrealablesGeneration",
     "charger_prealables",
     "message_assistant",
+    "raison_de_fin",
 ]
 
 _JETON: Final = object()
@@ -70,6 +83,12 @@ CARACTERES_PAR_TOKEN: Final = 3
 CLES_OPTIONNELLES_GABARIT: Final = ("max_tokens",)
 NOM_AMORCES: Final = "amorces.jsonl"
 TYPE_RUN_SEED: Final = "data-seed"
+TACHES_OUTILLEES: Final = frozenset({"RD"})
+"""Tâches dont chaque appel porte les outils de `config/outils-mcp.toml` (AD-8)."""
+TOOL_CHOICE: Final = "auto"
+EMPLACEMENT_PASSAGES: Final = "passages"
+"""Emplacement réservé : rempli par le rendu injecté des passages de l'Index, jamais par une
+amorce."""
 
 _RE_GABARIT_ID = re.compile(r"[a-z0-9-]+")
 _RE_SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
@@ -207,6 +226,17 @@ def message_assistant(brut: bytes | str | None) -> dict[str, Any]:
     return resultat
 
 
+def raison_de_fin(brut: bytes | str | None) -> str | None:
+    """`choices[0].finish_reason` d'une réponse brute Mistral (`None` si absente ou illisible)."""
+    if brut is None:
+        return None
+    try:
+        raison = json.loads(brut)["choices"][0].get("finish_reason")
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+        return None
+    return raison if isinstance(raison, str) else None
+
+
 @dataclass(frozen=True)
 class Generation:
     """Résultat d'un appel du Générateur, tel que journalisé."""
@@ -224,13 +254,43 @@ class Generation:
 
 
 def _textes_resultat(resultat: Any) -> list[str]:
-    """Formes admises du `content` d'un message `tool` pour un `result` MCP."""
+    """Formes admises du `content` d'un message `tool` pour un `result` MCP : JSON canonique,
+    ou textes des éléments `text` joints sans séparateur ou par un saut de ligne (règle de
+    `harness.taches.recherche.contenu_resultat`, reprise par `data.sessions`)."""
     formes = [json_canonique(resultat).decode("utf-8")]
     if isinstance(resultat, Mapping) and isinstance(resultat.get("content"), list):
         morceaux = resultat["content"]
         if all(isinstance(m, Mapping) and isinstance(m.get("text"), str) for m in morceaux):
             formes.append("".join(m["text"] for m in morceaux))
+            formes.append("\n".join(m["text"] for m in morceaux))
     return formes
+
+
+def _outils_openai(donnees: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Entrées `[[outils]]` de `config/outils-mcp.toml` au format `tools` d'OpenAI, dans
+    l'ordre du fichier (même projection que `slmsp.mcp.outils.charger_outils`, que la
+    couche `mistral` ne peut pas importer)."""
+    entrees = donnees.get("outils")
+    if not isinstance(entrees, list) or not entrees:
+        raise ConfigurationInvalide("outils-mcp.toml : table [[outils]] absente ou vide")
+    outils: list[dict[str, Any]] = []
+    for entree in entrees:
+        if not isinstance(entree, Mapping) or not all(
+            isinstance(entree.get(cle), typ)
+            for cle, typ in (("nom", str), ("description", str), ("parametres", Mapping))
+        ):
+            raise ConfigurationInvalide("outils-mcp.toml : outil sans nom, description ou schéma")
+        outils.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": entree["nom"],
+                    "description": entree["description"],
+                    "parameters": copy.deepcopy(dict(entree["parametres"])),
+                },
+            }
+        )
+    return outils
 
 
 class Generateur:
@@ -244,6 +304,8 @@ class Generateur:
         racine: str | Path | None = None,
         fichier_donnees: str | Path | None = None,
         dossier_gabarits: str | Path | None = None,
+        fichier_outils: str | Path | None = None,
+        rendre_passages: Callable[[str], str] | None = None,
         aujourd_hui: Callable[[], date] = date.today,
     ) -> None:
         if not isinstance(seed_run_id, str) or not _RE_RUN_ID.fullmatch(seed_run_id):
@@ -260,6 +322,13 @@ class Generateur:
             if dossier_gabarits is not None
             else self.racine / "config" / "prompts" / "generateur"
         )
+        self.fichier_outils = (
+            Path(fichier_outils)
+            if fichier_outils is not None
+            else self.racine / "config" / "outils-mcp.toml"
+        )
+        self._rendre_passages = rendre_passages
+        self._outils: list[dict[str, Any]] | None = None
         self._aujourd_hui = aujourd_hui
         self.prealables = charger_prealables(
             self.fichier_donnees, modele=client.config.modele, aujourd_hui=aujourd_hui()
@@ -322,6 +391,24 @@ class Generateur:
             )
         return gabarit, max_tokens
 
+    def gabarit(self, gabarit_id: str, tache: str) -> GabaritValide:
+        """Gabarit `gabarit_id` validé pour `tache` (identifiant, version, SHA, emplacements),
+        avec les contrôles de `generer` ; lève `GabaritInvalide`."""
+        return self._gabarit(gabarit_id, tache)[0]
+
+    def outils(self) -> list[dict[str, Any]]:
+        """Outils envoyés aux Tâches outillées : `[[outils]]` de `fichier_outils` au format
+        `tools` d'OpenAI (copies). Lève `ConfigurationInvalide` si le fichier est illisible."""
+        if self._outils is None:
+            try:
+                donnees = tomllib.loads(self.fichier_outils.read_bytes().decode("utf-8"))
+            except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+                raise ConfigurationInvalide(
+                    f"{self.fichier_outils} : outils illisibles ({type(exc).__name__})"
+                ) from None
+            self._outils = _outils_openai(donnees)
+        return copy.deepcopy(self._outils)
+
     # --- Contrôles -----------------------------------------------------------------------
 
     def _resoudre_amorces(
@@ -343,6 +430,11 @@ class Generateur:
                 raise ProvenanceInvalide("amorce inconnue de l'artefact seed")
             if amorce.tache != tache:
                 raise ProvenanceInvalide(f"amorce {amorce_id!r} : tâche différente de {tache!r}")
+            if amorce.emplacement == EMPLACEMENT_PASSAGES:
+                raise ProvenanceInvalide(
+                    f"amorce {amorce_id!r} : l'emplacement « passages » est réservé aux "
+                    "passages de l'Index"
+                )
             if sha256_hex(amorce.texte) != amorce.sha_texte:
                 raise ProvenanceInvalide(f"amorce {amorce_id!r} : sha_texte faux")
             if amorce.auteur_contenu == "anael":
@@ -358,7 +450,11 @@ class Generateur:
                     f"par le gabarit {gabarit.id!r}"
                 )
             groupes.setdefault(amorce.emplacement, []).append(amorce.texte)
-        manquants = [nom for nom in gabarit.emplacements if nom not in groupes]
+        manquants = [
+            nom
+            for nom in gabarit.emplacements
+            if nom not in groupes and nom != EMPLACEMENT_PASSAGES
+        ]
         if manquants:
             raise GabaritInvalide(
                 f"gabarit {gabarit.id!r} : emplacement(s) sans amorce : {', '.join(manquants)}"
@@ -387,6 +483,51 @@ class Generateur:
                 f"amorce {amorce.amorce_id!r} : texte différent de la réponse journalisée"
             )
 
+    def deriver_amorce(
+        self, appel_id: str, *, amorce_id: str, tache: str, emplacement: str
+    ) -> Amorce:
+        """Amorce `mistral` tirée de la réponse journalisée `appel_id`, connue ensuite de
+        `generer` (CR en deux temps : la transcription devient l'amorce du compte rendu).
+
+        L'appel doit être `generation`/`ok` d'un modèle stable, non tronqué, et sa réponse un
+        contenu texte sans appel d'outil. Idempotent pour un même `amorce_id` et le même
+        texte ; lève `ProvenanceInvalide` sinon (rien n'est enregistré).
+        """
+        if emplacement == EMPLACEMENT_PASSAGES:
+            raise ProvenanceInvalide("l'emplacement « passages » est réservé à l'Index")
+        ligne = self._journal().lire(appel_id) if isinstance(appel_id, str) else None
+        if ligne is None or not self._ligne_admise(ligne):
+            raise ProvenanceInvalide(
+                "amorce dérivée : appel absent du journal, non « ok » ou d'un modèle hors "
+                "modeles_stables"
+            )
+        message = message_assistant(ligne.reponse_brute)
+        texte = message.get("content")
+        if "tool_calls" in message or not isinstance(texte, str):
+            raise ProvenanceInvalide(f"amorce dérivée de {appel_id} : contenu texte seul attendu")
+        if raison_de_fin(ligne.reponse_brute) == "length":
+            raise ProvenanceInvalide(f"amorce dérivée de {appel_id} : réponse tronquée")
+        try:
+            amorce = Amorce(
+                schema_version=1,
+                amorce_id=amorce_id,
+                tache=tache,
+                emplacement=emplacement,
+                texte=texte,
+                sha_texte=sha256_hex(texte),
+                auteur_contenu="mistral",
+                appel_id=appel_id,
+            )
+        except ValidationError:
+            raise ProvenanceInvalide("amorce dérivée non conforme au schéma Amorce") from None
+        existante = self._amorces.get(amorce.amorce_id)
+        if existante is not None and existante != amorce:
+            raise ProvenanceInvalide(
+                f"amorce {amorce.amorce_id!r} déjà connue avec une autre provenance"
+            )
+        self._amorces[amorce.amorce_id] = amorce
+        return amorce
+
     def _precedents(
         self, messages: Sequence[Mapping[str, Any]] | None, session_id: str
     ) -> list[dict[str, Any]]:
@@ -395,7 +536,7 @@ class Generateur:
         if isinstance(messages, (str, bytes)) or not isinstance(messages, Sequence):
             raise ProvenanceInvalide("messages_precedents : liste de messages attendue")
         reponses: set[bytes] | None = None
-        cassette: Cassette | None = None
+        cassettes: list[Cassette] | None = None
         admis: list[dict[str, Any]] = []
         appels: dict[Any, Mapping[str, Any]] = {}  # appels d'outil des assistants admis
         for indice, message in enumerate(messages):
@@ -421,9 +562,9 @@ class Generateur:
                     raise ProvenanceInvalide(
                         f"message précédent {indice} : tool_call_id sans appel d'outil admis"
                     )
-                if cassette is None:
-                    cassette = self._cassette(session_id)
-                if not self._resultat_de_cassette(message, appel, cassette):
+                if cassettes is None:
+                    cassettes = self._cassettes(session_id)
+                if not any(self._resultat_de_cassette(message, appel, c) for c in cassettes):
                     raise ProvenanceInvalide(
                         f"message précédent {indice} : résultat d'outil absent de la cassette "
                         "de cette session"
@@ -449,16 +590,30 @@ class Generateur:
         except ProvenanceInvalide:
             return {}
 
-    def _cassette(self, session_id: str) -> Cassette:
-        chemin = self.racine / "data" / "cassettes" / f"{session_id}.json"
-        try:
-            octets = lire(chemin, "data", racine=self.racine)
-        except OSError:
-            raise ProvenanceInvalide(f"cassette de la session {session_id!r} absente") from None
-        try:
-            return Cassette.model_validate_json(octets)
-        except ValidationError:
-            raise ProvenanceInvalide(f"cassette de la session {session_id!r} invalide") from None
+    def _cassettes(self, session_id: str) -> list[Cassette]:
+        """Cassettes de la session : `<session_id>.json` s'il existe, puis les segments
+        `<session_id>.t1.json`, `.t2.json`… jusqu'au premier absent."""
+        dossier = self.racine / "data" / "cassettes"
+        chemins = []
+        if (dossier / f"{session_id}.json").is_file():
+            chemins.append(dossier / f"{session_id}.json")
+        tour = 1
+        while (dossier / f"{session_id}.t{tour}.json").is_file():
+            chemins.append(dossier / f"{session_id}.t{tour}.json")
+            tour += 1
+        if not chemins:
+            raise ProvenanceInvalide(f"cassette de la session {session_id!r} absente")
+        cassettes = []
+        for chemin in chemins:
+            try:
+                octets = lire(chemin, "data", racine=self.racine)
+            except OSError:
+                raise ProvenanceInvalide(f"cassette {chemin.name} illisible") from None
+            try:
+                cassettes.append(Cassette.model_validate_json(octets))
+            except ValidationError:
+                raise ProvenanceInvalide(f"cassette {chemin.name} invalide") from None
+        return cassettes
 
     @staticmethod
     def _resultat_de_cassette(
@@ -526,6 +681,16 @@ class Generateur:
             raise ProvenanceInvalide("session_id invalide (attendu : [A-Za-z0-9][A-Za-z0-9_-]*)")
         gabarit, max_tokens = self._gabarit(gabarit_id, tache)
         ids, valeurs = self._resoudre_amorces(amorce_ids, tache, gabarit)
+        if EMPLACEMENT_PASSAGES in gabarit.emplacements:
+            if self._rendre_passages is None:
+                raise ProvenanceInvalide(
+                    f"gabarit {gabarit.id!r} : emplacement « passages » sans rendu de "
+                    "passages injecté"
+                )
+            rendu = self._rendre_passages(session_id)
+            if not isinstance(rendu, str) or not rendu:
+                raise ProvenanceInvalide(f"session {session_id!r} : rendu des passages vide")
+            valeurs[EMPLACEMENT_PASSAGES] = rendu
         consigne = _RE_EMPLACEMENT.sub(lambda m: valeurs[m.group(1)], gabarit.consigne)
         requete = [
             {"role": "user", "content": consigne},
@@ -535,7 +700,10 @@ class Generateur:
             valider_conversation(requete)
         except ConversationInvalide as exc:
             raise ProvenanceInvalide(f"requête du générateur invalide : {exc}") from None
+        outils = self.outils() if tache in TACHES_OUTILLEES else None
         caracteres = sum(len(json_canonique(m).decode("utf-8")) for m in requete)
+        if outils is not None:
+            caracteres += len(json_canonique(outils).decode("utf-8"))
         reponse = self.client._appeler(
             USAGE_GENERATION,
             session_id,
@@ -549,6 +717,8 @@ class Generateur:
                 "sha256_gabarit": gabarit.sha256,
                 "amorce_ids": list(ids),
             },
+            tools=outils,
+            tool_choice=TOOL_CHOICE if outils is not None else None,
         )
         if reponse.modele_resolu not in self.prealables.modeles_stables:
             raise ModeleMistralRefuse(

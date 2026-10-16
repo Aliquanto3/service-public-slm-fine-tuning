@@ -38,6 +38,7 @@ JOUR = date(2026, 10, 12)
 SEED = "20261012-000000-seed-factice-0a1b"
 SEED_2 = "20261012-000001-seed-factice-0a1c"
 GABARITS = racine_projet() / "config" / "prompts" / "generateur"
+OUTILS_MCP = racine_projet() / "config" / "outils-mcp.toml"
 JOURNAL_DONNEES = "appels-mistral.sqlite"
 REPONSE = "<réponse-factice-1>"
 DONNEES = """
@@ -96,6 +97,7 @@ class Monde:
             "client": self.banc.client(),
             "racine": self.racine,
             "dossier_gabarits": GABARITS,
+            "fichier_outils": OUTILS_MCP,
             "aujourd_hui": lambda: JOUR,
         }
         return Generateur(run_id, **{**valeurs, **options})
@@ -798,3 +800,153 @@ def test_schema_amorce_conforme() -> None:
     Amorce.model_validate(amorce("d", "generique", "demande"))
     Amorce.model_validate(amorce("m", "CR", "scenario", auteur="mistral", appel_id="b" * 32))
     Amorce.model_validate(amorce("n", "CR", "scenario", auteur="anael"))  # refusée au Générateur
+
+
+# --- Extensions de la story 9.4 : outils, passages, amorce dérivée, cassettes par tour ---------
+
+
+def test_rd_envoie_les_outils_figes(monde: Monde) -> None:
+    from slmsp.mcp.outils import charger_outils
+
+    monde.ecrire_seed([amorce("d", "RD", "demande"), amorce("g", "generique", "demande")])
+    generateur = monde.generateur()
+    assert generateur.outils() == charger_outils(OUTILS_MCP)
+    generateur.generer("traces-rd", ["d"], "session-rd", "RD")
+    generateur.generer("generique", ["g"], "session-g", "generique")
+    rd, generique = monde.banc.faux.corps()
+    assert rd["tools"] == charger_outils(OUTILS_MCP) and rd["tool_choice"] == "auto"
+    assert "tools" not in generique and "tool_choice" not in generique
+    (ligne, _) = monde.banc.lignes_journal(JOURNAL_DONNEES)
+    assert json.loads(ligne["requete"])["tools"] == rd["tools"]  # journalisés avec la requête
+
+
+def test_rd_fichier_outils_illisible(monde: Monde, tmp_path: Path) -> None:
+    from slmsp.core.erreurs import ConfigurationInvalide
+
+    _seed_rd(monde)
+    generateur = monde.generateur(fichier_outils=tmp_path / "absent.toml")
+    with pytest.raises(ConfigurationInvalide):
+        generateur.generer("traces-rd", ["d"], "session-rd", "RD")
+    monde.rien_n_est_parti()
+
+
+def test_passages_rendus_par_le_resolveur(monde: Monde) -> None:
+    rendu = factice("passages")
+    vus: list[str] = []
+
+    def rendre(session_id: str) -> str:
+        vus.append(session_id)
+        return rendu
+
+    question = amorce("q", "Q", "question")
+    monde.ecrire_seed([question])
+    monde.generateur(rendre_passages=rendre).generer("traces-q", ["q"], "session-q", "Q")
+    attendu = consigne("traces-q").replace("{question}", question["texte"])
+    (corps,) = monde.banc.faux.corps()
+    assert corps["messages"][0]["content"] == attendu.replace("{passages}", rendu)
+    assert vus == ["session-q"]
+
+
+def test_passages_sans_resolveur_refuses(monde: Monde) -> None:
+    monde.ecrire_seed([amorce("q", "Q", "question")])
+    with pytest.raises(ProvenanceInvalide):
+        monde.generateur().generer("traces-q", ["q"], "session-q", "Q")
+    monde.rien_n_est_parti()
+
+
+def test_amorce_passages_refusee(monde: Monde) -> None:
+    monde.ecrire_seed([amorce("q", "Q", "question"), amorce("p", "Q", "passages")])
+    generateur = monde.generateur(rendre_passages=lambda _sid: factice())
+    with pytest.raises(ProvenanceInvalide):
+        generateur.generer("traces-q", ["q", "p"], "session-q", "Q")
+    monde.rien_n_est_parti()
+
+
+def _journaliser_brut(monde: Monde, corps: dict[str, Any]) -> str:
+    return monde.journal().inscrire(
+        session_id="session-cr",
+        usage="generation",
+        modele_demande="mistral-large-latest",
+        modele_resolu="mistral-large-2512",
+        requete={"messages": []},
+        reponse_brute=json.dumps(corps).encode(),
+        reservation_id=None,
+        statut="ok",
+        statut_http=200,
+        jeton=_JETON,
+        gabarit_id="transcription-cr",
+        version_gabarit=1,
+        sha256_gabarit="0" * 64,
+        amorce_ids=["amorce-anterieure"],
+    )
+
+
+def _corps(message: dict[str, Any], fin: str = "stop") -> dict[str, Any]:
+    return {"choices": [{"index": 0, "finish_reason": fin, "message": message}]}
+
+
+def test_amorce_derivee_puis_utilisee(monde: Monde) -> None:
+    monde.ecrire_seed([amorce("s", "CR", "theme")])
+    texte = factice("transcription")
+    appel_id = _journaliser_brut(monde, _corps({"role": "assistant", "content": texte}))
+    generateur = monde.generateur()
+    derivee = generateur.deriver_amorce(
+        appel_id, amorce_id="session-cr.transcription", tache="CR", emplacement="transcription"
+    )
+    assert derivee.auteur_contenu == "mistral" and derivee.appel_id == appel_id
+    assert derivee.sha_texte == sha256_hex(texte)
+    meme = generateur.deriver_amorce(
+        appel_id, amorce_id="session-cr.transcription", tache="CR", emplacement="transcription"
+    )
+    assert meme == derivee
+    generateur.generer("cr", ["session-cr.transcription"], "session-cr", "CR")
+    (corps,) = monde.banc.faux.corps()
+    assert corps["messages"][0]["content"] == consigne("cr").replace("{transcription}", texte)
+
+
+@pytest.mark.parametrize("cas", ["outil", "tronquee", "inconnu", "autre-texte", "passages"])
+def test_amorce_derivee_refusee(monde: Monde, cas: str) -> None:
+    monde.ecrire_seed([amorce("s", "CR", "theme")])
+    generateur = monde.generateur()
+    message = {"role": "assistant", "content": factice()}
+    if cas == "outil":
+        message["tool_calls"] = [APPEL_OUTIL]
+    appel_id = _journaliser_brut(monde, _corps(message, "length" if cas == "tronquee" else "stop"))
+    emplacement = "passages" if cas == "passages" else "transcription"
+    if cas == "inconnu":
+        appel_id = "f" * 32
+    if cas == "autre-texte":
+        generateur.deriver_amorce(
+            appel_id, amorce_id="session-cr.transcription", tache="CR", emplacement=emplacement
+        )
+        appel_id = _journaliser_brut(monde, _corps({"role": "assistant", "content": factice()}))
+    with pytest.raises(ProvenanceInvalide):
+        generateur.deriver_amorce(
+            appel_id, amorce_id="session-cr.transcription", tache="CR", emplacement=emplacement
+        )
+    monde.rien_n_est_parti()
+
+
+def test_precedents_de_plusieurs_cassettes_par_tour(monde: Monde) -> None:
+    _seed_rd(monde)
+    second_appel = {**APPEL_OUTIL, "id": "appelfactice02"}
+    textes = [factice("resultat"), factice("resultat")]
+    resultat_2 = factice("resultat")
+    monde.journaliser("session-rd", {"role": "assistant", "tool_calls": [APPEL_OUTIL]})
+    monde.journaliser("session-rd", {"role": "assistant", "tool_calls": [second_appel]})
+    monde.cassette(
+        "session-rd.t1",
+        [("outil_factice", {"content": [{"type": "text", "text": t} for t in textes]})],
+    )
+    monde.cassette(
+        "session-rd.t2",
+        [("outil_factice", {"content": [{"type": "text", "text": resultat_2}]})],
+    )
+    precedents = [
+        {"role": "assistant", "tool_calls": [APPEL_OUTIL]},
+        {"role": "tool", "tool_call_id": "appelfactice01", "content": "\n".join(textes)},
+        {"role": "assistant", "tool_calls": [second_appel]},
+        {"role": "tool", "tool_call_id": "appelfactice02", "content": resultat_2},
+    ]
+    monde.generateur().generer("traces-rd", ["d"], "session-rd", "RD", precedents)
+    assert len(monde.banc.faux.requetes) == 1

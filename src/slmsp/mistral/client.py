@@ -272,12 +272,15 @@ class ClientMistral:
         response_format: Mapping[str, Any] | None = None,
         jeton: object | None = None,
         complements_journal: Mapping[str, Any] | None = None,
+        tools: Sequence[Mapping[str, Any]] | None = None,
+        tool_choice: str | None = None,
     ) -> ReponseMistral:
         """`appeler`, avec le jeton du Générateur et la méta de sa ligne de journal.
 
         `complements_journal` porte `gabarit_id`, `version_gabarit`, `sha256_gabarit` et
         `amorce_ids`, exigés pour `generation` et refusés ailleurs (`UsageInterdit`, avant
-        toute réservation).
+        toute réservation). `tools` (format OpenAI) et `tool_choice` sont envoyés quand ils
+        sont fournis (traces RD du Générateur, AD-8) : le corps journalisé les porte.
         """
         complements = dict(complements_journal or {})
         inconnues = set(complements) - set(CLES_COMPLEMENTS)
@@ -295,6 +298,10 @@ class ClientMistral:
             parametres["temperature"] = temperature
         if response_format is not None:
             parametres["response_format"] = dict(response_format)
+        if tools is not None:
+            parametres["tools"] = [dict(outil) for outil in tools]
+        if tool_choice is not None:
+            parametres["tool_choice"] = tool_choice
         poste, sous_poste = self.registre.imputer(usage)
         reservation_id = self.registre.reserver(
             poste, sous_poste, modele, MODE, tokens_entree_estimes, max_tokens
