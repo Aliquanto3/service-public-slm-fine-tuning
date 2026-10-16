@@ -53,9 +53,9 @@ def test_plan_par_methode(
     assert config_lora["r"] == 16
 
 
-def test_qlora_unsloth_indisponible() -> None:
-    with pytest.raises(ConfigurationInvalide, match="10.5"):
-        methodes.plan_methode("qlora-unsloth")
+def test_plan_qlora_unsloth() -> None:
+    plan = methodes.plan_methode("qlora-unsloth")
+    assert plan.entraineur == "unsloth" and plan.quantification_4bits
 
 
 def test_arguments_sft(tmp_path: Path) -> None:

@@ -30,7 +30,7 @@ ENV_IMPOSE: Final[Mapping[str, str]] = MappingProxyType(
 """Variables de télémétrie imposées à toute commande et à tout sous-processus (AD-4)."""
 
 _SECRETS_EXACTS = frozenset({"API_KEY", "HF_TOKEN", "HF_TOKEN_PATH", "HUGGING_FACE_HUB_TOKEN"})
-_SUFFIXES_SECRET = ("_API_KEY", "_TOKEN")
+_SUFFIXES_SECRET = ("_API_KEY", "_TOKEN", "_KEY", "_PASSWORD")
 
 
 def racine_projet() -> Path:
@@ -113,7 +113,12 @@ def appliquer_environnement_impose() -> None:
 
 def _est_secret(nom: str) -> bool:
     nom = nom.upper()
-    return nom in _SECRETS_EXACTS or nom.endswith(_SUFFIXES_SECRET) or "SECRET" in nom
+    return (
+        nom in _SECRETS_EXACTS
+        or nom.endswith(_SUFFIXES_SECRET)
+        or "SECRET" in nom
+        or "PASSWORD" in nom
+    )
 
 
 def env_sous_processus(base: Mapping[str, str] | None = None) -> dict[str, str]:

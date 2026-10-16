@@ -13,7 +13,9 @@ chaque méthode par trois données, la base (nf4 4 bits ou bf16), les options de
 | `rslora` | nf4 4 bits | `use_rslora=True` | `SFTTrainer` |
 | `pissa` | bf16 (incompatible avec nf4) | `init_lora_weights="pissa"` | `SFTTrainer` |
 
-`qlora-unsloth` est délégué à l'environnement isolé : indisponible jusqu'à la story 10.5.
+| `qlora-unsloth` | nf4 4 bits (Unsloth) | — | sous-processus `envs/unsloth` (`variante_unsloth`) |
+
+`qlora-unsloth` est une variante de vitesse, déléguée à l'environnement isolé (story 10.5).
 `assistant_only_loss` de TRL n'est pas utilisé : le jeu est pré-tokenisé avec les labels de
 `train.masque`. La pile (torch, transformers, peft, trl) est injectée (`environnement.Pile`).
 """
@@ -32,7 +34,7 @@ from slmsp.train.config import RunConfig
 from slmsp.train.couts import ARGUMENTS_TRAINER
 from slmsp.train.environnement import ErreurQuantification, Pile
 
-Entraineur = Literal["sft", "orpo"]
+Entraineur = Literal["sft", "orpo", "unsloth"]
 
 
 @dataclass(frozen=True)
@@ -56,6 +58,7 @@ PLANS: Final[Mapping[str, PlanMethode]] = {
     "orpo": PlanMethode("orpo", True, entraineur="orpo"),
     "rslora": PlanMethode("rslora", True, {"use_rslora": True}),
     "pissa": PlanMethode("pissa", False, {"init_lora_weights": "pissa"}),
+    "qlora-unsloth": PlanMethode("qlora-unsloth", True, entraineur="unsloth"),
 }
 
 CIBLES_LORA: Final = "all-linear"
@@ -63,12 +66,7 @@ CIBLES_LORA: Final = "all-linear"
 
 
 def plan_methode(methode: str) -> PlanMethode:
-    """Plan de `methode` ; lève `ConfigurationInvalide` pour `qlora-unsloth` ou une inconnue."""
-    if methode == "qlora-unsloth":
-        raise ConfigurationInvalide(
-            "methode = qlora-unsloth : variante en environnement isolé, indisponible "
-            "jusqu'à la story 10.5"
-        )
+    """Plan de `methode` ; lève `ConfigurationInvalide` pour une méthode inconnue."""
     try:
         return PLANS[methode]
     except KeyError:

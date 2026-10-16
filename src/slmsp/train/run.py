@@ -41,7 +41,7 @@ from slmsp.core.config import appliquer_environnement_impose, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide
 from slmsp.core.var import verrou_gpu
 from slmsp.inference.serveur import charger_config_modele
-from slmsp.train import chargement, environnement, methodes
+from slmsp.train import chargement, environnement, methodes, variante_unsloth
 from slmsp.train.config import RunConfig, charger_config_couts, charger_run_config
 from slmsp.train.couts import creer_callback, ecrire_mesures
 from slmsp.train.masque import VERSION_MASQUE
@@ -200,6 +200,8 @@ def executer(
     config = charger_run_config(chemin_config)
     nom = chemin_config.stem
     plan = methodes.plan_methode(config.methode)
+    if plan.entraineur == "unsloth" and reprendre_run is not None:  # avant toute réouverture
+        raise ConfigurationInvalide("--reprendre n'est pas supporté par qlora-unsloth (story 10.5)")
     config_modele = charger_config_modele(config.modele)
     dossier = environnement.dossier_poids(config.modele, racine=racine)
     config_poids = environnement.lire_config_modele(dossier, racine=racine)
@@ -207,7 +209,7 @@ def executer(
         config_poids, config.modele, exclure_vision=config_modele.exclure_vision
     )
     specifiques = (
-        environnement.arguments_specifiques(config_poids) if plan.entraineur == "sft" else {}
+        environnement.arguments_specifiques(config_poids) if plan.entraineur != "orpo" else {}
     )
 
     fichier = chargement.NOM_PREFERENCES if plan.entraineur == "orpo" else chargement.NOM_TRAIN
@@ -315,6 +317,41 @@ def executer(
     return 0
 
 
+def _entrainer_unsloth(
+    run: Run,
+    config: RunConfig,
+    arguments: Mapping[str, Any],
+    *,
+    exemples: list[dict[str, Any]],
+    tokenizer: Any,
+    dossier: Path,
+) -> None:
+    """Variante Unsloth : mêmes `exemples` (ids et labels de `train.masque`), sous-processus.
+
+    Le `gpu.lock` est déjà pris par `executer`. Coûts, adaptateur et pertes sont archivés
+    par `variante_unsloth.entrainer` comme pour les autres méthodes.
+    """
+    hp = config.hyperparametres
+    contexte = {
+        "config": run.manifeste.config,
+        "graine": run.manifeste.graine,
+        "environnement": run.manifeste.environnement.model_dump(mode="json"),
+        "run_id": run.run_id,
+    }
+    variante_unsloth.entrainer(
+        run,
+        exemples=exemples,
+        pad_id=int(tokenizer.pad_token_id),
+        dossier_poids=dossier,
+        arguments=arguments,
+        longueur=config.longueur_max,
+        graine=config.graine,
+        lora={"r": hp.lora_rang, "alpha": hp.lora_alpha, "dropout": hp.lora_dropout},
+        racine=run.dossier.parents[2],
+        contexte=contexte,
+    )
+
+
 def _entrainer(
     run: Run,
     pile: environnement.Pile,
@@ -366,6 +403,12 @@ def _entrainer(
     run.ajouter_jsonl(
         NOM_LOG, {"evenement": "demarrage", "checkpoint": getattr(depart, "name", None)}
     )
+
+    if plan.entraineur == "unsloth":
+        _entrainer_unsloth(
+            run, config, arguments, exemples=exemples, tokenizer=tokenizer, dossier=dossier
+        )
+        return
 
     pile.transformers.set_seed(config.graine)  # avant le chargement et l'adaptateur (W4.4)
     modele = methodes.charger_modele(pile, dossier, plan, cpu=cpu)

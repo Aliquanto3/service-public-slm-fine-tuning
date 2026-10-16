@@ -181,6 +181,9 @@ def test_env_sous_processus_filtre_les_secrets(
         "CLIENT_SECRET": "factice-secret",
         "secret_partage_zz": "factice-secret-2",
         "HF_TOKEN_PATH": "factice-chemin",
+        "AWS_SECRET_KEY": "factice-aws",
+        "SSH_KEY": "factice-ssh",
+        "DB_PASSWORD": "factice-mdp",
     }
     copie = dict(base)
     env = env_sous_processus(base)
@@ -188,6 +191,7 @@ def test_env_sous_processus_filtre_les_secrets(
     assert not [nom for nom in env if nom.upper().endswith("_API_KEY")]
     assert not [nom for nom in env if nom.upper().endswith("_TOKEN")]
     assert not [nom for nom in env if "SECRET" in nom.upper()]
+    assert not {"SSH_KEY", "DB_PASSWORD"} & {nom.upper() for nom in env}
     assert not {"API_KEY", "HF_TOKEN_PATH"} & {nom.upper() for nom in env}
     assert not [valeur for valeur in env.values() if valeur.startswith("factice")]
     assert env["PATH"] == "chemin-factice"

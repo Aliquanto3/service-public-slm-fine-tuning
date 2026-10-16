@@ -197,6 +197,9 @@ def sonder(entree: dict[str, Any]) -> dict[str, Any]:
 
 
 def principal(arguments: list[str]) -> int:
+    for flux in (sys.stdout, sys.stderr):
+        if hasattr(flux, "reconfigure"):
+            flux.reconfigure(encoding="utf-8", errors="replace")
     resultat: dict[str, Any] = {"ok": False}
     try:
         if len(arguments) != 1:
@@ -208,7 +211,7 @@ def principal(arguments: list[str]) -> int:
         resultat["erreur"] = f"{type(exc).__name__} : {str(exc)[:2000]}"
         resultat["trace"] = traceback.format_exc()[-4000:]
     resultat["versions"] = versions()
-    print(MARQUEUR + json.dumps(resultat, ensure_ascii=False), flush=True)
+    print(MARQUEUR + json.dumps(resultat, ensure_ascii=True), flush=True)  # W4.6 : pas de cp1252
     return 0 if resultat.get("ok") else 1
 
 

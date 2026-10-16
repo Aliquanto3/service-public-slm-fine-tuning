@@ -141,13 +141,6 @@ def test_orpo_lecture_de_l_adaptateur_sft_interdite(projet, pile, factices) -> N
         module_run.executer(toml, racine=projet.racine, pile=pile)
 
 
-def test_qlora_unsloth_refuse(projet, pile) -> None:
-    with pytest.raises(ConfigurationInvalide, match="10.5"):
-        module_run.executer(
-            projet.ecrire_toml(methode="qlora-unsloth"), racine=projet.racine, pile=pile
-        )
-
-
 def test_cli_jeu_absent(projet, capsys: pytest.CaptureFixture[str]) -> None:
     toml = projet.ecrire_toml()
     assert main(["train", "run", "--config", str(toml), "--racine", str(projet.racine)]) == 1

@@ -1,0 +1,24 @@
+# Run variante QLoRA Unsloth, Granite 4.0 1B (story 10.5, AD-18).
+# Mêmes données, même masque (train.masque), même graine et même longueur que M1 : seul
+# `methode` change. Variante de vitesse, pas une méthode comptée. L'entraînement tourne
+# dans l'environnement isolé envs/unsloth (créé par : uv sync --frozen --project envs/unsloth).
+# Lancement : uv run --extra train slmsp train run --config config/runs/v-qlora-unsloth-granite-4.0-1b.toml
+
+campagne = "granite-4.0-1b-v1"
+modele = "granite-4.0-1b"
+methode = "qlora-unsloth"
+jeu_version = "v1"
+graine = 1234
+longueur_max = 2048
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
