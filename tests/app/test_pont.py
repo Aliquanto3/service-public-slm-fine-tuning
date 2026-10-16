@@ -197,7 +197,7 @@ def test_signaler_pret_et_appeler(banc: Any) -> None:
     pont, fenetre = banc(FakeLlm(script(mots(2, "j"))))
     pont.signaler_pret()
     assert fenetre.evenements() == [{"type": "pret"}]
-    assert pont.appeler("mode.etat")["erreur"]["code"] == "non-implementee"
+    assert pont.appeler("mode.inconnue")["erreur"]["code"] == "non-implementee"
     assert pont.appeler("verification.verifier", "<url>")["erreur"]["code"] == "non-implementee"
     assert pont.appeler("nimporte")["erreur"]["code"] == "methode-inconnue"
     assert pont.appeler("arreter") == {"ok": True, "en_cours": False}
