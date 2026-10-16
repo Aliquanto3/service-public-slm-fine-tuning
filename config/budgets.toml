@@ -6,7 +6,7 @@
 
 schema_version = 1
 
-campagne_id = "nuit-2026-10-12"
+campagne_id = "baseline-2026-10-16"
 
 # Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
 # réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
@@ -17,15 +17,15 @@ marge_eur = 0.5
 majoration_entree = 1.25
 
 [postes.anthropic]
-plafond_eur = 10.0
+plafond_eur = 7.5
 
 [postes.mistral]
-plafond_eur = 30.0
+plafond_eur = 1.0
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
-generation = 25.0
-juge = 5.0
+generation = 0.0
+juge = 1.0
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]
