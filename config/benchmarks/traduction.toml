@@ -19,10 +19,33 @@ depot = "facebook/flores"
 revision = "71abf77d8b7beb5cfef59898d6b24d92ab7654fc"
 acces = "conditionnel"
 licence = "cc-by-sa-4.0"
-# NON ÉPINGLÉ (fichiers) : accès conditionnel, 401 sans HF_TOKEN autorisé (2026-10-16). Après
-# acceptation des conditions sur la page du jeu et HF_TOKEN dans .env, épingler les 5 fichiers
-# data/language/{fra_Latn,spa_Latn,arb_Arab,por_Latn,deu_Latn}/devtest-00000-of-00001.parquet
-# (SHA-256 = oid LFS de l'API Hub, taille 124-141 Ko chacun) en [[jeux.fichiers]].
+# Fichiers épinglés le 2026-10-16 (conditions acceptées par Anaël, HF_TOKEN dans .env) :
+# SHA-256 = ETag LFS de l'API Hub (HEAD sur resolve, révision ci-dessus).
+
+[[jeux.fichiers]]
+chemin = "data/language/fra_Latn/devtest-00000-of-00001.parquet"
+sha256 = "00e4ad2c2b2f090907d65e80ae7737215cdf463d0c92fea5a80901601ad120d1"
+taille = 130934
+
+[[jeux.fichiers]]
+chemin = "data/language/spa_Latn/devtest-00000-of-00001.parquet"
+sha256 = "7b3319ec175588108e5d4abb073011920a1e494a90ac18d6840f4570b0393f36"
+taille = 131321
+
+[[jeux.fichiers]]
+chemin = "data/language/arb_Arab/devtest-00000-of-00001.parquet"
+sha256 = "7faede675a31cc727075862c1485c8d895d557a6df6f397d469349e433c24eab"
+taille = 141456
+
+[[jeux.fichiers]]
+chemin = "data/language/por_Latn/devtest-00000-of-00001.parquet"
+sha256 = "8e5d9b9b451899b9f1ccb2d358a75d2162edb162485e7a3aee370ff68ed3dffb"
+taille = 124144
+
+[[jeux.fichiers]]
+chemin = "data/language/deu_Latn/devtest-00000-of-00001.parquet"
+sha256 = "c8d410141c77e896e7960c49dd0d2d9157a100e105843ec2b87702b5fe341a80"
+taille = 130075
 
 [[jeux]]
 nom = "wmt14"
