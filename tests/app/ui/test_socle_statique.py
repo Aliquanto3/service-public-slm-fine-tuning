@@ -18,8 +18,8 @@ VUES = [
     "redaction",
     "correction",
     "resume",
-    "courrier",
     "traduction",
+    "courrier",
     "mode",
     "parametres",
     "historique",
@@ -106,7 +106,8 @@ VUES_REALISEES = {
     "retours",
     "resume",
     "courrier",
-}  # stories 12.7 à 12.11, 13.1 à 13.3
+    "traduction",
+}  # stories 12.7 à 12.11, 13.1 à 13.4
 
 
 def test_modules_de_vue_declares_d_avance() -> None:
