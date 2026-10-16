@@ -20,8 +20,11 @@ import argparse
 import importlib.metadata
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
+import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
@@ -44,6 +47,7 @@ INTERNE = "_internal"  # dossier des ressources d'un `onedir` PyInstaller 6 (= s
 RESSOURCES = "slmsp/app/ressources"
 FICHIER_EMPREINTE = "empreinte-application.txt"
 FICHIER_LICENCES = "licences-tierces.json"
+FICHIER_MANIFESTE_FICHIERS = "manifeste-fichiers.json"
 FICHIER_EXCLU = "pont-factice.js"  # 12.4, 12.6 : jamais dans l'application installée
 LLAMA_SERVER = "llama-server.exe"
 
@@ -70,6 +74,7 @@ EXCLUSIONS = (
     "immutabledict",
     "playwright",
     "pytest",
+    "_pytest",
     "tkinter",
     "matplotlib",
     "IPython",
@@ -142,12 +147,13 @@ def _exiger(chemin: Path, quoi: str) -> Path:
 
 
 def _garder_bin_cpu(chemin: Path) -> bool:
-    """`llama-server.exe` et ses DLL ; les autres outils llama.cpp (cli, bench…) sont exclus."""
-    nom = chemin.name.lower()
-    if nom.endswith(".exe"):
+    """`llama-server.exe` et toutes les DLL de `bin-cpu` ; les autres exécutables sont exclus.
+
+    Toutes les DLL sont gardées (y compris les `*-impl.dll` des autres outils) : filtrer sur les
+    imports de l'exe risquerait d'oublier une dépendance chargée à l'exécution, pour quelques Mo.
+    """
+    if chemin.name.lower().endswith(".exe"):
         return chemin.name == LLAMA_SERVER
-    if nom.endswith("-impl.dll"):
-        return nom == "llama-server-impl.dll"
     return True
 
 
@@ -225,6 +231,9 @@ def construire_plan(
     empreintes = json.loads(manifeste.read_text(encoding="utf-8")).get("fichiers", {})
     if not empreintes:
         raise ErreurBuild("MANIFEST.json de l'Index : aucune empreinte de fichier")
+    for nom, sha in empreintes.items():
+        if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", sha):
+            raise ErreurBuild(f"MANIFEST.json de l'Index : empreinte absente ou invalide ({nom})")
     composant = f"index:{plan.index_version}"
     plan.fichiers.append(Fichier(manifeste, f"index/{plan.index_version}/MANIFEST.json", composant))
     for nom, sha in sorted(empreintes.items()):
@@ -252,12 +261,73 @@ def verifier_taille(tailles: dict[str, int], limite: int = LIMITE_OCTETS) -> int
     return total
 
 
-def fermeture_runtime(dossier: Path) -> list[str]:
-    """Paquets exclus (AD-2) trouvés au premier niveau du dossier construit."""
+def _nom_module(nom: str) -> str:
+    """Nom de paquet d'une entrée : `a.b.c` -> `a`, `numpy-2.dist-info` -> `numpy-2`."""
+    return nom.lower().split(".")[0]
+
+
+def _nom_extension(nom: str) -> str:
+    """Module d'extension : `_tkinter.cp312-win_amd64.pyd` -> `tkinter` (sans `_` ni ABI)."""
+    return _nom_module(nom).lstrip("_")
+
+
+def modules_pyz(travail: Path) -> set[str]:
+    """Paquets de premier niveau des archives PYZ de `travail` et de `base_library.zip`.
+
+    Les modules Python purs ne sont pas des fichiers de `_internal` : ils vivent dans le PYZ
+    de l'exécutable. Lève `ErreurBuild` si aucun PYZ n'est trouvé (le contrôle serait vide).
+    """
+    from PyInstaller.archive.readers import ZlibArchiveReader
+
+    archives = sorted(travail.rglob("*.pyz"))
+    if not archives:
+        raise ErreurBuild(f"aucune archive PYZ sous {travail} : fermeture runtime invérifiable")
+    noms: set[str] = set()
+    for archive in archives:
+        noms |= {_nom_module(n) for n in ZlibArchiveReader(str(archive)).toc}
+    for zip_base in travail.rglob("base_library.zip"):
+        with zipfile.ZipFile(zip_base) as z:
+            noms |= {_nom_module(n.split("/")[0]) for n in z.namelist()}
+    return noms
+
+
+def fermeture_runtime(dossier: Path, travail: Path | None = None) -> list[str]:
+    """Paquets exclus (AD-2) présents dans le dossier construit.
+
+    Regarde le premier niveau de `_internal` (dossiers, `.pyd` préfixés ou suffixés d'ABI) et,
+    si `travail` est donné, les modules du PYZ (`modules_pyz`).
+    """
     interne = dossier / INTERNE
     base = interne if interne.is_dir() else dossier
-    presents = {entree.name.lower().split(".")[0] for entree in base.iterdir()}
+    presents = set()
+    for entree in base.iterdir():
+        presents.add(_nom_module(entree.name))
+        if entree.suffix.lower() == ".pyd":
+            presents.add(_nom_extension(entree.name))
+    if travail is not None:
+        presents |= modules_pyz(travail)
     return sorted(e for e in EXCLUSIONS if e.lower() in presents)
+
+
+def ecrire_manifeste_fichiers(dossier: Path, chemin: Path) -> str:
+    """SHA-256 de chaque fichier du paquet dans `chemin` ; renvoie l'empreinte de ce manifeste."""
+    fichiers = {
+        p.relative_to(dossier).as_posix(): sha256_fichier(p)
+        for p in sorted(dossier.rglob("*"))
+        if p.is_file()
+    }
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    chemin.write_text(json.dumps(fichiers, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return sha256_fichier(chemin)
+
+
+def ecarter_dossier(dossier: Path) -> Path:
+    """Renomme un paquet refusé en `<nom>-ECHEC` (remplace un précédent) : pas un livrable."""
+    cible = dossier.with_name(dossier.name + "-ECHEC")
+    if cible.exists():
+        shutil.rmtree(cible)
+    dossier.rename(cible)
+    return cible
 
 
 def ecrire_empreinte(dossier: Path, exe: Path) -> str:
@@ -326,6 +396,7 @@ def ecrire_manifeste(
     total: int | None = None,
     runtime: int | None = None,
     empreinte: str | None = None,
+    empreinte_manifeste_fichiers: str | None = None,
     licences_a_verifier: list[str] | None = None,
 ) -> dict:
     """`build/manifeste-application.json` : tailles par composant, empreintes GGUF et Index."""
@@ -344,6 +415,7 @@ def ecrire_manifeste(
         "composants": dict(sorted(plan.tailles().items())),
         "empreintes": {f.destination: f.sha256_attendu for f in plan.fichiers if f.sha256_attendu},
         "empreinte_application": empreinte,
+        "empreinte_manifeste_fichiers": empreinte_manifeste_fichiers,
         "licences_a_verifier": licences_a_verifier or [],
     }
     chemin.parent.mkdir(parents=True, exist_ok=True)
@@ -396,24 +468,32 @@ def construire(args: argparse.Namespace) -> int:
     )  # les seules données dépassent la limite : stop avant PyInstaller
 
     dossier = lancer_pyinstaller(plan, sortie)
-    exe = dossier / f"{NOM_APPLICATION}.exe"
-    if not exe.is_file():
-        raise ErreurBuild(f"exécutable absent : {exe}")
-    lourds = fermeture_runtime(dossier)
-    if lourds:
-        raise ErreurBuild(f"fermeture runtime violée (AD-2) : {', '.join(lourds)}")
-    empreinte = ecrire_empreinte(dossier, exe)
-    total = taille_dossier(dossier)
-    runtime = max(total - sum(plan.tailles().values()), 0)
-    ecrire_manifeste(
-        sortie / "manifeste-application.json",
-        plan,
-        total=total,
-        runtime=runtime,
-        empreinte=empreinte,
-        licences_a_verifier=a_verifier,
-    )
-    verifier_taille({**plan.tailles(), "runtime": runtime})
+    try:
+        exe = dossier / f"{NOM_APPLICATION}.exe"
+        if not exe.is_file():
+            raise ErreurBuild(f"exécutable absent : {exe}")
+        lourds = fermeture_runtime(dossier, sortie / "travail")
+        if lourds:
+            raise ErreurBuild(f"fermeture runtime violée (AD-2) : {', '.join(lourds)}")
+        empreinte = ecrire_empreinte(dossier, exe)
+        total = taille_dossier(dossier)
+        runtime = max(total - sum(plan.tailles().values()), 0)
+        empreinte_fichiers = ecrire_manifeste_fichiers(dossier, sortie / FICHIER_MANIFESTE_FICHIERS)
+        ecrire_manifeste(
+            sortie / "manifeste-application.json",
+            plan,
+            total=total,
+            runtime=runtime,
+            empreinte=empreinte,
+            empreinte_manifeste_fichiers=empreinte_fichiers,
+            licences_a_verifier=a_verifier,
+        )
+        verifier_taille({**plan.tailles(), "runtime": runtime})
+    except ErreurBuild as exc:
+        if dossier.is_dir():
+            ecarte = ecarter_dossier(dossier)
+            raise ErreurBuild(f"{exc} (paquet écarté : {ecarte})") from exc
+        raise
     print(f"{dossier} : {total / 1e6:.0f} Mo, empreinte {empreinte}")  # noqa: T201
     return 0
 

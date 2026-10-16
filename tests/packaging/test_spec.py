@@ -106,7 +106,8 @@ def test_plan_exclusions(ressources_factices) -> None:
     # Un seul exécutable llama.cpp, et pas les DLL des autres outils.
     exe = [d for d in destinations if d.endswith(".exe")]
     assert [Path(d).name for d in exe] == ["llama-server.exe"]
-    assert not any("bench-impl" in d for d in destinations)
+    assert any("bench-impl" in d for d in destinations)  # toutes les DLL de bin-cpu sont gardées
+    assert not any(d.endswith("llama-cli.exe") for d in destinations)
     assert any(d.endswith("llama-server-impl.dll") for d in destinations)
     # L'empreinte est produite au build, jamais embarquée depuis les sources.
     assert not any(d.endswith("empreinte-application.txt") for d in destinations)
@@ -312,3 +313,83 @@ def test_interface_et_ressources_sous_le_paquet() -> None:
     src = DEPOT / "src"
     assert principal.dossier_interface().relative_to(src).as_posix() == "slmsp/app/ui"
     assert reglages.RESSOURCES.relative_to(src).as_posix() == CA.RESSOURCES
+
+
+# --- Revue 12.12 ----------------------------------------------------------------------------
+
+
+def _pyz_factice(travail: Path, modules: list[str]) -> None:
+    from PyInstaller.archive.writers import ZlibArchiveWriter
+
+    source = travail / "m.py"
+    travail.mkdir(parents=True, exist_ok=True)
+    source.write_text("x = 1\n", encoding="utf-8")
+    code = {m: compile("x = 1", m, "exec") for m in modules}
+    entrees = [(m, str(source), "PYMODULE") for m in modules]
+    ZlibArchiveWriter(str(travail / "PYZ-00.pyz"), entrees, code)
+
+
+def test_fermeture_runtime_lit_le_pyz_et_les_pyd(tmp_path: Path) -> None:
+    dossier, travail = tmp_path / "dist", tmp_path / "travail"
+    interne = dossier / "_internal"
+    interne.mkdir(parents=True)
+    (interne / "_tkinter.cp312-win_amd64.pyd").write_bytes(b"")
+    _pyz_factice(travail, ["pydantic.main", "pandas.core.frame", "slmsp.app"])
+    assert CA.fermeture_runtime(dossier, travail) == ["pandas", "tkinter"]
+    # Sans PYZ, le contrôle échoue au lieu de passer à vide.
+    with pytest.raises(CA.ErreurBuild, match="PYZ"):
+        CA.fermeture_runtime(dossier, tmp_path / "vide")
+    assert CA.fermeture_runtime(dossier) == ["tkinter"]
+
+
+def test_bin_cpu_garde_toutes_les_dll_et_le_seul_serveur(tmp_path: Path) -> None:
+    garde = CA._garder_bin_cpu
+    assert garde(tmp_path / "llama-server.exe")
+    assert not garde(tmp_path / "llama-bench.exe")
+    assert garde(tmp_path / "ggml-base.dll") and garde(tmp_path / "llama-server-impl.dll")
+    assert garde(tmp_path / "libomp140.x86_64.DLL")
+
+
+def test_index_empreinte_nulle_refusee(ressources_factices) -> None:
+    r = ressources_factices
+    manifeste = r["index"] / "20260926" / "MANIFEST.json"
+    manifeste.write_text(json.dumps({"fichiers": {"a.bin": None}}), encoding="utf-8")
+    with pytest.raises(CA.ErreurBuild, match="empreinte absente ou invalide"):
+        _plan(r)
+
+
+def test_manifeste_fichiers_et_paquet_ecarte(tmp_path: Path) -> None:
+    dossier = tmp_path / "AssistantSP"
+    (dossier / "_internal").mkdir(parents=True)
+    (dossier / "AssistantSP.exe").write_bytes(b"exe")
+    (dossier / "_internal" / "x.dll").write_bytes(b"dll")
+    chemin = tmp_path / "manifeste-fichiers.json"
+    empreinte = CA.ecrire_manifeste_fichiers(dossier, chemin)
+    contenu = json.loads(chemin.read_text(encoding="utf-8"))
+    assert set(contenu) == {"AssistantSP.exe", "_internal/x.dll"}
+    assert contenu["_internal/x.dll"] == sha256_fichier(dossier / "_internal" / "x.dll")
+    assert empreinte == sha256_fichier(chemin)
+    ancien = tmp_path / "AssistantSP-ECHEC"
+    ancien.mkdir()
+    ecarte = CA.ecarter_dossier(dossier)
+    assert ecarte == ancien and not dossier.exists() and (ecarte / "AssistantSP.exe").is_file()
+
+
+def test_var_dir_gele_sous_les_donnees_de_l_application(
+    gele: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from slmsp.core.var import dossier_var
+
+    monkeypatch.delenv("SLMSP_VAR_DIR", raising=False)
+    attendu = (tmp_path / "local" / "AssistantSP" / "var").resolve()
+    assert dossier_var() == attendu and attendu.is_dir()
+    monkeypatch.setenv("SLMSP_VAR_DIR", str(tmp_path / "autre"))
+    assert dossier_var() == (tmp_path / "autre").resolve()
+
+
+def test_var_dir_non_gele_inchange(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from slmsp.core.var import dossier_var
+
+    monkeypatch.delenv("SLMSP_VAR_DIR", raising=False)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    assert dossier_var() == (tmp_path / "slmsp" / "var").resolve()

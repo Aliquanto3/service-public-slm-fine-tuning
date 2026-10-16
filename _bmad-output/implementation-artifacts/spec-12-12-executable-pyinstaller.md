@@ -48,3 +48,12 @@ Commande de build complet (depuis le dépôt principal, où vivent `vendor/`, `m
 
 ## Auto Run Result
 Statut : done (hors build complet). Revue conseillée sur `fermeture_runtime` (premier niveau seulement) et sur les `hiddenimports` du `.spec` (`collect_submodules` sur les couches runtime).
+
+## Revue
+- medium, second avis : `fermeture_runtime` ne lisait que le premier niveau. Corrigé : lit les PYZ de `build/travail` (`ZlibArchiveReader`) et `base_library.zip`, normalise les `.pyd` (préfixe `_`, suffixe d'ABI), échoue si aucun PYZ n'est trouvé. Test sur un PYZ factice. Le contrôle a révélé `_pytest` (tiré par `numpy.testing`) dans le PYZ : ajouté aux exclusions, build réel `--sans-modele` repassé (158 Mo) et exécutable démarré.
+- medium, second avis : `_garder_bin_cpu` ne gardait que `llama-server-impl.dll`. Corrigé : toutes les DLL de `bin-cpu`, seul `llama-server.exe` comme exécutable (choix sans lecteur PE : plus robuste, coût de quelques Mo). Testé.
+- medium, second avis : `SLMSP_VAR_DIR` partagé avec le développement. Corrigé : en mode gelé, défaut `%LOCALAPPDATA%\AssistantSP\var` (`core/var.py`), variable respectée si définie. Testé (gelé, variable, non gelé inchangé). Remplace le point « à confirmer » sur le dossier d'état.
+- low, second avis : empreinte limitée à l'exe. Corrigé : `build/manifeste-fichiers.json` (SHA-256 de chaque fichier du paquet) et son empreinte dans `manifeste-application.json`. Hors paquet (il ne peut pas se contenir).
+- low, second avis : entrée `null` du MANIFEST de l'Index. Corrigé : toute empreinte non hexadécimale de 64 caractères est refusée. Testé.
+- low, second avis : `dist/` laissé après un échec. Corrigé : le paquet refusé est renommé `AssistantSP-ECHEC`. Testé.
+- Reporté : réponse hors ligne (AC1), licences Granite, BGE-M3, WebView2, premier build complet (Modèle absent du poste chargé).
