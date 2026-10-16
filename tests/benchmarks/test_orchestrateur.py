@@ -116,8 +116,11 @@ def test_benchmark_inconnu_et_selection_vide(banc, capsys) -> None:
     assert "aucun benchmark" in capsys.readouterr().err
 
 
-def test_moteur_livre_mais_module_absent_est_une_erreur_du_benchmark(banc) -> None:
-    ecrire(banc.dossier, "reel", moteur="bfcl")
+def test_moteur_livre_mais_module_absent_est_une_erreur_du_benchmark(
+    banc, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(moteurs.MOTEURS, "fantome", "slmsp.benchmarks.moteurs.fantome")
+    ecrire(banc.dossier, "reel", moteur="fantome")
     ecrire(banc.dossier, "ok")
     assert lancer_cli(banc, "--socle") == 1
     resultats = {

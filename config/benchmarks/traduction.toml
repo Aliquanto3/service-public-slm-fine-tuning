@@ -17,3 +17,8 @@ paires_flores = ["fr-es", "fr-ar", "fr-pt", "fr-de"]
 nom = "flores-200"
 depot = "facebook/flores"
 acces = "conditionnel"
+
+[[jeux]]
+nom = "wmt14"
+depot = "wmt/wmt14"
+acces = "libre"

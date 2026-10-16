@@ -11,3 +11,8 @@ socle = true
 
 [options]
 categories = ["simple", "multiple", "irrelevance"]
+
+[[jeux]]
+nom = "bfcl"
+depot = "gorilla-llm/Berkeley-Function-Calling-Leaderboard"
+acces = "libre"

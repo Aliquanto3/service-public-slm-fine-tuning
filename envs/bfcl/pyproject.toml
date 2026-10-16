@@ -1,0 +1,15 @@
+# Environnement uv isolé du vérificateur BFCL (story 6.3, AD-2).
+#
+# Hors du lock principal : `slmsp` n'importe jamais `bfcl_eval`. Il appelle ce projet en
+# sous-processus, `uv run --project envs/bfcl python envs/bfcl/verifier.py <entree> <sortie>`,
+# avec `env_sous_processus()`, et échange du JSON. Le premier `uv run` crée l'environnement
+# et son `uv.lock` (réseau requis une fois).
+
+[project]
+name = "slmsp-bfcl"
+version = "0.1.0"
+description = "Vérificateur AST de Berkeley Function Calling Leaderboard pour slmsp"
+requires-python = "==3.12.*"
+dependencies = [
+    "bfcl-eval==2026.3.23",
+]
