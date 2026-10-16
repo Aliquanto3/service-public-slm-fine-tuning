@@ -181,7 +181,8 @@ def env_sous_processus(base: Mapping[str, str] | None = None) -> dict[str, str]:
     """Environnement d'un sous-processus : sans secret, télémétrie coupée, `HF_HOME` fixé.
 
     Retire, sans tenir compte de la casse, `API_KEY`, `*_API_KEY`, `*_TOKEN` (dont
-    `HF_TOKEN`), `HF_TOKEN_PATH` et tout nom contenant `SECRET`, puis pose `ENV_IMPOSE`
+    `HF_TOKEN`), `HF_TOKEN_PATH`, tout nom contenant `SECRET` et les `WEBVIEW2_*` (réglages
+    de la WebView de l'application, sans objet pour un serveur), puis pose `ENV_IMPOSE`
     et `HF_HOME=<models>/.cache-hf` en chemin absolu. `base` vaut `os.environ` par défaut
     et n'est jamais modifié.
     """
@@ -191,7 +192,9 @@ def env_sous_processus(base: Mapping[str, str] | None = None) -> dict[str, str]:
     env = {
         nom: valeur
         for nom, valeur in source.items()
-        if not _est_secret(nom) and nom.upper() not in remplaces
+        if not _est_secret(nom)
+        and nom.upper() not in remplaces
+        and not nom.upper().startswith("WEBVIEW2_")
     }
     env.update(imposes)
     return env
