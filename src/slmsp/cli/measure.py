@@ -64,26 +64,28 @@ def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[
 
 def _run(args: argparse.Namespace) -> int:
     from slmsp.cli._assemblage import ModeleInvalide, assembler, slug_modele
+    from slmsp.core.erreurs import ConfigurationInvalide
     from slmsp.harness.taches import charger_taches
     from slmsp.index.lecture import versions_disponibles
+    from slmsp.inference.serveur import charger_config_modele
     from slmsp.measure.config import charger_config_mesures
     from slmsp.measure.protocole import ContexteInsuffisant, mesurer, verrou_mesure
 
     try:
-        slug_modele(args.modele)
-    except ModeleInvalide as exc:
+        slug = slug_modele(args.modele)
+        maximum = charger_config_modele(slug).contexte
+    except (ModeleInvalide, ConfigurationInvalide) as exc:
         print(f"slmsp : {exc}", file=sys.stderr)
         return int(CodeSortie.USAGE)
-    from slmsp.inference.serveur import charger_config_modele
-
-    maximum = charger_config_modele(slug_modele(args.modele)).contexte
     if args.contexte is not None and not 0 < args.contexte <= maximum:
         print(
             f"slmsp : --contexte {args.contexte} invalide : entier de 1 à {maximum} "
-            f"(contexte de config/modeles/{slug_modele(args.modele)}.toml)",
+            f"(contexte de config/modeles/{slug}.toml)",
             file=sys.stderr,
         )
         return int(CodeSortie.USAGE)
+    # Sans --contexte : comportement inchangé (contexte du modèle, aucune vérification ajoutée),
+    # le contexte effectif est seulement consigné.
     contexte = maximum if args.contexte is None else args.contexte
     config = charger_config_mesures()
     racine = (args.racine if args.racine is not None else racine_projet()).resolve()
@@ -100,7 +102,7 @@ def _run(args: argparse.Namespace) -> int:
             variante="cpu",
             racine=racine,
             threads=config.plafond_threads,
-            contexte=contexte,
+            contexte=args.contexte,
         ) as assemblage,
     ):
         if args.quantification is not None:
@@ -129,12 +131,19 @@ def _run(args: argparse.Namespace) -> int:
                 racine=ecriture,
                 index_version=version,
                 contexte=contexte,
+                verifier_contexte=args.contexte is not None,
             )
         except ContexteInsuffisant as exc:
             print(f"slmsp : {exc}", file=sys.stderr)
             return int(CodeSortie.USAGE)
     valeurs = resultat.valeurs
     print(f"contexte effectif : {contexte} tokens (modèle : {maximum})")
+    if resultat.details.get("verification_contexte") == "non-verifiee":
+        print(
+            "slmsp : avertissement : le serveur n'a pas renvoyé usage.prompt_tokens, la tenue "
+            "du prompt dans --contexte n'a PAS pu être vérifiée (troncature possible)",
+            file=sys.stderr,
+        )
     print(f"{resultat.hypothese} ({args.modele}) : {resultat.verdict}")
     for nom, valeur in valeurs.items():
         print(f"  {nom} : {'n/d' if valeur is None else f'{valeur:.3f}'}")

@@ -59,15 +59,31 @@ class ContexteInsuffisant(MesureEchouee):
     """Le prompt du protocole ne tient pas dans le contexte demandé (jamais tronqué)."""
 
 
-def _verifier_contexte(mesure: MesureQuestion, contexte: int | None) -> None:
-    """Refuse si le prompt (ou prompt + réponse) remplit le contexte : risque de troncature."""
-    if contexte is None or mesure.prompt_tokens is None:
-        return
+def est_erreur_de_contexte(message: str) -> bool:
+    """Le message d'erreur du serveur signale-t-il un dépassement de contexte ?
+
+    Heuristique unique, sur le texte de llama-server (« exceeds the available context size »,
+    « context size exceeded »…) : sous-chaîne `context` insensible à la casse. Le serveur ne
+    donne pas de code structuré ; en cas de doute la mesure échoue quand même (erreur d'origine
+    relancée), seul le message est moins explicite.
+    """
+    return "context" in message.lower()
+
+
+def _verifier_contexte(mesure: MesureQuestion, contexte: int) -> bool:
+    """Refuse si le prompt (ou prompt + réponse) remplit le contexte : risque de troncature.
+
+    Retourne False si le serveur n'a pas renvoyé `usage.prompt_tokens` : la vérification n'a
+    alors pas pu se faire (à signaler, jamais à taire).
+    """
+    if mesure.prompt_tokens is None:
+        return False
     if mesure.prompt_tokens + mesure.tokens >= contexte:
         raise ContexteInsuffisant(
             f"contexte {contexte} trop petit : le prompt du protocole fait "
             f"{mesure.prompt_tokens} tokens et la réponse {mesure.tokens} ; augmenter --contexte"
         )
+    return True
 
 
 def _conformite(valeurs: dict[str, float | None], config: ConfigMesures) -> dict[str, bool]:
@@ -93,11 +109,14 @@ def mesurer(
     racine: str | Path | None = None,
     index_version: str | None = None,
     contexte: int | None = None,
+    verifier_contexte: bool = False,
     echantillonneur: Callable[..., EchantillonneurRam] = EchantillonneurRam,
     horloge: Callable[[], float] = time.perf_counter,
 ) -> ResultatMesure:
     """Mesure l'Assistant servi par `repondre(question)` et écrit le run `h-ram`.
 
+    `contexte` est le contexte effectif (consigné). `verifier_contexte` (contexte imposé par
+    l'appelant) refuse un prompt qui ne tient pas ; sinon aucune vérification n'est ajoutée.
     En cas d'erreur, le run est terminé `partiel-erreur` et l'erreur relancée.
     """
     racine = (Path(racine) if racine is not None else racine_ecriture()).resolve()
@@ -125,19 +144,21 @@ def mesurer(
     try:
         questions = config.questions
         mesures: list[MesureQuestion] = []
+        verifie = verifier_contexte and contexte is not None
         with echantillonneur(periode_s=config.periode_ms / 1000) as ram:
             for rang in range(config.echauffement + config.repetitions):
                 question = questions[rang % len(questions)]
                 try:
                     mesure = mesurer_question(repondre(question), horloge)
                 except MesureEchouee as exc:
-                    if contexte is not None and "context" in str(exc).lower():
+                    if verifier_contexte and est_erreur_de_contexte(str(exc)):
                         raise ContexteInsuffisant(
                             f"contexte {contexte} trop petit pour le prompt du protocole "
                             f"({exc}) ; augmenter --contexte"
                         ) from exc
                     raise
-                _verifier_contexte(mesure, contexte)
+                if verifier_contexte and contexte is not None:
+                    verifie = _verifier_contexte(mesure, contexte) and verifie
                 if rang >= config.echauffement:
                     mesures.append(mesure)
         premiers = [m.premier_token_s for m in mesures]
@@ -171,6 +192,14 @@ def mesurer(
                 "echantillons_ram": ram.nb_echantillons,
                 "tailles_octets": tailles,
                 "contexte_effectif": contexte,
+                # "verifie" | "non-verifiee" (serveur sans usage.prompt_tokens) | "non-demandee"
+                "verification_contexte": (
+                    "non-demandee"
+                    if not verifier_contexte
+                    else "verifie"
+                    if verifie
+                    else "non-verifiee"
+                ),
                 "tokens_par_repetition": [m.tokens for m in mesures],
                 "tokens_estimes_par_jetons": any(m.tokens_estimes for m in mesures),
                 "unite": "Go = 1024³ octets ; ram = pic de la somme des working sets de l'arbre",

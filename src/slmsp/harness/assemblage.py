@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.ports import EmbedderPort, JournalRequetes, LlmPort, ToolPort, VectorStore
 from slmsp.harness.config import charger_config_harnais
 from slmsp.harness.modes import ModeFixe, ModeSonde
@@ -105,9 +106,17 @@ def plafonner_threads(config_modele: Any, threads: int | None) -> Any:
 
 
 def avec_contexte(config_modele: Any, contexte: int | None) -> Any:
-    """Config du Modèle avec le contexte `contexte` (None : inchangée)."""
+    """Config du Modèle avec le contexte `contexte` (None : inchangée).
+
+    Lève `ConfigurationInvalide` hors de 1 .. contexte du Modèle (ou si non entier).
+    """
     if contexte is None:
         return config_modele
+    maximum = config_modele.contexte
+    if isinstance(contexte, bool) or not isinstance(contexte, int) or not 0 < contexte <= maximum:
+        raise ConfigurationInvalide(
+            f"contexte {contexte!r} invalide : entier de 1 à {maximum} (contexte du Modèle)"
+        )
     return config_modele.model_copy(update={"contexte": contexte})
 
 

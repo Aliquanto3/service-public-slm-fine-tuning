@@ -85,3 +85,15 @@ Commande réelle à lancer plus tard (verrou libre, modèle et Index présents, 
 - Contexte effectif (surcharge ou contexte du modèle) consigné dans `run.json` (`config.contexte`), `resultat.json` (`parametres.contexte`, `details.contexte_effectif`) et affiché par la commande.
 - Refus sans troncature (`ContexteInsuffisant`, code 2) si `prompt_tokens + completion_tokens >= contexte` (usage du serveur) ou si le serveur signale un dépassement de contexte ; le run est alors `partiel-erreur`.
 - Choix : le prompt n'est pas estimé avant lancement (pas de tokenizer côté harnais) ; le refus survient dès la question d'échauffement. À confirmer par Anaël : un contexte réduit invalide la comparaison NFR-1 avec les mesures à 8 192.
+
+## Revue
+
+Revue de `--contexte` (commit 5088376), second avis Haiku puis Opus.
+
+- medium, second avis, corrigé : sans `--contexte`, plus de vérification ni de surcharge (`assembler(contexte=None)`, `verifier_contexte=False`) ; le contexte effectif reste consigné (`verification_contexte: "non-demandee"`). Test du chemin par défaut avec un prompt au-dessus du plafond.
+- medium, second avis, corrigé : avec `--contexte`, un serveur sans `usage.prompt_tokens` donne `details.verification_contexte = "non-verifiee"` et un avertissement sur stderr (pas de refus : la mesure reste exploitable). `/tokenize` écarté : `mesurer` ne reçoit que `repondre`, pas le client, et le prompt final (système + passages) n'est pas connu du harnais.
+- low, second avis, corrigé : détection d'une erreur de contexte centralisée et documentée dans `est_erreur_de_contexte` (heuristique sur le texte de llama-server, sans code structuré), appliquée seulement si `--contexte` est donné.
+- low, second avis, corrigé : `avec_contexte` valide `1 <= N <= contexte du modèle` (`ConfigurationInvalide`, booléens refusés).
+- low, second avis, corrigé : `charger_config_modele` est dans le `try` de la validation du modèle (erreur de configuration signalée, code 2).
+- low, second avis, corrigé : tests ajoutés (chemin par défaut, valeur égale au maximum, hors bornes, usage absent, statut final `partiel-erreur` dans `etat.jsonl` après refus, CLI). Le statut final est inscrit dans `etat.jsonl`, `run.json` n'est pas modifié.
+- reporté : vérifier sur un vrai llama-server que `usage.prompt_tokens` est bien renvoyé en flux et que le message de dépassement contient « context » (service indisponible ici).
