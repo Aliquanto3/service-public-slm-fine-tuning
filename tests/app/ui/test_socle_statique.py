@@ -104,7 +104,8 @@ VUES_REALISEES = {
     "correction",
     "historique",
     "retours",
-}  # stories 12.7 à 12.11 et 13.1
+    "resume",
+}  # stories 12.7 à 12.11, 13.1 et 13.2
 
 
 def test_modules_de_vue_declares_d_avance() -> None:

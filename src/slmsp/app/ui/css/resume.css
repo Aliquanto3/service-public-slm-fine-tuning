@@ -1,1 +1,28 @@
-/* Vue « resume » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vue Résumé : choix de la longueur (story 13.2). */
+.choix-longueur {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  border: 0;
+}
+.choix-titre {
+  padding: 0;
+  margin-bottom: var(--sp-1);
+  color: var(--ink);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+.choix-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  cursor: pointer;
+}
+.mention-trop-longue {
+  margin: var(--sp-3) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
