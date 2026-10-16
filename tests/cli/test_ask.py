@@ -19,6 +19,7 @@ import pytest
 
 from slmsp.cli import CodeSortie, main
 from slmsp.cli import _assemblage as assemblage
+from slmsp.harness import assemblage as harness_assemblage
 from slmsp.net.journal import JournalMemoire
 
 
@@ -205,8 +206,10 @@ def test_hors_ligne_n_ouvre_pas_le_journal_sqlite(
     def interdit(*args: Any, **kwargs: Any) -> Any:
         raise AssertionError("JournalSqlite ouvert en hors ligne")
 
-    monkeypatch.setattr(assemblage, "JournalSqlite", interdit)
-    with assemblage.assembler(
+    # `assembler` vit dans `harness.assemblage` (story 12.1) : c'est là qu'il lit `JournalSqlite`.
+    monkeypatch.setattr(harness_assemblage, "JournalSqlite", interdit)
+    # `assembler` d'origine, sans le journal injecté par `banc` : sinon rien n'est vérifié.
+    with harness_assemblage.assembler(
         MODELE,
         hors_ligne=True,
         llm=banc.llm,

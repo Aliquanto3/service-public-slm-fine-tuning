@@ -22,7 +22,7 @@ from typing import Any, Final
 
 from slmsp.core.artefacts import empreinte_environnement, nouveau_run
 from slmsp.core.canonique import json_canonique
-from slmsp.core.config import racine_projet
+from slmsp.core.config import racine_ecriture
 from slmsp.core.evenements import Evenement
 from slmsp.core.schemas.mesure import ResultatMesure
 from slmsp.core.var import verrou_gpu
@@ -84,7 +84,7 @@ def mesurer(
 
     En cas d'erreur, le run est terminé `partiel-erreur` et l'erreur relancée.
     """
-    racine = (Path(racine) if racine is not None else racine_projet()).resolve()
+    racine = (Path(racine) if racine is not None else racine_ecriture()).resolve()
     parametres: dict[str, Any] = {
         "modele": modele,
         "quantification": quantification,

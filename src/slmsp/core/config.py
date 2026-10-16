@@ -39,16 +39,59 @@ def racine_projet() -> Path:
 
     Ordre : variable `SLMSP_RACINE` ; exécutable gelé (`sys.frozen`), où la racine est
     `sys._MEIPASS` (ou le dossier de l'exécutable) et porte `config/`, `vendor/`, `models/` ;
-    sinon le dépôt (installation éditable d'uv : `src/slmsp/core/config.py`).
+    sinon le dépôt (installation éditable d'uv : `src/slmsp/core/config.py`). En lecture
+    seule pour un processus gelé : les écritures passent par `racine_ecriture()`.
     """
     valeur = os.environ.get("SLMSP_RACINE", "").strip()
     if valeur:
         return Path(valeur).expanduser().resolve()
-    if getattr(sys, "frozen", False):
+    if processus_gele():
         meipass = getattr(sys, "_MEIPASS", None)
         base = Path(meipass) if meipass else Path(sys.executable).parent
         return base.resolve()
     return Path(__file__).resolve().parents[3]
+
+
+def processus_gele() -> bool:
+    """Vrai dans un exécutable PyInstaller (`sys.frozen`)."""
+    return bool(getattr(sys, "frozen", False))
+
+
+def etendre_chemin(valeur: str) -> Path:
+    """`valeur` avec `%VAR%`, `$VAR` et `~` étendus, en chemin absolu résolu.
+
+    Lève `ConfigurationInvalide` si une variable reste non résolue ou si le chemin obtenu
+    n'est pas absolu (aucune écriture ne doit partir du dossier courant).
+    """
+    etendu = os.path.expanduser(os.path.expandvars(valeur))
+    if "%" in etendu or "$" in etendu:
+        raise ConfigurationInvalide(f"chemin {valeur!r} : variable d'environnement non définie")
+    chemin = Path(etendu)
+    if not chemin.is_absolute():
+        raise ConfigurationInvalide(f"chemin {valeur!r} : chemin absolu attendu après expansion")
+    return chemin.resolve()
+
+
+def dossier_donnees_application() -> Path:
+    """`dossier_donnees` de `config/application.toml`, variables d'environnement étendues."""
+    from slmsp.core.schemas.config_application import charger_config_application
+
+    return charger_config_application().chemin_donnees()
+
+
+def racine_ecriture() -> Path:
+    """Racine des écritures (`runs/`, Index construit) : jamais les ressources gelées (AD-23).
+
+    Ordre : `SLMSP_RACINE` ; processus gelé : dossier de données de l'application (les
+    ressources de `racine_projet()`, sous `sys._MEIPASS`, sont en lecture seule) ; sinon le
+    dépôt, comme `racine_projet()`.
+    """
+    valeur = os.environ.get("SLMSP_RACINE", "").strip()
+    if valeur:
+        return Path(valeur).expanduser().resolve()
+    if processus_gele():
+        return dossier_donnees_application()
+    return racine_projet()
 
 
 def dossier_modeles() -> Path:

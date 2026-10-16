@@ -22,7 +22,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from slmsp.core.config import racine_projet
+from slmsp.core.config import racine_ecriture, racine_projet
 from slmsp.core.erreurs import CodeSortie
 from slmsp.core.ports import EmbedderPort
 from slmsp.index.config import charger_config_index, dossier_index
@@ -112,7 +112,8 @@ def _build(args: argparse.Namespace) -> int:
     from slmsp.indexation.construction import construire_index
 
     config = charger_config_index()
-    racine = _racine(args)
+    # L'Index construit s'écrit sous la racine d'écriture, jamais sous `sys._MEIPASS` (AD-23).
+    racine = (args.racine if args.racine is not None else racine_ecriture()).resolve()
     print(f"construction de l'Index {config.version()} sous {dossier_index(racine)}", flush=True)
     dossier = construire_index(config, racine)
     with IndexLocal(dossier, taille_bloc=config.taille_bloc) as index:
