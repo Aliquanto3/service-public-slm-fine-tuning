@@ -1,1 +1,93 @@
-/* Vue « recherche » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vue Recherche de données : cartes de jeux de données et tableaux (story 12.7). */
+.jeux {
+  display: grid;
+  gap: var(--sp-3);
+}
+.dataset-card {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  min-width: 0;
+}
+.dataset-card h3 {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+.dataset-meta {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.dataset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+/* « Voir les données » : Mode connecté seulement. */
+.conversation[data-mode="hors-ligne"] .voir-donnees {
+  display: none;
+}
+.dataset-donnees {
+  min-width: 0;
+}
+.tableau-donnees {
+  margin: 0;
+  min-width: 0;
+}
+.data-table-defilement {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  background: var(--surface);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.data-table th {
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.data-table th,
+.data-table td {
+  padding: var(--sp-2) var(--sp-3);
+}
+.data-table td {
+  max-width: 16rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.data-table tbody tr:nth-child(even) {
+  background: var(--surface-alt);
+}
+.data-table-pied {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.data-table-pied p {
+  margin: 0;
+}
+.tableau-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}

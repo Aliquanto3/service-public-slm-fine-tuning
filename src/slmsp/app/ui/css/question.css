@@ -1,1 +1,213 @@
-/* Vue « question » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vues Question et Recherche : fil, réponse, puces de citation, panneau Sources (story 12.7). */
+.conversation {
+  display: grid;
+  gap: var(--sp-4);
+}
+.info-mode {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.vide h2 {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--t-display);
+  line-height: var(--lh-display);
+}
+.vide-intro {
+  margin: 0 0 var(--sp-4);
+  color: var(--ink-soft);
+}
+.exemples {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.exemple {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.exemple:hover {
+  background: var(--primary-soft);
+}
+.exemple:focus-visible,
+.reponse:focus-visible,
+.citation-chip:focus-visible,
+.data-table-defilement:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.fil {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-5);
+}
+.tour {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.message-utilisateur {
+  margin: 0;
+  justify-self: end;
+  max-width: 85%;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--primary-soft);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.reponse {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.reponse-texte {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: var(--lh-body);
+}
+.attente {
+  margin: 0;
+  color: var(--ink-soft);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .attente {
+    animation: pulsation 1.2s ease-in-out infinite;
+  }
+}
+@keyframes pulsation {
+  50% {
+    opacity: 0.35;
+  }
+}
+.reponse-notes .avertissement,
+.mention-interrompue,
+.mention-echec {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.mention-interrompue {
+  font-weight: 700;
+}
+.citation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 16rem;
+  margin: 0 2px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: inherit;
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+  vertical-align: baseline;
+  cursor: pointer;
+}
+.citation-chip:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.citation-numero {
+  font-weight: 700;
+}
+.citation-titre {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.legal-notice {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-alt);
+  border-left: 3px solid var(--warning);
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.reponse-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.reponse-actions[hidden],
+.reponse [hidden] {
+  display: none;
+}
+.inline-confirmation {
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+a.bouton-secondaire {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Panneau Sources */
+#sources-corps {
+  display: grid;
+  gap: var(--sp-3);
+}
+.source-card {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  min-width: 0;
+}
+.source-card[aria-current] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.source-card h3 {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+.source-meta,
+.source-extrait {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.source-extrait {
+  margin-top: var(--sp-2);
+  overflow-wrap: anywhere;
+}
+.source-card summary {
+  cursor: pointer;
+  font-size: var(--t-small);
+}
+.source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}

@@ -99,7 +99,9 @@ def test_modules_de_vue_declares_d_avance() -> None:
     for vue in VUES:
         assert (UI / "css" / f"{vue}.css").is_file(), vue
         module = (UI / "js" / "vues" / f"{vue}.js").read_text(encoding="utf-8")
-        assert "non disponible" in module and "export function monter" in module, vue
+        assert "export function monter" in module, vue
+        if vue not in ("question", "recherche"):  # livrées par la story 12.7
+            assert "non disponible" in module, vue
         assert f'href="css/{vue}.css"' in (UI / "index.html").read_text(encoding="utf-8")
 
 
@@ -124,3 +126,10 @@ def test_icones_locales_utilisees_existent() -> None:
     css = (UI / "css" / "socle.css").read_text(encoding="utf-8")
     for chemin in re.findall(r'url\("\.\./(icones/[\w-]+\.svg)"\)', css):
         assert (UI / chemin).is_file(), chemin
+
+
+def test_aucun_innerhtml_dans_les_composants_et_vues() -> None:
+    """Le contenu du modèle n'entre dans le DOM que par `textContent` (story 12.7)."""
+    interdit = re.compile(r"innerHTML|outerHTML|insertAdjacentHTML|document\.write|\beval\(")
+    for chemin in (UI / "js").rglob("*.js"):
+        assert not interdit.search(chemin.read_text(encoding="utf-8")), chemin.name

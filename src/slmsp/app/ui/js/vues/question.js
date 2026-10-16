@@ -1,15 +1,26 @@
-// Vue « question » : module vide déclaré d'avance (story 12.4).
-// La story de la vue remplace ce fichier et css/question.css, sans toucher à index.html.
+// Vue « Question » (story 12.7) : réponse au fil de l'eau, puces de citation, panneau Sources.
+
+import { monterConversation } from "../composants/conversation.js";
+
+// Textes d'interface de l'écran « Question vide » (UX-DR19). Ce ne sont pas des données
+// d'entraînement (D1). Le premier vient d'EXPERIENCE.md ; les deux autres sont des emplacements
+// à faire valider par Anaël (voir la section « À confirmer » de la spec 12.7).
+export const EXEMPLES = [
+  "Quelles pièces pour une demande d'APA ?",
+  "<exemple-à-valider-2>",
+  "<exemple-à-valider-3>",
+];
 
 /**
- * Monte la vue dans son conteneur.
  * @param {HTMLElement} conteneur Élément réservé à la vue.
  * @param {object} pont Client du pont (appeler, envoyer, arreter).
- * @param {object} [contexte] `{ bus, tache }` : bus d'évènements et Tâche servie par ce conteneur.
+ * @param {{bus: object, tache: string}} contexte
  */
 export function monter(conteneur, pont, contexte) {
-  const p = document.createElement("p");
-  p.className = "non-disponible";
-  p.textContent = "non disponible";
-  conteneur.replaceChildren(p);
+  monterConversation(conteneur, pont, contexte, {
+    titre: "Posez votre question",
+    intro: "Je réponds à partir des documents officiels et je cite mes sources.",
+    exemples: EXEMPLES,
+    juridique: true,
+  });
 }
