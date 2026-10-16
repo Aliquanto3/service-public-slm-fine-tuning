@@ -129,7 +129,7 @@ development_status:
   12-4-socle-de-l-interface-jetons-disposition-navigation-zone-de-s: done
   12-5-pont-js-api-et-flux-d-evenements: done
   12-6-lancement-de-l-application-fenetre-instance-unique-demarrage: backlog
-  12-7-vues-question-et-recherche-de-donnees: backlog
+  12-7-vues-question-et-recherche-de-donnees: done
   12-8-vues-de-redaction-compte-rendu-et-langage-clair: backlog
   12-9-indicateur-de-mode-et-journal-des-requetes-sortantes: backlog
   12-10-parametres-et-a-propos: backlog
