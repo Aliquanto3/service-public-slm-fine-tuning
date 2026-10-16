@@ -845,7 +845,8 @@ def _items(versions: Versions, racine: str | Path | None) -> Iterator[tuple[Jeu,
             yield jeu, item
 
 
-def _empreintes_texte(texte: str, n: int) -> Iterator[str]:
+def empreintes_texte(texte: str, n: int) -> Iterator[str]:
+    """Empreintes hachées des n-grammes d'un texte (API publique de l'anti-fuite)."""
     grammes = ngrammes(texte, n)
     if not grammes:
         # Texte plus court que n mots : son tuple entier de jetons normalisés.
@@ -853,6 +854,9 @@ def _empreintes_texte(texte: str, n: int) -> Iterator[str]:
         grammes = [jetons] if jetons else []
     for gramme in grammes:
         yield _empreinte_ngramme(gramme)
+
+
+_empreintes_texte = empreintes_texte  # alias historique
 
 
 def empreintes_antifuite(
@@ -868,7 +872,7 @@ def empreintes_antifuite(
         empreintes = {
             empreinte
             for texte in textes_entree(item) + textes_reference(item)
-            for empreinte in _empreintes_texte(texte, n)
+            for empreinte in empreintes_texte(texte, n)
         }
         par_item[jeu.cle(item)] = frozenset(empreintes)
     return EmpreintesAntifuite(n=n, version_texte=VERSION_TEXTE, par_item=par_item)

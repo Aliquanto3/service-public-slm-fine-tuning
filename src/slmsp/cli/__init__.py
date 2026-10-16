@@ -37,6 +37,7 @@ SOUS_COMMANDES: dict[str, str] = {
     "export": "export GGUF des adaptateurs",
     "compare": "Comparatif des runs",
     "budget": "relevé du registre de budget",
+    "publication": "dossier de publication hors ligne",
 }
 """Sous-commandes déclarées d'avance (D-nuit-A2-6) : nom -> aide courte."""
 

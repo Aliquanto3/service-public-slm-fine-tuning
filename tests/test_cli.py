@@ -29,6 +29,7 @@ ATTENDUES = [
     "export",
     "compare",
     "budget",
+    "publication",
 ]
 
 RACINE_CLI = Path(slmsp.cli.__file__).parent
