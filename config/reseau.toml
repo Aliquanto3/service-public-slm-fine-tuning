@@ -40,12 +40,13 @@ nom = "pytorch"
 methodes = ["GET", "HEAD"]
 hotes = ["download.pytorch.org"]
 
-# Conditions commerciales de Mistral (D-nuit-A2-10) : cette page seule, GET seul.
+# Conditions commerciales de Mistral (D-nuit-A2-10) : cette page seule, GET seul. Depuis le 2026-10-17
+# la page redirige (301) vers sa forme avec « / » final, admise aussi (même document).
 [[profils.outillage.regles]]
 nom = "conditions-mistral"
 methodes = ["GET"]
 hotes = ["legal.mistral.ai"]
-chemins = ["/terms/commercial-terms-of-service"]
+chemins = ["/terms/commercial-terms-of-service", "/terms/commercial-terms-of-service/"]
 
 # API payantes et MCP data.gouv : POST seulement.
 [[profils.outillage.regles]]

@@ -74,10 +74,12 @@ def test_config_reelle() -> None:
         "generique": 90,
     }
     assert config.total == config.volumes.total == 595
-    assert config.mistral.conditions_verifiees_le is None
-    assert config.mistral.conditions_sha256 is None
+    # Vides avant la campagne 9.8, renseignés ensemble par elle (date + SHA de la page relue).
+    assert (config.mistral.conditions_verifiees_le is None) == (
+        config.mistral.conditions_sha256 is None
+    )
     assert config.mistral.conditions_url == (
-        "https://legal.mistral.ai/terms/commercial-terms-of-service"
+        "https://legal.mistral.ai/terms/commercial-terms-of-service/"
     )
     assert config.mistral.methode_verification
     assert config.deduplication.n_ngrammes == N_DEFAUT

@@ -15,7 +15,7 @@ conditions_verifiees_le = ""
 # Méthode de vérification des conditions (texte libre consigné au MANIFEST).
 methode_verification = "GET de la page des conditions par slmsp.net.client('outillage'), SHA-256 des octets reçus"
 # Page des conditions commerciales relue (seule URL admise par le profil `outillage`).
-conditions_url = "https://legal.mistral.ai/terms/commercial-terms-of-service"
+conditions_url = "https://legal.mistral.ai/terms/commercial-terms-of-service/"
 # SHA-256 (64 caractères hexadécimaux) de la page relue ; chaîne vide tant qu'elle ne l'a pas été.
 # Renseigné si et seulement si `conditions_verifiees_le` l'est aussi.
 conditions_sha256 = ""
