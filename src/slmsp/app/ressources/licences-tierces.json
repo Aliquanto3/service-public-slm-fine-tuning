@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "statut": "provisoire",
+  "note": "Fichier minimal versionné, à valider. Il est remplacé au build par la story 12.12.",
+  "composants": [
+    {"nom": "llama.cpp", "licence": "MIT"},
+    {"nom": "Granite 4.0 (modèle embarqué)", "licence": "Apache-2.0"},
+    {"nom": "BGE-M3 (recherche dans l'Index)", "licence": "MIT"},
+    {"nom": "pywebview", "licence": "BSD-3-Clause"},
+    {"nom": "Microsoft Edge WebView2 (composant du système)", "licence": "Licence Microsoft"}
+  ]
+}

@@ -74,7 +74,7 @@ class Pont:
         self._conversation = Conversation(service, self._pousser)
         self._domaines: dict[str, Any] = {
             "mode": PontMode(service.mode, stockage, self._pousser),
-            "reglages": PontReglages(),
+            "reglages": PontReglages(stockage),
             "historique": PontHistorique(),
             "retours": PontRetours(),
             "verification": PontVerification(),

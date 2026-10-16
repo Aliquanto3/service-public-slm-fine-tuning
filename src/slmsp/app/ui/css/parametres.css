@@ -1,1 +1,80 @@
-/* Vue « parametres » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vue « parametres » : dialogue à trois onglets (story 12.10). */
+.parametres-onglets {
+  display: flex;
+  gap: var(--sp-1);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-4);
+}
+.parametres-onglet {
+  padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.parametres-onglet:hover {
+  background: var(--primary-soft);
+}
+.parametres-onglet[aria-selected="true"] {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+.parametres-panneau[hidden] {
+  display: none;
+}
+.parametres-section {
+  margin-bottom: var(--sp-5, var(--sp-4));
+}
+.parametres-section h3 {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--t-body);
+}
+.parametres-rang {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.parametres-taille-valeur {
+  min-width: 4ch;
+  text-align: center;
+  font-weight: 600;
+}
+.parametres-aide {
+  margin: var(--sp-2) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.parametres-confirmation {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+.parametres-confirmation[hidden] {
+  display: none;
+}
+.parametres-liste {
+  margin: 0;
+}
+.parametres-ligne {
+  display: grid;
+  grid-template-columns: minmax(12ch, 1fr) 2fr;
+  gap: var(--sp-3);
+  padding: var(--sp-1) 0;
+  border-bottom: 1px solid var(--line);
+}
+.parametres-ligne dt {
+  color: var(--ink-soft);
+}
+.parametres-ligne dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.parametres-hotes,
+.parametres-licences {
+  margin: 0;
+  padding-left: var(--sp-4);
+}
