@@ -49,3 +49,13 @@ deferred: []
 - Anaël : contrôle FR-14 limité à l'objet. Les éléments connus n'ont pas de ligne propre dans un courrier, un contrôle fiable demanderait un juge ou un jeu de libellés par type.
 - Anaël : extension de `redaction.js` (`peutEnvoyer`, écoute des contrôles) et méthode ajoutée à `redaction_outils.py`, fichiers d'autres stories (conflit possible avec 13.2).
 - Format réel des emplacements produits par le modèle (crochets bien formés ?) : à vérifier sur une sortie réelle, hors périmètre (aucune génération).
+
+## Revue
+
+- medium, second avis, corrigé : `test_socle.py` attendait « non disponible » pour CT ; CT rejoint CO et RE.
+- medium, second avis, corrigé : conflit `VUES_REALISEES` au rebase, union avec courrier ; les marqueurs avaient été validés par erreur, retirés (aucun marqueur restant).
+- low, second avis, corrigé : docstring de `harness/emplacements.py` (`evaluation.controles` importe la fonction, il ne la réexporte pas).
+- low, second avis, corrigé : `champ_rendu_par_une_valeur` accepte « Objet : valeur [date] » (valeur = texte restant hors emplacements) et retire la puce ; tests ajoutés.
+- low, second avis, corrigé : une seule annonce au lecteur d'écran (texte visible en `aria-hidden`, libellé sr-only « à compléter : … »).
+- low, second avis, reporté : l'alerte FR-14 reste limitée à « Objet » (décision consignée), à valider par Anaël.
+- Contrainte : `controle_ct` inchangé (`libelles_presents` a la même expression) ; `tests/evaluation` passent.

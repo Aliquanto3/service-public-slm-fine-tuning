@@ -34,9 +34,11 @@ export function rendreEmplacements(zone, segments) {
   const noeuds = segments.map((s) => {
     if (s.type !== "emplacement") return document.createTextNode(s.texte);
     n += 1;
-    const marque = el("mark", "letter-placeholder", s.texte);
+    const marque = el("mark", "letter-placeholder");
     marque.tabIndex = 0;
-    marque.append(el("span", "sr-only", " (à compléter)"));
+    const visible = el("span", "", s.texte);
+    visible.setAttribute("aria-hidden", "true");
+    marque.append(visible, el("span", "sr-only", `à compléter : ${s.texte.slice(1, -1)}`));
     return marque;
   });
   zone.replaceChildren(...noeuds);

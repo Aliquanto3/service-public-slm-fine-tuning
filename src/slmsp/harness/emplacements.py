@@ -6,7 +6,7 @@ Un emplacement est un libellé entre crochets sur une seule ligne, sans crochet 
 - `segmenter` découpe un texte en segments `texte` et `emplacement`, dont la concaténation
   redonne le texte d'origine.
 - `libelles_presents` : chaque libellé attendu figure tel quel (crochets compris). C'est la règle
-  du contrôle automatique CT de la notation, déplacée ici et réexportée par `evaluation`.
+  du contrôle automatique CT de la notation, que `evaluation.controles` importe d'ici.
 - `champ_rendu_par_une_valeur` : la ligne « Intitulé : … » d'un champ non fourni porte une
   valeur, et non un emplacement (« aucun champ non fourni rendu par une valeur »).
 """
@@ -63,18 +63,23 @@ def _normaliser(texte: str) -> str:
     return sans_accent.strip(_DECOR)
 
 
+_RE_PUCE: Final = re.compile(r"^\s*(?:[-+*•–]|\d+[.)])\s+")
+
+
 def champ_rendu_par_une_valeur(texte: str, intitule: str) -> bool:
     """Vrai si une ligne « <intitulé> : valeur » ne porte aucun emplacement.
 
-    L'intitulé se compare sans casse ni accent, en ignorant la mise en forme (gras, titre).
-    Sans ligne d'intitulé, ou avec une valeur vide, le champ n'est pas jugé rendu par une valeur.
+    L'intitulé se compare sans casse ni accent, en ignorant la mise en forme (gras, titre, puce).
+    La valeur compte dès qu'il reste du texte une fois les emplacements retirés (« Objet : valeur
+    [date] » est rendu par une valeur). Sans ligne d'intitulé, ou avec une valeur vide ou faite
+    d'emplacements seuls, le champ n'est pas jugé rendu par une valeur.
     """
     cible = _normaliser(intitule)
     for ligne in texte.splitlines():
-        tete, separateur, valeur = ligne.partition(":")
+        tete, separateur, valeur = _RE_PUCE.sub("", ligne).partition(":")
         if not separateur or _normaliser(tete) != cible:
             continue
-        valeur = valeur.strip(_DECOR + "*")
-        if valeur and not detecter(valeur):
+        reste = _RE_EMPLACEMENT.sub("", valeur).strip(_DECOR)
+        if any(c.isalnum() for c in reste):
             return True
     return False

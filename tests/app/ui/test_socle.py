@@ -227,7 +227,7 @@ def test_travail_conserve_par_tache_et_vues_non_disponibles(page) -> None:
             assert vue.locator(".redaction .volet-entree").is_visible(), tache
             assert "non disponible" not in vue.inner_text(), tache
             continue
-        if tache in ("CO", "RE"):  # vues livrées par les stories 13.1 et 13.2
+        if tache in ("CO", "RE", "CT"):  # vues livrées par les stories 13.1 à 13.3
             assert "non disponible" not in page.inner_text(f"#vue-{tache}"), tache
             continue
         assert page.inner_text(f"#vue-{tache}") == "non disponible", tache
