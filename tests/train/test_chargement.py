@@ -153,3 +153,52 @@ def test_sha_chat_template(factices) -> None:
         chargement.sha_chat_template(tokenizer)
     tokenizer.chat_template = {"default": "x"}
     assert chargement.sha_chat_template(tokenizer) != json.dumps({"default": "x"})
+
+
+def test_pretokenisation_balises_garde_les_appels(factices) -> None:
+    """`balises-tool-call` (SmolLM3) : `tools` transmis, `tool_calls` supervisés en balises.
+
+    Le template factice, comme celui de SmolLM3, ignore `tool_calls` : sans la réécriture,
+    le tour d'appel serait supervisé vide.
+    """
+    tokenizer = factices.Tokenizer()
+    config = charger_config_modele("smollm3-3b")
+    assert config.protocole_outils == "balises-tool-call"
+    ligne = factices.ligne(1)
+    appel = {
+        "id": "c1",
+        "type": "function",
+        "function": {"name": "outil_factice", "arguments": "{}"},
+    }
+    ligne["messages"][2:2] = [
+        {"role": "assistant", "content": "", "tool_calls": [appel]},
+        {"role": "tool", "tool_call_id": "c1", "content": "<resultat-factice>"},
+    ]
+    (exemple,), _ = chargement.pretokeniser(
+        tokenizer,
+        [chargement._Ligne.model_validate(ligne)],
+        longueur_max=10_000,
+        config_modele=config,
+    )
+    inverse = {i: jeton for jeton, i in tokenizer.vocab.items()}
+    supervise = "".join(inverse[i] for i in exemple["labels"] if i != IGNORE)
+    assert '<tool_call>\n{"name": "outil_factice", "arguments": {}}\n</tool_call>' in supervise
+    assert all(tools is not None for tools in tokenizer.appels_tools)
+    assert "tool_calls" in ligne["messages"][2]  # la ligne n'est pas modifiée
+
+
+def test_preferences_balises_reecrit_les_appels(factices) -> None:
+    tokenizer = factices.Tokenizer()
+    config = charger_config_modele("smollm3-3b")
+    paire = factices.paire(1)
+    appel = {
+        "id": "c1",
+        "type": "function",
+        "function": {"name": "outil_factice", "arguments": "{}"},
+    }
+    paire["chosen"] = [{"role": "assistant", "content": "", "tool_calls": [appel]}]
+    (exemple,), _ = chargement.preparer_preferences(
+        tokenizer, [chargement._Paire.model_validate(paire)], config_modele=config
+    )
+    assert exemple["chosen"].startswith("<tool_call>\n")
+    assert all(tools is not None for tools in tokenizer.appels_tools)

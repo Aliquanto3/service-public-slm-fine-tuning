@@ -29,9 +29,9 @@ validée). Pas de `--reprendre` pour la notation : la relancer suffit, le cache 
 produit s'il est `complet` ou `partiel-erreur`.
 
 `sonde-outils` (story 8.2, H-TOOLS) : passe les items RD en protocole d'outils `natif`, puis
-en `json-generique` si `natif` échoue ; une ligne par item, le tableau par protocole, le
-protocole recommandé et le run `eval-sonde`. Code 0 si un protocole est valide et le run
-`complet`, 1 sinon (aucun protocole valide, ou item en erreur).
+en `json-generique`, puis en `balises-tool-call`, jusqu'au premier valide ; une ligne par
+item, le tableau par protocole, le protocole recommandé et le run `eval-sonde`. Code 0 si
+un protocole est valide et le run `complet`, 1 sinon (aucun protocole valide, ou item en erreur).
 
 Code 0 si le dernier run est `complet`, 1 s'il est `partiel-erreur` ou `partiel-budget`, 2
 pour une erreur d'usage, 4 si le jeu est altéré ou si le run repris diffère de la demande.
@@ -409,7 +409,7 @@ def tableau_sonde(bilans: Any) -> str:
 
 
 def executer_sonde(args: argparse.Namespace) -> int:
-    """`slmsp eval sonde-outils` : protocole d'outils `natif`, puis `json-generique`."""
+    """`slmsp eval sonde-outils` : protocoles d'outils `natif`, `json-generique`, `balises-…`."""
     from slmsp.evaluation import assemblage
     from slmsp.evaluation.sonde_outils import sonder
 
@@ -504,10 +504,14 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
 
     sonde = actions.add_parser(
         "sonde-outils",
-        help="sonder le tool calling d'un candidat (H-TOOLS) : natif, puis json-generique",
+        help=(
+            "sonder le tool calling d'un candidat (H-TOOLS) : natif, json-generique, "
+            "balises-tool-call"
+        ),
         description=(
             "Passe les items RD du calibrage par le Harnais d'évaluation en protocole d'outils "
-            "natif, puis json-generique si natif échoue, et recommande un protocole."
+            "natif, puis json-generique, puis balises-tool-call, jusqu'au premier valide, et "
+            "recommande un protocole."
         ),
     )
     sonde.add_argument("--modele", help="candidat sondé : base:<slug>")

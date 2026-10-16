@@ -4,8 +4,9 @@
 H-TOOLS) par le Harnais d'évaluation de la phase génération (`generation.generer_item`,
 Bac à sable sur les cassettes, `ModeFixe` connecté, profil réseau `aucun`, décodage de la
 section `[generation]` de `config/evaluation.toml`), d'abord avec le protocole d'outils
-`natif`. Si ce protocole échoue, une seconde passe relance les mêmes items en
-`json-generique`, avec un Harnais rouvert. Le
+`natif`. Si ce protocole échoue, une passe suivante relance les mêmes items en
+`json-generique`, puis en `balises-tool-call` (ordre de `PROTOCOLES`), avec un Harnais rouvert
+à chaque passe. Le
 protocole est imposé sur une copie de la configuration du modèle : aucun TOML n'est réécrit.
 
 Critère de validité d'un protocole : chaque item sondé a le statut `ok`, au moins un appel

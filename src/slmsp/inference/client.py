@@ -10,7 +10,15 @@ Protocoles d'outils (`protocole_outils` de `ConfigModele`) :
   sortie est contrainte par `response_format` (`schema_json_generique`) puis reconvertie :
   `{"tool_calls": [...]}` donne des `AppelOutil`, `{"content": ...}` un `Jeton`, un JSON
   illisible un `Jeton` du texte brut. Décrire les outils dans le prompt reste l'affaire
-  du Harnais.
+  du Harnais ;
+- `balises-tool-call` (SmolLM3) : `tools` est transmis et rendu par le template du tokenizer
+  (AD-13), qui demande au modèle des appels `<tool_call>{"name", "arguments"}</tool_call>`
+  dans le texte. Le template ne lit pas `message.tool_calls`, si bien que llama-server ne
+  construit aucun parseur d'outils : le client analyse les balises du flux de texte (le texte
+  qui précède les appels reste en `Jeton`, émis au fil de l'eau ; tout texte non blanc après
+  le premier `</tool_call>` est ignoré) et réécrit les `tool_calls` des messages `assistant`
+  de l'historique en balises dans `content` (`core.balises`). Avec des `tools`, `stop`
+  reçoit `</tool_call>` : llama-server s'arrête au premier appel fermé.
 
 Le flux se termine par un seul `Fin` : `terminee` (`finish_reason` `stop`/`tool_calls`, ou
 `[DONE]`), `longueur` (`length`) ou `interrompue` (flux coupé). `usage` porte
@@ -26,6 +34,12 @@ import uuid
 from collections.abc import Iterator, Mapping, Sequence
 from typing import Any, Final
 
+from slmsp.core.balises import (
+    BALISE_FERMANTE,
+    BALISE_OUVRANTE,
+    PROTOCOLE_BALISES,
+    messages_balises,
+)
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.inference.processus import ErreurInference
 from slmsp.net import client_local
@@ -33,7 +47,7 @@ from slmsp.net import client_local
 OPTIONS_AUTORISEES: Final = frozenset(
     {"temperature", "seed", "max_tokens", "top_p", "top_k", "stop", "chat_template_kwargs"}
 )
-PROTOCOLES: Final = ("natif", "json-generique")
+PROTOCOLES: Final = ("natif", "json-generique", PROTOCOLE_BALISES)
 CLES_USAGE: Final = ("prompt_tokens", "completion_tokens", "total_tokens")
 TAILLE_EXTRAIT: Final = 500
 """Caractères du corps d'une réponse HTTP en erreur cités dans `ErreurInference`."""
@@ -147,6 +161,159 @@ def _sortie_json_generique(texte: str) -> list[Evenement]:
     return [Jeton(texte=texte)]
 
 
+def _appel_balise(contenu: str, *, fermee: bool = True) -> AppelOutil | AppelNonConforme:
+    """Appel lu entre `<tool_call>` et `</tool_call>` : `{"name": ..., "arguments": {...}}`."""
+    try:
+        objet = json.loads(contenu)
+    except json.JSONDecodeError:
+        motif = "<tool_call> : JSON illisible" + ("" if fermee else " (balise non fermée)")
+        return AppelNonConforme(nom=None, arguments_bruts=contenu, motif=motif)
+    if not isinstance(objet, dict):
+        return AppelNonConforme(
+            nom=None, arguments_bruts=contenu, motif="<tool_call> : objet JSON attendu"
+        )
+    arguments = objet.get("arguments")
+    if isinstance(arguments, str):  # arguments en chaîne JSON (format OpenAI)
+        try:
+            arguments = json.loads(arguments)
+        except json.JSONDecodeError:
+            pass
+    bruts = json.dumps(arguments, ensure_ascii=False)
+    return _appel(nouvel_identifiant(), objet.get("name"), arguments, bruts)
+
+
+def _prefixe_en_attente(texte: str, balise: str) -> int:
+    """Longueur du plus long suffixe de `texte` qui commence `balise` (à retenir)."""
+    for taille in range(min(len(texte), len(balise) - 1), 0, -1):
+        if balise.startswith(texte[-taille:]):
+            return taille
+    return 0
+
+
+def _balise_dans_appel(tampon: str) -> tuple[str, int] | None:
+    """Première balise qui termine le contenu d'un appel ouvert : `(balise, position)`.
+
+    Un `</tool_call>` n'est retenu que hors d'une chaîne JSON (guillemets et échappements
+    suivis), pour qu'un argument qui le cite ne coupe pas l'appel. Un `<tool_call>` est
+    retenu partout : un appel tronqué au milieu d'une chaîne, puis suivi d'un nouvel appel,
+    est bien plus probable qu'un argument qui cite la balise ouvrante.
+    """
+    dans_chaine = echappe = False
+    for position, caractere in enumerate(tampon):
+        if caractere == "<":
+            if tampon.startswith(BALISE_OUVRANTE, position):
+                return BALISE_OUVRANTE, position
+            if not dans_chaine and tampon.startswith(BALISE_FERMANTE, position):
+                return BALISE_FERMANTE, position
+        if dans_chaine:
+            if echappe:
+                echappe = False
+            elif caractere == "\\":
+                echappe = True
+            elif caractere == '"':
+                dans_chaine = False
+        elif caractere == '"':
+            dans_chaine = True
+    return None
+
+
+def _arrets_balises(stop: Any) -> list[str]:
+    """Mots d'arrêt du protocole `balises-tool-call` : ceux demandés, plus `</tool_call>`.
+
+    llama-server s'arrête après le premier appel fermé (la balise est retirée du texte, d'où
+    l'analyse d'une balise non fermée par `LecteurBalises.finir`) : le modèle n'écrit pas le
+    résultat d'outil inventé qui suit souvent, et ne consomme pas de tokens pour rien.
+    """
+    arrets = [stop] if isinstance(stop, str) else list(stop or [])
+    return arrets if BALISE_FERMANTE in arrets else [*arrets, BALISE_FERMANTE]
+
+
+class LecteurBalises:
+    """Analyse incrémentale des `<tool_call>…</tool_call>` d'un flux de texte.
+
+    Le texte qui précède le premier appel est rendu en `Jeton` dès qu'il ne peut plus
+    commencer une balise ; chaque balise donne un `AppelOutil` ou un `AppelNonConforme`
+    (`<tool_call>` rouvert avant `</tool_call>` : le premier est non conforme). Après le
+    premier `</tool_call>`, seuls d'autres appels consécutifs (séparés par des blancs) sont
+    lus : le premier texte non blanc arrête la lecture du tour, comme un mot d'arrêt, car
+    c'est en général un résultat d'outil inventé. `finir` analyse une balise non fermée si
+    le tour s'est arrêté normalement (`terminee`, `longueur`) ; sur un flux `interrompue`,
+    elle est non conforme.
+    """
+
+    def __init__(self) -> None:
+        self._tampon = ""
+        self._etat = "texte"  # texte, appel, apres (un appel fermé), arret
+
+    def lire(self, morceau: str) -> list[Evenement]:
+        self._tampon += morceau
+        sortie: list[Evenement] = []
+        while True:
+            if self._etat == "arret":
+                self._tampon = ""
+                return sortie
+            if self._etat == "appel":
+                trouvee = _balise_dans_appel(self._tampon)
+                if trouvee is None:
+                    return sortie
+                balise, position = trouvee
+                contenu = self._tampon[:position].strip()
+                self._tampon = self._tampon[position + len(balise) :]
+                if balise == BALISE_FERMANTE:
+                    sortie.append(_appel_balise(contenu))
+                    self._etat = "apres"
+                else:
+                    sortie.append(
+                        AppelNonConforme(
+                            nom=None,
+                            arguments_bruts=contenu,
+                            motif="<tool_call> : balise non fermée avant la suivante",
+                        )
+                    )
+                continue
+            if self._etat == "apres":
+                reste = self._tampon.lstrip()
+                if reste.startswith(BALISE_OUVRANTE):
+                    self._tampon = reste[len(BALISE_OUVRANTE) :]
+                    self._etat = "appel"
+                    continue
+                if BALISE_OUVRANTE.startswith(reste):  # vide, ou début possible d'un appel
+                    return sortie
+                self._etat = "arret"
+                continue
+            debut = self._tampon.find(BALISE_OUVRANTE)
+            if debut >= 0:
+                if debut:
+                    sortie.append(Jeton(texte=self._tampon[:debut]))
+                self._tampon = self._tampon[debut + len(BALISE_OUVRANTE) :]
+                self._etat = "appel"
+                continue
+            garde = _prefixe_en_attente(self._tampon, BALISE_OUVRANTE)
+            emis = self._tampon[: len(self._tampon) - garde]
+            if emis:
+                sortie.append(Jeton(texte=emis))
+            self._tampon = self._tampon[len(emis) :]
+            return sortie
+
+    def finir(self, raison: str = "terminee") -> list[Evenement]:
+        """Reste du tour, selon la raison de `Fin` (`terminee`, `longueur`, `interrompue`)."""
+        reste, self._tampon = self._tampon, ""
+        etat, self._etat = self._etat, "arret"
+        if etat == "appel":
+            if raison == "interrompue":
+                return [
+                    AppelNonConforme(
+                        nom=None,
+                        arguments_bruts=reste.strip(),
+                        motif="<tool_call> : balise non fermée (flux interrompu)",
+                    )
+                ]
+            return [_appel_balise(reste.strip(), fermee=False)]
+        if etat == "texte" and reste:
+            return [Jeton(texte=reste)]
+        return []
+
+
 class ClientLlama:
     """`LlmPort` d'un `llama-server` de génération sur `127.0.0.1:<port>`.
 
@@ -195,6 +362,11 @@ class ClientLlama:
             )
         return reponse.json()
 
+    def _messages(self, messages: Sequence[Mapping[str, Any]]) -> list[Any]:
+        if self.protocole_outils == PROTOCOLE_BALISES:
+            return messages_balises(messages)
+        return list(messages)
+
     def _kwargs_template(self, options: Mapping[str, Any]) -> dict[str, Any]:
         return {**self.chat_template_kwargs, **(options.get("chat_template_kwargs") or {})}
 
@@ -205,11 +377,12 @@ class ClientLlama:
     ) -> int:
         """Tokens de l'entrée rendue par le chat template (`/apply-template`, `/tokenize`).
 
-        Avec `json-generique`, `tools` n'est pas rendu par le template (comme dans
+        Avec `json-generique`, `tools` n'est pas rendu par le template ; avec
+        `balises-tool-call`, les `tool_calls` de l'historique sont réécrits (comme dans
         `generer`).
         """
-        corps: dict[str, Any] = {"messages": list(messages)}
-        if tools and self.protocole_outils == "natif":
+        corps: dict[str, Any] = {"messages": self._messages(messages)}
+        if tools and self.protocole_outils != "json-generique":
             corps["tools"] = list(tools)
         kwargs = self._kwargs_template({})
         if kwargs:
@@ -238,7 +411,7 @@ class ClientLlama:
                 f"(permises : {', '.join(sorted(OPTIONS_AUTORISEES))})"
             )
         corps: dict[str, Any] = {
-            "messages": list(messages),
+            "messages": self._messages(messages),
             "stream": True,
             "stream_options": {"include_usage": True},
         }
@@ -249,7 +422,9 @@ class ClientLlama:
         if kwargs:
             corps["chat_template_kwargs"] = kwargs
         if tools:
-            if self.protocole_outils == "natif":
+            if self.protocole_outils == PROTOCOLE_BALISES:
+                corps["stop"] = _arrets_balises(options.get("stop"))
+            if self.protocole_outils != "json-generique":
                 corps["tools"] = list(tools)
             else:
                 corps["response_format"] = {
@@ -276,7 +451,8 @@ class ClientLlama:
         """
         corps = self.corps_generation(messages, tools=tools, options=options)
         json_generique = bool(tools) and self.protocole_outils == "json-generique"
-        return self._flux(corps, json_generique)
+        balises = LecteurBalises() if tools and self.protocole_outils == PROTOCOLE_BALISES else None
+        return self._flux(corps, json_generique, balises)
 
     def _lignes(self, reponse: Any) -> Iterator[str]:
         """Lignes du flux ; une coupure de transport termine simplement l'itération."""
@@ -290,7 +466,9 @@ class ClientLlama:
                 return
             yield ligne
 
-    def _flux(self, corps: dict[str, Any], json_generique: bool) -> Iterator[Evenement]:
+    def _flux(
+        self, corps: dict[str, Any], json_generique: bool, balises: LecteurBalises | None = None
+    ) -> Iterator[Evenement]:
         debut = time.perf_counter()
         premier: float | None = None
         texte_json: list[str] = []
@@ -341,6 +519,8 @@ class ClientLlama:
                             premier = time.perf_counter()
                         if json_generique:
                             texte_json.append(contenu)
+                        elif balises is not None:
+                            yield from balises.lire(contenu)
                         else:
                             yield Jeton(texte=contenu)
                     for fragment in delta.get("tool_calls") or []:
@@ -358,17 +538,19 @@ class ClientLlama:
                     if choix.get("finish_reason"):
                         raison_finale = choix["finish_reason"]
 
-        if json_generique:
-            yield from _sortie_json_generique("".join(texte_json))
-        for index in sorted(appels):
-            yield _appel_natif(appels[index])
-
         if raison_finale == "length":
             raison = "longueur"
         elif raison_finale is not None or termine:
             raison = "terminee"
         else:
             raison = "interrompue"
+
+        if json_generique:
+            yield from _sortie_json_generique("".join(texte_json))
+        if balises is not None:
+            yield from balises.finir(raison)
+        for index in sorted(appels):
+            yield _appel_natif(appels[index])
         if premier is not None:
             usage["delai_premier_token_ms"] = round((premier - debut) * 1000)
         yield Fin(raison=raison, usage=usage or None)
@@ -376,7 +558,10 @@ class ClientLlama:
 
 __all__ = [
     "ClientLlama",
+    "LecteurBalises",
     "OPTIONS_AUTORISEES",
+    "PROTOCOLES",
     "appel_canonique",
+    "messages_balises",
     "schema_json_generique",
 ]
