@@ -50,12 +50,12 @@ verifie_le = 2026-10-12
 [[sources]]
 id = "AgentPublic/assistant_ia_questions_corpus"
 licence = "mit"
-usage = "diffusable"
+usage = "evaluation_seulement"
 auteur_contenu = "public"
 genere_par = "humain"
 revision = "62cef57af7cc5fe54862a8118c221246771ad9ea"
 verifie_le = 2026-10-12
-notes = "Fiche : « generated and improved using non-expert knowledge », mode de génération non précisé : à confirmer par Anaël."
+notes = "Questions humaines probables (fautes, ton familier), réponses peut-être générées. Déjà source d'amorces du Jeu d'évaluation : évaluation seulement (décision d'Anaël, 2026-10-16, contamination)."
 
 [[sources]]
 id = "AgentPublic/retriever_dataset"
