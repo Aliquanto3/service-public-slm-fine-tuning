@@ -31,6 +31,7 @@ from slmsp.benchmarks.moteurs import ContexteBench, SortieMoteur
 from slmsp.benchmarks.moteurs.llm import llm_gguf
 from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.evenements import Jeton
+from slmsp.core.langues import LANGUES
 
 if TYPE_CHECKING:
     from slmsp.benchmarks.config import BenchmarkConfig
@@ -38,14 +39,6 @@ if TYPE_CHECKING:
 
 PAIRES_WMT14_DEFAUT = ("en-fr", "fr-en")
 PHRASES_WMT14_DEFAUT = 500
-LANGUES = {
-    "en": "anglais",
-    "fr": "français",
-    "es": "espagnol",
-    "ar": "arabe",
-    "pt": "portugais",
-    "de": "allemand",
-}
 CODES_FLORES = {
     "fr": "fra_Latn",
     "es": "spa_Latn",

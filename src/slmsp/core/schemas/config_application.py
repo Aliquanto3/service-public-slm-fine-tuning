@@ -9,10 +9,10 @@ from typing import Annotated, Literal
 from pydantic import Field, field_validator
 
 from slmsp.core.config import charger_toml, etendre_chemin, racine_projet
+from slmsp.core.langues import LANGUES
 from slmsp.core.schemas import SchemaBase
 
 _MOTIF_SLUG = re.compile(r"^[a-z0-9]+(?:[.-][a-z0-9]+)*$")
-_MOTIF_LANGUE = re.compile(r"^[a-z]{2,3}(?:-[A-Z]{2})?$")
 
 
 class ConfigApplication(SchemaBase):
@@ -41,8 +41,12 @@ class ConfigApplication(SchemaBase):
     @field_validator("langues_traduction")
     @classmethod
     def _langues_valides(cls, valeur: list[str]) -> list[str]:
-        if any(not _MOTIF_LANGUE.fullmatch(code) for code in valeur):
-            raise ValueError("code de langue mal formé : attendu ISO 639 (ex. « en », « pt-BR »)")
+        inconnues = [code for code in valeur if code not in LANGUES]
+        if inconnues:
+            raise ValueError(
+                f"langue(s) non gérée(s) par la Tâche TR : {', '.join(inconnues)} "
+                f"(attendu parmi {', '.join(LANGUES)})"
+            )
         if len(set(valeur)) != len(valeur):
             raise ValueError("langues_traduction contient des doublons")
         return valeur

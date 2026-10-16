@@ -15,8 +15,8 @@ export const NOMS = {
   pt: "portugais",
   de: "allemand",
 };
-// Repli si le pont ne répond pas (pont factice, échec) : les cinq langues de la configuration.
-export const LANGUES_PAR_DEFAUT = ["en", "es", "ar", "pt", "de"];
+export const ERREUR_LANGUES = "Les langues de traduction n'ont pas pu être chargées : la traduction est indisponible.";
+export const AUCUNE_CIBLE = "Aucune langue cible n'est configurée : la traduction est indisponible.";
 export const MENTION = "Traduction automatique, à vérifier avant envoi";
 const RTL = new Set(["ar", "he", "fa", "ur"]);
 
@@ -56,10 +56,33 @@ export function monter(conteneur, pont, contexte) {
   const inverser = el("button", "bouton-secondaire", "Inverser");
   inverser.type = "button";
   inverser.setAttribute("aria-label", "Inverser les langues");
-  groupe.append(etiqSource, source, inverser, etiqCible, cible);
+  const message = el("p", "message-langues");
+  message.setAttribute("role", "alert");
+  message.hidden = true;
+  groupe.append(etiqSource, source, inverser, etiqCible, cible, message);
+
+  // « Traduire » est désactivé tant qu'aucune langue cible n'est connue (pas de repli : Q9).
+  let disponible = false;
+  function majAction() {
+    conteneur.querySelector(".redaction-saisie")?.dispatchEvent(new Event("input"));
+  }
+  function indisponible(texte) {
+    disponible = false;
+    message.textContent = texte;
+    message.hidden = false;
+    majAction();
+  }
 
   function remplir(langues) {
-    const codes = ["fr", ...langues.filter((c) => c !== "fr")];
+    const cibles = langues.filter((c) => c !== "fr");
+    const codes = ["fr", ...cibles];
+    if (!cibles.length) {
+      viderSelects();
+      indisponible(AUCUNE_CIBLE);
+      return;
+    }
+    disponible = true;
+    message.hidden = true;
     const garder = [source.value || "fr", cible.value || langues[0]];
     for (const [select, voulu] of [
       [source, garder[0]],
@@ -77,6 +100,13 @@ export function monter(conteneur, pont, contexte) {
     }
     if (source.value === cible.value) cible.value = codes.find((c) => c !== source.value);
     saisieLangue();
+    majAction();
+  }
+
+  function viderSelects() {
+    for (const select of [source, cible]) {
+      select.replaceChildren(...["fr"].map((code) => Object.assign(el("option", undefined, nom(code)), { value: code })));
+    }
   }
 
   // La langue de la saisie suit la langue source (arabe : saisie de droite à gauche).
@@ -108,24 +138,28 @@ export function monter(conteneur, pont, contexte) {
     changement();
   });
 
-  remplir(LANGUES_PAR_DEFAUT);
-  precedents = { source: source.value, cible: cible.value };
+  // Avant la réponse du pont : français seul, « Traduire » désactivé (aucune liste par défaut).
+  viderSelects();
+  disponible = false;
   Promise.resolve()
     .then(() => pont.appeler("reglages.langues_traduction"))
     .then((r) => {
-      const langues = r?.ok === true && Array.isArray(r.langues) ? r.langues.filter((c) => typeof c === "string" && c) : [];
-      if (langues.length) {
-        remplir(langues);
-        precedents = { source: source.value, cible: cible.value };
-      }
+      if (r?.ok !== true || !Array.isArray(r.langues)) throw new Error("langues");
+      // Seules les langues connues de la vue (celles de la Tâche TR) sont proposées.
+      remplir(r.langues.filter((c) => typeof c === "string" && Object.hasOwn(NOMS, c)));
+      precedents = { source: source.value, cible: cible.value };
     })
-    .catch(() => {});
+    .catch(() => {
+      viderSelects();
+      indisponible(ERREUR_LANGUES);
+    });
 
   monterRedaction(conteneur, pont, contexte, {
     action: "Traduire",
     invite: "Collez le texte à traduire, puis choisissez les langues. La traduction est automatique : relisez-la avant de l'envoyer.",
     etiquetteResultat: "Traduction",
     controles: [groupe],
+    peutEnvoyer: () => disponible && (saisie()?.value.trim() ?? "") !== "",
     construireEnvoi: (texte) => {
       const zone = conteneur.querySelector(".resultat");
       if (zone) marquer(zone, cible.value);
@@ -149,4 +183,5 @@ export function monter(conteneur, pont, contexte) {
     },
   });
   saisieLangue();
+  majAction();
 }

@@ -68,6 +68,7 @@ def page(navigateur, base) -> Iterator[object]:
           window.__appels = [];
           window.__refus = null;
           const pont = window.slmsp.pont;
+          pont.appeler = async () => ({ ok: true, langues: ['en', 'es', 'ar', 'pt', 'de'] });
           pont.envoyer = async (tache, messages, options) => {
             window.__appels.push(['envoyer', tache, messages, options]);
             if (window.__refus) return window.__refus;
@@ -85,11 +86,15 @@ def page(navigateur, base) -> Iterator[object]:
     p.context.close()
 
 
-def _remonter(page, langues: list[str]) -> None:
+def _remonter(page, langues: list[str] | None) -> None:
+    """Remonte la vue ; `langues=None` simule un pont en échec."""
     page.evaluate(
         """async (l) => {
           const pont = window.slmsp.pont;
-          pont.appeler = async () => ({ ok: true, langues: l });
+          pont.appeler = async () => {
+            if (l === null) throw new Error('pont indisponible');
+            return { ok: true, langues: l };
+          };
           const m = await import('./js/vues/traduction.js');
           document.getElementById('vue-essai')?.remove();
           const c = document.createElement('div');
@@ -113,9 +118,26 @@ def test_langues_proposees_viennent_de_la_configuration(page) -> None:
     assert "arabe" not in _options(page, "#traduction-source-ESSAI")
 
 
-def test_repli_sur_les_cinq_langues_si_le_pont_ne_repond_pas(page) -> None:
-    libelles = _options(page, "#traduction-cible-TR")
-    assert libelles == ["français", "anglais", "espagnol", "arabe", "portugais", "allemand"]
+def test_echec_du_pont_francais_seul_message_et_traduire_desactive(page) -> None:
+    _remonter(page, None)
+    assert _options(page, "#traduction-cible-ESSAI") == ["français"]  # pas d'arabe en repli (Q9)
+    assert "indisponible" in page.inner_text("#vue-essai .message-langues")
+    page.fill("#vue-essai .redaction-saisie", DOC)
+    assert page.locator("#vue-essai .volet-pied .bouton-primaire").is_disabled()
+
+
+def test_langues_inconnues_filtrees_et_configuration_vide_desactive_traduire(page) -> None:
+    _remonter(page, ["it", "en"])
+    assert _options(page, "#traduction-cible-ESSAI") == ["français", "anglais"]
+    _remonter(page, ["fr"])
+    assert _options(page, "#traduction-cible-ESSAI") == ["français"]
+    assert "Aucune langue cible" in page.inner_text("#vue-essai .message-langues")
+    page.fill("#vue-essai .redaction-saisie", DOC)
+    assert page.locator("#vue-essai .volet-pied .bouton-primaire").is_disabled()
+    _remonter(page, ["en"])
+    page.fill("#vue-essai .redaction-saisie", DOC)
+    assert page.locator("#vue-essai .volet-pied .bouton-primaire").is_enabled()
+    assert page.locator("#vue-essai .message-langues").is_hidden()
 
 
 def test_entree_porte_langue_source_et_cible_et_sens_inverse(page) -> None:

@@ -30,3 +30,14 @@
   color: var(--ink-soft);
   font-size: var(--t-small);
 }
+
+.message-langues {
+  flex-basis: 100%;
+  margin: 0;
+  padding-left: var(--sp-2);
+  border-left: 3px solid var(--danger);
+}
+
+.message-langues[hidden] {
+  display: none;
+}

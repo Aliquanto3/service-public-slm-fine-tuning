@@ -16,7 +16,7 @@ deferred: []
 
 **Problem:** la vue Traduction (TR) affiche « non disponible » (FR-18, UX-DR15, Q9).
 
-**Approach:** `traduction.js` réutilise `monterRedaction` (12.8, non modifié) avec deux sélecteurs (langue source, langue cible) et un bouton « Inverser ». L'entrée envoyée est `{langue_source, langue_cible, texte}` avec les noms français du banc (`benchmarks/moteurs/traduction.py`, `LANGUES`), clés du gabarit `TR.md`. Les langues viennent de `config/application.toml` via la nouvelle méthode `reglages.langues_traduction` du pont ; le français est toujours proposé en plus. Retirer l'arabe = une ligne de config. Repli sur les cinq langues si le pont ne répond pas. Les deux sélecteurs ne sont jamais identiques (choisir la langue de l'autre les échange). Un changement de langue après un résultat ramène « Traduire » (Régénérer rejouerait les anciennes langues). Arabe : saisie (langue source) et sortie (langue cible) portent `lang="ar"` `dir="rtl"`, `unicode-bidi: isolate`, contenu par `textContent`. Mention affichée et ajoutée à la copie après toute traduction terminée.
+**Approach:** `traduction.js` réutilise `monterRedaction` (12.8, non modifié) avec deux sélecteurs (langue source, langue cible) et un bouton « Inverser ». L'entrée envoyée est `{langue_source, langue_cible, texte}` avec les noms français du banc (`benchmarks/moteurs/traduction.py`, `LANGUES`), clés du gabarit `TR.md`. Les langues viennent de `config/application.toml` via la nouvelle méthode `reglages.langues_traduction` du pont ; le français est toujours proposé en plus. Retirer l'arabe = une ligne de config. Pont en échec : français seul, message d'erreur, « Traduire » désactivé (revue). Les deux sélecteurs ne sont jamais identiques (choisir la langue de l'autre les échange). Un changement de langue après un résultat ramène « Traduire » (Régénérer rejouerait les anciennes langues). Arabe : saisie (langue source) et sortie (langue cible) portent `lang="ar"` `dir="rtl"`, `unicode-bidi: isolate`, contenu par `textContent`. Mention affichée et ajoutée à la copie après toute traduction terminée.
 
 ## Code Map
 
@@ -34,6 +34,14 @@ deferred: []
 
 - Les libellés ci-dessus (à valider par Anaël).
 - Noms français vs codes dans l'entrée TR : aligné sur le banc ; le jeu gelé n'a pas de TR à vérifier ici.
-- Repli sur les cinq langues si le pont échoue : l'arabe réapparaîtrait alors même retiré de la config ; à resserrer si on préfère un échec visible.
+- (Résolu en revue : plus de repli sur les cinq langues.)
 - Conflit probable avec 13.3 sur `VUES_REALISEES` et la tuple de `test_socle.py` (ajout d'un élément chacun).
 - Rendu RTL réel (WebView2 avec police arabe) et décision Q9 à la Baseline : non vérifiés ici (Edge, chaînes factices).
+
+## Revue
+
+- medium, second avis : repli codé en dur (arabe revenait si le pont échouait) ; corrigé : français seul, message, « Traduire » désactivé (`peutEnvoyer`), aucune liste avant la réponse du pont ; `test_echec_du_pont_...`.
+- medium, second avis : la configuration acceptait tout code ISO ; corrigé : `LANGUES` déplacé dans `core/langues.py` (source unique, le banc l'importe), validation de `langues_traduction` restreinte ; tests `["it"]`, `["en","zh"]`.
+- low, second avis : configuration `["fr"]` sans cible ; corrigé : message et « Traduire » désactivé.
+- low, second avis : filtre `langues.filter` sans contrôle ; corrigé : seules les langues connues (`NOMS`) sont retenues.
+- Reporté : `NOMS` (libellés) reste dupliqué côté JS (table d'affichage) ; à aligner si une langue est ajoutée à `core/langues.py`.
