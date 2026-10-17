@@ -40,7 +40,12 @@ nom = "pytorch"
 methodes = ["GET", "HEAD"]
 hotes = ["download.pytorch.org"]
 
-# Inno Setup (story 12.13, décision d'Anaël du 2026-10-17) : téléchargement de l'outillage# d'installation, GET seul, site officiel.[[profils.outillage.regles]]nom = "inno-setup"methodes = ["GET", "HEAD"]hotes = ["jrsoftware.org", "files.jrsoftware.org"]
+# Inno Setup (story 12.13, décision d'Anaël du 2026-10-17) : téléchargement de l'outillage
+# d'installation, GET seul, site officiel.
+[[profils.outillage.regles]]
+nom = "inno-setup"
+methodes = ["GET", "HEAD"]
+hotes = ["jrsoftware.org", "files.jrsoftware.org"]
 # Conditions commerciales de Mistral (D-nuit-A2-10) : cette page seule, GET seul. Depuis le 2026-10-17
 # la page redirige (301) vers sa forme avec « / » final, admise aussi (même document).
 [[profils.outillage.regles]]
