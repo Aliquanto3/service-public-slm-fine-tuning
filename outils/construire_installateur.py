@@ -7,7 +7,7 @@ puis écrit l'empreinte SHA-256 de l'installateur (Q4, pas de signature) dans un
     uv run --no-sync python outils/construire_installateur.py
     uv run --no-sync python outils/construire_installateur.py --iscc <chemin>/ISCC.exe
 
-ISCC est cherché dans : `--iscc`, `SLMSP_ISCC`, `vendor/inno-setup/ISCC.exe` (dépôt, puis `SLMSP_VENDOR_DIR`),
+ISCC est cherché dans : `--iscc`, `SLMSP_ISCC`, `vendor/inno-setup` (dépôt, puis `SLMSP_VENDOR_DIR`),
 `%LOCALAPPDATA%/Programs/Inno Setup 6/ISCC.exe`, puis le PATH. Aucun téléchargement ici :
 voir `outils/installer_inno_setup.py` et `config/outillage.toml`.
 Variante « pack complet » (Q2) : `--pack-complet <MicrosoftEdgeWebView2RuntimeInstallerX64.exe>`.
