@@ -14,7 +14,7 @@ from slmsp.inference.processus import ErreurInference
 
 @pytest.fixture
 def embedder(serveur_factice: Any) -> Any:
-    with EmbedderLlama(serveur_factice.port, taille_lot=2) as instance:
+    with EmbedderLlama(serveur_factice.port, taille_lot=2, contexte_max=8192) as instance:
         yield instance
 
 

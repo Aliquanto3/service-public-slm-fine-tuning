@@ -582,3 +582,39 @@ def test_fabrique_courriers_ecarte_la_reponse_tronquee(journalisee: bool) -> Non
     fabrique = cli_data._fabrique_courriers_depuis(lambda _seed: Generateur())
     with pytest.raises(ReponseTronquee):
         fabrique("seed-1", "ct.sujet.x.1", "seed-ct-1")
+
+
+def test_recherche_generate_en_texte_long(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """`data generate` garde la troncature d'avant F1 (8176 tokens) : sessions rejouables."""
+    from contextlib import nullcontext
+
+    from slmsp.harness import recherche_index
+    from slmsp.index import lecture
+    from slmsp.inference import serveur
+
+    appels: list[dict[str, Any]] = []
+
+    class ServeurFactice:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            appels.append(kwargs)
+
+        def __enter__(self) -> ServeurFactice:
+            return self
+
+        def __exit__(self, *exc: object) -> None:
+            return None
+
+        def embedder(self) -> str:
+            return "embedder"
+
+    monkeypatch.setattr(serveur, "ServeurLlama", ServeurFactice)
+    monkeypatch.setattr(serveur, "charger_config_modele", lambda slug: slug)
+    monkeypatch.setattr(serveur, "charger_config_llamacpp", lambda: None)
+    monkeypatch.setattr(
+        lecture, "ouvrir_index", lambda racine: nullcontext(SimpleNamespace(version="v1"))
+    )
+    monkeypatch.setattr(recherche_index, "depuis_config", lambda embedder, index: "recherche")
+    recherche = cli_data._RechercheParesseuse(tmp_path)
+    assert recherche.version == "v1"
+    assert [a.get("usage") for a in appels] == ["texte_long"]
+    recherche.fermer()

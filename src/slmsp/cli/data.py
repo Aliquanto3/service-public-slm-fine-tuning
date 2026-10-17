@@ -477,6 +477,9 @@ class _RechercheParesseuse:
                     slug="bge-m3",
                     config_llamacpp=charger_config_llamacpp(),
                     prendre_verrou_gpu=False,
+                    # Texte de groupe concaténé : troncature d'avant F1 (8176 tokens), pour que
+                    # les passages retenus restent ceux des sessions déjà générées.
+                    usage="texte_long",
                 )
             )
             index = self._pile.enter_context(ouvrir_index(self.racine))
@@ -643,6 +646,7 @@ def _filter(args: argparse.Namespace) -> int:
         slug="bge-m3",
         config_llamacpp=charger_config_llamacpp(),
         prendre_verrou_gpu=False,
+        usage="texte_long",
     ) as serveur:
         embedder = serveur.embedder()
         resultat = lancer_filtre(

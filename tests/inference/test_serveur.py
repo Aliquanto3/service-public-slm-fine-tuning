@@ -155,9 +155,72 @@ def test_arguments_embedding(vendor_factice, modeles: Path, tmp_path: Path) -> N
     assert instance.role == "embedding"
 
 
+@pytest.mark.parametrize(
+    ("usage", "micro_lot", "attendu"),
+    [
+        ("passage", {"passage": 1024, "texte_long": 4096}, "1024"),
+        ("texte_long", {"passage": 1024, "texte_long": 4096}, "4096"),
+        ("texte_long", {"passage": 1024}, "4096"),
+    ],
+)
+def test_arguments_embedding_par_usage(
+    vendor_factice, tmp_path: Path, usage: str, micro_lot: dict[str, int], attendu: str
+) -> None:
+    """`-c`, `-b` et `-ub` suivent le micro-lot de l'usage (absent : le contexte, 4096)."""
+    instance = ServeurLlama(
+        config_modele(**EMBEDDING, micro_lot=micro_lot),
+        gguf=tmp_path / "bge.gguf",
+        config_llamacpp=vendor_factice.config,
+        usage=usage,  # type: ignore[arg-type]
+    )
+    arguments = instance.arguments(7000)
+    assert arguments[7:9] == ["-c", attendu]
+    assert arguments[-4:] == ["-b", attendu, "-ub", attendu]
+    instance._port = 7000  # embedder() sans démarrage : la troncature suit le micro-lot
+    assert instance.embedder().contexte_max == int(attendu) == instance.micro_lot
+    description = instance.description()
+    assert (description["usage"], description["micro_lot"]) == (usage, int(attendu))
+    assert description["contexte"] == int(attendu)
+    instance.embedder().fermer()
+
+
+def test_micro_lot_generation_refuse(vendor_factice, tmp_path: Path) -> None:
+    instance = ServeurLlama(
+        config_modele(), gguf=tmp_path / "m.gguf", config_llamacpp=vendor_factice.config
+    )
+    assert instance.arguments(7000)[7:9] == ["-c", "4096"]
+    with pytest.raises(ValueError, match="embedding"):
+        _ = instance.micro_lot
+
+
+@pytest.mark.parametrize(
+    ("maj", "message"),
+    [
+        ({"micro_lot": {"passage": 1024}}, "réservé"),
+        ({**EMBEDDING, "micro_lot": {"passage": 8192}}, "hors de"),
+        ({**EMBEDDING, "micro_lot": {"passage": 0}}, "hors de"),
+        ({**EMBEDDING, "micro_lot": {"inconnu": 1024}}, "micro_lot"),
+    ],
+)
+def test_micro_lot_invalide(maj: dict[str, Any], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        config_modele(**maj)
+
+
+@pytest.mark.parametrize("slug", ["bge-m3", "bge-m3-f16"])
+def test_micro_lot_bge_m3(slug: str) -> None:
+    """Le passage tient le plus long chunk service-public (1 163 tokens, 2026-10-17) et
+    reste sous le texte long ; `data filter` garde le contexte entier."""
+    config = serveur.charger_config_modele(slug)
+    assert config.micro_lot_pour("texte_long") == config.contexte
+    assert 1163 + 16 <= config.micro_lot_pour("passage") < config.micro_lot_pour("texte_long")
+
+
 def test_parametres_invalides(vendor_factice) -> None:
     with pytest.raises(ValueError, match="slug ou gguf"):
         ServeurLlama(config_modele())
+    with pytest.raises(ValueError, match="usage d'embedding inconnu"):
+        ServeurLlama(config_modele(), gguf="m.gguf", usage="texte")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="chat_template_force"):
         ServeurLlama(config_modele(chat_template_force=True), gguf="m.gguf")
     with pytest.raises(ValueError, match="variante"):

@@ -2,7 +2,8 @@
 
 Vecteurs float32 de `dimension` (1024 pour BGE-M3), renormalisés L2 (le serveur les
 normalise déjà : la renormalisation absorbe l'arrondi). Les textes partent par lots de
-`taille_lot` ; un texte plus long que le contexte (8192 tokens) est tronqué à sa fin.
+`taille_lot` ; un texte plus long que `contexte_max` tokens, le micro-lot du serveur
+(`ServeurLlama.micro_lot`), est tronqué à sa fin.
 Les réponses sont remises dans l'ordre par leur `index`.
 """
 
@@ -22,8 +23,6 @@ DIMENSION: Final = 1024
 TAILLE_LOT: Final = 64
 TAILLE_EXTRAIT: Final = 500
 LOGGER: Final = logging.getLogger("slmsp.inference.embedding")
-CONTEXTE_MAX: Final = 8192
-"""Contexte de BGE-M3 (= `-b`/`-ub` du serveur, voir `ServeurLlama.arguments`)."""
 MARGE_TOKENS: Final = 16
 """Réserve pour les jetons spéciaux ajoutés par le serveur."""
 
@@ -37,11 +36,13 @@ class EmbedderLlama:
         *,
         dimension: int = DIMENSION,
         taille_lot: int = TAILLE_LOT,
-        contexte_max: int = CONTEXTE_MAX,
+        contexte_max: int,
         transport_interne: Any = None,
     ) -> None:
         if dimension <= 0 or taille_lot <= 0:
             raise ValueError("dimension et taille_lot doivent être strictement positives")
+        if contexte_max <= MARGE_TOKENS:
+            raise ValueError(f"contexte_max doit dépasser {MARGE_TOKENS} tokens")
         self.port = port
         self._dimension = dimension
         self.taille_lot = taille_lot
