@@ -435,3 +435,40 @@ def test_amorce_mistral_saine_inchangee(monde: Any) -> None:
     resultat = valider(monde, generation)
     assert motifs(resultat) == []
     assert len(resultat.run.lire_jsonl("valides.jsonl")) == 1
+
+
+def _alterer_brut(generation: Any, **champs: Any) -> None:
+    """Réécrit l'unique ligne de `brut.jsonl` avec `champs` (session devenue non prouvable)."""
+    chemin = generation.run.dossier / "brut.jsonl"
+    (brut,) = generation.run.lire_jsonl("brut.jsonl")
+    brut.update(champs)
+    chemin.write_text(json.dumps(brut) + "\n", encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("champs", "motif"),
+    [
+        ({"amorce_ids": ["generique.demande.jeu.999999"]}, "amorce_invalide"),
+        ({"appel_ids": ["f" * 32]}, "appel_invalide"),
+    ],
+)
+def test_provenance_introuvable_rejetee_sans_erreur(
+    monde: Any, champs: dict[str, Any], motif: str
+) -> None:
+    generation = une_session(monde, "generique", ["demande"], TEXTE)
+    _alterer_brut(generation, **champs)
+    resultat = valider(monde, generation)
+    assert resultat.statut == "complet"  # session rejetée, run non interrompu
+    assert motifs(resultat) == [motif]
+
+
+def test_reponse_tronquee_rejetee(monde: Any) -> None:
+    """Défense en profondeur : `generate` abandonne déjà une réponse tronquée, mais une session
+    qui en référence une (run ancien, `brut.jsonl` altéré) est rejetée, comme `build` la refuse."""
+    generation = une_session(monde, "generique", ["demande"], TEXTE)
+    tronque = monde.scenario(finish_reason="length")["appel_id"]  # ligne `length` du journal
+    _alterer_brut(generation, appel_ids=[tronque])
+    resultat = valider(monde, generation)
+    assert resultat.statut == "complet"
+    assert motifs(resultat) == ["reponse_tronquee"]
+    assert resultat.run.lire_jsonl("valides.jsonl") == []

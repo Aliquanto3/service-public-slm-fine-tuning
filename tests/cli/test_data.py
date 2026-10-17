@@ -549,3 +549,36 @@ def test_fabrique_ecarte_la_reponse_tronquee() -> None:
     fabrique = cli_data._fabrique_depuis(lambda _seed: Generateur())
     with pytest.raises(ReponseTronquee):
         fabrique("seed-1", "cr.theme.x.1", "session-1")
+
+
+@pytest.mark.parametrize("journalisee", [True, False])
+def test_fabrique_courriers_ecarte_la_reponse_tronquee(journalisee: bool) -> None:
+    """Courrier CT tronqué, journalisé (reprise) ou neuf : `ReponseTronquee`, jamais réutilisé."""
+    pytest.importorskip("mistralai")
+    from slmsp.core.erreurs import ReponseTronquee
+
+    brut = json.dumps(
+        {
+            "choices": [
+                {
+                    "finish_reason": "length",
+                    "message": {"role": "assistant", "content": '{"objet": "<objet-factice'},
+                }
+            ]
+        }
+    ).encode()
+
+    class Ligne:
+        appel_id = "b" * 32
+        reponse_brute = brut
+
+    class Generateur:
+        def reponse_journalisee(self, *_args: Any) -> Ligne | None:
+            return Ligne() if journalisee else None
+
+        def generer(self, *_args: Any) -> Ligne:
+            return Ligne()
+
+    fabrique = cli_data._fabrique_courriers_depuis(lambda _seed: Generateur())
+    with pytest.raises(ReponseTronquee):
+        fabrique("seed-1", "ct.sujet.x.1", "seed-ct-1")

@@ -9,8 +9,13 @@ terminé (`complet` ou `partiel-*` : seules les sessions de `brut.jsonl` sont ju
 
 Contrôles, dans cet ordre ; le premier qui échoue donne le motif :
 
-0. **Provenance des amorces** : chaque amorce `mistral` de la session doit venir d'une réponse
-   journalisée que l'extracteur de `build` accepte (non tronquée, texte seul) : `amorce_tronquee`.
+0. **Provenance** : les règles de provenance de `build` (`LecteurGeneration.amorce_verifiee`,
+   `appel_generation`, `data.extraction`), pour que `build` ne refuse aucune session validée.
+   Une amorce issue d'une réponse tronquée donne `amorce_tronquee` ; une amorce introuvable,
+   altérée (SHA, texte différent de sa réponse) ou d'un appel absent, non `generation`/`ok`
+   ou sans texte seul donne `amorce_invalide`. Une réponse tronquée de la session donne
+   `reponse_tronquee` ; un appel de la session absent du journal, non `generation`/`ok` ou sans
+   gabarit journalisé donne `appel_invalide`.
 1. **Rejeu (RD)** : chaque appel d'outil des réponses journalisées est rejoué sur `BacASable`
    avec les cassettes `data/cassettes/` de la session. Un appel hors schéma donne
    `appel_non_conforme` ; une cassette illisible ou d'une autre empreinte d'outils, un appel
@@ -49,23 +54,24 @@ from typing import Any, Final, Protocol
 from pydantic import ValidationError
 
 from slmsp.core.artefacts import Run, lire, nouveau_run, ouvrir_run
-from slmsp.core.canonique import json_canonique
+from slmsp.core.canonique import json_canonique, sha256_hex
 from slmsp.core.config import plafonds_re_evaluation, racine_projet
 from slmsp.core.erreurs import (
     AppelNonConforme,
     BudgetEpuise,
     ManifesteInvalide,
     ProvenanceInvalide,
+    ReponseTronquee,
     SlmspError,
 )
 from slmsp.core.gabarits import GabaritValide, valider_gabarit
 from slmsp.core.ports import Passage
-from slmsp.core.schemas.amorce import Amorce
+from slmsp.core.schemas.amorce import Amorce, texte_mistral_conforme
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.rejet_donnees import RejetExemple
 from slmsp.core.schemas.session_donnees import SessionBrute, SessionPlanifiee
 from slmsp.core.texte import compter_mots, extraire_nombres
-from slmsp.data.extraction import extraire_contenu
+from slmsp.data.extraction import extraire_contenu, extraire_message
 from slmsp.harness.citations import extraire_urls, urls_inventees
 from slmsp.harness.taches.recherche import contenu_resultat
 from slmsp.mcp.bac_a_sable import BacASable
@@ -76,7 +82,7 @@ from slmsp.mistral.generateur import (
     message_assistant,
     raison_de_fin,
 )
-from slmsp.mistral.journal import JournalMistral, LigneAppel
+from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, LigneAppel
 
 __all__ = [
     "GABARIT_VALIDATION",
@@ -260,19 +266,60 @@ class LecteurGeneration:
             raise ProvenanceInvalide(f"appel {brut.appel_ids[-1]} : réponse finale sans contenu")
         return contenu
 
-    def controler_provenance_amorces(self, brut: SessionBrute) -> None:
-        """Rejette (`amorce_tronquee`) une session dont une amorce `mistral` vient d'une
-        réponse introuvable ou inexploitable : même extracteur que `build` (tronquée refusée)."""
+    def appel_generation(self, appel_id: str) -> LigneAppel:
+        """Ligne du journal d'un appel `generation`/`ok` (règle de `build`, AD-3 verrou 4).
+        Lève `ProvenanceInvalide`."""
+        ligne = self.appel(appel_id)
+        if ligne.usage != USAGE_GENERATION:
+            raise ProvenanceInvalide(
+                f"appel {appel_id} : usage {ligne.usage!r}, {USAGE_GENERATION!r} seul admis"
+            )
+        if ligne.statut != "ok":
+            raise ProvenanceInvalide(f"appel {appel_id} : statut {ligne.statut!r}, « ok » attendu")
+        return ligne
+
+    def amorce_verifiee(self, amorce_id: str) -> Amorce:
+        """Amorce du seed ou dérivée dont le texte est vérifié (SHA, ou réponse journalisée si
+        Mistral), règle de `build`. Lève `ProvenanceInvalide` (`ReponseTronquee` si tronquée)."""
+        amorce = self.amorces.get(amorce_id)
+        if amorce is None:
+            raise ProvenanceInvalide(f"amorce {amorce_id} introuvable (seed ou dérivées)")
+        if sha256_hex(amorce.texte) != amorce.sha_texte:
+            raise ProvenanceInvalide(f"amorce {amorce_id} : sha_texte ne correspond pas au texte")
+        if amorce.auteur_contenu == "mistral":
+            assert amorce.appel_id is not None  # garanti par le schéma Amorce
+            ligne = self.appel_generation(amorce.appel_id)
+            if not texte_mistral_conforme(extraire_contenu(ligne.reponse_brute), amorce):
+                raise ProvenanceInvalide(
+                    f"amorce {amorce_id} : texte différent de la réponse journalisée "
+                    f"{amorce.appel_id}"
+                )
+        elif amorce.auteur_contenu not in ("public", "config"):
+            raise ProvenanceInvalide(
+                f"amorce {amorce_id} : auteur_contenu {amorce.auteur_contenu!r}"
+            )
+        return amorce
+
+    def controler_provenance(self, brut: SessionBrute) -> None:
+        """Règles de provenance de `build` sur les amorces et les appels de la session ; lève
+        `_Rejet` (`amorce_tronquee`, `amorce_invalide`, `reponse_tronquee`, `appel_invalide`)."""
         for amorce_id in [*brut.amorce_ids, *brut.amorces_derivees]:
-            amorce = self.amorces.get(amorce_id)
-            if amorce is None or amorce.auteur_contenu != "mistral" or amorce.appel_id is None:
-                continue
             try:
-                extraire_contenu(self.appel(amorce.appel_id).reponse_brute)
+                self.amorce_verifiee(amorce_id)
+            except ReponseTronquee as exc:
+                raise _Rejet("amorce_tronquee", f"amorce {amorce_id} : {exc}") from None
             except ProvenanceInvalide as exc:
-                raise _Rejet(
-                    "amorce_tronquee", f"amorce {amorce_id} (appel {amorce.appel_id}) : {exc}"
-                ) from None
+                raise _Rejet("amorce_invalide", str(exc)) from None
+        for appel_id in brut.appel_ids:
+            try:
+                ligne = self.appel_generation(appel_id)
+                if ligne.gabarit_id is None or ligne.version_gabarit is None:
+                    raise ProvenanceInvalide(f"appel {appel_id} : gabarit non journalisé")
+                extraire_message(ligne.reponse_brute)
+            except ReponseTronquee as exc:
+                raise _Rejet("reponse_tronquee", f"appel {appel_id} : {exc}") from None
+            except ProvenanceInvalide as exc:
+                raise _Rejet("appel_invalide", str(exc)) from None
 
     def textes_amorces(self, brut: SessionBrute) -> list[str]:
         """Textes des amorces du seed et des amorces dérivées de la session."""
@@ -523,7 +570,7 @@ def valider_session(
     controle: ControleurFidelite | None = None,
 ) -> None:
     """Valide une session ; lève `_Rejet` (motif de `MOTIFS_VALIDATION`) si elle est écartée."""
-    lecteur.controler_provenance_amorces(brut)
+    lecteur.controler_provenance(brut)
     outils: list[str] = []
     if brut.tache == "RD":
         outils = _rejouer(lecteur, brut, chemin_outils)
@@ -605,8 +652,8 @@ def lancer_validation(
     `journal` : journal Mistral ouvert en lecture (`lecteur="data"`). Lève, sans rien écrire,
     `ManifesteInvalide` (run absent, d'un autre type, en cours, sans `brut.jsonl`) ou
     `ProvenanceInvalide` (seed ou amorce dérivée illisible). Un appel ou une amorce introuvable
-    pendant la validation lève `ProvenanceInvalide` après création du run, clos en
-    `partiel-erreur`. `BudgetEpuise` pendant le contrôle de fidélité donne un run
+    pendant la validation rejette la session (`appel_invalide`, `amorce_invalide`).
+    `BudgetEpuise` pendant le contrôle de fidélité donne un run
     `partiel-budget` : les sessions non jugées sont absentes des deux fichiers et comptées
     dans `non_jugees`. Une erreur d'API donne `partiel-erreur`. Un run `generate` partiel
     rend le run `validate` partiel (`statut_herite`).

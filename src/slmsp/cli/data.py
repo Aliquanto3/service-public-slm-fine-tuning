@@ -314,8 +314,10 @@ def _fabrique_courriers_depuis(creer_generateur: Callable[[str], Any]) -> Fabriq
     """Fabrique des amorces CT : réponse déjà journalisée pour la session (reprise sans
     appel), sinon `Generateur(seed_run_id).generer("amorces-ct", [sujet])`. Renvoie le contenu
     du message `assistant`, objet JSON que `slmsp.data.seed` découpe et vérifie (chaîne vide si
-    la réponse n'a pas de texte : `seed` la compte en `schema_invalide` et poursuit)."""
-    from slmsp.mistral.generateur import message_assistant
+    la réponse n'a pas de texte : `seed` la compte en `schema_invalide` et poursuit). Une
+    réponse tronquée, même déjà journalisée, lève `ReponseTronquee` : `seed` la compte en
+    `tronques`."""
+    from slmsp.mistral.generateur import message_assistant, raison_de_fin
 
     def fabrique(seed_run_id: str, sujet_id: str, session_id: str) -> tuple[str, str]:
         generateur = creer_generateur(seed_run_id)
@@ -325,6 +327,8 @@ def _fabrique_courriers_depuis(creer_generateur: Callable[[str], Any]) -> Fabriq
         else:
             generation = generateur.generer(GABARIT_AMORCES_CT, [sujet_id], session_id, "CT")
             appel_id, brut = generation.appel_id, generation.reponse_brute
+        if raison_de_fin(brut) == "length":
+            raise ReponseTronquee(f"appel {appel_id} : réponse tronquée (length)")
         try:
             contenu = message_assistant(brut).get("content")
         except ProvenanceInvalide:
@@ -434,7 +438,8 @@ def _seed(args: argparse.Namespace) -> int:
     if bilan_ct["demandes"]:
         print(
             f"amorces CT : {bilan_ct['produits']} courrier(s) sur {bilan_ct['appels']} appel(s) "
-            f"(schéma invalide {bilan_ct['schema_invalide']}, doublons {bilan_ct['doublons']}, "
+            f"(schéma invalide {bilan_ct['schema_invalide']}, tronqués {bilan_ct['tronques']}, "
+            f"doublons {bilan_ct['doublons']}, "
             f"anti-fuite {bilan_ct['exclus']})"
         )
     print(f"run {resultat.run_id} ({resultat.statut}) : {resultat.dossier}")

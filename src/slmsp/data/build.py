@@ -46,7 +46,7 @@ from slmsp.core.artefacts import Run, lire, nouveau_run, ouvrir_run
 from slmsp.core.canonique import json_canonique, sha256_fichier, sha256_hex
 from slmsp.core.erreurs import ManifesteInvalide, ProvenanceInvalide, SlmspError
 from slmsp.core.messages import ConversationInvalide, valider_conversation
-from slmsp.core.schemas.amorce import Amorce, texte_mistral_conforme
+from slmsp.core.schemas.amorce import Amorce
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.entrainement import (
     TYPE_RUN_BUILD,
@@ -72,7 +72,7 @@ from slmsp.harness.prompts import EntreeInvalide, construire_messages
 from slmsp.harness.taches import TableTaches
 from slmsp.mcp.outils import charger_outils
 from slmsp.mistral.generateur import Generateur
-from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, LigneAppel
+from slmsp.mistral.journal import JournalMistral, LigneAppel
 
 __all__ = [
     "NOM_ECHANTILLON",
@@ -127,34 +127,15 @@ class ResultatBuild:
 
 
 def _appel(ctx: ContexteBuild, appel_id: str) -> LigneAppel:
-    """Ligne du journal d'un appel `generation`/`ok` (AC 2, verrou 4)."""
-    ligne = ctx.lecteur.appel(appel_id)
-    if ligne.usage != USAGE_GENERATION:
-        raise ProvenanceInvalide(
-            f"appel {appel_id} : usage {ligne.usage!r}, {USAGE_GENERATION!r} seul admis"
-        )
-    if ligne.statut != "ok":
-        raise ProvenanceInvalide(f"appel {appel_id} : statut {ligne.statut!r}, « ok » attendu")
-    return ligne
+    """Ligne du journal d'un appel `generation`/`ok` (AC 2, verrou 4), règle partagée avec
+    `validate`."""
+    return ctx.lecteur.appel_generation(appel_id)
 
 
 def _amorce(ctx: ContexteBuild, amorce_id: str) -> Amorce:
-    """Amorce du seed dont le texte est vérifié (SHA, ou réponse journalisée si Mistral)."""
-    amorce = ctx.lecteur.amorces.get(amorce_id)
-    if amorce is None:
-        raise ProvenanceInvalide(f"amorce {amorce_id} introuvable (seed ou dérivées)")
-    if sha256_hex(amorce.texte) != amorce.sha_texte:
-        raise ProvenanceInvalide(f"amorce {amorce_id} : sha_texte ne correspond pas au texte")
-    if amorce.auteur_contenu == "mistral":
-        assert amorce.appel_id is not None  # garanti par le schéma Amorce
-        ligne = _appel(ctx, amorce.appel_id)
-        if not texte_mistral_conforme(extraire_contenu(ligne.reponse_brute), amorce):
-            raise ProvenanceInvalide(
-                f"amorce {amorce_id} : texte différent de la réponse journalisée {amorce.appel_id}"
-            )
-    elif amorce.auteur_contenu not in ("public", "config"):
-        raise ProvenanceInvalide(f"amorce {amorce_id} : auteur_contenu {amorce.auteur_contenu!r}")
-    return amorce
+    """Amorce du seed dont le texte est vérifié (SHA, ou réponse journalisée si Mistral),
+    règle partagée avec `validate`."""
+    return ctx.lecteur.amorce_verifiee(amorce_id)
 
 
 def _cassettes(ctx: ContexteBuild, brut: SessionBrute) -> list[Cassette]:

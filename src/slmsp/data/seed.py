@@ -896,6 +896,7 @@ def _courriers(
         "appels": 0,
         "produits": 0,
         "schema_invalide": 0,
+        "tronques": 0,
         "doublons": 0,
         "exclus": 0,
         "exclusions": dict.fromkeys(MOTIFS_EXCLUSION, 0),
@@ -912,6 +913,10 @@ def _courriers(
             bilan["budget_epuise"] = True
             consigner("budget épuisé : amorces CT interrompues")
             break
+        except ReponseTronquee:
+            bilan["appels"] += 1
+            bilan["tronques"] += 1  # jamais d'amorce issue d'une réponse tronquée
+            continue
         bilan["appels"] += 1
         valeurs = _champs_courrier(contenu)
         if valeurs is None:

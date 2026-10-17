@@ -34,3 +34,13 @@ deferred:
 - Tests : seed (scénario `length` écarté), validate (amorce tronquée rejetée, amorce saine inchangée), fabrique CLI.
 - Les 74 sessions CR du filter 20261017-102523-filter-accf sont toutes concernées : validate, à relancer, les rejettera.
 - À confirmer par Anaël : relever `max_tokens` de `scenario-reunion` (budget), puis refaire seed, generate, validate.
+
+## Revue
+
+- medium | corrigé | Réponse de session tronquée non rejetée par validate alors que build la refuse : `controler_provenance` passe chaque appel de la session à `extraire_message`, motif `reponse_tronquee` (défense en profondeur : generate abandonne déjà ces sessions).
+- low | corrigé | Validate ne vérifiait ni `usage = generation`, ni `statut = ok`, ni SHA et texte des amorces : règles factorisées dans `LecteurGeneration.appel_generation` et `amorce_verifiee`, appelées par build (`_appel`, `_amorce`) et validate ; gabarit non journalisé contrôlé aussi.
+- low | corrigé | Amorce ou appel introuvable : session rejetée (`amorce_invalide`, `appel_invalide`) au lieu d'un run `partiel-erreur`.
+- low | corrigé | Libellé `amorce_tronquee` trop large : `ReponseTronquee` levée par `extraire_message` (comportement et `VERSION_EXTRACTEUR` inchangés) ; `amorce_tronquee` pour `length` seul, `amorce_invalide` pour le reste.
+- low | corrigé | Courrier CT tronqué compté `schema_invalide` (et un JSON complet tronqué aurait été admis) : la fabrique CT lève `ReponseTronquee`, journalisée ou non ; seed compte `courriers.tronques`.
+- low | écarté | Réutilisation de `reponse_journalisee` pour les scénarios : leur `session_id` contient le `run_id` du seed, donc aucune reprise possible sans changer l'identité des sessions ; gain nul, risque de reprendre une réponse tronquée.
+- Reste hors champ : les refus de build non liés à la provenance (entrée refusée par la Tâche, conversation invalide, licence) ne sont pas rejoués par validate.

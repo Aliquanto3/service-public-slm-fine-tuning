@@ -1223,3 +1223,21 @@ def test_scenario_tronque_ecarte_et_compte(monde: Monde) -> None:
     assert (scenarios["demandes"], scenarios["produits"], scenarios["tronques"]) == (2, 1, 1)
     produits = [a for a in monde.amorces(resultat.run_id) if a["emplacement"] == "scenario"]
     assert len(produits) == 1
+
+
+class FabriqueCTTronquee(FabriqueCT):
+    """Fabrique CT dont le premier appel renvoie une réponse tronquée (`length`)."""
+
+    def __call__(self, seed_run_id: str, sujet_id: str, session_id: str) -> tuple[str, str]:
+        if not self.appels:
+            self.appels.append((seed_run_id, sujet_id, session_id))
+            raise ReponseTronquee("appel factice : réponse tronquée (length)")
+        return super().__call__(seed_run_id, sujet_id, session_id)
+
+
+def test_courrier_tronque_ecarte_et_compte(monde: Monde) -> None:
+    resultat = executer_ct(monde, nb_courriers=2, fabrique_courriers=FabriqueCTTronquee())
+    assert resultat.statut == "complet"
+    comptes = monde.comptes(resultat.run_id)["courriers"]
+    assert (comptes["appels"], comptes["tronques"], comptes["schema_invalide"]) == (2, 1, 0)
+    assert comptes["produits"] == 1
