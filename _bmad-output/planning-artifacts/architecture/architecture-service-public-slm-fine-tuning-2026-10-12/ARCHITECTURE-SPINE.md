@@ -462,6 +462,8 @@ flowchart TB
   - **Flux.** Les évènements sont poussés à l'interface par `evaluate_js`.
   - **Stockage.** `slmsp.app.stockage` est le seul propriétaire de l'historique, des Retours, du réglage « Rester hors ligne » et de l'implémentation J4 de `JournalRequetes` (même schéma, 30 jours glissants). Il stocke tout en SQLite dans `%LOCALAPPDATA%\AssistantSP\`.
   - **Journal technique.** Il ne contient jamais le texte collé par l'Agent.
+  - **Racine de composition partagée (amendement du 2026-10-17, décision Q10 d'Anaël).** `assembler` vit dans `slmsp.harness.assemblage` (couche 3), partagé par la CLI et l'application ; `cli/_assemblage.py` n'en est qu'un ré-export. Cela déroge à la règle initiale, qui plaçait la racine de composition dans la CLI : `app` et `cli` sont de même couche et ne peuvent pas s'importer (AD-1).
+  - **Racines de lecture et d'écriture (amendement du 2026-10-17, story 12.1).** En mode installé, les ressources se lisent dans le dossier gelé (`racine_projet()`) et toute écriture (`runs/`, état, données) va sous `%LOCALAPPDATA%\AssistantSP\` (`racine_ecriture()`), jamais sous `_MEIPASS` ni dans le dossier d'installation.
 
 ### AD-24 — Entrées autorisées des pipelines de données et d'entraînement
 
