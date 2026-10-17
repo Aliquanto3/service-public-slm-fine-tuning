@@ -7,7 +7,7 @@ PC portable : 32 Go de RAM DDR4, GPU NVIDIA de 6 Go de VRAM.
 
 Tout vient de GitHub, sans copie de disque à disque :
 - le code et les runs : dépôt privé `Aliquanto3/service-public-slm-fine-tuning` ;
-- l'état machine : release privée `etat-2026-10-17`, environ 10 Mo. Elle contient les journaux Mistral et le registre des budgets, indispensables pour la provenance et les plafonds ;
+- l'état machine : release `etat-2026-10-17` du dépôt **privé** `Aliquanto3/slmsp-etat`, environ 12 Mo. Le dépôt du projet est public : l'état n'y est jamais joint. Elle contient les journaux Mistral et le registre des budgets, indispensables pour la provenance et les plafonds ;
 - modèles, llama.cpp, sources et index : retéléchargés ou reconstruits par `slmsp`, avec des SHA-256 épinglés.
 
 ## 1. Ce que fait Anaël (une fois)
@@ -72,3 +72,7 @@ Si `slmsp budget etat` montre un registre vide, la restauration a échoué : ne 
 ## Annexe : transfert par disque
 
 `outils/migration/exporter-etat.ps1` et `importer-etat.ps1` copient le même état, plus les modèles et l'index, par un disque externe : environ 25 Go avec `-AvecModeles`. C'est utile seulement si le réseau est lent.
+
+## Annexe : publier un nouvel état
+
+Sur le PC source, `outils/migration/publier-etat.ps1 [-Date AAAA-MM-JJ]` construit l'archive, refuse tout `.env` ou motif de clé, crée au besoin le dépôt privé `Aliquanto3/slmsp-etat` et publie la release `etat-<date>` sans la marquer « Latest ». Avec `-SansPublier`, il s'arrête après le SHA-256. Reporter ensuite le tag, le nom d'archive et le SHA-256 en valeurs par défaut de `restaurer-etat.ps1`.
