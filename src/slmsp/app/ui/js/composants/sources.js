@@ -5,6 +5,7 @@ import { confirmer, copierTexte, dateLisible } from "./copie.js";
 /** Origine libellée sans jargon (DESIGN.md). */
 export function libelleOrigine(source) {
   if (source.origine === "index") return "Documents installés";
+  if (source.origine === "verification") return "Vérifiée en ligne";
   try {
     const hote = new URL(source.url).hostname;
     if (hote === "data.gouv.fr" || hote.endsWith(".data.gouv.fr")) return "data.gouv";

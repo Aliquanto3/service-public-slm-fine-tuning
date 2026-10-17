@@ -107,7 +107,8 @@ VUES_REALISEES = {
     "resume",
     "courrier",
     "traduction",
-}  # stories 12.7 à 12.11, 13.1 à 13.4
+    "verification",
+}  # stories 12.7 à 12.11, 13.1 à 13.4, 13.6
 
 
 def test_modules_de_vue_declares_d_avance() -> None:

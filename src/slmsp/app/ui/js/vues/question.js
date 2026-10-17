@@ -22,5 +22,6 @@ export function monter(conteneur, pont, contexte) {
     intro: "Je réponds à partir des documents officiels et je cite mes sources.",
     exemples: EXEMPLES,
     juridique: true,
+    verification: true,
   });
 }

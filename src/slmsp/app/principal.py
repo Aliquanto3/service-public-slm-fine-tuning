@@ -34,6 +34,7 @@ from slmsp.app.stockage import JournalApplication, Stockage, dossier_donnees
 from slmsp.core.evenements import Erreur, vers_dict
 from slmsp.core.schemas.config_application import charger_config_application
 from slmsp.harness.assemblage import assembler
+from slmsp.harness.verification import Verificateur
 from slmsp.net.config import charger_liste_blanche
 
 LOGGER: Final = logging.getLogger("slmsp.app")
@@ -301,6 +302,28 @@ class Chrono:
         return self.pret_s
 
 
+def construire_verificateur(assemblage: Any) -> Verificateur | None:
+    """Vérificateur FR-12 (story 13.6), lié à la passerelle de l'assemblage.
+
+    Le Mode est celui de la passerelle : le hors ligne forcé prime, sans dérogation possible.
+    Le recoupement avec l'Index passe par `contient_url` ; sans Index, aucune source n'est
+    retenue (rien ne sort). Rend `None` si l'assemblage n'a ni passerelle ni LLM.
+    """
+    service = getattr(assemblage, "service", None)
+    passerelle = getattr(assemblage, "passerelle", None)
+    llm = getattr(service, "llm", None)
+    if passerelle is None or llm is None:
+        return None
+    index = getattr(getattr(service, "recherche", None), "vector_store", None)
+    contient = getattr(index, "contient_url", None)
+    return Verificateur(
+        passerelle,
+        llm,
+        dans_index=contient if callable(contient) else (lambda _url: False),
+        config=getattr(getattr(service, "config", None), "verification", None),
+    )
+
+
 class Demarrage:
     """Assemblage en fil de fond, puis `pret` quand l'assemblage ET la page sont prêts."""
 
@@ -359,6 +382,7 @@ class Demarrage:
                     self._fenetre,
                     stockage=self._stockage,
                     choisir_fichier=dialogue_enregistrer(self._fenetre),
+                    verificateur=construire_verificateur(assemblage),
                 )
                 self._differe.brancher(pont)
                 if self._page_prete():
@@ -565,4 +589,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     return lancer()
 
 
-__all__ = ["Demarrage", "InstanceUnique", "PontDiffere", "decider_navigation", "lancer", "main"]
+__all__ = [
+    "Demarrage",
+    "construire_verificateur",
+    "InstanceUnique",
+    "PontDiffere",
+    "decider_navigation",
+    "lancer",
+    "main",
+]
