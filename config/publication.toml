@@ -86,3 +86,14 @@ licences_compatibles = ["apache-2.0"]
 
 [modeles."gemma-4-e2b"]
 licences_compatibles = ["apache-2.0"]
+
+# Ajoutés le 2026-10-17 (candidats < 2B, spec-modeles-octobre-2026) : licences lues sur les
+# fiches Hugging Face.
+[modeles."eurollm-1.7b"]
+licences_compatibles = ["apache-2.0"]
+
+[modeles."croissantllm-chat"]
+licences_compatibles = ["mit"]
+
+[modeles."qwen3.5-0.8b"]
+licences_compatibles = ["apache-2.0"]

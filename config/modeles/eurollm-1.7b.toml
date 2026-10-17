@@ -1,0 +1,57 @@
+# EuroLLM 1.7B Instruct (UTTER, Apache 2.0, sans accès conditionnel) : candidat de moins de
+# 2B ajouté par décision d'Anaël du 2026-10-17 (spec-modeles-octobre-2026, « Candidats < 2B »).
+# Révisions, SHA-256 et tailles relevés le même jour via l'API Hugging Face. AD-6 : valeurs
+# communes à l'inférence et à l'entraînement.
+# Architecture `llama` dense, texte seul, 35 langues. Contexte natif de 4096 jetons
+# (max_position_embeddings) : contexte inférieur à 8192, voir la spec.
+# Pas de GGUF officiel : GGUF communautaire mradermacher (Q4_K_M et f16).
+# Pas de mode raisonnement.
+
+schema_version = 1
+depot_hf = "utter-project/EuroLLM-1.7B-Instruct"
+revision = "a25c7fa65fc2a644e6270b8940dbe295b51da681"
+fichiers = [
+    "config.json",
+    "generation_config.json",
+    "model.safetensors",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer.model",
+    "tokenizer_config.json",
+]
+contexte = 4096
+cache_kv = "f16"
+reasoning = "off"
+exclure_vision = false
+# Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
+protocole_outils = "natif"
+# Template GGUF différent de celui du tokenizer HF (contrôle chat_template, run
+# fetch/20261017-090825-modeles-8a15) : le template HF, exporté sous
+# models/<slug>/chat_template.jinja, est imposé à llama-server.
+chat_template_force = true
+
+[sha256_fichiers]
+"config.json" = "f0c12f25e72422f319f3d995b171b686adcc502811d6a4871851a0a410e7d325" # 712 octets
+"generation_config.json" = "92ea9a67baf2795260fd3ed41f2c477b879612656c1aa27178c31d1113b8e04f" # 132 octets
+"model.safetensors" = "853ac1edd51009c46ce28e457a389ef69206b27e3b9734a43ae0644e766553ac" # 3 313 726 248 octets
+"special_tokens_map.json" = "60f4998edef989ba22a5eba0838fdce563b44fd6c75a22fc27967720541ff6ad" # 443 octets
+"tokenizer.json" = "e5345150649e70dbfde004a0deec153c5175af35f86dabf75892e9c6a88dea9a" # 8 224 310 octets
+"tokenizer.model" = "42957aec88804838805b335da1bbcce9d116024a20c6c4b56757648b9e348254" # 2 408 875 octets
+"tokenizer_config.json" = "68c4fc703b0728dcc855a90ea389d62dc7e9eb8a3ccacbbb28a70fbf7ea41949" # 47 381 octets
+
+[gguf] # 1 045 157 088 octets
+depot = "mradermacher/EuroLLM-1.7B-Instruct-GGUF"
+revision = "2951f08f66429c934c8b01a94347161362430808"
+fichier = "EuroLLM-1.7B-Instruct.Q4_K_M.gguf"
+sha256 = "1cade17f491ea46a686dbee51fbd52442e0f001f102380c3b9d66b4a77f84093"
+source = "communautaire"
+
+# GGUF F16 de base pour la variante `avant` du banc (non téléchargé le 2026-10-17) :
+# `slmsp fetch modeles eurollm-1.7b --f16`.
+[gguf_f16] # 3 316 978 912 octets
+depot = "mradermacher/EuroLLM-1.7B-Instruct-GGUF"
+revision = "2951f08f66429c934c8b01a94347161362430808"
+fichier = "EuroLLM-1.7B-Instruct.f16.gguf"
+sha256 = "8d4535417ecf8da9d2f579d67545f73a4b06cc1e5f983661bf99f26071b93ac3"
+source = "communautaire"
+precision = "f16"

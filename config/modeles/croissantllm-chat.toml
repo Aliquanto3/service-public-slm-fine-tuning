@@ -1,0 +1,47 @@
+# CroissantLLMChat v0.1 (CroissantLLM, MIT, sans accès conditionnel) : candidat de moins de
+# 2B ajouté par décision d'Anaël du 2026-10-17 (spec-modeles-octobre-2026, « Candidats < 2B »).
+# Révisions, SHA-256 et tailles relevés le même jour via l'API Hugging Face. AD-6 : valeurs
+# communes à l'inférence et à l'entraînement.
+# Architecture `llama` dense (1,3 Md), bilingue fr-en, poids HF en float32. Contexte natif
+# de 2048 jetons (max_position_embeddings) : très inférieur à 8192, le prompt RAG de la
+# Tâche Q risque de ne pas tenir (point bloquant, voir la spec).
+# GGUF du dépôt officiel de l'éditeur (Q4_K_M seul : pas de F16).
+# Template ChatML dans tokenizer_config.json ; pas de mode raisonnement.
+
+schema_version = 1
+depot_hf = "croissantllm/CroissantLLMChat-v0.1"
+revision = "f05665c340c868ce48cebdf997cfafb7dbfef2b3"
+fichiers = [
+    "config.json",
+    "generation_config.json",
+    "model-00001-of-00002.safetensors",
+    "model-00002-of-00002.safetensors",
+    "model.safetensors.index.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+]
+contexte = 2048
+cache_kv = "f16"
+reasoning = "off"
+exclure_vision = false
+# Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
+protocole_outils = "natif"
+chat_template_force = false
+
+[sha256_fichiers]
+"config.json" = "a376a067f76553ab2e65440aaaa9d964bd512625c9c0094db0c2c1f8fb439c13" # 732 octets
+"generation_config.json" = "40e6ecbcedfc2b67b7fa8ba37216c9546c18c00242020b2b34f0b58c3558f680" # 116 octets
+"model-00001-of-00002.safetensors" = "455168e13188165abcc15179aa208f7049e8a3e715ab942a3187dfebdef4e549" # 4 984 299 296 octets
+"model-00002-of-00002.safetensors" = "41be48d007ef6c79c7e2f9908e34c29a7c9166efdb217717a54978415afb133c" # 397 452 040 octets
+"model.safetensors.index.json" = "a44ed34c6d1ab6bd3a5251ede4e453102579fc601ecbe176a40604f8a231ba0b" # 18 005 octets
+"special_tokens_map.json" = "5a1e50e0e488ce4306a390682135546eeb6a91039212d85520a4db3e650b5c4f" # 557 octets
+"tokenizer.json" = "522b8169e05ae2eb9c6d092e60ea937d2535d4052eff74d39f143539a04a0b41" # 1 352 489 octets
+"tokenizer_config.json" = "faba03ed3b785c54e30b2e015a6e43983d162fa7f7cc5c97556f2cb7a3df2148" # 19 221 octets
+
+[gguf] # 872 319 104 octets
+depot = "croissantllm/CroissantLLMChat-v0.1-GGUF"
+revision = "eb629e449909fe694e0699cad2a2f04578fddfaa"
+fichier = "croissantllmchat-v0.1.Q4_K_M.gguf"
+sha256 = "932a8d4007221249aec65400bb3df8555ea5e679acb27b5041d3b2c6687c0de5"
+source = "officielle"
