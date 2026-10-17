@@ -219,6 +219,8 @@ def test_micro_lot_bge_m3(slug: str) -> None:
 def test_parametres_invalides(vendor_factice) -> None:
     with pytest.raises(ValueError, match="slug ou gguf"):
         ServeurLlama(config_modele())
+    with pytest.raises(ValueError, match="usage d'embedding inconnu"):
+        ServeurLlama(config_modele(), gguf="m.gguf", usage="texte")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="chat_template_force"):
         ServeurLlama(config_modele(chat_template_force=True), gguf="m.gguf")
     with pytest.raises(ValueError, match="variante"):

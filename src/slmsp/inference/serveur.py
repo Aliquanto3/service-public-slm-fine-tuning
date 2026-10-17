@@ -380,6 +380,8 @@ class ServeurLlama:
             raise ConfigurationInvalide(
                 f"le modèle exige llama.cpp {config.llamacpp}, pas {config_llamacpp.tag}"
             )
+        if usage not in get_args(UsageEmbedding):
+            raise ValueError(f"usage d'embedding inconnu : {usage!r}")
         self.config = config
         self.usage: UsageEmbedding = usage
         self.variante: Variante = variante

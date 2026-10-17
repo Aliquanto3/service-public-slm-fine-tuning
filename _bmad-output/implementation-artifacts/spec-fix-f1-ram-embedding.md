@@ -52,8 +52,8 @@ Working set de `llama-server --embedding --pooling cls --parallel 1`, avec `-c =
 ## Réglages choisis
 
 `config/modeles/bge-m3.toml` et `bge-m3-f16.toml` : `micro_lot = { passage = 2048, texte_long = 8192 }`.
-- `passage` (défaut de `ServeurLlama`) sert à l'application, au Harnais, à l'évaluation, à la recherche de `data generate` et à H-EMB. Le plus long chunk fait 1 163 tokens, la marge est de 869 tokens, et le pire cas passe de 8,5 Go à 2,4 Go.
-- `texte_long` sert à `data filter` (`cli/data.py`) : 8192, c'est-à-dire la troncature antérieure, inchangée.
+- `passage` (défaut de `ServeurLlama`) sert à l'application, au Harnais, à l'évaluation, à la construction de l'Index (`index`) et à H-EMB. Le plus long chunk fait 1 163 tokens, la marge est de 869 tokens, et le pire cas passe de 8,5 Go à 2,4 Go. Une question de 2 033 à 8 176 tokens, acceptée entière auparavant, est désormais tronquée à 2 032 tokens (avertissement journalisé) : accepté pour l'application.
+- `texte_long` sert à `data filter` et à la recherche de `data generate` (`cli/data.py`) : 8192, c'est-à-dire la troncature antérieure, inchangée.
 - Génération : aucun changement. La mesure ne porte que sur l'embedding, aucun gain n'y est établi.
 
 ## Code Map
@@ -61,7 +61,7 @@ Working set de `llama-server --embedding --pooling cls --parallel 1`, avec `-c =
 - `src/slmsp/core/schemas/config_modele.py` : `UsageEmbedding`, `micro_lot`, `micro_lot_pour()` et validation.
 - `src/slmsp/inference/serveur.py` : `usage`, `micro_lot`, `contexte` (`-c`), arguments, `description()` (`usage`, `micro_lot`) et `embedder()`.
 - `src/slmsp/inference/embedding.py` : `contexte_max` obligatoire, supérieur à 16 ; `CONTEXTE_MAX` supprimé.
-- `src/slmsp/cli/data.py` : `data filter` passe en `usage="texte_long"`.
+- `src/slmsp/cli/data.py` : `data filter` et la recherche de `data generate` passent en `usage="texte_long"`.
 - `tests/inference/test_serveur.py` : arguments par usage, cohérence entre troncature et micro-lot, validation, configurations BGE-M3 réelles.
 
 ## Verification
@@ -77,3 +77,10 @@ Working set de `llama-server --embedding --pooling cls --parallel 1`, avec `-c =
 - 2048 plutôt que 1536 pour `passage` : la marge couvre une réindexation avec titre préfixé (H-EMB infirmée, réindexation à décider). L'écart de pic n'est que de 0,5 Go.
 
 </intent-contract>
+
+## Revue
+
+- **medium**, corrigé : la recherche de `data generate` (texte de groupe concaténé) passait en `passage` et aurait tronqué à 2 032 tokens au lieu de 8 176, changeant en silence les passages d'une campagne en cours. `_RechercheParesseuse` passe en `texte_long` (test `test_recherche_generate_en_texte_long`). Validate et build ne relancent ni recherche ni embedding : les passages sont lus dans les sessions.
+- **low**, corrigé : un `usage` inconnu retombait en silence sur `contexte`. `ServeurLlama.__init__` le refuse (`ValueError`), testé dans `test_parametres_invalides`. Les clés de `micro_lot` étaient déjà validées par le schéma.
+- **low**, rejeté : `description()` consigne déjà `usage` et `micro_lot` pour un serveur d'embedding (testé), la clé `contexte` reste présente ; aucun lecteur de `run.json` ne compare `contexte` d'embedding entre runs.
+- **low**, documenté : troncature des requêtes de 2 033 à 8 176 tokens en usage `passage`, consignée dans « Réglages choisis ».
