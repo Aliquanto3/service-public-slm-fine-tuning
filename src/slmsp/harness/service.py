@@ -21,9 +21,12 @@ toute autre exception donne `Erreur(erreur-interne)`.
 
 Longueur de sortie (correctif F2) : sans `max_tokens` dans les options, le service le fixe à
 `config.compte_rendu.reserve_sortie_tokens` pour le compte rendu, à
-`config.generation.max_tokens` pour toute autre Tâche. Le flux se termine
+`config.generation.par_tache[code]` s'il existe, à un plafond proportionnel au prompt pour
+les Tâches de réécriture (`generation.reecriture`, calculé par `redaction`), à
+`config.generation.max_tokens` sinon (`max_tokens_par_defaut`). Le flux se termine
 toujours par un `Fin` ou un `Erreur`. Le délai au premier token (`delai_premier_token_ms`
-de `Fin.usage`) est mesuré depuis le début de l'itération : il compte la recherche.
+de `Fin.usage`) est mesuré depuis le début de l'itération : il compte la recherche et les
+mesures du budget de prompt (`harness.budget`).
 """
 
 from __future__ import annotations
@@ -245,7 +248,9 @@ class AssistantService:
         saisis = [m["content"] for m in conversation if m["role"] == "user"]
         saisis.extend(chaines(entree, cles=False))
         brutes.pop(CLE_ENTREE, None)
-        brutes.setdefault(CLE_MAX_TOKENS, self._max_tokens(fiche))
+        defaut = self.max_tokens_par_defaut(fiche)
+        if defaut is not None:
+            brutes.setdefault(CLE_MAX_TOKENS, defaut)
         ctx = ContexteTache(
             tache=fiche,
             entree=entree,
@@ -260,11 +265,21 @@ class AssistantService:
         )
         return self._flux(traiter, ctx)
 
-    def _max_tokens(self, fiche: Tache) -> int:
-        """`max_tokens` par défaut de la Tâche : réserve du compte rendu, sinon génération."""
+    def max_tokens_par_defaut(self, fiche: Tache) -> int | None:
+        """`max_tokens` posé quand l'appelant n'en fixe pas.
+
+        Réserve du compte rendu pour CR ; `generation.par_tache[code]` s'il existe ; `None`
+        pour une Tâche de `generation.reecriture` (plafond proportionnel au prompt, calculé
+        par le traitement) ; sinon `generation.max_tokens`.
+        """
+        generation = self.config.generation
         if MODULES_TRAITEMENT.get(fiche.code) == MODULE_COMPTE_RENDU:
             return self.config.compte_rendu.reserve_sortie_tokens
-        return self.config.generation.max_tokens
+        if fiche.code in generation.par_tache:
+            return generation.par_tache[fiche.code]
+        if fiche.code in generation.reecriture:
+            return None
+        return generation.max_tokens
 
     # --- Flux -----------------------------------------------------------------------------
 

@@ -581,7 +581,27 @@ def test_erreur_en_flux_de_contexte(client: ClientLlama, serveur_factice: Any, f
         ('{"type":"exceed_context_size_error"}', True),
         ("HTTP 400 : requête refusée", False),
         ("HTTP 500 : contexte", False),
+        # Revue F2 : seul le type structuré ou le message précis comptent.
+        ("context size", False),
+        ("prompt tokens exceed context size", False),
+        (CORPS_CONTEXTE, True),
+        ({"type": "exceed_context_size_error", "message": "x"}, True),
+        ({"type": "invalid_request_error", "message": "context size"}, False),
+        ({"message": "the request exceeds the available context size"}, True),
+        (None, False),
     ],
 )
-def test_est_depassement_contexte(texte: str, attendu: bool) -> None:
+def test_est_depassement_contexte(texte: Any, attendu: bool) -> None:
     assert est_depassement_contexte(texte) is attendu
+
+
+def test_http_400_sans_type_de_contexte_reste_erreur_inference(
+    client: ClientLlama, serveur_factice: Any
+) -> None:
+    serveur_factice.scenario.statut_chat = 400
+    serveur_factice.scenario.corps_erreur = (
+        '{"error":{"code":400,"message":"context size","type":"invalid_request_error"}}'
+    )
+    with pytest.raises(ErreurInference) as info:
+        list(client.generer(MESSAGES))
+    assert not isinstance(info.value, ContexteServeurDepasse)

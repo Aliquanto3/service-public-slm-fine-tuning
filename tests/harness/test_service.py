@@ -358,7 +358,8 @@ def test_contexte_redaction_sans_port_externe(table, config_harnais, monkeypatch
     redaction, question = contextes
     assert redaction.recherche is None and redaction.outils is None and redaction.mode is None
     assert redaction.entree == {"texte": texte}
-    assert dict(redaction.options_llm) == {"seed": 1, "max_tokens": MAX_TOKENS}
+    # TR (réécriture) : plafond proportionnel posé par `redaction`, pas par le service.
+    assert dict(redaction.options_llm) == {"seed": 1}
     assert texte in redaction.textes_saisis
     assert question.recherche is instance.recherche
     assert question.outils is None and question.mode is None

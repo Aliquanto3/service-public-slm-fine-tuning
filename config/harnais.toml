@@ -24,6 +24,14 @@ delai_sonde_s = 3.0
 # environ 700 mots, plusieurs paragraphes. Le compte rendu garde son plafond
 # (`compte_rendu.reserve_sortie_tokens`). Le budget de prompt réserve cette sortie.
 max_tokens = 1024
+# Tâches qui réécrivent un texte d'entrée : plafond proportionnel au prompt mesuré,
+# max(max_tokens, facteur × prompt + marge), borné par le contexte restant. Une traduction
+# ou une correction rend à peu près la longueur de l'entrée ; 1,5 couvre le foisonnement.
+reecriture = ["CO", "TR"]
+facteur_reecriture = 1.5
+marge_reecriture = 256
+# Plafond fixe par Tâche (code), prioritaire sur les deux règles ci-dessus ; vide par défaut.
+par_tache = {}
 
 # Découpage des comptes rendus longs (story 4.4).
 [compte_rendu]

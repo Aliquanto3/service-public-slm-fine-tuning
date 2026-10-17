@@ -116,13 +116,18 @@ def mesurer(
     index_version: str | None = None,
     contexte: int | None = None,
     verifier_contexte: bool = False,
+    max_tokens: int | None = None,
     echantillonneur: Callable[..., EchantillonneurRam] = EchantillonneurRam,
     horloge: Callable[[], float] = time.perf_counter,
 ) -> ResultatMesure:
     """Mesure l'Assistant servi par `repondre(question)` et écrit le run `h-ram`.
 
-    `contexte` est le contexte effectif (consigné). `verifier_contexte` (contexte imposé par
-    l'appelant) refuse un prompt qui ne tient pas ; sinon aucune vérification n'est ajoutée.
+    `contexte` est le contexte effectif (consigné). `max_tokens` est le plafond de sortie
+    effectif des Questions (consigné) : depuis le correctif F2 (`generation.max_tokens`), les
+    réponses sont plafonnées, ce qui rend débit et tokens non comparables aux runs antérieurs
+    sans plafond. Le délai au premier token compte aussi les mesures du budget de prompt.
+    `verifier_contexte` (contexte imposé par l'appelant) refuse un prompt qui ne tient pas ;
+    sinon aucune vérification n'est ajoutée.
     En cas d'erreur, le run est terminé `partiel-erreur` et l'erreur relancée.
     """
     racine = (Path(racine) if racine is not None else racine_ecriture()).resolve()
@@ -138,6 +143,8 @@ def mesurer(
     }
     if contexte is not None:
         parametres["contexte"] = contexte
+    if max_tokens is not None:
+        parametres["max_tokens"] = max_tokens
     seuils = config.seuils.model_dump()
     run = nouveau_run(
         "measure",

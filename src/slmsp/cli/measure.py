@@ -74,6 +74,12 @@ def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[
     return composants
 
 
+def _plafond_sortie(service: Any, fiche: Any) -> int | None:
+    """`max_tokens` effectif des Questions mesurées (consigné), `None` si inconnu."""
+    plafond = getattr(service, "max_tokens_par_defaut", None)
+    return plafond(fiche) if callable(plafond) else None
+
+
 def _run(args: argparse.Namespace) -> int:
     from slmsp.cli._assemblage import ModeleInvalide, assembler, slug_modele
     from slmsp.core.erreurs import ConfigurationInvalide
@@ -144,6 +150,7 @@ def _run(args: argparse.Namespace) -> int:
                 index_version=version,
                 contexte=contexte,
                 verifier_contexte=args.contexte is not None,
+                max_tokens=_plafond_sortie(assemblage.service, fiche),
             )
         except ContexteInsuffisant as exc:
             print(f"slmsp : {exc}", file=sys.stderr)

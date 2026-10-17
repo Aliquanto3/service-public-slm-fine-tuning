@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final, Literal
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, PositiveInt
 
 from slmsp.core.config import ModeleConfig, charger_toml, racine_projet
 from slmsp.index.config import ConfigIndex, charger_config_index
@@ -40,11 +40,18 @@ class ConfigModes(_Fige):
 class ConfigGeneration(_Fige):
     """Longueur de sortie par défaut des Tâches (correctif F2).
 
-    Section facultative de `config/harnais.toml` : sa valeur par défaut s'applique si elle
-    est absente.
+    Section facultative de `config/harnais.toml` : ses valeurs par défaut s'appliquent si
+    elle est absente. `par_tache` fixe le plafond d'une Tâche (code) ; les Tâches de
+    `reecriture` (CO, TR), qui réécrivent un texte d'entrée, reçoivent un plafond
+    proportionnel au prompt mesuré (`harness.budget.plafond_reecriture`) : au moins
+    `max_tokens`, `facteur_reecriture × prompt + marge_reecriture`, borné par le contexte.
     """
 
     max_tokens: int = Field(default=1024, gt=0)
+    par_tache: dict[str, PositiveInt] = Field(default_factory=dict)
+    reecriture: tuple[str, ...] = ("CO", "TR")
+    facteur_reecriture: float = Field(default=1.5, gt=0)
+    marge_reecriture: int = Field(default=256, ge=0)
 
 
 class ConfigCompteRendu(_Fige):

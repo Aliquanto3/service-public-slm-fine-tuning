@@ -70,7 +70,7 @@ from slmsp.core.evenements import (
 )
 from slmsp.core.messages import valider_conversation
 from slmsp.core.ports import Passage, ToolPort
-from slmsp.harness.budget import borner_passages
+from slmsp.harness.budget import borner_passages, borner_resultats
 from slmsp.harness.citations import (
     extraire_urls,
     normaliser_url,
@@ -483,18 +483,29 @@ def traiter(ctx: ContexteTache) -> Iterator[Evenement]:
             passages, messages = _messages_index(ctx, demande)
             tools = None
             continue
-        messages = [
-            *messages,
-            {
-                "role": "assistant",
-                "content": texte or None,
-                "tool_calls": [appel_canonique(appel) for appel in valides],
-            },
-            *(
-                {"role": "tool", "tool_call_id": appel.id, "content": contenu}
-                for appel, contenu in zip(valides, contenus, strict=True)
-            ),
-        ]
+        assistant = {
+            "role": "assistant",
+            "content": texte or None,
+            "tool_calls": [appel_canonique(appel) for appel in valides],
+        }
+
+        def suite(
+            liste: Sequence[str],
+            avant: list[dict[str, Any]] = messages,
+            assistant: dict[str, Any] = assistant,
+            valides: list[AppelOutil] = valides,
+        ) -> list[dict[str, Any]]:
+            return [
+                *avant,
+                assistant,
+                *(
+                    {"role": "tool", "tool_call_id": appel.id, "content": contenu}
+                    for appel, contenu in zip(valides, liste, strict=True)
+                ),
+            ]
+
+        # Résultats bornés au contexte avant le tour suivant (correctif F2, `harness.budget`).
+        messages = suite(borner_resultats(ctx, contenus, suite, tools))
         valider_conversation(messages)
 
     texte_total = "\n".join(textes)

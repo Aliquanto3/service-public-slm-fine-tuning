@@ -86,3 +86,34 @@ deferred:
 - `_verifier_contexte` est inchangée. Le budget garantit `prompt + réponse ≤ contexte`, et le cas d'égalité, ambigu, reste refusé, ce qui est prudent.
 - `est_erreur_de_contexte` garde son repli sur la sous-chaîne `context`, pour les textes bruts du serveur.
 - Le budget ajoute une mesure, soit deux requêtes locales `/apply-template` et `/tokenize`, avant chaque Q et chaque RD sur l'Index quand le contexte est connu. Le surcoût est de quelques millisecondes, et il entre dans le délai au premier token mesuré.
+
+## Revue
+
+Revue du commit 6ff7c4e (Opus, avec la liste du second avis Haiku). La spec n'avait pas changé sur disque depuis le commit (arbre propre, même horodatage) : rien à intégrer.
+
+- **medium, corrigé (1).** Les résultats d'outils MCP n'étaient pas bornés. `budget.borner_resultats` les mesure maintenant avec le schéma `tools`, avant le tour suivant de la RD. Chaque résultat est tronqué en proportion, puis remplacé par « […] » si cela ne suffit pas. `ContexteDepasse` est levée si même alors le prompt dépasse. Le comptage des `tools` dans `_messages_index` est sans objet : ces messages partent toujours sans `tools`. Le premier tour connecté n'est pas mesuré, et un dépassement y est rendu par le refus du serveur (`ContexteServeurDepasse`).
+- **medium, corrigé (2).** `mesurer(max_tokens=…)` consigne `parametres.max_tokens`, et la CLI passe `service.max_tokens_par_defaut(fiche)`. Les runs `h-ram` d'après F2 sont plafonnés à 1024 tokens de sortie. Leur débit et leurs tokens ne se comparent pas aux runs antérieurs, qui n'avaient pas de plafond. **Décision d'Anaël attendue** : soit on accepte la rupture et on remesure les modèles retenus, soit la mesure passe un `max_tokens` explicite.
+- **medium, corrigé (3).** Ajouts à `[generation]` :
+  - `par_tache`, un plafond fixe par code, prioritaire ;
+  - `reecriture = ["CO", "TR"]`, avec `facteur_reecriture = 1.5` et `marge_reecriture = 256`.
+  
+  Pour CO et TR, `redaction` pose `max(max_tokens, ceil(1,5 × prompt mesuré) + 256)`, borné par `contexte − prompt`. On lève `ContexteDepasse` si le prompt remplit déjà le contexte. Le prompt mesuré majore l'entrée. Si la mesure échoue, la valeur retombe sur 1024. Les autres Tâches (Q, RD, RE, CT, NR, LC) gardent 1024, et CR garde sa réserve.
+- **low, corrigé (4).** Le dépassement de contexte n'est plus reconnu que par `error.type == "exceed_context_size_error"`. Quand l'erreur n'a pas de `type`, le message précis « exceeds the available context size » est aussi reconnu. L'objet `error` est lu dans le corps HTTP (JSON) et dans le flux. La sous-chaîne « context size » ne suffit plus, et un autre `type` n'est jamais reconnu. La docstring de `TAILLE_EXTRAIT`, mal placée, est corrigée.
+- **low, corrigé (5).** `budget_prompt` lève `ContexteDepasse` avec un message explicite (« max_tokens N laisse B tokens au prompt… ») quand la sortie réservée laisse moins de `BUDGET_MIN = 64` tokens au prompt. Aucune mesure n'est alors faite.
+- **low, rejeté pour l'algorithme, documenté (6).** Le retrait linéaire est conservé. Pour 5 passages dont 1 ou 2 à retirer, il fait 2 ou 3 mesures, contre 3 ou 4 pour une dichotomie. Une estimation suivie d'une vérification coûterait 3 mesures. Chaque mesure est locale et prend quelques ms. La docstring de `budget` et celle de `mesurer` indiquent que le délai au premier token inclut ces mesures.
+- **low, corrigé (7).** Si `compter_tokens` échoue, on revient au comportement d'avant F2 : passages ou résultats envoyés sans budget. Un avertissement est journalisé avec la classe de l'exception, sans son message, qui pourrait citer le prompt.
+- **low, documenté (8).** Modèles à raisonnement : le raisonnement consomme le même `max_tokens`. Le point est déjà consigné dans `deferred`, et rien n'est changé.
+- **Tests ajoutés.** Dans `tests/harness/test_budget.py` (9) :
+  - repli de la mesure ;
+  - `max_tokens` trop grand ;
+  - nombre de mesures ;
+  - réécriture proportionnelle, puis courte, puis bornée par le contexte ;
+  - `par_tache` ;
+  - `borner_resultats` ;
+  - boucle RD avec troncature du résultat.
+
+  Ailleurs : `tests/inference/test_client.py` (cas stricts et HTTP 400 d'un autre type) et `tests/measure/test_contexte.py` (consignation de `max_tokens` par l'API et par la CLI).
+- **Vérification de bout en bout (9).** llama-server CPU, granite-4.0-1b q4_k_m, `--contexte 2048`, run `20261017-122434-h-ram-abe4` sous la racine principale. Les répétitions sont réduites à 3 dans un `config/mesures.toml` temporaire, non commité, car l'option n'est pas exposée et l'outil limite une commande à 10 min ; l'échauffement est resté à 1.
+  - Résultat : aucun plantage, verdict `confirmee`, `verification_contexte = verifie`.
+  - Valeurs : RAM max 2,94 Go, débit médian 33,3 tok/s (minimum 31,1), premier token médian 2,89 s (p95 3,20 s), tokens par répétition [311, 37, 172].
+  - **Éviction : 1 passage sur 5** à chaque Question (budget 1024). C'est moins que les 3 passages estimés plus haut. À 2048, réserver 1024 tokens à la sortie laisse un seul passage. Si Anaël veut mesurer avec plus de passages, il faudra un `max_tokens` plus bas à contexte 2048.
