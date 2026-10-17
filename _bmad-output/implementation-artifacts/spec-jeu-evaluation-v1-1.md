@@ -70,6 +70,12 @@ context:
 - `src/slmsp/judge/cache.py:119` -- clé = SHA du `model_dump(mode="json")` de l'item : `version_item: 2` rejuge seulement les items modifiés.
 - `tests/evaluation/test_gel.py` (l. 560-594 schéma, 711-757 CLI) ; `tests/eval_outils/test_jeu_v1.py` (`VERSION="v1.0"` l. 22, à paramétrer sur `v1.0` et `v1.1`) ; `test_items_co_re_ct.py` (sélection des CO réels : par `provenance`, plus par `fictif`) ; `test_items_rd.py`, `test_items_cr_lc.py`.
 - Sources figées : `data/raw/eval-sources/` (parquet `hf/AgentPublic/service-public/latest/train/0000.parquet`, colonnes `doc_id`, `chunk_index`, `title`, `url`, `chunk_text`) ; candidats marchés publics : F23371 (seuils de publicité), F32049 (procédures), F23386 (paiement), F32106 (remise des offres), F23387. Index local : `index/20260926/chunks.sqlite`.
+- **Révisions non épinglées par `construire_jeu.py sources`** (constat du 2026-10-17). La commande résout `main` ou `refs/convert/parquet` au moment où on la lance. Un nouveau téléchargement change donc les instantanés, et 120 tests `tests/eval_outils` échouent (ex. segment de Q-026#2 introuvable). Seule copie de référence : `data/raw/eval-sources/` de la tour, publiée dans la release `etat-2026-10-17b` du dépôt privé `Aliquanto3/slmsp-etat` (restauration : `outils/migration/restaurer-etat.ps1`). L'outil n'est pas modifié. Révisions réellement utilisées (`INDEX.json`, consultées le 2026-10-12) :
+  - `AgentPublic/service-public` : `29f236f8a534bb599cd82b4f9731307bf5c0dbb1` (1 fichier) ;
+  - `AgentPublic/legi` : `68b01fbbe0cdaf5fe7b8a6befe4b8acab41530f8` (5 fichiers) ;
+  - `AgentPublic/data-gouv-datasets-catalog` : `11f3d3c9481ad478dbcff52e85d73b7fd10533ce` (3 fichiers) ;
+  - `AgentPublic/sp_questions_corpus` : `495a22cf7b572621a85d2f3e97783b2f4189c47e` (1 fichier) ;
+  - `AgentPublic/assistant_ia_questions_corpus` : `62cef57af7cc5fe54862a8118c221246771ad9ea` (1 fichier).
 
 ## Tasks & Acceptance
 

@@ -8,6 +8,7 @@ PC portable : 32 Go de RAM DDR4, GPU NVIDIA de 6 Go de VRAM.
 Tout vient de GitHub, sans copie de disque à disque :
 - le code et les runs : dépôt privé `Aliquanto3/service-public-slm-fine-tuning` ;
 - l'état machine : release `etat-2026-10-17` du dépôt **privé** `Aliquanto3/slmsp-etat`, environ 12 Mo. Le dépôt du projet est public : l'état n'y est jamais joint. Elle contient les journaux Mistral et le registre des budgets, indispensables pour la provenance et les plafonds ;
+- les sources figées du Jeu d'évaluation `data/raw/eval-sources` (avec `INDEX.json`) : release `etat-2026-10-17b` du même dépôt, environ 900 Mo. Elles ne se reconstruisent pas : `construire_jeu.py sources` n'épingle pas les révisions et un nouveau téléchargement fait échouer 120 tests `tests/eval_outils` ;
 - modèles, llama.cpp, sources et index : retéléchargés ou reconstruits par `slmsp`, avec des SHA-256 épinglés.
 
 ## 1. Ce que fait Anaël (une fois)
@@ -49,6 +50,15 @@ uv sync --extra data --extra judge --extra bench --extra train --extra app
 
 Pour télécharger un modèle plus tard, repasser par la phase 1, puis revenir à la phase 2.
 
+`restaurer-etat.ps1` restaure aussi `data/raw/eval-sources`. Sur un PC déjà restauré avec l'ancien script (le portable), ajouter seulement les sources, sans toucher au reste ni écraser un fichier existant :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File outils/migration/restaurer-etat.ps1 -SeulementEvalSources
+$env:SLMSP_EVAL_SOURCES = "$PWD\data\raw\eval-sources"   # sinon 244 tests sont ignorés
+```
+
+Ne pas lancer `construire_jeu.py sources` pour reconstruire ce dossier.
+
 Points de vigilance :
 - **Vecteurs de l'Index.** `index build` reconstruit l'Index depuis les parquet MediaTech, avec des vecteurs fournis par MediaTech et non recalculés. Vérifier avec `slmsp index info` que la version est `20260926`, comme sur la tour.
 - **Candidats EuroLLM-1.7B, CroissantLLM et Qwen3.5-0.8B.** Leurs fiches ne sont que sur la branche `feat/modeles-moins-2b` (travail interrompu, non relu). Les télécharger depuis cette branche, au moment de les traiter.
@@ -61,6 +71,7 @@ uv run --no-sync python outils/controle_rapide.py
 uv run --no-sync slmsp budget etat     # campagne baseline-2026-10-17, génération Mistral 10,64 € dépensés
 uv run --no-sync slmsp index info
 nvidia-smi
+$env:SLMSP_EVAL_SOURCES = "$PWD\data\raw\eval-sources"
 uv run --no-sync pytest -q --tb=line -p no:warnings   # suite complète, une fois (4 992 passés sur la tour)
 ```
 
