@@ -3,10 +3,11 @@
 # Le jeu est figé par ce cache ; les révisions (SHA de commit) qu'il contient sont consignées dans
 # [options.jeux_hf] (pas de [[jeux]] : `slmsp fetch` ne télécharge pas ces jeux).
 nom = "french_bench_mc"
-description = "Français général, QCM French Bench (3-shot)"
+description = "Français général, QCM French Bench (3-shot), 500 questions par sous-tâche"
 moteur = "lm_eval"
 tache = "french_bench_mc_agrege"
 fewshot = 3
+limite = 500  # par sous-tâche (`--limit` de lm-eval) ; sans limite, ≈ 43 000 requêtes saturaient la RAM (17/10, garde mémoire) ; précision appariée suffisante pour SM-1
 cible = "hf"
 quantification = "avant"
 socle = true
