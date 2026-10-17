@@ -116,6 +116,8 @@ def lire_release(telechargeur: Telechargeur, config: ConfigLlamacpp) -> list[Arc
 
 def archive_sources(config: ConfigLlamacpp) -> ArchivePrevue:
     """Archive des sources du tag (taille inconnue : générée à la demande par GitHub)."""
+    if config.sources is None:
+        raise ValueError(f"aucune archive des sources déclarée pour {config.tag}")
     url = URL_SOURCES.format(depot=config.depot, tag=config.tag)
     return ArchivePrevue("sources", config.sources.nom, url, config.sources.sha256, None)
 
@@ -297,7 +299,8 @@ def executer(
         ]
     else:
         prevues = lire_release(telechargeur, config)
-    prevues.append(archive_sources(config))
+    if config.sources is not None:  # facultatives pour une version réservée à un modèle
+        prevues.append(archive_sources(config))
 
     # Archives, plus l'estimation de leur extraction (taille × facteur) rattachée au dossier
     # cible : le contrôle avant téléchargement couvre toute l'écriture de la commande.
@@ -332,6 +335,8 @@ def executer(
         )
 
     for cle, dossier, retirer_racine in EXTRACTIONS:
+        if cle not in resultats:
+            continue
         resultat = resultats[cle]
         resume = extraire(
             resultat.destination,

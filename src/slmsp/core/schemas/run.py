@@ -11,6 +11,7 @@ from typing import Annotated, Any, Final, Literal
 from pydantic import AwareDatetime, Field, StringConstraints
 
 from slmsp.core.schemas import SchemaBase, Sha256, SousSchema
+from slmsp.core.schemas.config_llamacpp import TagLlamacpp
 
 Statut = Literal["en_cours", "complet", "partiel-budget", "partiel-erreur", "interrompu", "degrade"]
 """Statuts d'un run (AD-25) ; `degrade` marque un résultat obtenu avec une doublure (D5)."""
@@ -69,7 +70,7 @@ class RunManifest(SchemaBase):
     modele_ref: ModeleRef | None = None
     quantification: Literal["f16", "q4_k_m"] | None = None
     variante_llamacpp: Literal["cpu", "cuda"] | None = None
-    llamacpp_tag: Annotated[str, StringConstraints(pattern=r"^b\d+$")] | None = None
+    llamacpp_tag: TagLlamacpp | None = None
     chat_template_sha256: Sha256 | None = None
     jeu_version: str | None = None
     index_version: str | None = None

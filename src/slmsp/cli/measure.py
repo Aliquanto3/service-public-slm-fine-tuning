@@ -53,8 +53,10 @@ def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[
     composants: dict[str, Path] = {s.role: s.gguf for s in serveurs}
     if version is not None:
         composants["index"] = dossier_index(racine) / version
-    # NFR-6 : tous les binaires installés (bin-cpu et bin-cuda si présent), sans sous-estimer.
-    base = dossier_llamacpp()
+    # NFR-6 : tous les binaires installés (bin-cpu et bin-cuda si présent), sans sous-estimer ;
+    # ceux de la version du modèle de génération (version réservée éventuelle, ex. Bonsai).
+    generation = next((s for s in serveurs if s.role != "embedding"), None)
+    base = dossier_llamacpp(None if generation is None else generation.config_llamacpp)
     for dossier in sorted(base.glob("bin-*")):
         composants[f"binaires-{dossier.name.removeprefix('bin-')}"] = dossier
     if not any(nom.startswith("binaires-") for nom in composants):

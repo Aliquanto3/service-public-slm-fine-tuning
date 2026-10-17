@@ -21,7 +21,7 @@ from slmsp.benchmarks.config import BenchmarkConfig, Cible, Quantification
 from slmsp.benchmarks.moteurs import ContexteBench, SortieMoteur, charger_moteur, moteur_connu
 from slmsp.core.artefacts import Run, nouveau_run
 from slmsp.core.canonique import json_canonique
-from slmsp.core.erreurs import ConfigurationInvalide
+from slmsp.core.erreurs import ConfigurationInvalide, SlmspError
 from slmsp.core.schemas.bench import ConfigurationExecution, ResultatBench, Variante
 from slmsp.core.schemas.run import ModeleRef
 from slmsp.core.var import verrou_gpu
@@ -173,6 +173,25 @@ def _executer_un(
     )
 
 
+def _tag_llamacpp(modele_ref: str, racine: Path, selection: Sequence[Selection]) -> str | None:
+    """Tag llama.cpp des cibles GGUF (version réservée du modèle, sinon commune), pour
+    `run.json` ; `None` sans cible GGUF ou si la configuration du modèle est introuvable (le
+    moteur le signale alors)."""
+    if not any(s.config.cible == "gguf" for s in selection):
+        return None
+    from slmsp.core.artefacts import ouvrir_run
+    from slmsp.inference.serveur import charger_config_modele, config_llamacpp_modele
+
+    genre, valeur = modele_ref.split(":", 1)
+    try:
+        if genre == "ft":
+            base = ouvrir_run(valeur, racine=racine).manifeste.modele_ref or ""
+            valeur = base.removeprefix("base:")
+        return config_llamacpp_modele(charger_config_modele(valeur)).tag
+    except (SlmspError, OSError, ValueError):
+        return None
+
+
 def lancer(
     modele_ref: str,
     selection: Sequence[Selection],
@@ -209,6 +228,7 @@ def lancer(
             },
             racine=racine,
             modele_ref=modele_ref,
+            llamacpp_tag=_tag_llamacpp(modele_ref, racine, selection),
         )
         rapport = RapportBench(run, "en_cours")
         contexte_base = {

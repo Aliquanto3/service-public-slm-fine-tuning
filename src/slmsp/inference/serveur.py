@@ -30,7 +30,7 @@ from slmsp.core.artefacts import ArtefactExistant
 from slmsp.core.canonique import sha256_fichier
 from slmsp.core.config import charger_toml, dossier_modeles, env_sous_processus, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
-from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp
+from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp, fichier_config
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.var import dossier_var, verrou_gpu
 from slmsp.inference import processus
@@ -77,9 +77,22 @@ def dossier_vendor() -> Path:
     return dossier.resolve()
 
 
-def charger_config_llamacpp() -> ConfigLlamacpp:
-    """`config/llamacpp.toml` (lève `ConfigurationInvalide`)."""
-    return charger_toml(racine_projet() / "config" / "llamacpp.toml", ConfigLlamacpp)
+def charger_config_llamacpp(version: str | None = None) -> ConfigLlamacpp:
+    """`config/llamacpp.toml`, ou la version réservée `config/llamacpp/<version>.toml`.
+
+    Lève `ConfigurationInvalide` (fichier absent ou invalide, `tag` différent de `version`).
+    """
+    config = charger_toml(fichier_config(racine_projet() / "config", version), ConfigLlamacpp)
+    if version is not None and config.tag != version:
+        raise ConfigurationInvalide(
+            f"config/llamacpp/{version}.toml : tag {config.tag!r} différent du nom du fichier"
+        )
+    return config
+
+
+def config_llamacpp_modele(config: ConfigModele) -> ConfigLlamacpp:
+    """Version de llama.cpp du modèle : `config.llamacpp` s'il est défini, sinon la commune."""
+    return charger_config_llamacpp(config.llamacpp)
 
 
 def charger_config_modele(slug: str) -> ConfigModele:
@@ -359,6 +372,14 @@ class ServeurLlama:
             _verifier_slug(slug)
         if config.chat_template_force and slug is None:
             raise ValueError("chat_template_force exige le slug du modèle")
+        if (
+            config_llamacpp is not None
+            and config.llamacpp is not None
+            and config_llamacpp.tag != config.llamacpp
+        ):
+            raise ConfigurationInvalide(
+                f"le modèle exige llama.cpp {config.llamacpp}, pas {config_llamacpp.tag}"
+            )
         self.config = config
         self.variante: Variante = variante
         self.slug = slug
@@ -382,7 +403,7 @@ class ServeurLlama:
     @property
     def config_llamacpp(self) -> ConfigLlamacpp:
         if self._config_llamacpp is None:
-            self._config_llamacpp = charger_config_llamacpp()
+            self._config_llamacpp = config_llamacpp_modele(self.config)
         return self._config_llamacpp
 
     @property
@@ -607,6 +628,7 @@ __all__ = [
     "Variante",
     "binaire",
     "charger_config_llamacpp",
+    "config_llamacpp_modele",
     "charger_config_modele",
     "commande_conversion",
     "commande_quantification",

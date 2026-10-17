@@ -17,7 +17,7 @@ from pydantic import Field, StringConstraints, field_validator
 from slmsp.core.config import ModeleConfig, charger_toml, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.schemas import Sha256
-from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp
+from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp, fichier_config
 from slmsp.core.schemas.config_modele import ConfigModele, RevisionHf
 
 MOTIF_SLUG = re.compile(r"[a-z0-9.-]+")
@@ -123,9 +123,22 @@ def charger_config_sources(dossier: str | Path | None = None) -> ConfigSources:
     return charger_toml(_dossier(dossier) / "sources.toml", ConfigSources)
 
 
-def charger_config_llamacpp(dossier: str | Path | None = None) -> ConfigLlamacpp:
-    """Version figée de llama.cpp, `<dossier>/llamacpp.toml`."""
-    return charger_toml(_dossier(dossier) / "llamacpp.toml", ConfigLlamacpp)
+def charger_config_llamacpp(
+    dossier: str | Path | None = None, version: str | None = None
+) -> ConfigLlamacpp:
+    """Version figée de llama.cpp : `<dossier>/llamacpp.toml`, ou la version réservée
+    `<dossier>/llamacpp/<version>.toml` (son `tag` doit valoir `version`)."""
+    return _verifier_tag(
+        charger_toml(fichier_config(_dossier(dossier), version), ConfigLlamacpp), version
+    )
+
+
+def _verifier_tag(config: ConfigLlamacpp, version: str | None) -> ConfigLlamacpp:
+    if version is not None and config.tag != version:
+        raise ConfigurationInvalide(
+            f"config/llamacpp/{version}.toml : tag {config.tag!r} différent du nom du fichier"
+        )
+    return config
 
 
 def charger_config_modele(slug: str, dossier: str | Path | None = None) -> ConfigModele:

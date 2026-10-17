@@ -46,6 +46,7 @@ from slmsp.inference.serveur import (
     Variante,
     charger_config_llamacpp,
     charger_config_modele,
+    config_llamacpp_modele,
 )
 from slmsp.mcp.bac_a_sable import BacASable
 from slmsp.net import client_local
@@ -139,7 +140,10 @@ def ouvrir_harnais(
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
     config = charger_config_harnais()
     taches = charger_taches()
-    config_llamacpp = charger_config_llamacpp()
+    # Le modèle évalué peut exiger sa propre version (`llamacpp` de sa configuration, ex.
+    # Bonsai) ; l'embedding reste sur la version commune.
+    config_llamacpp = config_llamacpp_modele(modele.config)
+    config_llamacpp_embedding = charger_config_llamacpp()
     config_embedding = charger_config_modele(SLUG_EMBEDDING)
     with ExitStack() as pile:
         generation = pile.enter_context(
@@ -157,7 +161,7 @@ def ouvrir_harnais(
                 config_embedding,
                 "cpu",
                 slug=SLUG_EMBEDDING,
-                config_llamacpp=config_llamacpp,
+                config_llamacpp=config_llamacpp_embedding,
                 prendre_verrou_gpu=False,
             )
         )

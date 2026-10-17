@@ -12,6 +12,7 @@ from typing import Annotated, Any, Literal
 from pydantic import Field, StringConstraints, model_validator
 
 from slmsp.core.schemas import SchemaBase, Sha256, SousSchema
+from slmsp.core.schemas.config_llamacpp import TagLlamacpp
 
 RevisionHf = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{40}$")]
 """Révision Hugging Face figée : SHA de commit complet (40 hexadécimaux minuscules)."""
@@ -83,6 +84,9 @@ class ConfigModele(SchemaBase):
     entrainable: bool = True
     """Faux pour un modèle évalué tel quel (poids ternaires, GGUF seul) : `train run` le refuse."""
     pooling: Literal["cls", "mean", "last"] | None = None
+    llamacpp: TagLlamacpp | None = None
+    """Version de llama.cpp réservée au modèle (`config/llamacpp/<tag>.toml`) ; par défaut, la
+    version commune (`config/llamacpp.toml`)."""
 
     @model_validator(mode="after")
     def _coherence(self) -> ConfigModele:

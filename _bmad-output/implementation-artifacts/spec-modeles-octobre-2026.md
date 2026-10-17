@@ -27,15 +27,24 @@ Décision d'Anaël (17/10) : trois Modèles de base candidats de plus pour la Ba
 |---|---|---|---|
 | qwen3.5-2b | `qwen35` (hybride Gated DeltaNet) | **oui** | Charge en CPU et répond correctement. |
 | minicpm-v-4.7-1b | texte `qwen35` (`qwen3_5_text`) | **oui** (texte seul) | Charge en CPU et répond correctement. Projecteur `minicpmv` 4.7 non testé (vision exclue). |
-| bonsai-2-4b | `qwen35`, type `q2_0` | **non** : charge mais produit du charabia | Le type `q2_0` est connu, mais les métadonnées `prism.hadamard.*` (rotation d'activation) sont ignorées. |
+| bonsai-2-4b | `qwen35`, type `q2_0` | **non** : charge mais produit du charabia | Le type `q2_0` est connu, mais les métadonnées `prism.hadamard.*` (rotation d'activation) sont ignorées. Tourne avec le binaire réservé `prism-b10777-e3de715` (section suivante). |
 
-Pour Bonsai, il faut une build amont qui applique le runtime d'activation Hadamard (`prism.hadamard.*`). Selon la carte du modèle, c'est le cas de « recent master ». La documentation PrismML cite la PR amont #24448 (Q2_0 natif), encore en cours d'après elle. **Le numéro minimal de build reste à relever** : l'outillage n'a pas d'accès à GitHub. Monter la version épinglée (`config/llamacpp.toml`) changerait le moteur de toute la Baseline. Il faudrait alors **re-mesurer la Baseline** de tous les candidats (génération v1.1, mesures, socle GGUF), sans quoi les résultats ne sont plus comparables. L'autre voie est un binaire réservé à Bonsai, mais l'écart de moteur doit alors être consigné. **À confirmer par Anaël.**
+Pour Bonsai, il faut une build amont qui applique le runtime d'activation Hadamard (`prism.hadamard.*`). Selon la carte du modèle, c'est le cas de « recent master ». La documentation PrismML cite la PR amont #24448 (Q2_0 natif), encore en cours d'après elle. **Le numéro minimal de build reste à relever** : l'outillage n'a pas d'accès à GitHub. Monter la version épinglée (`config/llamacpp.toml`) changerait le moteur de toute la Baseline. Il faudrait alors **re-mesurer la Baseline** de tous les candidats (génération v1.1, mesures, socle GGUF), sans quoi les résultats ne sont plus comparables. L'autre voie est un binaire réservé à Bonsai, mais l'écart de moteur doit alors être consigné. **Tranché par Anaël le 17/10 : binaire réservé** (section suivante).
+
+## Binaire llama.cpp réservé à Bonsai (décision d'Anaël du 17/10)
+- **Version** : `prism-b10777-e3de715` du fork `PrismML-Eng/llama.cpp`, branche `prism` (build 10777, commit `e3de715222b2667c54a267441159a5729f11155e`, publiée le 14/10). C'est la release épinglée par `PrismML-Eng/Bonsai-demo` (`setup.ps1`, `$ReleaseTag`, commit `db871ea` du 15/10), un cran après `prism-b10776-d00e252` cité par la carte. Lue en GET par la passerelle `outillage`, règle `github`.
+- **Archives** (SHA-256 = `digest` publié par GitHub) : `llama-prism-b10777-e3de715-bin-win-cpu-x64.zip` (`cff7eeff…23c4`), `…-bin-win-cuda-12.4-x64.zip` (`fa5874a1…3462`), `cudart-llama-bin-win-cuda-12.4-x64.zip` (`8c79a9b2…d1e6`, identique à celle de b11429, réutilisée par lien dur). Binaires extraits (SHA calculés à l'extraction) : `bin-cpu/llama-server.exe` `42373a44…ff4b`, `bin-cuda/llama-server.exe` `e95c81a7…29d7`, `bin-cuda/ggml-cuda.dll` `385ccf23…0c27`. Pas d'archive des sources : Bonsai n'est ni converti ni quantifié.
+- **Configuration** : `config/llamacpp/<tag>.toml`, au schéma de `config/llamacpp.toml` (tag de fork admis, `[sources]` devenu facultatif). Champ optionnel `llamacpp = "<tag>"` dans `config/modeles/<slug>.toml` (seul Bonsai le porte). Sans ce champ, le modèle garde la version commune b11429.
+- **Résolution** : `serveur.config_llamacpp_modele(config)`. `ServeurLlama` la prend par défaut, donc le serveur, le banc (lm-eval, moteur LLM), les mesures et `fetch modeles` utilisent le binaire du modèle. L'assemblage d'évaluation sert la génération avec la version du modèle et l'embedding (BGE-M3) avec la version commune. Un `config_llamacpp` explicite contraire au modèle est refusé.
+- **Consignation dans `run.json`** : `llamacpp_tag` (éval et sonde d'outils, banc dès qu'une cible est GGUF) et `tag_llamacpp` de la description des serveurs (éval, mesures). `measure run` compte la taille des binaires de la version du modèle de génération.
+- **Fetch** : `slmsp fetch llamacpp --version prism-b10777-e3de715`, même mécanisme (archives vérifiées, extraction sans écrasement, binaires vérifiés) sous `vendor/llama.cpp/prism-b10777-e3de715/bin-{cpu,cuda}`. Run `runs/fetch/20261017-055925-llamacpp-fdce` (dépôt principal) : 2 archives téléchargées, cudart réutilisée.
 
 ## Essais (CPU, `--device none -ngl 0`, une question, T = 0)
 Question : « Quelle est la capitale de la France ? Réponds en une phrase. »
 - qwen3.5-2b (template HF forcé) : « La capitale de la France est Paris. » Débit de 25 tok/s.
 - minicpm-v-4.7-1b : « La capitale de la France est Paris. » Débit de 30 tok/s.
 - bonsai-2-4b : tokens incohérents et multilingues, 4,5 tok/s. Inutilisable en b11429.
+- bonsai-2-4b avec `prism-b10777-e3de715` (CPU, par `ServeurLlama`, thinking désactivé, T = 0) : « La capitale de la France est Paris. » Une seconde question (« Explique en deux phrases ce qu'est une carte d'identité. ») reçoit deux phrases françaises cohérentes, avec une approximation de fond (« numéro de passeport »). La rotation est donc appliquée. Débit en génération de 5,3 à 6,5 tok/s, prompt à 8 tok/s : ces noyaux ternaires sont lents sur CPU, c'est à noter pour les mesures et la durée de la Baseline.
 
 Runs de téléchargement (dépôt principal) :
 - `runs/fetch/20261017-052245-modeles-67a6` (bonsai) : serveur ok, les autres contrôles sont sans objet.
@@ -50,7 +59,7 @@ uv run slmsp eval run --modele base:<slug> --phase notation --depuis <run_genera
 uv run slmsp measure run --modele base:<slug> --quantification q4_k_m
 uv run --extra bench slmsp bench run --modele base:<slug> --socle --cible gguf --quantification apres --variante-llamacpp cpu
 ```
-Bonsai : mêmes commandes, à lancer **seulement après** la montée de version de llama.cpp. `measure run` se lance sans `--quantification`, car le fichier porte Q2_0 et non Q4_K_M. Dans `eval run`, l'étiquette `q4_k_m` désigne la section `[gguf]`, qui est ici en Q2_0 : l'écart est à noter dans le comparatif. Le banc HF bf16 est exclu par décision d'Anaël (cible : PC sans GPU, 16 Go).
+Bonsai : mêmes commandes avec `base:bonsai-2-4b`. Le binaire `prism-b10777-e3de715` est choisi par la configuration du modèle, sans option. Il faut d'abord `uv run slmsp fetch llamacpp --version prism-b10777-e3de715` (déjà fait dans le dépôt principal). `measure run` se lance sans `--quantification`, car le fichier porte Q2_0 et non Q4_K_M. Dans `eval run`, l'étiquette `q4_k_m` désigne la section `[gguf]`, qui est ici en Q2_0 : l'écart est à noter dans le comparatif. Le banc HF bf16 est exclu par décision d'Anaël (cible : PC sans GPU, 16 Go).
 
 ## Écarts et points à confirmer par Anaël
 - **Contrôle `dense` (D7)** : Qwen3.5-2B et MiniCPM ont 18 couches `linear_attention` (Gated DeltaNet) sur 24. Le contrôle de la story 8.1 les « écarte », alors que D7 visait les hybrides Mamba. Le code n'a pas été modifié. Il faut décider s'il faut admettre `linear_attention`, et vérifier l'entraînement sous Windows : sans `flash-linear-attention` ni `causal-conv1d`, transformers bascule sur une implémentation torch lente. À confirmer par Anaël.
@@ -59,6 +68,10 @@ Bonsai : mêmes commandes, à lancer **seulement après** la montée de version 
 - `[gguf_f16]` est épinglé pour qwen3.5-2b et minicpm, mais n'a pas été téléchargé.
 
 ## Tests
+- `tests/inference/test_serveur.py` : version par modèle (Bonsai réservé, tous les autres sur b11429), version absente refusée, champ `llamacpp` validé, `ServeurLlama` par défaut et `tag_llamacpp`, version explicite incohérente refusée, binaires sous `vendor/llama.cpp/<tag>/`.
+- `tests/fetch/test_llamacpp.py` : `--version` sans sources (CLI de bout en bout), tag incohérent avec le nom du fichier, configuration réservée versionnée.
+- `tests/evaluation/test_assemblage.py` : génération et `llamacpp_tag` sur la version réservée, embedding sur la commune.
+- `tests/benchmarks/test_orchestrateur.py` : `llamacpp_tag` du run de banc (réservé, commun, sans GGUF, modèle inconnu) et consignation dans `run.json`.
 - `tests/fetch/test_verifications.py` : `test_toml_modeles_octobre` (trois slugs) et `test_toml_modeles_octobre_particularites`.
 - `tests/train/test_run.py` : `test_modele_non_entrainable_refuse`.
 
@@ -66,3 +79,7 @@ Bonsai : mêmes commandes, à lancer **seulement après** la montée de version 
 - Slugs `qwen3.5-2b`, `bonsai-2-4b` et `minicpm-v-4.7-1b`, hors `CANDIDATS` : c'est le choix le plus réversible.
 - Champ `entrainable` plutôt qu'une liste en dur, avec le refus placé dans `train.run.executer`. Le refus ne porte pas sur l'export ni sur `eval`.
 - Pour Bonsai, `source = "officielle"`, car le dépôt est celui de l'éditeur Prism ML.
+- Binaire réservé : `prism-b10777-e3de715` (épinglé par Bonsai-demo) plutôt que `prism-b10776-d00e252` (cité par la carte), car c'est la recommandation la plus récente de l'éditeur. Version réservée décrite par un fichier à part (`config/llamacpp/<tag>.toml`), pour ne pas changer l'empreinte de `config/llamacpp.toml` inscrite dans les runs existants.
+- Banc : `llamacpp_tag` est rempli seulement pour une sélection avec cible GGUF. Il est laissé vide si la configuration du modèle est introuvable : le moteur signale alors l'erreur lui-même.
+- `version()` (`llama-server --version`) renvoie `b10777` pour le binaire réservé, pas le tag du fork. Rien ne compare ce résultat au tag aujourd'hui ; c'est à garder en tête si un contrôle est ajouté.
+- Débit CPU de Bonsai (environ 6 tok/s) : la génération v1.1 sera longue en CPU. La variante CUDA est épinglée et vérifiée, mais elle n'a pas été essayée (GPU occupé).

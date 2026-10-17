@@ -4,9 +4,10 @@
 # Hugging Face.
 # Poids ternaires {-1, 0, +1}, rotation de Hadamard repliée dans les poids : ce n'est pas
 # une base de fine-tuning (`entrainable = false`, `train run` refuse). GGUF seul.
-# Format Q2_0 : le seul que llama.cpp amont exécute (« recent master », runtime Hadamard
-# d'activation) ; PQ2_0 et PTQ1_0 exigent le fork PrismML. llama.cpp b11429 ne connaît pas
-# le type Q2_0 : montée de version requise (spec-modeles-octobre-2026).
+# Format Q2_0 avec rotation de Hadamard d'activation (`prism.hadamard.*`) : b11429 charge le
+# fichier mais ignore la rotation (charabia). Décision d'Anaël du 2026-10-17 : binaire
+# llama.cpp réservé à ce modèle (`llamacpp`, config/llamacpp/<tag>.toml), fork PrismML ; les
+# autres modèles restent sur b11429. L'écart de moteur est consigné dans run.json.
 # Mode non-thinking imposé. La carte recommande T = 0,7 en non-thinking ; l'éval reste
 # gloutonne (protocole commun), écart consigné dans la spec.
 # Tour vision exclue : aucun --mmproj.
@@ -24,6 +25,7 @@ exclure_vision = true
 protocole_outils = "natif"
 chat_template_force = false
 entrainable = false
+llamacpp = "prism-b10777-e3de715"
 
 [gguf] # 1 212 103 520 octets
 depot = "prism-ml/Ternary-Bonsai-2-4B-gguf"
