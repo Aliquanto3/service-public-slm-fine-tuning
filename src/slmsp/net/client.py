@@ -26,11 +26,13 @@ from slmsp.net.config import (
 )
 from slmsp.net.journal import JournalSqlite
 from slmsp.net.profils import MODE_ILLISIBLE, PROFILS, evaluer, hote_de, lire_mode
+from slmsp.net.relances import DelaisAppel, transport_echeance
 from slmsp.net.transport import (
     LIBS,
     Garde,
     module_http,
     transport_garde,
+    transport_interne_defaut,
     transport_local,
 )
 
@@ -62,11 +64,15 @@ def client(
     config: ConfigReseau | None = None,
     liste_blanche: ConfigListeBlanche | None = None,
     follow_redirects: bool = False,
+    delais_appel: DelaisAppel | None = None,
 ) -> Any:
     """Client gardé de `lib` (`httpx2.Client`, `httpx2.AsyncClient`, ou leurs pendants httpx).
 
     `usage` choisit le délai (`mcp` : `delais.mcp`, `sonde` : `delais.sonde`, sinon
-    `delais.defaut`). `journal` vaut par défaut le `JournalSqlite` de `SLMSP_VAR_DIR` ;
+    `delais.defaut`). `delais_appel` impose à chaque requête des délais explicites de
+    connexion, de lecture et une échéance totale (`slmsp.net.relances.TransportEcheance`,
+    sous la garde), quels que soient ceux que demande le SDK appelant.
+    `journal` vaut par défaut le `JournalSqlite` de `SLMSP_VAR_DIR` ;
     `config` et `liste_blanche` sont lus dans `config/` s'ils ne sont pas fournis.
     Lève `ValueError` pour un profil, une bibliothèque ou un usage inconnu, ou un profil
     `assistant` sans `mode`.
@@ -80,10 +86,17 @@ def client(
     delai = {"mcp": config.delais.mcp, "sonde": config.delais.sonde}.get(
         usage or "", config.delais.defaut
     )
+    timeout = module.Timeout(delai)
+    if delais_appel is not None:
+        interne = transport_interne
+        if interne is None:
+            interne = transport_interne_defaut(lib, asynchrone)
+        transport_interne = transport_echeance(module, asynchrone, interne, delais_appel)
+        timeout = module.Timeout(delais_appel.lecture, connect=delais_appel.connexion)
     classe = module.AsyncClient if asynchrone else module.Client
     return classe(
         transport=transport_garde(lib, asynchrone, garde, transport_interne),
-        timeout=module.Timeout(delai),
+        timeout=timeout,
         follow_redirects=follow_redirects,
         trust_env=False,
     )
@@ -186,6 +199,7 @@ class Passerelle:
         usage: str | None = None,
         follow_redirects: bool = False,
         transport_interne: Any = None,
+        delais_appel: DelaisAppel | None = None,
     ) -> Any:
         """Client gardé pour `profil`, partageant le Mode et le journal de la passerelle."""
         return client(
@@ -199,6 +213,7 @@ class Passerelle:
             config=self.config,
             liste_blanche=self.liste_blanche,
             follow_redirects=follow_redirects,
+            delais_appel=delais_appel,
         )
 
     def verifier(

@@ -42,6 +42,15 @@ class ConfigMistral(ModeleConfig):
     modeles_autorises: list[Nom] = Field(min_length=1)
     motifs_interdits: list[Nom]
     delai_appel: float = Field(gt=0, allow_inf_nan=False)
+    """Délai total d'un appel HTTP (secondes), échéance comprise."""
+    delai_connexion: float = Field(default=10.0, gt=0, allow_inf_nan=False)
+    delai_lecture: float = Field(default=180.0, gt=0, allow_inf_nan=False)
+    reessais_max: int = Field(default=5, ge=0, le=20)
+    attente_totale_max: float = Field(default=600.0, ge=0, allow_inf_nan=False)
+    duree_totale_max_appel: float = Field(default=900.0, gt=0, allow_inf_nan=False)
+    """Durée maximale d'un appel `appeler`, tentatives et attentes comprises (secondes)."""
+    attente_base: float = Field(default=2.0, gt=0, allow_inf_nan=False)
+    attente_plafond: float = Field(default=60.0, gt=0, allow_inf_nan=False)
     fichier_journal_donnees: Nom
     fichier_journal_juge: Nom
 
@@ -56,6 +65,8 @@ class ConfigMistral(ModeleConfig):
         _nom_de_fichier(self.fichier_journal_juge, "fichier_journal_juge")
         if self.fichier_journal_donnees.casefold() == self.fichier_journal_juge.casefold():
             raise ValueError("les journaux des données et du juge doivent être distincts")
+        if self.attente_plafond < self.attente_base:
+            raise ValueError("attente_plafond doit être supérieure ou égale à attente_base")
         if self.fichier_journal_donnees != NOM_JOURNAL_MISTRAL:
             raise ValueError(
                 f"fichier_journal_donnees doit valoir {NOM_JOURNAL_MISTRAL!r} "

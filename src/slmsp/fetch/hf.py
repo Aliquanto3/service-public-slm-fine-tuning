@@ -30,8 +30,6 @@ classe `TransportError` d'un module `httpx*` dans son MRO, ou à `ConnectionErro
 
 from __future__ import annotations
 
-import email.utils
-import math
 import os
 import re
 import shutil
@@ -50,6 +48,7 @@ from slmsp.core.config import appliquer_environnement_impose, dossier_modeles
 from slmsp.core.erreurs import SecretManquant, SlmspError
 from slmsp.core.secrets import secret
 from slmsp.fetch.config import ConfigTelechargement
+from slmsp.net.relances import erreur_transport, lire_retry_after
 
 HOTE_HF: Final = "https://huggingface.co"
 STATUTS_TRANSITOIRES: Final = frozenset({429, 500, 502, 503, 504})
@@ -83,38 +82,6 @@ class _Transitoire(Exception):
         super().__init__(motif)
         self.motif = motif
         self.attente_serveur = attente_serveur
-
-
-def erreur_transport(exc: BaseException) -> bool:
-    """Vrai pour une erreur de transport : `httpx*.TransportError`, `ConnectionError` ou
-    `TimeoutError`. Une autre `OSError` (disque plein, droits) n'est pas relancée."""
-    if isinstance(exc, (ConnectionError, TimeoutError)):
-        return True
-    return any(
-        classe.__name__ == "TransportError" and classe.__module__.split(".")[0].startswith("httpx")
-        for classe in type(exc).__mro__
-    )
-
-
-def lire_retry_after(valeur: str | None, maintenant: datetime | None = None) -> float | None:
-    """Attente demandée par `Retry-After` (secondes ou date HTTP), `None` si absente ou
-    non finie (`inf`, `nan`)."""
-    if valeur is None or not valeur.strip():
-        return None
-    valeur = valeur.strip()
-    try:
-        secondes = float(valeur)
-    except ValueError:
-        pass
-    else:
-        return max(0.0, secondes) if math.isfinite(secondes) else None
-    try:
-        date = email.utils.parsedate_to_datetime(valeur)
-    except (TypeError, ValueError):
-        return None
-    if date.tzinfo is None:
-        date = date.replace(tzinfo=UTC)
-    return max(0.0, (date - (maintenant or datetime.now(UTC))).total_seconds())
 
 
 def horodatage() -> str:

@@ -138,14 +138,21 @@ class Banc:
     cache: CacheVerdicts
 
     def juge(self, **config_juge: Any) -> JugeMistral:
-        config_mistral = charger_mistral()
+        # Sans réessai : une erreur simulée est vue telle quelle (relances : tests/mistral).
+        config_mistral = charger_mistral().model_copy(update={"reessais_max": 0})
         sdk = fabriquer_sdk(
             config_mistral,
             transport_interne=httpx2.MockTransport(self.faux),
             journal_requetes=JournalMemoire(),
             fichier_env=self.dossier / ".env",
         )
-        client = ClientMistral(config_mistral, self.registre, sdk, dossier_journaux=self.dossier)
+        client = ClientMistral(
+            config_mistral,
+            self.registre,
+            sdk,
+            dossier_journaux=self.dossier,
+            dormir=lambda _: None,
+        )
         config = charger_juges().second.model_copy(update=config_juge)
         return JugeMistral(config, client, self.cache, self.grille)
 
@@ -356,11 +363,11 @@ def test_erreur_serveur_puis_item_suivant(banc: Banc, items: dict[str, Item]) ->
     )
     premier, second = rapport.resultats
     assert (premier.statut, premier.motif) == ("non-juge", "erreur-api")
-    assert premier.cout_eur > 0  # compté au pire cas
+    assert premier.cout_eur == 0  # 5xx non facturée : réglée à 0
     assert second.statut == "juge"
     assert banc.faux.items() == ["Q-001", "Q-002"]  # aucune relance
     pire = banc.lignes_registre()[0]
-    assert pire["etat"] == "pire-cas"
+    assert pire["etat"] == "regularisee"
     assert premier.cout_eur == pytest.approx(pire["montant_reel_eur"])
     (appel,) = [a for a in banc.cache.appels() if a["item_id"] == "Q-001"]
     assert appel["issue"] == "erreur-api" and appel["tokens_entree"] is None

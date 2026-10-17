@@ -81,8 +81,9 @@ juge-principal = "anthropic"
 class FauxMistral:
     """Faux serveur Mistral. `reponses` : file de réponses, consommée une par requête.
 
-    Une réponse vaut un statut HTTP (`int`), une exception à lever (transport en panne), ou
-    un dictionnaire (`texte`, `model`, `finish_reason`) ; file vide : réponse conforme.
+    Une réponse vaut un statut HTTP (`int`), un couple (statut, en-têtes), une exception à
+    lever (transport en panne), ou un dictionnaire (`texte`, `model`, `finish_reason`) ;
+    file vide : réponse conforme.
     `texte_par_defaut` fabrique le texte à partir du corps JSON de la requête.
     """
 
@@ -95,10 +96,13 @@ class FauxMistral:
     def corps(self) -> list[dict[str, Any]]:
         return [json.loads(c) for _, _, c in self.requetes]
 
-    def _servir(self, statut: int, contenu: dict[str, Any]) -> Any:
+    def _servir(
+        self, statut: int, contenu: dict[str, Any], en_tetes: dict[str, str] | None = None
+    ) -> Any:
         brut = json.dumps(contenu, ensure_ascii=False, indent=1).encode("utf-8")
         self.servis.append(brut)
-        return httpx2.Response(statut, content=brut, headers={"content-type": "application/json"})
+        en_tetes = {"content-type": "application/json", **(en_tetes or {})}
+        return httpx2.Response(statut, content=brut, headers=en_tetes)
 
     def __call__(self, requete: Any) -> Any:
         contenu = bytes(requete.content or b"")
@@ -109,6 +113,10 @@ class FauxMistral:
         spec = self.reponses.pop(0) if self.reponses else None
         if isinstance(spec, BaseException):
             raise spec
+        if isinstance(spec, tuple):  # (statut, en-têtes) : Retry-After…
+            statut, en_tetes = spec
+            erreur = {"object": "error", "message": "<erreur-factice>"}
+            return self._servir(statut, erreur, en_tetes)
         if isinstance(spec, int):
             return self._servir(spec, {"object": "error", "message": "<erreur-factice>"})
         spec = spec if isinstance(spec, dict) else {}
@@ -148,6 +156,8 @@ class BancMistral:
     faux: FauxMistral
     chemin_env: Path
     plafond_juge: float = 5.0
+    attentes: list[float] = field(default_factory=list)
+    """Attentes demandées entre deux tentatives (aucune attente réelle en test)."""
 
     def registre(self) -> RegistreBudget:
         budgets = self.dossier / "budgets.toml"
@@ -169,15 +179,25 @@ class BancMistral:
             fichier_env=self.chemin_env,
         )
 
-    def client(self, config: ConfigMistral | None = None, registre: Any = None) -> Any:
+    def client(
+        self,
+        config: ConfigMistral | None = None,
+        registre: Any = None,
+        dormir: Callable[[float], None] | None = None,
+        horloge: Callable[[], float] | None = None,
+    ) -> Any:
         from slmsp.mistral.client import ClientMistral
 
         config = config or self.config
+        options = {} if horloge is None else {"horloge": horloge}
         return ClientMistral(
             config,
             registre if registre is not None else self.registre(),
             self.sdk(config),
             dossier_journaux=self.dossier,
+            dormir=dormir or self.attentes.append,
+            alea=lambda: 1.0,
+            **options,
         )
 
     def lignes_registre(self) -> list[dict[str, Any]]:
