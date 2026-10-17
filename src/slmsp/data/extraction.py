@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from slmsp.core.erreurs import ProvenanceInvalide
+from slmsp.core.erreurs import ProvenanceInvalide, ReponseTronquee
 from slmsp.mistral.generateur import message_assistant, raison_de_fin
 
 __all__ = ["VERSION_EXTRACTEUR", "extraire_contenu", "extraire_message"]
@@ -24,11 +24,12 @@ VERSION_EXTRACTEUR: Final = 1
 def extraire_message(brut: bytes | str | None) -> dict[str, Any]:
     """Message `assistant` de la réponse brute : `role`, `content` et `tool_calls` éventuels.
 
-    Une réponse tronquée (`finish_reason = length`) est refusée. Lève `ProvenanceInvalide`.
+    Une réponse tronquée (`finish_reason = length`) est refusée (`ReponseTronquee`, sous-classe
+    de `ProvenanceInvalide`). Lève `ProvenanceInvalide`.
     """
     message = message_assistant(brut)
     if raison_de_fin(brut) == "length":
-        raise ProvenanceInvalide("réponse tronquée (finish_reason = length)")
+        raise ReponseTronquee("réponse tronquée (finish_reason = length)")
     return message
 
 

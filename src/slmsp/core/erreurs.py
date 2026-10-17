@@ -71,6 +71,10 @@ class ProvenanceInvalide(SlmspError):
     """La provenance d'un artefact ne peut être établie ou ne convient pas."""
 
 
+class ReponseTronquee(ProvenanceInvalide):
+    """Une réponse Mistral s'est arrêtée sur `finish_reason = length` : texte incomplet."""
+
+
 class LectureInterdite(SlmspError):
     """Lecture refusée par le lecteur contrôlé."""
 

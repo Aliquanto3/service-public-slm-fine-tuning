@@ -438,7 +438,11 @@ def test_longueur_config_exige_son_amorce_liee_dans_la_session() -> None:
         auteur_contenu="config",
         lie_a="re.texte.1",
     )
-    ctx = SimpleNamespace(lecteur=SimpleNamespace(amorces={longueur.amorce_id: longueur}))
+    from slmsp.data.validate import LecteurGeneration
+
+    lecteur = SimpleNamespace(amorces={longueur.amorce_id: longueur})
+    lecteur.amorce_verifiee = lambda i: LecteurGeneration.amorce_verifiee(lecteur, i)  # type: ignore[arg-type]
+    ctx = SimpleNamespace(lecteur=lecteur)
 
     def session(amorce_ids: list[str]) -> SessionBrute:
         return SessionBrute(

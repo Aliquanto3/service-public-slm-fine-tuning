@@ -13,6 +13,10 @@ from slmsp.core.schemas import SchemaBase
 from slmsp.core.schemas.session_donnees import SessionId
 
 MotifValidation = Literal[
+    "amorce_tronquee",
+    "amorce_invalide",
+    "reponse_tronquee",
+    "appel_invalide",
     "trace_divergente",
     "appel_non_conforme",
     "url_inventee",
