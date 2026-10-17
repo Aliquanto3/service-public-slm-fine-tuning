@@ -42,3 +42,9 @@ deferred: []
 
 - `lm_eval_batch_size = 4` pour `minicpm5-1b` : valeur prudente, **à confirmer par mesure** (par Anaël, GPU).
 - Report : RAM CPU (~12,75 Go sur mcq_eval) non traitée ici.
+
+## Revue
+
+- medium, corrigé : `lot_modele` avalait `ConfigurationInvalide` et ramenait l'OOM sans signal. Désormais seul un fichier absent donne `auto` (avertissement journalisé) ; un fichier présent mais invalide fait échouer le benchmark avec le message de `charger_toml`.
+- low, corrigé : trois tests du chemin réel de `lot_modele` (config absente + journal, valeur 4, config invalide) sur une racine de projet factice.
+- low, rejeté (acté, code inchangé) : la clé ne s'applique qu'aux références `base:<slug>`. La variante `apres` est sautée avant `taille_lot` (« seuls les modèles base:<slug> sont gérés ») ; les QCM HF ne portent donc que sur le modèle de base.
