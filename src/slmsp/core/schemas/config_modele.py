@@ -46,6 +46,11 @@ class FichierGguf(SousSchema):
         return self
 
 
+UsageEmbedding = Literal["passage", "texte_long"]
+"""Usage d'un serveur d'embedding : `passage` (question de l'utilisateur, passage de l'Index)
+ou `texte_long` (`data filter`, poste de développement)."""
+
+
 PrecisionGguf = Literal["f16", "bf16"]
 """Précision réelle d'un GGUF non quantifié (BF16 quand l'éditeur ne publie pas de F16)."""
 
@@ -84,6 +89,10 @@ class ConfigModele(SchemaBase):
     entrainable: bool = True
     """Faux pour un modèle évalué tel quel (poids ternaires, GGUF seul) : `train run` le refuse."""
     pooling: Literal["cls", "mean", "last"] | None = None
+    micro_lot: dict[UsageEmbedding, int] = Field(default_factory=dict)
+    """Embedding : `-c`, `-b` et `-ub` du serveur par usage, en tokens (usage absent :
+    `contexte`). Une entrée doit tenir dans un micro-lot ; la RAM du serveur croît avec la
+    plus longue entrée traitée, que le micro-lot borne par la troncature d'`EmbedderLlama`."""
     llamacpp: TagLlamacpp | None = None
     """Version de llama.cpp réservée au modèle (`config/llamacpp/<tag>.toml`) ; par défaut, la
     version commune (`config/llamacpp.toml`)."""
@@ -123,4 +132,13 @@ class ConfigModele(SchemaBase):
     def _pooling_si_embedding(self) -> ConfigModele:
         if (self.pooling is not None) != self.embedding:
             raise ValueError("pooling est requis pour un modèle d'embedding, et seulement pour lui")
+        if self.micro_lot and not self.embedding:
+            raise ValueError("micro_lot est réservé à un modèle d'embedding")
+        hors_bornes = {u: n for u, n in self.micro_lot.items() if not 0 < n <= self.contexte}
+        if hors_bornes:
+            raise ValueError(f"micro_lot hors de 1 .. contexte ({self.contexte}) : {hors_bornes}")
         return self
+
+    def micro_lot_pour(self, usage: UsageEmbedding) -> int:
+        """Micro-lot du serveur d'embedding pour `usage` (`contexte` s'il n'est pas fixé)."""
+        return self.micro_lot.get(usage, self.contexte)

@@ -31,7 +31,7 @@ from slmsp.core.canonique import sha256_fichier
 from slmsp.core.config import charger_toml, dossier_modeles, env_sous_processus, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp, fichier_config, verifier_config
-from slmsp.core.schemas.config_modele import ConfigModele
+from slmsp.core.schemas.config_modele import ConfigModele, UsageEmbedding
 from slmsp.core.var import dossier_var, verrou_gpu
 from slmsp.inference import processus
 from slmsp.inference.client import ClientLlama
@@ -348,6 +348,8 @@ class ServeurLlama:
 
     Le GGUF est `gguf` s'il est donné, sinon `<dossier_modeles()>/<slug>/gguf/<fichier>`.
     `chat_template_force` exige `slug` (`<dossier_modeles()>/<slug>/chat_template.jinja`).
+    En embedding, `usage` choisit le micro-lot (`ConfigModele.micro_lot`) : il fixe `-c`,
+    `-b`, `-ub` et la troncature de l'`EmbedderLlama`, qui ne peuvent donc pas diverger.
     """
 
     def __init__(
@@ -361,6 +363,7 @@ class ServeurLlama:
         prendre_verrou_gpu: bool = True,
         delai_demarrage: float = DELAI_DEMARRAGE,
         journal: str | os.PathLike[str] | None = None,
+        usage: UsageEmbedding = "passage",
     ) -> None:
         _verifier_variante(variante)
         if slug is None and gguf is None:
@@ -378,6 +381,7 @@ class ServeurLlama:
                 f"le modèle exige llama.cpp {config.llamacpp}, pas {config_llamacpp.tag}"
             )
         self.config = config
+        self.usage: UsageEmbedding = usage
         self.variante: Variante = variante
         self.slug = slug
         self._gguf = None if gguf is None else Path(gguf)
@@ -396,6 +400,18 @@ class ServeurLlama:
     @property
     def role(self) -> str:
         return "embedding" if self.config.embedding else "generation"
+
+    @property
+    def micro_lot(self) -> int:
+        """Embedding : `-c`, `-b` et `-ub` (tokens) pour `usage` ; une entrée doit y tenir."""
+        if not self.config.embedding:
+            raise ValueError("micro_lot : réservé à un serveur d'embedding")
+        return self.config.micro_lot_pour(self.usage)
+
+    @property
+    def contexte(self) -> int:
+        """`-c` du serveur : le micro-lot en embedding, `config.contexte` en génération."""
+        return self.micro_lot if self.config.embedding else self.config.contexte
 
     @property
     def config_llamacpp(self) -> ConfigLlamacpp:
@@ -436,7 +452,7 @@ class ServeurLlama:
             "-m",
             str(self.gguf),
             "-c",
-            str(config.contexte),
+            str(self.contexte),
             "-ctk",
             config.cache_kv,
             "-ctv",
@@ -449,11 +465,11 @@ class ServeurLlama:
             arguments += ["-t", str(config.threads)]
         if config.embedding:
             assert config.pooling is not None
-            # Lot et micro-lot à la taille du contexte : sinon llama-server refuse une entrée
-            # de plus de 512 tokens (micro-lot par défaut).
-            contexte = str(config.contexte)
+            # Une entrée doit tenir dans un micro-lot (512 tokens par défaut) : lot et
+            # micro-lot au micro-lot de l'usage, qui borne aussi la RAM (voir `micro_lot`).
+            micro_lot = str(self.micro_lot)
             arguments += ["--embedding", "--pooling", config.pooling]
-            arguments += ["-b", contexte, "-ub", contexte]
+            arguments += ["-b", micro_lot, "-ub", micro_lot]
         else:
             arguments += ["--jinja", "--reasoning", config.reasoning]
             if config.chat_template_kwargs:
@@ -572,13 +588,15 @@ class ServeurLlama:
             "tag_llamacpp": self.config_llamacpp.tag,
             "slug": self.slug,
             "gguf": self.gguf.name,
-            "contexte": self.config.contexte,
+            "contexte": self.contexte,
             "cache_kv": self.config.cache_kv,
             "threads": self.config.threads,
             "parallel": 1,
         }
         if self.config.embedding:
-            description["pooling"] = self.config.pooling
+            description.update(
+                pooling=self.config.pooling, usage=self.usage, micro_lot=self.micro_lot
+            )
         else:
             description.update(
                 reasoning=self.config.reasoning,
@@ -611,7 +629,7 @@ class ServeurLlama:
         if not self.config.embedding:
             raise ValueError("serveur de génération : utiliser client()")
         if self._embedder is None:
-            self._embedder = EmbedderLlama(self.port)
+            self._embedder = EmbedderLlama(self.port, contexte_max=self.micro_lot)
         return self._embedder
 
 

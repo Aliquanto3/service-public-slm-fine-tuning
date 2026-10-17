@@ -643,6 +643,7 @@ def _filter(args: argparse.Namespace) -> int:
         slug="bge-m3",
         config_llamacpp=charger_config_llamacpp(),
         prendre_verrou_gpu=False,
+        usage="texte_long",
     ) as serveur:
         embedder = serveur.embedder()
         resultat = lancer_filtre(

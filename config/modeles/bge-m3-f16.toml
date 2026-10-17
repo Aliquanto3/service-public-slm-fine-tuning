@@ -9,6 +9,13 @@ fichiers = []
 contexte = 8192
 embedding = true
 pooling = "cls"
+# Micro-lot (-c, -b, -ub) par usage, en tokens : une entrée doit tenir dans un micro-lot, et
+# EmbedderLlama tronque à micro-lot - 16. La RAM croît avec la plus longue entrée traitée
+# (CPU, Q8_0, 2026-10-17) : environ 0,5 Go au repos, 1,7 Go pour 1 163 tokens (plus long
+# chunk service-public), 2,4 Go pour 1 900 tokens, 8,5 Go pour 7 900 tokens.
+# passage : question de l'utilisateur et passage de l'Index (application, Harnais, H-EMB).
+# texte_long : `data filter`, sur le poste de développement.
+micro_lot = { passage = 2048, texte_long = 8192 }
 # Sans objet pour un modèle d'embedding, mais exigé par le schéma.
 protocole_outils = "natif"
 
