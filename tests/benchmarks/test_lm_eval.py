@@ -458,3 +458,41 @@ def test_hf_mistral3_lance_l_adaptateur_dedie(banc):
     argv = banc.appel()["argv"]
     assert option(argv, "--model") == "hf-mistral3"
     assert option(argv, "--model_args") == f"pretrained={poids},dtype=bfloat16"
+
+
+def test_extraire_erreurs_ignore_les_barres_de_progression():
+    barres = "".join(
+        f"Requesting API:  15%|█▍        | {i}/541 [06:51<29:09,  3.80s/it]\r" for i in range(80)
+    )
+    trace = (
+        "Traceback (most recent call last):\n"
+        '  File "x.py", line 1, in f\n'
+        "    raise ValueError\n"
+        "requests.exceptions.HTTPError: 500 Server Error: <erreur-factice>\n"
+    )
+    texte = lm_eval.extraire_erreurs(barres + trace + barres)
+    assert "Traceback" in texte
+    assert "500 Server Error" in texte
+    assert "Requesting API" not in texte
+
+
+def test_echec_ecrit_stderr_log_complet_et_motif_sans_progression(banc, monkeypatch):
+    poser_poids(banc)
+    monkeypatch.setenv("LM_EVAL_FACTICE_ECHEC", "1")
+    with pytest.raises(lm_eval.LmEvalEchoue, match="stderr.log"):
+        lm_eval.executer(config(), banc.contexte())
+    journal = banc.tmp / "run" / "lm_eval" / "bench_factice--avant" / "stderr.log"
+    assert "echec factice" in journal.read_text(encoding="utf-8")
+
+
+def test_echec_sans_trace_signale_un_processus_tue_de_l_exterieur(banc, monkeypatch):
+    poser_poids(banc)
+    monkeypatch.setattr(
+        lm_eval,
+        "lancer_outil",
+        lambda *a, **k: SimpleNamespace(
+            returncode=1, stdout="", stderr="Requesting API: 1%| 1/9 [00:01<00:09, 1s/it]"
+        ),
+    )
+    with pytest.raises(lm_eval.LmEvalEchoue, match="tué de l'extérieur"):
+        lm_eval.executer(config(), banc.contexte())
