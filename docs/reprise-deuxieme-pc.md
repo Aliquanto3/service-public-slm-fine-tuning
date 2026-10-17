@@ -27,12 +27,15 @@ Tout vient de GitHub, sans copie de disque à disque :
 
 ## 2. Ce que fait Claude Code (installation)
 
-Lancer les commandes dans l'ordre, en arrêtant au premier échec. Après `uv sync`, toujours utiliser `uv run --no-sync`.
+Lancer les commandes dans l'ordre, en arrêtant au premier échec. Après `uv sync`, toujours utiliser `uv run --no-sync` : un `uv run` simple resynchronise sans extras.
+
+Les extras `fetch` et `train` sont déclarés en conflit dans `pyproject.toml` (transformers 5.17 exige `huggingface-hub<2`, `fetch` épingle la 2.2.0) : ils ne s'installent jamais ensemble. On synchronise donc deux fois : d'abord avec `fetch` pour les téléchargements, puis avec `train` pour l'entraînement et les benchmarks (lm-eval importe torch).
 
 ```powershell
 git config core.longpaths true
 powershell -NoProfile -ExecutionPolicy Bypass -File outils/migration/restaurer-etat.ps1
-uv sync --extra fetch --extra data --extra judge --extra bench --extra train --extra app
+# Phase 1 : téléchargements (sans train)
+uv sync --extra fetch --extra data --extra judge --extra bench --extra app
 uv run --no-sync python -m playwright install msedge
 uv run --no-sync slmsp fetch llamacpp
 uv run --no-sync slmsp fetch sources
@@ -40,7 +43,11 @@ uv run --no-sync slmsp index build
 uv run --no-sync slmsp fetch benchmarks
 uv run --no-sync slmsp fetch modeles bge-m3 bge-m3-f16 granite-4.0-1b minicpm5-1b
 uv run --no-sync slmsp fetch modeles granite-4.0-1b minicpm5-1b --f16
+# Phase 2 : environnement de travail, comme sur la tour (retire fetch, installe torch cu130)
+uv sync --extra data --extra judge --extra bench --extra train --extra app
 ```
+
+Pour télécharger un modèle plus tard, repasser par la phase 1, puis revenir à la phase 2.
 
 Points de vigilance :
 - **Vecteurs de l'Index.** `index build` reconstruit l'Index depuis les parquet MediaTech, avec des vecteurs fournis par MediaTech et non recalculés. Vérifier avec `slmsp index info` que la version est `20260926`, comme sur la tour.
