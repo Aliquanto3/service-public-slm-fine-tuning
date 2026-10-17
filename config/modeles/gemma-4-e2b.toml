@@ -1,3 +1,5 @@
+# ÉCARTÉ (taille > 2B, décision du 2026-10-17, voir le registre de decisions.md) : fiche
+# conservée, plus aucun run à lancer.
 # Gemma 4 E2B instruct (Google, Apache 2.0, sans accès conditionnel : vérifié le 2026-10-17
 # par l'API Hugging Face, `gated` faux) : candidat ajouté par décision d'Anaël du 2026-10-17
 # (spec-modeles-octobre-2026). Révisions, SHA-256 et tailles relevés le même jour. AD-6 :

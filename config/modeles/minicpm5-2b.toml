@@ -1,3 +1,5 @@
+# ÉCARTÉ (taille > 2B, décision du 2026-10-17, voir le registre de decisions.md) : fiche
+# conservée, plus aucun run à lancer.
 # MiniCPM5 2B (OpenBMB, Apache 2.0, sans accès conditionnel) : candidat ajouté par décision
 # d'Anaël du 2026-10-17 (spec-modeles-octobre-2026). Révisions, SHA-256 et tailles relevés
 # le 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes à l'inférence et à

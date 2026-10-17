@@ -3,7 +3,9 @@
 Pour chaque modèle de génération, après `slmsp fetch modeles` :
 
 - `dense` : toutes les couches de `config.json` (`layer_types`, à la racine ou sous
-  `text_config`) sont des couches d'attention ; une couche `mamba` écarte le modèle ;
+  `text_config`) sont des couches d'attention ; une couche `mamba` ou de type inconnu écarte
+  le modèle. Les couches `linear_attention` (hybride Gated DeltaNet) sont admises pour
+  l'inférence et la Baseline (décision D8), si la fiche porte `entrainable = false` ;
 - `fp8` : aucune `quantization_config`, aucun `dtype`/`torch_dtype` en `float8` ;
 - `vision` : un `vision_config` exige `exclure_vision = true` ;
 - `chat_template` : le template du tokenizer HF et celui du GGUF
@@ -51,8 +53,10 @@ Statut = Literal["ok", "echec", "sans-objet"]
 NOM_TEMPLATE: Final = "chat_template.jinja"
 CLE_TEMPLATE_GGUF: Final = "tokenizer.chat_template"
 COUCHES_DENSES: Final = frozenset({"attention", "full_attention", "sliding_attention"})
-"""Types de couche admis par le contrôle `dense` (liste fermée : `linear_attention`,
-`mamba`… désignent une variante hybride)."""
+"""Types de couche d'attention du contrôle `dense` (liste fermée)."""
+COUCHES_INFERENCE_SEULE: Final = frozenset({"linear_attention"})
+"""Couches hybrides admises pour l'inférence seulement (Gated DeltaNet, décision D8) : la
+fiche doit porter `entrainable = false`. `mamba` et tout autre type écartent le modèle."""
 DELAI_PROPS: Final = 30.0
 
 
@@ -197,10 +201,11 @@ def _sous_configs(donnees: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     return configs
 
 
-def _controle_dense(slug: str, donnees: dict[str, Any]) -> Controle:
+def _controle_dense(slug: str, donnees: dict[str, Any], config: ConfigModele) -> Controle:
     sources: list[str] = []
     comptes: Counter[str] = Counter()
     autres: list[str] = []
+    lineaires = 0
     total = 0
     for prefixe, sous in _sous_configs(donnees):
         types = sous.get("layer_types")
@@ -210,7 +215,12 @@ def _controle_dense(slug: str, donnees: dict[str, Any]) -> Controle:
         sources.append(f"{prefixe}layer_types")
         comptes.update(types)
         total += len(types)
-        autres += [f"{prefixe}{i} ({t})" for i, t in enumerate(types) if t not in COUCHES_DENSES]
+        lineaires += sum(t in COUCHES_INFERENCE_SEULE for t in types)
+        autres += [
+            f"{prefixe}{i} ({t})"
+            for i, t in enumerate(types)
+            if t not in COUCHES_DENSES and t not in COUCHES_INFERENCE_SEULE
+        ]
     if not sources:
         return Controle(slug, "dense", "ok", "layer_types absent : modèle dense", {})
     valeurs = {"layer_types": dict(comptes), "source": ", ".join(sources)}
@@ -223,6 +233,24 @@ def _controle_dense(slug: str, donnees: dict[str, Any]) -> Controle:
             "echec",
             f"{len(autres)} couche(s) sur {total} hors attention : {liste}{suite} ; "
             "variante hybride écartée",
+            valeurs,
+        )
+    if lineaires:
+        if config.entrainable:
+            return Controle(
+                slug,
+                "dense",
+                "echec",
+                f"{lineaires} couche(s) linear_attention sur {total} : hybride Gated DeltaNet "
+                "admis pour l'inférence seulement, inscrire entrainable = false (décision D8)",
+                valeurs,
+            )
+        return Controle(
+            slug,
+            "dense",
+            "ok",
+            f"hybride Gated DeltaNet admis pour l'inférence, non entraînable : {lineaires} "
+            f"couche(s) linear_attention sur {total} ({', '.join(sources)})",
             valeurs,
         )
     return Controle(
@@ -289,7 +317,7 @@ def verifier_config_hf(slug: str, config: ConfigModele, dossier_hf: str | Path) 
     if not isinstance(donnees, dict):
         return [Controle(slug, nom, "echec", f"{chemin} : objet JSON attendu") for nom in noms]
     return [
-        _controle_dense(slug, donnees),
+        _controle_dense(slug, donnees, config),
         _controle_fp8(slug, donnees),
         _controle_vision(slug, donnees, config),
     ]

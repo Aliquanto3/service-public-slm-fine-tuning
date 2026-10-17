@@ -592,14 +592,49 @@ def test_gguf_en_sous_dossier_meme_chemin_pour_fetch_controles_et_serveur(
 @pytest.mark.parametrize(
     "contenu",
     [
-        {"layer_types": ["full_attention", "linear_attention", "full_attention"]},
+        {"layer_types": ["full_attention", "couche_inconnue", "full_attention"]},
         {"layer_types": ["attention"] * 2, "text_config": {"layer_types": ["attention", "mamba"]}},
     ],
 )
 def test_dense_liste_fermee_et_toutes_les_sous_configs(tmp_path: Path, contenu: dict) -> None:
     (dense, _, _) = verifier_config_hf("m", config_modele(), dossier_hf(tmp_path, **contenu))
     assert dense.statut == "echec"
-    assert "1 couche(s) sur" in dense.detail
+    assert "1 couche(s) sur" in dense.detail and "variante hybride écartée" in dense.detail
+
+
+GATED_DELTANET = {"layer_types": ["linear_attention"] * 3 + ["full_attention"]}
+"""Motif Qwen3.5 (3 couches Gated DeltaNet pour 1 d'attention complète), sous text_config."""
+
+
+def test_dense_admet_gated_deltanet_non_entrainable(tmp_path: Path) -> None:
+    dossier = dossier_hf(tmp_path, text_config=GATED_DELTANET)
+    (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
+    assert dense.statut == "ok"
+    assert "hybride Gated DeltaNet admis pour l'inférence, non entraînable" in dense.detail
+    assert dense.valeurs["layer_types"] == {"linear_attention": 3, "full_attention": 1}
+    assert verifications.ecartes([dense]) == {}
+
+
+def test_dense_gated_deltanet_exige_entrainable_false(tmp_path: Path) -> None:
+    dossier = dossier_hf(tmp_path, text_config=GATED_DELTANET)
+    (dense, _, _) = verifier_config_hf("m", config_modele(), dossier)
+    assert dense.statut == "echec"
+    assert "3 couche(s) linear_attention sur 4" in dense.detail
+    assert "inscrire entrainable = false" in dense.detail
+
+
+@pytest.mark.parametrize("intrus", ["mamba", "couche_inconnue"])
+def test_dense_hybride_mixte_ecarte_meme_non_entrainable(tmp_path: Path, intrus: str) -> None:
+    dossier = dossier_hf(tmp_path, layer_types=["linear_attention", intrus, "full_attention"])
+    (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
+    assert dense.statut == "echec"
+    assert f"1 ({intrus})" in dense.detail and "linear_attention)" not in dense.detail
+
+
+def test_mamba_ecarte_meme_non_entrainable(tmp_path: Path) -> None:
+    dossier = dossier_hf(tmp_path, "hybride")
+    (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
+    assert dense.statut == "echec" and "variante hybride écartée" in dense.detail
 
 
 def test_export_oserror_donne_conflit_sans_part(
@@ -678,7 +713,7 @@ def test_toml_modeles_octobre(slug: str) -> None:
     assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
     assert config.chat_template_kwargs == {"enable_thinking": False}
     assert config.exclure_vision and not config.embedding
-    assert config.entrainable == (slug != "bonsai-2-4b")
+    assert config.entrainable == (slug not in ("bonsai-2-4b", "qwen3.5-2b"))
 
 
 def test_toml_modeles_octobre_particularites() -> None:
@@ -706,7 +741,7 @@ def test_toml_modeles_moins_2b(slug: str) -> None:
     assert config.gguf.fichier.lower().endswith("q4_k_m.gguf")
     assert config.gguf.source == "communautaire"
     assert config.exclure_vision == (slug == "qwen3.5-0.8b")
-    assert config.entrainable and not config.embedding
+    assert config.entrainable == (slug != "qwen3.5-0.8b") and not config.embedding
     assert config.lm_eval_batch_size == 2
 
 

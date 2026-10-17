@@ -4,8 +4,9 @@
 # communes à l'inférence et à l'entraînement.
 # Même famille que qwen3.5-2b : VLM à attention hybride (Gated DeltaNet), tour vision exclue,
 # aucun --mmproj. GGUF communautaire unsloth (Qwen ne publie pas de GGUF).
-# Contrôle `dense` (story 8.1) en échec : 18 couches linear_attention sur 24, comme
-# qwen3.5-2b ; décision d'Anaël attendue (voir la spec).
+# 18 couches linear_attention sur 24, comme qwen3.5-2b : hybride Gated DeltaNet admis pour
+# l'inférence et la Baseline seulement (décision D8 du 2026-10-17, decisions.md), d'où
+# `entrainable = false` ; le contrôle `dense` passe à cette condition.
 # Raisonnement : le template n'ouvre <think> que si enable_thinking vaut true ; forcé à false.
 
 schema_version = 1
@@ -37,6 +38,8 @@ chat_template_force = true
 # lm_eval sur HF bf16, portable de 6 Go de VRAM : `auto` provoque des OOM CUDA. Valeur
 # prudente (jamais `auto`), à confirmer par mesure.
 lm_eval_batch_size = 2
+# Baseline seulement (D8) : `train run` refuse ce modèle.
+entrainable = false
 
 [sha256_fichiers]
 "chat_template.jinja" = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80" # 7 755 octets

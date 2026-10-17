@@ -1,9 +1,10 @@
-# Qwen3.5 2B (post-entraîné, Apache 2.0, sans accès conditionnel) : candidat au fine-tuning,
-# ajouté par décision d'Anaël du 2026-10-17 (spec-modeles-octobre-2026). Révisions,
+# Qwen3.5 2B (post-entraîné, Apache 2.0, sans accès conditionnel) : ajouté par décision
+# d'Anaël du 2026-10-17 (spec-modeles-octobre-2026). Révisions,
 # SHA-256 et tailles relevés le 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes
 # à l'inférence et à l'entraînement.
 # VLM à attention hybride (Gated DeltaNet `linear_attention` + `full_attention`, 3 pour 1) :
-# le contrôle `dense` de la story 8.1 le signale en échec (à confirmer par Anaël). Tour
+# admis pour l'inférence et la Baseline seulement (décision D8 du 2026-10-17,
+# decisions.md), d'où `entrainable = false` ; le contrôle `dense` passe à cette condition. Tour
 # vision exclue comme pour Ministral : aucun --mmproj, aucun poids vision entraîné.
 # GGUF communautaire réputé (unsloth) : Qwen ne publie pas de GGUF pour ce modèle.
 # Raisonnement : le template n'ouvre <think> que si enable_thinking vaut true ; il est
@@ -35,6 +36,8 @@ protocole_outils = "natif"
 # fetch/20261017-052846-modeles-a55f) : le template HF, exporté sous
 # models/<slug>/chat_template.jinja, est imposé à llama-server.
 chat_template_force = true
+# Baseline seulement (D8) : `train run` refuse ce modèle.
+entrainable = false
 
 [sha256_fichiers]
 "chat_template.jinja" = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80" # 7 755 octets

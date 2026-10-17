@@ -122,3 +122,39 @@ L'architecture fixe la bibliothèque vectorielle et le modèle d'embedding, par 
     - L'architecture `mistral3` comprend un encodeur vision, à exclure.
   - **SmolLM3.** `HuggingFaceTB/SmolLM3-3B`.
 - **Corpus de l'Index local** : `AgentPublic/service-public` et `AgentPublic/data-gouv-datasets-catalog`, sous licence Etalab 2.0, mis à jour fin septembre 2026.
+
+## D8. Hybrides Gated DeltaNet et registre des Modèles de base (2026-10-17)
+
+Décisions d'Anaël du 2026-10-17 (option 2 et règle de taille). D8 précise D7 :
+
+- **Mamba reste écarté sous Windows natif** (D2, D7) : un modèle dont `config.json` a une couche `mamba`, ou d'un type inconnu, est écarté par le contrôle `dense` de la story 8.1.
+- **Gated DeltaNet (`linear_attention`) est admis pour l'inférence et la Baseline**, avec `entrainable = false` dans la fiche du modèle. llama.cpp b11429 le sert (contrôles `serveur` ok). Le contrôle `dense` échoue si une fiche à couches `linear_attention` ne porte pas `entrainable = false`, et `train run` refuse un modèle non entraînable.
+  - Motif : sous Windows natif, sans `flash-linear-attention` ni `causal-conv1d`, transformers prend une implémentation torch lente. Seuls l'entraînement et `lm_eval` HF sont touchés.
+  - **L'entraînement sera rouvert** seulement si un Qwen3.5 sort bien de la Baseline, après un court essai QLoRA qui mesure la vitesse sous Windows.
+- **Règle de taille** : 2B au plus, en paramètres du modèle texte servi, tour vision exclue (cible : PC de 16 Go avec Teams, Edge et Outlook).
+  - Méthode de comptage : en-têtes safetensors des dépôts HF (`huggingface_hub.get_safetensors_metadata`), relevés par l'orchestrateur le 2026-10-17. Les modules exclus du modèle servi (tour vision, audio, tête MTP) ne comptent pas.
+
+### Registre des Modèles de base candidats
+
+Paramètres en milliards (B). « Mesuré » : comptage safetensors du 2026-10-17 ; sinon, taille d'après le nom ou la source citée.
+
+| Slug | Dépôt HF | Paramètres texte servis | Statut | Raison | Date | Source |
+|---|---|---|---|---|---|---|
+| `granite-4.0-1b` | `ibm-granite/granite-4.0-1b` | 1,63 (mesuré) | candidat au fine-tuning | `granitemoehybrid` sans couche Mamba (variante dense) | 2026-10-17 | D4, D7 ; `etat-run-2026-10-16.md` (décision de 09h, passation) |
+| `minicpm5-1b` | `openbmb/MiniCPM5-1B` | 1,08 (mesuré) | candidat au fine-tuning | llama dense, texte seul | 2026-10-17 | `spec-modeles-octobre-2026.md` (seconde campagne) ; `etat-run-2026-10-16.md` (décision de 09h) |
+| `eurollm-1.7b` | `utter-project/EuroLLM-1.7B-Instruct` | 1,66 (mesuré) | candidat au fine-tuning | llama dense ; contexte 4096 | 2026-10-17 | `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
+| `qwen3.5-0.8b` | `Qwen/Qwen3.5-0.8B` | 0,75 (mesuré : 0,87 au total, dont 0,12 de vision et MTP exclus) | Baseline seulement | hybride Gated DeltaNet, `entrainable = false` | 2026-10-17 | D8 ; `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
+| `qwen3.5-2b` | `Qwen/Qwen3.5-2B` | 1,88 (mesuré : 2,27 au total, dont 0,39 de vision et MTP exclus) | Baseline seulement | hybride Gated DeltaNet, `entrainable = false` | 2026-10-17 | D8 (règle de taille) ; `spec-modeles-octobre-2026.md` |
+| `minicpm5-2b` | `openbmb/MiniCPM5-2B` | 2,52 (mesuré, texte seul) | écarté | taille > 2B | 2026-10-17 | D8 ; `etat-run-2026-10-16.md` (décision de 09h) |
+| `gemma-4-e2b` | `google/gemma-4-E2B-it` | 4,65 (mesuré : 5,12 au total ; hors vision et audio, dont 2,39 d'embeddings par couche) | écarté | taille > 2B | 2026-10-17 | D8 ; `etat-run-2026-10-16.md` (décision de 09h, « 5B réels ») |
+| `ministral-3-3b` | `mistralai/Ministral-3-3B-Instruct-2512-BF16` | ≈ 3 (nom) | écarté | taille > 2B, cible 16 Go | 2026-10-17 | `etat-run-2026-10-16.md` (décision de 09h, passation) |
+| `ministral-3-8b` | `mistralai/Ministral-3-8B-Instruct-2512-GGUF` | ≈ 8 (nom) | écarté | taille > 2B, cible 16 Go | 2026-10-17 | `etat-run-2026-10-16.md` (passation : seuls les modèles < 2B restent candidats) |
+| `qwen-4b` | `Qwen/Qwen3-4B-Instruct-2507` | ≈ 4 (nom) | écarté | taille > 2B, cible 16 Go ; modèle lent | 2026-10-17 | `etat-run-2026-10-16.md` (réponses d'Anaël, décision de 09h, passation) |
+| `smollm3-3b` | `HuggingFaceTB/SmolLM3-3B` | ≈ 3 (nom) | écarté | taille > 2B, cible 16 Go | 2026-10-17 | `etat-run-2026-10-16.md` (décision de 09h, passation) |
+| `bonsai-2-4b` | `prism-ml/Ternary-Bonsai-2-4B-gguf` | ≈ 4 (source) | écarté | ternaire Q2_0, non entraînable (`entrainable = false`), taille > 2B | 2026-10-17 | `spec-modeles-octobre-2026.md` ; `etat-run-2026-10-16.md` (décision de 09h, « 4B ») |
+| `minicpm-v-4.7-1b` | `openbmb/MiniCPM-V-4.7-1B` | non mesuré | écarté | retiré de la Baseline (seconde campagne) | 2026-10-17 | `spec-modeles-octobre-2026.md` ; `etat-run-2026-10-16.md` |
+| LFM2.5 (pas de fiche) | non épinglé | non mesuré | écarté | licence LFM 1.0 (usage commercial limité aux entités de moins de 10 M$ de chiffre d'affaires) | 2026-10-17 | `etat-run-2026-10-16.md` (candidats ajoutés) |
+| Granite 4.0 H (pas de fiche) | non épinglé | non mesuré | écarté | hybride Mamba, Windows natif | 2026-10-12 | D2, D7 |
+| `croissantllm-chat` (fiche supprimée, runs `fetch` conservés) | `croissantllm/CroissantLLMChat-v0.1` | ≈ 1,3 (source) | écarté | licence MIT non admise en sortie ; contexte natif 2048 | 2026-10-17 | `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
+
+Les sources citées sont sous `_bmad-output/implementation-artifacts/`.

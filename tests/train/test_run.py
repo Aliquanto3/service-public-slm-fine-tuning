@@ -139,6 +139,14 @@ def test_modele_non_entrainable_refuse(projet, pile, monkeypatch) -> None:
     assert pile.ordre == [] and not (projet.racine / "runs").exists()
 
 
+@pytest.mark.parametrize("slug", ["qwen3.5-2b", "qwen3.5-0.8b"])
+def test_hybrides_gated_deltanet_refuses(projet, pile, slug: str) -> None:
+    """Décision D8 : les Qwen3.5 hybrides sont réservés à la Baseline (fiches réelles)."""
+    with pytest.raises(ConfigurationInvalide, match="non entraînable"):
+        module_run.executer(projet.ecrire_toml(modele=slug), racine=projet.racine, pile=pile)
+    assert pile.ordre == [] and not (projet.racine / "runs").exists()
+
+
 def test_gpu_occupe(projet, pile) -> None:
     projet.ecrire_jeu()
     with verrou_gpu(commande="autre"), pytest.raises(RessourceOccupee):
