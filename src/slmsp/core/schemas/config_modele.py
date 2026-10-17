@@ -83,6 +83,9 @@ class ConfigModele(SchemaBase):
     embedding: bool = False
     entrainable: bool = True
     """Faux pour un modèle évalué tel quel (poids ternaires, GGUF seul) : `train run` le refuse."""
+    lm_eval_batch_size: int | None = Field(default=None, gt=0)
+    """`--batch_size` de lm_eval sur les poids HF (QCM) ; par défaut `auto`. Un `batch_size` du
+    benchmark l'emporte."""
     pooling: Literal["cls", "mean", "last"] | None = None
     llamacpp: TagLlamacpp | None = None
     """Version de llama.cpp réservée au modèle (`config/llamacpp/<tag>.toml`) ; par défaut, la

@@ -92,8 +92,22 @@ def graine(config: BenchmarkConfig) -> int:
     return int(config.options.get("seed", SEED_DEFAUT))
 
 
-def taille_lot(config: BenchmarkConfig) -> str:
-    return str(config.options.get("batch_size", BATCH_DEFAUT))
+def lot_modele(slug: str) -> int | None:
+    """`lm_eval_batch_size` de `config/modeles/<slug>.toml`, `None` si absent ou config illisible."""
+    from slmsp.inference.serveur import charger_config_modele
+
+    try:
+        return charger_config_modele(slug).lm_eval_batch_size
+    except ConfigurationInvalide:
+        return None
+
+
+def taille_lot(config: BenchmarkConfig, slug: str | None = None) -> str:
+    """Priorité : `options.batch_size` du benchmark > `lm_eval_batch_size` du modèle > `auto`."""
+    if "batch_size" in config.options:
+        return str(config.options["batch_size"])
+    parametre = lot_modele(slug) if slug else None
+    return str(parametre) if parametre is not None else BATCH_DEFAUT
 
 
 def arguments_communs(config: BenchmarkConfig, sortie: Path) -> list[str]:
@@ -318,7 +332,11 @@ def extraire_erreurs(stderr: str, stdout: str = "") -> str:
 
 
 def _lancer(
-    commande: list[str], dossier_sortie: Path, env: Mapping[str, str], config: BenchmarkConfig
+    commande: list[str],
+    dossier_sortie: Path,
+    env: Mapping[str, str],
+    config: BenchmarkConfig,
+    lot: str = "1",
 ) -> SortieMoteur:
     dossier_sortie.mkdir(parents=True, exist_ok=True)
     fin = lancer_outil(commande, env_supplementaire=env)
@@ -348,7 +366,7 @@ def _lancer(
     sortie = analyser(donnees)
     sortie.details["sortie_json"] = str(chemin)
     sortie.seed = graine(config)
-    sortie.batch_size = taille_lot(config) if config.cible == "hf" else "1"
+    sortie.batch_size = lot
     return sortie
 
 
@@ -436,12 +454,13 @@ def executer(config: BenchmarkConfig, contexte: ContexteBench) -> SortieMoteur:
                 saute=f"poids HF absents ({slug} : ni hf-bf16 ni hf) : GGUF seul, QCM sautés"
             )
         verifier_cache_hf(config)
+        lot = taille_lot(config, slug)
         commande = [
             *commande_lm_eval(),
-            *arguments_hf(poids, taille_lot(config)),
+            *arguments_hf(poids, lot),
             *arguments_communs(config, sortie),
         ]
-        return _lancer(commande, sortie, env, config)
+        return _lancer(commande, sortie, env, config, lot)
     verifier_cache_hf(config)
     try:
         with serveur_llama(config, contexte) as (url, nom):

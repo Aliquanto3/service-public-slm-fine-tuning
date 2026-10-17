@@ -26,6 +26,9 @@ exclure_vision = false
 # Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
 protocole_outils = "natif"
 chat_template_force = false
+# lm_eval sur HF bf16, carte de 8 Go : `auto` provoque des OOM CUDA (belebele, french_bench_mc).
+# Valeur prudente, à confirmer par mesure.
+lm_eval_batch_size = 4
 
 [sha256_fichiers]
 "chat_template.jinja" = "7451a05cf1e28a79d97d7c0bc951028c0b1915119bf9046acd06a0e3d931f47c" # 9 062 octets
