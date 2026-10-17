@@ -1001,7 +1001,7 @@ def longueur_re(lie_a: str) -> dict[str, Any]:
         "RE",
         "longueur_demandee",
         auteur="config",
-        texte="150 mots",
+        texte="moyenne",
         lie_a=lie_a,
     )
 
@@ -1011,7 +1011,7 @@ def test_longueur_re_de_configuration_admise_avec_son_texte(monde: Monde) -> Non
     generation = monde.generateur().generer(
         "re", ["re.longueur_demandee.1", "re.texte.1"], "session-re", "RE"
     )
-    assert "150 mots" in generation.messages[0]["content"]
+    assert "moyenne" in generation.messages[0]["content"]
 
 
 def test_longueur_re_sans_son_texte_dans_l_appel_refusee(monde: Monde) -> None:

@@ -1046,7 +1046,7 @@ def test_longueurs_re_tirees_dans_la_configuration(monde: Monde) -> None:
     textes = {a["amorce_id"] for a in amorces if a["emplacement"] == "texte"}
     longueurs = [Amorce.model_validate(a) for a in amorces if a["auteur_contenu"] == "config"]
     assert len(longueurs) == len(textes) == 6
-    admises = {f"{n} mots" for n in config.seed.re_longueurs_mots}
+    admises = set(config.seed.re_longueurs)
     for longueur in longueurs:
         assert longueur.lie_a in textes
         assert longueur.texte in admises
@@ -1066,8 +1066,8 @@ def test_verifier_refuse_une_longueur_sans_amorce_liee(monde: Monde) -> None:
         "amorce_id": "re.longueur_demandee.x",
         "tache": "RE",
         "emplacement": "longueur_demandee",
-        "texte": "80 mots",
-        "sha_texte": sha256_hex("80 mots"),
+        "texte": "courte",
+        "sha_texte": sha256_hex("courte"),
         "auteur_contenu": "config",
         "lie_a": "re.texte.absente",
     }
@@ -1081,7 +1081,8 @@ def test_verifier_refuse_une_longueur_sans_amorce_liee(monde: Monde) -> None:
     [
         ({}, True),
         ({"texte": "<longueur-factice>"}, False),
-        ({"texte": "5 mots"}, False),
+        ({"texte": "80 mots"}, False),
+        ({"texte": "détaillée"}, False),
         ({"emplacement": "texte"}, False),
         ({"lie_a": None}, False),
         ({"appel_id": "a" * 32}, False),
@@ -1093,7 +1094,7 @@ def test_schema_amorce_config(champs: dict[str, Any], admis: bool) -> None:
         "amorce_id": "re.longueur_demandee.x",
         "tache": "RE",
         "emplacement": "longueur_demandee",
-        "texte": "150 mots",
+        "texte": "moyenne",
         "auteur_contenu": "config",
         "lie_a": "re.texte.x",
     } | champs
@@ -1168,3 +1169,12 @@ def test_generate_groupe_longueur_avec_son_texte_et_courrier_par_appel(monde: Mo
     complets, incomplets, ignorees = _groupes(ct, ["type_courrier", "objet", "elements_connus"])
     assert (len(complets), incomplets, ignorees) == (2, 0, 3)  # sujets publics ignorés
     assert all(len({a.appel_id for a in g}) == 1 for g in complets)
+
+
+def test_longueurs_re_hors_evaluation_refusees() -> None:
+    from slmsp.data.config import SeedDonnees
+
+    assert SeedDonnees().re_longueurs == ["courte", "moyenne", "detaillee"]
+    for invalide in (["détaillée"], ["80 mots"], []):
+        with pytest.raises(ValueError):
+            SeedDonnees(re_longueurs=invalide)

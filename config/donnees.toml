@@ -71,9 +71,10 @@ graine = 42
 
 # Étape `seed` : paramètres sans contenu (aucune amorce n'est écrite ici, D1.1).
 [seed]
-# Longueurs de résumé, en mots (10 à 9999), proposées à l'emplacement RE/longueur_demandee :
-# chaque texte RE reçoit une longueur tirée dans cette liste (texte de l'amorce : « <n> mots »).
-re_longueurs_mots = [80, 150, 250]
+# Longueurs de résumé proposées à l'emplacement RE/longueur_demandee, avec les mêmes mots que le
+# Jeu d'évaluation (clés de [re.longueurs] de evaluation.toml, sans accent) : chaque texte RE
+# reçoit une longueur tirée dans cette liste (texte de l'amorce : la valeur elle-même).
+re_longueurs = ["courte", "moyenne", "detaillee"]
 # Graine du tirage (une même amorce de texte reçoit toujours la même longueur).
 graine = 42
 

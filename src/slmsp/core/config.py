@@ -198,3 +198,13 @@ def env_sous_processus(base: Mapping[str, str] | None = None) -> dict[str, str]:
     }
     env.update(imposes)
     return env
+
+
+def longueurs_re_evaluation() -> tuple[str, ...]:
+    """Clés de `[re.longueurs]` de `config/evaluation.toml` (longueurs demandées du Jeu, sans
+    accent) ; `ConfigurationInvalide` si le fichier manque ou n'a pas la section."""
+    chemin = racine_projet() / "config" / "evaluation.toml"
+    try:
+        return tuple(tomllib.loads(chemin.read_text(encoding="utf-8"))["re"]["longueurs"])
+    except (OSError, KeyError, TypeError, tomllib.TOMLDecodeError):
+        raise ConfigurationInvalide(f"{chemin.name} : section [re.longueurs] illisible") from None

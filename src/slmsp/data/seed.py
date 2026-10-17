@@ -33,8 +33,9 @@ révision et SHA-256 (le CLI les convertit en `JeuPublic`).
   de même `appel_id` (un groupe pour `generate`), après contrôle du schéma, déduplication
   par objet normalisé et anti-fuite de chaque valeur.
 - **Longueurs RE** : chaque texte `RE/texte` conservé reçoit une amorce `config`
-  `RE/longueur_demandee` (`<n> mots`, `lie_a` = l'amorce du texte), `n` tiré par graine dans
-  `[seed].re_longueurs_mots` de `config/donnees.toml` : un paramètre, pas un contenu.
+  `RE/longueur_demandee` (`courte`, `moyenne` ou `detaillee`, `lie_a` = l'amorce du texte),
+  valeur tirée par graine dans
+  `[seed].re_longueurs` de `config/donnees.toml` : un paramètre, pas un contenu.
 
 Le run `data-seed` contient `amorces.jsonl` (écrit en ajout) et `comptes.json`.
 `verifier_amorces` relit un `amorces.jsonl` : schéma (provenance complète), `sha_texte`,
@@ -617,7 +618,7 @@ def executer_seed(
             facteur=facteur,
             nb_scenarios=nb_scenarios,
             fabrique=fabrique_scenarios,
-            longueurs_re=tuple(config.seed.re_longueurs_mots),
+            longueurs_re=tuple(config.seed.re_longueurs),
             graine=config.seed.graine,
             nb_courriers=nb_courriers,
             fabrique_courriers=fabrique_courriers,
@@ -647,7 +648,7 @@ def _remplir(
     facteur: int,
     nb_scenarios: int,
     fabrique: FabriqueScenario | None,
-    longueurs_re: Sequence[int],
+    longueurs_re: Sequence[str],
     graine: int,
     nb_courriers: int,
     fabrique_courriers: FabriqueCourrier | None,
@@ -827,13 +828,12 @@ def _scenarios(
 
 
 def _longueurs_re(
-    run: Run, textes: Sequence[Amorce], longueurs: Sequence[int], graine: int
+    run: Run, textes: Sequence[Amorce], longueurs: Sequence[str], graine: int
 ) -> dict[str, Any]:
     """Une amorce `config` `RE/longueur_demandee` par texte RE, tirée par graine."""
-    tirees: Counter[int] = Counter()
+    tirees: Counter[str] = Counter()
     for texte in textes:
-        mots = random.Random(f"{graine}\0{texte.amorce_id}").choice(list(longueurs))
-        valeur = f"{mots} mots"
+        valeur = random.Random(f"{graine}\0{texte.amorce_id}").choice(list(longueurs))
         suffixe = texte.amorce_id.removeprefix(f"{TEXTE_RE[0].lower()}.{TEXTE_RE[1]}.")
         _ecrire_amorce(
             run,
@@ -848,10 +848,10 @@ def _longueurs_re(
                 lie_a=texte.amorce_id,
             ),
         )
-        tirees[mots] += 1
+        tirees[valeur] += 1
     return {
         "produites": sum(tirees.values()),
-        "par_longueur": {str(mots): n for mots, n in sorted(tirees.items())},
+        "par_longueur": dict(sorted(tirees.items())),
     }
 
 
