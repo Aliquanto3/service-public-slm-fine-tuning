@@ -135,7 +135,7 @@ development_status:
   12-10-parametres-et-a-propos: done
   12-11-historique-et-retours-dans-l-interface: done
   12-12-executable-pyinstaller-avec-modele-embarque-et-index-local: done
-  12-13-installateur-inno-setup-par-utilisateur-et-desinstallation: review
+  12-13-installateur-inno-setup-par-utilisateur-et-desinstallation: done
   12-14-mesures-fr-26-avec-webview2-et-recette-sur-pc-cible: backlog
   epic-12-retrospective: optional
 
