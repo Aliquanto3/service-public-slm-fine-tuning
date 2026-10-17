@@ -80,7 +80,9 @@ class Pont:
             "reglages": PontReglages(stockage, apres_effacement=self._conversation.oublier_dernier),
             "historique": PontHistorique(stockage),
             "retours": PontRetours(stockage, choisir_fichier),
-            "verification": PontVerification(verificateur),
+            "verification": PontVerification(
+                verificateur, occupe=self._conversation.generation_en_cours
+            ),
             "redaction_outils": PontRedactionOutils(),
         }
 

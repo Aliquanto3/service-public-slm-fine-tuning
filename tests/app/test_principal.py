@@ -718,7 +718,95 @@ def test_lancer_cable_la_verification_hors_ligne_force_aucune_requete(
         )
     )
     resultat = domaine.appeler("verifier", "<réponse-factice-1> [1]", [source])
-    assert resultat["ok"] is True
+    assert resultat["ok"] is True, resultat
     assert [e["type"] for e in resultat["evenements"]] == ["verification"]
     assert resultat["evenements"][0]["verdict"] == "indisponible"
     assert [e.statut for e in assemblage.passerelle.journal.lister()] == ["bloquee-mode"]
+
+
+def test_lancer_cable_le_vrai_verificateur_sur_un_transport_factice(
+    stockage: Stockage, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`lancer()` branche un vrai `Verificateur` sur la vraie `Passerelle` (Mode, Liste blanche,
+    journal) ; seul le transport HTTP et le Modèle embarqué sont factices. GET de l'URL citée
+    seulement, verdict du faux LLM, page rendue en origine `verification`."""
+    import httpx2  # noqa: TID251 (tests : transport factice)
+
+    from slmsp.core.evenements import Fin, Jeton, Source, vers_dict
+    from slmsp.harness.modes import ModeFixe
+    from slmsp.net.client import Passerelle
+    from slmsp.net.journal import JournalMemoire
+
+    url = "https://www.service-public.gouv.fr/particuliers/vosdroits/F0000"
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.delenv(principal.VARIABLE_ARGUMENTS, raising=False)
+    vues: list[httpx2.Request] = []
+
+    def repondre(requete: httpx2.Request) -> httpx2.Response:
+        vues.append(requete)
+        corps = (
+            "<html><head><title>Page</title></head><body><main><p>Contenu.</p></main></body></html>"
+        )
+        return httpx2.Response(200, content=corps.encode(), headers={"content-type": "text/html"})
+
+    transport = httpx2.MockTransport(repondre)
+
+    from slmsp.harness import verification as module_verification
+
+    vrai_client = module_verification.client
+
+    def client_factice(*args: Any, **options: Any) -> Any:
+        # Même garde (Mode, Liste blanche, journal) ; seul le transport HTTP est remplacé.
+        return vrai_client(*args[:5], transport, *args[6:], **options)
+
+    monkeypatch.setattr(module_verification, "client", client_factice)
+
+    class LlmVerdict:
+        def __init__(self) -> None:
+            self.appels: list[Any] = []
+
+        def generer(self, messages: Any, *, tools: Any = None, options: Any = None) -> Any:
+            self.appels.append(list(messages))
+            yield Jeton(texte="CONCORDANT\nphrase")
+            yield Fin(raison="terminee")
+
+        def compter_tokens(self, messages: Any, tools: Any = None) -> int:
+            return 0
+
+    journal = JournalMemoire()
+    passerelle = Passerelle(ModeFixe("connecte"), journal)
+    llm = LlmVerdict()
+    service = SimpleNamespace(
+        mode=passerelle.mode,
+        llm=llm,
+        recherche=SimpleNamespace(vector_store=SimpleNamespace(contient_url=lambda u: u == url)),
+        config=SimpleNamespace(verification=None),
+    )
+    assemblage = SimpleNamespace(service=service, passerelle=passerelle)
+
+    @contextlib.contextmanager
+    def fabrique(modele: str, **options: Any) -> Any:
+        yield assemblage
+
+    web = WebviewFactice()
+    code = principal.lancer(
+        webview=web,
+        stockage=stockage,
+        instance=InstanceUnique(ApiFausse()),
+        fabrique_assemblage=fabrique,
+    )
+    assert code == 0
+    domaine = web.creations[0]["js_api"]._pont._domaines["verification"]
+    source = vers_dict(Source(numero=1, titre="<titre-factice-1>", url=url, origine="index"))
+    resultat = domaine.appeler("verifier", "<réponse-factice-1> [1]", [source])
+    assert resultat["ok"] is True, resultat
+    assert [e["type"] for e in resultat["evenements"]] == ["verification", "sources"]
+    assert resultat["evenements"][0]["verdict"] == "concordant"
+    assert resultat["evenements"][1]["sources"][0]["origine"] == "verification"
+    assert [(r.method, str(r.url)) for r in vues] == [("GET", url)]
+    assert len(llm.appels) == 1
+    # Une URL absente de l'Index n'est pas retenue : aucune requête de plus, aucun appel LLM.
+    autre = vers_dict(Source(numero=1, titre="t", url=url + "x", origine="index"))
+    refus = domaine.appeler("verifier", "<réponse-factice-1> [1]", [autre])
+    assert [e["type"] for e in refus["evenements"]] == ["verification"]
+    assert len(vues) == 1 and len(llm.appels) == 1

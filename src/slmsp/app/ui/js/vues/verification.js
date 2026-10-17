@@ -7,11 +7,18 @@ import { annoncer } from "../socle/annonces.js";
 import { dateLisible } from "../composants/copie.js";
 import { urlOuvrable } from "../composants/sources.js";
 
+/** Même borne que le pont (`REPONSE_MAX_CARACTERES`, harnais) : au-delà, aucun appel. */
+export const REPONSE_MAX_CARACTERES = 20000;
+/** Délai minimal avant de vérifier de nouveau la même réponse. */
+export const DELAI_REVERIFICATION_MS = 30000;
+
 export const LIBELLES = {
   bouton: "Vérifier en ligne",
   enCours: "Vérification en cours…",
   extrait: "Passage de la page",
   impossible: "La vérification n'a pas pu être lancée.",
+  generationEnCours: "Une réponse est en cours : réessayez à la fin de celle-ci.",
+  tropLongue: "Cette réponse est trop longue pour être vérifiée en ligne.",
   pageParDefaut: "la page officielle",
 };
 
@@ -56,10 +63,14 @@ export function creerVerification({ reponse, pont, horsLigne, eligible, surSourc
   let resultat = null; // { zone, brut } : verdict affiché pour ce texte de réponse
   let essai = 0; // invalide une vérification devenue sans objet (Mode, nouvelle réponse)
   let enCours = false;
+  let libreA = 0; // pas de nouvelle vérification avant cette date (ms)
+  let minuteur = null;
 
   const effacer = () => {
     essai += 1;
     enCours = false;
+    libreA = 0;
+    clearTimeout(minuteur);
     resultat = null;
     bouton = null;
     racine.replaceChildren();
@@ -86,16 +97,26 @@ export function creerVerification({ reponse, pont, horsLigne, eligible, surSourc
   }
 
   async function lancer() {
-    if (enCours || !bouton) return;
+    // `aria-disabled` (et non `disabled`) : le bouton garde le focus clavier pendant l'attente.
+    if (enCours || !bouton || Date.now() < libreA) return;
     const mon = ++essai;
-    enCours = true;
     const brut = reponse.brut;
-    bouton.disabled = true;
+    const bouton0 = bouton;
+    resultat?.zone.remove();
+    if (brut.length > REPONSE_MAX_CARACTERES) {
+      const zone = el("div", "verification-resultat verification-indisponible callout callout-warning");
+      zone.append(el("p", null, LIBELLES.tropLongue));
+      racine.append(zone);
+      resultat = { zone, brut };
+      annoncer(LIBELLES.tropLongue);
+      return;
+    }
+    enCours = true;
+    bouton.setAttribute("aria-disabled", "true");
     bouton.setAttribute("aria-busy", "true");
     const zone = el("div", "verification-resultat verification-attente");
     zone.setAttribute("role", "status");
     zone.textContent = LIBELLES.enCours;
-    resultat?.zone.remove();
     racine.append(zone);
     resultat = { zone, brut };
     let charge = null;
@@ -106,22 +127,30 @@ export function creerVerification({ reponse, pont, horsLigne, eligible, surSourc
     }
     if (mon !== essai) return; // devenue sans objet : rien n'est affiché
     enCours = false;
-    bouton.disabled = false;
-    bouton.removeAttribute("aria-busy");
+    const surBouton = document.activeElement === bouton0;
+    bouton0.removeAttribute("aria-busy");
+    // Délai avant de revérifier la même page ; le bouton reste `aria-disabled` jusque-là.
+    libreA = Date.now() + DELAI_REVERIFICATION_MS;
+    minuteur = setTimeout(() => bouton0.removeAttribute("aria-disabled"), DELAI_REVERIFICATION_MS);
     const evenements = charge?.ok === true && Array.isArray(charge.evenements) ? charge.evenements : [];
     const verdict = evenements.find((e) => e?.type === "verification");
     zone.removeAttribute("role");
     zone.tabIndex = -1;
+    let texte;
     if (verdict) {
-      const texte = texteVerdict(verdict);
+      texte = texteVerdict(verdict);
       afficher(zone, verdict, texte);
       ajouterSource(evenements);
-      annoncer(texte);
     } else {
-      afficher(zone, { verdict: "indisponible" }, LIBELLES.impossible);
-      annoncer(LIBELLES.impossible);
+      texte = charge?.erreur?.code === "generation-en-cours" ? LIBELLES.generationEnCours : LIBELLES.impossible;
+      afficher(zone, { verdict: "indisponible" }, texte);
+      libreA = 0; // rien n'a été consulté : on peut réessayer tout de suite
+      clearTimeout(minuteur);
+      bouton0.removeAttribute("aria-disabled");
     }
-    zone.focus();
+    // Une seule annonce : le focus sur le résultat (s'il était sur le bouton) ou la région `aria-live`.
+    if (surBouton) zone.focus();
+    else annoncer(texte);
   }
 
   function rafraichir() {

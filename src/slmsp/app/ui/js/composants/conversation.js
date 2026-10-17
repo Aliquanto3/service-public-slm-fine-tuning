@@ -107,7 +107,8 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       tours: tours.map((t) => ({
         question: t.question,
         texte: t.reponse.brut,
-        sources: t.reponse.sources,
+        // La page « Vérifiée en ligne » (13.6) reste dans le panneau, hors de l'Historique.
+        sources: t.reponse.sources.filter((s) => s.origine !== "verification"),
         fin: t.fin,
         element: t.reponse.el,
       })),

@@ -14,6 +14,7 @@ from harness_factices import FakeEmbedder, FakeLlm, FakeVectorStore, mots, scrip
 
 from slmsp.app.pont import Pont
 from slmsp.app.pont.reglages import PontReglages
+from slmsp.app.pont.verification import PontVerification
 from slmsp.core.evenements import Fin, Jeton
 from slmsp.harness.assemblage import assembler
 from slmsp.net.journal import JournalMemoire
@@ -392,3 +393,28 @@ def test_domaine_redaction_outils(banc: Any) -> None:
     r = pont.appeler("redaction_outils.differences", "<a> <b>", "<a> <c>")
     assert r["ok"] is True and r["identiques"] is False
     assert pont.appeler("redaction_outils.autre")["erreur"]["code"] == "non-implementee"
+
+
+def test_verification_refusee_pendant_une_vraie_generation(banc: Any) -> None:
+    """`Pont` branche `generation_en_cours` sur le domaine `verification` (story 13.6)."""
+    appels: list[str] = []
+    llm = LlmBloque()
+    pont, fenetre = banc(llm)
+    pont._domaines["verification"] = PontVerification(
+        lambda r, s: appels.append(r) or [], occupe=pont._conversation.generation_en_cours
+    )
+    pont.envoyer("Q", _user(mots(3, "v")), {})
+    assert llm.premier.wait(5)
+    refus = pont.appeler("verification.verifier", "<r> [1]", [])
+    assert refus["ok"] is False and refus["erreur"]["code"] == "generation-en-cours"
+    assert appels == []
+    llm.libre.set()
+    pont.arreter()
+    assert fenetre.fini.wait(5)
+    assert pont.appeler("verification.verifier", "<r> [1]", [])["ok"] is True
+    assert appels == ["<r> [1]"]
+
+
+def test_pont_transmet_generation_en_cours_au_domaine_verification(banc: Any) -> None:
+    pont, _ = banc(FakeLlm())
+    assert pont._domaines["verification"]._occupe == pont._conversation.generation_en_cours

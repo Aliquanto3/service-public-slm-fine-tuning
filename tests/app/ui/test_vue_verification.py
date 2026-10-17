@@ -165,7 +165,11 @@ def test_concordant_etat_en_cours_verdict_focus_et_panneau_sources(page) -> None
     zone = page.locator("#vue-Q .verification-resultat")
     assert zone.inner_text() == "Vérification en cours…"
     assert zone.get_attribute("role") == "status"
-    assert bouton.is_disabled()
+    assert bouton.get_attribute("aria-disabled") == "true"  # pas `disabled` : le focus reste
+    assert bouton.get_attribute("aria-busy") == "true"
+    assert page.evaluate(
+        "document.activeElement === document.querySelector('.verification button')"
+    )
     appel = next(a for a in page.evaluate("window.__appels") if a[0] == "verification.verifier")
     assert appel[1] == "voir [1]."
     assert appel[2][0]["url"] == URL_1
@@ -175,16 +179,85 @@ def test_concordant_etat_en_cours_verdict_focus_et_panneau_sources(page) -> None
     assert texte.startswith("Vérifié sur <titre-page-factice> le ")
     assert "2026" in texte and texte.endswith(": concordant")
     assert page.evaluate("document.activeElement.classList.contains('verification-resultat')")
-    page.wait_for_function(
-        "() => document.getElementById('annonces').textContent.endsWith(': concordant')"
-    )
-    assert not bouton.is_disabled()
+    assert bouton.get_attribute("aria-busy") is None
+    assert not page.locator("#annonces").inner_text().endswith(": concordant")  # le focus suffit
     page.click("#bouton-sources")
     cartes = page.locator("#sources-corps .source-card")
     assert cartes.count() == 2
     meta = cartes.nth(1).locator(".source-meta").inner_text()
     assert meta.startswith("Vérifiée en ligne · Consultée le ")
     assert cartes.nth(1).locator(".source-extrait").text_content() == "<extrait-page-factice>"
+
+
+def test_focus_ailleurs_ni_deplace_ni_vole_et_annonce_une_fois(page) -> None:
+    _poser(page, _flux(SOURCE_INDEX))
+    page.click("#vue-Q .verification button")
+    page.focus("#saisie")
+    _liberer(page, [_verdict("concordant")])
+    page.wait_for_function(
+        "() => document.getElementById('annonces').textContent.endsWith(': concordant')"
+    )
+    assert page.evaluate("document.activeElement.id") == "saisie"
+
+
+def test_clics_repetes_une_seule_verification_puis_delai_de_30_s(page) -> None:
+    _poser(page, _flux(SOURCE_INDEX))
+    bouton = page.locator("#vue-Q .verification button")
+    clic = "() => document.querySelector('#vue-Q .verification button').click()"
+    page.evaluate(clic)
+    page.evaluate(clic)  # pendant l'attente : ignoré
+    nb = "() => window.__appels.filter((a) => a[0] === 'verification.verifier').length"
+    assert page.evaluate(nb) == 1
+    _liberer(page, [_verdict("concordant")])
+    page.wait_for_selector(".verification-concordant")
+    page.evaluate(clic)  # moins de 30 s après : ignoré
+    assert page.evaluate(nb) == 1
+    assert bouton.get_attribute("aria-disabled") == "true"
+    page.evaluate("() => { const d = Date.now(); Date.now = () => d + 31000; }")
+    page.evaluate(clic)
+    assert page.evaluate(nb) == 2
+
+
+def test_generation_en_cours_message_dedie_et_reessai_immediat(page) -> None:
+    _poser(page, _flux(SOURCE_INDEX))
+    page.click("#vue-Q .verification button")
+    page.evaluate("() => window.__liberer({ ok: false, erreur: { code: 'generation-en-cours' } })")
+    zone = page.locator("#vue-Q .verification-resultat.callout-warning")
+    zone.wait_for()
+    assert zone.inner_text() == "Une réponse est en cours : réessayez à la fin de celle-ci."
+    assert page.locator("#vue-Q .verification button").get_attribute("aria-disabled") is None
+
+
+def test_reponse_trop_longue_message_dedie_sans_appel_au_pont(page) -> None:
+    _poser(page, _flux(SOURCE_INDEX, texte="a" * 20001 + " [1]"))
+    page.click("#vue-Q .verification button")
+    zone = page.locator("#vue-Q .verification-resultat.callout-warning")
+    zone.wait_for()
+    assert zone.inner_text() == "Cette réponse est trop longue pour être vérifiée en ligne."
+    assert not any(a[0] == "verification.verifier" for a in page.evaluate("window.__appels"))
+
+
+def test_la_page_verifiee_n_entre_pas_dans_l_historique(page) -> None:
+    page.evaluate(
+        "() => { window.__tours = []; window.slmsp.bus.abonner('conversation:tours',"
+        " (c) => window.__tours.push(c.tours.map((t) => t.sources.map((s) => s.origine)))); }"
+    )
+    _poser(page, _flux(SOURCE_INDEX))
+    page.click("#vue-Q .verification button")
+    _liberer(page, [_verdict("concordant"), {"type": "sources", "sources": [PAGE]}])
+    page.wait_for_selector(".verification-concordant")
+    page.click("#bouton-sources")
+    assert page.locator("#sources-corps .source-card").count() == 2  # visible dans le panneau
+    page.fill("#saisie", "<question-factice-2>")  # le prochain `fin` republie tous les tours
+    page.keyboard.press("Enter")
+    page.wait_for_function("() => window.__tours.length >= 2")
+    dernier = page.evaluate("window.__tours.at(-1)")
+    assert dernier[0] == ["index"]  # premier tour : sans la page vérifiée
+    assert all(
+        "verification" not in origines
+        for tour in page.evaluate("window.__tours")
+        for origines in tour
+    )
 
 
 def test_difference_dans_un_callout_avec_extrait(page) -> None:
@@ -207,7 +280,9 @@ def test_indisponible_n_empeche_pas_de_continuer(page) -> None:
     zone.wait_for()
     assert zone.inner_text() == "<phrase-indisponible-factice>"
     assert page.is_enabled("#saisie")
-    assert page.locator("#vue-Q .verification button").is_enabled()
+    assert (
+        page.locator("#vue-Q .verification button").get_attribute("aria-disabled") == "true"
+    )  # délai 30 s
 
 
 def test_refus_du_pont_rend_un_message_sans_bloquer(page) -> None:

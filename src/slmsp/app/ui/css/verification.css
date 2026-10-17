@@ -32,3 +32,8 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+
+.verification button[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: default;
+}

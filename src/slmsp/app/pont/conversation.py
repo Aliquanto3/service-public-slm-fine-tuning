@@ -55,6 +55,11 @@ class Conversation:
     def _actif(self) -> bool:
         return self._courant is not None
 
+    def generation_en_cours(self) -> bool:
+        """Vrai tant qu'une réponse se génère (la vérification FR-12 attend, story 13.6)."""
+        with self._verrou:
+            return self._actif()
+
     def _emettre(self, arret: threading.Event, lot: list[dict[str, Any]]) -> None:
         """Pousse `lot` si la génération n'est pas arrêtée ; `Fin`/`Erreur` libère l'état."""
         with self._envoi:

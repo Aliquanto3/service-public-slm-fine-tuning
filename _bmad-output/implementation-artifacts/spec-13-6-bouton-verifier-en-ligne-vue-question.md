@@ -34,7 +34,8 @@ deferred:
 - Pas de bouton : hors ligne (y compris forcé), Mode inconnu, réponse en cours, interrompue ou en échec, aucune source de l'Index citée par `[n]`.
 - Clic : bouton désactivé (`aria-busy`), encart `role="status"` « Vérification en cours… », puis verdict. Si le Mode passe hors ligne pendant l'attente, tout est retiré et le résultat tardif est ignoré. Une réponse régénérée efface le résultat.
 - `concordant` : « Vérifié sur [titre] le [date] : concordant ». `difference` : callout-warning « Différence relevée : [phrase] » (phrase = libellé fixe côté Harnais) avec l'extrait dans un `details`. `indisponible` : callout-warning avec la phrase fixe. Refus ou exception du pont : callout-warning « La vérification n'a pas pu être lancée. » Aucun cas ne bloque la saisie.
-- Accessibilité : verdict annoncé par la région `aria-live` du socle, focus placé sur l'encart (`tabindex=-1`, anneau de focus visible).
+- Accessibilité : bouton `aria-disabled` (pas `disabled`) pendant l'attente, donc le focus clavier reste ; au verdict, le focus passe sur l'encart (`tabindex=-1`) seulement s'il était sur le bouton, sinon le verdict est annoncé une fois par la région `aria-live` du socle.
+- Garde-fous : une vérification à la fois par réponse (interface) et au pont (`verification-en-cours`) ; 30 s minimum avant de revérifier la même réponse ; réponse de plus de 20 000 caractères : message dédié sans appel ; refus du pont `generation-en-cours` tant qu'une réponse se génère (message dédié, réessai immédiat). Le Mode est contrôlé à l'ouverture de la requête : un passage en hors ligne forcé pendant une vérification déjà partie ne l'interrompt pas (délai et taille bornés), l'interface en ignore le résultat.
 - Tout texte passe par `textContent` ; aucun `innerHTML` (test dédié et test d'un contenu piégé).
 
 ## Auto Run Result
@@ -52,3 +53,19 @@ deferred:
 - **À confirmer par Anaël :** une différence est signalée par un callout-warning (pas de style danger), sans icône ; la concordance par un encart à filet vert.
 - **À confirmer par Anaël :** la page vérifiée n'entre pas dans l'Historique enregistré.
 - Le verdict réel avec le Modèle embarqué n'est pas mesuré (faux LLM, aucun réseau).
+
+## Revue
+
+Second avis (Haiku) puis relecture Opus. Pont, interface et câblage relus ; tests Python et `ui` exécutés.
+
+| # | Sévérité | Source | Statut | Motif |
+|---|----------|--------|--------|-------|
+| 1 | medium | second avis | corrigé | `publierTours` filtre l'origine `verification` : la page reste dans le panneau Sources, jamais dans l'Historique. Test `ui` : le tour enregistré au `fin` suivant n'a que `index`. |
+| 2 | medium | second avis | corrigé | `tests/app/test_pont_verification.py` : bornes (20 000 caractères, 100 sources, types), une à la fois, verrou relâché après exception ; `test_principal.py` : `lancer()` avec le vrai `Verificateur`, la vraie `Passerelle` et un transport HTTP factice (GET de l'URL citée seulement, URL hors Index sans requête). |
+| 3 | low | second avis | corrigé | `aria-disabled` au lieu de `disabled` ; focus déplacé seulement s'il était sur le bouton, sinon annonce unique. |
+| 4 | low | second avis | corrigé | Une vérification à la fois (interface et pont) ; 30 s avant de revérifier (`DELAI_REVERIFICATION_MS`), levé tout de suite si rien n'a été consulté (échec du pont). |
+| 5 | low | second avis | corrigé | Garde à 20 000 caractères côté interface, message dédié, aucun appel au pont. |
+| 6 | low | second avis | documenté | Interrompre une requête partie impose un canal d'annulation dans la passerelle (appel bloquant dans un fil du pont) : hors périmètre. Délai et taille bornés ; le résultat tardif est ignoré par l'interface ; documenté dans le pont et la spec. |
+| 7 | low | second avis | corrigé | Refus `generation-en-cours` si une génération est active (`Conversation.generation_en_cours`). Reste une course théorique si l'Agent envoie une question pendant une vérification déjà partie ; reporté, voir ci-dessous. |
+| 8 | low | revue Opus | reporté | Course génération/vérification : à mesurer avec le Modèle embarqué réel (le serveur llama est-il réentrant ?) ; si non, faire refuser `envoyer` pendant une vérification. Vérification à faire avec le GPU. |
+
