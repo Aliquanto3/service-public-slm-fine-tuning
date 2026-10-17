@@ -3,12 +3,12 @@
 import { monterConversation } from "../composants/conversation.js";
 
 // Textes d'interface de l'écran « Question vide » (UX-DR19). Ce ne sont pas des données
-// d'entraînement (D1). Le premier vient d'EXPERIENCE.md ; les deux autres sont des emplacements
-// à faire valider par Anaël (voir la section « À confirmer » de la spec 12.7).
+// d'entraînement (D1). Le premier vient d'EXPERIENCE.md ; les deux autres sont des questions
+// publiques d'AgentPublic/service-public, hors Jeu d'évaluation (provenance : spec 12.7).
 export const EXEMPLES = [
   "Quelles pièces pour une demande d'APA ?",
-  "<exemple-à-valider-2>",
-  "<exemple-à-valider-3>",
+  "Peut-on conserver son logement social en cas d'augmentation de revenus ?",
+  "Quelles questions d'urbanisme se poser avant de construire une maison ?",
 ];
 
 /**

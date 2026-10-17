@@ -93,6 +93,6 @@ def test_pas_d_avertissement_si_prenoms_presents():
     assert "AVERTISSEMENT" not in apercu(export)
 
 
-def test_avertissement_avec_fichier_embarque_vide():
-    """Le dépôt ne contient aujourd'hui que des commentaires : l'avertissement doit apparaître."""
-    assert AVERTISSEMENT_PRENOMS in construire_export(FauxStockage()).avertissements
+def test_pas_d_avertissement_avec_fichier_embarque():
+    """`prenoms.txt` est généré par `slmsp fetch prenoms` : la détection est active."""
+    assert AVERTISSEMENT_PRENOMS not in construire_export(FauxStockage()).avertissements

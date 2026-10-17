@@ -8,3 +8,15 @@ url = "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-
 sha256 = "9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732"
 taille = 10592232
 dossier = "inno-setup" # sous vendor/ (ou SLMSP_VENDOR_DIR)
+
+# Fichier des prénoms de l'INSEE (story 12.3, décision d'Anaël du 2026-10-17) : fichier national
+# 1900-2022 (millésime 2023), Licence Ouverte 2.0 (fiche data.gouv 5bf42c958b4c4144b0110ce8,
+# page INSEE 7633685). SHA-256 calculé à la première lecture (2026-10-17) : l'INSEE n'en publie pas.
+# `slmsp fetch prenoms` en tire `src/slmsp/app/ressources/prenoms.txt` (au moins 20 naissances
+# cumulées, au moins 3 lettres).
+[prenoms-insee]
+url = "https://www.insee.fr/fr/statistiques/fichier/7633685/nat2022_csv.zip"
+sha256 = "c13b45e770c684b3c8531f28b6e3eae62194dc6dc86205fa17e4c6447b01b81d"
+taille = 2571727
+membre = "nat2022.csv"
+licence = "etalab-2.0"

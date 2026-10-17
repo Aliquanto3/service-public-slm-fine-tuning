@@ -1,4 +1,4 @@
-"""`slmsp fetch {llamacpp, sources, modeles, benchmarks}` : téléchargeur unique (AD-28).
+"""`slmsp fetch {llamacpp, sources, modeles, benchmarks, prenoms}` : téléchargeur unique (AD-28).
 
 Chaque exécution de `llamacpp`, `sources` ou `modeles` ouvre un run `fetch` (slug = la
 sous-commande) sous `<racine>/runs/fetch/<run_id>/`, y inscrit `fichiers.jsonl` (une ligne
@@ -31,7 +31,8 @@ from slmsp import net
 from slmsp.core.artefacts import Run, nouveau_run
 from slmsp.core.config import dossier_modeles, racine_projet
 from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide
-from slmsp.fetch import benchmarks, llamacpp, modeles, sources, verifications
+from slmsp.core.prenoms_insee import OCCURRENCES_MINIMALES, prenoms_depuis_csv_insee
+from slmsp.fetch import benchmarks, llamacpp, modeles, prenoms, sources, verifications
 from slmsp.fetch import config as config_fetch
 from slmsp.fetch.hf import Telechargeur, client_hf, jeton_hf, preparer_hf
 
@@ -102,6 +103,16 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     p.add_argument("noms", nargs="*", metavar="BENCHMARK", help="benchmarks (défaut : tous)")
     p.set_defaults(func=_benchmarks)
+
+    p = cibles.add_parser(
+        "prenoms",
+        parents=[commun],
+        help="fichier des prénoms de l'INSEE, d'où `app/ressources/prenoms.txt`",
+    )
+    p.add_argument(
+        "--sortie", type=Path, default=None, help="fichier généré (défaut : app/ressources)"
+    )
+    p.set_defaults(func=_prenoms)
 
 
 def _racine(args: argparse.Namespace) -> Path:
@@ -308,5 +319,30 @@ def _benchmarks(args: argparse.Namespace) -> int:
         },
         entrees={"config/fetch.toml": dossier / "fetch.toml"},
         ouvrir_client=_client_hf,
+        pilote=pilote,
+    )
+
+
+def _prenoms(args: argparse.Namespace) -> int:
+    config = prenoms.charger_config_prenoms()
+    sortie = args.sortie if args.sortie is not None else prenoms.FICHIER_PRENOMS
+
+    def pilote(telechargeur: Telechargeur, consigner: Any, _run: Run) -> None:
+        _resultat, nombre = prenoms.executer(
+            telechargeur,
+            config,
+            _racine(args),
+            sortie=sortie,
+            extraire=prenoms_depuis_csv_insee,
+            minimum=OCCURRENCES_MINIMALES,
+            consigner=consigner,
+        )
+        print(f"{nombre} prénoms retenus")
+
+    return _executer(
+        args,
+        config_run={"sous_commande": "prenoms", "url": config.url, "sha256": config.sha256},
+        entrees={"config/outillage.toml": config_fetch.dossier_config() / "outillage.toml"},
+        ouvrir_client=_client_github,
         pilote=pilote,
     )

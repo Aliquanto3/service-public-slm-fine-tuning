@@ -38,7 +38,11 @@ REVISIONS_RELEVEES = {
     "esoria3/french_simplified": "baebde461d0fd28baba32671a9af16826c55ccee",
     "OpenLLM-France/Claire-Dialogue-French-0.1": "2d003b86aff5b622533ecfea29ada554f3e6db03",
 }
-SOURCES_SANS_REVISION = {"mistral/reponses-generateur", "data.gouv/reponses-outils-mcp"}
+SOURCES_SANS_REVISION = {
+    "mistral/reponses-generateur",
+    "data.gouv/reponses-outils-mcp",
+    "insee/fichier-des-prenoms",
+}
 
 
 # --- Fixtures -----------------------------------------------------------------------------

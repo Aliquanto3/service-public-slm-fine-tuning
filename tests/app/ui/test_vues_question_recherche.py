@@ -481,6 +481,7 @@ def test_question_vide_trois_exemples_cliquables(page) -> None:
     exemples = page.locator("#vue-Q .exemple")
     assert exemples.count() == 3
     assert exemples.nth(0).inner_text() == "Quelles pièces pour une demande d'APA ?"
+    assert "<exemple-à-valider" not in " ".join(exemples.all_inner_texts())
     exemples.nth(0).click()
     assert page.input_value("#saisie") == "Quelles pièces pour une demande d'APA ?"
     assert page.evaluate("document.activeElement.id") == "saisie"
