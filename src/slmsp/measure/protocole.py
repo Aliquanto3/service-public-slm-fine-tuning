@@ -26,6 +26,7 @@ from slmsp.core.config import racine_ecriture
 from slmsp.core.evenements import Evenement
 from slmsp.core.schemas.mesure import ResultatMesure
 from slmsp.core.var import verrou_gpu
+from slmsp.harness.service import CODE_CONTEXTE
 from slmsp.measure.config import ConfigMesures
 from slmsp.measure.debit import MesureEchouee, MesureQuestion, mediane_p95, mesurer_question
 from slmsp.measure.ram import EchantillonneurRam
@@ -60,18 +61,23 @@ class ContexteInsuffisant(MesureEchouee):
 
 
 def est_erreur_de_contexte(message: str) -> bool:
-    """Le message d'erreur du serveur signale-t-il un dépassement de contexte ?
+    """Le message d'erreur signale-t-il un dépassement de contexte ?
 
-    Heuristique unique, sur le texte de llama-server (« exceeds the available context size »,
-    « context size exceeded »…) : sous-chaîne `context` insensible à la casse. Le serveur ne
-    donne pas de code structuré ; en cas de doute la mesure échoue quand même (erreur d'origine
-    relancée), seul le message est moins explicite.
+    Cas nominal (correctif F2) : l'évènement `Erreur` du Harnais porte le code
+    `contexte-depasse` (`CODE_CONTEXTE`), que `mesurer_question` place en tête du message.
+    Repli : sous-chaîne `context` insensible à la casse, sur un texte brut de llama-server
+    (« exceeds the available context size »…). En cas de doute la mesure échoue quand même
+    (erreur d'origine relancée), seul le message est moins explicite.
     """
-    return "context" in message.lower()
+    return message.startswith(CODE_CONTEXTE) or "context" in message.lower()
 
 
 def _verifier_contexte(mesure: MesureQuestion, contexte: int) -> bool:
     """Refuse si le prompt (ou prompt + réponse) remplit le contexte : risque de troncature.
+
+    Le Harnais borne le prompt à `contexte − max_tokens` et la réponse à `max_tokens`
+    (correctif F2) : la somme ne dépasse donc pas le contexte. L'égalité, ambiguë (réponse
+    coupée par `max_tokens` ou par le contexte), reste refusée.
 
     Retourne False si le serveur n'a pas renvoyé `usage.prompt_tokens` : la vérification n'a
     alors pas pu se faire (à signaler, jamais à taire).
@@ -110,13 +116,18 @@ def mesurer(
     index_version: str | None = None,
     contexte: int | None = None,
     verifier_contexte: bool = False,
+    max_tokens: int | None = None,
     echantillonneur: Callable[..., EchantillonneurRam] = EchantillonneurRam,
     horloge: Callable[[], float] = time.perf_counter,
 ) -> ResultatMesure:
     """Mesure l'Assistant servi par `repondre(question)` et écrit le run `h-ram`.
 
-    `contexte` est le contexte effectif (consigné). `verifier_contexte` (contexte imposé par
-    l'appelant) refuse un prompt qui ne tient pas ; sinon aucune vérification n'est ajoutée.
+    `contexte` est le contexte effectif (consigné). `max_tokens` est le plafond de sortie
+    effectif des Questions (consigné) : depuis le correctif F2 (`generation.max_tokens`), les
+    réponses sont plafonnées, ce qui rend débit et tokens non comparables aux runs antérieurs
+    sans plafond. Le délai au premier token compte aussi les mesures du budget de prompt.
+    `verifier_contexte` (contexte imposé par l'appelant) refuse un prompt qui ne tient pas ;
+    sinon aucune vérification n'est ajoutée.
     En cas d'erreur, le run est terminé `partiel-erreur` et l'erreur relancée.
     """
     racine = (Path(racine) if racine is not None else racine_ecriture()).resolve()
@@ -132,6 +143,8 @@ def mesurer(
     }
     if contexte is not None:
         parametres["contexte"] = contexte
+    if max_tokens is not None:
+        parametres["max_tokens"] = max_tokens
     seuils = config.seuils.model_dump()
     run = nouveau_run(
         "measure",

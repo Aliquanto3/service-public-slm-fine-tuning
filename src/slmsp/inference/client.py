@@ -29,6 +29,7 @@ Le flux se termine par un seul `Fin` : `terminee` (`finish_reason` `stop`/`tool_
 from __future__ import annotations
 
 import json
+import re
 import time
 import uuid
 from collections.abc import Iterator, Mapping, Sequence
@@ -40,6 +41,7 @@ from slmsp.core.balises import (
     PROTOCOLE_BALISES,
     messages_balises,
 )
+from slmsp.core.erreurs import ContexteDepasse
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.inference.processus import ErreurInference
 from slmsp.net import client_local
@@ -51,6 +53,11 @@ PROTOCOLES: Final = ("natif", "json-generique", PROTOCOLE_BALISES)
 CLES_USAGE: Final = ("prompt_tokens", "completion_tokens", "total_tokens")
 TAILLE_EXTRAIT: Final = 500
 """Caractères du corps d'une réponse HTTP en erreur cités dans `ErreurInference`."""
+TYPE_CONTEXTE: Final = "exceed_context_size_error"
+"""`error.type` structuré d'un refus de llama-server pour dépassement de contexte."""
+MOTIF_CONTEXTE: Final = re.compile(r"\bexceeds the available context size\b")
+"""Message de ce refus (« the request exceeds the available context size, try increasing
+it »), pour une erreur sans `type` structuré."""
 
 Evenement = Jeton | AppelOutil | AppelNonConforme | Fin
 
@@ -314,6 +321,38 @@ class LecteurBalises:
         return []
 
 
+class ContexteServeurDepasse(ErreurInference, ContexteDepasse):
+    """llama-server refuse la requête : le prompt dépasse son contexte (correctif F2)."""
+
+
+def est_depassement_contexte(erreur: object) -> bool:
+    """L'erreur de llama-server signale-t-elle un dépassement de contexte ?
+
+    `erreur` est l'objet `error` (ou le corps JSON `{"error": {...}}`, ou son texte) :
+    reconnu par `type == TYPE_CONTEXTE`, ou à défaut de `type` par `MOTIF_CONTEXTE` dans
+    le message. Un texte non JSON n'est reconnu que par `MOTIF_CONTEXTE`.
+    """
+    if isinstance(erreur, str):
+        try:
+            erreur = json.loads(erreur)
+        except ValueError:
+            return MOTIF_CONTEXTE.search(erreur) is not None
+    if isinstance(erreur, Mapping) and isinstance(erreur.get("error"), Mapping):
+        erreur = erreur["error"]
+    if not isinstance(erreur, Mapping):
+        return False
+    if erreur.get("type") is not None:
+        return erreur.get("type") == TYPE_CONTEXTE
+    message = erreur.get("message")
+    return isinstance(message, str) and MOTIF_CONTEXTE.search(message) is not None
+
+
+def _erreur_serveur(message: str, erreur: object) -> ErreurInference:
+    """`ContexteServeurDepasse` si `erreur` signale un dépassement de contexte."""
+    classe = ContexteServeurDepasse if est_depassement_contexte(erreur) else ErreurInference
+    return classe(message)
+
+
 class ClientLlama:
     """`LlmPort` d'un `llama-server` de génération sur `127.0.0.1:<port>`.
 
@@ -480,9 +519,10 @@ class ClientLlama:
         with self._http.stream("POST", self._base + "/v1/chat/completions", json=corps) as reponse:
             if reponse.status_code != 200:
                 reponse.read()
-                raise ErreurInference(
+                raise _erreur_serveur(
                     f"POST /v1/chat/completions : HTTP {reponse.status_code} : "
-                    f"{reponse.text[:TAILLE_EXTRAIT]}"
+                    f"{reponse.text[:TAILLE_EXTRAIT]}",
+                    reponse.text,
                 )
             for ligne in self._lignes(reponse):
                 if not ligne.startswith("data:"):
@@ -498,9 +538,10 @@ class ClientLlama:
                 if not isinstance(morceau, dict):
                     continue
                 if "error" in morceau:
-                    raise ErreurInference(
+                    raise _erreur_serveur(
                         f"/v1/chat/completions : erreur en flux : "
-                        f"{json.dumps(morceau['error'], ensure_ascii=False)[:TAILLE_EXTRAIT]}"
+                        f"{json.dumps(morceau['error'], ensure_ascii=False)[:TAILLE_EXTRAIT]}",
+                        morceau["error"],
                     )
                 if isinstance(morceau.get("usage"), dict):
                     usage = {
@@ -558,10 +599,12 @@ class ClientLlama:
 
 __all__ = [
     "ClientLlama",
+    "ContexteServeurDepasse",
     "LecteurBalises",
     "OPTIONS_AUTORISEES",
     "PROTOCOLES",
     "appel_canonique",
+    "est_depassement_contexte",
     "messages_balises",
     "schema_json_generique",
 ]

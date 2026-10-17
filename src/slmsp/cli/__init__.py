@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import logging
 import sys
 from collections.abc import Callable, Iterable, Sequence
+from typing import Any
 
 from slmsp.core.config import appliquer_environnement_impose
 from slmsp.core.erreurs import CodeSortie, SlmspError
@@ -131,9 +133,37 @@ def _signaler(exc: SlmspError) -> int:
     return int(exc.code_sortie)
 
 
+class _StderrCourant(logging.StreamHandler):  # type: ignore[type-arg]
+    """Écrit sur le `sys.stderr` courant (remplacé par les tests ou une redirection)."""
+
+    @property  # type: ignore[override]
+    def stream(self) -> Any:
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, _valeur: Any) -> None:
+        pass
+
+
+def _journal_harnais() -> None:
+    """Logger `slmsp.harness` au niveau WARNING sur stderr (cause des erreurs du Harnais).
+
+    L'application configure le sien (`app.principal`) ; la CLI n'ajoute qu'un gestionnaire,
+    une seule fois, sans toucher au logger racine.
+    """
+    journal = logging.getLogger("slmsp.harness")
+    if any(isinstance(g, _StderrCourant) for g in journal.handlers):
+        return
+    gestionnaire = _StderrCourant()
+    gestionnaire.setLevel(logging.WARNING)
+    gestionnaire.setFormatter(logging.Formatter("slmsp : %(name)s : %(levelname)s : %(message)s"))
+    journal.addHandler(gestionnaire)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Exécute `slmsp` et renvoie le code de sortie."""
     _sortie_utf8()
+    _journal_harnais()
     appliquer_environnement_impose()
     arguments = list(sys.argv[1:] if argv is None else argv)
     charger = arguments[:1] if arguments and arguments[0] in SOUS_COMMANDES else []

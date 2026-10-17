@@ -341,3 +341,58 @@ def test_composants_binaires_des_deux_versions(tmp_path: Path, monkeypatch) -> N
     }
     une = _composants([serveur("generation", "b1"), embedding], tmp_path, None)
     assert {k for k in une if k.startswith("binaires-")} == {"binaires-cpu"}
+
+
+def test_erreur_contexte_depasse_du_harnais_est_traduite(tmp_path: Path) -> None:
+    from slmsp.core.evenements import Erreur
+    from slmsp.harness.service import CODE_CONTEXTE, MESSAGE_CONTEXTE
+
+    def repondre(_q: str):
+        yield Erreur(code=CODE_CONTEXTE, message=MESSAGE_CONTEXTE)
+
+    with pytest.raises(ContexteInsuffisant, match="contexte 2048 trop petit"):
+        mesurer(repondre, _config(), modele=MODELE, racine=tmp_path, contexte=2048,
+                verifier_contexte=True, echantillonneur=RamFactice())  # fmt: skip
+
+
+def test_erreur_interne_n_est_pas_une_erreur_de_contexte() -> None:
+    from slmsp.harness.service import CODE_CONTEXTE, CODE_ERREUR, MESSAGE_CONTEXTE, MESSAGE_ERREUR
+
+    assert est_erreur_de_contexte(f"{CODE_CONTEXTE} : {MESSAGE_CONTEXTE}")
+    assert not est_erreur_de_contexte(f"{CODE_ERREUR} : {MESSAGE_ERREUR}")
+
+
+def test_max_tokens_effectif_consigne(tmp_path: Path) -> None:
+    resultat = mesurer(
+        _repondre(100), _config(), modele=MODELE, racine=tmp_path, contexte=2048,
+        max_tokens=1024, echantillonneur=RamFactice(),
+    )  # fmt: skip
+    assert resultat.parametres["max_tokens"] == 1024
+    sans = mesurer(
+        _repondre(100), _config(), modele=MODELE, racine=tmp_path / "b",
+        echantillonneur=RamFactice(),
+    )  # fmt: skip
+    assert "max_tokens" not in sans.parametres
+
+
+def test_cli_consigne_le_max_tokens_du_service(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Service:
+        def max_tokens_par_defaut(self, _fiche: object) -> int:
+            return 777
+
+        def repondre(self, _fiche: object, _messages: object):
+            yield from _repondre(100)("")
+
+    @contextmanager
+    def faux_assembler(modele: str, fiche: object, **kw: Any):
+        yield SimpleNamespace(service=Service(), serveurs=[])
+
+    monkeypatch.setattr("slmsp.cli._assemblage.assembler", faux_assembler)
+    monkeypatch.setattr("slmsp.measure.protocole.EchantillonneurRam", RamFactice())
+    monkeypatch.setattr("slmsp.cli.measure._composants", lambda *a, **k: {})
+    assert main(["measure", "run", "--modele", MODELE, "--racine", str(tmp_path)]) == 0
+    run = next((tmp_path / "runs" / "measure").iterdir())
+    resultat = json.loads((run / "resultat.json").read_text(encoding="utf-8"))
+    assert resultat["parametres"]["max_tokens"] == 777

@@ -3,7 +3,8 @@
 Ordre du flux : `Jeton*`, `Sources` (passages cités par `[n]`, numérotés comme dans le
 texte ; vide sans renvoi ni passage pertinent), `Avertissement(avis-juridique)`, puis
 `Fin` avec `urls_inventees`. Sans passage au-dessus du seuil, le prompt le dit
-(`AUCUN_PASSAGE`) et ce n'est pas une erreur.
+(`AUCUN_PASSAGE`) et ce n'est pas une erreur. Les passages sont bornés au contexte du Modèle
+par `harness.budget.borner_passages` (correctif F2).
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 from slmsp.core.evenements import Evenement, Sources
+from slmsp.harness.budget import borner_passages
 from slmsp.harness.citations import sources_citees, urls_inventees
 from slmsp.harness.prompts import construire_messages
 from slmsp.harness.taches import ContexteTache, avertissement, diffuser
@@ -23,7 +25,11 @@ def traiter(ctx: ContexteTache) -> Iterator[Evenement]:
     question = ctx.entree
     if not isinstance(question, str):
         raise TypeError("Question : entrée texte attendue")
-    passages = ctx.recherche.rechercher(question)
+    passages = borner_passages(
+        ctx,
+        ctx.recherche.rechercher(question),
+        lambda liste: ctx.messages_pour(construire_messages(ctx.tache, question, liste)),
+    )
     messages = ctx.messages_pour(construire_messages(ctx.tache, question, passages))
     texte, fin = yield from diffuser(ctx, messages)
     yield Sources(sources=sources_citees(texte, passages))
