@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import sys
 from collections.abc import Iterator, Mapping
@@ -269,20 +270,76 @@ def verifier_cache_hf(config: BenchmarkConfig) -> None:
 INDICES_HORS_LIGNE = ("offline", "couldn't reach", "cannot find", "connectionerror", "not found")
 
 
+LIGNE_ERREUR = re.compile(
+    r"traceback|error|exception|\b[45]\d\d\b|killed|out of memory|oom|fatal|failed|abort",
+    re.IGNORECASE,
+)
+LIGNE_PROGRESSION = re.compile(r"\d+%\||\d+/\d+ \[|it/s\]|s/it\]")
+MAX_LIGNES_MOTIF = 25
+MAX_CARACTERES_MOTIF = 2500
+
+
+def ecrire_journal(dossier: Path, fin: Any) -> Path:
+    """Écrit stdout et stderr complets du sous-processus (`stdout.log`, `stderr.log`)."""
+    dossier.mkdir(parents=True, exist_ok=True)
+    (dossier / "stdout.log").write_text(fin.stdout or "", encoding="utf-8")
+    journal = dossier / "stderr.log"
+    journal.write_text(fin.stderr or "", encoding="utf-8")
+    return journal
+
+
+def extraire_erreurs(stderr: str, stdout: str = "") -> str:
+    """Lignes d'erreur réelles (trace Python, Error, HTTP 4xx/5xx) sans barres de progression.
+
+    Sans ligne d'erreur, repli sur les dernières lignes hors progression, puis sur la fin brute.
+    """
+    lignes: list[str] = []
+    for brut in (stderr + "\n" + stdout).replace("\r", "\n").splitlines():
+        ligne = brut.strip()
+        if ligne and not LIGNE_PROGRESSION.search(ligne):
+            lignes.append(ligne)
+    retenues: list[str] = []
+    en_trace = False
+    for ligne in lignes:
+        if ligne.startswith("Traceback"):
+            en_trace = True
+            retenues.append(ligne)
+        elif en_trace:
+            retenues.append(ligne)
+            if not ligne.startswith(("File ", "raise ")) and LIGNE_ERREUR.search(ligne):
+                en_trace = False
+        elif LIGNE_ERREUR.search(ligne):
+            retenues.append(ligne)
+    choisies = (retenues or lignes)[-MAX_LIGNES_MOTIF:]
+    texte = "\n".join(dict.fromkeys(choisies))
+    if not texte:
+        texte = (stderr or stdout or "").strip()
+    return texte[-MAX_CARACTERES_MOTIF:]
+
+
 def _lancer(
     commande: list[str], dossier_sortie: Path, env: Mapping[str, str], config: BenchmarkConfig
 ) -> SortieMoteur:
     dossier_sortie.mkdir(parents=True, exist_ok=True)
     fin = lancer_outil(commande, env_supplementaire=env)
+    journal = ecrire_journal(dossier_sortie, fin)
     if fin.returncode != 0:
-        queue = (fin.stderr or fin.stdout or "").strip()[-600:]
+        queue = extraire_erreurs(fin.stderr or "", fin.stdout or "")
         indice = ""
+        if not LIGNE_ERREUR.search(queue):
+            indice = (
+                " [aucune ligne d'erreur dans stderr : sortie sans trace, donc processus tué de "
+                "l'extérieur (garde mémoire, mémoire saturée) plutôt qu'erreur lm-eval]"
+            )
         if any(m in queue.lower() for m in INDICES_HORS_LIGNE) and not config.jeux:
             indice = (
                 " [jeu ou ressource introuvable hors ligne : ce benchmark n'épingle aucun jeu "
                 "(`[[jeux]]`), lm_eval lit le cache HF local ; le remplir avant (HF_HOME)]"
             )
-        raise LmEvalEchoue(f"lm_eval a échoué (code {fin.returncode}) : {queue}{indice}")
+        raise LmEvalEchoue(
+            f"lm_eval a échoué (code {fin.returncode}) : {queue}{indice} "
+            f"[journal complet : {journal}]"
+        )
     chemin = trouver_sortie(dossier_sortie)
     try:
         donnees = json.loads(chemin.read_text(encoding="utf-8"))
