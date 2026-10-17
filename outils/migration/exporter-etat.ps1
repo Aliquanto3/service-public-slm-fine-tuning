@@ -12,7 +12,7 @@ $memoire = Join-Path $env:USERPROFILE '.claude\projects\C--Users-Utilisateur-Doc
 
 # Aucun traitement ne doit écrire dans var pendant la copie (SQLite).
 $actifs = Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='llama-server.exe'" |
-    Where-Object { $_.CommandLine -match 'slmsp|lm_eval|llama-server' }
+    Where-Object { $_.CommandLine -and $_.CommandLine.Contains($depot) }
 if ($actifs) { throw "Traitements slmsp en cours ($($actifs.Count)) : attendre leur fin avant d'exporter." }
 
 function Copier([string]$source, [string]$cible, [string[]]$exclus = @()) {
