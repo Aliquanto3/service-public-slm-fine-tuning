@@ -693,7 +693,7 @@ def test_toml_modeles_octobre_particularites() -> None:
     assert minicpm.gguf_f16 is not None and minicpm.gguf_f16.precision == "f16"
 
 
-MODELES_MOINS_2B = ("eurollm-1.7b", "croissantllm-chat", "qwen3.5-0.8b")
+MODELES_MOINS_2B = ("eurollm-1.7b", "qwen3.5-0.8b")
 """Candidats de moins de 2B ajoutés le 2026-10-17 (hors CANDIDATS D4)."""
 
 
@@ -704,7 +704,7 @@ def test_toml_modeles_moins_2b(slug: str) -> None:
     assert set(config.sha256_fichiers) == set(config.fichiers)
     assert (config.cache_kv, config.reasoning) == ("f16", "off")
     assert config.gguf.fichier.lower().endswith("q4_k_m.gguf")
-    assert config.gguf.source == ("officielle" if slug == "croissantllm-chat" else "communautaire")
+    assert config.gguf.source == "communautaire"
     assert config.exclure_vision == (slug == "qwen3.5-0.8b")
     assert config.entrainable and not config.embedding
     assert config.lm_eval_batch_size == 2
@@ -714,9 +714,6 @@ def test_toml_modeles_moins_2b_particularites() -> None:
     euro = charger_config_modele("eurollm-1.7b")
     assert euro.contexte == 4096 and euro.chat_template_force
     assert euro.gguf_f16 is not None and euro.gguf_f16.precision == "f16"
-    croissant = charger_config_modele("croissantllm-chat")
-    assert croissant.contexte == 2048 and croissant.gguf_f16 is None
-    assert not croissant.chat_template_force
     qwen = charger_config_modele("qwen3.5-0.8b")
     assert qwen.contexte == 8192 and qwen.chat_template_force
     assert qwen.chat_template_kwargs == {"enable_thinking": False}

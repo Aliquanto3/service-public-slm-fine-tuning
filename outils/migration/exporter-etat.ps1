@@ -42,7 +42,7 @@ if (Test-Path (Join-Path $parent 'CLAUDE.md')) {
 if ($AvecModeles) {
     # Modèles de moins de 2B et embedding seulement (décision du 2026-10-17) ; le reste se
     # retélécharge avec `slmsp fetch modeles <slug>`.
-    foreach ($slug in 'bge-m3', 'bge-m3-f16', 'granite-4.0-1b', 'minicpm5-1b', 'qwen3.5-0.8b', 'eurollm-1.7b', 'croissantllm-chat') {
+    foreach ($slug in 'bge-m3', 'bge-m3-f16', 'granite-4.0-1b', 'minicpm5-1b', 'qwen3.5-0.8b', 'eurollm-1.7b') {
         Copier (Join-Path $depot "models\$slug") (Join-Path $Destination "depot\models\$slug")
     }
 }

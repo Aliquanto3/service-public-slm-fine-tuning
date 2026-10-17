@@ -134,7 +134,7 @@ Runs `fetch` : `20261017-061207-modeles-5969` (1B), `20261017-061650-modeles-6ca
 
 # Candidats < 2B (décision du 2026-10-17)
 
-**CroissantLLM (`croissantllm-chat`) est retiré des candidats** (décision d'Anaël du 2026-10-17) : sa licence MIT n'est pas admise en sortie (`ordre_permissivite` ne contient que `apache-2.0`) et son contexte natif de 2048 jetons est trop court pour le RAG de la Tâche Q. Son entrée de `config/publication.toml` est supprimée ; **restent à supprimer** `config/modeles/croissantllm-chat.toml`, son slug dans `MODELES_MOINS_2B` et ses assertions de `test_toml_modeles_moins_2b` et de `test_toml_modeles_moins_2b_particularites`, et la mention de `outils/migration/exporter-etat.ps1` (suppressions refusées à l'agent de revue par le contrôle de permissions ; le test `test_croissantllm_mit_sans_licence_de_sortie` cité plus bas a été retiré avant commit). Les runs `fetch` gardent la trace de son téléchargement et de ses contrôles ; les fichiers de `models/croissantllm-chat` sont laissés à l'orchestrateur. Les lignes qui le concernent ci-dessous restent comme trace.
+**CroissantLLM (`croissantllm-chat`) est retiré des candidats** (décision d'Anaël du 2026-10-17) : sa licence MIT n'est pas admise en sortie (`ordre_permissivite` ne contient que `apache-2.0`) et son contexte natif de 2048 jetons est trop court pour le RAG de la Tâche Q. Son entrée de `config/publication.toml` est supprimée, ainsi que sa fiche `config/modeles/croissantllm-chat.toml`, son slug et ses assertions dans `tests/fetch/test_verifications.py` et sa mention dans `outils/migration/exporter-etat.ps1` (retrait achevé par l'orchestrateur, les suppressions ayant été refusées à l'agent de revue par le contrôle de permissions). Les runs `fetch` gardent la trace de son téléchargement et de ses contrôles ; les fichiers de `models/croissantllm-chat` (5,8 Go) sont supprimés. Les lignes qui le concernent ci-dessous restent comme trace.
 
 Trois modèles de moins de 2B s'ajoutent, hors `CANDIDATS` (choix le plus réversible). Épinglage (révisions, SHA-256 et tailles) relevé dans l'API HF, puis **recalculé sur les fichiers de `models/`** : tous concordent.
 
@@ -168,7 +168,7 @@ Le contrôle `dense` n'a pas été modifié.
 - **Licences d'EuroLLM-1.7B et de Qwen3.5-0.8B non revérifiées** depuis l'épinglage (pas de réseau en revue) ; `verifie_le` absent, donc préparation refusée (« non relue ») jusqu'à la relecture d'Anaël.
 - La branche est rebasée sur main 2dc2293, qui contient F3 (champ `lm_eval_batch_size` du schéma) : le test lit `config.lm_eval_batch_size` par le schéma.
 - Les empreintes des fiches consignées dans `runs/fetch/20261017-184442-modeles-29f5/run.json` (et `20261017-185344-modeles-9f7d`) sont celles du WIP (commit 8379099 avant rebase, c7e31bc après), pas celles des fiches commitées : écarts limités à `lm_eval_batch_size`, aux commentaires, et au commentaire de contexte d'EuroLLM ajouté en revue ; révisions, SHA-256 et options servies identiques. Runs non modifiés (traces).
-- Tests : `test_toml_modeles_moins_2b` et `test_toml_modeles_moins_2b_particularites` dans `tests/fetch/test_verifications.py` ; `test_croissantllm_mit_sans_licence_de_sortie` dans `tests/publication/test_preparer.py`.
+- Tests : `test_toml_modeles_moins_2b` et `test_toml_modeles_moins_2b_particularites` dans `tests/fetch/test_verifications.py`.
 
 ## Revue
 Revue de c7e31bc et 9f459f5 (rebasés sur main 2dc2293), second avis Haiku puis Opus.
@@ -179,6 +179,6 @@ Revue de c7e31bc et 9f459f5 (rebasés sur main 2dc2293), second avis Haiku puis 
 - low, second avis, corrigé : contexte EuroLLM, commentaire et spec précisés (HF 4096, GGUF 8192, 4096 gardé), vérifié sur les GGUF de `models/`.
 - low, second avis, corrigé (commentaire) : `verifie_le` absent et licences non revérifiées, explicités dans `config/publication.toml` ; `verifie_le` non posé.
 - low, revue, sans objet (modèle retiré) : poids HF float32 de CroissantLLM contre « lm_eval sur HF bf16 » ; `lm_eval.py` charge de toute façon `dtype=bfloat16`.
-- low, revue, reporté : `outils/migration/exporter-etat.ps1` (ligne 45) copie encore `models\croissantllm-chat` ; inoffensif (`Copier` avertit si le dossier manque), à retirer avec le dossier.
+- low, revue, corrigé : `outils/migration/exporter-etat.ps1` (ligne 45) copie encore `models\croissantllm-chat`, retiré avec le dossier.
 - low, revue, vérifié : aucun consommateur ne suppose 8192 (`contexte` lu par fiche dans `serveur`, `measure`, `assemblage`) ; `test_version_llamacpp_par_modele`, qui parcourt toutes les fiches, passe.
 - Complexité : aucun constat (configuration et tests seulement).
