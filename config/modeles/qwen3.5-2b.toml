@@ -1,0 +1,66 @@
+# Qwen3.5 2B (post-entraîné, Apache 2.0, sans accès conditionnel) : candidat au fine-tuning,
+# ajouté par décision d'Anaël du 2026-10-17 (spec-modeles-octobre-2026). Révisions,
+# SHA-256 et tailles relevés le 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes
+# à l'inférence et à l'entraînement.
+# VLM à attention hybride (Gated DeltaNet `linear_attention` + `full_attention`, 3 pour 1) :
+# le contrôle `dense` de la story 8.1 le signale en échec (à confirmer par Anaël). Tour
+# vision exclue comme pour Ministral : aucun --mmproj, aucun poids vision entraîné.
+# GGUF communautaire réputé (unsloth) : Qwen ne publie pas de GGUF pour ce modèle.
+# Raisonnement : le template n'ouvre <think> que si enable_thinking vaut true ; il est
+# néanmoins forcé à false.
+
+schema_version = 1
+depot_hf = "Qwen/Qwen3.5-2B"
+revision = "15852e8c16360a2fea060d615a32b45270f8a8fc"
+fichiers = [
+    "chat_template.jinja",
+    "config.json",
+    "merges.txt",
+    "model.safetensors-00001-of-00001.safetensors",
+    "model.safetensors.index.json",
+    "preprocessor_config.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "video_preprocessor_config.json",
+    "vocab.json",
+]
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = { enable_thinking = false }
+exclure_vision = true
+# Non sondé (sonde H-TOOLS 8.2 à lancer) : natif par défaut.
+protocole_outils = "natif"
+# Template GGUF différent de celui du tokenizer HF (contrôle chat_template, run
+# fetch/20261017-052846-modeles-a55f) : le template HF, exporté sous
+# models/<slug>/chat_template.jinja, est imposé à llama-server.
+chat_template_force = true
+
+[sha256_fichiers]
+"chat_template.jinja" = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80" # 7 755 octets
+"config.json" = "ed1c1723241f23f7f4e23430759cbd7dcfb4103cbdfe052bfe7626b57c2615b4" # 2 908 octets
+"merges.txt" = "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d" # 3 353 259 octets
+"model.safetensors-00001-of-00001.safetensors" = "aa33250c4fc64891ddfaba3a314fd9542ea371843c387178b425fbcc5ed680b1" # 4 548 221 488 octets
+"model.safetensors.index.json" = "aca8afed9da75b0f050b408d270766fd77627f1af401e240f61c3b47d0db02f9" # 64 460 octets
+"preprocessor_config.json" = "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516" # 390 octets
+"tokenizer.json" = "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42" # 12 807 982 octets
+"tokenizer_config.json" = "49e2b6e395f959f077f1e992b338919c0d4a9732fc6e613995e06557f843500c" # 16 709 octets
+"video_preprocessor_config.json" = "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13" # 385 octets
+"vocab.json" = "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003" # 6 722 759 octets
+
+[gguf] # 1 280 835 840 octets
+depot = "unsloth/Qwen3.5-2B-GGUF"
+revision = "f6d5376be1edb4d416d56da11e5397a961aca8ae"
+fichier = "Qwen3.5-2B-Q4_K_M.gguf"
+sha256 = "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223"
+source = "communautaire"
+
+# GGUF de base pour la variante `avant` du banc (non téléchargé le 2026-10-17) :
+# `slmsp fetch modeles qwen3.5-2b --f16`.
+[gguf_f16] # 3 775 709 216 octets, BF16 (pas de F16 publié par unsloth)
+depot = "unsloth/Qwen3.5-2B-GGUF"
+revision = "f6d5376be1edb4d416d56da11e5397a961aca8ae"
+fichier = "Qwen3.5-2B-BF16.gguf"
+sha256 = "dc11be2ca4519954a3e4b013ef59497b5522209987d67891851113eda89619f1"
+source = "communautaire"
+precision = "bf16"

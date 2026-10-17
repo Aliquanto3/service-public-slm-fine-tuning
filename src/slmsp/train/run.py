@@ -216,6 +216,11 @@ def executer(
     if plan.entraineur == "unsloth" and reprendre_run is not None:  # avant toute réouverture
         raise ConfigurationInvalide("--reprendre n'est pas supporté par qlora-unsloth (story 10.5)")
     config_modele = charger_config_modele(config.modele)
+    if not config_modele.entrainable:
+        raise ConfigurationInvalide(
+            f"{config.modele} : modèle non entraînable (`entrainable = false` dans "
+            f"config/modeles/{config.modele}.toml), évalué sans fine-tuning"
+        )
     dossier = environnement.dossier_poids(config.modele, racine=racine)
     config_poids = environnement.lire_config_modele(dossier, racine=racine)
     contraintes = chargement.controler_contraintes(

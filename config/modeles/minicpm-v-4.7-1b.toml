@@ -1,0 +1,59 @@
+# MiniCPM-V 4.7 1B (OpenBMB, Apache 2.0) : candidat ajouté par décision d'Anaël du
+# 2026-10-17 (spec-modeles-octobre-2026). Révisions, SHA-256 et tailles relevés le
+# 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes à l'inférence et à
+# l'entraînement.
+# Multimodal (`minicpmv4_7`), modèle de texte `qwen3_5_text` à attention hybride (Gated
+# DeltaNet) : le contrôle `dense` de la story 8.1 le signale en échec (à confirmer par
+# Anaël). Tour vision exclue comme pour Ministral : aucun --mmproj.
+# transformers 5.17.0 (épinglé) ne connaît pas `minicpmv4_7` (config écrite en 5.18.0) :
+# entraînement et banc HF hors périmètre tant que l'épinglage ne bouge pas.
+# Le template ouvre le raisonnement par défaut : enable_thinking = false imposé.
+
+schema_version = 1
+depot_hf = "openbmb/MiniCPM-V-4.7-1B"
+revision = "286817f1132b998913a129a221c89b4402b4ab80"
+fichiers = [
+    "chat_template.jinja",
+    "config.json",
+    "generation_config.json",
+    "model.safetensors",
+    "preprocessor_config.json",
+    "processor_config.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+]
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = { enable_thinking = false }
+exclure_vision = true
+# Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
+protocole_outils = "natif"
+chat_template_force = false
+
+[sha256_fichiers]
+"chat_template.jinja" = "c4531cacbf2a0ab65170433d7a4f371d11b7599cf96c04b192e6372432636c70" # 7 250 octets
+"config.json" = "20ed1fe71b174719b88ed1ce37c840ec45e3657f1120391d45f33505be7638a4" # 2 575 octets
+"generation_config.json" = "4dc190baaab3bc4bccb796ee73deb2c3dd776cd4feae3587b29bc22083e03415" # 132 octets
+"model.safetensors" = "8c4921ac83182c85190ad10c3aeb118d51e385d2d98ec13b88b514bbf6cac002" # 3 109 054 480 octets
+"preprocessor_config.json" = "c64289d04f36e48d9d059e3a0069f54062b2ef6044a807adb448b98449cb54de" # 148 octets
+"processor_config.json" = "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a" # 2 octets
+"tokenizer.json" = "33861e37bb955af1e3f3061182b820f347eba2b9c2c1011c82794bf0d6e77b54" # 19 992 481 octets
+"tokenizer_config.json" = "11d04ab77486ca63a9f2b2537e70bbd8f6b24e1850e53eedb32caa3ca771cb0d" # 8 947 octets
+
+[gguf] # 672 003 680 octets
+depot = "openbmb/MiniCPM-V-4.7-1B-gguf"
+revision = "9684c734cfb2e6aaccb0bb52ba58afa9aae92d90"
+fichier = "MiniCPM-V-4_7-1B-Q4_K_M.gguf"
+sha256 = "588c6c94c82f756b86dba35c42ed9ba9ec187d65824eb52f039c347df563e63d"
+source = "officielle"
+
+# GGUF F16 de base pour la variante `avant` du banc (non téléchargé le 2026-10-17) :
+# `slmsp fetch modeles minicpm-v-4.7-1b --f16`.
+[gguf_f16] # 2 024 372 320 octets
+depot = "openbmb/MiniCPM-V-4.7-1B-gguf"
+revision = "9684c734cfb2e6aaccb0bb52ba58afa9aae92d90"
+fichier = "MiniCPM-V-4_7-1B-F16.gguf"
+sha256 = "bc5a85f8973c3cbb29b3bd195cce5279361221a8628bd50a2387261289ea2fbc"
+source = "officielle"
+precision = "f16"
