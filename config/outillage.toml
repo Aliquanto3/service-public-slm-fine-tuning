@@ -1,0 +1,10 @@
+# Outillage épinglé (story 12.13) : outils de build téléchargés par la passerelle (profil `outillage`).
+# Aucune signature publiée par l'éditeur pour ce fichier : le SHA-256 a été calculé à la première
+# lecture (2026-10-17) ; la signature Authenticode du .exe était valide (Pyrsys B.V.).
+
+[inno-setup]
+version = "6.7.3"
+url = "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe"
+sha256 = "9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732"
+taille = 10592232
+dossier = "inno-setup" # sous vendor/ (ou SLMSP_VENDOR_DIR)

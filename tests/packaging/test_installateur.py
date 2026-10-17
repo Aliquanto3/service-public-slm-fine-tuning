@@ -167,7 +167,7 @@ def test_paquet_absent_et_iscc_introuvable(tmp_path: Path) -> None:
     with pytest.raises(CI.ErreurInstallateur, match="paquet absent"):
         CI.construire(_args(tmp_path, tmp_path / "rien", _iscc_factice(tmp_path)), lambda _c: 0)
     env = {"PATH": str(tmp_path / "vide"), "LOCALAPPDATA": str(tmp_path / "x")}
-    if not (DEPOT / "vendor" / "innosetup" / "ISCC.exe").is_file():
+    if not (DEPOT / "vendor" / "inno-setup" / "ISCC.exe").is_file():
         with pytest.raises(CI.ErreurInstallateur, match="ISCC.exe introuvable"):
             CI.trouver_iscc(None, env)
 
@@ -277,3 +277,37 @@ def test_oserror_du_sous_processus_devient_echec_propre(
         ]
     )  # fmt: skip
     assert code == 2 and "ECHEC" in capsys.readouterr().err
+
+
+def test_outillage_epingle() -> None:
+    import tomllib
+
+    cfg = tomllib.loads((DEPOT / "config" / "outillage.toml").read_text(encoding="utf-8"))
+    inno = cfg["inno-setup"]
+    assert re.fullmatch(r"6\.\d+\.\d+", inno["version"])
+    assert re.fullmatch(r"[0-9a-f]{64}", inno["sha256"])
+    assert inno["url"].startswith("https://github.com/jrsoftware/")
+
+
+def _iscc_reel() -> Path | None:
+    import os
+
+    for base in (os.environ.get("SLMSP_VENDOR_DIR"), str(DEPOT / "vendor")):
+        if base and (Path(base) / "inno-setup" / "ISCC.exe").is_file():
+            return Path(base) / "inno-setup" / "ISCC.exe"
+    return None
+
+
+@pytest.mark.lent
+def test_compilation_reelle(tmp_path: Path) -> None:
+    """Compile le `.iss` avec un vrai ISCC sur un paquet factice (ignoré sans ISCC)."""
+    iscc = _iscc_reel()
+    if iscc is None:
+        pytest.skip("ISCC absent (outils/installer_inno_setup.py)")
+    paquet = _paquet(tmp_path)
+    (paquet / "AssistantSP.exe").write_bytes(b"MZ")
+    args = _args(tmp_path, paquet, iscc)
+    empreintes = CI.construire(args)
+    installateur = empreintes.with_suffix("")
+    assert installateur.is_file() and installateur.stat().st_size > 0
+    assert empreintes.read_text(encoding="utf-8").split()[0] == sha256_fichier(installateur)

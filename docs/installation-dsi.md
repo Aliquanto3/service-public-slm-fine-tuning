@@ -23,7 +23,7 @@ Si l'installateur est découpé (paquet de plus de 2 Go), les fichiers `.bin` vo
 
 ## Construire l'installateur (poste de dev)
 1. `uv run --extra app python outils/construire_application.py` (12.12, produit `dist/AssistantSP`).
-2. Inno Setup : installation **par utilisateur**, jamais pour tous les utilisateurs. Télécharger l'installateur depuis https://jrsoftware.org/isdl.php, consigner la version et son SHA-256 ici, puis `innosetup-<version>.exe /CURRENTUSER /VERYSILENT /SUPPRESSMSGBOXES /DIR=<dossier>` (par défaut `%LOCALAPPDATA%\Programs\Inno Setup 6`, ou `vendor\innosetup`). L'hôte jrsoftware.org n'est pas dans la passerelle réseau du projet : étape manuelle (voir la spec 12.13, « À confirmer »).
+2. Inno Setup 6.7.3, par utilisateur, sans administrateur : `uv run --no-sync python outils/installer_inno_setup.py` (téléchargement par la passerelle, version, URL et SHA-256 `9c73c3ba…97b732` épinglés dans `config/outillage.toml`, installation dans `vendor\inno-setup` ou `SLMSP_VENDOR_DIR`).
 3. `uv run --no-sync python outils/construire_installateur.py [--iscc <chemin>\ISCC.exe] [--pack-complet <installateur WebView2>]` : produit `dist/installateur/AssistantSP-Setup-<version>.exe` et son `.sha256`.
 
 ## Codes de sortie en mode silencieux
