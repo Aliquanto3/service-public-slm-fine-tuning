@@ -1,13 +1,14 @@
-﻿# Restaure l'état hors git depuis la release GitHub privée (voir docs/reprise-deuxieme-pc.md).
+﻿# Restaure l'état hors git depuis la release du dépôt privé slmsp-etat (voir docs/reprise-deuxieme-pc.md).
 # Usage, depuis le dépôt cloné :
 #   powershell -NoProfile -ExecutionPolicy Bypass -File outils/migration/restaurer-etat.ps1
 # Contenu : var (journaux Mistral, registre des budgets, verdicts), data/cache, data/train,
 # mémoire Claude Code du projet, CLAUDE.md globaux (posés seulement s'ils manquent).
 # N'écrase aucun fichier existant sans -Forcer. Le fichier .env n'est jamais dans l'archive.
 param(
+    [string]$Repo = 'Aliquanto3/slmsp-etat',
     [string]$Tag = 'etat-2026-10-17',
     [string]$Archive = 'etat-slmsp-2026-10-17.zip',
-    [string]$Sha256 = '487515AFAE6F8620F725EAFBE13AB0FFE1332B3A5C1DF76DA2A138C12C823A69',
+    [string]$Sha256 = '9D930AECB7A8669571B3B26A4CC7D528A9C951819D522ECF8CC2BEC926A267BB',
     [switch]$Forcer
 )
 $ErrorActionPreference = 'Stop'
@@ -22,7 +23,7 @@ if (Test-Path (Join-Path $var 'budget.sqlite')) {
 }
 if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
 New-Item -ItemType Directory $tmp | Out-Null
-& gh release download $Tag --repo Aliquanto3/service-public-slm-fine-tuning --pattern $Archive --dir $tmp
+& gh release download $Tag --repo $Repo --pattern $Archive --dir $tmp
 if ($LASTEXITCODE -ne 0) { throw "gh release download a échoué ($LASTEXITCODE)" }
 $zip = Join-Path $tmp $Archive
 $h = (Get-FileHash $zip -Algorithm SHA256).Hash
