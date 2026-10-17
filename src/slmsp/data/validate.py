@@ -389,6 +389,54 @@ def _sans_urls(texte: str) -> str:
     return texte
 
 
+_MOIS: Final = {
+    mois: numero
+    for numero, mois in enumerate(
+        (
+            "janvier février mars avril mai juin juillet août septembre octobre novembre décembre"
+        ).split(),
+        start=1,
+    )
+}
+_DATE: Final = re.compile(
+    r"(?<![\w.,/-])(?:"
+    r"(?P<iso_a>\d{4})-(?P<iso_m>\d{1,2})-(?P<iso_j>\d{1,2})"
+    r"|(?P<num_j>\d{1,2})[/.-](?P<num_m>\d{1,2})[/.-](?P<num_a>\d{4})"
+    r"|(?P<lit_j>\d{1,2})(?:er)?\s+(?P<lit_m>[A-Za-zéèêûôîàç]+)\s+(?P<lit_a>\d{4})"
+    r")(?![\w,/-]|\.\d)",
+    re.IGNORECASE,
+)
+_ANNOTATION_MOTS: Final = re.compile(
+    r"(?<![\w,.])(?:\d{1,3}(?:[    ]\d{3})+|\d+)\s*mots?\b", re.IGNORECASE
+)
+"""Compte de mots écrit par le générateur (« (80 mots max.) », « de 200 mots au plus ») :
+seul le nombre suivi de « mots » est retiré ; le reste d'une parenthèse reste contrôlé."""
+
+
+def _dates(texte: str) -> list[tuple[re.Match[str], tuple[int, int, int]]]:
+    """Dates du texte (ISO, jj/mm/aaaa, « 20 avril 2021 ») avec leur forme (année, mois, jour)."""
+    trouvees = []
+    for m in _DATE.finditer(texte):
+        if m["iso_a"]:
+            a, mois, j = m["iso_a"], m["iso_m"], m["iso_j"]
+        elif m["num_a"]:
+            a, mois, j = m["num_a"], m["num_m"], m["num_j"]
+        else:
+            mois = str(_MOIS.get(m["lit_m"].lower(), 0))
+            a, j = m["lit_a"], m["lit_j"]
+        if 1 <= int(mois) <= 12 and 1 <= int(j) <= 31:
+            trouvees.append((m, (int(a), int(mois), int(j))))
+    return trouvees
+
+
+def _retirer_dates_connues(texte: str, connues: set[tuple[int, int, int]]) -> str:
+    """Retire du texte les dates déjà présentes (sous une autre forme) dans les sources."""
+    for m, forme in reversed(_dates(texte)):
+        if forme in connues:
+            texte = texte[: m.start()] + " " + texte[m.end() :]
+    return texte
+
+
 def _controler_sources(
     texte: str,
     tache: str,
@@ -402,14 +450,23 @@ def _controler_sources(
     if tache not in TACHES_A_VALEURS:
         return
     connus: set[Decimal] = set()
+    dates_connues: set[tuple[int, int, int]] = set()
     for source in (*(p.titre for p in passages), *(p.texte for p in passages), *outils, *fournis):
         connus |= {abs(n) for n in extraire_nombres(source)}
-    sortie = _nombres_notables(_sans_urls(texte))
+        dates_connues |= {forme for _, forme in _dates(source)}
+    controle = texte
+    if tache == "RE":
+        # Le compte de mots recopié du gabarit (« (80 mots max.) ») n'est pas une valeur du
+        # résumé ; un plafond écrit comme valeur libre (« 200 euros ») reste contrôlé.
+        controle = _ANNOTATION_MOTS.sub(" ", controle)
+    sortie = _nombres_notables(_retirer_dates_connues(_sans_urls(controle), dates_connues))
     absents = sortie - connus
     if absents:
         raise _Rejet("valeur_absente", f"{len(absents)} valeur(s) absente(s) des sources")
     if tache in TACHES_VALEURS_CONSERVEES:
-        perdues = set().union(*(_nombres_notables(_sans_urls(f)) for f in fournis)) - sortie
+        perdues = set().union(*(_nombres_notables(_sans_urls(f)) for f in fournis)) - (
+            _nombres_notables(_sans_urls(texte))
+        )
         if perdues:
             raise _Rejet("infidele", f"{len(perdues)} valeur(s) de la source perdue(s)")
 
