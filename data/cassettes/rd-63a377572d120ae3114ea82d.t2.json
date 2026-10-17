@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:00:20Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "689d75371f90bdfb13252386"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Zones sensibles Hivernage Milan royal en Provence-Alpes-Côte d'Azur\nDataset ID: 689d75371f90bdfb13252386\nTotal resources: 3\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 7dbee86e-845f-4efd-988d-b44ebb9b9d1d\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=06c86545-4144-4323-bab8-044a178ab7fc&dataType=dataset\n\n2. URL du GetCapabilities du service wms sur internet\n   Resource ID: 14283d8d-adc3-49e3-934d-36cb70a945c0\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38174/06c86545-4144-4323-bab8-044a178ab7fc.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n3. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 850431bc-dfa6-4af9-9ae5-0f668f05bb25\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38174/06c86545-4144-4323-bab8-044a178ab7fc.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Zones sensibles Hivernage Milan royal en Provence-Alpes-Côte d'Azur\nDataset ID: 689d75371f90bdfb13252386\nTotal resources: 3\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 7dbee86e-845f-4efd-988d-b44ebb9b9d1d\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=06c86545-4144-4323-bab8-044a178ab7fc&dataType=dataset\n\n2. URL du GetCapabilities du service wms sur internet\n   Resource ID: 14283d8d-adc3-49e3-934d-36cb70a945c0\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38174/06c86545-4144-4323-bab8-044a178ab7fc.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n3. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 850431bc-dfa6-4af9-9ae5-0f668f05bb25\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38174/06c86545-4144-4323-bab8-044a178ab7fc.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

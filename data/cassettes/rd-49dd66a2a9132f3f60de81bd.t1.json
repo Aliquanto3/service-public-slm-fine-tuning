@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:20:40Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "élections cantonales 2008 résultats bureaux de vote"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 11 dataset(s) for query: 'élections cantonales 2008 résultats bureaux de vote'\nPage 1 of results:\n\n1. Elections cantonales 2008 - Résultats par bureaux de vote\n   ID: 560d392088ee38152183905b\n   Organization: Ministère de l'intérieur\n   Tags: bureaux-de-vote, elections, elections-cantonales, elections-cantonales-2008, resultats\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-resultats-par-bureaux-de-vote\n\n2. Données des élections agrégées\n   ID: 6481e741d4cf002ec0efec9d\n   Organization: data.gouv.fr\n   Tags: agregation, democratie, elections\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-des-elections-agregees\n\n3. Résultats des élections cantonales à Rennes de 2008\n   ID: 580a5721a3a7292dcea9d1c2\n   Organization: Rennes Métropole en accès libre\n   Tags: citoyennete, elections\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-cantonales-a-rennes-de-2008\n\n4. Elections cantonales 2008 - 1er tour - Ville de Toulouse (Résultats)\n   ID: 56b0c2ddb595086d5569cb83\n   Organization: Toulouse métropole\n   Tags: 1er, 2008, cantonales, citoyennete, elections\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-1er-tour-ville-de-toulouse-resultats\n\n5. Elections cantonales 2008 - 2ieme tour - Ville de Toulouse (Résultats)\n   ID: 56b0c2dfb595086d5669cb83\n   Organization: Toulouse métropole\n   Tags: 2008, 2ieme, cantonales, citoyennete, deuxieme\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-2ieme-tour-ville-de-toulouse-resultats\n\n6. Résultats des élections cantonales à Rennes de 2004 à 2011\n   ID: 53699f36a3a729239d20609c\n   Organization: Ville de Rennes\n   Tags: citoyennete\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-cantonales-a-rennes-de-2004-a-2011-rm\n\n7. Résultats des élections départementales depuis 2008 à Rennes\n   ID: 5e82b281e751432d9cfbf416\n   Organization: Rennes Métropole en accès libre\n   Tags: citoyennete, elections\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-departementales-depuis-2008-a-rennes\n\n8. Elections cantonales 2008 1er et  2 ème tours a Toulouse (Résultats)\n   ID: 53699382a3a729239d2041f5\n   Organization: Mairie de Toulouse\n   Tags: cantonales, election\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-1er-et-2-eme-tours-a-toulouse-resultats-tm\n\n9. Résultats électoraux\n   ID: 553e52bbc751df2029e96a3b\n   Organization: Ville de Saint-Malo\n   Tags: elections, resultats, scrutin, vote\n   Resources: 23\n   URL: https://www.data.gouv.fr/datasets/resultats-electoraux\n\n10. Elections cantonales 2004 - Résultats par bureaux de vote\n   ID: 56050ad3c751df3f0a8dabf2\n   Organization: Ministère de l'intérieur\n   Tags: bureaux-de-vote, elections, elections-cantonales, elections-cantonales-2004, resultats\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2004-resultats-par-bureaux-de-vote\n\n11. Elections cantonales 2001 - Résultats par bureaux de vote\n   ID: 56050b87c751df639d8dabf0\n   Organization: Ministère de l'intérieur\n   Tags: bureaux-de-vote, election-cantonale-2001, elections, elections-cantonales, resultats\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2001-resultats-par-bureaux-de-vote\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 11 dataset(s) for query: 'élections cantonales 2008 résultats bureaux de vote'\nPage 1 of results:\n\n1. Elections cantonales 2008 - Résultats par bureaux de vote\n   ID: 560d392088ee38152183905b\n   Organization: Ministère de l'intérieur\n   Tags: bureaux-de-vote, elections, elections-cantonales, elections-cantonales-2008, resultats\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-resultats-par-bureaux-de-vote\n\n2. Données des élections agrégées\n   ID: 6481e741d4cf002ec0efec9d\n   Organization: data.gouv.fr\n   Tags: agregation, democratie, elections\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-des-elections-agregees\n\n3. Résultats des élections cantonales à Rennes de 2008\n   ID: 580a5721a3a7292dcea9d1c2\n   Organization: Rennes Métropole en accès libre\n   Tags: citoyennete, elections\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-cantonales-a-rennes-de-2008\n\n4. Elections cantonales 2008 - 1er tour - Ville de Toulouse (Résultats)\n   ID: 56b0c2ddb595086d5569cb83\n   Organization: Toulouse métropole\n   Tags: 1er, 2008, cantonales, citoyennete, elections\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-1er-tour-ville-de-toulouse-resultats\n\n5. Elections cantonales 2008 - 2ieme tour - Ville de Toulouse (Résultats)\n   ID: 56b0c2dfb595086d5669cb83\n   Organization: Toulouse métropole\n   Tags: 2008, 2ieme, cantonales, citoyennete, deuxieme\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-2ieme-tour-ville-de-toulouse-resultats\n\n6. Résultats des élections cantonales à Rennes de 2004 à 2011\n   ID: 53699f36a3a729239d20609c\n   Organization: Ville de Rennes\n   Tags: citoyennete\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-cantonales-a-rennes-de-2004-a-2011-rm\n\n7. Résultats des élections départementales depuis 2008 à Rennes\n   ID: 5e82b281e751432d9cfbf416\n   Organization: Rennes Métropole en accès libre\n   Tags: citoyennete, elections\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-departementales-depuis-2008-a-rennes\n\n8. Elections cantonales 2008 1er et  2 ème tours a Toulouse (Résultats)\n   ID: 53699382a3a729239d2041f5\n   Organization: Mairie de Toulouse\n   Tags: cantonales, election\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2008-1er-et-2-eme-tours-a-toulouse-resultats-tm\n\n9. Résultats électoraux\n   ID: 553e52bbc751df2029e96a3b\n   Organization: Ville de Saint-Malo\n   Tags: elections, resultats, scrutin, vote\n   Resources: 23\n   URL: https://www.data.gouv.fr/datasets/resultats-electoraux\n\n10. Elections cantonales 2004 - Résultats par bureaux de vote\n   ID: 56050ad3c751df3f0a8dabf2\n   Organization: Ministère de l'intérieur\n   Tags: bureaux-de-vote, elections, elections-cantonales, elections-cantonales-2004, resultats\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2004-resultats-par-bureaux-de-vote\n\n11. Elections cantonales 2001 - Résultats par bureaux de vote\n   ID: 56050b87c751df639d8dabf0\n   Organization: Ministère de l'intérieur\n   Tags: bureaux-de-vote, election-cantonale-2001, elections, elections-cantonales, resultats\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-cantonales-2001-resultats-par-bureaux-de-vote\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

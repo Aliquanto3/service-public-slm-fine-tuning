@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:59:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "servitudes EL11 accès routes Pas-de-Calais",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'servitudes EL11 accès routes Pas-de-Calais'\nPage 1 of results:\n\n1. Table contenant les assiettes surfaciques liées aux servitudes de la catégorie EL11 en Pas-de-Calais\n   ID: 67377f4a1018607db6c40bd6\n   Organization: DDTM Pas-de-Calais\n   Tags: amenagement-urbanisme-assiette-servitude, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/table-contenant-les-assiettes-surfaciques-liees-aux-servitudes-de-la-categorie-el11-en-pas-de-calais\n\n2. Table contenant les générateurs linéaires liés aux servitudes de la catégorie EL11 en Pas-de-Calais\n   ID: 67377f021018607db6c40b9a\n   Organization: DDTM Pas-de-Calais\n   Tags: amenagement-urbanisme-assiette-servitude, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/table-contenant-les-generateurs-lineaires-lies-aux-servitudes-de-la-categorie-el11-en-pas-de-calais\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'servitudes EL11 accès routes Pas-de-Calais'\nPage 1 of results:\n\n1. Table contenant les assiettes surfaciques liées aux servitudes de la catégorie EL11 en Pas-de-Calais\n   ID: 67377f4a1018607db6c40bd6\n   Organization: DDTM Pas-de-Calais\n   Tags: amenagement-urbanisme-assiette-servitude, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/table-contenant-les-assiettes-surfaciques-liees-aux-servitudes-de-la-categorie-el11-en-pas-de-calais\n\n2. Table contenant les générateurs linéaires liés aux servitudes de la catégorie EL11 en Pas-de-Calais\n   ID: 67377f021018607db6c40b9a\n   Organization: DDTM Pas-de-Calais\n   Tags: amenagement-urbanisme-assiette-servitude, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/table-contenant-les-generateurs-lineaires-lies-aux-servitudes-de-la-categorie-el11-en-pas-de-calais\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:16:23Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6ac05a0f729dcf0d0d50800b"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Délimitation d'une bande de 100m à partir du rivage en Haute-Corse\nDataset ID: 6ac05a0f729dcf0d0d50800b\nTotal resources: 1\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: fa8df237-0b2d-4c70-8ff3-041f677767fb\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=a11d558e-e415-4847-891a-7c52f93ce4f8&dataType=dataset\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Délimitation d'une bande de 100m à partir du rivage en Haute-Corse\nDataset ID: 6ac05a0f729dcf0d0d50800b\nTotal resources: 1\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: fa8df237-0b2d-4c70-8ff3-041f677767fb\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=a11d558e-e415-4847-891a-7c52f93ce4f8&dataType=dataset\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

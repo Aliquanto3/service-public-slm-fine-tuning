@@ -1,0 +1,17 @@
+Passed argument batch_size = auto:1. Detecting largest batch size
+Determined largest batch size: 32
+hf ({'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\minicpm5-1b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: 2000.0, num_fewshot: 0, batch_size: auto (32)
+|              Tasks              |Version|Filter|n-shot|Metric|   |Value |   |Stderr|
+|---------------------------------|------:|------|-----:|------|---|-----:|---|-----:|
+|global_mmlu_fr                   |      0|none  |     0|acc   |↑  |0.4200|±  |0.0246|
+| - global_mmlu_fr_business       |      0|none  |     0|acc   |↑  |0.5000|±  |0.0662|
+| - global_mmlu_fr_humanities     |      0|none  |     0|acc   |↑  |0.5000|±  |0.0498|
+| - global_mmlu_fr_medical        |      0|none  |     0|acc   |↑  |0.3056|±  |0.0779|
+| - global_mmlu_fr_other          |      0|none  |     0|acc   |↑  |0.4286|±  |0.0667|
+| - global_mmlu_fr_social_sciences|      0|none  |     0|acc   |↑  |0.3725|±  |0.0481|
+| - global_mmlu_fr_stem           |      0|none  |     0|acc   |↑  |0.3261|±  |0.0699|
+
+|    Groups    |Version|Filter|n-shot|Metric|   |Value|   |Stderr|
+|--------------|------:|------|-----:|------|---|----:|---|-----:|
+|global_mmlu_fr|      0|none  |     0|acc   |↑  | 0.42|±  |0.0246|
+

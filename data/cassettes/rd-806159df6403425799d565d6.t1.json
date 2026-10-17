@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:03:43Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "habitat Cartham Parc naturel marin Bassin Arcachon polygone"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 9 dataset(s) for query: 'habitat Cartham Parc naturel marin Bassin Arcachon polygone'\nPage 1 of results:\n\n1. Cartographie d'habitat Cartham sur les parties terrestres (dont schorre / îlots / près-salés) dans le périmètre du Parc naturel marin du Bassin d'Arcachon (2010-2012) - polygone\n   ID: 684be6be7dd2fdcc07ae017b\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/cartographie-dhabitat-cartham-sur-les-parties-terrestres-dont-schorre-ilots-pres-sales-dans-le-perimetre-du-parc-naturel-marin-du-bassin-darcachon-2010-2012-polygone\n\n2. Habitats marins du domaine de Malprat au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be8077dd2fdcc07ae0388\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, domaine-endigue, eunis\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-du-domaine-de-malprat-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n3. Emprise des données sources dans la zone d'étude de la mission de création de Parc naturel marin du bassin d'Arcachon réalisées dans le cadre du programme CARTHAM - polygone\n   ID: 684be7987dd2fdcc07ae02e2\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, autre-mot-clef, benthos, emprise\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/emprise-des-donnees-sources-dans-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-realisees-dans-le-cadre-du-programme-cartham-polygone\n\n4. Habitats marins de la zone d'étude de la mission de création du Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygone\n   ID: 684be6d37dd2fdcc07ae01a0\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-de-la-zone-detude-de-la-mission-de-creation-du-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygone\n\n5. Lacs de tonne dans la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygone\n   ID: 684be6427dd2fdcc07ae008f\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/lacs-de-tonne-dans-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygone\n\n6. Habitats marins du domaine de Saint Brice - Le Coulin au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be85e7dd2fdcc07ae03fc\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-du-domaine-de-saint-brice-le-coulin-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n7. Habitats marins du domaine de Certes et Graveyron au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be74a7dd2fdcc07ae0263\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, domaine-endigue, eunis\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-du-domaine-de-certes-et-graveyron-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n8. Délimitation du schorre identifiable au sein du Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be8577dd2fdcc07ae03f3\n   Organization: Office Français de la Biodiversité\n   Tags: atlantique, bassin-darcachon, eunis, facade-maritime, france-metropolitaine\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/delimitation-du-schorre-identifiable-au-sein-du-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n9. Habitats marins de la réserve naturelle d'Arès et de Lège - Cap-Ferret au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be6c27dd2fdcc07ae017f\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-de-la-reserve-naturelle-dares-et-de-lege-cap-ferret-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 9 dataset(s) for query: 'habitat Cartham Parc naturel marin Bassin Arcachon polygone'\nPage 1 of results:\n\n1. Cartographie d'habitat Cartham sur les parties terrestres (dont schorre / îlots / près-salés) dans le périmètre du Parc naturel marin du Bassin d'Arcachon (2010-2012) - polygone\n   ID: 684be6be7dd2fdcc07ae017b\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/cartographie-dhabitat-cartham-sur-les-parties-terrestres-dont-schorre-ilots-pres-sales-dans-le-perimetre-du-parc-naturel-marin-du-bassin-darcachon-2010-2012-polygone\n\n2. Habitats marins du domaine de Malprat au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be8077dd2fdcc07ae0388\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, domaine-endigue, eunis\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-du-domaine-de-malprat-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n3. Emprise des données sources dans la zone d'étude de la mission de création de Parc naturel marin du bassin d'Arcachon réalisées dans le cadre du programme CARTHAM - polygone\n   ID: 684be7987dd2fdcc07ae02e2\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, autre-mot-clef, benthos, emprise\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/emprise-des-donnees-sources-dans-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-realisees-dans-le-cadre-du-programme-cartham-polygone\n\n4. Habitats marins de la zone d'étude de la mission de création du Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygone\n   ID: 684be6d37dd2fdcc07ae01a0\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-de-la-zone-detude-de-la-mission-de-creation-du-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygone\n\n5. Lacs de tonne dans la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygone\n   ID: 684be6427dd2fdcc07ae008f\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/lacs-de-tonne-dans-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygone\n\n6. Habitats marins du domaine de Saint Brice - Le Coulin au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be85e7dd2fdcc07ae03fc\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-du-domaine-de-saint-brice-le-coulin-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n7. Habitats marins du domaine de Certes et Graveyron au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be74a7dd2fdcc07ae0263\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, domaine-endigue, eunis\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-du-domaine-de-certes-et-graveyron-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n8. Délimitation du schorre identifiable au sein du Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be8577dd2fdcc07ae03f3\n   Organization: Office Français de la Biodiversité\n   Tags: atlantique, bassin-darcachon, eunis, facade-maritime, france-metropolitaine\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/delimitation-du-schorre-identifiable-au-sein-du-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n\n9. Habitats marins de la réserve naturelle d'Arès et de Lège - Cap-Ferret au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\n   ID: 684be6c27dd2fdcc07ae017f\n   Organization: Office Français de la Biodiversité\n   Tags: arcachon, atlantique, benthos, eunis, france\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-marins-de-la-reserve-naturelle-dares-et-de-lege-cap-ferret-au-sein-de-la-zone-detude-de-la-mission-de-creation-de-parc-naturel-marin-du-bassin-darcachon-etat-2010-2012-polygones\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

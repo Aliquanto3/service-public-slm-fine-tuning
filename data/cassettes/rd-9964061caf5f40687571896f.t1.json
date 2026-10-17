@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:02:59Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "carte stratégique bruit Lden Doubs",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'carte stratégique bruit Lden Doubs'\nPage 1 of results:\n\n1. Carte stratégique de bruit (CSB) - C Lden - du département du Doubs\n   ID: 63f55c73def91c21ae1a2e1b\n   Organization: Direction Départementale des Territoires du Doubs\n   Tags: bruit, ddt-25, ddt-doubs, nuisance, reseau-routier\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-strategique-de-bruit-csb-c-lden-du-departement-du-doubs\n\n2. Carte stratégique de bruit (CSB) - A Lden - du département du Doubs\n   ID: 63f55c734777a023f31a2e1b\n   Organization: Direction Départementale des Territoires du Doubs\n   Tags: bruit, ddt-25, ddt-doubs, nuisance, reseau-routier\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-strategique-de-bruit-csb-a-lden\n\n3. Carte stratégique de bruit (CSB) - C L night - du département du Doubs\n   ID: 63f55c73cdf9cb24ac1a2e1b\n   Organization: Direction Départementale des Territoires du Doubs\n   Tags: bruit, ddt-25, ddt-doubs, nuisance, reseau-routier\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-strategique-de-bruit-csb-c-l-night-du-departement-du-doubs\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'carte stratégique bruit Lden Doubs'\nPage 1 of results:\n\n1. Carte stratégique de bruit (CSB) - C Lden - du département du Doubs\n   ID: 63f55c73def91c21ae1a2e1b\n   Organization: Direction Départementale des Territoires du Doubs\n   Tags: bruit, ddt-25, ddt-doubs, nuisance, reseau-routier\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-strategique-de-bruit-csb-c-lden-du-departement-du-doubs\n\n2. Carte stratégique de bruit (CSB) - A Lden - du département du Doubs\n   ID: 63f55c734777a023f31a2e1b\n   Organization: Direction Départementale des Territoires du Doubs\n   Tags: bruit, ddt-25, ddt-doubs, nuisance, reseau-routier\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-strategique-de-bruit-csb-a-lden\n\n3. Carte stratégique de bruit (CSB) - C L night - du département du Doubs\n   ID: 63f55c73cdf9cb24ac1a2e1b\n   Organization: Direction Départementale des Territoires du Doubs\n   Tags: bruit, ddt-25, ddt-doubs, nuisance, reseau-routier\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-strategique-de-bruit-csb-c-l-night-du-departement-du-doubs\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

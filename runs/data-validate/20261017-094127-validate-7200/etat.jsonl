@@ -1,0 +1,2 @@
+{"horodatage":"2026-10-17T09:41:29.439485+02:00","motif":null,"pid":19864,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T09:41:30.180514+02:00","motif":"AttributeError : module 'slmsp.data.validate' has no attribute '_dates'","pid":19864,"schema_version":1,"statut":"partiel-erreur"}

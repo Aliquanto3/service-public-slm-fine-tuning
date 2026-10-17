@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:54:45Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget primitif 2024 Ville de Nantes"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 16 dataset(s) for query: 'budget primitif 2024 Ville de Nantes'\nPage 1 of results:\n\n1. Budget primitif (BP) 2024 de la Ville de Nantes\n   ID: 69e17a807145881e17a21d5b\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2024-de-la-ville-de-nantes-2\n\n2. Budget primitif (BP) 2024 du CCAS de la Ville de Nantes\n   ID: 69e17a847145881e17a21d5d\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2024-du-ccas-de-la-ville-de-nantes-2\n\n3. Budget primitif (BP) 2021 de la Ville de Nantes\n   ID: 60b03305a60fbbf9046ca195\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2021-de-la-ville-de-nantes\n\n4. Budget primitif (BP) 2025 de la Ville de Nantes\n   ID: 69e17a827145881e17a21d5c\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2025-de-la-ville-de-nantes-1\n\n5. Budget primitif (BP) 2023 de la Ville de Nantes\n   ID: 69e17a887145881e17a21d5e\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2023-de-la-ville-de-nantes-2\n\n6. Budget primitif (BP) 2022 de la Ville de Nantes\n   ID: 621d62752509116464952885\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2022-de-la-ville-de-nantes\n\n7. Budget primitif (BP) 2026 de la Ville de Nantes\n   ID: 69effa17e2d5d96b0bfaedbf\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2026-de-la-ville-de-nantes\n\n8. Budget primitif (BP) 2020 de la Ville de Nantes\n   ID: 5e43509d06e3e73a68320ba9\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2020-de-la-ville-de-nantes\n\n9. Budget primitif (BP) 2014 de la Ville de Nantes\n   ID: 5b4eec71b595087de2d496de\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2014-de-la-ville-de-nantes-1\n\n10. Budget primitif (BP) 2023 du CCAS de la Ville de Nantes\n   ID: 69e17a887145881e17a21d5f\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2023-du-ccas-de-la-ville-de-nantes-2\n\n11. Budget primitif (BP) 2025 du CCAS de la Ville de Nantes\n   ID: 69e17a8d7145881e17a21d60\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2025-du-ccas-de-la-ville-de-nantes-2\n\n12. Budget primitif (BP) 2014 du CCAS de la Ville de Nantes\n   ID: 5b4ee85ba3a7296dbbe1c34e\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2014-du-ccas-de-la-ville-de-nantes-1\n\n13. Budget primitif (BP) 2026 du CCAS de la Ville de Nantes\n   ID: 69effa15e2d5d96b0bfaedbe\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2026-du-ccas-de-la-ville-de-nantes\n\n14. Budget primitif (BP) 2022 du CCAS de la Ville de Nantes\n   ID: 621d62802509116464952886\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2022-du-ccas-de-la-ville-de-nantes\n\n15. Budget primitif (BP) 2020 du CCAS de la Ville de Nantes\n   ID: 5e45f3a59ce2e70e01f7fb8a\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2020-du-ccas-de-la-ville-de-nantes\n\n16. Budget primitif (BP) 2021 du CCAS de la Ville de Nantes\n   ID: 60b0330467c2158cca6ca195\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2021-du-ccas-de-la-ville-de-nantes\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 16 dataset(s) for query: 'budget primitif 2024 Ville de Nantes'\nPage 1 of results:\n\n1. Budget primitif (BP) 2024 de la Ville de Nantes\n   ID: 69e17a807145881e17a21d5b\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2024-de-la-ville-de-nantes-2\n\n2. Budget primitif (BP) 2024 du CCAS de la Ville de Nantes\n   ID: 69e17a847145881e17a21d5d\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2024-du-ccas-de-la-ville-de-nantes-2\n\n3. Budget primitif (BP) 2021 de la Ville de Nantes\n   ID: 60b03305a60fbbf9046ca195\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2021-de-la-ville-de-nantes\n\n4. Budget primitif (BP) 2025 de la Ville de Nantes\n   ID: 69e17a827145881e17a21d5c\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2025-de-la-ville-de-nantes-1\n\n5. Budget primitif (BP) 2023 de la Ville de Nantes\n   ID: 69e17a887145881e17a21d5e\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2023-de-la-ville-de-nantes-2\n\n6. Budget primitif (BP) 2022 de la Ville de Nantes\n   ID: 621d62752509116464952885\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2022-de-la-ville-de-nantes\n\n7. Budget primitif (BP) 2026 de la Ville de Nantes\n   ID: 69effa17e2d5d96b0bfaedbf\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2026-de-la-ville-de-nantes\n\n8. Budget primitif (BP) 2020 de la Ville de Nantes\n   ID: 5e43509d06e3e73a68320ba9\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2020-de-la-ville-de-nantes\n\n9. Budget primitif (BP) 2014 de la Ville de Nantes\n   ID: 5b4eec71b595087de2d496de\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2014-de-la-ville-de-nantes-1\n\n10. Budget primitif (BP) 2023 du CCAS de la Ville de Nantes\n   ID: 69e17a887145881e17a21d5f\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2023-du-ccas-de-la-ville-de-nantes-2\n\n11. Budget primitif (BP) 2025 du CCAS de la Ville de Nantes\n   ID: 69e17a8d7145881e17a21d60\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2025-du-ccas-de-la-ville-de-nantes-2\n\n12. Budget primitif (BP) 2014 du CCAS de la Ville de Nantes\n   ID: 5b4ee85ba3a7296dbbe1c34e\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2014-du-ccas-de-la-ville-de-nantes-1\n\n13. Budget primitif (BP) 2026 du CCAS de la Ville de Nantes\n   ID: 69effa15e2d5d96b0bfaedbe\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2026-du-ccas-de-la-ville-de-nantes\n\n14. Budget primitif (BP) 2022 du CCAS de la Ville de Nantes\n   ID: 621d62802509116464952886\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2022-du-ccas-de-la-ville-de-nantes\n\n15. Budget primitif (BP) 2020 du CCAS de la Ville de Nantes\n   ID: 5e45f3a59ce2e70e01f7fb8a\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2020-du-ccas-de-la-ville-de-nantes\n\n16. Budget primitif (BP) 2021 du CCAS de la Ville de Nantes\n   ID: 60b0330467c2158cca6ca195\n   Organization: Ville de Nantes\n   Tags: budget, budget-primitif, citoyennete-institution\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-bp-2021-du-ccas-de-la-ville-de-nantes\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

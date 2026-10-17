@@ -1,0 +1,52 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 41,
+   "precision": 0.82,
+   "erreurs": {
+    "simple_102": "aucun appel émis",
+    "simple_249": "Invalid value for parameter 'include_people': True. Expected one of [False, ''].",
+    "simple_277": "Wrong number of functions.",
+    "simple_298": "aucun appel émis",
+    "simple_343": "Invalid value for parameter 'game': 'The Legend of Zelda'. Expected one of ['Zelda']. Case insensitive.",
+    "simple_365": "aucun appel émis",
+    "simple_42": "Invalid value for parameter 'inductance': 5e-05. Expected one of [0.05].",
+    "simple_50": "Invalid value for parameter 'substance': 'water'. Expected one of ['ice']. Case insensitive.",
+    "simple_58": "aucun appel émis"
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 42,
+   "precision": 0.84,
+   "erreurs": {
+    "multiple_123": "aucun appel émis",
+    "multiple_138": "aucun appel émis",
+    "multiple_153": "aucun appel émis",
+    "multiple_169": "aucun appel émis",
+    "multiple_180": "Invalid value for parameter 'game': 'The Legend of Zelda: Breath of the Wild or Zelda: Tears of the Kingdom'. Expected one of ['Zelda']. Case insensitive.",
+    "multiple_21": "aucun appel émis",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional.",
+    "multiple_7": "Invalid value for parameter 'species': 'white-tailed deer'. Expected one of ['deer', 'Deer']. Case insensitive."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 41,
+   "precision": 0.82,
+   "erreurs": {
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_206": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_237": "appel émis sans fonction pertinente",
+    "irrelevance_25": "appel émis sans fonction pertinente",
+    "irrelevance_69": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

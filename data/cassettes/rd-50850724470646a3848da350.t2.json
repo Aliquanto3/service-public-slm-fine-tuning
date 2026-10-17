@@ -1,0 +1,92 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:05:30Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "compte administratif département Île-de-France",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'compte administratif département Île-de-France'\nPage 1 of results:\n\n1. Parcours d'études dans l'enseignement supérieur France entière à partir de données SISE et BPBAC 2024-2025  \n   ID: 6965538804a9e09ad508fc3b\n   Organization: université numérique Île-de-France\n   Tags: baccalaureat, diplomes, enseignement-superieur, inscriptions, parcours\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/parcours-detudes-dans-lenseignement-superieur-france-entiere-a-partir-de-donnees-sise-et-bpbac-2024-2025\n\n2. Accès aux spécialistes de ville sans dépassement d'honoraires, par commune\n   ID: 6ab6a1a31f8139c6537bbe81\n   Description: Pour chaque commune et 15 spécialités, la distance au spécialiste de ville le plus proche qui consulte sans dépassement d'honoraires, comparée à celle du plus proche tous secteurs confondus....\n   Organization: Caresquad\n   Tags: acces-aux-soins, depassements-d-honoraires, deserts-medicaux, medecins, offre-de-soins\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/acces-aux-specialistes-de-ville-sans-depassement-dhonoraires-par-commune\n\n3. Cartographie nationale des antennes relais de téléphonie mobile\n   ID: 6916e74a0cfd01977366d987\n   Description: Ce jeu de données recense les antennes relais de téléphonie mobile déployées en France métropolitaine et outre-mer, fournissant des informations géographiques, techniques et administratives sur chaqu…...\n   Organization: sarl 1.0 acola Groupe Bisatel\n   Tags: 5g, antennes-relais, couverture-reseau, infrastructures-telecoms, telephonie-mobile\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/cartographie-nationale-des-antennes-relais-de-telephonie-mobile\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'compte administratif département Île-de-France'\nPage 1 of results:\n\n1. Parcours d'études dans l'enseignement supérieur France entière à partir de données SISE et BPBAC 2024-2025  \n   ID: 6965538804a9e09ad508fc3b\n   Organization: université numérique Île-de-France\n   Tags: baccalaureat, diplomes, enseignement-superieur, inscriptions, parcours\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/parcours-detudes-dans-lenseignement-superieur-france-entiere-a-partir-de-donnees-sise-et-bpbac-2024-2025\n\n2. Accès aux spécialistes de ville sans dépassement d'honoraires, par commune\n   ID: 6ab6a1a31f8139c6537bbe81\n   Description: Pour chaque commune et 15 spécialités, la distance au spécialiste de ville le plus proche qui consulte sans dépassement d'honoraires, comparée à celle du plus proche tous secteurs confondus....\n   Organization: Caresquad\n   Tags: acces-aux-soins, depassements-d-honoraires, deserts-medicaux, medecins, offre-de-soins\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/acces-aux-specialistes-de-ville-sans-depassement-dhonoraires-par-commune\n\n3. Cartographie nationale des antennes relais de téléphonie mobile\n   ID: 6916e74a0cfd01977366d987\n   Description: Ce jeu de données recense les antennes relais de téléphonie mobile déployées en France métropolitaine et outre-mer, fournissant des informations géographiques, techniques et administratives sur chaqu…...\n   Organization: sarl 1.0 acola Groupe Bisatel\n   Tags: 5g, antennes-relais, couverture-reseau, infrastructures-telecoms, telephonie-mobile\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/cartographie-nationale-des-antennes-relais-de-telephonie-mobile\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget primitif Val d'Oise",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'budget primitif Val d'Oise'\nPage 1 of results:\n\n1. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2025\n   ID: 686e24feb69afdc9cd2977bd\n   Organization: GrandSoissons Agglomération\n   Tags: 2025, conseil-communautaire, decisions, deliberations\n   Resources: 499\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2025\n\n2. Délibérations 2025 du Conseil Municipal de la Ville de Soissons\n   ID: 6880fb48b62c746b0671eb33\n   Organization: Ville de Soissons\n   Tags: 2025, conseil-municipal, deliberations\n   Resources: 465\n   URL: https://www.data.gouv.fr/datasets/deliberations-2025-du-conseil-municipal-de-la-ville-de-soissons\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'budget primitif Val d'Oise'\nPage 1 of results:\n\n1. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2025\n   ID: 686e24feb69afdc9cd2977bd\n   Organization: GrandSoissons Agglomération\n   Tags: 2025, conseil-communautaire, decisions, deliberations\n   Resources: 499\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2025\n\n2. Délibérations 2025 du Conseil Municipal de la Ville de Soissons\n   ID: 6880fb48b62c746b0671eb33\n   Organization: Ville de Soissons\n   Tags: 2025, conseil-municipal, deliberations\n   Resources: 465\n   URL: https://www.data.gouv.fr/datasets/deliberations-2025-du-conseil-municipal-de-la-ville-de-soissons\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

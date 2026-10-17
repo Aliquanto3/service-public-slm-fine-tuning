@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:14:12Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "exposition bruit infrastructures routières nuit Alpes-Maritimes Ln"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'exposition bruit infrastructures routières nuit Alpes-Maritimes Ln'\nPage 1 of results:\n\n1. [DDTM-06] Carte d'exposition au bruit lié aux grandes infrastructures routières des Alpes-Maritimes de type Ln (nuit)\n   ID: 673771ee8c98275b4dc25376\n   Organization: DDTM Alpes-Maritimes\n   Tags: alpes-maritimes, bruit, ddtm06, donnees-ouvertes, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddtm-06-carte-dexposition-au-bruit-lie-aux-grandes-infrastructures-routieres-des-alpes-maritimes-de-type-ln-nuit\n\n2. [DDTM-06] Carte de dépassement des valeurs limites du bruit lié aux grandes infrastructures routières des Alpes-Maritimes de type Ln (nuit)\n   ID: 673771ee8c98275b4dc25379\n   Organization: DDTM Alpes-Maritimes\n   Tags: alpes-maritimes, bruit, ddtm06, donnees-ouvertes, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddtm-06-carte-de-depassement-des-valeurs-limites-du-bruit-lie-aux-grandes-infrastructures-routieres-des-alpes-maritimes-de-type-ln-nuit\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'exposition bruit infrastructures routières nuit Alpes-Maritimes Ln'\nPage 1 of results:\n\n1. [DDTM-06] Carte d'exposition au bruit lié aux grandes infrastructures routières des Alpes-Maritimes de type Ln (nuit)\n   ID: 673771ee8c98275b4dc25376\n   Organization: DDTM Alpes-Maritimes\n   Tags: alpes-maritimes, bruit, ddtm06, donnees-ouvertes, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddtm-06-carte-dexposition-au-bruit-lie-aux-grandes-infrastructures-routieres-des-alpes-maritimes-de-type-ln-nuit\n\n2. [DDTM-06] Carte de dépassement des valeurs limites du bruit lié aux grandes infrastructures routières des Alpes-Maritimes de type Ln (nuit)\n   ID: 673771ee8c98275b4dc25379\n   Organization: DDTM Alpes-Maritimes\n   Tags: alpes-maritimes, bruit, ddtm06, donnees-ouvertes, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddtm-06-carte-de-depassement-des-valeurs-limites-du-bruit-lie-aux-grandes-infrastructures-routieres-des-alpes-maritimes-de-type-ln-nuit\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

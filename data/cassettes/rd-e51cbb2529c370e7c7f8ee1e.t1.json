@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:07:41Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "classement sonore infrastructures transports terrestres Meuse",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'classement sonore infrastructures transports terrestres Meuse'\nPage 1 of results:\n\n1. Secteurs de nuisances sonores du classement sonore des infrastructures de transports terrestres dans le département de la Meuse (arrêté préfectoral n°11639-2026 du 24 août 2026)\n   ID: 6a9f76c596d0fc30474a40ba\n   Organization: DDT de la Meuse\n   Tags: bruit, donnees-ouvertes, nuisance-bruit, secteur, sonore\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/secteurs-de-nuisances-sonores-du-classement-sonore-des-infrastructures-de-transports-terrestres-dans-le-departement-de-la-meuse-arrete-prefectoral-ndeg11639-2026-du-24-aout-2026\n\n2. Classement sonore des infrastructures de transports terrestres dans le département de la Meuse (arrêté préfectoral n°11639-2026 du 24 août 2026)\n   ID: 6a9f76c596d0fc30474a40bb\n   Organization: DDT de la Meuse\n   Tags: bruit, classement, donnees-ouvertes, nuisance-bruit, sonore\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/classement-sonore-des-infrastructures-de-transports-terrestres-dans-le-departement-de-la-meuse-arrete-prefectoral-ndeg11639-2026-du-24-aout-2026\n\n3. Bruit des transports terrestres dans le département de la Meuse\n   ID: 6734d255e46a3dcdbec25367\n   Organization: DDT de la Meuse\n   Tags: cartes-de-bruit-strategiques, donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/bruit-des-transports-terrestres-dans-le-departement-de-la-meuse-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'classement sonore infrastructures transports terrestres Meuse'\nPage 1 of results:\n\n1. Secteurs de nuisances sonores du classement sonore des infrastructures de transports terrestres dans le département de la Meuse (arrêté préfectoral n°11639-2026 du 24 août 2026)\n   ID: 6a9f76c596d0fc30474a40ba\n   Organization: DDT de la Meuse\n   Tags: bruit, donnees-ouvertes, nuisance-bruit, secteur, sonore\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/secteurs-de-nuisances-sonores-du-classement-sonore-des-infrastructures-de-transports-terrestres-dans-le-departement-de-la-meuse-arrete-prefectoral-ndeg11639-2026-du-24-aout-2026\n\n2. Classement sonore des infrastructures de transports terrestres dans le département de la Meuse (arrêté préfectoral n°11639-2026 du 24 août 2026)\n   ID: 6a9f76c596d0fc30474a40bb\n   Organization: DDT de la Meuse\n   Tags: bruit, classement, donnees-ouvertes, nuisance-bruit, sonore\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/classement-sonore-des-infrastructures-de-transports-terrestres-dans-le-departement-de-la-meuse-arrete-prefectoral-ndeg11639-2026-du-24-aout-2026\n\n3. Bruit des transports terrestres dans le département de la Meuse\n   ID: 6734d255e46a3dcdbec25367\n   Organization: DDT de la Meuse\n   Tags: cartes-de-bruit-strategiques, donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/bruit-des-transports-terrestres-dans-le-departement-de-la-meuse-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,148 @@
+2026-10-17:09:11:46 WARNING  [config.evaluate_config:337] --limit SHOULD ONLY BE USED FOR TESTING. REAL METRICS SHOULD NOT BE COMPUTED USING LIMIT.
+2026-10-17:09:11:59 INFO     [_cli.run:391] Including path: C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-17:09:11:59 INFO     [_cli.run:392] Selected Tasks: ['french_bench_mc_agrege']
+2026-10-17:09:12:01 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-17:09:12:01 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\granite-4.0-1b\\hf', 'dtype': 'bfloat16'}
+2026-10-17:09:12:08 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-17:09:12:08 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/322 [00:00<?, ?it/s]
+Loading weights:   7%|▋         | 24/322 [00:00<00:01, 215.74it/s]
+Loading weights:  16%|█▌        | 52/322 [00:00<00:01, 226.08it/s]
+Loading weights:  23%|██▎       | 75/322 [00:00<00:01, 212.82it/s]
+Loading weights:  31%|███       | 99/322 [00:00<00:01, 220.82it/s]
+Loading weights:  38%|███▊      | 122/322 [00:00<00:00, 211.87it/s]
+Loading weights:  45%|████▌     | 146/322 [00:00<00:00, 211.81it/s]
+Loading weights:  52%|█████▏    | 168/322 [00:00<00:00, 199.46it/s]
+Loading weights:  61%|██████    | 196/322 [00:00<00:00, 212.22it/s]
+Loading weights:  68%|██████▊   | 220/322 [00:01<00:00, 215.20it/s]
+Loading weights:  75%|███████▌  | 242/322 [00:01<00:00, 215.87it/s]
+Loading weights:  82%|████████▏ | 264/322 [00:01<00:00, 216.51it/s]
+Loading weights:  89%|████████▉ | 288/322 [00:01<00:00, 221.83it/s]
+Loading weights:  97%|█████████▋| 311/322 [00:01<00:00, 205.72it/s]
+Loading weights: 100%|██████████| 322/322 [00:01<00:00, 215.52it/s]
+Using the latest cached version of the dataset since manu/french_bench_arc_challenge couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\manu___french_bench_arc_challenge\default\0.0.0\25a80534368914cfd6aa4c5f73262d64ce2d61fb (last modified on Fri Oct 16 18:14:41 2026).
+Using the latest cached version of the dataset since manu/french-bench-grammar-vocab-reading couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\manu___french-bench-grammar-vocab-reading\default\0.0.0\dcbe950e3266f4a64e5ea35586d948a80faf3f18 (last modified on Fri Oct 16 18:14:45 2026).
+Using the latest cached version of the dataset since manu/french_bench_hellaswag couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\manu___french_bench_hellaswag\default\0.0.0\f9f7e441f4a5c30863aa5a0ec09bbd1c3ab4f5e0 (last modified on Fri Oct 16 23:11:31 2026).
+Using the latest cached version of the dataset since manu/french-bench-grammar-vocab-reading couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\manu___french-bench-grammar-vocab-reading\default\0.0.0\dcbe950e3266f4a64e5ea35586d948a80faf3f18 (last modified on Fri Oct 16 18:14:45 2026).
+2026-10-17:09:12:11 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-17:09:12:11 INFO     [evaluator_utils:488] Group: french_bench_mc_agrege
+2026-10-17:09:12:11 INFO     [evaluator_utils:496]   Task: french_bench_arc_challenge (french_bench\french_bench_arc_challenge.yaml)
+2026-10-17:09:12:11 INFO     [evaluator_utils:496]   Task: french_bench_grammar (french_bench\french_bench_grammar.yaml)
+2026-10-17:09:12:11 INFO     [evaluator_utils:496]   Task: french_bench_hellaswag (french_bench\french_bench_hellaswag.yaml)
+2026-10-17:09:12:11 INFO     [evaluator_utils:496]   Task: french_bench_vocab (french_bench\french_bench_vocab.yaml)
+2026-10-17:09:12:11 WARNING  [evaluator:335] Overwriting default num_fewshot of french_bench_arc_challenge from None to 3
+2026-10-17:09:12:11 WARNING  [evaluator:335] Overwriting default num_fewshot of french_bench_grammar from None to 3
+2026-10-17:09:12:11 WARNING  [evaluator:335] Overwriting default num_fewshot of french_bench_hellaswag from None to 3
+2026-10-17:09:12:11 WARNING  [evaluator:335] Overwriting default num_fewshot of french_bench_vocab from None to 3
+2026-10-17:09:12:11 INFO     [api.task:312] Building contexts for french_bench_arc_challenge on rank 0...
+
+  0%|          | 0/500 [00:00<?, ?it/s]
+  5%|▍         | 24/500 [00:00<00:02, 237.47it/s]
+ 10%|▉         | 49/500 [00:00<00:01, 242.88it/s]
+ 15%|█▍        | 74/500 [00:00<00:01, 243.64it/s]
+ 20%|█▉        | 99/500 [00:00<00:01, 243.06it/s]
+ 25%|██▌       | 125/500 [00:00<00:01, 244.79it/s]
+ 30%|███       | 150/500 [00:00<00:01, 242.03it/s]
+ 35%|███▌      | 176/500 [00:00<00:01, 245.64it/s]
+ 40%|████      | 202/500 [00:00<00:01, 247.49it/s]
+ 45%|████▌     | 227/500 [00:00<00:01, 240.38it/s]
+ 50%|█████     | 252/500 [00:01<00:01, 242.55it/s]
+ 55%|█████▌    | 277/500 [00:01<00:00, 241.56it/s]
+ 60%|██████    | 302/500 [00:01<00:00, 243.23it/s]
+ 65%|██████▌   | 327/500 [00:01<00:00, 241.84it/s]
+ 70%|███████   | 352/500 [00:01<00:00, 227.23it/s]
+ 75%|███████▌  | 375/500 [00:01<00:00, 205.03it/s]
+ 79%|███████▉  | 396/500 [00:01<00:00, 205.40it/s]
+ 84%|████████▍ | 419/500 [00:01<00:00, 209.90it/s]
+ 88%|████████▊ | 442/500 [00:01<00:00, 215.30it/s]
+ 93%|█████████▎| 465/500 [00:02<00:00, 219.18it/s]
+ 98%|█████████▊| 489/500 [00:02<00:00, 225.02it/s]
+100%|██████████| 500/500 [00:02<00:00, 231.12it/s]
+2026-10-17:09:12:13 INFO     [api.task:312] Building contexts for french_bench_grammar on rank 0...
+
+  0%|          | 0/119 [00:00<?, ?it/s]
+ 12%|█▏        | 14/119 [00:00<00:00, 134.88it/s]
+ 24%|██▎       | 28/119 [00:00<00:01, 50.89it/s] 
+ 35%|███▌      | 42/119 [00:00<00:01, 71.40it/s]
+ 46%|████▌     | 55/119 [00:00<00:00, 85.48it/s]
+ 56%|█████▋    | 67/119 [00:00<00:00, 92.86it/s]
+ 66%|██████▋   | 79/119 [00:00<00:00, 96.92it/s]
+ 77%|███████▋  | 92/119 [00:01<00:00, 105.24it/s]
+ 89%|████████▉ | 106/119 [00:01<00:00, 112.73it/s]
+100%|██████████| 119/119 [00:01<00:00, 116.14it/s]
+100%|██████████| 119/119 [00:01<00:00, 96.27it/s] 
+2026-10-17:09:12:14 INFO     [api.task:312] Building contexts for french_bench_hellaswag on rank 0...
+
+  0%|          | 0/500 [00:00<?, ?it/s]
+  7%|▋         | 33/500 [00:00<00:01, 320.77it/s]
+ 13%|█▎        | 67/500 [00:00<00:01, 328.36it/s]
+ 20%|██        | 101/500 [00:00<00:01, 333.19it/s]
+ 27%|██▋       | 135/500 [00:00<00:01, 326.44it/s]
+ 34%|███▎      | 168/500 [00:00<00:01, 319.99it/s]
+ 40%|████      | 201/500 [00:00<00:00, 315.72it/s]
+ 47%|████▋     | 233/500 [00:00<00:00, 316.40it/s]
+ 53%|█████▎    | 265/500 [00:00<00:00, 317.21it/s]
+ 59%|█████▉    | 297/500 [00:00<00:00, 312.75it/s]
+ 66%|██████▌   | 329/500 [00:01<00:00, 310.46it/s]
+ 72%|███████▏  | 362/500 [00:01<00:00, 315.66it/s]
+ 79%|███████▉  | 395/500 [00:01<00:00, 319.07it/s]
+ 85%|████████▌ | 427/500 [00:01<00:00, 319.06it/s]
+ 92%|█████████▏| 460/500 [00:01<00:00, 319.49it/s]
+ 99%|█████████▊| 493/500 [00:01<00:00, 322.22it/s]
+100%|██████████| 500/500 [00:01<00:00, 319.26it/s]
+2026-10-17:09:12:16 INFO     [api.task:312] Building contexts for french_bench_vocab on rank 0...
+
+  0%|          | 0/119 [00:00<?, ?it/s]
+ 11%|█         | 13/119 [00:00<00:00, 128.83it/s]
+ 24%|██▎       | 28/119 [00:00<00:00, 136.20it/s]
+ 35%|███▌      | 42/119 [00:00<00:00, 136.17it/s]
+ 47%|████▋     | 56/119 [00:00<00:00, 135.40it/s]
+ 59%|█████▉    | 70/119 [00:00<00:00, 135.91it/s]
+ 71%|███████   | 84/119 [00:00<00:00, 135.02it/s]
+ 82%|████████▏ | 98/119 [00:00<00:00, 135.79it/s]
+ 94%|█████████▍| 112/119 [00:00<00:00, 135.90it/s]
+100%|██████████| 119/119 [00:00<00:00, 135.28it/s]
+2026-10-17:09:12:17 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/4951 [00:00<?, ?it/s]
+Tokenizing inputs:   4%|▎         | 180/4951 [00:00<00:02, 1797.13it/s]
+Tokenizing inputs:   7%|▋         | 363/4951 [00:00<00:02, 1812.59it/s]
+Tokenizing inputs:  11%|█         | 545/4951 [00:00<00:02, 1803.52it/s]
+Tokenizing inputs:  15%|█▍        | 735/4951 [00:00<00:02, 1835.86it/s]
+Tokenizing inputs:  19%|█▊        | 919/4951 [00:00<00:02, 1816.27it/s]
+Tokenizing inputs:  22%|██▏       | 1101/4951 [00:00<00:02, 1768.44it/s]
+Tokenizing inputs:  26%|██▌       | 1279/4951 [00:00<00:02, 1731.65it/s]
+Tokenizing inputs:  29%|██▉       | 1453/4951 [00:00<00:02, 1713.34it/s]
+Tokenizing inputs:  33%|███▎      | 1643/4951 [00:00<00:01, 1765.21it/s]
+Tokenizing inputs:  37%|███▋      | 1820/4951 [00:01<00:01, 1761.48it/s]
+Tokenizing inputs:  40%|████      | 1997/4951 [00:01<00:01, 1761.84it/s]
+Tokenizing inputs:  48%|████▊     | 2365/4951 [00:01<00:01, 2337.20it/s]
+Tokenizing inputs:  53%|█████▎    | 2600/4951 [00:01<00:01, 2006.41it/s]
+Tokenizing inputs:  57%|█████▋    | 2810/4951 [00:01<00:01, 1443.67it/s]
+Tokenizing inputs:  60%|██████    | 2982/4951 [00:01<00:01, 1205.01it/s]
+Tokenizing inputs:  63%|██████▎   | 3126/4951 [00:02<00:01, 1058.36it/s]
+Tokenizing inputs:  66%|██████▌   | 3249/4951 [00:02<00:01, 985.16it/s] 
+Tokenizing inputs:  68%|██████▊   | 3359/4951 [00:02<00:01, 947.66it/s]
+Tokenizing inputs:  70%|██████▉   | 3461/4951 [00:02<00:01, 921.98it/s]
+Tokenizing inputs:  72%|███████▏  | 3558/4951 [00:02<00:01, 905.31it/s]
+Tokenizing inputs:  74%|███████▍  | 3652/4951 [00:02<00:01, 874.94it/s]
+Tokenizing inputs:  76%|███████▌  | 3741/4951 [00:02<00:01, 875.51it/s]
+Tokenizing inputs:  77%|███████▋  | 3830/4951 [00:02<00:01, 861.86it/s]
+Tokenizing inputs:  79%|███████▉  | 3918/4951 [00:02<00:01, 866.24it/s]
+Tokenizing inputs:  81%|████████  | 4007/4951 [00:03<00:01, 868.13it/s]
+Tokenizing inputs:  83%|████████▎ | 4095/4951 [00:03<00:01, 846.41it/s]
+Tokenizing inputs:  85%|████████▍ | 4186/4951 [00:03<00:00, 863.37it/s]
+Tokenizing inputs:  86%|████████▋ | 4273/4951 [00:03<00:00, 847.53it/s]
+Tokenizing inputs:  88%|████████▊ | 4362/4951 [00:03<00:00, 857.50it/s]
+Tokenizing inputs:  90%|████████▉ | 4448/4951 [00:03<00:00, 847.73it/s]
+Tokenizing inputs:  95%|█████████▌| 4716/4951 [00:03<00:00, 1377.75it/s]
+Tokenizing inputs: 100%|██████████| 4951/4951 [00:03<00:00, 1306.50it/s]
+
+Running loglikelihood requests:   0%|          | 0/4951 [00:00<?, ?it/s][W1017 09:13:05.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 9403629568 bytes (free: 0, total: 8589410304).
+[W1017 09:13:06.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 9403629568 bytes (free: 0, total: 8589410304).
+[W1017 09:13:15.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 8376025088 bytes (free: 0, total: 8589410304).

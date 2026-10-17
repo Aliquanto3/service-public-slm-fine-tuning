@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:22:41Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6863b7cbb1aafe4118ea43d3"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Jointure BOAMP - SIREN / Côté acheteurs / 2024, 2025 et 2026\nDataset ID: 6863b7cbb1aafe4118ea43d3\nTotal resources: 4\n\n1. boamp-avec-siren-acheteurs-2026-datagouv.parquet\n   Resource ID: 98cfab64-85df-4612-a981-a22aff68d2f7\n   Format: parquet\n   Size: 14.7 MB\n   MIME type: application/vnd.apache.parquet\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20261016-071343/boamp-avec-siren-acheteurs-2026-datagouv.parquet\n\n2. boamp-avec-siren-acheteurs-2025-datagouv.parquet\n   Resource ID: 8b965b80-6ace-48c5-ac3d-7e2ab3c607a4\n   Format: parquet\n   Size: 20.5 MB\n   MIME type: application/vnd.apache.parquet\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20261009-063729/boamp-avec-siren-acheteurs-2025-datagouv.parquet\n\n3. boamp-avec-siren-acheteurs-2024-datagouv.parquet\n   Resource ID: eab0fc6b-5c56-4849-9022-a53a48d7fd44\n   Format: parquet\n   Size: 17.8 MB\n   MIME type: application/vnd.apache.parquet\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20261009-063725/boamp-avec-siren-acheteurs-2024-datagouv.parquet\n\n4. schema-boamp-avec-siren-acheteurs.csv\n   Resource ID: f8aa9aaf-d1e1-4816-b36f-500a77ddd72d\n   Format: csv\n   Size: 8.0 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20260817-095022/schema-bsa-allege-76-colonnes.csv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Jointure BOAMP - SIREN / Côté acheteurs / 2024, 2025 et 2026\nDataset ID: 6863b7cbb1aafe4118ea43d3\nTotal resources: 4\n\n1. boamp-avec-siren-acheteurs-2026-datagouv.parquet\n   Resource ID: 98cfab64-85df-4612-a981-a22aff68d2f7\n   Format: parquet\n   Size: 14.7 MB\n   MIME type: application/vnd.apache.parquet\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20261016-071343/boamp-avec-siren-acheteurs-2026-datagouv.parquet\n\n2. boamp-avec-siren-acheteurs-2025-datagouv.parquet\n   Resource ID: 8b965b80-6ace-48c5-ac3d-7e2ab3c607a4\n   Format: parquet\n   Size: 20.5 MB\n   MIME type: application/vnd.apache.parquet\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20261009-063729/boamp-avec-siren-acheteurs-2025-datagouv.parquet\n\n3. boamp-avec-siren-acheteurs-2024-datagouv.parquet\n   Resource ID: eab0fc6b-5c56-4849-9022-a53a48d7fd44\n   Format: parquet\n   Size: 17.8 MB\n   MIME type: application/vnd.apache.parquet\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20261009-063725/boamp-avec-siren-acheteurs-2024-datagouv.parquet\n\n4. schema-boamp-avec-siren-acheteurs.csv\n   Resource ID: f8aa9aaf-d1e1-4816-b36f-500a77ddd72d\n   Format: csv\n   Size: 8.0 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/jointure-boamp-siren-cote-acheteurs-2024-2025-et-2026/20260817-095022/schema-bsa-allege-76-colonnes.csv\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

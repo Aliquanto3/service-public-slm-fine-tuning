@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:05:49Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "682ea2975c6ddc960c7082e3"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Centres de formation d'apprentis\nDataset ID: 682ea2975c6ddc960c7082e3\nTotal resources: 4\n\n1. cfa.csv\n   Resource ID: 393d4551-1ddd-4882-9bc8-c8a7647401de\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/csv?use_labels=true\n\n2. cfa.json\n   Resource ID: 47cafb70-d611-4a41-b9a1-0f784fc871f1\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/json\n\n3. cfa.geojson\n   Resource ID: fdc8e4be-7785-4071-8882-7b85d5417854\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/geojson\n\n4. cfa.zip\n   Resource ID: fa5c5368-31f5-4ae6-b87c-5aa967de5d1f\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/shp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Centres de formation d'apprentis\nDataset ID: 682ea2975c6ddc960c7082e3\nTotal resources: 4\n\n1. cfa.csv\n   Resource ID: 393d4551-1ddd-4882-9bc8-c8a7647401de\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/csv?use_labels=true\n\n2. cfa.json\n   Resource ID: 47cafb70-d611-4a41-b9a1-0f784fc871f1\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/json\n\n3. cfa.geojson\n   Resource ID: fdc8e4be-7785-4071-8882-7b85d5417854\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/geojson\n\n4. cfa.zip\n   Resource ID: fa5c5368-31f5-4ae6-b87c-5aa967de5d1f\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/cfa/exports/shp\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

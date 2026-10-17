@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:10:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "55d1aad488ee383afca46ec1"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\n\nID: 55d1aad488ee383afca46ec1\nSlug: 15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen\nURL: https://www.data.gouv.fr/datasets/15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen/\n\nFull description: Ces titres s’adressent aux ressortissants de l’UE qui en font la demande et aux membres de leurs familles, y compris lorsque ces derniers sont ressortissants de pays tiers.\r\n\r\nCes personnes peuvent donc bénéficier de titres « UE » (« CE » jusqu’en 2011) dont la mention varie selon le profil du demandeur et dont la durée de validité ne peut excéder 5 ans, sauf dans le cas d’un titre permanent.\r\n\r\nLes ressortissants des pays tiers membres de famille de citoyens de l’UE ainsi que les ressortissants...\n\nOrganization: Ministère de l'intérieur\n  Organization ID: 534fff91a3a7292c64a77f53\n\nTags: admission-au-sejour, autorisation-de-sejour, autorisation-provisoire-de-sejou, carte-de-sejour, eee, entree-en-france, espace-schengen, etranger, immigration, immigration-familiale\n\nResources: 1 file(s)\n\nCreated: 2015-08-17T11:35:16.761000+00:00\nLast updated: 2015-08-17T11:35:37.906000+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\n\nID: 55d1aad488ee383afca46ec1\nSlug: 15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen\nURL: https://www.data.gouv.fr/datasets/15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen/\n\nFull description: Ces titres s’adressent aux ressortissants de l’UE qui en font la demande et aux membres de leurs familles, y compris lorsque ces derniers sont ressortissants de pays tiers.\r\n\r\nCes personnes peuvent donc bénéficier de titres « UE » (« CE » jusqu’en 2011) dont la mention varie selon le profil du demandeur et dont la durée de validité ne peut excéder 5 ans, sauf dans le cas d’un titre permanent.\r\n\r\nLes ressortissants des pays tiers membres de famille de citoyens de l’UE ainsi que les ressortissants...\n\nOrganization: Ministère de l'intérieur\n  Organization ID: 534fff91a3a7292c64a77f53\n\nTags: admission-au-sejour, autorisation-de-sejour, autorisation-provisoire-de-sejou, carte-de-sejour, eee, entree-en-france, espace-schengen, etranger, immigration, immigration-familiale\n\nResources: 1 file(s)\n\nCreated: 2015-08-17T11:35:16.761000+00:00\nLast updated: 2015-08-17T11:35:37.906000+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

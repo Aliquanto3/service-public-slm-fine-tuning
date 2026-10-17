@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:58:54Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6737844cc711827bfac40ab6"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Zones de protection spéciale (ZPS) Natura 2000 dans le département des Vosges\nDataset ID: 6737844cc711827bfac40ab6\nTotal resources: 2\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: d1ecb388-cb86-4a61-84dd-5c0cb1dbf1cc\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-a6124050-015f-4627-be0c-9f547efce4c8&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: da94f6cd-d959-4aa2-84b9-add20402e9ff\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-a6124050-015f-4627-be0c-9f547efce4c8&dataType=dataset\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Zones de protection spéciale (ZPS) Natura 2000 dans le département des Vosges\nDataset ID: 6737844cc711827bfac40ab6\nTotal resources: 2\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: d1ecb388-cb86-4a61-84dd-5c0cb1dbf1cc\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-a6124050-015f-4627-be0c-9f547efce4c8&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: da94f6cd-d959-4aa2-84b9-add20402e9ff\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-a6124050-015f-4627-be0c-9f547efce4c8&dataType=dataset\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

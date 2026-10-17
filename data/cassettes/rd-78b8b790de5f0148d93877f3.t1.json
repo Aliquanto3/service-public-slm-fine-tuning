@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:16:31Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "démographie 2013 communes Mulhouse Alsace"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'démographie 2013 communes Mulhouse Alsace'\nPage 1 of results:\n\n1. Démographie 2013 Communes m2A\n   ID: 5be560b906e3e70c7277c6e7\n   Organization: Mulhouse Alsace Agglomération\n   Tags: age, familles, population, social, statistiques\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/demographie-2013-communes-m2a\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'démographie 2013 communes Mulhouse Alsace'\nPage 1 of results:\n\n1. Démographie 2013 Communes m2A\n   ID: 5be560b906e3e70c7277c6e7\n   Organization: Mulhouse Alsace Agglomération\n   Tags: age, familles, population, social, statistiques\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/demographie-2013-communes-m2a\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

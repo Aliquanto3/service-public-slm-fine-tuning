@@ -1,0 +1,125 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:07:12Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "démographie territoire évolution",
+      "sort": "-last_update",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 7 dataset(s) for query: 'démographie territoire évolution'\nPage 1 of results:\n\n1. Analyse des données mensuelles de radiance satellite en cœur de nuit et des pratiques d’éclairage associées (de janvier 2014 à décembre 2024) en Bretagne\n   ID: 6a236435398f6243a987da87\n   Organization: Région Bretagne\n   Tags: 233500016, donnees-ouvertes, pollution-lumineuse, trame-noire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/analyse-des-donnees-mensuelles-de-radiance-satellite-en-coeur-de-nuit-et-des-pratiques-declairage-associees-de-janvier-2014-a-decembre-2024-en-bretagne\n\n2. SLA - Evolution démographique du territoire depuis 2008\n   ID: 6500ff9140a8be1b71c02c1a\n   Organization: Saint-Louis Agglomération\n   Tags: amenagement-du-territoire-habitat-population, portrait\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/sla-evolution-demographique-du-territoire-depuis-2008\n\n3. Démographie de la Polynésie française\n   ID: 5ca7c5ba8b4c412051d92552\n   Organization: Institut de la statistique de la Polynésie française\n   Tags: deces, demographie, etat-civil, mairies, naissances\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/demographie-de-la-polynesie-francaise\n\n4. Niveau IRIS France, 1964 variables sur les 48 950 IRIS\n   ID: 6a0db7a7fa455e938f5024dc\n   Description: Description détaillée et structurée des données socio-économiques, démographiques et territoriales des 48 950 IRIS français, avec 1 959 variables mises à jour (notamment 2021-2022), par MyDataBall....\n   Organization: MyDataBall\n   Tags: donnees-ouvertes, evolution-temporelle, indicateurs-socio-economiques, iris-france, population\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/niveau-iris-france-1964-variables-sur-les-48-950-iris-2\n\n5. Quartiers prioritaires politique de la ville ANCT 26avril2024\n   ID: 66a195b0491374ed2b444aff\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, politique-de-la-ville, qpv, quartiers\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/quartiers-prioritaires-politique-de-la-ville-anct-26avril2024\n\n6. Carte quartiers prioritaires de la politique de la ville ANCT 26avril2024\n   ID: 697801b7c4d7fd6d893fd2d2\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, politique-de-la-ville, qpv, quartiers\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/carte-quartiers-prioritaires-de-la-politique-de-la-ville-anct-26avril2024\n\n7. Recensement général de la population en Polynésie française\n   ID: 5c7047c7634f415b2f29ac53\n   Organization: Institut de la statistique de la Polynésie française\n   Tags: ispf, polynesie-francaise, population, recensement\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/recensement-general-de-la-population-en-polynesie-francaise\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 7 dataset(s) for query: 'démographie territoire évolution'\nPage 1 of results:\n\n1. Analyse des données mensuelles de radiance satellite en cœur de nuit et des pratiques d’éclairage associées (de janvier 2014 à décembre 2024) en Bretagne\n   ID: 6a236435398f6243a987da87\n   Organization: Région Bretagne\n   Tags: 233500016, donnees-ouvertes, pollution-lumineuse, trame-noire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/analyse-des-donnees-mensuelles-de-radiance-satellite-en-coeur-de-nuit-et-des-pratiques-declairage-associees-de-janvier-2014-a-decembre-2024-en-bretagne\n\n2. SLA - Evolution démographique du territoire depuis 2008\n   ID: 6500ff9140a8be1b71c02c1a\n   Organization: Saint-Louis Agglomération\n   Tags: amenagement-du-territoire-habitat-population, portrait\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/sla-evolution-demographique-du-territoire-depuis-2008\n\n3. Démographie de la Polynésie française\n   ID: 5ca7c5ba8b4c412051d92552\n   Organization: Institut de la statistique de la Polynésie française\n   Tags: deces, demographie, etat-civil, mairies, naissances\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/demographie-de-la-polynesie-francaise\n\n4. Niveau IRIS France, 1964 variables sur les 48 950 IRIS\n   ID: 6a0db7a7fa455e938f5024dc\n   Description: Description détaillée et structurée des données socio-économiques, démographiques et territoriales des 48 950 IRIS français, avec 1 959 variables mises à jour (notamment 2021-2022), par MyDataBall....\n   Organization: MyDataBall\n   Tags: donnees-ouvertes, evolution-temporelle, indicateurs-socio-economiques, iris-france, population\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/niveau-iris-france-1964-variables-sur-les-48-950-iris-2\n\n5. Quartiers prioritaires politique de la ville ANCT 26avril2024\n   ID: 66a195b0491374ed2b444aff\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, politique-de-la-ville, qpv, quartiers\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/quartiers-prioritaires-politique-de-la-ville-anct-26avril2024\n\n6. Carte quartiers prioritaires de la politique de la ville ANCT 26avril2024\n   ID: 697801b7c4d7fd6d893fd2d2\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, politique-de-la-ville, qpv, quartiers\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/carte-quartiers-prioritaires-de-la-politique-de-la-ville-anct-26avril2024\n\n7. Recensement général de la population en Polynésie française\n   ID: 5c7047c7634f415b2f29ac53\n   Organization: Institut de la statistique de la Polynésie française\n   Tags: ispf, polynesie-francaise, population, recensement\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/recensement-general-de-la-population-en-polynesie-francaise\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "emploi technologie territoire impact",
+      "sort": "-last_update",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'emploi technologie territoire impact'\nPage 1 of results:\n\n1. Emploi et logistique liés au e-commerce : indicateurs structurels (2024-2025) \n   ID: 698f326d98c40903c0e90d4f\n   Description: Chiffres clés sur l'emploi lié au e-commerce, les flux logistiques et leur empreinte environnementale en France métropolitaine et DOM pour 2023-2025....\n   Tags: donnees-ouvertes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/emploi-et-logistique-lies-au-e-commerce-indicateurs-structurels-2024-2025\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'emploi technologie territoire impact'\nPage 1 of results:\n\n1. Emploi et logistique liés au e-commerce : indicateurs structurels (2024-2025) \n   ID: 698f326d98c40903c0e90d4f\n   Description: Chiffres clés sur l'emploi lié au e-commerce, les flux logistiques et leur empreinte environnementale en France métropolitaine et DOM pour 2023-2025....\n   Tags: donnees-ouvertes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/emploi-et-logistique-lies-au-e-commerce-indicateurs-structurels-2024-2025\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "développement territorial innovation",
+      "sort": "-last_update",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 8 dataset(s) for query: 'développement territorial innovation'\nPage 1 of results:\n\n1. Opération de Revitalisation de Territoire (ORT) en Bretagne\n   ID: 68cbc428df952493fcc0bcd9\n   Organization: Direction régionale de l'environnement, de l'aménagement et du logement de Bretagne\n   Tags: bretagne, centralite, centre-ville, donnees-ouvertes, habitat-urbain\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/operation-de-revitalisation-de-territoire-ort-en-bretagne\n\n2. Gestion des fonds européens en Île-de-France - liste des opérations 2021-2027\n   ID: 6a321c3c6d45c8b114467379\n   Organization: Région Île-de-France\n   Tags: decrochage-scolaire, emploi, entreprises, environnement, europe\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/gestion-des-fonds-europeens-en-ile-de-france-liste-des-operations-2021-2027\n\n3. La filière Eau en Provence-Alpes-Côte d'Azur\n   ID: 6a0fa03767d24dafa187da8b\n   Organization: Région Provence-Alpes-Côte-d'Azur\n   Tags: activite-economique, eau, economie, filieres, industrie\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/la-filiere-eau-en-provence-alpes-cote-d-azur\n\n4. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2024\n   ID: 686e112b9c8f9805aea2e6f4\n   Organization: GrandSoissons Agglomération\n   Tags: 2024, conseil-communautaire, decisions, deliberations\n   Resources: 534\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2024\n\n5. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2025\n   ID: 686e24feb69afdc9cd2977bd\n   Organization: GrandSoissons Agglomération\n   Tags: 2025, conseil-communautaire, decisions, deliberations\n   Resources: 499\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2025\n\n6. Liste des lauréats \"Démonstrateurs ville durable\" - France 2030\n   ID: 636c418c159330f20df64c85\n   Organization: Caisse des Dépôts\n   Tags: agriculture-transition-agroecologique-innovation-territoires-france-2030-demonstrateurs-territoriaux, bdt, dvd, france-2030, investissement-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/liste-des-laureats-demonstrateurs-ville-durable-france-2030\n\n7. Périmètre infra-communal des opérations de revitalisation territoriale dans le Puy-de-Dôme\n   ID: 660bf793882b255e1183d68a\n   Organization: Direction Départementale des Territoire du Puy-de-Dôme\n   Tags: donnees-ouvertes, habitat-politique-de-la-ville-politique, inspire, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/perimetre-infra-communal-des-operations-de-revitalisation-territoriale-dans-le-puy-de-dome\n\n8. ANALYSE DES MARCHÉS DES TECHNOLOGIES DANS LES TÉLÉCOMMUNICATIONS DE 2000 À 2025 \n   ID: 691311305c04515247b14cd6\n   Description: Les données de télécommunications françaises de 2000 à 2025 détaillent l'évolution des marchés technologiques avec la généralisation de la fibre optique et la montée de la 5G....\n   Organization: sarl 1.0 acola Groupe Bisatel\n   Tags: analyse, operateur-mobile, operateurs-internet, technologies, telecom\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/analyse-des-marches-des-technologies-dans-les-telecommunications-de-2000-a-2025\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 8 dataset(s) for query: 'développement territorial innovation'\nPage 1 of results:\n\n1. Opération de Revitalisation de Territoire (ORT) en Bretagne\n   ID: 68cbc428df952493fcc0bcd9\n   Organization: Direction régionale de l'environnement, de l'aménagement et du logement de Bretagne\n   Tags: bretagne, centralite, centre-ville, donnees-ouvertes, habitat-urbain\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/operation-de-revitalisation-de-territoire-ort-en-bretagne\n\n2. Gestion des fonds européens en Île-de-France - liste des opérations 2021-2027\n   ID: 6a321c3c6d45c8b114467379\n   Organization: Région Île-de-France\n   Tags: decrochage-scolaire, emploi, entreprises, environnement, europe\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/gestion-des-fonds-europeens-en-ile-de-france-liste-des-operations-2021-2027\n\n3. La filière Eau en Provence-Alpes-Côte d'Azur\n   ID: 6a0fa03767d24dafa187da8b\n   Organization: Région Provence-Alpes-Côte-d'Azur\n   Tags: activite-economique, eau, economie, filieres, industrie\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/la-filiere-eau-en-provence-alpes-cote-d-azur\n\n4. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2024\n   ID: 686e112b9c8f9805aea2e6f4\n   Organization: GrandSoissons Agglomération\n   Tags: 2024, conseil-communautaire, decisions, deliberations\n   Resources: 534\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2024\n\n5. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2025\n   ID: 686e24feb69afdc9cd2977bd\n   Organization: GrandSoissons Agglomération\n   Tags: 2025, conseil-communautaire, decisions, deliberations\n   Resources: 499\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2025\n\n6. Liste des lauréats \"Démonstrateurs ville durable\" - France 2030\n   ID: 636c418c159330f20df64c85\n   Organization: Caisse des Dépôts\n   Tags: agriculture-transition-agroecologique-innovation-territoires-france-2030-demonstrateurs-territoriaux, bdt, dvd, france-2030, investissement-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/liste-des-laureats-demonstrateurs-ville-durable-france-2030\n\n7. Périmètre infra-communal des opérations de revitalisation territoriale dans le Puy-de-Dôme\n   ID: 660bf793882b255e1183d68a\n   Organization: Direction Départementale des Territoire du Puy-de-Dôme\n   Tags: donnees-ouvertes, habitat-politique-de-la-ville-politique, inspire, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/perimetre-infra-communal-des-operations-de-revitalisation-territoriale-dans-le-puy-de-dome\n\n8. ANALYSE DES MARCHÉS DES TECHNOLOGIES DANS LES TÉLÉCOMMUNICATIONS DE 2000 À 2025 \n   ID: 691311305c04515247b14cd6\n   Description: Les données de télécommunications françaises de 2000 à 2025 détaillent l'évolution des marchés technologiques avec la généralisation de la fibre optique et la montée de la 5G....\n   Organization: sarl 1.0 acola Groupe Bisatel\n   Tags: analyse, operateur-mobile, operateurs-internet, technologies, telecom\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/analyse-des-marches-des-technologies-dans-les-telecommunications-de-2000-a-2025\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+2026-10-17:11:30:02 INFO     [_cli.run:391] Including path: C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-17:11:30:02 INFO     [_cli.run:392] Selected Tasks: ['agentpublic_mcq']
+2026-10-17:11:30:03 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-17:11:30:03 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\minicpm5-1b\\hf', 'dtype': 'bfloat16'}
+2026-10-17:11:30:08 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-17:11:30:08 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/219 [00:00<?, ?it/s]
+Loading weights:  16%|█▋        | 36/219 [00:00<00:00, 319.19it/s]
+Loading weights:  32%|███▏      | 70/219 [00:00<00:00, 330.32it/s]
+Loading weights:  48%|████▊     | 106/219 [00:00<00:00, 337.11it/s]
+Loading weights:  66%|██████▌   | 144/219 [00:00<00:00, 344.59it/s]
+Loading weights:  83%|████████▎ | 181/219 [00:00<00:00, 351.54it/s]
+Loading weights: 100%|██████████| 219/219 [00:00<00:00, 358.46it/s]
+2026-10-17:11:30:09 WARNING  [api.task:861] agentpublic_mcq: Custom kwargs can be passed to `--metadata` in console (as json string) or to the TaskManager.
+For example --metadata='{"max_seq_lengths":[4096, 8192]}'. For details see task Readme.
+2026-10-17:11:30:10 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-17:11:30:10 INFO     [evaluator_utils:506] Task: agentpublic_mcq (C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval\agentpublic_mcq\agentpublic_mcq.yaml)
+2026-10-17:11:30:10 WARNING  [evaluator:335] Overwriting default num_fewshot of agentpublic_mcq from None to 0
+2026-10-17:11:30:10 INFO     [api.task:312] Building contexts for agentpublic_mcq on rank 0...
+
+  0%|          | 0/42 [00:00<?, ?it/s]
+100%|██████████| 42/42 [00:00<00:00, 1374.71it/s]
+2026-10-17:11:30:10 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/200 [00:00<?, ?it/s]
+Tokenizing inputs: 100%|██████████| 200/200 [00:00<00:00, 6874.89it/s]
+
+Running loglikelihood requests:   0%|          | 0/200 [00:00<?, ?it/s][W1017 11:30:21.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 7755268096 bytes (free: 0, total: 8589410304).
+[W1017 11:30:24.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 7755268096 bytes (free: 0, total: 8589410304).
+[W1017 11:30:31.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 6908018688 bytes (free: 0, total: 8589410304).

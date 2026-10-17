@@ -1,0 +1,104 @@
+2026-10-17:09:38:49 INFO     [_cli.run:391] Including path: C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-17:09:38:49 INFO     [_cli.run:392] Selected Tasks: ['belebele_fra_Latn']
+2026-10-17:09:38:51 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-17:09:38:51 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\granite-4.0-1b\\hf', 'dtype': 'bfloat16'}
+2026-10-17:09:38:59 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-17:09:38:59 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/322 [00:00<?, ?it/s]
+Loading weights:   5%|▍         | 16/322 [00:00<00:02, 147.76it/s]
+Loading weights:  10%|█         | 33/322 [00:00<00:01, 160.21it/s]
+Loading weights:  18%|█▊        | 57/322 [00:00<00:01, 187.73it/s]
+Loading weights:  25%|██▌       | 82/322 [00:00<00:01, 204.69it/s]
+Loading weights:  34%|███▍      | 109/322 [00:00<00:00, 220.15it/s]
+Loading weights:  41%|████      | 131/322 [00:00<00:00, 211.77it/s]
+Loading weights:  48%|████▊     | 156/322 [00:00<00:00, 217.68it/s]
+Loading weights:  55%|█████▌    | 178/322 [00:00<00:00, 206.73it/s]
+Loading weights:  62%|██████▏   | 201/322 [00:00<00:00, 213.25it/s]
+Loading weights:  69%|██████▉   | 223/322 [00:01<00:00, 212.00it/s]
+Loading weights:  76%|███████▌  | 245/322 [00:01<00:00, 206.08it/s]
+Loading weights:  83%|████████▎ | 267/322 [00:01<00:00, 204.89it/s]
+Loading weights:  90%|████████▉ | 289/322 [00:01<00:00, 206.39it/s]
+Loading weights:  96%|█████████▋| 310/322 [00:01<00:00, 182.79it/s]
+Loading weights: 100%|██████████| 322/322 [00:01<00:00, 199.39it/s]
+Using the latest cached version of the dataset since facebook/belebele couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fra_Latn' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\facebook___belebele\fra_Latn\0.0.0\7899cdfa4e1e0d733fd77c848e2c273cb1d32be2 (last modified on Fri Oct 16 18:14:05 2026).
+2026-10-17:09:39:01 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-17:09:39:01 INFO     [evaluator_utils:506] Task: belebele_fra_Latn (belebele\belebele_fra_Latn.yaml)
+2026-10-17:09:39:01 WARNING  [evaluator:335] Overwriting default num_fewshot of belebele_fra_Latn from None to 0
+2026-10-17:09:39:01 INFO     [api.task:312] Building contexts for belebele_fra_Latn on rank 0...
+
+  0%|          | 0/900 [00:00<?, ?it/s]
+ 13%|█▎        | 113/900 [00:00<00:00, 1127.83it/s]
+ 26%|██▌       | 230/900 [00:00<00:00, 1147.93it/s]
+ 38%|███▊      | 345/900 [00:00<00:00, 1146.05it/s]
+ 51%|█████     | 460/900 [00:00<00:00, 1144.82it/s]
+ 64%|██████▍   | 576/900 [00:00<00:00, 1145.40it/s]
+ 77%|███████▋  | 691/900 [00:00<00:00, 1144.14it/s]
+ 90%|████████▉ | 806/900 [00:00<00:00, 1133.83it/s]
+100%|██████████| 900/900 [00:00<00:00, 1125.65it/s]
+2026-10-17:09:39:02 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/3600 [00:00<?, ?it/s]
+Tokenizing inputs:   5%|▍         | 169/3600 [00:00<00:02, 1685.40it/s]
+Tokenizing inputs:  10%|█         | 375/3600 [00:00<00:01, 1903.33it/s]
+Tokenizing inputs:  16%|█▌        | 566/3600 [00:00<00:01, 1896.28it/s]
+Tokenizing inputs:  22%|██▏       | 784/3600 [00:00<00:01, 2005.83it/s]
+Tokenizing inputs:  28%|██▊       | 1021/3600 [00:00<00:01, 2135.54it/s]
+Tokenizing inputs:  35%|███▍      | 1248/3600 [00:00<00:01, 2179.81it/s]
+Tokenizing inputs:  41%|████      | 1473/3600 [00:00<00:00, 2197.61it/s]
+Tokenizing inputs:  47%|████▋     | 1704/3600 [00:00<00:00, 2232.13it/s]
+Tokenizing inputs:  54%|█████▎    | 1932/3600 [00:00<00:00, 2245.41it/s]
+Tokenizing inputs:  60%|██████    | 2167/3600 [00:01<00:00, 2276.67it/s]
+Tokenizing inputs:  67%|██████▋   | 2414/3600 [00:01<00:00, 2331.58it/s]
+Tokenizing inputs:  74%|███████▎  | 2648/3600 [00:01<00:00, 2318.32it/s]
+Tokenizing inputs:  80%|████████  | 2880/3600 [00:01<00:00, 2167.32it/s]
+Tokenizing inputs:  86%|████████▌ | 3099/3600 [00:01<00:00, 2073.92it/s]
+Tokenizing inputs:  92%|█████████▏| 3309/3600 [00:01<00:00, 2018.70it/s]
+Tokenizing inputs:  98%|█████████▊| 3513/3600 [00:01<00:00, 1952.61it/s]
+Tokenizing inputs: 100%|██████████| 3600/3600 [00:01<00:00, 2094.11it/s]
+
+Running loglikelihood requests:   0%|          | 0/3600 [00:00<?, ?it/s][W1017 09:39:24.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 7386169344 bytes (free: 0, total: 8589410304).
+[W1017 09:39:30.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 7386169344 bytes (free: 0, total: 8589410304).
+[W1017 09:39:53.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 6578765824 bytes (free: 0, total: 8589410304).
+[W1017 09:40:05.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 6578765824 bytes (free: 0, total: 8589410304).
+[W1017 09:40:22.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 5886705664 bytes (free: 0, total: 8589410304).
+[W1017 09:40:29.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 5886705664 bytes (free: 0, total: 8589410304).
+[W1017 09:40:41.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 5194645504 bytes (free: 0, total: 8589410304).
+[W1017 09:40:48.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 5194645504 bytes (free: 0, total: 8589410304).
+[W1017 09:40:58.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 4617928704 bytes (free: 0, total: 8589410304).
+[W1017 09:41:05.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 4617928704 bytes (free: 0, total: 8589410304).
+[W1017 09:41:15.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 4156555264 bytes (free: 0, total: 8589410304).
+[W1017 09:41:20.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 4156555264 bytes (free: 0, total: 8589410304).
+
+Running loglikelihood requests:   0%|          | 1/3600 [02:52<172:03:37, 172.11s/it]
+Running loglikelihood requests:   4%|▎         | 129/3600 [02:55<55:40,  1.04it/s]   
+Running loglikelihood requests:   7%|▋         | 257/3600 [02:58<22:51,  2.44it/s]
+Running loglikelihood requests:  11%|█         | 385/3600 [03:01<12:30,  4.29it/s]
+Running loglikelihood requests:  14%|█▍        | 513/3600 [03:04<07:43,  6.66it/s]
+Running loglikelihood requests:  18%|█▊        | 641/3600 [03:06<05:05,  9.69it/s]
+Running loglikelihood requests:  21%|██▏       | 769/3600 [03:09<03:33, 13.27it/s]
+Running loglikelihood requests:  25%|██▍       | 897/3600 [03:12<02:38, 17.02it/s]
+Running loglikelihood requests:  28%|██▊       | 1025/3600 [03:15<01:59, 21.50it/s]
+Running loglikelihood requests:  32%|███▏      | 1153/3600 [03:17<01:32, 26.36it/s]
+Running loglikelihood requests:  36%|███▌      | 1281/3600 [03:19<01:14, 31.11it/s]
+Running loglikelihood requests:  39%|███▉      | 1409/3600 [03:22<01:01, 35.92it/s]
+Running loglikelihood requests:  43%|████▎     | 1537/3600 [03:24<00:51, 40.24it/s]
+Running loglikelihood requests:  46%|████▋     | 1665/3600 [03:26<00:43, 44.33it/s]
+Running loglikelihood requests:  50%|████▉     | 1793/3600 [03:28<00:37, 47.97it/s]
+Running loglikelihood requests:  53%|█████▎    | 1921/3600 [03:30<00:31, 52.73it/s]
+Running loglikelihood requests:  57%|█████▋    | 2049/3600 [03:32<00:27, 55.43it/s]
+Running loglikelihood requests:  60%|██████    | 2177/3600 [03:34<00:23, 59.59it/s]
+Running loglikelihood requests:  64%|██████▍   | 2305/3600 [03:36<00:21, 61.24it/s]
+Running loglikelihood requests:  68%|██████▊   | 2433/3600 [03:38<00:17, 65.13it/s]
+Running loglikelihood requests:  71%|███████   | 2561/3600 [03:40<00:15, 66.62it/s]
+Running loglikelihood requests:  75%|███████▍  | 2689/3600 [03:41<00:12, 70.76it/s]
+Running loglikelihood requests:  78%|███████▊  | 2817/3600 [03:43<00:10, 72.17it/s]
+Running loglikelihood requests:  82%|████████▏ | 2945/3600 [03:45<00:09, 70.94it/s]
+Running loglikelihood requests:  85%|████████▌ | 3073/3600 [03:46<00:07, 72.79it/s]
+Running loglikelihood requests:  89%|████████▉ | 3201/3600 [03:48<00:05, 73.92it/s]
+Running loglikelihood requests:  92%|█████████▏| 3329/3600 [03:49<00:03, 78.14it/s]
+Running loglikelihood requests:  96%|█████████▌| 3457/3600 [03:52<00:02, 70.21it/s]
+Running loglikelihood requests: 100%|█████████▉| 3585/3600 [03:52<00:00, 96.86it/s]
+Running loglikelihood requests: 100%|██████████| 3600/3600 [03:52<00:00, 15.50it/s]
+2026-10-17:09:43:02 INFO     [loggers.evaluation_tracker:247] Saving results aggregated

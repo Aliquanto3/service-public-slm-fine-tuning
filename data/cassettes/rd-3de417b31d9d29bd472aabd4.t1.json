@@ -1,0 +1,148 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:23:12Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "éducation musicale initiale Occitanie 2019"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'éducation musicale initiale Occitanie 2019'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'éducation musicale initiale Occitanie 2019'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "enseignement artistique Occitanie 2019"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'enseignement artistique Occitanie 2019'\nPage 1 of results:\n\n1. Programmes d'enseignement de première générale (réforme du baccalauréat 2021)\n   ID: 5ca2153d8b4c41425bc82c82\n   Organization: Ministères de l'Éducation nationale\n   Resources: 31\n   URL: https://www.data.gouv.fr/datasets/programmes-denseignement-de-premiere-generale-reforme-du-baccalaureat-2021\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'enseignement artistique Occitanie 2019'\nPage 1 of results:\n\n1. Programmes d'enseignement de première générale (réforme du baccalauréat 2021)\n   ID: 5ca2153d8b4c41425bc82c82\n   Organization: Ministères de l'Éducation nationale\n   Resources: 31\n   URL: https://www.data.gouv.fr/datasets/programmes-denseignement-de-premiere-generale-reforme-du-baccalaureat-2021\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "école de musique région Occitanie 2019"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'école de musique région Occitanie 2019'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'école de musique région Occitanie 2019'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "EMI Occitanie 2019"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 50 dataset(s) for query: 'EMI Occitanie 2019'\nPage 1 of results:\n\n1. emi occitanie dpt 2019\n   ID: 66e97cca2e904e483f45d1f8\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-2019\n\n2. emi occitanie region 2019\n   ID: 66e97cc62e904e483f45d1ec\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2019\n\n3. emi occitanie epci 2019\n   ID: 66e97cce2e904e483f45d204\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2019\n\n4. emi occitanie dpt sectorise 2019\n   ID: 6a4308ec20a96c92e954d375\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-sectorise-2019\n\n5. emi occitanie region sectorise 2019\n   ID: 6a4308e420a96c92e954d358\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-sectorise-2019\n\n6. emi occitanie region 2014\n   ID: 66e97cc82e904e483f45d1f1\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2014\n\n7. emi occitanie region 2013\n   ID: 66e97cc82e904e483f45d1f2\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2013\n\n8. emi occitanie region 2016\n   ID: 66e97cc72e904e483f45d1ef\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2016\n\n9. emi occitanie region 2015\n   ID: 66e97cc82e904e483f45d1f0\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2015\n\n10. emi occitanie region 2012\n   ID: 66e97cc82e904e483f45d1f3\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2012\n\n11. emi occitanie region 2011\n   ID: 66e97cc92e904e483f45d1f4\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2011\n\n12. emi occitanie region 2010\n   ID: 66e97cc92e904e483f45d1f5\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2010\n\n13. emi occitanie region 2018\n   ID: 66e97cc72e904e483f45d1ed\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2018\n\n14. emi occitanie region 2017\n   ID: 66e97cc72e904e483f45d1ee\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2017\n\n15. emi occitanie epci 2012\n   ID: 66e97cd02e904e483f45d20b\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2012\n\n16. emi occitanie dpt 2010\n   ID: 66e97ccd2e904e483f45d201\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-2010\n\n17. emi occitanie dpt 2012\n   ID: 66e97ccc2e904e483f45d1ff\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-2012\n\n18. emi occitanie epci 2013\n   ID: 66e97ccf2e904e483f45d20a\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2013\n\n19. emi occitanie epci 2014\n   ID: 66e97ccf2e904e483f45d209\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2014\n\n20. emi occitanie epci 2015\n   ID: 66e97ccf2e904e483f45d208\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2015\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 50 dataset(s) for query: 'EMI Occitanie 2019'\nPage 1 of results:\n\n1. emi occitanie dpt 2019\n   ID: 66e97cca2e904e483f45d1f8\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-2019\n\n2. emi occitanie region 2019\n   ID: 66e97cc62e904e483f45d1ec\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2019\n\n3. emi occitanie epci 2019\n   ID: 66e97cce2e904e483f45d204\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2019\n\n4. emi occitanie dpt sectorise 2019\n   ID: 6a4308ec20a96c92e954d375\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-sectorise-2019\n\n5. emi occitanie region sectorise 2019\n   ID: 6a4308e420a96c92e954d358\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-sectorise-2019\n\n6. emi occitanie region 2014\n   ID: 66e97cc82e904e483f45d1f1\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2014\n\n7. emi occitanie region 2013\n   ID: 66e97cc82e904e483f45d1f2\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2013\n\n8. emi occitanie region 2016\n   ID: 66e97cc72e904e483f45d1ef\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2016\n\n9. emi occitanie region 2015\n   ID: 66e97cc82e904e483f45d1f0\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2015\n\n10. emi occitanie region 2012\n   ID: 66e97cc82e904e483f45d1f3\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2012\n\n11. emi occitanie region 2011\n   ID: 66e97cc92e904e483f45d1f4\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2011\n\n12. emi occitanie region 2010\n   ID: 66e97cc92e904e483f45d1f5\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2010\n\n13. emi occitanie region 2018\n   ID: 66e97cc72e904e483f45d1ed\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2018\n\n14. emi occitanie region 2017\n   ID: 66e97cc72e904e483f45d1ee\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire, region\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-region-2017\n\n15. emi occitanie epci 2012\n   ID: 66e97cd02e904e483f45d20b\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2012\n\n16. emi occitanie dpt 2010\n   ID: 66e97ccd2e904e483f45d201\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-2010\n\n17. emi occitanie dpt 2012\n   ID: 66e97ccc2e904e483f45d1ff\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-dpt-2012\n\n18. emi occitanie epci 2013\n   ID: 66e97ccf2e904e483f45d20a\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2013\n\n19. emi occitanie epci 2014\n   ID: 66e97ccf2e904e483f45d209\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2014\n\n20. emi occitanie epci 2015\n   ID: 66e97ccf2e904e483f45d208\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2015\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

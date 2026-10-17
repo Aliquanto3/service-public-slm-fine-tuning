@@ -1,0 +1,8 @@
+Passed argument batch_size = auto:1. Detecting largest batch size
+Determined largest batch size: 32
+hf ({'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\granite-4.0-1b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: None, num_fewshot: 0, batch_size: auto (32)
+|      Tasks      |Version|Filter|n-shot| Metric |   |Value |   |Stderr|
+|-----------------|------:|------|-----:|--------|---|-----:|---|-----:|
+|belebele_fra_Latn|      0|none  |     0|acc     |↑  |0.6367|±  | 0.016|
+|                 |       |none  |     0|acc_norm|↑  |0.6367|±  | 0.016|
+

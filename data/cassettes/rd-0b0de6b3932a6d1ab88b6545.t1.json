@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:53:33Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zonage petite échelle",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 12 dataset(s) for query: 'zonage petite échelle'\nPage 1 of results:\n\n1. Revenus, pauvreté et niveau de vie - Données carroyées\n   ID: 5d8e16106f44410332a79994\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: disparites-de-revenus, distribution-des-revenus, inegalites-de-revenus, menages-fiscaux, niveaux-de-revenus\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/revenus-pauvrete-et-niveau-de-vie-donnees-carroyees\n\n2. Tronçons de voies : vitesse règlementaire\n   ID: 64809545ce7de8cc24092716\n   Organization: Brest métropole\n   Tags: arretes, circulation, filaire, mobilite-deplacement-transports, reglementation\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/troncons-de-voies-vitesse-reglementaire\n\n3. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme et communes soumises au règlement national d'urbanisme\n   ID: 6a033442c762c94feac14a98\n   Organization: Région GRAND EST\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnees-geoportail-de-lurbanisme-zonages-des-documents-durbanisme-et-communes-soumises-au-reglement-national-durbanisme\n\n4. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme\n   ID: 6a033441c762c94feac14a97\n   Organization: Région GRAND EST\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnees-geoportail-de-lurbanisme-zonages-des-documents-durbanisme\n\n5. Limites à grande échelle des aires urbaines du Nord - Pas-de-Calais (en 2010)\n   ID: 5e166f7e06e3e76946ce8d54\n   Organization: Région Hauts-de-France\n   Tags: administration, aire-urbaine, dcat, nord-departement, nord-pas-de-calais-ancienne-region\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/limites-a-grande-echelle-des-aires-urbaines-du-nord-pas-de-calais-en-2010\n\n6. Aléa érosif en Languedoc-Roussillon\n   ID: 61b3ec3d76b118fe528b8e9e\n   Organization: Occitanie Pyrénées en Intelligence Géomatique\n   Tags: alea, erosion, pedologie, sol\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/alea-erosif-en-languedoc-roussillon\n\n7. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme et communes soumises au règlement national d'urbanisme\n   ID: 67e3454d072f32777a388bda\n   Organization: DataGrandEst\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/69dd0701-6543-4731-b419-4684ef07bed5-uuid\n\n8. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme\n   ID: 67e3454b072f32777a388bd7\n   Organization: DataGrandEst\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/62a1c37a-af7b-48bd-8c68-683828473dac-uuid\n\n9. [DREAL OCCITANIE] PNA Vautour Percnoptère - Domaines Vitaux en Occitanie\n   ID: 6a4b801e1d7ecb5a4eb55bcf\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, habitats-et-biotopes, inspire, n-zonages-nature\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-pna-vautour-percnoptere-domaines-vitaux-en-occitanie\n\n10. [DREAL OCCITANIE] PNA Cistude d'Europe en Occitanie\n   ID: 6a4b7fd21d7ecb5a4eb55b6c\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, habitats-et-biotopes, inspire, n-zonages-nature\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-pna-cistude-deurope-en-occitanie\n\n11. Localisation des Milieux Naturels d’Intérêt Ecologique (MNIE) sur le Pays de Rennes en 2022\n   ID: 665fd572408fe7030cf23bab\n   Organization: Rennes Métropole en accès libre\n   Tags: biotope, ecologie-du-paysage, environnement, protection-de-biotope, protection-de-la-faune-et-de-la-flore\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/localisation-des-milieux-naturels-dinteret-ecologique-mnie-sur-le-pays-de-rennes-en-2022\n\n12. Limites administratives à grande échelle des petites régions agricoles Nord - Pas-de-Calais\n   ID: 5e166f74dee7e75ddd25e8d7\n   Organization: Région Hauts-de-France\n   Tags: agriculture, amenagement-du-territoire, dcat, departement, nord-pas-de-calais-ancienne-region\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/limites-administratives-a-grande-echelle-des-petites-regions-agricoles-nord-pas-de-calais\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 12 dataset(s) for query: 'zonage petite échelle'\nPage 1 of results:\n\n1. Revenus, pauvreté et niveau de vie - Données carroyées\n   ID: 5d8e16106f44410332a79994\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: disparites-de-revenus, distribution-des-revenus, inegalites-de-revenus, menages-fiscaux, niveaux-de-revenus\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/revenus-pauvrete-et-niveau-de-vie-donnees-carroyees\n\n2. Tronçons de voies : vitesse règlementaire\n   ID: 64809545ce7de8cc24092716\n   Organization: Brest métropole\n   Tags: arretes, circulation, filaire, mobilite-deplacement-transports, reglementation\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/troncons-de-voies-vitesse-reglementaire\n\n3. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme et communes soumises au règlement national d'urbanisme\n   ID: 6a033442c762c94feac14a98\n   Organization: Région GRAND EST\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnees-geoportail-de-lurbanisme-zonages-des-documents-durbanisme-et-communes-soumises-au-reglement-national-durbanisme\n\n4. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme\n   ID: 6a033441c762c94feac14a97\n   Organization: Région GRAND EST\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnees-geoportail-de-lurbanisme-zonages-des-documents-durbanisme\n\n5. Limites à grande échelle des aires urbaines du Nord - Pas-de-Calais (en 2010)\n   ID: 5e166f7e06e3e76946ce8d54\n   Organization: Région Hauts-de-France\n   Tags: administration, aire-urbaine, dcat, nord-departement, nord-pas-de-calais-ancienne-region\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/limites-a-grande-echelle-des-aires-urbaines-du-nord-pas-de-calais-en-2010\n\n6. Aléa érosif en Languedoc-Roussillon\n   ID: 61b3ec3d76b118fe528b8e9e\n   Organization: Occitanie Pyrénées en Intelligence Géomatique\n   Tags: alea, erosion, pedologie, sol\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/alea-erosif-en-languedoc-roussillon\n\n7. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme et communes soumises au règlement national d'urbanisme\n   ID: 67e3454d072f32777a388bda\n   Organization: DataGrandEst\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/69dd0701-6543-4731-b419-4684ef07bed5-uuid\n\n8. DONNEES : Géoportail de l'Urbanisme - Zonages des documents d'urbanisme\n   ID: 67e3454b072f32777a388bd7\n   Organization: DataGrandEst\n   Tags: documents-durbanisme, france, plan-local-durbanisme, plan-local-durbanisme-intercommunal\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/62a1c37a-af7b-48bd-8c68-683828473dac-uuid\n\n9. [DREAL OCCITANIE] PNA Vautour Percnoptère - Domaines Vitaux en Occitanie\n   ID: 6a4b801e1d7ecb5a4eb55bcf\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, habitats-et-biotopes, inspire, n-zonages-nature\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-pna-vautour-percnoptere-domaines-vitaux-en-occitanie\n\n10. [DREAL OCCITANIE] PNA Cistude d'Europe en Occitanie\n   ID: 6a4b7fd21d7ecb5a4eb55b6c\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, habitats-et-biotopes, inspire, n-zonages-nature\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-pna-cistude-deurope-en-occitanie\n\n11. Localisation des Milieux Naturels d’Intérêt Ecologique (MNIE) sur le Pays de Rennes en 2022\n   ID: 665fd572408fe7030cf23bab\n   Organization: Rennes Métropole en accès libre\n   Tags: biotope, ecologie-du-paysage, environnement, protection-de-biotope, protection-de-la-faune-et-de-la-flore\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/localisation-des-milieux-naturels-dinteret-ecologique-mnie-sur-le-pays-de-rennes-en-2022\n\n12. Limites administratives à grande échelle des petites régions agricoles Nord - Pas-de-Calais\n   ID: 5e166f74dee7e75ddd25e8d7\n   Organization: Région Hauts-de-France\n   Tags: agriculture, amenagement-du-territoire, dcat, departement, nord-pas-de-calais-ancienne-region\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/limites-administratives-a-grande-echelle-des-petites-regions-agricoles-nord-pas-de-calais\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

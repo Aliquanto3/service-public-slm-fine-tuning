@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:10:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "premiers titres séjour communautaires espace économique européen"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'premiers titres séjour communautaires espace économique européen'\nPage 1 of results:\n\n1. 2014-43 - Premiers titres de séjour communautaires et titres - Espace économique européen\n   ID: 543bf9bd88ee3805983c164f\n   Organization: Ministère de l'intérieur\n   Tags: admission-au-sejour, autorisation-de-sejour, autorisation-provisoire-de-sejou, carte-de-sejour, eee\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2014-43-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen\n\n2. 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\n   ID: 55d1aad488ee383afca46ec1\n   Organization: Ministère de l'intérieur\n   Tags: admission-au-sejour, autorisation-de-sejour, autorisation-provisoire-de-sejou, carte-de-sejour, eee\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen\n\n3. 2013-33 - Premiers titres de séjour communautaires et titres Espace économique européen en métropole\n   ID: 53698e21a3a729239d2033ae\n   Organization: Ministère de l'intérieur\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2013-33-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen-en-metropole\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'premiers titres séjour communautaires espace économique européen'\nPage 1 of results:\n\n1. 2014-43 - Premiers titres de séjour communautaires et titres - Espace économique européen\n   ID: 543bf9bd88ee3805983c164f\n   Organization: Ministère de l'intérieur\n   Tags: admission-au-sejour, autorisation-de-sejour, autorisation-provisoire-de-sejou, carte-de-sejour, eee\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2014-43-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen\n\n2. 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\n   ID: 55d1aad488ee383afca46ec1\n   Organization: Ministère de l'intérieur\n   Tags: admission-au-sejour, autorisation-de-sejour, autorisation-provisoire-de-sejou, carte-de-sejour, eee\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen\n\n3. 2013-33 - Premiers titres de séjour communautaires et titres Espace économique européen en métropole\n   ID: 53698e21a3a729239d2033ae\n   Organization: Ministère de l'intérieur\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2013-33-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen-en-metropole\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

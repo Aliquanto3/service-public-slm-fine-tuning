@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:09:33Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "communes secteur bruit infrastructures routières Corrèze 2023"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'communes secteur bruit infrastructures routières Corrèze 2023'\nPage 1 of results:\n\n1. Communes en secteur bruit 2023 pour les infrastructures routières en Corrèze\n   ID: 6737743a3c31c2c72ac40aa7\n   Organization: Direction Départementale des Territoires de la Corrèze\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/communes-en-secteur-bruit-2023-pour-les-infrastructures-routieres-en-correze\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'communes secteur bruit infrastructures routières Corrèze 2023'\nPage 1 of results:\n\n1. Communes en secteur bruit 2023 pour les infrastructures routières en Corrèze\n   ID: 6737743a3c31c2c72ac40aa7\n   Organization: Direction Départementale des Territoires de la Corrèze\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/communes-en-secteur-bruit-2023-pour-les-infrastructures-routieres-en-correze\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

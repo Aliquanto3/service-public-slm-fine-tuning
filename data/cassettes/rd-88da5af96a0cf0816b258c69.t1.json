@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:13:55Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PLU prescriptions surfaciques Hautes-Alpes",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'PLU prescriptions surfaciques Hautes-Alpes'\nPage 1 of results:\n\n1. Prescriptions surfaciques des PLU des Alpes de Haute-Provence\n   ID: 68268298ba315cd3fb777ea6\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prescriptions-surfaciques-des-plu-des-alpes-de-haute-provence-1\n\n2. Prescriptions linéaires des PLU des Alpes de Haute-Provence\n   ID: 68268299ba315cd3fb777ea9\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prescriptions-lineaires-des-plu-des-alpes-de-haute-provence-1\n\n3. Prescriptions ponctuelles des PLU des Alpes de Haute-Provence\n   ID: 68268297ba315cd3fb777ea4\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prescriptions-ponctuelles-des-plu-des-alpes-de-haute-provence-1\n\n4. DDT05 - Prescriptions linéaires des PLU des Hautes-Alpes\n   ID: 673771aa00ff33ca1fc40a8d\n   Organization: Direction Départementale des Territoires des Hautes-Alpes\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/ddt05-prescriptions-lineaires-des-plu-des-hautes-alpes-1\n\n5. DDT05 - Prescriptions surfaciques des PLU des Hautes-Alpes\n   ID: 69a23375d23ed5d1aa3d1e47\n   Organization: Direction Départementale des Territoires des Hautes-Alpes\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddt05-prescriptions-surfaciques-des-plu-des-hautes-alpes-1\n\n6. DDT05 - Prescriptions ponctuelles des PLU des Hautes-Alpes\n   ID: 69a23376d23ed5d1aa3d1e48\n   Organization: Direction Départementale des Territoires des Hautes-Alpes\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddt05-prescriptions-ponctuelles-des-plu-des-hautes-alpes-2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'PLU prescriptions surfaciques Hautes-Alpes'\nPage 1 of results:\n\n1. Prescriptions surfaciques des PLU des Alpes de Haute-Provence\n   ID: 68268298ba315cd3fb777ea6\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prescriptions-surfaciques-des-plu-des-alpes-de-haute-provence-1\n\n2. Prescriptions linéaires des PLU des Alpes de Haute-Provence\n   ID: 68268299ba315cd3fb777ea9\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prescriptions-lineaires-des-plu-des-alpes-de-haute-provence-1\n\n3. Prescriptions ponctuelles des PLU des Alpes de Haute-Provence\n   ID: 68268297ba315cd3fb777ea4\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/prescriptions-ponctuelles-des-plu-des-alpes-de-haute-provence-1\n\n4. DDT05 - Prescriptions linéaires des PLU des Hautes-Alpes\n   ID: 673771aa00ff33ca1fc40a8d\n   Organization: Direction Départementale des Territoires des Hautes-Alpes\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/ddt05-prescriptions-lineaires-des-plu-des-hautes-alpes-1\n\n5. DDT05 - Prescriptions surfaciques des PLU des Hautes-Alpes\n   ID: 69a23375d23ed5d1aa3d1e47\n   Organization: Direction Départementale des Territoires des Hautes-Alpes\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddt05-prescriptions-surfaciques-des-plu-des-hautes-alpes-1\n\n6. DDT05 - Prescriptions ponctuelles des PLU des Hautes-Alpes\n   ID: 69a23376d23ed5d1aa3d1e48\n   Organization: Direction Départementale des Territoires des Hautes-Alpes\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/ddt05-prescriptions-ponctuelles-des-plu-des-hautes-alpes-2\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

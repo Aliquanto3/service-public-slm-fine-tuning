@@ -1,0 +1,122 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:16:23Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "délimitation rivage bande 100m Haute-Corse",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'délimitation rivage bande 100m Haute-Corse'\nPage 1 of results:\n\n1. Délimitation d'une bande de 100m à partir du rivage en Haute-Corse\n   ID: 6ac05a0f729dcf0d0d50800b\n   Organization: Direction Départementale des Territoires de Haute-Corse\n   Tags: bande-100m, donnees-ouvertes, dpm, mer-littoral-limite-administrative-speciale\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/delimitation-dune-bande-de-100m-a-partir-du-rivage-en-haute-corse\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'délimitation rivage bande 100m Haute-Corse'\nPage 1 of results:\n\n1. Délimitation d'une bande de 100m à partir du rivage en Haute-Corse\n   ID: 6ac05a0f729dcf0d0d50800b\n   Organization: Direction Départementale des Territoires de Haute-Corse\n   Tags: bande-100m, donnees-ouvertes, dpm, mer-littoral-limite-administrative-speciale\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/delimitation-dune-bande-de-100m-a-partir-du-rivage-en-haute-corse\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "littoral Haute-Corse délimitation",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'littoral Haute-Corse délimitation'\nPage 1 of results:\n\n1. [DREAL OCCITANIE] PNA Cistude d'Europe en Occitanie\n   ID: 6a4b7fd21d7ecb5a4eb55b6c\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, habitats-et-biotopes, inspire, n-zonages-nature\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-pna-cistude-deurope-en-occitanie\n\n2. [DREAL OCCITANIE] Communes soumises aux dispositions d'urbanisme relatives à la Loi Montagne\n   ID: 6a4b80871d7ecb5a4eb55c2b\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, inspire, n-zonages-planification, occitanie\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-communes-soumises-aux-dispositions-durbanisme-relatives-a-la-loi-montagne\n\n3. Délimitation d'une bande de 100m à partir du rivage en Haute-Corse\n   ID: 6ac05a0f729dcf0d0d50800b\n   Organization: Direction Départementale des Territoires de Haute-Corse\n   Tags: bande-100m, donnees-ouvertes, dpm, mer-littoral-limite-administrative-speciale\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/delimitation-dune-bande-de-100m-a-partir-du-rivage-en-haute-corse\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'littoral Haute-Corse délimitation'\nPage 1 of results:\n\n1. [DREAL OCCITANIE] PNA Cistude d'Europe en Occitanie\n   ID: 6a4b7fd21d7ecb5a4eb55b6c\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, habitats-et-biotopes, inspire, n-zonages-nature\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-pna-cistude-deurope-en-occitanie\n\n2. [DREAL OCCITANIE] Communes soumises aux dispositions d'urbanisme relatives à la Loi Montagne\n   ID: 6a4b80871d7ecb5a4eb55c2b\n   Organization: DREAL Occitanie\n   Tags: donnees-ouvertes, dreal, inspire, n-zonages-planification, occitanie\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-communes-soumises-aux-dispositions-durbanisme-relatives-a-la-loi-montagne\n\n3. Délimitation d'une bande de 100m à partir du rivage en Haute-Corse\n   ID: 6ac05a0f729dcf0d0d50800b\n   Organization: Direction Départementale des Territoires de Haute-Corse\n   Tags: bande-100m, donnees-ouvertes, dpm, mer-littoral-limite-administrative-speciale\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/delimitation-dune-bande-de-100m-a-partir-du-rivage-en-haute-corse\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zonage maritime Haute-Corse",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'zonage maritime Haute-Corse'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'zonage maritime Haute-Corse'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

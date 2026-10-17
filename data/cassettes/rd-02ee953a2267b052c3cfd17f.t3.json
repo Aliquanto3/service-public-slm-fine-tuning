@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:57:27Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6863a89a3492920481cfefb6"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Zone humide surfacique - Isère\nDataset ID: 6863a89a3492920481cfefb6\nTotal resources: 6\n\n1. n_zone_humide_s_038\n   Resource ID: 33ca8444-700b-4eda-a43c-43c3a3f02a4c\n   Format: wms\n   Type: api\n   URL: https://datacarto.open-datara.fr/wms?service=WMS&request=GetCapabilities\n\n2. Accès au téléchargement des données\n   Resource ID: d0c36889-e612-4cfa-9091-ff26704335ac\n   Format: zip\n   Type: main\n   URL: https://telechargement.open-datara.fr/download/0e10d5f0-1383-4c22-8b5f-c07230e7c508\n\n3. API Geojson\n   Resource ID: 44c9ce33-f858-4bc6-8681-5893b617f472\n   Format: zip\n   Type: main\n   URL: https://catalogue.open-datara.fr/api/data/0e10d5f0-1383-4c22-8b5f-c07230e7c508?srs=EPSG:4326\n\n4. zone_humide_s_038\n   Resource ID: 2432e360-b04c-42ee-bc75-c2e98526202b\n   Format: wms\n   Type: api\n   URL: https://datacarto.open-datara.fr/wms?service=WMS&request=GetCapabilities\n\n5. zone_humide_s_038\n   Resource ID: 760047a0-df5c-4ded-94ae-d9fd896a5922\n   Format: wfs\n   Type: api\n   URL: https://datacarto.open-datara.fr/wfs?service=WFS&request=GetCapabilities\n\n6. zone_humide_s_038\n   Resource ID: 9e93c494-3e3a-4943-98d9-58adaf29a04e\n   Format: wfs\n   Type: api\n   URL: https://datacarto.open-datara.fr/wfs/1dcf5c3e-39c4-49d8-a10f-69ba2d65647c?service=WFS&request=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Zone humide surfacique - Isère\nDataset ID: 6863a89a3492920481cfefb6\nTotal resources: 6\n\n1. n_zone_humide_s_038\n   Resource ID: 33ca8444-700b-4eda-a43c-43c3a3f02a4c\n   Format: wms\n   Type: api\n   URL: https://datacarto.open-datara.fr/wms?service=WMS&request=GetCapabilities\n\n2. Accès au téléchargement des données\n   Resource ID: d0c36889-e612-4cfa-9091-ff26704335ac\n   Format: zip\n   Type: main\n   URL: https://telechargement.open-datara.fr/download/0e10d5f0-1383-4c22-8b5f-c07230e7c508\n\n3. API Geojson\n   Resource ID: 44c9ce33-f858-4bc6-8681-5893b617f472\n   Format: zip\n   Type: main\n   URL: https://catalogue.open-datara.fr/api/data/0e10d5f0-1383-4c22-8b5f-c07230e7c508?srs=EPSG:4326\n\n4. zone_humide_s_038\n   Resource ID: 2432e360-b04c-42ee-bc75-c2e98526202b\n   Format: wms\n   Type: api\n   URL: https://datacarto.open-datara.fr/wms?service=WMS&request=GetCapabilities\n\n5. zone_humide_s_038\n   Resource ID: 760047a0-df5c-4ded-94ae-d9fd896a5922\n   Format: wfs\n   Type: api\n   URL: https://datacarto.open-datara.fr/wfs?service=WFS&request=GetCapabilities\n\n6. zone_humide_s_038\n   Resource ID: 9e93c494-3e3a-4943-98d9-58adaf29a04e\n   Format: wfs\n   Type: api\n   URL: https://datacarto.open-datara.fr/wfs/1dcf5c3e-39c4-49d8-a10f-69ba2d65647c?service=WFS&request=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

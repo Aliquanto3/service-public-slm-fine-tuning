@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:19:51Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "aides hébergement établissement personnes âgées EPCI 2023 Seine-Maritime"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'aides hébergement établissement personnes âgées EPCI 2023 Seine-Maritime'\nPage 1 of results:\n\n1. Aides hebergement en etablissement personnes agees HEPA par EPCI CD76 2023\n   ID: 66ce69a0db123de9ed22770b\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-en-etablissement-personnes-agees-hepa-par-epci-cd76-2023\n\n2. Aides hebergement personnes handicapees HEPH par EPCI CD76 2023\n   ID: 699f8d480d6ba5e8822f5456\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2023\n\n3. APA a domicile Depenses et Beneficiaires par GIR par EPCI76 2023\n   ID: 66ce69a1db123de9ed22770d\n   Organization: Département de la Seine-Maritime\n   Tags: allocation-personnalisee-a-lautonomie, apa, apad, epci, geospatial\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/apa-a-domicile-depenses-et-beneficiaires-par-gir-par-epci76-2023\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'aides hébergement établissement personnes âgées EPCI 2023 Seine-Maritime'\nPage 1 of results:\n\n1. Aides hebergement en etablissement personnes agees HEPA par EPCI CD76 2023\n   ID: 66ce69a0db123de9ed22770b\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-en-etablissement-personnes-agees-hepa-par-epci-cd76-2023\n\n2. Aides hebergement personnes handicapees HEPH par EPCI CD76 2023\n   ID: 699f8d480d6ba5e8822f5456\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2023\n\n3. APA a domicile Depenses et Beneficiaires par GIR par EPCI76 2023\n   ID: 66ce69a1db123de9ed22770d\n   Organization: Département de la Seine-Maritime\n   Tags: allocation-personnalisee-a-lautonomie, apa, apad, epci, geospatial\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/apa-a-domicile-depenses-et-beneficiaires-par-gir-par-epci76-2023\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "HEPA EPCI 2023 CD76"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'HEPA EPCI 2023 CD76'\nPage 1 of results:\n\n1. Aides hebergement en etablissement personnes agees HEPA par EPCI CD76 2023\n   ID: 66ce69a0db123de9ed22770b\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-en-etablissement-personnes-agees-hepa-par-epci-cd76-2023\n\n2. Aides hebergement personnes handicapees HEPH par EPCI CD76 2023\n   ID: 699f8d480d6ba5e8822f5456\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2023\n\n3. Aides hebergement en etablissement personnes agees HEPA par EPCI CD76 2022\n   ID: 64f7c3516b9c0b6f36ae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-en-etablissement-personnes-agees-hepa-par-epci-cd76-2022\n\n4. Aides hebergement personnes handicapees HEPH par EPCI CD76 2022\n   ID: 685f3711bc0e4e96b1f61207\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2022-1\n\n5. Aides hebergement personnes handicapees HEPH par EPCI CD76 2022\n   ID: 64f912f6da71ca6441ae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2022\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'HEPA EPCI 2023 CD76'\nPage 1 of results:\n\n1. Aides hebergement en etablissement personnes agees HEPA par EPCI CD76 2023\n   ID: 66ce69a0db123de9ed22770b\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-en-etablissement-personnes-agees-hepa-par-epci-cd76-2023\n\n2. Aides hebergement personnes handicapees HEPH par EPCI CD76 2023\n   ID: 699f8d480d6ba5e8822f5456\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2023\n\n3. Aides hebergement en etablissement personnes agees HEPA par EPCI CD76 2022\n   ID: 64f7c3516b9c0b6f36ae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-en-etablissement-personnes-agees-hepa-par-epci-cd76-2022\n\n4. Aides hebergement personnes handicapees HEPH par EPCI CD76 2022\n   ID: 685f3711bc0e4e96b1f61207\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2022-1\n\n5. Aides hebergement personnes handicapees HEPH par EPCI CD76 2022\n   ID: 64f912f6da71ca6441ae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: aides, epci, etablissements, geospatial, hebergement\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/aides-hebergement-personnes-handicapees-heph-par-epci-cd76-2022\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "subventions hébergement personnes âgées 2023 Seine-Maritime"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'subventions hébergement personnes âgées 2023 Seine-Maritime'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'subventions hébergement personnes âgées 2023 Seine-Maritime'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

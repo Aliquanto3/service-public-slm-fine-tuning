@@ -1,0 +1,50 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 50,
+   "precision": 1.0,
+   "erreurs": {}
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 48,
+   "precision": 0.96,
+   "erreurs": {
+    "multiple_149": "Invalid value for parameter 'language': 'en'. Expected one of ['english', 'English']. Case insensitive.",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 27,
+   "precision": 0.54,
+   "erreurs": {
+    "irrelevance_11": "appel émis sans fonction pertinente",
+    "irrelevance_112": "appel émis sans fonction pertinente",
+    "irrelevance_123": "appel émis sans fonction pertinente",
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_131": "appel émis sans fonction pertinente",
+    "irrelevance_142": "appel émis sans fonction pertinente",
+    "irrelevance_148": "appel émis sans fonction pertinente",
+    "irrelevance_149": "appel émis sans fonction pertinente",
+    "irrelevance_157": "appel émis sans fonction pertinente",
+    "irrelevance_159": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_206": "appel émis sans fonction pertinente",
+    "irrelevance_21": "appel émis sans fonction pertinente",
+    "irrelevance_218": "appel émis sans fonction pertinente",
+    "irrelevance_22": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_25": "appel émis sans fonction pertinente",
+    "irrelevance_29": "appel émis sans fonction pertinente",
+    "irrelevance_3": "appel émis sans fonction pertinente",
+    "irrelevance_38": "appel émis sans fonction pertinente",
+    "irrelevance_60": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

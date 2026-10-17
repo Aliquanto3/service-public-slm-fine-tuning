@@ -1,0 +1,2 @@
+{"horodatage":"2026-10-17T10:22:30.698608+02:00","motif":null,"pid":10648,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T10:25:07.613786+02:00","motif":"ContexteInsuffisant : contexte 4096 trop petit : le prompt du protocole fait 1668 tokens et la réponse 2428 ; augmenter --contexte","pid":10648,"schema_version":1,"statut":"partiel-erreur"}

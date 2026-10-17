@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:53:22Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6556add43e9bd536d102ccba"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: ZAENR (zones ayant une date de délibération)\nDataset ID: 6556add43e9bd536d102ccba\nTotal resources: 16\n\n1. ArcGIS Hub Dataset\n   Resource ID: 23f2cbeb-d606-4346-bbbe-42458364900b\n   Format: web page\n   MIME type: text/html\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/maps/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération\n\n2. ArcGIS GeoService\n   Resource ID: f0e9e520-dded-4c18-8f90-54ae8a3946de\n   Format: arcgis geoservices rest api\n   MIME type: application/json\n   Type: main\n   URL: https://services2.arcgis.com/rDH2Z04XoJ9VRLop/arcgis/rest/services/ZAENR_(zones_ayant_une_date_de_d%C3%A9lib%C3%A9ration)/FeatureServer/0\n\n3. CSV\n   Resource ID: 9e7529c9-4a66-47ea-a217-806885d080c8\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.csv?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n4. GeoJSON\n   Resource ID: d2895715-e29e-4ef0-8fed-1ae10af3e760\n   Format: geojson\n   MIME type: application/vnd.geo+json\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.geojson?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n5. Shapefile\n   Resource ID: 54348ffa-192d-4175-8d60-c8dd61c28346\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.zip?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n6. KML\n   Resource ID: dd90090a-9a80-4958-84fb-e6d6c92259e8\n   Format: kml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.kml?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n7. CSV\n   Resource ID: 77291bf6-f76e-46a1-bd58-ee449c091967\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/csv?layers=0\n\n8. GeoJSON\n   Resource ID: 10f6faf3-3789-4b17-a240-1a963baca1f7\n   Format: geojson\n   MIME type: application/vnd.geo+json\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/geojson?layers=0\n\n9. Shapefile\n   Resource ID: cd683297-cb14-4b45-87f5-7ba652d32afb\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/shapefile?layers=0\n\n10. KML\n   Resource ID: 8b972144-a366-4b58-93c4-2740570d4110\n   Format: kml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/kml?layers=0\n\n11. ArcGIS Hub Dataset\n   Resource ID: e26bc841-0229-466e-92ee-bac4bd6a457d\n   Format: web page\n   MIME type: text/html\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération\n\n12. File Geodatabase\n   Resource ID: b487baa8-f160-4a0d-94a0-bc4de329a8cd\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/filegdb?layers=0\n\n13. Feature Collection\n   Resource ID: 3b29dda9-6b9e-43a2-a8eb-e7e34fa395ac\n   Format: txt\n   MIME type: text/plain\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/featureCollection?layers=0\n\n14. Excel\n   Resource ID: 6df3ab9a-0f9f-425a-a958-8506aea0700e\n   Format: xlsx\n   MIME type: application/vnd.ms-excel\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/excel?layers=0\n\n15. GeoPackage\n   Resource ID: 455c727e-6595-44a8-b64b-44e8c8e0315c\n   Format: gpkg\n   MIME type: application/geopackage+sqlite3\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/geoPackage?layers=0\n\n16. SQLite Geodatabase\n   Resource ID: e46c6b90-49d4-4370-9575-4a642b7f81c9\n   Format: gdb\n   MIME type: application/geopackage+sqlite3\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/sqlite?layers=0\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: ZAENR (zones ayant une date de délibération)\nDataset ID: 6556add43e9bd536d102ccba\nTotal resources: 16\n\n1. ArcGIS Hub Dataset\n   Resource ID: 23f2cbeb-d606-4346-bbbe-42458364900b\n   Format: web page\n   MIME type: text/html\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/maps/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération\n\n2. ArcGIS GeoService\n   Resource ID: f0e9e520-dded-4c18-8f90-54ae8a3946de\n   Format: arcgis geoservices rest api\n   MIME type: application/json\n   Type: main\n   URL: https://services2.arcgis.com/rDH2Z04XoJ9VRLop/arcgis/rest/services/ZAENR_(zones_ayant_une_date_de_d%C3%A9lib%C3%A9ration)/FeatureServer/0\n\n3. CSV\n   Resource ID: 9e7529c9-4a66-47ea-a217-806885d080c8\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.csv?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n4. GeoJSON\n   Resource ID: d2895715-e29e-4ef0-8fed-1ae10af3e760\n   Format: geojson\n   MIME type: application/vnd.geo+json\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.geojson?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n5. Shapefile\n   Resource ID: 54348ffa-192d-4175-8d60-c8dd61c28346\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.zip?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n6. KML\n   Resource ID: dd90090a-9a80-4958-84fb-e6d6c92259e8\n   Format: kml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération.kml?where=1=1&outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D\n\n7. CSV\n   Resource ID: 77291bf6-f76e-46a1-bd58-ee449c091967\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/csv?layers=0\n\n8. GeoJSON\n   Resource ID: 10f6faf3-3789-4b17-a240-1a963baca1f7\n   Format: geojson\n   MIME type: application/vnd.geo+json\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/geojson?layers=0\n\n9. Shapefile\n   Resource ID: cd683297-cb14-4b45-87f5-7ba652d32afb\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/shapefile?layers=0\n\n10. KML\n   Resource ID: 8b972144-a366-4b58-93c4-2740570d4110\n   Format: kml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/kml?layers=0\n\n11. ArcGIS Hub Dataset\n   Resource ID: e26bc841-0229-466e-92ee-bac4bd6a457d\n   Format: web page\n   MIME type: text/html\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/datasets/agglo-plainevallee::zaenr-zones-ayant-une-date-de-délibération\n\n12. File Geodatabase\n   Resource ID: b487baa8-f160-4a0d-94a0-bc4de329a8cd\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/filegdb?layers=0\n\n13. Feature Collection\n   Resource ID: 3b29dda9-6b9e-43a2-a8eb-e7e34fa395ac\n   Format: txt\n   MIME type: text/plain\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/featureCollection?layers=0\n\n14. Excel\n   Resource ID: 6df3ab9a-0f9f-425a-a958-8506aea0700e\n   Format: xlsx\n   MIME type: application/vnd.ms-excel\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/excel?layers=0\n\n15. GeoPackage\n   Resource ID: 455c727e-6595-44a8-b64b-44e8c8e0315c\n   Format: gpkg\n   MIME type: application/geopackage+sqlite3\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/geoPackage?layers=0\n\n16. SQLite Geodatabase\n   Resource ID: e46c6b90-49d4-4370-9575-4a642b7f81c9\n   Format: gdb\n   MIME type: application/geopackage+sqlite3\n   Type: main\n   URL: https://portail-agglo-plainevallee.opendata.arcgis.com/api/download/v1/items/96719f3b11a14d57b1e10b978110ecd0/sqlite?layers=0\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,148 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:12:27Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "participation opérations conjointes services habilités"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'participation opérations conjointes services habilités'\nPage 1 of results:\n\n1. 15075 - Implication des services habilités (participation aux opérations conjointes)\n   ID: 55d4a210c751df49121f92b2\n   Organization: Ministère de l'intérieur\n   Tags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/15075-implication-des-services-habilites-participation-aux-operations-conjointes\n\n2. 2014-59 - Immigration : Implication des services habilités (participation aux opérations conjointes)\n   ID: 543d365388ee383229cb104f\n   Organization: Ministère de l'intérieur\n   Tags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2014-59-immigration-implication-des-services-habilites-participation-aux-operations-conjointes\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'participation opérations conjointes services habilités'\nPage 1 of results:\n\n1. 15075 - Implication des services habilités (participation aux opérations conjointes)\n   ID: 55d4a210c751df49121f92b2\n   Organization: Ministère de l'intérieur\n   Tags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/15075-implication-des-services-habilites-participation-aux-operations-conjointes\n\n2. 2014-59 - Immigration : Implication des services habilités (participation aux opérations conjointes)\n   ID: 543d365388ee383229cb104f\n   Organization: Ministère de l'intérieur\n   Tags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2014-59-immigration-implication-des-services-habilites-participation-aux-operations-conjointes\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "opérations conjointes forces de l'ordre"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'opérations conjointes forces de l'ordre'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'opérations conjointes forces de l'ordre'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "collaboration services publics sécurité"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'collaboration services publics sécurité'\nPage 1 of results:\n\n1. Vigilance crues - VIC\n   ID: 597b454e88ee383927b14c56\n   Organization: Système d'Information sur l'Eau\n   Tags: crue, donnees-de-references-referentiels-vocabulaire-controle, donnees-ouvertes, eau-de-surface, eaux-interieures-de-surface-rivieres-et-lacs\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/vigilance-crues-vic\n\n2. Etat des lieux du vélo en Provence-Alpes-Côte d'Azur\n   ID: 6a8796d5afd4e08617a071f1\n   Organization: Région Provence-Alpes-Côte-d'Azur\n   Tags: deplacement-doux, developpement-durable, eurovelo, mobilite-douce, qualite-de-vie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/etat-des-lieux-du-velo-en-provence-alpes-cote-d-azur\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'collaboration services publics sécurité'\nPage 1 of results:\n\n1. Vigilance crues - VIC\n   ID: 597b454e88ee383927b14c56\n   Organization: Système d'Information sur l'Eau\n   Tags: crue, donnees-de-references-referentiels-vocabulaire-controle, donnees-ouvertes, eau-de-surface, eaux-interieures-de-surface-rivieres-et-lacs\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/vigilance-crues-vic\n\n2. Etat des lieux du vélo en Provence-Alpes-Côte d'Azur\n   ID: 6a8796d5afd4e08617a071f1\n   Organization: Région Provence-Alpes-Côte-d'Azur\n   Tags: deplacement-doux, developpement-durable, eurovelo, mobilite-douce, qualite-de-vie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/etat-des-lieux-du-velo-en-provence-alpes-cote-d-azur\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "statistiques interventions conjointes police gendarmerie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'statistiques interventions conjointes police gendarmerie'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'statistiques interventions conjointes police gendarmerie'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

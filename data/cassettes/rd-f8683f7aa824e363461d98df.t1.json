@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:58:49Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zones bruit carte stratégique type A indice Ln infrastructures ferroviaires Maine-et-Loire"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'zones bruit carte stratégique type A indice Ln infrastructures ferroviaires Maine-et-Loire'\nPage 1 of results:\n\n1. Zones de bruit d'une carte de bruit stratégique de type A et d'indice Ln pour les infrastructures ferroviaires dans le Maine-et-Loire(49)\n   ID: 6a3de437239af2d22454d36f\n   Organization: DDT de Maine-et-Loire\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-dune-carte-de-bruit-strategique-de-type-a-et-dindice-ln-pour-les-infrastructures-ferroviaires-dans-le-maine-et-loire-49-1\n\n2. Zones de bruit d'une carte de bruit stratégique de type C et d'indice Ln pour les infrastructures ferroviaires dans le Maine-et-Loire(49)\n   ID: 6a3de442239af2d22454d376\n   Organization: DDT de Maine-et-Loire\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-dune-carte-de-bruit-strategique-de-type-c-et-dindice-ln-pour-les-infrastructures-ferroviaires-dans-le-maine-et-loire-49-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'zones bruit carte stratégique type A indice Ln infrastructures ferroviaires Maine-et-Loire'\nPage 1 of results:\n\n1. Zones de bruit d'une carte de bruit stratégique de type A et d'indice Ln pour les infrastructures ferroviaires dans le Maine-et-Loire(49)\n   ID: 6a3de437239af2d22454d36f\n   Organization: DDT de Maine-et-Loire\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-dune-carte-de-bruit-strategique-de-type-a-et-dindice-ln-pour-les-infrastructures-ferroviaires-dans-le-maine-et-loire-49-1\n\n2. Zones de bruit d'une carte de bruit stratégique de type C et d'indice Ln pour les infrastructures ferroviaires dans le Maine-et-Loire(49)\n   ID: 6a3de442239af2d22454d376\n   Organization: DDT de Maine-et-Loire\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-dune-carte-de-bruit-strategique-de-type-c-et-dindice-ln-pour-les-infrastructures-ferroviaires-dans-le-maine-et-loire-49-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

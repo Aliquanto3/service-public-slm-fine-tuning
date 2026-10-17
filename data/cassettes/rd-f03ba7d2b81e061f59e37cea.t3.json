@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:59:36Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "689e806e1f90bdfb132523c8"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Zones pays ain\nDataset ID: 689e806e1f90bdfb132523c8\nTotal resources: 7\n\n1. ArcGIS Hub Dataset\n   Resource ID: d1042b49-4ce8-446a-b3b8-44718ba9177f\n   Format: web page\n   MIME type: text/html\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/datasets/ain::zones-pays-ain\n\n2. ArcGIS GeoService\n   Resource ID: f94ed1d5-50cf-4bea-9fab-a13b2b706bfb\n   Format: arcgis geoservices rest api\n   MIME type: application/json\n   Type: main\n   URL: https://geodata.ain.fr/server/rest/services/Hosted/externe_Perimetre/FeatureServer/11\n\n3. CSV\n   Resource ID: c922503c-011e-486c-a81d-5f4808246c6d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/csv?layers=11\n\n4. Shapefile\n   Resource ID: 27c341a5-0338-486a-99ee-ea8fee99eb70\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/shapefile?layers=11\n\n5. GeoJSON\n   Resource ID: 514b8944-5cf4-4db4-b16e-85498e4bf7b1\n   Format: geojson\n   MIME type: application/vnd.geo+json\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/geojson?layers=11\n\n6. KML\n   Resource ID: a8cb6e69-fb60-441f-8002-9f3942c2c9fc\n   Format: kml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/kml?layers=11\n\n7. File Geodatabase\n   Resource ID: b17061b4-578c-4608-981b-87e1273d46a0\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/filegdb?layers=11\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Zones pays ain\nDataset ID: 689e806e1f90bdfb132523c8\nTotal resources: 7\n\n1. ArcGIS Hub Dataset\n   Resource ID: d1042b49-4ce8-446a-b3b8-44718ba9177f\n   Format: web page\n   MIME type: text/html\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/datasets/ain::zones-pays-ain\n\n2. ArcGIS GeoService\n   Resource ID: f94ed1d5-50cf-4bea-9fab-a13b2b706bfb\n   Format: arcgis geoservices rest api\n   MIME type: application/json\n   Type: main\n   URL: https://geodata.ain.fr/server/rest/services/Hosted/externe_Perimetre/FeatureServer/11\n\n3. CSV\n   Resource ID: c922503c-011e-486c-a81d-5f4808246c6d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/csv?layers=11\n\n4. Shapefile\n   Resource ID: 27c341a5-0338-486a-99ee-ea8fee99eb70\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/shapefile?layers=11\n\n5. GeoJSON\n   Resource ID: 514b8944-5cf4-4db4-b16e-85498e4bf7b1\n   Format: geojson\n   MIME type: application/vnd.geo+json\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/geojson?layers=11\n\n6. KML\n   Resource ID: a8cb6e69-fb60-441f-8002-9f3942c2c9fc\n   Format: kml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/kml?layers=11\n\n7. File Geodatabase\n   Resource ID: b17061b4-578c-4608-981b-87e1273d46a0\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://departement-ain.opendata.arcgis.com/api/download/v1/items/eab1798367b7440a8b12bb5194c90189/filegdb?layers=11\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:53:43Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "6826828aba315cd3fb777e9e"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Zonage des PLU/CC des Alpes de Haute-Provence\n\nID: 6826828aba315cd3fb777e9e\nSlug: zonage-des-plu-cc-des-alpes-de-haute-provence-1\nURL: https://www.data.gouv.fr/datasets/zonage-des-plu-cc-des-alpes-de-haute-provence-1/\n\nFull description: Le Code de l'urbanisme définit quatre types de zones règlementées dans le plan local d'urbanisme (R.123-5 à 8) : les zones urbaines (U), les zones à urbaniser (AU), les zones agricoles (A) et les zones naturelles et forestières (N). Ces zones sont délimitées sur un ou plusieurs documents graphiques. A chaque zone est attaché un règlement. Le règlement peut fixer des règles différentes, selon que la destination des constructions concerne l'habitation, l'hébergement hôtelier, les bureaux, le comme...\n\nOrganization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n  Organization ID: 558dc1c0c751df341aa453b9\n\nTags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n\nResources: 6 file(s)\n\nCreated: 2016-09-08T00:00:00+00:00\nLast updated: 2026-10-15T00:00:00+00:00\n\nLicense: lov2\nUpdate frequency: semiannual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Zonage des PLU/CC des Alpes de Haute-Provence\n\nID: 6826828aba315cd3fb777e9e\nSlug: zonage-des-plu-cc-des-alpes-de-haute-provence-1\nURL: https://www.data.gouv.fr/datasets/zonage-des-plu-cc-des-alpes-de-haute-provence-1/\n\nFull description: Le Code de l'urbanisme définit quatre types de zones règlementées dans le plan local d'urbanisme (R.123-5 à 8) : les zones urbaines (U), les zones à urbaniser (AU), les zones agricoles (A) et les zones naturelles et forestières (N). Ces zones sont délimitées sur un ou plusieurs documents graphiques. A chaque zone est attaché un règlement. Le règlement peut fixer des règles différentes, selon que la destination des constructions concerne l'habitation, l'hébergement hôtelier, les bureaux, le comme...\n\nOrganization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n  Organization ID: 558dc1c0c751df341aa453b9\n\nTags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n\nResources: 6 file(s)\n\nCreated: 2016-09-08T00:00:00+00:00\nLast updated: 2026-10-15T00:00:00+00:00\n\nLicense: lov2\nUpdate frequency: semiannual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

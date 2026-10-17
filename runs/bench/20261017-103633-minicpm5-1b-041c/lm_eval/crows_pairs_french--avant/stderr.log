@@ -1,0 +1,88 @@
+2026-10-17:10:40:10 INFO     [_cli.run:391] Including path: C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-17:10:40:10 INFO     [_cli.run:392] Selected Tasks: ['crows_pairs_french']
+2026-10-17:10:40:13 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-17:10:40:13 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\minicpm5-1b\\hf', 'dtype': 'bfloat16'}
+2026-10-17:10:40:26 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-17:10:40:27 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/219 [00:00<?, ?it/s]
+Loading weights:  15%|█▍        | 32/219 [00:00<00:00, 312.33it/s]
+Loading weights:  29%|██▉       | 64/219 [00:00<00:00, 285.33it/s]
+Loading weights:  45%|████▌     | 99/219 [00:00<00:00, 297.64it/s]
+Loading weights:  59%|█████▉    | 129/219 [00:00<00:00, 295.20it/s]
+Loading weights:  73%|███████▎  | 159/219 [00:00<00:00, 296.78it/s]
+Loading weights:  86%|████████▋ | 189/219 [00:00<00:00, 293.96it/s]
+Loading weights: 100%|██████████| 219/219 [00:00<00:00, 298.50it/s]
+Using the latest cached version of the dataset since jannalu/crows_pairs_multilingual couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'french' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\jannalu___crows_pairs_multilingual\french\0.0.0\3550adcf6ac84fc021c0cd99114acd35e1f8b88d (last modified on Fri Oct 16 18:14:08 2026).
+2026-10-17:10:40:28 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-17:10:40:28 INFO     [evaluator_utils:506] Task: crows_pairs_french (crows_pairs\crows_pairs_french.yaml)
+2026-10-17:10:40:28 WARNING  [evaluator:335] Overwriting default num_fewshot of crows_pairs_french from None to 0
+2026-10-17:10:40:28 INFO     [api.task:312] Building contexts for crows_pairs_french on rank 0...
+
+  0%|          | 0/1677 [00:00<?, ?it/s]
+ 40%|████      | 677/1677 [00:00<00:00, 6765.47it/s]
+ 81%|████████  | 1354/1677 [00:00<00:00, 6635.02it/s]
+100%|██████████| 1677/1677 [00:00<00:00, 6707.29it/s]
+2026-10-17:10:40:28 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/3354 [00:00<?, ?it/s]
+Tokenizing inputs:  42%|████▏     | 1406/3354 [00:00<00:00, 14029.24it/s]
+Tokenizing inputs:  86%|████████▌ | 2885/3354 [00:00<00:00, 14471.71it/s]
+Tokenizing inputs: 100%|██████████| 3354/3354 [00:00<00:00, 15088.40it/s]
+
+Running loglikelihood requests:   0%|          | 0/3354 [00:00<?, ?it/s]
+Running loglikelihood requests:   0%|          | 1/3354 [00:04<3:49:50,  4.11s/it]
+Running loglikelihood requests:   2%|▏         | 65/3354 [00:04<02:47, 19.68it/s] 
+Running loglikelihood requests:   4%|▍         | 129/3354 [00:04<01:18, 40.90it/s]
+Running loglikelihood requests:   6%|▌         | 193/3354 [00:05<00:49, 63.56it/s]
+Running loglikelihood requests:   8%|▊         | 257/3354 [00:05<00:35, 86.74it/s]
+Running loglikelihood requests:  10%|▉         | 321/3354 [00:05<00:27, 109.88it/s]
+Running loglikelihood requests:  11%|█▏        | 385/3354 [00:06<00:22, 132.58it/s]
+Running loglikelihood requests:  13%|█▎        | 449/3354 [00:06<00:18, 154.45it/s]
+Running loglikelihood requests:  15%|█▌        | 513/3354 [00:06<00:16, 174.01it/s]
+Running loglikelihood requests:  17%|█▋        | 577/3354 [00:06<00:14, 190.37it/s]
+Running loglikelihood requests:  19%|█▉        | 641/3354 [00:07<00:13, 205.26it/s]
+Running loglikelihood requests:  21%|██        | 705/3354 [00:07<00:12, 216.85it/s]
+Running loglikelihood requests:  23%|██▎       | 769/3354 [00:07<00:11, 225.25it/s]
+Running loglikelihood requests:  25%|██▍       | 833/3354 [00:07<00:10, 236.75it/s]
+Running loglikelihood requests:  27%|██▋       | 897/3354 [00:08<00:09, 246.04it/s]
+Running loglikelihood requests:  29%|██▊       | 961/3354 [00:08<00:09, 253.10it/s]
+Running loglikelihood requests:  31%|███       | 1025/3354 [00:08<00:08, 262.70it/s]
+Running loglikelihood requests:  32%|███▏      | 1089/3354 [00:08<00:08, 268.20it/s]
+Running loglikelihood requests:  34%|███▍      | 1153/3354 [00:09<00:08, 274.10it/s]
+Running loglikelihood requests:  36%|███▋      | 1217/3354 [00:09<00:07, 278.38it/s]
+Running loglikelihood requests:  38%|███▊      | 1281/3354 [00:09<00:07, 288.01it/s]
+Running loglikelihood requests:  40%|████      | 1345/3354 [00:09<00:06, 295.49it/s]
+Running loglikelihood requests:  42%|████▏     | 1409/3354 [00:09<00:06, 301.52it/s]
+Running loglikelihood requests:  44%|████▍     | 1473/3354 [00:10<00:06, 305.95it/s]
+Running loglikelihood requests:  46%|████▌     | 1537/3354 [00:10<00:05, 308.25it/s]
+Running loglikelihood requests:  48%|████▊     | 1602/3354 [00:10<00:05, 321.93it/s]
+Running loglikelihood requests:  50%|████▉     | 1666/3354 [00:10<00:05, 328.45it/s]
+Running loglikelihood requests:  52%|█████▏    | 1730/3354 [00:10<00:04, 334.78it/s]
+Running loglikelihood requests:  53%|█████▎    | 1794/3354 [00:11<00:04, 341.64it/s]
+Running loglikelihood requests:  55%|█████▌    | 1859/3354 [00:11<00:04, 344.73it/s]
+Running loglikelihood requests:  57%|█████▋    | 1923/3354 [00:11<00:04, 352.94it/s]
+Running loglikelihood requests:  59%|█████▉    | 1987/3354 [00:11<00:03, 352.00it/s]
+Running loglikelihood requests:  61%|██████    | 2051/3354 [00:11<00:03, 355.94it/s]
+Running loglikelihood requests:  63%|██████▎   | 2115/3354 [00:11<00:03, 362.90it/s]
+Running loglikelihood requests:  65%|██████▍   | 2179/3354 [00:12<00:03, 364.38it/s]
+Running loglikelihood requests:  67%|██████▋   | 2243/3354 [00:12<00:02, 375.06it/s]
+Running loglikelihood requests:  69%|██████▉   | 2307/3354 [00:12<00:02, 386.65it/s]
+Running loglikelihood requests:  71%|███████   | 2371/3354 [00:12<00:02, 393.46it/s]
+Running loglikelihood requests:  73%|███████▎  | 2435/3354 [00:12<00:02, 401.63it/s]
+Running loglikelihood requests:  75%|███████▍  | 2500/3354 [00:12<00:02, 406.00it/s]
+Running loglikelihood requests:  76%|███████▋  | 2564/3354 [00:13<00:01, 407.96it/s]
+Running loglikelihood requests:  78%|███████▊  | 2628/3354 [00:13<00:01, 417.07it/s]
+Running loglikelihood requests:  80%|████████  | 2692/3354 [00:13<00:01, 424.11it/s]
+Running loglikelihood requests:  82%|████████▏ | 2756/3354 [00:13<00:01, 432.08it/s]
+Running loglikelihood requests:  84%|████████▍ | 2820/3354 [00:13<00:01, 439.89it/s]
+Running loglikelihood requests:  86%|████████▌ | 2884/3354 [00:13<00:01, 454.96it/s]
+Running loglikelihood requests:  88%|████████▊ | 2948/3354 [00:13<00:00, 464.11it/s]
+Running loglikelihood requests:  90%|████████▉ | 3012/3354 [00:14<00:00, 476.43it/s]
+Running loglikelihood requests:  92%|█████████▏| 3076/3354 [00:14<00:00, 485.06it/s]
+Running loglikelihood requests:  94%|█████████▎| 3140/3354 [00:14<00:00, 512.91it/s]
+Running loglikelihood requests:  96%|█████████▌| 3204/3354 [00:14<00:00, 540.64it/s]
+Running loglikelihood requests:  98%|█████████▊| 3296/3354 [00:14<00:00, 641.32it/s]
+Running loglikelihood requests: 100%|██████████| 3354/3354 [00:14<00:00, 231.06it/s]
+2026-10-17:10:40:47 INFO     [loggers.evaluation_tracker:247] Saving results aggregated

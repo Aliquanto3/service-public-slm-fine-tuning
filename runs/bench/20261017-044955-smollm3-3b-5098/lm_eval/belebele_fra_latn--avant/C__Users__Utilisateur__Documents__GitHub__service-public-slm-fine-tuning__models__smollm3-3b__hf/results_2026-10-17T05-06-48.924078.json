@@ -1,0 +1,148 @@
+{
+  "results": {
+    "belebele_fra_Latn": {
+      "name": "belebele_fra_Latn",
+      "alias": "belebele_fra_Latn",
+      "sample_len": 900,
+      "acc,none": 0.7322222222222222,
+      "acc_stderr,none": 0.014768244481214481,
+      "acc_norm,none": 0.7322222222222222,
+      "acc_norm_stderr,none": 0.014768244481214481
+    }
+  },
+  "group_subtasks": {},
+  "configs": {
+    "belebele_fra_Latn": {
+      "task": "belebele_fra_Latn",
+      "dataset_path": "facebook/belebele",
+      "dataset_name": "fra_Latn",
+      "test_split": "test",
+      "fewshot_split": "test",
+      "doc_to_text": "P: {{flores_passage}}\nQ: {{question.strip()}}\nA: {{mc_answer1}}\nB: {{mc_answer2}}\nC: {{mc_answer3}}\nD: {{mc_answer4}}\nAnswer:",
+      "doc_to_target": "{{['1', '2', '3', '4'].index(correct_answer_num)}}",
+      "unsafe_code": false,
+      "doc_to_choice": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "fewshot_config": {
+        "sampler": "first_n",
+        "split": "test",
+        "process_docs": null,
+        "fewshot_indices": null,
+        "samples": null,
+        "doc_to_text": "P: {{flores_passage}}\nQ: {{question.strip()}}\nA: {{mc_answer1}}\nB: {{mc_answer2}}\nC: {{mc_answer3}}\nD: {{mc_answer4}}\nAnswer:",
+        "doc_to_choice": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "doc_to_target": "{{['1', '2', '3', '4'].index(correct_answer_num)}}",
+        "gen_prefix": null,
+        "fewshot_delimiter": "\n\n",
+        "target_delimiter": " "
+      },
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "acc_norm",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "{{question}}",
+      "metadata": {
+        "version": 0.0,
+        "pretrained": "C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\smollm3-3b\\hf",
+        "dtype": "bfloat16",
+        "config_source": "C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\.venv\\Lib\\site-packages\\lm_eval\\tasks\\belebele\\belebele_fra_Latn.yaml"
+      }
+    }
+  },
+  "versions": {
+    "belebele_fra_Latn": 0.0
+  },
+  "n-shot": {
+    "belebele_fra_Latn": 0
+  },
+  "higher_is_better": {
+    "belebele_fra_Latn": {
+      "acc": true,
+      "acc_norm": true
+    }
+  },
+  "n-samples": {
+    "belebele_fra_Latn": {
+      "original": 900,
+      "effective": 900
+    }
+  },
+  "config": {
+    "model": "hf",
+    "model_args": {
+      "pretrained": "C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\smollm3-3b\\hf",
+      "dtype": "bfloat16"
+    },
+    "model_num_parameters": 3075098624,
+    "model_dtype": "torch.bfloat16",
+    "model_revision": "main",
+    "model_sha": "",
+    "batch_size": "auto",
+    "batch_sizes": [
+      32
+    ],
+    "device": "cuda:0",
+    "use_cache": null,
+    "limit": null,
+    "bootstrap_iters": 100000,
+    "gen_kwargs": {},
+    "random_seed": 1234,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234
+  },
+  "git_hash": "5ff0db4",
+  "date": 1792205470.4304893,
+  "pretty_env_info": "PyTorch version: 2.14.1+cu130\nIs debug build: False\nCUDA used to build PyTorch: 13.0\nROCM used to build PyTorch: N/A\n\nOS: Microsoft Windows 11 Famille (10.0.26300 64 bits)\nGCC version: Could not collect\nClang version: Could not collect\nCMake version: Could not collect\nLibc version: N/A\n\nPython version: 3.12.14 (main, Sep  1 2026, 14:17:39) [MSC v.1944 64 bit (AMD64)] (64-bit runtime)\nPython platform: Windows-11-10.0.26300-SP0\nIs CUDA available: True\nCUDA runtime version: Could not collect\nCUDA_MODULE_LOADING set to: \nGPU models and configuration: GPU 0: NVIDIA GeForce RTX 3050\nNvidia driver version: Could not collect\ncuDNN version: Could not collect\nIs XPU available: False\nHIP runtime version: N/A\nMIOpen runtime version: N/A\nIs XNNPACK available: False\nCaching allocator config: N/A\n\nCPU:\nName: AMD Ryzen 5 7600 6-Core Processor              \nManufacturer: AuthenticAMD\nFamily: 107\nArchitecture: 9\nProcessorType: 3\nDeviceID: CPU0\nCurrentClockSpeed: 3801\nMaxClockSpeed: 3801\nL2CacheSize: 6144\nL2CacheSpeed: None\nRevision: 24834\n\nVersions of relevant libraries:\n[pip3] Could not collect\n[conda] Could not collect",
+  "transformers_version": "5.17.0",
+  "lm_eval_version": "0.4.13",
+  "upper_git_hash": null,
+  "tokenizer_pad_token": [
+    "<|im_end|>",
+    "128012"
+  ],
+  "tokenizer_eos_token": [
+    "<|im_end|>",
+    "128012"
+  ],
+  "tokenizer_bos_token": [
+    null,
+    "None"
+  ],
+  "eot_token_id": 128012,
+  "max_length": 65536,
+  "task_hashes": {},
+  "model_source": "hf",
+  "model_name": "C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\smollm3-3b\\hf",
+  "model_name_sanitized": "C__Users__Utilisateur__Documents__GitHub__service-public-slm-fine-tuning__models__smollm3-3b__hf",
+  "system_instruction": null,
+  "system_instruction_sha": null,
+  "fewshot_as_multiturn": null,
+  "chat_template": null,
+  "chat_template_sha": null,
+  "total_evaluation_time_seconds": "1010.1249154000034"
+}

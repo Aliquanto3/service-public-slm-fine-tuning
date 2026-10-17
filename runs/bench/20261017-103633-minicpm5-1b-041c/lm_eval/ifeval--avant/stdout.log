@@ -1,0 +1,8 @@
+local-chat-completions ({'model': 'minicpm5-1b', 'base_url': 'http://127.0.0.1:52446/v1/chat/completions', 'num_concurrent': 1, 'max_retries': 3, 'tokenized_requests': False}), gen_kwargs: ({}), limit: None, num_fewshot: 0, batch_size: 1
+|Tasks |Version|Filter|n-shot|        Metric         |   |Value |   |Stderr|
+|------|------:|------|-----:|-----------------------|---|-----:|---|------|
+|ifeval|      4|none  |     0|inst_level_loose_acc   |↑  |0.7890|±  |   N/A|
+|      |       |none  |     0|inst_level_strict_acc  |↑  |0.7638|±  |   N/A|
+|      |       |none  |     0|prompt_level_loose_acc |↑  |0.7061|±  |0.0196|
+|      |       |none  |     0|prompt_level_strict_acc|↑  |0.6747|±  |0.0202|
+

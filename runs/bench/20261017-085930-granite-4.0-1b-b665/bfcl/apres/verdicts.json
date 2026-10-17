@@ -1,0 +1,47 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 47,
+   "precision": 0.94,
+   "erreurs": {
+    "simple_102": "Optional parameter 'unit' not provided and not marked as optional.",
+    "simple_277": "Optional parameter 'information' not provided and not marked as optional.",
+    "simple_35": "Invalid value for parameter 'location': 'New York'. Expected one of ['New York, NY']. Case insensitive."
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 49,
+   "precision": 0.98,
+   "erreurs": {
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 33,
+   "precision": 0.66,
+   "erreurs": {
+    "irrelevance_11": "appel émis sans fonction pertinente",
+    "irrelevance_118": "appel émis sans fonction pertinente",
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_148": "appel émis sans fonction pertinente",
+    "irrelevance_153": "appel émis sans fonction pertinente",
+    "irrelevance_157": "appel émis sans fonction pertinente",
+    "irrelevance_159": "appel émis sans fonction pertinente",
+    "irrelevance_16": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_171": "appel émis sans fonction pertinente",
+    "irrelevance_172": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_22": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_25": "appel émis sans fonction pertinente",
+    "irrelevance_29": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

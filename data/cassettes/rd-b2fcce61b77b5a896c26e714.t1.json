@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:54:39Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "aléa Beuvron PPRI"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'aléa Beuvron PPRI'\nPage 1 of results:\n\n1. Zone d'aléa du Beuvron hors zone réglementaire des PPRI\n   ID: 67377ba68609c51859c40b18\n   Organization: Direction Départementale des Territoires du Loiret\n   Tags: crise45, donnees-ouvertes, inspire, risque-inondation, risque-n-zonages-risque-naturel-id-gaspar\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-dalea-du-beuvron-hors-zone-reglementaire-des-ppri\n\n2. Lignes d’isocote du Beuvron hors des zones réglementaires des PPRI (courbes de niveaux des altitudes atteintes par les eaux lors d’une inondation)\n   ID: 67377ba48609c51859c40b10\n   Organization: Direction Départementale des Territoires du Loiret\n   Tags: crise45, donnees-ouvertes, inspire, risque-inondation, risque-n-inondation\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/lignes-disocote-du-beuvron-hors-des-zones-reglementaires-des-ppri-courbes-de-niveaux-des-altitudes-atteintes-par-les-eaux-lors-dune-inondation\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'aléa Beuvron PPRI'\nPage 1 of results:\n\n1. Zone d'aléa du Beuvron hors zone réglementaire des PPRI\n   ID: 67377ba68609c51859c40b18\n   Organization: Direction Départementale des Territoires du Loiret\n   Tags: crise45, donnees-ouvertes, inspire, risque-inondation, risque-n-zonages-risque-naturel-id-gaspar\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-dalea-du-beuvron-hors-zone-reglementaire-des-ppri\n\n2. Lignes d’isocote du Beuvron hors des zones réglementaires des PPRI (courbes de niveaux des altitudes atteintes par les eaux lors d’une inondation)\n   ID: 67377ba48609c51859c40b10\n   Organization: Direction Départementale des Territoires du Loiret\n   Tags: crise45, donnees-ouvertes, inspire, risque-inondation, risque-n-inondation\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/lignes-disocote-du-beuvron-hors-des-zones-reglementaires-des-ppri-courbes-de-niveaux-des-altitudes-atteintes-par-les-eaux-lors-dune-inondation\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:00:32Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "réglementation incinération végétaux Hautes Pyrénées"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'réglementation incinération végétaux Hautes Pyrénées'\nPage 1 of results:\n\n1. Commissions locales d'écobuage dans les hautes pyrénées\n   ID: 67377fe2b561510ce3c2550d\n   Organization: DDT Hautes-Pyrénées\n   Tags: commission, donnees-ouvertes, ecobuage, foret-dfci, hautes-pyrenees\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/commissions-locales-decobuage-dans-les-hautes-pyrenees\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'réglementation incinération végétaux Hautes Pyrénées'\nPage 1 of results:\n\n1. Commissions locales d'écobuage dans les hautes pyrénées\n   ID: 67377fe2b561510ce3c2550d\n   Organization: DDT Hautes-Pyrénées\n   Tags: commission, donnees-ouvertes, ecobuage, foret-dfci, hautes-pyrenees\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/commissions-locales-decobuage-dans-les-hautes-pyrenees\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "brûlage déchets verts Hautes Pyrénées"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'brûlage déchets verts Hautes Pyrénées'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'brûlage déchets verts Hautes Pyrénées'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "interdiction brûlage végétaux département 65"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'interdiction brûlage végétaux département 65'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'interdiction brûlage végétaux département 65'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

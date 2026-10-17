@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:00:45Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5b4422e8a3a7295bfdb11d6f"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: CA 2017 - Ville de Rennes - Subventions aux associations\nDataset ID: 5b4422e8a3a7295bfdb11d6f\nTotal resources: 2\n\n1. ca-2017-ville-de-rennes-subventions-aux-associations.csv\n   Resource ID: 48cb6ec8-a645-4b42-8bc3-b6ebaec7113d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/ca-2017-ville-de-rennes-subventions-aux-associations/exports/csv?use_labels=true\n\n2. ca-2017-ville-de-rennes-subventions-aux-associations.json\n   Resource ID: fe216196-938f-49d2-8275-9c068bb16951\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/ca-2017-ville-de-rennes-subventions-aux-associations/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: CA 2017 - Ville de Rennes - Subventions aux associations\nDataset ID: 5b4422e8a3a7295bfdb11d6f\nTotal resources: 2\n\n1. ca-2017-ville-de-rennes-subventions-aux-associations.csv\n   Resource ID: 48cb6ec8-a645-4b42-8bc3-b6ebaec7113d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/ca-2017-ville-de-rennes-subventions-aux-associations/exports/csv?use_labels=true\n\n2. ca-2017-ville-de-rennes-subventions-aux-associations.json\n   Resource ID: fe216196-938f-49d2-8275-9c068bb16951\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/ca-2017-ville-de-rennes-subventions-aux-associations/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

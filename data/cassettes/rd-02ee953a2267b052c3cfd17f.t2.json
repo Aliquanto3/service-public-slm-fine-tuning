@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:57:27Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "6863a89a3492920481cfefb6"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Zone humide surfacique - Isère\n\nID: 6863a89a3492920481cfefb6\nSlug: zone-humide-surfacique-isere\nURL: https://www.data.gouv.fr/datasets/zone-humide-surfacique-isere/\n\nFull description: Au sens juridique, la loi sur l'eau de janvier 1992 définit les zones humides comme «les terrains, exploités ou non, habituellement inondés ou gorgés d'eau douce, salée ou saumâtre de façon permanente ou temporaire ; la végétation, quand elle existe, y est dominée par des plantes hygrophiles pendant au moins une partie de l'année». Elles sont aussi citées dans les articles 127 et 128 de la loi 2005-157 sur le développement des territoires ruraux (dont ajout d'un article L. 211-1-1 au Code de l'E...\n\nOrganization: DDT de l'Isère\n  Organization ID: 55ae6ba688ee386c843ca28b\n\nTags: ddt-isere, donnees-ouvertes, grand-public, hydrographie, inspire, isere, specification-nationale, zonages-eau\n\nResources: 6 file(s)\n\nCreated: 2014-02-04T05:58:00+00:00\nLast updated: 2026-09-23T11:41:44+00:00\n\nLicense: lov2\nUpdate frequency: unknown"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Zone humide surfacique - Isère\n\nID: 6863a89a3492920481cfefb6\nSlug: zone-humide-surfacique-isere\nURL: https://www.data.gouv.fr/datasets/zone-humide-surfacique-isere/\n\nFull description: Au sens juridique, la loi sur l'eau de janvier 1992 définit les zones humides comme «les terrains, exploités ou non, habituellement inondés ou gorgés d'eau douce, salée ou saumâtre de façon permanente ou temporaire ; la végétation, quand elle existe, y est dominée par des plantes hygrophiles pendant au moins une partie de l'année». Elles sont aussi citées dans les articles 127 et 128 de la loi 2005-157 sur le développement des territoires ruraux (dont ajout d'un article L. 211-1-1 au Code de l'E...\n\nOrganization: DDT de l'Isère\n  Organization ID: 55ae6ba688ee386c843ca28b\n\nTags: ddt-isere, donnees-ouvertes, grand-public, hydrographie, inspire, isere, specification-nationale, zonages-eau\n\nResources: 6 file(s)\n\nCreated: 2014-02-04T05:58:00+00:00\nLast updated: 2026-09-23T11:41:44+00:00\n\nLicense: lov2\nUpdate frequency: unknown"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

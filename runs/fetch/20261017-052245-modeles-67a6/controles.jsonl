@@ -1,0 +1,5 @@
+{"controle":"dense","detail":"aucun poids HF (fichiers = [])","modele":"bonsai-2-4b","statut":"sans-objet","valeurs":{}}
+{"controle":"fp8","detail":"aucun poids HF (fichiers = [])","modele":"bonsai-2-4b","statut":"sans-objet","valeurs":{}}
+{"controle":"vision","detail":"aucun poids HF (fichiers = [])","modele":"bonsai-2-4b","statut":"sans-objet","valeurs":{}}
+{"controle":"chat_template","detail":"aucun poids HF (fichiers = [])","modele":"bonsai-2-4b","statut":"sans-objet","valeurs":{"sha256_gguf":"a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"}}
+{"controle":"serveur","detail":"llama-server (cpu) prêt ; /props : modalités texte seul","modele":"bonsai-2-4b","statut":"ok","valeurs":{"build_info":"b11429-d81235049","journal":"C:\\Users\\Utilisateur\\AppData\\Local\\slmsp\\var\\journaux\\llama-server-generation-20261017-052412-54075.log","modalities":{"audio":false,"video":false,"vision":false},"n_ctx":8192,"sha256_chat_template":"a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715","sha256_template_attendu":"a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715","template_servi_conforme":true,"variante":"cpu"}}

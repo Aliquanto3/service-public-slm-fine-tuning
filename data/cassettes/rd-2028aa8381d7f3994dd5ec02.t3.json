@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:10:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "55d1aad488ee383afca46ec1"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\nDataset ID: 55d1aad488ee383afca46ec1\nTotal resources: 1\n\n1. 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\n   Resource ID: 4887e04a-dfac-44ba-84f8-c4c59b3f299f\n   Format: xls\n   Size: 31.0 KB\n   MIME type: application/vnd.ms-excel\n   Type: main\n   URL: https://static.data.gouv.fr/resources/15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen/20150817-113531/15055_Premiers-titres-sejour-communautaires-et-titres-EEE-2007-2013.xls\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\nDataset ID: 55d1aad488ee383afca46ec1\nTotal resources: 1\n\n1. 15055 - Premiers titres de séjour communautaires et titres - Espace économique européen\n   Resource ID: 4887e04a-dfac-44ba-84f8-c4c59b3f299f\n   Format: xls\n   Size: 31.0 KB\n   MIME type: application/vnd.ms-excel\n   Type: main\n   URL: https://static.data.gouv.fr/resources/15055-premiers-titres-de-sejour-communautaires-et-titres-espace-economique-europeen/20150817-113531/15055_Premiers-titres-sejour-communautaires-et-titres-EEE-2007-2013.xls\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

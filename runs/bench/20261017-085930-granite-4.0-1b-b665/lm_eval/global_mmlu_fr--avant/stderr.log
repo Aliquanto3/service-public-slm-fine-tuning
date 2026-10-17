@@ -1,0 +1,95 @@
+2026-10-17:09:13:19 WARNING  [config.evaluate_config:337] --limit SHOULD ONLY BE USED FOR TESTING. REAL METRICS SHOULD NOT BE COMPUTED USING LIMIT.
+2026-10-17:09:14:25 INFO     [_cli.run:391] Including path: C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-17:09:14:25 INFO     [_cli.run:392] Selected Tasks: ['global_mmlu_fr']
+2026-10-17:09:14:28 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-17:09:14:28 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\granite-4.0-1b\\hf', 'dtype': 'bfloat16'}
+2026-10-17:09:14:37 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-17:09:14:38 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/322 [00:00<?, ?it/s]
+Loading weights:   5%|▌         | 17/322 [00:00<00:01, 155.83it/s]
+Loading weights:  10%|█         | 33/322 [00:00<00:01, 155.26it/s]
+Loading weights:  17%|█▋        | 55/322 [00:00<00:01, 168.27it/s]
+Loading weights:  25%|██▍       | 80/322 [00:00<00:01, 184.45it/s]
+Loading weights:  32%|███▏      | 104/322 [00:00<00:01, 200.37it/s]
+Loading weights:  39%|███▉      | 125/322 [00:00<00:01, 156.79it/s]
+Loading weights:  44%|████▍     | 142/322 [00:00<00:01, 144.97it/s]
+Loading weights:  49%|████▉     | 158/322 [00:01<00:01, 139.04it/s]
+Loading weights:  54%|█████▎    | 173/322 [00:01<00:01, 131.19it/s]
+Loading weights:  58%|█████▊    | 187/322 [00:01<00:01, 122.99it/s]
+Loading weights:  63%|██████▎   | 202/322 [00:01<00:00, 123.45it/s]
+Loading weights:  68%|██████▊   | 218/322 [00:01<00:00, 114.99it/s]
+Loading weights:  72%|███████▏  | 233/322 [00:01<00:00, 109.20it/s]
+Loading weights:  77%|███████▋  | 248/322 [00:01<00:00, 112.45it/s]
+Loading weights:  82%|████████▏ | 265/322 [00:01<00:00, 115.60it/s]
+Loading weights:  86%|████████▋ | 278/322 [00:02<00:00, 111.51it/s]
+Loading weights:  92%|█████████▏| 297/322 [00:02<00:00, 130.18it/s]
+Loading weights:  97%|█████████▋| 311/322 [00:02<00:00, 117.15it/s]
+Loading weights: 100%|██████████| 322/322 [00:02<00:00, 132.81it/s]
+Using the latest cached version of the dataset since CohereLabs/Global-MMLU-Lite couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fr' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\CohereLabs___global-mmlu-lite\fr\0.0.0\36c2fd756f19ccf13a9a96c8e53ccecc02192b8b (last modified on Fri Oct 16 21:26:42 2026).
+Using the latest cached version of the dataset since CohereLabs/Global-MMLU-Lite couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fr' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\CohereLabs___global-mmlu-lite\fr\0.0.0\36c2fd756f19ccf13a9a96c8e53ccecc02192b8b (last modified on Fri Oct 16 21:26:42 2026).
+Using the latest cached version of the dataset since CohereLabs/Global-MMLU-Lite couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fr' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\CohereLabs___global-mmlu-lite\fr\0.0.0\36c2fd756f19ccf13a9a96c8e53ccecc02192b8b (last modified on Fri Oct 16 21:26:42 2026).
+Using the latest cached version of the dataset since CohereLabs/Global-MMLU-Lite couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fr' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\CohereLabs___global-mmlu-lite\fr\0.0.0\36c2fd756f19ccf13a9a96c8e53ccecc02192b8b (last modified on Fri Oct 16 21:26:42 2026).
+Using the latest cached version of the dataset since CohereLabs/Global-MMLU-Lite couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fr' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\CohereLabs___global-mmlu-lite\fr\0.0.0\36c2fd756f19ccf13a9a96c8e53ccecc02192b8b (last modified on Fri Oct 16 21:26:42 2026).
+Using the latest cached version of the dataset since CohereLabs/Global-MMLU-Lite couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fr' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\CohereLabs___global-mmlu-lite\fr\0.0.0\36c2fd756f19ccf13a9a96c8e53ccecc02192b8b (last modified on Fri Oct 16 21:26:42 2026).
+2026-10-17:09:14:41 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-17:09:14:41 INFO     [evaluator_utils:488] Group: global_mmlu_fr
+2026-10-17:09:14:41 INFO     [evaluator_utils:496]   Task: global_mmlu_fr_business (global_mmlu\default\fr\global_mmlu_fr_business.yaml)
+2026-10-17:09:14:41 INFO     [evaluator_utils:496]   Task: global_mmlu_fr_humanities (global_mmlu\default\fr\global_mmlu_fr_humanities.yaml)
+2026-10-17:09:14:41 INFO     [evaluator_utils:496]   Task: global_mmlu_fr_medical (global_mmlu\default\fr\global_mmlu_fr_medical.yaml)
+2026-10-17:09:14:41 INFO     [evaluator_utils:496]   Task: global_mmlu_fr_other (global_mmlu\default\fr\global_mmlu_fr_other.yaml)
+2026-10-17:09:14:41 INFO     [evaluator_utils:496]   Task: global_mmlu_fr_stem (global_mmlu\default\fr\global_mmlu_fr_stem.yaml)
+2026-10-17:09:14:41 INFO     [evaluator_utils:496]   Task: global_mmlu_fr_social_sciences (global_mmlu\default\fr\global_mmlu_fr_social_sciences.yaml)
+2026-10-17:09:14:41 WARNING  [evaluator:335] Overwriting default num_fewshot of global_mmlu_fr_business from None to 0
+2026-10-17:09:14:41 WARNING  [evaluator:335] Overwriting default num_fewshot of global_mmlu_fr_humanities from None to 0
+2026-10-17:09:14:41 WARNING  [evaluator:335] Overwriting default num_fewshot of global_mmlu_fr_medical from None to 0
+2026-10-17:09:14:41 WARNING  [evaluator:335] Overwriting default num_fewshot of global_mmlu_fr_other from None to 0
+2026-10-17:09:14:41 WARNING  [evaluator:335] Overwriting default num_fewshot of global_mmlu_fr_stem from None to 0
+2026-10-17:09:14:41 WARNING  [evaluator:335] Overwriting default num_fewshot of global_mmlu_fr_social_sciences from None to 0
+2026-10-17:09:14:41 INFO     [api.task:312] Building contexts for global_mmlu_fr_business on rank 0...
+
+  0%|          | 0/58 [00:00<?, ?it/s]
+100%|██████████| 58/58 [00:00<00:00, 1411.38it/s]
+2026-10-17:09:14:41 INFO     [api.task:312] Building contexts for global_mmlu_fr_humanities on rank 0...
+
+  0%|          | 0/102 [00:00<?, ?it/s]
+100%|██████████| 102/102 [00:00<00:00, 1473.80it/s]
+2026-10-17:09:14:41 INFO     [api.task:312] Building contexts for global_mmlu_fr_medical on rank 0...
+
+  0%|          | 0/36 [00:00<?, ?it/s]
+100%|██████████| 36/36 [00:00<00:00, 1633.72it/s]
+2026-10-17:09:14:41 INFO     [api.task:312] Building contexts for global_mmlu_fr_other on rank 0...
+
+  0%|          | 0/56 [00:00<?, ?it/s]
+100%|██████████| 56/56 [00:00<00:00, 1595.78it/s]
+2026-10-17:09:14:41 INFO     [api.task:312] Building contexts for global_mmlu_fr_stem on rank 0...
+
+  0%|          | 0/46 [00:00<?, ?it/s]
+100%|██████████| 46/46 [00:00<00:00, 1552.56it/s]
+2026-10-17:09:14:41 INFO     [api.task:312] Building contexts for global_mmlu_fr_social_sciences on rank 0...
+
+  0%|          | 0/102 [00:00<?, ?it/s]
+100%|██████████| 102/102 [00:00<00:00, 1643.58it/s]
+2026-10-17:09:14:41 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/1600 [00:00<?, ?it/s]
+Tokenizing inputs:  15%|█▌        | 245/1600 [00:00<00:00, 2430.45it/s]
+Tokenizing inputs:  31%|███       | 489/1600 [00:00<00:00, 1728.51it/s]
+Tokenizing inputs:  43%|████▎     | 689/1600 [00:00<00:00, 1827.22it/s]
+Tokenizing inputs:  65%|██████▍   | 1034/1600 [00:00<00:00, 2387.97it/s]
+Tokenizing inputs:  85%|████████▍ | 1356/1600 [00:00<00:00, 2663.25it/s]
+Tokenizing inputs: 100%|██████████| 1600/1600 [00:00<00:00, 2364.43it/s]
+
+Running loglikelihood requests:   0%|          | 0/1600 [00:00<?, ?it/s][W1017 09:14:58.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 9955180544 bytes (free: 0, total: 8589410304).
+[W1017 09:15:25.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 9955180544 bytes (free: 0, total: 8589410304).
+[W1017 09:15:34.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 8866758656 bytes (free: 0, total: 8589410304).
+[W1017 09:16:08.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 8866758656 bytes (free: 0, total: 8589410304).
+[W1017 09:16:16.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 7933526016 bytes (free: 0, total: 8589410304).
+[W1017 09:16:34.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 7933526016 bytes (free: 0, total: 8589410304).
+[W1017 09:16:41.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 7000293376 bytes (free: 0, total: 8589410304).

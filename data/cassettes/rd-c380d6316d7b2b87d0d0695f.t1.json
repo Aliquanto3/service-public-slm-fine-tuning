@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:14:17Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "déclaration acquisition biens réemploi réutilisation matières recyclées Cholet"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'déclaration acquisition biens réemploi réutilisation matières recyclées Cholet'\nPage 1 of results:\n\n1. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Centre Communal d’Action Sociale de Cholet )\n   ID: 6a292c391ce0b51ad4e3bb10\n   Organization: Centre Communal d’Action Sociale de Cholet \n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-centre-communal-daction-sociale-de-cholet\n\n2. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Cholet Agglomération)\n   ID: 6a292aa8b5d2776e5c7067b1\n   Organization: Cholet Agglomération\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-cholet-agglomeration\n\n3. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Ville de Cholet)\n   ID: 6a292f1b1f7391a3e8aea722\n   Organization: Ville de Cholet\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-ville-de-cholet\n\n4. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Centre Intercommunal d’Action Sociale du Choletais )\n   ID: 6a292dab06b7a816e1d09545\n   Organization: Centre Intercommunal d’Action Sociale du Choletais \n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-centre-intercommunal-daction-sociale-du-choletais\n\n5. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation COLLEGE MONDETOUR)\n   ID: 69788f7777b056f5bb03d250\n   Organization: COLLEGE MONDETOUR\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-college-mondetour\n\n6. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation COLLEGE DE CASTELNAU D'ESTRETEFONDS)\n   ID: 697a2795f2d0ee7f69918e31\n   Organization: COLLEGE DE CASTELNAU D'ESTRETEFONDS\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-college-de-castelnau-destretefonds\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'déclaration acquisition biens réemploi réutilisation matières recyclées Cholet'\nPage 1 of results:\n\n1. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Centre Communal d’Action Sociale de Cholet )\n   ID: 6a292c391ce0b51ad4e3bb10\n   Organization: Centre Communal d’Action Sociale de Cholet \n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-centre-communal-daction-sociale-de-cholet\n\n2. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Cholet Agglomération)\n   ID: 6a292aa8b5d2776e5c7067b1\n   Organization: Cholet Agglomération\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-cholet-agglomeration\n\n3. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Ville de Cholet)\n   ID: 6a292f1b1f7391a3e8aea722\n   Organization: Ville de Cholet\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-ville-de-cholet\n\n4. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation Centre Intercommunal d’Action Sociale du Choletais )\n   ID: 6a292dab06b7a816e1d09545\n   Organization: Centre Intercommunal d’Action Sociale du Choletais \n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-centre-intercommunal-daction-sociale-du-choletais\n\n5. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation COLLEGE MONDETOUR)\n   ID: 69788f7777b056f5bb03d250\n   Organization: COLLEGE MONDETOUR\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-college-mondetour\n\n6. Déclaration de l'acquisition de biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées (organisation COLLEGE DE CASTELNAU D'ESTRETEFONDS)\n   ID: 697a2795f2d0ee7f69918e31\n   Organization: COLLEGE DE CASTELNAU D'ESTRETEFONDS\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-de-lacquisition-de-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-organisation-college-de-castelnau-destretefonds\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "marchés publics réemploi réutilisation recyclage Maine-et-Loire"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'marchés publics réemploi réutilisation recyclage Maine-et-Loire'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'marchés publics réemploi réutilisation recyclage Maine-et-Loire'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "achats durables réemploi recyclage collectivités territoriales"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'achats durables réemploi recyclage collectivités territoriales'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'achats durables réemploi recyclage collectivités territoriales'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

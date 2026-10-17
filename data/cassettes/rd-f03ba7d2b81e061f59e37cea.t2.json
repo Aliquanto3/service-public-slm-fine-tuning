@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-16T23:59:36Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "689e806e1f90bdfb132523c8"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Zones pays ain\n\nID: 689e806e1f90bdfb132523c8\nSlug: zones-pays-ain\nURL: https://www.data.gouv.fr/datasets/zones-pays-ain/\n\nFull description: Grandes entités paysagères définies dans le SDENS 2012-2017 - Service  de carte représentant schématiquement les grandes zones géo morphologique et dénomination des territoires de l'Ain.\n\n  * La Bresse au nord ouest\n  * Le Revermont\n  * Le Bugey que l'on peut subdiviser en Bugey-Valromey avec le plateau du retord, et le Bas Bugey\n  * Le Pays de Gex vers la frontière Suisse\n  * La Dombes et ces étangs\n  * La plaine de l'Ain de Pont-d'Ain à la confluence de la rivière d'Ain avec le Rhône\n  * La Cô...\n\nOrganization: Département de l'Ain\n  Organization ID: 5851009688ee3870fbc65bb3\n\nTags: ain, bresse, bugey, cotiere, departement, dombes, environnement, geospatial, limites, nature\n\nResources: 7 file(s)\n\nCreated: 2025-08-14T00:00:00+00:00\nLast updated: 2025-08-14T00:00:00+00:00\n\nLicense: notspecified\nUpdate frequency: unknown"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Zones pays ain\n\nID: 689e806e1f90bdfb132523c8\nSlug: zones-pays-ain\nURL: https://www.data.gouv.fr/datasets/zones-pays-ain/\n\nFull description: Grandes entités paysagères définies dans le SDENS 2012-2017 - Service  de carte représentant schématiquement les grandes zones géo morphologique et dénomination des territoires de l'Ain.\n\n  * La Bresse au nord ouest\n  * Le Revermont\n  * Le Bugey que l'on peut subdiviser en Bugey-Valromey avec le plateau du retord, et le Bas Bugey\n  * Le Pays de Gex vers la frontière Suisse\n  * La Dombes et ces étangs\n  * La plaine de l'Ain de Pont-d'Ain à la confluence de la rivière d'Ain avec le Rhône\n  * La Cô...\n\nOrganization: Département de l'Ain\n  Organization ID: 5851009688ee3870fbc65bb3\n\nTags: ain, bresse, bugey, cotiere, departement, dombes, environnement, geospatial, limites, nature\n\nResources: 7 file(s)\n\nCreated: 2025-08-14T00:00:00+00:00\nLast updated: 2025-08-14T00:00:00+00:00\n\nLicense: notspecified\nUpdate frequency: unknown"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

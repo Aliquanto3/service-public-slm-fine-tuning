@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:00:20Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Milan royal zones sensibles hivernage Provence-Alpes-Côte d'Azur",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'Milan royal zones sensibles hivernage Provence-Alpes-Côte d'Azur'\nPage 1 of results:\n\n1. Zones sensibles Hivernage Milan royal en Provence-Alpes-Côte d'Azur\n   ID: 689d75371f90bdfb13252386\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, milan, nature-paysage-biodiversite-inventaire-nature-biodiversite, rapace\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/zones-sensibles-hivernage-milan-royal-en-provence-alpes-cote-dazur-1\n\n2. Zones sensibles Reproduction Milan royal en Provence-Alpes-Côte d'Azur\n   ID: 689d75121f90bdfb13252384\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, milan, nature-paysage-biodiversite-inventaire-nature-biodiversite, rapace\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/zones-sensibles-reproduction-milan-royal-en-provence-alpes-cote-dazur-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'Milan royal zones sensibles hivernage Provence-Alpes-Côte d'Azur'\nPage 1 of results:\n\n1. Zones sensibles Hivernage Milan royal en Provence-Alpes-Côte d'Azur\n   ID: 689d75371f90bdfb13252386\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, milan, nature-paysage-biodiversite-inventaire-nature-biodiversite, rapace\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/zones-sensibles-hivernage-milan-royal-en-provence-alpes-cote-dazur-1\n\n2. Zones sensibles Reproduction Milan royal en Provence-Alpes-Côte d'Azur\n   ID: 689d75121f90bdfb13252384\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, milan, nature-paysage-biodiversite-inventaire-nature-biodiversite, rapace\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/zones-sensibles-reproduction-milan-royal-en-provence-alpes-cote-dazur-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:10:01Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "comptes individuels départements collectivités territoriales uniques 2025"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'comptes individuels départements collectivités territoriales uniques 2025'\nPage 1 of results:\n\n1. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2025\n   ID: 6ab318c0ef5b789f4804fa37\n   Organization: Ministères économiques et financiers\n   Tags: 2025, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2025\n\n2. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2023-2024\n   ID: 68e5aa4dcf61185939ecc33a\n   Organization: Ministères économiques et financiers\n   Tags: 2023, 2024, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2023-2024\n\n3. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2021-2022\n   ID: 68e45a885ce2dfcc7690226c\n   Organization: Ministères économiques et financiers\n   Tags: 2021, 2022, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2021-2022\n\n4. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2019-2020\n   ID: 68e5aa66cf61185939ecc33d\n   Organization: Ministères économiques et financiers\n   Tags: 2019, 2020, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2019-2020\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'comptes individuels départements collectivités territoriales uniques 2025'\nPage 1 of results:\n\n1. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2025\n   ID: 6ab318c0ef5b789f4804fa37\n   Organization: Ministères économiques et financiers\n   Tags: 2025, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2025\n\n2. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2023-2024\n   ID: 68e5aa4dcf61185939ecc33a\n   Organization: Ministères économiques et financiers\n   Tags: 2023, 2024, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2023-2024\n\n3. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2021-2022\n   ID: 68e45a885ce2dfcc7690226c\n   Organization: Ministères économiques et financiers\n   Tags: 2021, 2022, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2021-2022\n\n4. Comptes individuels des départements et des collectivités territoriales uniques (fichier global) 2019-2020\n   ID: 68e5aa66cf61185939ecc33d\n   Organization: Ministères économiques et financiers\n   Tags: 2019, 2020, collectivites-locales, comptabilite-publique, comptes-publics\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/comptes-individuels-des-departements-et-des-collectivites-territoriales-uniques-fichier-global-2019-2020\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

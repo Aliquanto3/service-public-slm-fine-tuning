@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:16:13Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "délibérations conseil municipal Orvault 2020"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 8 dataset(s) for query: 'délibérations conseil municipal Orvault 2020'\nPage 1 of results:\n\n1. Délibérations du conseil municipal de la ville d'Orvault en 2020 (délibérations incluses en PDF)\n   ID: 67f70b11c7f49c50e69ac782\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2020-deliberations-incluses-en-pdf\n\n2. Délibérations du conseil municipal de la ville d'Orvault en 2026 (délibérations incluses en PDF)\n   ID: 698e6bcfd077e599866e390c\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2026-deliberations-incluses-en-pdf\n\n3. Délibérations du conseil municipal de la ville d'Orvault en 2024 (délibérations incluses en PDF)\n   ID: 67f70b09c7f49c50e69ac775\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2024-deliberations-incluses-en-pdf\n\n4. Délibérations du conseil municipal de la ville d'Orvault en 2021 (délibérations incluses en PDF)\n   ID: 67f70b0fc7f49c50e69ac780\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2021-deliberations-incluses-en-pdf\n\n5. Délibérations du conseil municipal de la ville d'Orvault en 2022 (délibérations incluses en PDF)\n   ID: 67f70b0cc7f49c50e69ac778\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2022-deliberations-incluses-en-pdf\n\n6. Délibérations du conseil municipal de la ville d'Orvault en 2025 (délibérations incluses en PDF)\n   ID: 67f70b0dc7f49c50e69ac77d\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2025-deliberations-incluses-en-pdf\n\n7. Délibérations du conseil municipal de la ville d'Orvault en 2023 (délibérations incluses en PDF)\n   ID: 67f70b11c7f49c50e69ac781\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2023-deliberations-incluses-en-pdf\n\n8. Liste des délibérations du conseil municipal de la ville d'Orvault de 2013 à 2026\n   ID: 67f70b3ec7f49c50e69ac79b\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-des-deliberations-du-conseil-municipal-de-la-ville-dorvault-de-2013-a-2026\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 8 dataset(s) for query: 'délibérations conseil municipal Orvault 2020'\nPage 1 of results:\n\n1. Délibérations du conseil municipal de la ville d'Orvault en 2020 (délibérations incluses en PDF)\n   ID: 67f70b11c7f49c50e69ac782\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2020-deliberations-incluses-en-pdf\n\n2. Délibérations du conseil municipal de la ville d'Orvault en 2026 (délibérations incluses en PDF)\n   ID: 698e6bcfd077e599866e390c\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2026-deliberations-incluses-en-pdf\n\n3. Délibérations du conseil municipal de la ville d'Orvault en 2024 (délibérations incluses en PDF)\n   ID: 67f70b09c7f49c50e69ac775\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2024-deliberations-incluses-en-pdf\n\n4. Délibérations du conseil municipal de la ville d'Orvault en 2021 (délibérations incluses en PDF)\n   ID: 67f70b0fc7f49c50e69ac780\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2021-deliberations-incluses-en-pdf\n\n5. Délibérations du conseil municipal de la ville d'Orvault en 2022 (délibérations incluses en PDF)\n   ID: 67f70b0cc7f49c50e69ac778\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2022-deliberations-incluses-en-pdf\n\n6. Délibérations du conseil municipal de la ville d'Orvault en 2025 (délibérations incluses en PDF)\n   ID: 67f70b0dc7f49c50e69ac77d\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2025-deliberations-incluses-en-pdf\n\n7. Délibérations du conseil municipal de la ville d'Orvault en 2023 (délibérations incluses en PDF)\n   ID: 67f70b11c7f49c50e69ac781\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2023-deliberations-incluses-en-pdf\n\n8. Liste des délibérations du conseil municipal de la ville d'Orvault de 2013 à 2026\n   ID: 67f70b3ec7f49c50e69ac79b\n   Organization: Nantes Métropole\n   Tags: acte-administratif, citoyennete-institution, conseil-municipal, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-des-deliberations-du-conseil-municipal-de-la-ville-dorvault-de-2013-a-2026\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,63 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:22:41Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "f8aa9aaf-d1e1-4816-b36f-500a77ddd72d",
+      "page": 1,
+      "page_size": 20
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: schema-boamp-avec-siren-acheteurs.csv\nResource ID: f8aa9aaf-d1e1-4816-b36f-500a77ddd72d\nDataset: Jointure BOAMP - SIREN / Côté acheteurs / 2024, 2025 et 2026 (ID: 6863b7cbb1aafe4118ea43d3)\n\nTotal rows (Tabular API): 76\nTotal pages: 4 (page size: 20)\nRetrieved: 20 row(s) from page 1\nColumns: __id, Colonne, Description, Type, Exemple\n\nData (20 rows):\n  Row 1:\n    __id: 1\n    Colonne: B_01_annonceLie\n    Description: Annonce(s) liée(s).\n    Type: Texte\n    Exemple: 22-64263\n  Row 2:\n    __id: 2\n    Colonne: B_02_annonceReferenceSchemaV110\n    Description: N’a plus cours.\n    Type: na\n    Exemple: \n  Row 3:\n    __id: 3\n    Colonne: B_03_annoncesAnterieuresSchemaV110\n    Description: N’a plus cours.\n    Type: na\n    Exemple: \n  Row 4:\n    __id: 4\n    Colonne: B_04_codeDepartement\n    Description: Département(s) d’émission de l’annonce.\n    Type: Texte\n    Exemple: '75’\n  Row 5:\n    __id: 5\n    Colonne: B_05_codeDepartementPrestation\n    Description: Département(s) de prestation du marché.\n    Type: Texte\n    Exemple: \n  Row 6:\n    __id: 6\n    Colonne: B_06_criteres\n    Description: Critères sociaux / environnementaux…\n    Type: Texte\n    Exemple: Environnementaux / sociaux\n  Row 7:\n    __id: 7\n    Colonne: B_07_dateFinDiffusion\n    Description: Date de fin de diffusion de l’annonce.\n    Type: Date\n    Exemple: ‘2024-12-25’\n  Row 8:\n    __id: 8\n    Colonne: B_08_dateLimiteReponse\n    Description: Date limite de réponse à l’annonce.\n    Type: Date\n    Exemple: '2024-08-02T14:15:00+02:00’\n  Row 9:\n    __id: 9\n    Colonne: B_09_dateParution\n    Description: Date de parution de l’annonce.\n    Type: Date\n    Exemple: ‘2024-12-25’\n  Row 10:\n    __id: 10\n    Colonne: B_10_dc\n    Description: Code(s) descripteur(s) de l’objet du marché.\n    Type: Liste de codes\n    Exemple: '197’\n  Row 11:\n    __id: 11\n    Colonne: B_11_descripteurCode\n    Description: Code(s) descripteur(s) de l’objet du marché.\n    Type: Liste de codes\n    Exemple: '197’\n  Row 12:\n    __id: 12\n    Colonne: B_12_descripteurLibelle\n    Description: Libellé du ou des descripteurs.\n    Type: Texte\n    Exemple: Prestations de services\n  Row 13:\n    __id: 13\n    Colonne: B_13_etat\n    Description: État de l’annonce\n    Type: Texte\n    Exemple: INITIAL / RECTIFICATIF\n  Row 14:\n    __id: 14\n    Colonne: B_14_famille\n    Description: Famille de l’annonce\n    Type: Texte\n    Exemple: JOUE / FNS / MAPA\n  Row 15:\n    __id: 15\n    Colonne: B_15_familleLibelle\n    Description: Libellé de la famille de l’annonce\n    Type: Texte\n    Exemple: Marchés européens / Marchés <90 k€ (MAPA)\n  Row 16:\n    __id: 16\n    Colonne: B_16_filename\n    Description: Nom du fichier de l’annonce\n    Type: Texte\n    Exemple: BOAMP-J-IC-AA_2024_010010 / 24-95000\n  Row 17:\n    __id: 17\n    Colonne: B_17_idweb\n    Description: Référence de l’annonce au Boamp / CLÉ PRIMAIRE.\n    Type: Texte\n    Exemple: 24-95000\n  Row 18:\n    __id: 18\n    Colonne: B_18_marchePublicSimplifie\n    Description: Marché public simplifié.\n    Type: Code\n    Exemple: NA / 1\n  Row 19:\n    __id: 19\n    Colonne: B_19_marchePublicSimplifieLabel\n    Description: Marché public simplifié.\n    Type: Texte\n    Exemple: NA / Marché public simplifié\n  Row 20:\n    __id: 20\n    Colonne: B_20_nature\n    Description: Nature de l’annonce.\n    Type: Texte\n    Exemple: APPEL_OFFRE / ATTRIBUTION / RECTIFICATIF\n\n📄 More data available. Use page=2 to see the next page."
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: schema-boamp-avec-siren-acheteurs.csv\nResource ID: f8aa9aaf-d1e1-4816-b36f-500a77ddd72d\nDataset: Jointure BOAMP - SIREN / Côté acheteurs / 2024, 2025 et 2026 (ID: 6863b7cbb1aafe4118ea43d3)\n\nTotal rows (Tabular API): 76\nTotal pages: 4 (page size: 20)\nRetrieved: 20 row(s) from page 1\nColumns: __id, Colonne, Description, Type, Exemple\n\nData (20 rows):\n  Row 1:\n    __id: 1\n    Colonne: B_01_annonceLie\n    Description: Annonce(s) liée(s).\n    Type: Texte\n    Exemple: 22-64263\n  Row 2:\n    __id: 2\n    Colonne: B_02_annonceReferenceSchemaV110\n    Description: N’a plus cours.\n    Type: na\n    Exemple: \n  Row 3:\n    __id: 3\n    Colonne: B_03_annoncesAnterieuresSchemaV110\n    Description: N’a plus cours.\n    Type: na\n    Exemple: \n  Row 4:\n    __id: 4\n    Colonne: B_04_codeDepartement\n    Description: Département(s) d’émission de l’annonce.\n    Type: Texte\n    Exemple: '75’\n  Row 5:\n    __id: 5\n    Colonne: B_05_codeDepartementPrestation\n    Description: Département(s) de prestation du marché.\n    Type: Texte\n    Exemple: \n  Row 6:\n    __id: 6\n    Colonne: B_06_criteres\n    Description: Critères sociaux / environnementaux…\n    Type: Texte\n    Exemple: Environnementaux / sociaux\n  Row 7:\n    __id: 7\n    Colonne: B_07_dateFinDiffusion\n    Description: Date de fin de diffusion de l’annonce.\n    Type: Date\n    Exemple: ‘2024-12-25’\n  Row 8:\n    __id: 8\n    Colonne: B_08_dateLimiteReponse\n    Description: Date limite de réponse à l’annonce.\n    Type: Date\n    Exemple: '2024-08-02T14:15:00+02:00’\n  Row 9:\n    __id: 9\n    Colonne: B_09_dateParution\n    Description: Date de parution de l’annonce.\n    Type: Date\n    Exemple: ‘2024-12-25’\n  Row 10:\n    __id: 10\n    Colonne: B_10_dc\n    Description: Code(s) descripteur(s) de l’objet du marché.\n    Type: Liste de codes\n    Exemple: '197’\n  Row 11:\n    __id: 11\n    Colonne: B_11_descripteurCode\n    Description: Code(s) descripteur(s) de l’objet du marché.\n    Type: Liste de codes\n    Exemple: '197’\n  Row 12:\n    __id: 12\n    Colonne: B_12_descripteurLibelle\n    Description: Libellé du ou des descripteurs.\n    Type: Texte\n    Exemple: Prestations de services\n  Row 13:\n    __id: 13\n    Colonne: B_13_etat\n    Description: État de l’annonce\n    Type: Texte\n    Exemple: INITIAL / RECTIFICATIF\n  Row 14:\n    __id: 14\n    Colonne: B_14_famille\n    Description: Famille de l’annonce\n    Type: Texte\n    Exemple: JOUE / FNS / MAPA\n  Row 15:\n    __id: 15\n    Colonne: B_15_familleLibelle\n    Description: Libellé de la famille de l’annonce\n    Type: Texte\n    Exemple: Marchés européens / Marchés <90 k€ (MAPA)\n  Row 16:\n    __id: 16\n    Colonne: B_16_filename\n    Description: Nom du fichier de l’annonce\n    Type: Texte\n    Exemple: BOAMP-J-IC-AA_2024_010010 / 24-95000\n  Row 17:\n    __id: 17\n    Colonne: B_17_idweb\n    Description: Référence de l’annonce au Boamp / CLÉ PRIMAIRE.\n    Type: Texte\n    Exemple: 24-95000\n  Row 18:\n    __id: 18\n    Colonne: B_18_marchePublicSimplifie\n    Description: Marché public simplifié.\n    Type: Code\n    Exemple: NA / 1\n  Row 19:\n    __id: 19\n    Colonne: B_19_marchePublicSimplifieLabel\n    Description: Marché public simplifié.\n    Type: Texte\n    Exemple: NA / Marché public simplifié\n  Row 20:\n    __id: 20\n    Colonne: B_20_nature\n    Description: Nature de l’annonce.\n    Type: Texte\n    Exemple: APPEL_OFFRE / ATTRIBUTION / RECTIFICATIF\n\n📄 More data available. Use page=2 to see the next page."
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

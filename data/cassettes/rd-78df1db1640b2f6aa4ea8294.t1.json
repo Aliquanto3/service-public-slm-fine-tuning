@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:10:29Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Contours Iris 2014"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 28 dataset(s) for query: 'Contours Iris 2014'\nPage 1 of results:\n\n1. Iris...GE\n   ID: 61489e33b77d1697d00d2fec\n   Organization: Institut national de l'information géographique et forestière\n   Tags: distribution-demographique, donnees-ouvertes, inspire, repartition-de-la-population-demographie, statistiques\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/iris-ge\n\n2. Historique des codes IRIS\n   ID: 64a935e7f5ddd207829205e8\n   Organization: Santé publique France\n   Tags: decoupage-administratif, gd4h, insee, iris\n   Resources: 18\n   URL: https://www.data.gouv.fr/datasets/historique-des-codes-iris\n\n3. Démographie infracommunal en IRIS des communes 2014 dans la Somme\n   ID: 673818bcc1f7a9921ac40a9a\n   Organization: Direction Départementale des Territoires et de la Mer de la Somme\n   Tags: donnee-generique-demographie, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/demographie-infracommunal-en-iris-des-communes-2014-dans-la-somme-1\n\n4. IRIS\n   ID: 5552123588ee381f841c0bd6\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-7\n\n5. IRIS\n   ID: 5552090688ee381a501c0be6\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-4\n\n6. IRIS\n   ID: 5552125e88ee381f841c0bd7\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-8\n\n7. IRIS\n   ID: 55520f42c751df7977190c79\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-6\n\n8. IRIS\n   ID: 55520951c751df7832190c9c\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-5\n\n9. IRIS\n   ID: 555206e888ee381c0e1c0bd6\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-2\n\n10. IRIS\n   ID: 555207fa88ee381e451c0bd9\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-3\n\n11. IRIS\n   ID: 5552127c88ee381e451c0c1c\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-9\n\n12. Analyse des données mensuelles de radiance satellite en cœur de nuit et des pratiques d’éclairage associées (de janvier 2014 à décembre 2024) en Bretagne\n   ID: 6a236435398f6243a987da87\n   Organization: Région Bretagne\n   Tags: 233500016, donnees-ouvertes, pollution-lumineuse, trame-noire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/analyse-des-donnees-mensuelles-de-radiance-satellite-en-coeur-de-nuit-et-des-pratiques-declairage-associees-de-janvier-2014-a-decembre-2024-en-bretagne\n\n13. Contours IRIS - 2015 - Morbihan\n   ID: 606e4a32bba9fb168f9baccd\n   Organization: Morbihan énergies\n   Tags: amenagement-du-territoire-urbanisme-batiments-equipements-logement, geographie, iris, morbihan, repartition-geographique\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/contours-iris-2015-morbihan\n\n14. Contours IRIS - géographie 2024\n   ID: 67f5bb0603325228295b7e8e\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, iris, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2024\n\n15. Contours IRIS - géographie 2016\n   ID: 67f5baf603325228295b7e62\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2016-1\n\n16. Consommation électrique annuelle à la maille IRIS de Soissons (2012-2017)\n   ID: 685d33bca472f14cb7d4f100\n   Organization: Ville de Soissons\n   Tags: agriculture, article-179, consommation-electrique, donnees-locales-de-lenergie, gradient\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/consommation-electrique-annuelle-a-la-maille-iris-de-soissons-2012-2017\n\n17. Contours Iris 2016 Version 2.1 France + DOM en WGS84\n   ID: 59eb8173c751df4e79532d98\n   Tags: ign, insee, iris\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/contours-iris-2016-version-2-1-france-dom-en-wgs84\n\n18. Consommation annuelle par IRIS au périmètre du Réseau de Transport d’Electricité (2012 à 2017)\n   ID: 59591a84a3a7291dcf9c810e\n   Organization: Région Île-de-France\n   Tags: amenagement-du-territoire, electricite, energie, industrie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-par-iris-au-perimetre-du-reseau-de-transport-delectricite-2012-a-2017\n\n19. Consommation annuelle de gaz par IRIS et code NAF (depuis 2018)\n   ID: 64e978e7c332ee8c5e0b3335\n   Organization: GRDF\n   Tags: codes-naf, consommation, gaz, iris, territoires\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-de-gaz-par-iris-et-code-naf-depuis-2018\n\n20. Carte interactive IRIS Communes Cantons CMS Adresses CD76 2022 2024 V2\n   ID: 65dd27a68e331b2a1fd981d7\n   Organization: Département de la Seine-Maritime\n   Tags: cantons, cms, communes, epci, geospatial\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-interactive-iris-communes-cantons-cms-adresses-cd76-2022-2024-v2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 28 dataset(s) for query: 'Contours Iris 2014'\nPage 1 of results:\n\n1. Iris...GE\n   ID: 61489e33b77d1697d00d2fec\n   Organization: Institut national de l'information géographique et forestière\n   Tags: distribution-demographique, donnees-ouvertes, inspire, repartition-de-la-population-demographie, statistiques\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/iris-ge\n\n2. Historique des codes IRIS\n   ID: 64a935e7f5ddd207829205e8\n   Organization: Santé publique France\n   Tags: decoupage-administratif, gd4h, insee, iris\n   Resources: 18\n   URL: https://www.data.gouv.fr/datasets/historique-des-codes-iris\n\n3. Démographie infracommunal en IRIS des communes 2014 dans la Somme\n   ID: 673818bcc1f7a9921ac40a9a\n   Organization: Direction Départementale des Territoires et de la Mer de la Somme\n   Tags: donnee-generique-demographie, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/demographie-infracommunal-en-iris-des-communes-2014-dans-la-somme-1\n\n4. IRIS\n   ID: 5552123588ee381f841c0bd6\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-7\n\n5. IRIS\n   ID: 5552090688ee381a501c0be6\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-4\n\n6. IRIS\n   ID: 5552125e88ee381f841c0bd7\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-8\n\n7. IRIS\n   ID: 55520f42c751df7977190c79\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-6\n\n8. IRIS\n   ID: 55520951c751df7832190c9c\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-5\n\n9. IRIS\n   ID: 555206e888ee381c0e1c0bd6\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-2\n\n10. IRIS\n   ID: 555207fa88ee381e451c0bd9\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-3\n\n11. IRIS\n   ID: 5552127c88ee381e451c0c1c\n   Tags: contours, decoupage-administratif, frontieres, ign, insee\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/iris-9\n\n12. Analyse des données mensuelles de radiance satellite en cœur de nuit et des pratiques d’éclairage associées (de janvier 2014 à décembre 2024) en Bretagne\n   ID: 6a236435398f6243a987da87\n   Organization: Région Bretagne\n   Tags: 233500016, donnees-ouvertes, pollution-lumineuse, trame-noire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/analyse-des-donnees-mensuelles-de-radiance-satellite-en-coeur-de-nuit-et-des-pratiques-declairage-associees-de-janvier-2014-a-decembre-2024-en-bretagne\n\n13. Contours IRIS - 2015 - Morbihan\n   ID: 606e4a32bba9fb168f9baccd\n   Organization: Morbihan énergies\n   Tags: amenagement-du-territoire-urbanisme-batiments-equipements-logement, geographie, iris, morbihan, repartition-geographique\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/contours-iris-2015-morbihan\n\n14. Contours IRIS - géographie 2024\n   ID: 67f5bb0603325228295b7e8e\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, iris, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2024\n\n15. Contours IRIS - géographie 2016\n   ID: 67f5baf603325228295b7e62\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2016-1\n\n16. Consommation électrique annuelle à la maille IRIS de Soissons (2012-2017)\n   ID: 685d33bca472f14cb7d4f100\n   Organization: Ville de Soissons\n   Tags: agriculture, article-179, consommation-electrique, donnees-locales-de-lenergie, gradient\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/consommation-electrique-annuelle-a-la-maille-iris-de-soissons-2012-2017\n\n17. Contours Iris 2016 Version 2.1 France + DOM en WGS84\n   ID: 59eb8173c751df4e79532d98\n   Tags: ign, insee, iris\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/contours-iris-2016-version-2-1-france-dom-en-wgs84\n\n18. Consommation annuelle par IRIS au périmètre du Réseau de Transport d’Electricité (2012 à 2017)\n   ID: 59591a84a3a7291dcf9c810e\n   Organization: Région Île-de-France\n   Tags: amenagement-du-territoire, electricite, energie, industrie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-par-iris-au-perimetre-du-reseau-de-transport-delectricite-2012-a-2017\n\n19. Consommation annuelle de gaz par IRIS et code NAF (depuis 2018)\n   ID: 64e978e7c332ee8c5e0b3335\n   Organization: GRDF\n   Tags: codes-naf, consommation, gaz, iris, territoires\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-de-gaz-par-iris-et-code-naf-depuis-2018\n\n20. Carte interactive IRIS Communes Cantons CMS Adresses CD76 2022 2024 V2\n   ID: 65dd27a68e331b2a1fd981d7\n   Organization: Département de la Seine-Maritime\n   Tags: cantons, cms, communes, epci, geospatial\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/carte-interactive-iris-communes-cantons-cms-adresses-cd76-2022-2024-v2\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,90 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-17T00:12:27Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "55d4a210c751df49121f92b2"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: 15075 - Implication des services habilités (participation aux opérations conjointes)\n\nID: 55d4a210c751df49121f92b2\nSlug: 15075-implication-des-services-habilites-participation-aux-operations-conjointes\nURL: https://www.data.gouv.fr/datasets/15075-implication-des-services-habilites-participation-aux-operations-conjointes/\n\nFull description: **Opérations conjointes de lutte contre le travail illégal intéressant les ressortissants étrangers**\r\n\r\n\r\nDes opérations associant plusieurs corps de contrôle sont régulièrement organisées depuis 2005. Celles menées en 2013 l’ont été sur la base des indications des circulaires interministérielles précédentes et de la circulaire interministérielle du 11 février 2013 relative à la mise en œuvre du plan national de lutte contre le travail illégal (PNLTI) 2013-2015.\r\n...\n\nOrganization: Ministère de l'intérieur\n  Organization ID: 534fff91a3a7292c64a77f53\n\nTags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen, etrangers, frontiere, immigration, immigration-clandestine, immigration-illegale\n\nResources: 1 file(s)\n\nCreated: 2015-08-19T17:34:40.468000+00:00\nLast updated: 2015-08-19T17:35:04.288000+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: 15075 - Implication des services habilités (participation aux opérations conjointes)\n\nID: 55d4a210c751df49121f92b2\nSlug: 15075-implication-des-services-habilites-participation-aux-operations-conjointes\nURL: https://www.data.gouv.fr/datasets/15075-implication-des-services-habilites-participation-aux-operations-conjointes/\n\nFull description: **Opérations conjointes de lutte contre le travail illégal intéressant les ressortissants étrangers**\r\n\r\n\r\nDes opérations associant plusieurs corps de contrôle sont régulièrement organisées depuis 2005. Celles menées en 2013 l’ont été sur la base des indications des circulaires interministérielles précédentes et de la circulaire interministérielle du 11 février 2013 relative à la mise en œuvre du plan national de lutte contre le travail illégal (PNLTI) 2013-2015.\r\n...\n\nOrganization: Ministère de l'intérieur\n  Organization ID: 534fff91a3a7292c64a77f53\n\nTags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen, etrangers, frontiere, immigration, immigration-clandestine, immigration-illegale\n\nResources: 1 file(s)\n\nCreated: 2015-08-19T17:34:40.468000+00:00\nLast updated: 2015-08-19T17:35:04.288000+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "543d365388ee383229cb104f"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: 2014-59 - Immigration : Implication des services habilités (participation aux opérations conjointes)\n\nID: 543d365388ee383229cb104f\nSlug: 2014-59-immigration-implication-des-services-habilites-participation-aux-operations-conjointes\nURL: https://www.data.gouv.fr/datasets/2014-59-immigration-implication-des-services-habilites-participation-aux-operations-conjointes/\n\nFull description: Immigration : Les résultats obtenus par les services de police et de gendarmerie en métropole...\n\nOrganization: Ministère de l'intérieur\n  Organization ID: 534fff91a3a7292c64a77f53\n\nTags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen, etrangers, frontiere, immigration, immigration-clandestine, immigration-illegale\n\nResources: 1 file(s)\n\nCreated: 2014-10-14T16:42:27.511000+00:00\nLast updated: 2014-10-14T16:43:06.692000+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: 2014-59 - Immigration : Implication des services habilités (participation aux opérations conjointes)\n\nID: 543d365388ee383229cb104f\nSlug: 2014-59-immigration-implication-des-services-habilites-participation-aux-operations-conjointes\nURL: https://www.data.gouv.fr/datasets/2014-59-immigration-implication-des-services-habilites-participation-aux-operations-conjointes/\n\nFull description: Immigration : Les résultats obtenus par les services de police et de gendarmerie en métropole...\n\nOrganization: Ministère de l'intérieur\n  Organization ID: 534fff91a3a7292c64a77f53\n\nTags: ame, centre-de-retention-administrati, controle-aux-frontieres, cra, espace-schengen, etrangers, frontiere, immigration, immigration-clandestine, immigration-illegale\n\nResources: 1 file(s)\n\nCreated: 2014-10-14T16:42:27.511000+00:00\nLast updated: 2014-10-14T16:43:06.692000+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

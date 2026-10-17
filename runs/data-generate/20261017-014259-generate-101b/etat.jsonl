@@ -1,0 +1,29 @@
+{"horodatage":"2026-10-17T01:42:59.294597+02:00","motif":null,"pid":18844,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T01:54:47.339128+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":18844,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T01:54:49.987798+02:00","motif":"reprise","pid":17360,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T01:54:50.284080+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":17360,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T01:54:51.847635+02:00","motif":"reprise","pid":2940,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T01:54:52.128829+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":2940,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T01:57:12.091846+02:00","motif":"reprise","pid":22148,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T01:57:56.469792+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":22148,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T01:58:17.206467+02:00","motif":"reprise","pid":2104,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:00:54.097498+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":2104,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:01:55.748332+02:00","motif":"reprise","pid":9904,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:03:54.368158+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":9904,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:04:55.961322+02:00","motif":"reprise","pid":14864,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:05:57.122987+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":14864,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:06:58.718042+02:00","motif":"reprise","pid":17676,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:07:56.065710+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":17676,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:08:57.620189+02:00","motif":"reprise","pid":3948,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:10:46.299102+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":3948,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:11:47.852173+02:00","motif":"reprise","pid":13668,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:12:53.370125+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":13668,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:13:54.957253+02:00","motif":"reprise","pid":24560,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:14:45.136036+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":24560,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:15:46.701185+02:00","motif":"reprise","pid":2772,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:16:39.820389+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":2772,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:17:41.421525+02:00","motif":"reprise","pid":20940,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:18:45.082368+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":20940,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:19:46.691426+02:00","motif":"reprise","pid":18844,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-17T02:20:41.346771+02:00","motif":"ErreurApiMistral : API Mistral : réponse HTTP 429 (generation)","pid":18844,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-17T02:21:42.915033+02:00","motif":"reprise","pid":18320,"schema_version":1,"statut":"en_cours"}

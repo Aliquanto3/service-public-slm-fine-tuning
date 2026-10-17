@@ -1,0 +1,59 @@
+2026-10-17:10:36:51 INFO     [_cli.run:391] Including path: C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-17:10:36:51 INFO     [_cli.run:392] Selected Tasks: ['belebele_fra_Latn']
+2026-10-17:10:36:52 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-17:10:36:52 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Utilisateur\\Documents\\GitHub\\service-public-slm-fine-tuning\\models\\minicpm5-1b\\hf', 'dtype': 'bfloat16'}
+2026-10-17:10:36:58 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-17:10:36:59 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/219 [00:00<?, ?it/s]
+Loading weights:  14%|█▎        | 30/219 [00:00<00:00, 291.04it/s]
+Loading weights:  28%|██▊       | 62/219 [00:00<00:00, 296.52it/s]
+Loading weights:  43%|████▎     | 95/219 [00:00<00:00, 302.57it/s]
+Loading weights:  58%|█████▊    | 126/219 [00:00<00:00, 294.60it/s]
+Loading weights:  71%|███████   | 156/219 [00:00<00:00, 280.00it/s]
+Loading weights:  84%|████████▍ | 185/219 [00:00<00:00, 258.53it/s]
+Loading weights:  97%|█████████▋| 212/219 [00:00<00:00, 228.73it/s]
+Loading weights: 100%|██████████| 219/219 [00:00<00:00, 265.47it/s]
+Using the latest cached version of the dataset since facebook/belebele couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'fra_Latn' at C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\.cache-hf\datasets\facebook___belebele\fra_Latn\0.0.0\7899cdfa4e1e0d733fd77c848e2c273cb1d32be2 (last modified on Fri Oct 16 18:14:05 2026).
+2026-10-17:10:37:01 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-17:10:37:01 INFO     [evaluator_utils:506] Task: belebele_fra_Latn (belebele\belebele_fra_Latn.yaml)
+2026-10-17:10:37:01 WARNING  [evaluator:335] Overwriting default num_fewshot of belebele_fra_Latn from None to 0
+2026-10-17:10:37:01 INFO     [api.task:312] Building contexts for belebele_fra_Latn on rank 0...
+
+  0%|          | 0/900 [00:00<?, ?it/s]
+ 12%|█▏        | 106/900 [00:00<00:00, 1059.42it/s]
+ 24%|██▍       | 219/900 [00:00<00:00, 1100.53it/s]
+ 37%|███▋      | 330/900 [00:00<00:00, 1003.63it/s]
+ 49%|████▊     | 437/900 [00:00<00:00, 1028.20it/s]
+ 61%|██████    | 546/900 [00:00<00:00, 1049.41it/s]
+ 73%|███████▎  | 655/900 [00:00<00:00, 1061.30it/s]
+ 85%|████████▌ | 766/900 [00:00<00:00, 1074.99it/s]
+ 97%|█████████▋| 874/900 [00:00<00:00, 1055.40it/s]
+100%|██████████| 900/900 [00:00<00:00, 1053.58it/s]
+2026-10-17:10:37:02 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/3600 [00:00<?, ?it/s]
+Tokenizing inputs:   5%|▍         | 175/3600 [00:00<00:01, 1748.97it/s]
+Tokenizing inputs:  10%|▉         | 350/3600 [00:00<00:02, 1524.52it/s]
+Tokenizing inputs:  14%|█▍        | 505/3600 [00:00<00:02, 1401.76it/s]
+Tokenizing inputs:  19%|█▉        | 691/3600 [00:00<00:01, 1561.48it/s]
+Tokenizing inputs:  24%|██▍       | 857/3600 [00:00<00:01, 1594.32it/s]
+Tokenizing inputs:  29%|██▉       | 1058/3600 [00:00<00:01, 1726.07it/s]
+Tokenizing inputs:  34%|███▍      | 1240/3600 [00:00<00:01, 1755.53it/s]
+Tokenizing inputs:  40%|███▉      | 1435/3600 [00:00<00:01, 1814.01it/s]
+Tokenizing inputs:  45%|████▍     | 1618/3600 [00:00<00:01, 1665.64it/s]
+Tokenizing inputs:  50%|████▉     | 1788/3600 [00:01<00:01, 1516.33it/s]
+Tokenizing inputs:  55%|█████▍    | 1979/3600 [00:01<00:00, 1622.54it/s]
+Tokenizing inputs:  61%|██████    | 2181/3600 [00:01<00:00, 1733.07it/s]
+Tokenizing inputs:  66%|██████▋   | 2385/3600 [00:01<00:00, 1820.15it/s]
+Tokenizing inputs:  72%|███████▏  | 2585/3600 [00:01<00:00, 1871.68it/s]
+Tokenizing inputs:  77%|███████▋  | 2775/3600 [00:01<00:00, 1863.36it/s]
+Tokenizing inputs:  82%|████████▏ | 2964/3600 [00:01<00:00, 1809.91it/s]
+Tokenizing inputs:  87%|████████▋ | 3147/3600 [00:01<00:00, 1710.04it/s]
+Tokenizing inputs:  92%|█████████▏| 3320/3600 [00:02<00:00, 1458.57it/s]
+Tokenizing inputs:  96%|█████████▋| 3473/3600 [00:02<00:00, 1472.75it/s]
+Tokenizing inputs: 100%|██████████| 3600/3600 [00:02<00:00, 1636.22it/s]
+
+Running loglikelihood requests:   0%|          | 0/3600 [00:00<?, ?it/s][W1017 10:37:19.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 9175040000 bytes (free: 0, total: 8589410304).
+[W1017 10:37:23.000000000 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 9175040000 bytes (free: 0, total: 8589410304).
