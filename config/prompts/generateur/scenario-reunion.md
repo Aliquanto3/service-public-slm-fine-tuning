@@ -1,8 +1,8 @@
 ---
 id: scenario-reunion
-version: 1
+version: 2
 tache: CR
-max_tokens: 1500
+max_tokens: 3000
 ---
 
 ## Consigne
@@ -13,7 +13,7 @@ Tu imagines le scénario d'une réunion de travail fictive dans une administrati
 - Présente de trois à six participants par leur fonction, avec des noms manifestement fictifs.
 - Indique les points abordés, les positions de chacun, les désaccords éventuels, les décisions prises et les actions à mener avec leur responsable et leur échéance.
 - Reste plausible et cohérent avec le fonctionnement d'une administration, sans citer de personne réelle ni de donnée personnelle.
-- Écris en français, en prose, sans transcription des échanges. Donne seulement le scénario.
+- Écris en français, en prose, sans transcription des échanges. Donne seulement le scénario, en 500 à 700 mots.
 
 Thème de la réunion.
 

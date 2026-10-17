@@ -45,7 +45,7 @@ def test_gabarit_conforme(nom: str) -> None:
     chemin = DOSSIER / f"{nom}.md"
     gabarit = valider_gabarit(chemin, cles_optionnelles=("max_tokens",))
     assert gabarit.id == nom
-    assert gabarit.version == 1
+    assert gabarit.version >= 1
     assert gabarit.front_matter["tache"] in TACHES
     if "max_tokens" in gabarit.front_matter:
         assert int(gabarit.front_matter["max_tokens"]) >= 1
