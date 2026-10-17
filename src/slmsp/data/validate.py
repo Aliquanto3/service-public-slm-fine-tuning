@@ -406,8 +406,11 @@ _DATE: Final = re.compile(
     r")(?![\w,/-]|\.\d)",
     re.IGNORECASE,
 )
-_ANNOTATION_MOTS: Final = re.compile(r"\(\s*\d+\s*mots?\b[^)\n]*\)", re.IGNORECASE)
-"""Annotation de longueur écrite par le générateur (« (80 mots max.) », « (199 mots) »)."""
+_ANNOTATION_MOTS: Final = re.compile(
+    r"(?<![\w,.])(?:\d{1,3}(?:[    ]\d{3})+|\d+)\s*mots?\b", re.IGNORECASE
+)
+"""Compte de mots écrit par le générateur (« (80 mots max.) », « de 200 mots au plus ») :
+seul le nombre suivi de « mots » est retiré ; le reste d'une parenthèse reste contrôlé."""
 
 
 def _dates(texte: str) -> list[tuple[re.Match[str], tuple[int, int, int]]]:
@@ -451,12 +454,12 @@ def _controler_sources(
     for source in (*(p.titre for p in passages), *(p.texte for p in passages), *outils, *fournis):
         connus |= {abs(n) for n in extraire_nombres(source)}
         dates_connues |= {forme for _, forme in _dates(source)}
+    controle = texte
     if tache == "RE":
-        # Le plafond de mots vient du gabarit, pas des sources : il est admis, et l'annotation
-        # de longueur du générateur n'est pas une valeur du résumé.
-        connus |= {Decimal(plafond) for plafond in plafonds_re_evaluation().values()}
-        texte = _ANNOTATION_MOTS.sub(" ", texte)
-    sortie = _nombres_notables(_retirer_dates_connues(_sans_urls(texte), dates_connues))
+        # Le compte de mots recopié du gabarit (« (80 mots max.) ») n'est pas une valeur du
+        # résumé ; un plafond écrit comme valeur libre (« 200 euros ») reste contrôlé.
+        controle = _ANNOTATION_MOTS.sub(" ", controle)
+    sortie = _nombres_notables(_retirer_dates_connues(_sans_urls(controle), dates_connues))
     absents = sortie - connus
     if absents:
         raise _Rejet("valeur_absente", f"{len(absents)} valeur(s) absente(s) des sources")

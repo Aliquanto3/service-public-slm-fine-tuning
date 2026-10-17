@@ -79,6 +79,7 @@ class Scenario:
     embeddings: Callable[[list[str]], list[Any]] | None = None
     """`textes -> data` ; défaut : `vecteur(texte)` par texte, index dans l'ordre inverse."""
     tokens: Callable[[str], list[int]] = lambda texte: list(range(len(texte.split())))
+    statut_tokenize: int = 200
 
 
 class ServeurFactice:
@@ -169,7 +170,10 @@ def _fabrique(serveur: ServeurFactice) -> type[BaseHTTPRequestHandler]:
                     rendu += f"<|outils|>{json.dumps(corps['tools'])}\n"
                 self._json(200, {"prompt": rendu})
             elif self.path == "/tokenize":
-                self._json(200, {"tokens": scenario.tokens(corps["content"])})
+                if scenario.statut_tokenize != 200:
+                    self._json(scenario.statut_tokenize, {"error": "refus"})
+                else:
+                    self._json(200, {"tokens": scenario.tokens(corps["content"])})
             elif self.path == "/v1/embeddings":
                 textes = corps["input"]
                 if scenario.embeddings is not None:

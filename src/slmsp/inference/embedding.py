@@ -8,6 +8,7 @@ Les réponses sont remises dans l'ordre par leur `index`.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from typing import Any, Final
 
@@ -20,6 +21,7 @@ from slmsp.net import client_local
 DIMENSION: Final = 1024
 TAILLE_LOT: Final = 64
 TAILLE_EXTRAIT: Final = 500
+LOGGER: Final = logging.getLogger("slmsp.inference.embedding")
 CONTEXTE_MAX: Final = 8192
 """Contexte de BGE-M3 (= `-b`/`-ub` du serveur, voir `ServeurLlama.arguments`)."""
 MARGE_TOKENS: Final = 16
@@ -44,6 +46,8 @@ class EmbedderLlama:
         self._dimension = dimension
         self.taille_lot = taille_lot
         self.contexte_max = contexte_max
+        self.textes_tronques = 0
+        """Nombre de textes tronqués au contexte depuis la création."""
         self._http = client_local(port, transport_interne=transport_interne)
         self._url = f"http://127.0.0.1:{port}/v1/embeddings"
 
@@ -67,19 +71,39 @@ class EmbedderLlama:
         aucun appel. Sinon `/tokenize` compte, puis on coupe au prorata et on revérifie.
         """
         limite = self.contexte_max - MARGE_TOKENS
+        if len(texte) <= limite:
+            return texte
+        origine = len(texte)
         for _ in range(8):
             if len(texte) <= limite:
-                return texte
+                break
             reponse = self._http.post(
                 f"http://127.0.0.1:{self.port}/tokenize", json={"content": texte}
             )
-            tokens = reponse.json().get("tokens") if reponse.status_code == 200 else None
+            tokens: object = None
+            if reponse.status_code == 200:
+                try:
+                    tokens = reponse.json().get("tokens")
+                except (ValueError, AttributeError):
+                    tokens = None
             if not isinstance(tokens, list):
-                raise ErreurInference(f"POST /tokenize : HTTP {reponse.status_code}")
+                raise ErreurInference(
+                    f"POST /tokenize : HTTP {reponse.status_code}, réponse illisible"
+                )
             if len(tokens) <= limite:
-                return texte
+                break
             texte = texte[: max(1, int(len(texte) * limite / len(tokens) * 0.98))]
-        return texte[:limite]
+        else:
+            texte = texte[:limite]
+        if len(texte) < origine:
+            self.textes_tronques += 1
+            LOGGER.warning(
+                "embedding : texte tronqué de %d à %d caractères (contexte %d tokens)",
+                origine,
+                len(texte),
+                self.contexte_max,
+            )
+        return texte
 
     def _lot(self, textes: list[str]) -> NDArray[np.float32]:
         reponse = self._http.post(self._url, json={"input": textes})

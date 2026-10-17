@@ -78,3 +78,35 @@ def test_texte_trop_long_tronque(serveur_factice: Any) -> None:
     envoyes = serveur_factice.corps("/v1/embeddings")[0]["input"]
     assert len(envoyes[0]) <= 100 - 16
     assert envoyes[1] == "court"
+
+
+def test_texte_tronque_compte_et_journalise(
+    serveur_factice: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    serveur_factice.scenario.tokens = lambda texte: list(range(len(texte)))
+    with EmbedderLlama(serveur_factice.port, contexte_max=100) as instance:
+        with caplog.at_level("WARNING", logger="slmsp.inference.embedding"):
+            instance.vectoriser(["x" * 1000, "court"])
+        assert instance.textes_tronques == 1
+    assert "tronqué" in caplog.text
+
+
+def test_texte_court_sans_appel_tokenize(serveur_factice: Any) -> None:
+    with EmbedderLlama(serveur_factice.port, contexte_max=100) as instance:
+        instance.vectoriser(["court", "y" * 84])
+        assert instance.textes_tronques == 0
+    assert serveur_factice.corps("/tokenize") == []
+
+
+def test_tokenize_en_erreur(serveur_factice: Any) -> None:
+    serveur_factice.scenario.statut_tokenize = 500
+    with EmbedderLlama(serveur_factice.port, contexte_max=100) as instance:
+        with pytest.raises(ErreurInference):
+            instance.vectoriser(["x" * 1000])
+
+
+def test_tokenize_reponse_illisible(serveur_factice: Any) -> None:
+    serveur_factice.scenario.tokens = lambda texte: None
+    with EmbedderLlama(serveur_factice.port, contexte_max=100) as instance:
+        with pytest.raises(ErreurInference):
+            instance.vectoriser(["x" * 1000])

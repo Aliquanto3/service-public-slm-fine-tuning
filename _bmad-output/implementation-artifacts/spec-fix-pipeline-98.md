@@ -21,3 +21,12 @@ Campagne 9.8, run generate `20261017-073544-generate-3741`. Deux défauts bloqua
 ## Auto Run Result
 - Rejets `valeur_absente` RE : 29/35 vers 1/35. RD inchangé (38/139) : les dates de « mise à jour » écrites par le générateur ne figurent dans aucun résultat d'outil rejoué (vérifié sur des exemples) ; ce sont des valeurs inventées, le rejet reste justifié.
 - Annotation de longueur : non retirée du texte conservé. À confirmer par Anaël : nettoyage de forme ou consigne au gabarit (qui ferait repayer les 35 sessions RE).
+
+## Revue
+- high, corrigé : les plafonds 80/200/400 n'entrent plus dans les valeurs connues de RE ; « 200 euros » ou « 400 agents » inventés sont rejetés.
+- high, corrigé : seul le nombre suivi de « mot(s) » est retiré (en-tête, parenthèse ou corps), plus la parenthèse entière ; « (150 mots : soit 1234 euros) » reste contrôlé.
+- medium, corrigé : le texte nettoyé est une variable distincte (`controle`) ; la règle `infidele` garde le texte brut.
+- medium, écarté : une date impossible (« 31 juin ») n'est exemptée que si la même forme figure dans les sources ; aucun relâchement possible.
+- medium, corrigé : `EmbedderLlama` compte les textes tronqués (`textes_tronques`) et journalise un avertissement par texte.
+- low, corrigé : réponse `/tokenize` non JSON ou sans `tokens` convertie en `ErreurInference`.
+- low, corrigé : tests ajoutés (plafond en valeur libre, annotation suivie d'un montant inventé, `/tokenize` en 500 ou illisible, texte court sans appel `/tokenize`, compteur et journal).

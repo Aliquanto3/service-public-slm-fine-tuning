@@ -399,3 +399,20 @@ def test_date_inventee_rejetee() -> None:
 
     with pytest.raises(_Rejet):
         _sources("<r> le 21 avril 2021 <r>", "RD", "<s> 2021-04-20 <s>")
+
+
+@pytest.mark.parametrize(
+    "texte",
+    [
+        "<résumé-factice> Le montant est de 200 euros.",
+        "<résumé-factice> Il y a 400 agents.",
+        "<résumé-factice> (150 mots : soit 1234 euros) fin.",
+        "<résumé-factice> (80 mots max.) puis 80 euros.",
+    ],
+)
+def test_re_plafond_hors_annotation_rejete(texte: str) -> None:
+    from slmsp.data.validate import _Rejet
+
+    with pytest.raises(_Rejet) as erreur:
+        _sources(texte, "RE", "<source-factice> 99 euros")
+    assert erreur.value.motif == "valeur_absente"
