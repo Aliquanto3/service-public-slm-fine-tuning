@@ -306,6 +306,47 @@ def test_par_tour_amorce_officielle_et_corps_seul(nom: str) -> None:
         assert rendu.texte.count(BLOC) == 1  # seulement dans l'amorce du tour supervisé
 
 
+def test_par_tour_textes_litteraux() -> None:
+    """Oracle indépendant de la formule du code : textes attendus écrits à la main."""
+    tok, config = AmorceRaisonnementVide(), config_par_tour()
+    premier, second = calculer_masques(tok, CONVERSATIONS_PAR_TOUR["2-tours"], config=config)
+    q1, r1 = "<|user|><question-factice-1><|end|>\n", "<réponse-factice-1><|end|>\n"
+    assert premier.texte == q1 + "<|assistant|><think></think>" + r1
+    assert texte_non_masque(tok, premier) == r1
+    historique = q1 + "<|assistant|>" + r1 + "<|user|><question-factice-2><|end|>\n"
+    assert second.texte == historique + "<|assistant|><think></think><réponse-factice-2><|end|>\n"
+    assert texte_non_masque(tok, second) == "<réponse-factice-2><|end|>\n"
+
+
+@pytest.mark.parametrize("raisonnement", [["<raisonnement-factice>"], {"a": 1}, " x "])
+def test_par_tour_raisonnement_non_chaine_refuse(raisonnement: Any) -> None:
+    messages = [
+        {"role": "user", "content": "q"},
+        {"role": "assistant", "content": "r", "reasoning_content": raisonnement},
+    ]
+    with pytest.raises(ErreurMasque, match="reasoning_content"):
+        calculer_masques(AmorceRaisonnementVide(), messages, config=config_par_tour())
+
+
+def test_par_tour_erreur_de_rendu_cite_r7() -> None:
+    """Template qui échoue sur des `arguments` en chaîne : `ErreurMasque` qui cite R7."""
+
+    class ArgumentsObjets(AmorceRaisonnementVide):
+        def apply_chat_template(self, messages, **kw):
+            for m in messages:
+                for appel in m.get("tool_calls") or []:
+                    appel["function"]["arguments"].items()
+            return super().apply_chat_template(messages, **kw)
+
+    appel = {"id": "c1", "type": "function", "function": {"name": "o", "arguments": '{"q": 1}'}}
+    messages = [
+        {"role": "user", "content": "q"},
+        {"role": "assistant", "content": "", "tool_calls": [appel]},
+    ]
+    with pytest.raises(ErreurMasque, match="R7"):
+        calculer_masques(ArgumentsObjets(), messages, config=config_par_tour())
+
+
 def test_par_tour_tour_historique_d_appel_d_outil() -> None:
     """Le tour `tool_calls` est supervisé dans son exemple, et seulement contexte ensuite."""
     tok, config = AmorceRaisonnementVide(), config_par_tour()
@@ -422,6 +463,8 @@ def test_schema_bloc_amorce_exige_par_tour() -> None:
         ConfigModele.model_validate({**brut, "bloc_amorce": BLOC})
     with pytest.raises(ValidationError):
         ConfigModele.model_validate({**brut, "decoupage_masque": "par-tour", "bloc_amorce": ""})
+    with pytest.raises(ValidationError, match="marqueur non blanc"):
+        ConfigModele.model_validate({**brut, "decoupage_masque": "par-tour", "bloc_amorce": "\n "})
     fiche = charger_config_modele("minicpm5-1b")
     assert fiche.decoupage_masque == "par-tour"
     assert fiche.bloc_amorce == "<think>\n\n</think>\n\n"

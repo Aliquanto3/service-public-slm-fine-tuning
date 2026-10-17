@@ -147,7 +147,9 @@ def amorce_et_corps(
     if message.get("role") != "assistant":
         raise ValueError(f"le message {k} n'est pas un message assistant")
     raisonnement = message.get("reasoning_content")
-    if isinstance(raisonnement, str) and raisonnement.strip():
+    if raisonnement is not None and (
+        raisonnement.strip() if isinstance(raisonnement, str) else raisonnement
+    ):
         raise ErreurMasque(
             f"le message assistant {k} porte un `reasoning_content` : le découpage par tour "
             "ne supervise pas de raisonnement (amorce sans raisonnement à l'inférence)"
@@ -165,11 +167,15 @@ def amorce_et_corps(
     options: dict[str, Any] = {"tools": tools, "config": config}
     try:
         amorce = apply_chat_template(tokenizer, messages[:k], add_generation_prompt=True, **options)
+        jusque = apply_chat_template(tokenizer, messages[: k + 1], **options)
     except Exception as erreur:
-        raise ErreurMasque(
-            f"l'amorce du message assistant {k} n'est pas calculable ({erreur})"
-        ) from erreur
-    jusque = apply_chat_template(tokenizer, messages[: k + 1], **options)
+        motif = f"le rendu du message assistant {k} n'est pas calculable ({erreur})"
+        if _arguments_en_chaine(messages[: k + 1]):
+            motif += (
+                " ; des `tool_calls` portent des `arguments` en chaîne JSON, non convertis à "
+                "l'entraînement : voir R7 (spec-masque-minicpm5)"
+            )
+        raise ErreurMasque(motif) from erreur
     if jusque.startswith(amorce):
         corps = jusque[len(amorce) :]
     elif bloc and amorce.endswith(bloc) and jusque.startswith(amorce[: -len(bloc)]):
@@ -182,7 +188,19 @@ def amorce_et_corps(
         )
     if not corps:
         raise ErreurMasque(f"le message assistant {k} ne produit aucun texte")
+    if bloc and bloc in corps:  # le corps ne doit jamais superviser le bloc d'amorce
+        raise ErreurMasque(f"le corps du message assistant {k} contient le bloc d'amorce")
     return amorce, corps
+
+
+def _arguments_en_chaine(messages: Sequence[Mapping[str, Any]]) -> bool:
+    """Vrai si un `tool_calls` porte des `arguments` en chaîne (format OpenAI, R7)."""
+    for message in messages:
+        for appel in message.get("tool_calls") or ():
+            fonction = appel.get("function", appel) if isinstance(appel, Mapping) else None
+            if isinstance(fonction, Mapping) and isinstance(fonction.get("arguments"), str):
+                return True
+    return False
 
 
 def masque_du_tour(

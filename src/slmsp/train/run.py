@@ -82,20 +82,23 @@ def invariants(
     """Éléments qu'une campagne partage (FR-34, AD-18).
 
     `decoupage_masque` : `masque.empreinte_decoupage` de la fiche du Modèle (mode et bloc
-    d'amorce) ; `None` pour le découpage par défaut, comme dans les runs antérieurs.
+    d'amorce) ; `None` pour le découpage par défaut : la clé est alors absente, comme dans les runs
+    antérieurs (`--reprendre` compare la configuration résolue entière).
 
     Le jeu est identifié par sa version et par le run `data-build` de son MANIFEST, pas par
     le SHA du fichier lu : M4 lit `preferences.jsonl`, M1 à M3 `train.jsonl`, du même build.
     """
-    return {
+    resultat: dict[str, Any] = {
         "jeu_version": config.jeu_version,
         "jeu_build": jeu_build,
         "graine": config.graine,
         "longueur_max": config.longueur_max,
         "chat_template_sha256": chat_template_sha256,
         "version_masque": VERSION_MASQUE,
-        "decoupage_masque": dict(decoupage_masque) if decoupage_masque is not None else None,
     }
+    if decoupage_masque is not None:  # absente au défaut : run.json des runs antérieurs intact
+        resultat["decoupage_masque"] = dict(decoupage_masque)
+    return resultat
 
 
 def verifier_campagne(
@@ -302,13 +305,14 @@ def executer(
             "contraintes": contraintes,
             "chat_template_kwargs": dict(config_modele.chat_template_kwargs),
             "protocole_outils": config_modele.protocole_outils,
-            "decoupage_masque": empreinte_decoupage(config_modele),
         },
         "arguments_specifiques": specifiques,
         "jeu": jeu.ligne(),
         "appel_ids_verifies": appels,
         "derogation": DEROGATION_ORPO if plan.entraineur == "orpo" else None,
     }
+    if (decoupage := empreinte_decoupage(config_modele)) is not None:  # absente au défaut
+        resolue["modele"]["decoupage_masque"] = decoupage
     if reprendre_run is None:
         verifier_campagne(config.campagne, attendus, racine=racine)
 

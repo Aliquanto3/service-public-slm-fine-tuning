@@ -119,6 +119,35 @@ def test_reprise_sur_le_dernier_checkpoint(projet, pile) -> None:
         module_run.executer(toml, racine=projet.racine, pile=pile, reprendre_run=run.run_id)
 
 
+def test_decoupage_par_defaut_absent_de_la_config_resolue(projet, pile) -> None:
+    """Un run antérieur au découpage par tour (sans la clé) reste reprenable."""
+    projet.ecrire_jeu()
+    toml = projet.ecrire_toml(hyperparametres={"pas_max": 6, "pas_sauvegarde": 2})
+    pile.interrompre_apres = 4
+    with pytest.raises(KeyboardInterrupt):
+        module_run.executer(toml, racine=projet.racine, pile=pile, sortie=lambda _m: None)
+    (dossier,) = (projet.racine / "runs" / "train").iterdir()
+    config = ouvrir_run(dossier.name, racine=projet.racine).manifeste.config
+    assert "decoupage_masque" not in config["invariants"]
+    assert "decoupage_masque" not in config["modele"]
+    assert set(config["invariants"]) == set(module_run.CLES_INVARIANTS) - {"decoupage_masque"}
+    pile.interrompre_apres = None
+    assert _executer(projet, pile, toml, reprendre_run=dossier.name) == dossier.name
+
+
+def test_invariants_portent_le_decoupage_par_tour(projet) -> None:
+    toml = projet.ecrire_toml()
+    from slmsp.train.config import charger_run_config
+
+    config = charger_run_config(toml)
+    empreinte = {"mode": "par-tour", "bloc_amorce": "<b>"}
+    avec = module_run.invariants(
+        config, jeu_build="b", chat_template_sha256="s", decoupage_masque=empreinte
+    )
+    sans = module_run.invariants(config, jeu_build="b", chat_template_sha256="s")
+    assert avec == {**sans, "decoupage_masque": empreinte} and "decoupage_masque" not in sans
+
+
 def test_reprise_refusee_si_la_config_change(projet, pile) -> None:
     projet.ecrire_jeu()
     run_id = _executer(projet, pile, projet.ecrire_toml())

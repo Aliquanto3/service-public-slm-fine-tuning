@@ -155,6 +155,8 @@ class ConfigModele(SchemaBase):
     def _bloc_si_par_tour(self) -> ConfigModele:
         if self.bloc_amorce is not None and self.decoupage_masque != "par-tour":
             raise ValueError('bloc_amorce exige decoupage_masque = "par-tour"')
+        if self.bloc_amorce is not None and not self.bloc_amorce.strip():
+            raise ValueError("bloc_amorce doit contenir au moins un marqueur non blanc")
         return self
 
     def micro_lot_pour(self, usage: UsageEmbedding) -> int:

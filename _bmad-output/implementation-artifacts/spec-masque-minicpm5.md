@@ -81,7 +81,7 @@ Constats sur le même jeu :
 - aucun `reasoning_content` ;
 - aucun refus du masque.
 
-La règle la plus prudente est donc conservée : un masque non prouvé refuse le Run. L'autre règle possible, refuser l'exemple seul et le journaliser, n'est pas mise en œuvre tant qu'aucun cas n'existe. La mesure a été faite après conversion des `arguments` en objets (voir R7).
+La règle la plus prudente est donc conservée : un masque non prouvé refuse le Run. L'autre règle possible, refuser l'exemple seul et le journaliser, n'est pas mise en œuvre tant qu'aucun cas n'existe. La mesure vient d'un script ponctuel, hors du chemin d'entraînement : ce script convertissait les `arguments` des `tool_calls` en objets avant le rendu, ce que `_messages_rendus` ne fait pas (R7). Sur minicpm5-1b, le chemin réel `pretokeniser` refuse aujourd'hui le Run dès la première ligne qui porte l'un de ces 147 `tool_calls` (« aucun refus du masque » ne vaut donc qu'après conversion).
 
 ## Tests
 Les fixtures sont factices (D1). Tests rapides, dans `tests/train/test_masque.py` :
@@ -102,20 +102,38 @@ Tests lents (marqueur `lent`, lancés à la main, jamais dans la suite par défa
 - `test_candidat_reel_masque_sur_les_tours_assistant` passe maintenant pour minicpm5-1b (xfail strict retiré), en plus de granite et eurollm ;
 - `test_minicpm5_reel_par_tour_egal_a_l_amorce_officielle` vérifie G1 à G4 sur les 5 conversations, avec le tokenizer réel ;
 - ces 8 tests passent ;
-- minicpm5-1b est ajouté à `test_rendu_identique_a_llama_server_jinja`, qui n'a pas été lancé (il démarre llama-server).
+- minicpm5-1b est ajouté à `test_rendu_identique_a_llama_server_jinja`, lancé en revue sur CPU (R2).
 
 ## Risques et points non vérifiés
-- **R2, non vérifié** : que llama-server b11429 (`--reasoning off`) envoie exactement l'amorce HF. Le test lent `/apply-template` est à lancer (CPU possible).
+- **R2, vérifié en revue (2026-10-17, CPU)** : `test_rendu_identique_a_llama_server_jinja[minicpm5-1b]` passe : `/apply-template` de llama-server rend exactement l'amorce HF (`add_generation_prompt=True`, `enable_thinking = false`, bloc vide compris) sur une conversation avec outil qui se termine par le message `tool`. granite passe aussi ; smollm3-3b est sauté (GGUF absent).
 - **R3, non vérifié** : l'égalité entre le template du GGUF officiel et le template HF n'a pas été recontrôlée. L'export a été lu dans le code, pas exécuté.
 - **R5** : le coût en tokens augmente de 18,5 % (mesuré).
 - **R7, hors périmètre, bloquant pour la story 11.2 sur minicpm5-1b** :
   - dans data/train/v1, 147 `tool_calls` ont des `arguments` en chaîne JSON (format OpenAI) ;
   - le template de minicpm5-1b appelle `.items()` sur ces arguments, et `apply_chat_template` lève alors `UndefinedError` ;
   - à l'inférence, llama-server convertit les arguments en objets pour les templates qui l'exigent ; à l'entraînement, `_messages_rendus` ne le fait pas, quel que soit le découpage ;
-  - à traiter dans une story dédiée : décoder les arguments selon les capacités du template, comme llama.cpp, sans changer granite.
+  - à traiter dans une story dédiée : décoder les arguments selon les capacités du template, comme llama.cpp, sans changer granite. La forme exacte que llama-server passe au template à l'inférence est à établir dans cette story ;
+  - depuis la revue, l'échec est une `ErreurMasque` qui cite R7 (vérifié sur le tokenizer réel), et non plus une `UndefinedError` brute ;
+  - **eurollm-1.7b** : son template n'a aucune gestion des outils (ni `tool_calls` ni rôle `tool`). Les appels d'outils disparaissent du rendu sans erreur, à l'entraînement, et probablement aussi à l'inférence, où le template HF est forcé. Perte silencieuse, à remonter à Anaël.
 
 ## Auto Run Result
 - Statut : review. Pas de fusion ni de push ; `sprint-status.yaml` n'est pas touché.
 - Décision prise seul (la plus simple et la plus réversible) : `bloc_amorce` est déclaré dans la fiche, pas déduit. Le plus long préfixe commun entre l'amorce et le tour est ambigu, car le corps commence souvent par `<`.
 - Décision prise seul : en `par-tour`, une réponse ORPO de plus d'un message est refusée.
 - À confirmer par Anaël : R7, avant la story 11.2.
+
+## Revue
+Une passe (reviewer, 2026-10-17), avec la liste du second avis.
+
+| # | Sévérité | Source | Décision | Motif |
+|---|---|---|---|---|
+| 1 | high | second avis (R7) | reporté, message corrigé | `arguments` en chaîne JSON non convertis : hors périmètre (story dédiée). L'échec sur minicpm5-1b est désormais une `ErreurMasque` qui cite R7 (vérifié sur le tokenizer réel). Cas eurollm consigné dans R7. Bloquant pour l'entraînement de minicpm5-1b, à remonter à Anaël. |
+| 2 | medium | second avis | corrigé | La spec attribuait la mesure à une conversion absente du code. Elle précise maintenant qu'elle vient d'un script hors du chemin d'entraînement. |
+| 3 | medium | second avis, confirmé | corrigé | Les clés `decoupage_masque` (valeur `None`) entraient dans `invariants` et `resolue["modele"]`, donc `--reprendre` d'un run antérieur échouait (`_rouvrir` compare la config résolue entière). Les clés sont maintenant absentes au défaut : la config résolue des modèles par défaut est celle d'avant le commit. Tests ajoutés : `test_decoupage_par_defaut_absent_de_la_config_resolue` et `test_invariants_portent_le_decoupage_par_tour`. |
+| 4 | low | second avis | corrigé | Le second `apply_chat_template` est maintenant dans le `try` et lève `ErreurMasque`. |
+| 5 | low | second avis | corrigé | Garde en production : un corps qui contient `bloc_amorce` est refusé. |
+| 6 | low | second avis | corrigé | Un `reasoning_content` non vide est refusé quel que soit son type. `bloc_amorce` entièrement blanc est refusé par le schéma. Tests ajoutés. |
+| 7 | low | second avis | corrigé | Oracle G2 en partie tautologique : ajout de `test_par_tour_textes_litteraux` (textes attendus écrits à la main). G1 était déjà contrôlé de façon indépendante (rendu officiel de `messages[:k]` égal au préfixe de l'exemple). |
+| 8 | info | reviewer | vérifié | R2 levé : llama-server (CPU) rend la même amorce que HF pour minicpm5-1b. |
+| 9 | info | reviewer, complexité | rejeté | Le découpage par tour rend `O(t)` préfixes par conversation (`O(t²)` en texte), comme le masque de conversation. Au plus 4 tours sur data/train/v1 : aucun impact réel. Complexité : 0 constat à corriger. |
+| 10 | info | reviewer | noté | `verifier_campagne` traite une clé absente comme `None` (`.get`). Un run `par-tour` et un run `conversation` d'une même campagne sont donc refusés ensemble, ce qui est voulu. |
