@@ -70,3 +70,11 @@ deferred: []
 - low, second avis : IBAN avec insécables : corrigé par la normalisation du premier point (testé).
 - low, second avis : corpus de faux positifs trop étroit : corrigé. Cas insécables dans les montants, dossiers `00…`, « n place … euros » (200 phrases aléatoires, 0 modifiée hors normalisation des espaces).
 - Limite connue, reportée : un `00` collé avec un indicatif rare hors liste n'est pas masqué ; l'aperçu reste le filet.
+
+## Suite du 2026-10-17 : `slmsp fetch prenoms` (décision d'Anaël)
+
+- Le point 1 de « À confirmer » est tranché : accord. `slmsp fetch prenoms` télécharge `https://www.insee.fr/fr/statistiques/fichier/7633685/nat2022_csv.zip` (fichier national 1900-2022, Licence Ouverte 2.0, fiche data.gouv `5bf42c958b4c4144b0110ce8`), par la passerelle, profil `outillage`, règle `insee-prenoms` (GET seul, ce chemin seul, `config/reseau.toml`).
+- URL, SHA-256 (`c13b45e7…b81d`) et taille (2 571 727 octets) sont épinglés dans `config/outillage.toml` `[prenoms-insee]` ; le SHA a été calculé à la première lecture (l'INSEE n'en publie pas). Source inscrite au registre des licences (`insee/fichier-des-prenoms`).
+- `prenoms.txt` est généré par `fetch/prenoms.py` avec `prenoms_depuis_csv_insee` (au moins 20 naissances, au moins 3 lettres) : 36 905 prénoms, environ 285 Ko, versionné. Aucun prénom écrit à la main. La détection Prénom Nom est donc active (l'avertissement ne s'affiche plus).
+- `fetch` ne peut pas importer `app` (règle de couche) : la CLI injecte `prenoms_depuis_csv_insee`.
+- Report : la liste contient des prénoms rares qui sont aussi des mots courants (seuil de 20 naissances) ; la règle « prénom suivi d'un mot capitalisé » limite les faux positifs, l'aperçu reste le filet.

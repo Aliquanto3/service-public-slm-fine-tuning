@@ -122,3 +122,11 @@ usage = "diffusable"
 auteur_contenu = "public"
 genere_par = "api-publique"
 notes = "Réponses d'outils MCP data.gouv (métadonnées publiées sous Licence Ouverte 2.0) ; licence de chaque jeu interrogé à confirmer."
+
+[[sources]]
+id = "insee/fichier-des-prenoms"
+licence = "etalab-2.0"
+usage = "diffusable"
+auteur_contenu = "public"
+genere_par = "humain"
+notes = "Fichier national des prénoms 1900-2022 relevé le 2026-10-17 (INSEE, fiche data.gouv 5bf42c958b4c4144b0110ce8). Licence Ouverte 2.0 : attribution obligatoire. Sert seulement à la détection Prénom Nom de l'export des Retours (ressources/prenoms.txt), pas de Donnée d'entraînement. SHA-256 de l'archive épinglé dans config/outillage.toml."

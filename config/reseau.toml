@@ -46,6 +46,15 @@ hotes = ["download.pytorch.org"]
 nom = "inno-setup"
 methodes = ["GET", "HEAD"]
 hotes = ["jrsoftware.org", "files.jrsoftware.org"]
+
+# Fichier des prénoms de l'INSEE (story 12.3, décision d'Anaël du 2026-10-17) : GET seul, hôte
+# officiel, Licence Ouverte 2.0 ; URL et SHA-256 épinglés dans config/outillage.toml.
+[[profils.outillage.regles]]
+nom = "insee-prenoms"
+methodes = ["GET"]
+hotes = ["www.insee.fr"]
+chemins = ["/fr/statistiques/fichier/7633685/nat2022_csv.zip"]
+
 # Conditions commerciales de Mistral (D-nuit-A2-10) : cette page seule, GET seul. Depuis le 2026-10-17
 # la page redirige (301) vers sa forme avec « / » final, admise aussi (même document).
 [[profils.outillage.regles]]
