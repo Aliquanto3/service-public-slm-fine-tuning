@@ -200,7 +200,8 @@ def test_budget_epuise(banc: Any) -> None:
 
 
 @pytest.mark.parametrize("statut", [500, 502, 503])
-def test_erreur_serveur_comptee_au_pire_cas(banc: Any, statut: int) -> None:
+def test_erreur_serveur_reglee_a_zero(banc: Any, statut: int) -> None:
+    """Une 5xx n'est pas facturée par Mistral : réglée à 0 (décision à confirmer par Anaël)."""
     banc.faux.reponses.append(statut)
     with pytest.raises(ErreurApiMistral) as erreur:
         appeler(banc.client(sans_relance(banc)))
@@ -209,8 +210,8 @@ def test_erreur_serveur_comptee_au_pire_cas(banc: Any, statut: int) -> None:
     assert ligne["statut"] == "erreur" and ligne["statut_http"] == statut
     assert ligne["reponse_brute"] == banc.faux.servis[0]
     (reservation,) = banc.lignes_registre()
-    assert reservation["etat"] == "pire-cas"
-    assert erreur.value.cout_eur == pytest.approx(reservation["montant_reserve_eur"])
+    assert reservation["etat"] == "regularisee" and reservation["montant_reel_eur"] == 0
+    assert erreur.value.cout_eur == 0
     assert erreur.value.statut_http == statut
 
 

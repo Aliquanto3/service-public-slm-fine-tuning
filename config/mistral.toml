@@ -1,6 +1,6 @@
 # Adaptateur Mistral (AD-3 verrous 1 et 3, D1.2). Lu par `slmsp.mistral.config.charger_mistral`.
 # Toute requête à l'API Mistral passe par `slmsp.mistral.client.ClientMistral` : réservation au
-# budget, appel unique sans relance, journal, régularisation, contrôle du modèle résolu.
+# budget, relances bornées, journal, régularisation, contrôle du modèle résolu.
 
 # Version du format de ce fichier (seule valeur admise : 1).
 schema_version = 1
@@ -23,19 +23,23 @@ motifs_interdits = ["labs", "preview", "beta", "-rc", "experimental"]
 # d'une tentative (contrôlée à chaque morceau reçu) ; `delai_lecture` borne l'attente de chaque
 # lecture, dont la première (l'API ne répond qu'une fois la génération finie) ; un dépassement
 # est une erreur de transport, relancée comme une 5xx.
-# Échéance totale d'une tentative.
-delai_appel = 300
+# Échéance totale d'une tentative. 180 s couvrent une génération de 2 048 tokens ; à
+# surveiller pour le second juge (max_tokens jusqu'à 6 000) : une tentative coupée est comptée
+# au pire cas.
+delai_appel = 180
 # Établissement de la connexion.
 delai_connexion = 10
-# Chaque lecture (et écriture).
-delai_lecture = 300
+# Chaque lecture (et écriture), ramenée au temps restant avant l'échéance.
+delai_lecture = 180
 
 # Relances sur 429 (limite de débit), 500, 502, 503, 504 et erreur de transport. Chaque
-# tentative a sa réservation, réglée avant la suivante : un 429 à 0, une 5xx ou une erreur de
-# transport au pire cas. L'attente suit `Retry-After` (secondes ou date HTTP) ; sans cet
-# en-tête, `attente_base * 2**(n-1)` bornée par `attente_plafond`, avec gigue. Au-delà de
-# `reessais_max` réessais, ou si l'attente cumulée dépasserait `attente_totale_max`, l'erreur
-# est levée (`ErreurApiMistral`) : le run passe en `partiel-erreur` et peut être repris.
+# tentative a sa réservation, réglée avant la suivante : une réponse d'erreur HTTP (429, 5xx)
+# à 0, une erreur de transport (sans réponse) au pire cas. L'attente suit `Retry-After`
+# (secondes ou date HTTP, au moins `attente_base`) ; sans cet en-tête, `attente_base * 2**(n-1)`
+# bornée par `attente_plafond`, avec gigue. Au-delà de `reessais_max` réessais, si l'attente
+# cumulée dépasserait `attente_totale_max`, ou si une tentative complète (`delai_appel`) ne
+# tiendrait plus dans `duree_totale_max_appel`, l'erreur est levée (`ErreurApiMistral`) : le
+# run passe en `partiel-erreur` et peut être repris.
 # Nombre maximal de réessais après la première tentative (0 : aucune relance).
 reessais_max = 5
 # Attente cumulée maximale entre tentatives (secondes).
@@ -44,6 +48,8 @@ attente_totale_max = 600
 attente_base = 2
 # Plafond d'une attente exponentielle (secondes).
 attente_plafond = 60
+# Durée maximale d'un appel, tentatives et attentes comprises (secondes).
+duree_totale_max_appel = 900
 
 # Journaux des appels, dans `SLMSP_VAR_DIR`. Journal des données (`generation`, `validation`) :
 # lisible par les pipelines `data` et `train` (AD-24) ; son nom doit rester celui de

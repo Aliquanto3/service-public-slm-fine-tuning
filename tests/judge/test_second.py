@@ -363,11 +363,11 @@ def test_erreur_serveur_puis_item_suivant(banc: Banc, items: dict[str, Item]) ->
     )
     premier, second = rapport.resultats
     assert (premier.statut, premier.motif) == ("non-juge", "erreur-api")
-    assert premier.cout_eur > 0  # compté au pire cas
+    assert premier.cout_eur == 0  # 5xx non facturée : réglée à 0
     assert second.statut == "juge"
     assert banc.faux.items() == ["Q-001", "Q-002"]  # aucune relance
     pire = banc.lignes_registre()[0]
-    assert pire["etat"] == "pire-cas"
+    assert pire["etat"] == "regularisee"
     assert premier.cout_eur == pytest.approx(pire["montant_reel_eur"])
     (appel,) = [a for a in banc.cache.appels() if a["item_id"] == "Q-001"]
     assert appel["issue"] == "erreur-api" and appel["tokens_entree"] is None

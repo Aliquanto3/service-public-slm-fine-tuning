@@ -91,8 +91,7 @@ def test_5xx_transitoire_puis_succes(banc: Any, statut: int) -> None:
     banc.faux.reponses.append(statut)
     appeler(banc.client())
     premier, second = banc.lignes_registre()
-    assert premier["etat"] == "pire-cas"
-    assert premier["montant_reel_eur"] == pytest.approx(premier["montant_reserve_eur"])
+    assert premier["etat"] == "regularisee" and premier["montant_reel_eur"] == 0
     assert second["etat"] == "regularisee"
     assert second["montant_reel_eur"] == pytest.approx(COUT_FACTICE)
 
@@ -155,3 +154,94 @@ def test_idempotence_inchangee_par_les_lignes_en_erreur(banc: Any) -> None:
     appeler(banc.client())
     statuts = [j["statut"] for j in banc.lignes_journal(JOURNAL_JUGE)]
     assert statuts.count("ok") == 1 and statuts[-1] == "ok"
+
+
+@pytest.mark.parametrize("valeur", ["0", "-5", "passee"])
+def test_retry_after_anormal_porte_a_attente_base(banc: Any, valeur: str) -> None:
+    """`Retry-After` nul, négatif ou daté du passé : jamais de relance sans pause."""
+    if valeur == "passee":
+        valeur = format_datetime(datetime.now(UTC) - timedelta(minutes=5), usegmt=True)
+    banc.faux.reponses.extend([(429, {"Retry-After": valeur})] * 2)
+    appeler(banc.client(config(banc, attente_base=3, attente_plafond=3)))
+    assert banc.attentes == [3.0, 3.0]
+    assert len(banc.faux.requetes) == 3
+
+
+def test_duree_totale_de_l_appel_bornee(banc: Any) -> None:
+    """Un réessai n'est tenté que si une tentative complète tient encore dans
+    `duree_totale_max_appel`, attentes comprises."""
+    instant = [0.0]
+
+    def dormir(attente: float) -> None:
+        banc.attentes.append(attente)
+        instant[0] += attente
+
+    banc.faux.reponses.extend([(429, {"Retry-After": "50"})] * 4)
+    reglage = config(banc, duree_totale_max_appel=300, delai_appel=180)
+    with pytest.raises(ErreurApiMistral, match="après 2 réessai") as erreur:
+        appeler(banc.client(reglage, dormir=dormir, horloge=lambda: instant[0]))
+    assert banc.attentes == [50.0, 50.0]  # 100 + 50 + 180 > 300 : pas de troisième réessai
+    assert erreur.value.reessais == 2 and len(banc.faux.requetes) == 3
+
+
+def test_echeance_globale_transmise_a_la_tentative(banc: Any) -> None:
+    """Chaque tentative est ramenée au temps restant de l'appel (délai de lecture imposé)."""
+    vus: list[float] = []
+
+    def espion(requete: Any) -> Any:
+        vus.append(requete.extensions["timeout"]["read"])
+        return banc.faux(requete)
+
+    reglage = config(banc, duree_totale_max_appel=40, delai_appel=180, delai_lecture=180)
+    from slmsp.mistral.client import ClientMistral, fabriquer_sdk
+    from slmsp.net.journal import JournalMemoire
+
+    sdk = fabriquer_sdk(
+        reglage,
+        transport_interne=httpx2.MockTransport(espion),
+        journal_requetes=JournalMemoire(),
+        fichier_env=banc.chemin_env,
+    )
+    client = ClientMistral(reglage, banc.registre(), sdk, dossier_journaux=banc.dossier)
+    appeler(client)
+    assert len(vus) == 1 and 39.0 <= vus[0] <= 40.0
+
+
+def test_reponse_200_illisible_reservation_reglee(
+    banc: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Une exception après un 200 (usage illisible) ne laisse aucune réservation ouverte."""
+    from slmsp.mistral import client as module_client
+
+    def illisible(reponse: Any) -> Any:
+        raise ValueError("usage illisible (factice)")
+
+    monkeypatch.setattr(module_client, "_usage", illisible)
+    with pytest.raises(ValueError, match="usage illisible"):
+        appeler(banc.client())
+    (reservation,) = banc.lignes_registre()
+    assert reservation["etat"] == "pire-cas"
+    (ligne,) = banc.lignes_journal(JOURNAL_JUGE)
+    assert ligne["statut"] == "erreur" and ligne["statut_http"] == 200
+    assert ligne["reponse_brute"] is not None
+
+
+def test_interruption_pendant_l_appel(banc: Any) -> None:
+    banc.faux.reponses.append(KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        appeler(banc.client())
+    (reservation,) = banc.lignes_registre()
+    assert reservation["etat"] == "pire-cas"  # issue inconnue : pire cas, rien d'ouvert
+    assert len(banc.lignes_journal(JOURNAL_JUGE)) == 1
+
+
+def test_interruption_pendant_l_attente(banc: Any) -> None:
+    def interrompre(attente: float) -> None:
+        raise KeyboardInterrupt
+
+    banc.faux.reponses.append(429)
+    with pytest.raises(KeyboardInterrupt):
+        appeler(banc.client(dormir=interrompre))
+    (reservation,) = banc.lignes_registre()
+    assert reservation["etat"] == "regularisee" and reservation["montant_reel_eur"] == 0
+    assert len(banc.faux.requetes) == 1

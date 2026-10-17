@@ -44,9 +44,11 @@ class ConfigMistral(ModeleConfig):
     delai_appel: float = Field(gt=0, allow_inf_nan=False)
     """Délai total d'un appel HTTP (secondes), échéance comprise."""
     delai_connexion: float = Field(default=10.0, gt=0, allow_inf_nan=False)
-    delai_lecture: float = Field(default=300.0, gt=0, allow_inf_nan=False)
+    delai_lecture: float = Field(default=180.0, gt=0, allow_inf_nan=False)
     reessais_max: int = Field(default=5, ge=0, le=20)
     attente_totale_max: float = Field(default=600.0, ge=0, allow_inf_nan=False)
+    duree_totale_max_appel: float = Field(default=900.0, gt=0, allow_inf_nan=False)
+    """Durée maximale d'un appel `appeler`, tentatives et attentes comprises (secondes)."""
     attente_base: float = Field(default=2.0, gt=0, allow_inf_nan=False)
     attente_plafond: float = Field(default=60.0, gt=0, allow_inf_nan=False)
     fichier_journal_donnees: Nom

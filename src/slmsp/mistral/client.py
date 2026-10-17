@@ -10,19 +10,21 @@
    explicites de `config/mistral.toml` imposés par la passerelle réseau ;
 4. le journal de l'usage (requête canonique, corps brut de la réponse, SHA, référence
    budget) ;
-5. la régularisation au coût réel (`regulariser`), à 0 pour un refus 4xx non facturé ou une
-   requête bloquée avant l'envoi (`SlmspError`, dont `HoteBloque`), ou au pire cas
-   (`compter_pire_cas`) pour une erreur sans usage (5xx, réseau) ;
+5. la régularisation au coût réel (`regulariser`), à 0 pour une réponse d'erreur HTTP non
+   facturée (4xx, 429, 5xx) ou une requête bloquée avant l'envoi (`SlmspError`, dont
+   `HoteBloque`), ou au pire cas (`compter_pire_cas`) pour une erreur sans réponse HTTP
+   (réseau, délai dépassé : on ne sait pas si le serveur a traité la requête) ;
 6. le contrôle du modèle résolu (champ `model` de la réponse) : `ModeleMistralRefuse` s'il
    sort de la liste stable ou porte un motif interdit, l'appel restant journalisé et payé.
 
 Les étapes 2 à 5 forment une tentative. Une tentative en échec transitoire (HTTP 429, 500,
 502, 503, 504, erreur de transport ou délai dépassé) est relancée après une attente
-(`Retry-After`, sinon exponentielle avec gigue), dans les bornes `reessais_max` et
-`attente_totale_max` ; au-delà, `ErreurApiMistral` est levée. Chaque tentative a sa propre
-réservation, réglée (et journalisée) avant la suivante : rien n'est compté deux fois, et un
-429 est réglé à 0. Chaque relance est consignée (journal `slmsp.mistral.client` : horodatage,
-code, attente), sans corps ni en-tête.
+(`Retry-After`, au moins `attente_base`, sinon exponentielle avec gigue), dans les bornes
+`reessais_max`, `attente_totale_max` et `duree_totale_max_appel` (appel entier, tentatives
+et attentes comprises) ; au-delà, `ErreurApiMistral` est levée. Chaque tentative a sa propre
+réservation, réglée (et journalisée) avant la suivante : rien n'est compté deux fois.
+Chaque relance est consignée (journal `slmsp.mistral.client` : horodatage, code, attente),
+sans corps ni en-tête.
 
 Réservation et coût se font au tarif du modèle demandé, seul tarifé dans `tarifs.toml`.
 
@@ -59,6 +61,7 @@ from slmsp.net import client as client_reseau
 from slmsp.net.relances import (
     DelaisAppel,
     attente_exponentielle,
+    echeance_globale,
     erreur_transport,
     lire_retry_after,
     statut_transitoire,
@@ -93,7 +96,8 @@ class ErreurApiMistral(SlmspError):
     """Échec d'un appel à l'API Mistral (refus HTTP, erreur serveur ou réseau).
 
     `statut_http` vaut `None` sans réponse HTTP ; `cout_eur` est le montant compté au
-    registre pour la dernière tentative (0 pour un refus 4xx, le pire cas sinon).
+    registre pour la dernière tentative (0 pour une réponse d'erreur HTTP, le pire cas sans
+    réponse HTTP).
     `transitoire` : l'échec est relançable (429, 5xx passagère, transport) ;
     `attente_serveur` : attente demandée par `Retry-After` ; `reessais` : nombre de
     réessais faits avant d'abandonner.
@@ -264,6 +268,7 @@ class ClientMistral:
         dossier_journaux: str | Path | None = None,
         dormir: Callable[[float], None] = time.sleep,
         alea: Callable[[], float] = random.random,
+        horloge: Callable[[], float] = time.monotonic,
     ) -> None:
         self.config = config
         self.registre = registre
@@ -271,6 +276,7 @@ class ClientMistral:
         self.dossier_journaux = dossier_journaux
         self._dormir = dormir
         self._alea = alea
+        self._horloge = horloge
         self._capture = _Capture()
         hooks = sdk.sdk_configuration.__dict__["_hooks"]
         hooks.register_before_request_hook(self._capture)
@@ -364,21 +370,25 @@ class ClientMistral:
             parametres["tools"] = [dict(outil) for outil in tools]
         if tool_choice is not None:
             parametres["tool_choice"] = tool_choice
+        debut = self._horloge()
         attente_cumulee = 0.0
         reessai = 0
         while True:
+            restant = self.config.duree_totale_max_appel - (self._horloge() - debut)
             try:
-                return self._tentative(
-                    usage,
-                    session_id,
-                    journal,
-                    parametres,
-                    tokens_entree_estimes=tokens_entree_estimes,
-                    jeton=jeton,
-                    complements=complements,
-                )
+                # L'échéance globale ramène chaque tentative au temps qui reste à l'appel.
+                with echeance_globale(restant):
+                    return self._tentative(
+                        usage,
+                        session_id,
+                        journal,
+                        parametres,
+                        tokens_entree_estimes=tokens_entree_estimes,
+                        jeton=jeton,
+                        complements=complements,
+                    )
             except ErreurApiMistral as exc:
-                attente = self._attente(exc, reessai + 1, attente_cumulee)
+                attente = self._attente(exc, reessai + 1, attente_cumulee, debut)
                 if attente is None:
                     if reessai:
                         exc.reessais = reessai
@@ -399,16 +409,29 @@ class ClientMistral:
                 )
                 self._dormir(attente)
 
-    def _attente(self, exc: ErreurApiMistral, reessai: int, attente_cumulee: float) -> float | None:
-        """Attente avant le réessai n° `reessai`, ou `None` s'il ne doit pas avoir lieu."""
-        if not exc.transitoire or reessai > self.config.reessais_max:
+    def _attente(
+        self, exc: ErreurApiMistral, reessai: int, attente_cumulee: float, debut: float
+    ) -> float | None:
+        """Attente avant le réessai n° `reessai`, ou `None` s'il ne doit pas avoir lieu.
+
+        Un `Retry-After` nul, négatif ou daté du passé est porté à `attente_base` (jamais de
+        relance sans pause). Le réessai n'a lieu que si l'attente cumulée reste dans
+        `attente_totale_max` et si, après l'attente, une tentative complète (`delai_appel`)
+        tient encore dans `duree_totale_max_appel`.
+        """
+        config = self.config
+        if not exc.transitoire or reessai > config.reessais_max:
             return None
-        attente = exc.attente_serveur
-        if attente is None:
+        if exc.attente_serveur is not None:
+            attente = max(exc.attente_serveur, config.attente_base)
+        else:
             attente = attente_exponentielle(
-                reessai, self.config.attente_base, self.config.attente_plafond, self._alea
+                reessai, config.attente_base, config.attente_plafond, self._alea
             )
-        if attente_cumulee + attente > self.config.attente_totale_max:
+        if attente_cumulee + attente > config.attente_totale_max:
+            return None
+        ecoule = self._horloge() - debut
+        if ecoule + attente + config.delai_appel > config.duree_totale_max_appel:
             return None
         return attente
 
@@ -450,7 +473,9 @@ class ClientMistral:
             )
         except MistralError as exc:
             statut = exc.status_code
-            facture = not 400 <= statut < 500  # un refus 4xx n'est pas facturé
+            # Une réponse d'erreur HTTP (refus 4xx, 429 comme échec serveur 5xx) n'est pas
+            # facturée par Mistral : réglée à 0 (5xx : décision à confirmer par Anaël).
+            facture = not 400 <= statut < 600
             try:
                 inscrire(
                     modele_resolu=None,
@@ -491,10 +516,24 @@ class ClientMistral:
                 transitoire=erreur_transport(exc),
             ) from exc
 
-        texte, raison = _texte(reponse)
-        usage_tokens = _usage(reponse)
-        modele_resolu = str(getattr(reponse, "model", "") or "")
-        refus = self.config.refus_modele(modele_resolu)
+        try:
+            texte, raison = _texte(reponse)
+            usage_tokens = _usage(reponse)
+            modele_resolu = str(getattr(reponse, "model", "") or "")
+            refus = self.config.refus_modele(modele_resolu)
+        except BaseException:
+            # Réponse 200 illisible : appel facturé d'usage inconnu, journalisé et compté au
+            # pire cas ; aucune réservation ne reste ouverte.
+            try:
+                inscrire(
+                    modele_resolu=None,
+                    reponse_brute=self._capture.reponse,
+                    statut="erreur",
+                    statut_http=200,
+                )
+            finally:
+                self._regler_echec(reservation_id, True)
+            raise
         try:
             appel_id = inscrire(
                 modele_resolu=modele_resolu or None,

@@ -179,17 +179,25 @@ class BancMistral:
             fichier_env=self.chemin_env,
         )
 
-    def client(self, config: ConfigMistral | None = None, registre: Any = None) -> Any:
+    def client(
+        self,
+        config: ConfigMistral | None = None,
+        registre: Any = None,
+        dormir: Callable[[float], None] | None = None,
+        horloge: Callable[[], float] | None = None,
+    ) -> Any:
         from slmsp.mistral.client import ClientMistral
 
         config = config or self.config
+        options = {} if horloge is None else {"horloge": horloge}
         return ClientMistral(
             config,
             registre if registre is not None else self.registre(),
             self.sdk(config),
             dossier_journaux=self.dossier,
-            dormir=self.attentes.append,
+            dormir=dormir or self.attentes.append,
             alea=lambda: 1.0,
+            **options,
         )
 
     def lignes_registre(self) -> list[dict[str, Any]]:

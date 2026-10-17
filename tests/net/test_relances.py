@@ -179,3 +179,30 @@ def test_sans_delais_appel_rien_ne_change() -> None:
     ) as garde:
         garde.post(URL, timeout=12.0)
     assert vus == [12.0]
+
+
+def test_echeance_globale_ramene_les_delais(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dans `echeance_globale`, chaque délai est ramené au temps restant ; une échéance
+    échue bloque la requête avant tout envoi."""
+    monkeypatch.setattr(relances, "_horloge", lambda: 100.0)
+    vus: list[Any] = []
+
+    def servir(requete: Any) -> Any:
+        vus.append(dict(requete.extensions["timeout"]))
+        return _reponse(requete)
+
+    with client(
+        "outillage",
+        journal=JournalMemoire(),
+        transport_interne=httpx2.MockTransport(servir),
+        delais_appel=DELAIS,
+    ) as garde:
+        with relances.echeance_globale(5.0):
+            garde.post(URL)
+        with relances.echeance_globale(0.0), pytest.raises(httpx2.ReadTimeout):
+            garde.post(URL)
+        garde.post(URL)
+    assert vus == [
+        {"connect": 4.0, "read": 5.0, "write": 5.0, "pool": 4.0},
+        {"connect": 4.0, "read": 7.0, "write": 7.0, "pool": 4.0},
+    ]

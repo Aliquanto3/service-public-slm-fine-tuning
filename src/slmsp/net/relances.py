@@ -4,9 +4,17 @@ transitoires, délais explicites par appel (connexion, lecture, échéance total
 `DelaisAppel` est appliqué par `TransportEcheance`, placé sous la garde réseau
 (`slmsp.net.client.client(..., delais_appel=...)`) : il impose à chaque requête ses délais de
 connexion et de lecture (quels que soient ceux du SDK appelant) et une échéance totale,
-contrôlée avant l'envoi, à l'arrivée des en-têtes et à chaque morceau du corps. Un
-dépassement lève le `ReadTimeout` de la bibliothèque HTTP (erreur de transport, donc
-transitoire). Un appel dure ainsi au plus `total + lecture` environ.
+contrôlée avant l'envoi, à l'arrivée des en-têtes et à chaque morceau du corps. Les délais
+imposés sont ramenés au temps restant avant l'échéance au moment de l'envoi : l'attente des
+en-têtes (qui couvre toute la génération pour l'API Mistral) ne dépasse donc pas l'échéance.
+Un corps qui s'arrête en cours de route n'est contrôlé qu'à l'arrivée du morceau suivant ou
+au bout du délai de lecture : dans ce cas rare, une requête dure au plus `total + lecture`.
+Un dépassement lève le `ReadTimeout` de la bibliothèque HTTP (erreur de transport, donc
+transitoire).
+
+`echeance_globale` (variable de contexte) borne en plus toutes les requêtes émises dans un
+bloc : un client qui relance un appel y fixe le temps restant à l'appel entier, attentes
+comprises, et chaque tentative est ramenée à ce temps.
 """
 
 from __future__ import annotations
@@ -16,6 +24,8 @@ import math
 import random
 import time
 from collections.abc import AsyncIterator, Callable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import ModuleType
@@ -91,18 +101,40 @@ class DelaisAppel:
             if not (isinstance(valeur, int | float) and math.isfinite(valeur) and valeur > 0):
                 raise ValueError(f"délai {nom} invalide : {valeur!r} (secondes > 0)")
 
-    def extension(self) -> dict[str, float]:
-        """Valeur de `request.extensions["timeout"]` lue par les transports httpx."""
+    def extension(self, restant: float | None = None) -> dict[str, float]:
+        """Valeur de `request.extensions["timeout"]` lue par les transports httpx, chaque délai
+        ramené à `restant` (secondes avant l'échéance) s'il est fourni."""
+        borne = math.inf if restant is None else max(restant, 0.001)
         return {
-            "connect": self.connexion,
-            "read": self.lecture,
-            "write": self.lecture,
-            "pool": self.connexion,
+            "connect": min(self.connexion, borne),
+            "read": min(self.lecture, borne),
+            "write": min(self.lecture, borne),
+            "pool": min(self.connexion, borne),
         }
 
 
 def _horloge() -> float:
     return time.monotonic()
+
+
+_ECHEANCE_GLOBALE: ContextVar[float | None] = ContextVar("echeance_globale", default=None)
+
+
+@contextmanager
+def echeance_globale(secondes: float) -> Iterator[None]:
+    """Borne à `secondes` à partir de maintenant toutes les requêtes émises dans le bloc,
+    en plus de l'échéance propre à chaque requête (`DelaisAppel.total`)."""
+    jeton = _ECHEANCE_GLOBALE.set(_horloge() + max(0.0, secondes))
+    try:
+        yield
+    finally:
+        _ECHEANCE_GLOBALE.reset(jeton)
+
+
+def _echeance(debut: float, delais: DelaisAppel) -> float:
+    globale = _ECHEANCE_GLOBALE.get()
+    propre = debut + delais.total
+    return propre if globale is None else min(propre, globale)
 
 
 def _depasse(module: ModuleType, requete: Any, delais: DelaisAppel) -> Exception:
@@ -138,8 +170,11 @@ def _classe_echeance(module: ModuleType, asynchrone: bool) -> type:
                 self.delais = delais
 
             async def handle_async_request(self, request: Any) -> Any:
-                echeance = _horloge() + self.delais.total
-                request.extensions["timeout"] = self.delais.extension()
+                debut = _horloge()
+                echeance = _echeance(debut, self.delais)
+                if debut >= echeance:
+                    raise _depasse(module, request, self.delais)
+                request.extensions["timeout"] = self.delais.extension(echeance - debut)
                 reponse = await self.interne.handle_async_request(request)
                 if _horloge() > echeance:
                     await reponse.aclose()
@@ -171,8 +206,11 @@ def _classe_echeance(module: ModuleType, asynchrone: bool) -> type:
             self.delais = delais
 
         def handle_request(self, request: Any) -> Any:
-            echeance = _horloge() + self.delais.total
-            request.extensions["timeout"] = self.delais.extension()
+            debut = _horloge()
+            echeance = _echeance(debut, self.delais)
+            if debut >= echeance:
+                raise _depasse(module, request, self.delais)
+            request.extensions["timeout"] = self.delais.extension(echeance - debut)
             reponse = self.interne.handle_request(request)
             if _horloge() > echeance:
                 reponse.close()
