@@ -283,7 +283,7 @@ class Monde:
         valeurs.update(champs)
         return valeurs
 
-    def scenario(self) -> dict[str, Any]:
+    def scenario(self, finish_reason: str = "stop") -> dict[str, Any]:
         """Amorce CR `scenario` d'auteur Mistral, journalisée comme le ferait le seed."""
         texte = factice("scenario")
         brut = json.dumps(
@@ -291,7 +291,7 @@ class Monde:
                 "choices": [
                     {
                         "index": 0,
-                        "finish_reason": "stop",
+                        "finish_reason": finish_reason,
                         "message": {"role": "assistant", "content": texte},
                     }
                 ]

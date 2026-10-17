@@ -24,6 +24,7 @@ from slmsp.core.erreurs import (
     BudgetEpuise,
     ConfigurationInvalide,
     ProvenanceInvalide,
+    ReponseTronquee,
     SourceSansLicence,
 )
 from slmsp.core.items import empreintes_antifuite, textes_entree, textes_reference
@@ -1202,3 +1203,23 @@ def test_evaluation_toml_illisible_rejette_la_configuration_seed(
     monkeypatch.setattr("slmsp.core.config.racine_projet", lambda: tmp_path)
     with pytest.raises(ValueError, match="illisible"):
         SeedDonnees(re_longueurs=["courte"])
+
+
+class FabriqueTronquee(FabriqueFactice):
+    """Fabrique dont le premier appel renvoie une réponse tronquée (`length`)."""
+
+    def __call__(self, seed_run_id: str, theme_id: str, session_id: str) -> tuple[str, str]:
+        if not self.appels:
+            self.appels.append((seed_run_id, theme_id, session_id))
+            raise ReponseTronquee("appel factice : réponse tronquée (length)")
+        return super().__call__(seed_run_id, theme_id, session_id)
+
+
+def test_scenario_tronque_ecarte_et_compte(monde: Monde) -> None:
+    resultat = monde.executer(
+        nb_scenarios=2, fabrique_scenarios=FabriqueTronquee(monde), config=config_petite(CR=5)
+    )
+    scenarios = monde.comptes(resultat.run_id)["scenarios"]
+    assert (scenarios["demandes"], scenarios["produits"], scenarios["tronques"]) == (2, 1, 1)
+    produits = [a for a in monde.amorces(resultat.run_id) if a["emplacement"] == "scenario"]
+    assert len(produits) == 1

@@ -62,6 +62,7 @@ from slmsp.core.erreurs import (
     BudgetEpuise,
     ConfigurationInvalide,
     ProvenanceInvalide,
+    ReponseTronquee,
 )
 from slmsp.core.items import (
     LONGUEUR_EMPREINTE,
@@ -786,6 +787,7 @@ def _scenarios(
         "produits": 0,
         "exclus": 0,
         "exclusions": dict.fromkeys(MOTIFS_EXCLUSION, 0),
+        "tronques": 0,
         "budget_epuise": False,
     }
     if nb_scenarios == 0 or fabrique is None:
@@ -799,6 +801,9 @@ def _scenarios(
             bilan["budget_epuise"] = True
             consigner("budget épuisé : scénarios interrompus")
             break
+        except ReponseTronquee:
+            bilan["tronques"] += 1  # jamais d'amorce issue d'une réponse tronquée
+            continue
         motifs = protection.motifs(texte)
         if motifs:
             bilan["exclus"] += 1
@@ -823,7 +828,9 @@ def _scenarios(
             ) from None
         _ecrire_amorce(run, amorce)
         bilan["produits"] += 1
-    consigner(f"scénarios : {bilan['produits']}/{nb_scenarios}")
+    consigner(
+        f"scénarios : {bilan['produits']}/{nb_scenarios} ({bilan['tronques']} tronqué(s) écarté(s))"
+    )
     return bilan
 
 

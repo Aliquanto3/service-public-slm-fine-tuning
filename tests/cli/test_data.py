@@ -524,3 +524,28 @@ def test_fabrique_courriers_reponse_sans_texte_chaine_vide(message: dict[str, An
 
     fabrique = cli_data._fabrique_courriers_depuis(lambda seed: Generateur())
     assert fabrique("seed-1", "ct.sujet.x.1", "seed-ct-1") == ("c" * 32, "")
+
+
+def test_fabrique_ecarte_la_reponse_tronquee() -> None:
+    from slmsp.core.erreurs import ReponseTronquee
+
+    class Generation:
+        appel_id = "b" * 32
+        reponse_brute = json.dumps(
+            {
+                "choices": [
+                    {
+                        "finish_reason": "length",
+                        "message": {"role": "assistant", "content": "<scenario-factice>"},
+                    }
+                ]
+            }
+        ).encode()
+
+    class Generateur:
+        def generer(self, *_args: Any) -> Generation:
+            return Generation()
+
+    fabrique = cli_data._fabrique_depuis(lambda _seed: Generateur())
+    with pytest.raises(ReponseTronquee):
+        fabrique("seed-1", "cr.theme.x.1", "session-1")

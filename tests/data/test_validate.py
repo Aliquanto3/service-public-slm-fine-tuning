@@ -416,3 +416,22 @@ def test_re_plafond_hors_annotation_rejete(texte: str) -> None:
     with pytest.raises(_Rejet) as erreur:
         _sources(texte, "RE", "<source-factice> 99 euros")
     assert erreur.value.motif == "valeur_absente"
+
+
+def test_amorce_tronquee_rejetee(monde: Any) -> None:
+    seed = monde.ecrire_seed([monde.scenario(finish_reason="length")])
+    monde.faux.reponses = [{"texte": TEXTE}]
+    generation = monde.lancer({"CR": 1}, seed=seed)
+    resultat = valider(monde, generation)
+    assert motifs(resultat) == ["amorce_tronquee"]
+    assert resultat.rapport["taches"]["CR"]["rejets"] == {"amorce_tronquee": 1}
+    assert resultat.run.lire_jsonl("valides.jsonl") == []
+
+
+def test_amorce_mistral_saine_inchangee(monde: Any) -> None:
+    seed = monde.ecrire_seed([monde.scenario()])
+    monde.faux.reponses = [{"texte": TEXTE}]
+    generation = monde.lancer({"CR": 1}, seed=seed)
+    resultat = valider(monde, generation)
+    assert motifs(resultat) == []
+    assert len(resultat.run.lire_jsonl("valides.jsonl")) == 1

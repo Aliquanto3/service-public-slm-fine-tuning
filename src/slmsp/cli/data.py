@@ -55,7 +55,12 @@ from pathlib import Path
 from typing import Any
 
 from slmsp.core.config import racine_projet
-from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, ProvenanceInvalide
+from slmsp.core.erreurs import (
+    CodeSortie,
+    ConfigurationInvalide,
+    ProvenanceInvalide,
+    ReponseTronquee,
+)
 from slmsp.data.config import charger_config_donnees
 from slmsp.data.licences import RegistreLicences
 from slmsp.data.seed import (
@@ -286,14 +291,17 @@ def _fabrique_depuis(creer_generateur: Callable[[str], Any]) -> FabriqueScenario
     """Fabrique de scénarios : `Generateur(seed_run_id).generer("scenario-reunion", [thème])`.
 
     Le texte de l'amorce est le contenu du message `assistant` de la réponse brute
-    journalisée, celui que `Generateur` revérifie ensuite.
+    journalisée, celui que `Generateur` revérifie ensuite. Une réponse tronquée lève
+    `ReponseTronquee` : `seed` écarte alors le scénario et le compte.
     """
-    from slmsp.mistral.generateur import message_assistant
+    from slmsp.mistral.generateur import message_assistant, raison_de_fin
 
     def fabrique(seed_run_id: str, theme_id: str, session_id: str) -> tuple[str, str]:
         generation = creer_generateur(seed_run_id).generer(
             GABARIT_SCENARIO, [theme_id], session_id, "CR"
         )
+        if raison_de_fin(generation.reponse_brute) == "length":
+            raise ReponseTronquee(f"appel {generation.appel_id} : réponse tronquée (length)")
         contenu = message_assistant(generation.reponse_brute).get("content")
         if not isinstance(contenu, str) or not contenu:
             raise ProvenanceInvalide(f"appel {generation.appel_id} : réponse sans contenu texte")
@@ -418,7 +426,10 @@ def _seed(args: argparse.Namespace) -> int:
             )
     scenarios = resultat.comptes["scenarios"]
     if scenarios["demandes"]:
-        print(f"scénarios : {scenarios['produits']}/{scenarios['demandes']}")
+        print(
+            f"scénarios : {scenarios['produits']}/{scenarios['demandes']} "
+            f"({scenarios['tronques']} tronqué(s) écarté(s))"
+        )
     bilan_ct = resultat.comptes["courriers"]
     if bilan_ct["demandes"]:
         print(

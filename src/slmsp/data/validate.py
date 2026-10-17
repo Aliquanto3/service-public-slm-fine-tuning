@@ -9,6 +9,8 @@ terminé (`complet` ou `partiel-*` : seules les sessions de `brut.jsonl` sont ju
 
 Contrôles, dans cet ordre ; le premier qui échoue donne le motif :
 
+0. **Provenance des amorces** : chaque amorce `mistral` de la session doit venir d'une réponse
+   journalisée que l'extracteur de `build` accepte (non tronquée, texte seul) : `amorce_tronquee`.
 1. **Rejeu (RD)** : chaque appel d'outil des réponses journalisées est rejoué sur `BacASable`
    avec les cassettes `data/cassettes/` de la session. Un appel hors schéma donne
    `appel_non_conforme` ; une cassette illisible ou d'une autre empreinte d'outils, un appel
@@ -63,6 +65,7 @@ from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.rejet_donnees import RejetExemple
 from slmsp.core.schemas.session_donnees import SessionBrute, SessionPlanifiee
 from slmsp.core.texte import compter_mots, extraire_nombres
+from slmsp.data.extraction import extraire_contenu
 from slmsp.harness.citations import extraire_urls, urls_inventees
 from slmsp.harness.taches.recherche import contenu_resultat
 from slmsp.mcp.bac_a_sable import BacASable
@@ -256,6 +259,20 @@ class LecteurGeneration:
         if not isinstance(contenu, str) or not contenu:
             raise ProvenanceInvalide(f"appel {brut.appel_ids[-1]} : réponse finale sans contenu")
         return contenu
+
+    def controler_provenance_amorces(self, brut: SessionBrute) -> None:
+        """Rejette (`amorce_tronquee`) une session dont une amorce `mistral` vient d'une
+        réponse introuvable ou inexploitable : même extracteur que `build` (tronquée refusée)."""
+        for amorce_id in [*brut.amorce_ids, *brut.amorces_derivees]:
+            amorce = self.amorces.get(amorce_id)
+            if amorce is None or amorce.auteur_contenu != "mistral" or amorce.appel_id is None:
+                continue
+            try:
+                extraire_contenu(self.appel(amorce.appel_id).reponse_brute)
+            except ProvenanceInvalide as exc:
+                raise _Rejet(
+                    "amorce_tronquee", f"amorce {amorce_id} (appel {amorce.appel_id}) : {exc}"
+                ) from None
 
     def textes_amorces(self, brut: SessionBrute) -> list[str]:
         """Textes des amorces du seed et des amorces dérivées de la session."""
@@ -506,6 +523,7 @@ def valider_session(
     controle: ControleurFidelite | None = None,
 ) -> None:
     """Valide une session ; lève `_Rejet` (motif de `MOTIFS_VALIDATION`) si elle est écartée."""
+    lecteur.controler_provenance_amorces(brut)
     outils: list[str] = []
     if brut.tache == "RD":
         outils = _rejouer(lecteur, brut, chemin_outils)
