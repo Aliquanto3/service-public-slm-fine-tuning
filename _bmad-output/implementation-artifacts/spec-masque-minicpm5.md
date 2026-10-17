@@ -1,115 +1,121 @@
 ---
-title: "Variante d'entraînement du chat template de minicpm5-1b (option 1)"
+title: "Découpage par tour du masque de perte (minicpm5-1b)"
 type: 'feature'
 created: '2026-10-17'
-status: 'draft'
+status: 'review'
 baseline_commit: '18ad3ea'
 review_loop_iteration: 0
 followup_review_recommended: true
 context:
   - '{project-root}/_bmad-output/planning-artifacts/architecture/architecture-service-public-slm-fine-tuning-2026-10-12/ARCHITECTURE-SPINE.md (AD-7, H-MASQUE)'
-  - '{project-root}/_bmad-output/implementation-artifacts/spec-candidats-registre.md (section Revue, options 1 à 4)'
-  - '{project-root}/_bmad-output/implementation-artifacts/journal-decisions-nuit.md (D-nuit-A1-22)'
+  - '{project-root}/_bmad-output/implementation-artifacts/spec-candidats-registre.md (section Revue)'
+  - '{project-root}/_bmad-output/implementation-artifacts/journal-decisions-nuit.md (D-nuit-A1-22, D-2026-10-17-M1)'
 warnings:
-  - "Écart à AD-7 (« rendu par le template officiel et par lui seul ») : à consigner, AD-7 n'est pas réécrit."
-  - "Écart résiduel entre entraînement et inférence sur l'historique des conversations à plusieurs tours assistant : voir Risques, R1. À confirmer par Anaël."
+  - "Écart à AD-7, consigné au journal (D-2026-10-17-M1) : le texte d'un exemple est l'historique officiel suivi de l'amorce officielle, identique à l'inférence. AD-7 n'est pas réécrit."
+  - "Hors périmètre, bloquant pour la story 11.2 sur minicpm5-1b : 147 `tool_calls` de data/train/v1 portent des `arguments` en chaîne JSON, sur lesquels le template de minicpm5-1b appelle `.items()` (UndefinedError). Voir R7."
 ---
 
 ## Intent
-Décision d'Anaël du 2026-10-17 : option 1 de la revue de `spec-candidats-registre.md`. Avec `chat_template_kwargs = { enable_thinking = false }`, l'amorce de génération de minicpm5-1b (`add_generation_prompt=True`) se termine par `<|im_start|>assistant\n<think>\n\n</think>\n\n`. Le template officiel n'écrit jamais ce bloc dans un tour `assistant` rendu. `masque.intervalles_assistant` refuse donc dès le premier tour, et `chargement.pretokeniser` refuse tout Run sur minicpm5-1b (story 11.2 bloquée). ORPO est bloqué de la même façon : `preparer_preferences` exige que le rendu complet prolonge l'amorce.
+Avec `chat_template_kwargs = { enable_thinking = false }`, l'amorce de génération de minicpm5-1b se termine par `<think>\n\n</think>\n\n`. Le template n'écrit jamais ce bloc dans un tour `assistant` rendu. Le masque de conversation refusait donc tout Run sur ce modèle, en SFT comme en ORPO, ce qui bloquait la story 11.2.
 
-À l'entraînement, chaque tour `assistant` est rendu avec le bloc vide en tête. Le masque supervisé commence après le bloc, comme à l'inférence, où le modèle génère après l'amorce. L'inférence ne change pas.
+Anaël a d'abord retenu l'option 1 (insérer le bloc dans chaque tour), puis l'a remplacée le 2026-10-17 par le **découpage par tour**. Chaque tour `assistant` devient un exemple :
+- l'historique est rendu par le template officiel et n'est pas supervisé ;
+- l'amorce officielle suit (`add_generation_prompt=True`, mêmes kwargs, donc avec le bloc vide) ;
+- le corps du tour vient en dernier, et c'est la seule partie supervisée.
 
-Faits vérifiés sur le tokenizer local (CPU, révision `87179e5`), pour une conversation avec système, 3 tours, un tour vide et un appel d'outil à contenu vide :
-- pour chaque tour `k`, `rendu(messages[:k])` est un préfixe de l'amorce et du rendu `rendu(messages[:k+1])` ;
-- l'amorce vaut toujours `rendu(messages[:k]) + "<|im_start|>assistant\n" + "<think>\n\n</think>\n\n"` ;
-- le tour rendu vaut `"<|im_start|>assistant\n" + corps + "<|im_end|>\n"`, et le corps commence souvent par `<` (`<function …`, `<|im_end|>` pour un tour vide). On ne peut donc pas déduire le bloc du plus long préfixe commun : il doit être déclaré ;
-- tokenisation de `…</think>\n\n` suivi du corps : frontière nette (`\n\n` | `R`, `<function`, `<|im_end|>`). Exception : un corps qui commence par `\n` donne un token `\n\n\n` à cheval sur la frontière, et le masque le refuse (voir R4).
+Le texte et les tokens sont ainsi ceux de l'inférence à chaque tour. Le bloc n'apparaît que dans l'amorce du tour supervisé, jamais dans un historique.
 
 ## Approach
+- **Déclaration générique dans la fiche** (`core/schemas/config_modele.py`) :
+  - `decoupage_masque: "conversation" | "par-tour"`, avec `conversation` par défaut ;
+  - `bloc_amorce: str | None`, non vide, admis seulement en `par-tour` (validateur) : la fin de l'amorce que le template n'écrit pas dans un tour rendu.
 
-### Où vit la variante : dérivée par programme, déclarée dans la fiche
-Il n'y a pas de fichier Jinja de variante. La variante est le rendu officiel, dans lequel un bloc déclaré est inséré en tête de chaque tour `assistant`. Ce mécanisme est générique : il dépend seulement de la fiche, pas du slug.
+  Aucun slug n'est codé en dur. `config/modeles/minicpm5-1b.toml` déclare `par-tour` et `bloc_amorce = "<think>\n\n</think>\n\n"`. Toutes les autres fiches restent au défaut.
+- **`train/masque.py`** (aucune insertion dans un rendu) :
+  - `amorce_et_corps(messages, k)` :
+    - l'amorce est `rendu(messages[:k], add_generation_prompt=True)` ;
+    - le corps est la suite de `rendu(messages[:k+1])` après l'ouverture du tour ;
+    - l'ouverture est l'amorce entière si le rendu la prolonge (cas Qwen), sinon l'amorce privée de `bloc_amorce`. Dans tout autre cas, `ErreurMasque`.
+  - Refus explicites : un `reasoning_content` non vide, ou un contenu qui porte une balise du bloc déclaré (`<think>`, `</think>`). On n'ajoute jamais un second bloc.
+  - `masque_du_tour` : `texte = amorce + corps`, labels à `IGNORE` sur l'amorce et égaux aux ids sur le corps.
+  - `calculer_masques` : en `conversation`, `[calculer_masque(...)]`, sans changement ; en `par-tour`, un exemple par message `assistant`.
+  - `empreinte_decoupage(config)` : `None` en `conversation`, sinon `{mode, bloc_amorce}`.
+- **`train/chargement.py`** :
+  - `pretokeniser` appelle `calculer_masques` et aplatit le résultat. `retenus` compte des exemples. La troncature et l'écartement des exemples sans supervision s'appliquent par exemple.
+  - ORPO (`preparer_preferences`) en `par-tour` : le prompt est l'amorce officielle, c'est-à-dire l'historique officiel suivi de l'amorce avec le bloc. `chosen` et `rejected` sont le seul corps du tour, calculé par `amorce_et_corps`. Une réponse de plus d'un message, ou qui n'est pas `assistant`, lève `ManifesteInvalide`. Ni le bloc ni un tour suivant n'entrent dans la perte. En `conversation`, rien ne change.
+- **Empreinte** (`train/run.py`) :
+  - `invariants(..., decoupage_masque=empreinte_decoupage(config_modele))` ajoute la clé `decoupage_masque` à `CLES_INVARIANTS` ;
+  - la même valeur est archivée sous `resolue["modele"]["decoupage_masque"]` dans `run.json` ;
+  - la valeur `None` reste comparable aux runs antérieurs, qui n'ont pas la clé ;
+  - `VERSION_MASQUE` reste à 1 et `chat_template_sha256` reste le SHA officiel ;
+  - l'amorce se déduit du template, des kwargs (déjà archivés) et de `bloc_amorce`.
+- **Inférence et export inchangés** :
+  - `inference/serveur.py` ne lit que des champs nommés ; `--jinja`, `--reasoning` et `--chat-template-kwargs` ne bougent pas.
+  - Le tokenizer n'est jamais modifié. `train/export.fusionner` sauvegarde le tokenizer de base : le GGUF embarque donc le template officiel, et le contrôle bloquant CA2 compare son SHA à `chat_template_sha256` (officiel).
+  - AD-7 n'impose aucun export de variante.
+- **Pas de cache de pré-tokenisation** :
+  - `pretokeniser` tourne à chaque `train run` ;
+  - SFT et Unsloth reçoivent ses `input_ids` et `labels` (`variante_unsloth` ne rend aucun template) ;
+  - ORPO passe par `preparer_preferences`.
+- **Qwen3.5** : le mécanisme le couvre sans toucher à ses fiches, qui restent `entrainable = false`.
+  - Son template retire le bloc des anciens tours. En `par-tour`, chaque exemple n'utilise que le rendu officiel de son propre préfixe, et le dernier tour rendu prolonge l'amorce : `bloc_amorce` est inutile.
+  - Démontré sur faux tokenizer (`test_par_tour_accepte_un_template_qui_reecrit_l_historique`), non vérifié sur le tokenizer réel de Qwen.
+- **Écart à AD-7** : consigné au journal (D-2026-10-17-M1) et dans le commentaire de la fiche. Il se réduit à ceci : le texte d'un exemple est l'historique officiel suivi de l'amorce officielle, identique à l'inférence, au lieu du rendu de la conversation entière. AD-7, H-MASQUE et `decisions.md` ne sont pas modifiés.
 
-- **Schéma** (`core/schemas/config_modele.py`) : sous-schéma `VarianteEntrainement(SousSchema)` avec `bloc_amorce: str` (non vide), et champ `variante_entrainement: VarianteEntrainement | None = None` dans `ConfigModele`. Un validateur refuse la variante sur un modèle `embedding` ou `entrainable = false`. Le sous-schéma pourra recevoir d'autres options plus tard (voir Qwen3.5).
-- **Fiche** `config/modeles/minicpm5-1b.toml` : table `[variante_entrainement]` avec `bloc_amorce = "<think>\n\n</think>\n\n"` (chaîne TOML de base, `\n` échappés). Un commentaire renvoie à cette spec et à l'écart à AD-7.
-- **Rendu** (`train/masque.intervalles_assistant`, seul point de calcul). Si `config.variante_entrainement` est absent, le code reste inchangé. Sinon, avec `B = bloc_amorce`, pour chaque message `assistant` d'indice `k` :
-  1. `amorce = rendu(messages[:k], add_generation_prompt=True)` et `jusque = rendu(messages[:k+1])`, comme aujourd'hui (mêmes `tools` et mêmes kwargs) ;
-  2. `amorce` doit se terminer par `B`, sinon `ErreurMasque` (« bloc d'amorce absent de l'amorce : kwargs ou template changés ») ;
-  3. `ouverture = amorce[:-len(B)]` doit être un préfixe de `jusque`, sinon `ErreurMasque` ;
-  4. si `jusque[len(ouverture):]` commence déjà par `B`, c'est un `ErreurMasque` (bloc déjà rendu, par exemple par un `reasoning_content`). On n'insère jamais deux fois ;
-  5. `texte_officiel.startswith(jusque)` est contrôlé, comme aujourd'hui (une réécriture de l'historique reste refusée) ;
-  6. la position d'insertion dans le texte officiel est `len(ouverture)`. Le tour officiel couvre `[len(ouverture), len(jusque))`.
+### Garanties, contrôlées pour chaque exemple et testées
+- **G1, amorce exacte** : `texte[:debut]` est égal octet pour octet à `rendu(messages[:k], add_generation_prompt=True)`, sans rien retirer.
+- **G2, texte exact** : `texte == amorce + corps`, où le corps est le rendu officiel du tour après son ouverture. L'historique ne contient aucun bloc ajouté.
+- **G3, supervision** : le texte décodé des labels supervisés est égal au corps.
+- **G4, tokens (bloquante)** : `tokenizer(amorce, add_special_tokens=False)` est exactement le début des `input_ids` de l'exemple, et aucun token ne chevauche la fin de l'amorce. Sinon, `ErreurMasque`.
 
-  Le texte final est le texte officiel complet, avec `B` inséré à chaque position (décalage cumulé). Les intervalles des tours commencent après `B` : le bloc est hors de la perte, comme l'amorce à l'inférence. Le bloc du tour `k` occupe `[debut_k - len(B), debut_k)` du texte rendu, ce qui permet aux tests de le retirer sans champ supplémentaire. `RenduMasque` et la tokenisation (texte complet tokenisé d'un coup, contrôle des chevauchements) ne changent pas.
-- **Tour vide** : avec la variante, un tour `assistant` vide rend `B + "<|im_end|>\n"`, donc du texte. Il est accepté et supervisé sur la fin de tour, comme ce que le modèle produirait à l'inférence. Le filtrage des réponses vides relève des données, hors périmètre.
-- **ORPO** (`chargement.preparer_preferences`) : un seul chemin, avec ou sans variante. Il appelle `masque.intervalles_assistant(debut + suite)`. `prompt` est le texte jusqu'au début du premier tour de `suite`, et la réponse est le reste. Un `ErreurMasque` devient `ManifesteInvalide` avec le numéro de paire. Sans variante, le résultat est identique à aujourd'hui : `prompt = amorce`, et la réponse vaut `complet[len(amorce):]`.
+### Coût mesuré sur data/train/v1 (503 lignes, tokenizer minicpm5-1b, CPU)
+| | Exemples | Tokens |
+|---|---|---|
+| Avant (conversation, rendu entier) | 503 | 1 014 568 |
+| Après (par tour) | 617 (+22,7 %) | 1 202 229 (+18,5 %), dont 268 559 supervisés |
 
-Rejeté : un fichier versionné `config/modeles/minicpm5-1b/chat_template.entrainement.jinja`, copie modifiée du template officiel de 9 Ko. AD-7 veut éviter justement un « chat template réécrit à la main ». Cette copie dériverait sans bruit à chaque changement de révision, et son équivalence ne serait prouvée que sur des conversations d'exemple. Avec la dérivation par programme, le texte produit est le même que celui de la variante Jinja de l'option 1, et l'équivalence est contrôlée à l'exécution sur chaque conversation. **À confirmer par Anaël** : « variante de template » s'entend ici au sens du texte rendu, pas d'un fichier.
+Répartition des lignes par nombre de tours `assistant` : 412 à 1 tour, 73 à 2, 13 à 3 et 5 à 4.
 
-### Garantie d'équivalence (contrôlée à l'exécution, puis testée)
-Pour toute conversation acceptée :
-- **G1** : en retirant les blocs insérés du texte de la variante, on retrouve, octet pour octet, le rendu officiel complet (mêmes `tools` et mêmes kwargs). C'est vrai par construction.
-- **G2** : pour chaque tour `assistant` `k`, `texte[:debut_k]` privé des blocs des tours antérieurs est égal à l'amorce officielle `rendu(messages[:k], add_generation_prompt=True)`. Pour le premier tour `assistant`, l'égalité est exacte, octet pour octet, sans rien retirer.
-- **G3** : le texte supervisé du tour `k` (`texte[debut_k:fin_k]`) est égal au corps officiel `jusque_k[len(ouverture_k):]`.
+Constats sur le même jeu :
+- aucun corps ne commence par `\n` ;
+- aucun `reasoning_content` ;
+- aucun refus du masque.
 
-Limite : la demande vise un préfixe de chaque tour égal à l'amorce officielle. G2 ne la satisfait pas au-delà du premier tour. Avec l'option 1, les tours `assistant` antérieurs portent le bloc dans le texte d'entraînement, alors que l'amorce officielle, rendue par le template, n'en porte pas. Voir R1.
-
-### Inférence et export : inchangés
-- `inference/serveur.py` lit des champs nommés (`chat_template_kwargs`, `reasoning`, `chat_template_force`) et ignore `variante_entrainement`. `--chat-template-kwargs` et `--jinja` ne changent pas. `inference/`, `evaluation/` et `benchmarks/` ne lisent pas le nouveau champ.
-- Le tokenizer n'est jamais modifié : la variante n'est pas posée sur `tokenizer.chat_template`. `sha_chat_template(tokenizer)` reste le SHA du template officiel, inscrit dans `run.json` (`chat_template_sha256`).
-- Export (`train/export.fusionner`) : le tokenizer est rechargé depuis `dossier_base` et sauvegardé tel quel, puis `convert_hf_to_gguf` embarque `tokenizer.chat_template`, donc le template officiel. Le contrôle bloquant CA2 (`cli/export.controler_format`) compare le SHA embarqué à `run.manifeste.chat_template_sha256`, qui est le SHA officiel. Rien à changer. La variante n'est jamais exportée, et AD-7 ne l'impose pas : la revue technique d'AD-7 (`review-verification-tech.md`) prévoit au contraire un GGUF qui embarque le template officiel.
-
-### Empreinte (provenance)
-- `train/run.py` : `CLES_INVARIANTS` reçoit `"variante_template"`, qui vaut `config_modele.variante_entrainement.model_dump()` ou `None`. `invariants(...)` le reçoit en paramètre. Deux Runs d'une campagne doivent avoir la même variante. Un ancien run sans la clé lit `None` et reste comparable pour granite et eurollm.
-- `resolue["modele"]["variante_entrainement"]` est archivé dans `run.json`, à côté de `chat_template_kwargs`.
-- La provenance du texte d'entraînement est donc : SHA du template officiel, kwargs, `variante_template` et `VERSION_MASQUE`. `VERSION_MASQUE` reste à 1, car le calcul ne change pas sans variante. La variante est identifiée par son propre invariant.
-
-### Granite et eurollm
-Aucun effet. Leurs fiches n'ont pas de `variante_entrainement`, donc le chemin de `intervalles_assistant` est inchangé, leur texte et leurs labels sont identiques, et l'invariant vaut `None`. Leurs tests rapides et lents passent sans modification. Un test vérifie que la sortie est identique à celle de la base sans variante.
-
-### Consignation de l'écart à AD-7
-- Nouvelle entrée datée dans `journal-decisions-nuit.md`, au format des entrées D-nuit (Décision, Justification), qui prolonge D-nuit-A1-22. Elle dit que le rendu d'entraînement de minicpm5-1b insère `bloc_amorce`, et elle rappelle l'écart à AD-7, les garanties G1 à G3, l'export inchangé, la décision d'Anaël du 2026-10-17 et le renvoi vers cette spec.
-- Commentaire dans `config/modeles/minicpm5-1b.toml` et docstrings de `masque.py` et de `rendu.py` : le repli H-MASQUE « balises `generation` » devient « variante déclarée dans la fiche ».
-- Ni AD-7, ni H-MASQUE, ni `decisions.md` ne sont modifiés. **À confirmer par Anaël** : faut-il une ligne dans `decisions.md` (sous D8 ou dans une nouvelle décision) ? Ce document de décision n'est pas touché sans son accord.
-
-### Qwen3.5 (hors périmètre)
-Le mécanisme ne le couvre pas. Le template de Qwen3.5 retire le bloc des tours antérieurs à la dernière question : `rendu(messages[:k+1])` n'est plus un préfixe du rendu complet, et l'étape 5 refuse. Le sous-schéma pourra le couvrir sans cas particulier, avec une option `decoupage = "par-tour"` : un exemple par tour `assistant`, dont le contexte est l'amorce officielle `rendu(messages[:k], add_generation_prompt=True)` et dont seul le corps du tour `k` est supervisé. Ce découpage traite à la fois la réécriture de l'historique de Qwen et l'écart R1 de minicpm5. En contrepartie, il multiplie les tokens par le nombre de tours `assistant` de chaque conversation. Report.
+La règle la plus prudente est donc conservée : un masque non prouvé refuse le Run. L'autre règle possible, refuser l'exemple seul et le journaliser, n'est pas mise en œuvre tant qu'aucun cas n'existe. La mesure a été faite après conversion des `arguments` en objets (voir R7).
 
 ## Tests
-Les fixtures sont des chaînes factices (`"<réponse-factice-1>"`, `"<question-factice-2>"`, etc.), conformément à D1.
+Les fixtures sont factices (D1). Tests rapides, dans `tests/train/test_masque.py` :
+- `test_par_tour_amorce_officielle_et_corps_seul`, sur 5 conversations, vérifie G1 à G4 et la présence du bloc une seule fois, dans l'amorce :
+  - système et 1 tour ;
+  - 2 tours ;
+  - système et 3 tours avec appel d'outil ;
+  - tour vide ;
+  - appel d'outil à contenu vide, puis `tool`, puis réponse.
+- `test_par_tour_tour_historique_d_appel_d_outil` : le tour `tool_calls` est supervisé dans son propre exemple, puis n'est plus que du contexte, sans bloc.
+- Cas sans bloc, réécriture de l'historique (cas Qwen), transmission des outils et des kwargs.
+- Refus : `reasoning_content`, balise du bloc dans le contenu, bloc absent ou faux, token à cheval, tokens de l'amorce différents (G4).
+- ORPO : prompt égal à l'amorce officielle, `chosen` et `rejected` égaux au seul corps, réponse à plusieurs messages refusée.
+- Schéma : `bloc_amorce` exige `par-tour` et n'est jamais vide ; la fiche minicpm5-1b est chargée ; granite et eurollm restent en `conversation`.
+- Défaut inchangé : pour granite, `calculer_masques` donne `[calculer_masque]`.
 
-**Rapides, sans poids** (`tests/train/test_masque.py`), avec le faux tokenizer `AmorceRaisonnementVide` existant (amorce `+ "<think></think>"`) et une `ConfigModele` de test qui déclare `bloc_amorce = "<think></think>"` :
-- conversations à 1, 2 et 3 tours `assistant`, avec et sans message système, un tour vide et un tour avec `tool_calls` suivi d'un message `tool`. Pour chacune, G1, G2 (égalité exacte au premier tour) et G3, labels non masqués égaux aux corps ;
-- `test_amorce_absente_du_tour_rendu_refusee` reste valable sans variante. L'ensemble des cas refusés sans variante ne change pas ;
-- refus avec la variante : amorce qui ne se termine pas par le bloc (kwargs changés), ouverture qui n'est pas un préfixe du tour, bloc déjà présent dans le tour, réécriture de l'historique (`reecrit_historique=True`) ;
-- sans variante : texte, tours et labels identiques à la base sur `conversation()` et sur les conversations aléatoires existantes.
-
-**Schéma** (test de `config_modele` existant ou voisin) : `bloc_amorce` vide refusé, variante refusée sur `embedding` ou `entrainable = false`, fiche minicpm5-1b chargée avec le bloc exact `"<think>\n\n</think>\n\n"`.
-
-**ORPO** (`tests/train/test_chargement.py` ou équivalent) : paire factice avec la variante. `prompt` est égal à l'amorce officielle, `chosen` et `rejected` commencent par le corps (sans le bloc). Sans variante, la sortie est identique à aujourd'hui.
-
-**Run** (`tests/train/test_run.py` ou équivalent) : `variante_template` est présent dans les invariants. Une campagne mélangeant `None` et la variante est refusée, et un ancien run sans la clé est comparable à `None`.
-
-**Lents** (`-m lent`, tokenizer local sur CPU, sans GPU) :
-- `test_candidat_reel_masque_sur_les_tours_assistant` : le `xfail(strict=True)` de minicpm5-1b est retiré, et le test doit passer ;
-- nouveau test paramétré sur minicpm5-1b (tokenizer réel, `enable_thinking = false`), avec : système et 1 tour ; 2 tours ; système et 3 tours ; tour vide ; appel d'outil à contenu vide, puis `tool`, puis réponse ; `conversation_outils()`. Il contrôle G1, G2 et G3 sur chaque tour et vérifie qu'aucun token n'est à cheval. Le template gère les outils, qui sont passés par `tools=[OUTIL]` ;
-- `test_rendu_identique_a_llama_server_jinja` : minicpm5-1b est ajouté. Il vérifie que l'amorce officielle HF, référence de G2, est bien celle que `llama-server --jinja --reasoning off --chat-template-kwargs` envoie à l'inférence. Il tourne en variante CPU de llama.cpp, à lancer quand le GPU est libre, ou en CPU s'il est disponible.
-
-Commandes : `uv run --no-sync pytest -q --tb=short tests/train tests/core`, puis `uv run --no-sync pytest -q -m lent -k "minicpm5 or candidat_reel" tests/train/test_masque.py`, puis la suite complète, `ruff check` et `ruff format --check`.
+Tests lents (marqueur `lent`, lancés à la main, jamais dans la suite par défaut) :
+- `test_candidat_reel_masque_sur_les_tours_assistant` passe maintenant pour minicpm5-1b (xfail strict retiré), en plus de granite et eurollm ;
+- `test_minicpm5_reel_par_tour_egal_a_l_amorce_officielle` vérifie G1 à G4 sur les 5 conversations, avec le tokenizer réel ;
+- ces 8 tests passent ;
+- minicpm5-1b est ajouté à `test_rendu_identique_a_llama_server_jinja`, qui n'a pas été lancé (il démarre llama-server).
 
 ## Risques et points non vérifiés
-- **R1 (à confirmer par Anaël)** : écart résiduel sur l'historique. À l'inférence, les tours `assistant` passés, renvoyés par le Harnais (boucle d'outils RD), sont rendus par le template officiel, donc sans bloc. Un contenu préfixé par le bloc n'y change rien : le template le retire, car le raisonnement est vide. Avec l'option 1, ces mêmes tours portent le bloc dans le texte d'entraînement. Le texte supervisé et l'amorce du premier tour sont exacts. Le contexte des tours suivants diffère de quelques tokens. Les conversations à un seul tour `assistant` (la plupart des Tâches) ne sont pas touchées. Seule l'option `decoupage = "par-tour"` (voir Qwen3.5) donne une égalité exacte pour tous les tours.
-- **R2, non vérifié** : je n'ai pas vérifié que llama-server b11429 (`--reasoning off` et `enable_thinking = false`) envoie exactement l'amorce HF de minicpm5-1b. Le test lent `/apply-template` le vérifiera, mais il n'a pas tourné (pas de llama-server lancé pour cette spec).
-- **R3, non vérifié** : je n'ai pas vérifié non plus que le template embarqué par le GGUF officiel est identique au template HF. Le contrôle `chat_template` de `fetch` (avec `chat_template_force = false`) l'affirme, mais je ne l'ai pas relancé. L'embarquement du template officiel par l'export a été établi à la lecture du code, sans export réel.
-- **R4** : un corps de tour qui commence par `\n` produit un token `\n\n\n` à cheval sur la frontière. `ErreurMasque` s'en suit et `pretokeniser` refuse alors le Run entier, pas seulement la ligne. Le risque existe déjà pour les autres modèles, mais il est plus probable ici, puisque l'amorce finit par `\n\n`. Normaliser ces corps à la construction des données est hors périmètre (report).
-- **R5** : je ne connais pas l'effet sur le modèle d'un bloc vide écrit dans l'historique, une forme que le template officiel ne produit jamais.
-- **R6** : un message portant `reasoning_content`, ou un contenu avec `</think>`, est refusé par l'étape 4 (bloc déjà présent) ou rendu autrement par le template. Les données du projet n'en portent pas (`enable_thinking = false`), mais ce n'est pas vérifié sur `train.jsonl`, qui n'est pas lu ici.
-
-## Fichiers (implémentation)
-`src/slmsp/core/schemas/config_modele.py`, `config/modeles/minicpm5-1b.toml`, `src/slmsp/train/masque.py`, `src/slmsp/train/chargement.py` (ORPO), `src/slmsp/train/run.py`, docstring de `src/slmsp/train/rendu.py`, `tests/train/test_masque.py` et les tests voisins de schéma, de chargement et de run, `_bmad-output/implementation-artifacts/journal-decisions-nuit.md`.
+- **R2, non vérifié** : que llama-server b11429 (`--reasoning off`) envoie exactement l'amorce HF. Le test lent `/apply-template` est à lancer (CPU possible).
+- **R3, non vérifié** : l'égalité entre le template du GGUF officiel et le template HF n'a pas été recontrôlée. L'export a été lu dans le code, pas exécuté.
+- **R5** : le coût en tokens augmente de 18,5 % (mesuré).
+- **R7, hors périmètre, bloquant pour la story 11.2 sur minicpm5-1b** :
+  - dans data/train/v1, 147 `tool_calls` ont des `arguments` en chaîne JSON (format OpenAI) ;
+  - le template de minicpm5-1b appelle `.items()` sur ces arguments, et `apply_chat_template` lève alors `UndefinedError` ;
+  - à l'inférence, llama-server convertit les arguments en objets pour les templates qui l'exigent ; à l'entraînement, `_messages_rendus` ne le fait pas, quel que soit le découpage ;
+  - à traiter dans une story dédiée : décoder les arguments selon les capacités du template, comme llama.cpp, sans changer granite.
 
 ## Auto Run Result
-- Spec seule, en `draft`, pour relecture avant le code (story à risque).
-- Décision prise seul, selon la règle « la plus simple et la plus réversible » : variante dérivée par programme, avec le bloc déclaré dans la fiche, plutôt qu'un fichier Jinja (à confirmer par Anaël).
-- Points « à confirmer par Anaël » : R1 (option 1 telle quelle ou découpage par tour), sens de « variante de template », ligne éventuelle dans `decisions.md`.
+- Statut : review. Pas de fusion ni de push ; `sprint-status.yaml` n'est pas touché.
+- Décision prise seul (la plus simple et la plus réversible) : `bloc_amorce` est déclaré dans la fiche, pas déduit. Le plus long préfixe commun entre l'amorce et le tour est ambigu, car le corps commence souvent par `<`.
+- Décision prise seul : en `par-tour`, une réponse ORPO de plus d'un message est refusée.
+- À confirmer par Anaël : R7, avant la story 11.2.

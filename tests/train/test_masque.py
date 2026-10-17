@@ -15,13 +15,19 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from slmsp.core.config import dossier_modeles
+from slmsp.core.erreurs import ManifesteInvalide
+from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.fetch.config import charger_config_modele
+from slmsp.train import chargement
 from slmsp.train.masque import (
     IGNORE,
     ErreurMasque,
     calculer_masque,
+    calculer_masques,
+    empreinte_decoupage,
     intervalles_assistant,
     texte_non_masque,
 )
@@ -227,19 +233,209 @@ def test_amorce_absente_du_tour_rendu_refusee(court: bool) -> None:
         intervalles_assistant(AmorceRaisonnementVide(), messages)
 
 
+# ---- découpage par tour (spec-masque-minicpm5) ----
+
+BLOC = "<think></think>"
+
+
+def config_par_tour(bloc: str | None = BLOC) -> ConfigModele:
+    return charger_config_modele("minicpm5-1b").model_copy(
+        update={"chat_template_kwargs": {}, "bloc_amorce": bloc, "decoupage_masque": "par-tour"}
+    )
+
+
+def appel_factice() -> dict[str, Any]:
+    return {"id": "c1", "type": "function", "function": {"name": "outil", "arguments": {}}}
+
+
+CONVERSATIONS_PAR_TOUR = {
+    "systeme-1-tour": [
+        {"role": "system", "content": "<système-factice>"},
+        {"role": "user", "content": "<question-factice-1>"},
+        {"role": "assistant", "content": "<réponse-factice-1>"},
+    ],
+    "2-tours": [
+        {"role": "user", "content": "<question-factice-1>"},
+        {"role": "assistant", "content": "<réponse-factice-1>"},
+        {"role": "user", "content": "<question-factice-2>"},
+        {"role": "assistant", "content": "<réponse-factice-2>"},
+    ],
+    "systeme-3-tours-outil": conversation(),
+    "tour-vide": [
+        {"role": "user", "content": "<question-factice-1>"},
+        {"role": "assistant", "content": ""},
+    ],
+    "appel-puis-reponse": [
+        {"role": "user", "content": "<question-factice-1>"},
+        {"role": "assistant", "content": "", "tool_calls": [appel_factice()]},
+        {"role": "tool", "tool_call_id": "c1", "content": "<résultat-factice>"},
+        {"role": "assistant", "content": "<réponse-factice-1>"},
+    ],
+}
+
+
+def verifier_par_tour(tok: Any, messages, rendus, *, config, bloc: str | None, tools=None):
+    """G1 à G4 sur chaque exemple : amorce officielle exacte, corps officiel seul supervisé."""
+    tours = [k for k, m in enumerate(messages) if m["role"] == "assistant"]
+    assert len(rendus) == len(tours)
+    options: dict[str, Any] = {"tools": tools, "config": config}
+    for k, rendu in zip(tours, rendus, strict=True):
+        amorce = apply_chat_template(tok, messages[:k], add_generation_prompt=True, **options)
+        jusque = apply_chat_template(tok, messages[: k + 1], **options)
+        ouverture = amorce[: -len(bloc)] if bloc and not jusque.startswith(amorce) else amorce
+        corps = jusque[len(ouverture) :]
+        assert rendu.texte == amorce + corps  # G1, G2 : égalité exacte, sans retrait
+        assert rendu.tours == [(len(amorce), len(rendu.texte))]
+        ids_amorce = list(tok(amorce, add_special_tokens=False)["input_ids"])
+        n = len(ids_amorce)
+        assert rendu.input_ids[:n] == ids_amorce  # G4
+        assert set(rendu.labels[:n]) == {IGNORE}
+        assert rendu.labels[n:] == rendu.input_ids[n:]
+        assert texte_non_masque(tok, rendu) == corps  # G3
+        if bloc:
+            assert bloc not in corps
+
+
+@pytest.mark.parametrize("nom", sorted(CONVERSATIONS_PAR_TOUR))
+def test_par_tour_amorce_officielle_et_corps_seul(nom: str) -> None:
+    tok, config = AmorceRaisonnementVide(), config_par_tour()
+    messages = CONVERSATIONS_PAR_TOUR[nom]
+    rendus = calculer_masques(tok, messages, config=config)
+    verifier_par_tour(tok, messages, rendus, config=config, bloc=BLOC)
+    for rendu in rendus:
+        assert rendu.texte.count(BLOC) == 1  # seulement dans l'amorce du tour supervisé
+
+
+def test_par_tour_tour_historique_d_appel_d_outil() -> None:
+    """Le tour `tool_calls` est supervisé dans son exemple, et seulement contexte ensuite."""
+    tok, config = AmorceRaisonnementVide(), config_par_tour()
+    premier, deuxieme, troisieme = calculer_masques(tok, conversation(), config=config)
+    assert "<|call|>" in texte_non_masque(tok, premier)
+    for rendu in (deuxieme, troisieme):
+        debut = rendu.tours[0][0]
+        assert "<|call|>" in rendu.texte[:debut]
+        assert "<|call|>" not in texte_non_masque(tok, rendu)
+        assert BLOC not in rendu.texte[: debut - len(BLOC)]  # historique officiel, sans bloc
+
+
+def test_par_tour_sans_bloc_quand_le_rendu_prolonge_l_amorce() -> None:
+    tok, config = TokenizerFactice(), config_par_tour(None)
+    rendus = calculer_masques(tok, conversation(), config=config)
+    verifier_par_tour(tok, conversation(), rendus, config=config, bloc=None)
+
+
+def test_par_tour_accepte_un_template_qui_reecrit_l_historique() -> None:
+    """Cas Qwen3.5 : chaque exemple n'utilise que le rendu officiel de son propre préfixe."""
+    tok, config = TokenizerFactice(reecrit_historique=True), config_par_tour(None)
+    rendus = calculer_masques(tok, conversation(), config=config)
+    verifier_par_tour(tok, conversation(), rendus, config=config, bloc=None)
+
+
+def test_par_tour_outils_et_kwargs_transmis() -> None:
+    tok = AmorceRaisonnementVide()
+    config = config_par_tour().model_copy(update={"chat_template_kwargs": {"avec_amorce": True}})
+    outils = [{"type": "function", "function": {"name": "outil"}}]
+    rendus = calculer_masques(tok, conversation(), tools=outils, config=config)
+    verifier_par_tour(tok, conversation(), rendus, config=config, bloc=BLOC, tools=outils)
+    assert all(a["kwargs"] == {"avec_amorce": True} and a["tools"] == outils for a in tok.appels)
+
+
+def test_conversation_par_defaut_inchangee() -> None:
+    config = charger_config_modele("granite-4.0-1b")
+    assert config.decoupage_masque == "conversation" and config.bloc_amorce is None
+    (rendu,) = calculer_masques(TokenizerFactice(), conversation(), config=config)
+    assert rendu == calculer_masque(TokenizerFactice(), conversation(), config=config)
+    assert empreinte_decoupage(config) is None
+
+
+@pytest.mark.parametrize(
+    ("modif", "motif"),
+    [
+        ({"reasoning_content": "<raisonnement-factice>"}, "reasoning_content"),
+        ({"content": "<think>x"}, "balise du bloc"),
+        ({"content": "x</think>"}, "balise du bloc"),
+    ],
+)
+def test_par_tour_raisonnement_refuse(modif: dict[str, Any], motif: str) -> None:
+    messages = [{"role": "user", "content": "q"}, {"role": "assistant", "content": "r", **modif}]
+    config = config_par_tour("<think>\n\n</think>\n\n")
+    with pytest.raises(ErreurMasque, match=motif):
+        calculer_masques(AmorceRaisonnementVide(), messages, config=config)
+
+
+@pytest.mark.parametrize("bloc", [None, "<autre-bloc>"])
+def test_par_tour_bloc_absent_ou_faux_refuse(bloc: str | None) -> None:
+    with pytest.raises(ErreurMasque, match="ouverture du tour introuvable"):
+        calculer_masques(AmorceRaisonnementVide(), conversation(), config=config_par_tour(bloc))
+
+
+def test_par_tour_jeton_a_cheval_refuse() -> None:
+    tok = TokenizerFactice(jeton_colle=True)
+    with pytest.raises(ErreurMasque, match="chevauche la fin de l'amorce"):
+        calculer_masques(tok, conversation(), config=config_par_tour(None))
+
+
+class DernierJetonMarque(AmorceRaisonnementVide):
+    """Le dernier token d'un texte a un identifiant propre : l'amorce seule se tokenise
+    autrement qu'au début de l'exemple (G4)."""
+
+    def __call__(self, texte, **kw):
+        sortie = super().__call__(texte, **kw)
+        sortie["input_ids"][-1] += 10_000
+        return sortie
+
+
+def test_par_tour_tokens_de_l_amorce_differents_refuse() -> None:
+    with pytest.raises(ErreurMasque, match="tokens de l'amorce"):
+        calculer_masques(DernierJetonMarque(), conversation(), config=config_par_tour())
+
+
+def test_par_tour_preferences_prompt_officiel_et_corps_seul(factices) -> None:
+    tok, config = AmorceRaisonnementVide(), config_par_tour()
+    paire = chargement._Paire.model_validate(factices.paire(1))
+    (exemple,), _ = chargement.preparer_preferences(tok, [paire], config_modele=config)
+    officiel = apply_chat_template(
+        tok, paire.prompt, tools=paire.tools, config=config, add_generation_prompt=True
+    )
+    assert exemple["prompt"] == officiel and officiel.endswith(BLOC)
+    assert exemple["chosen"] == "<retenue-factice-1><|end|>\n"
+    assert exemple["rejected"] == "<rejetee-factice-1><|end|>\n"
+
+
+def test_par_tour_preferences_reponse_a_plusieurs_messages_refusee(factices) -> None:
+    brut = factices.paire(1)
+    brut["chosen"] = [
+        {"role": "assistant", "content": "", "tool_calls": [appel_factice()]},
+        {"role": "tool", "tool_call_id": "c1", "content": "<résultat-factice>"},
+        {"role": "assistant", "content": "<retenue-factice-1>"},
+    ]
+    paire = chargement._Paire.model_validate(brut)
+    with pytest.raises(ManifesteInvalide, match="un seul message assistant"):
+        chargement.preparer_preferences(
+            AmorceRaisonnementVide(), [paire], config_modele=config_par_tour()
+        )
+
+
+def test_schema_bloc_amorce_exige_par_tour() -> None:
+    brut = charger_config_modele("granite-4.0-1b").model_dump()
+    with pytest.raises(ValidationError, match="bloc_amorce"):
+        ConfigModele.model_validate({**brut, "bloc_amorce": BLOC})
+    with pytest.raises(ValidationError):
+        ConfigModele.model_validate({**brut, "decoupage_masque": "par-tour", "bloc_amorce": ""})
+    fiche = charger_config_modele("minicpm5-1b")
+    assert fiche.decoupage_masque == "par-tour"
+    assert fiche.bloc_amorce == "<think>\n\n</think>\n\n"
+    assert empreinte_decoupage(fiche) == {"mode": "par-tour", "bloc_amorce": fiche.bloc_amorce}
+    for slug in ("granite-4.0-1b", "eurollm-1.7b"):
+        assert charger_config_modele(slug).decoupage_masque == "conversation"
+
+
 # ---- tests lents : tokenizers réels et llama-server (jamais dans la suite par défaut) ----
 
 CANDIDATS = [
     "granite-4.0-1b",
     "eurollm-1.7b",
-    pytest.param(
-        "minicpm5-1b",
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason="amorce `<think>\\n\\n</think>\\n\\n` (enable_thinking = false) absente des "
-            "tours rendus : décision en attente (spec-candidats-registre)",
-        ),
-    ),
+    "minicpm5-1b",  # découpage par tour (spec-masque-minicpm5)
 ]
 """Candidats au fine-tuning du registre D8 (`entrainable = true`)."""
 OUTIL = {
@@ -283,19 +479,38 @@ def test_candidat_reel_masque_sur_les_tours_assistant(slug: str) -> None:
     tok = charger_tokenizer(_dossier_hf(slug))
     config = charger_config_modele(slug)
     try:
-        rendu = calculer_masque(tok, conversation_outils(), tools=[OUTIL], config=config)
-    except ErreurMasque as e:  # critère 2 : à consigner, variante `generation` à produire
+        rendus = calculer_masques(tok, conversation_outils(), tools=[OUTIL], config=config)
+    except ErreurMasque as e:  # critère 2 : à consigner, découpage à déclarer dans la fiche
         pytest.fail(f"{slug} : masque impossible avec le template officiel ({e})")
-    gardes = texte_non_masque(tok, rendu)
+    gardes = "".join(texte_non_masque(tok, rendu) for rendu in rendus)
     assert "<réponse-factice-0>" in gardes
     assert "<réponse-factice-1>" in gardes
     assert "<résultat-factice>" not in gardes
     assert "<question-factice-1>" not in gardes
-    print(f"H-MASQUE {slug} : ok, {sum(e != IGNORE for e in rendu.labels)}/{len(rendu.labels)}")
+    assert "<système-factice>" not in gardes
+    supervises = sum(e != IGNORE for rendu in rendus for e in rendu.labels)
+    print(f"H-MASQUE {slug} : ok, {len(rendus)} exemple(s), {supervises} tokens supervisés")
 
 
 @pytest.mark.lent
-@pytest.mark.parametrize("slug", ["granite-4.0-1b", "smollm3-3b"])
+@pytest.mark.parametrize("nom", sorted(CONVERSATIONS_PAR_TOUR))
+def test_minicpm5_reel_par_tour_egal_a_l_amorce_officielle(nom: str) -> None:
+    """G1 à G4 sur le tokenizer réel de minicpm5-1b (CPU), `enable_thinking = false`."""
+    pytest.importorskip("transformers")
+    from slmsp.train.rendu import charger_tokenizer
+
+    tok = charger_tokenizer(_dossier_hf("minicpm5-1b"))
+    config = charger_config_modele("minicpm5-1b")
+    messages = CONVERSATIONS_PAR_TOUR[nom]
+    rendus = calculer_masques(tok, messages, tools=[OUTIL], config=config)
+    verifier_par_tour(tok, messages, rendus, config=config, bloc=config.bloc_amorce, tools=[OUTIL])
+    for rendu in rendus:
+        assert rendu.texte.count("<think>") == 1
+        assert rendu.texte.endswith("<|im_end|>\n")
+
+
+@pytest.mark.lent
+@pytest.mark.parametrize("slug", ["granite-4.0-1b", "smollm3-3b", "minicpm5-1b"])
 def test_rendu_identique_a_llama_server_jinja(slug: str) -> None:
     """Critère 3 : `/apply-template` de `llama-server --jinja` rend le même texte."""
     pytest.importorskip("transformers")

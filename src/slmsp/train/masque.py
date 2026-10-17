@@ -11,7 +11,10 @@ ce tour. Tous les autres labels valent -100.
 Le masque refuse (`ErreurMasque`) ce qu'il ne peut pas prouver : rendu incrémental qui n'est
 pas un préfixe du rendu complet (template qui réécrit l'historique, par exemple en retirant
 le raisonnement des tours passés), ou token à cheval sur une frontière de tour. Le repli est
-alors une variante d'entraînement du template, limitée aux balises `generation` (epic 10).
+alors le découpage par tour (`decoupage_masque = "par-tour"` dans la fiche du Modèle,
+spec-masque-minicpm5) : un exemple par tour `assistant`, dont le texte est l'amorce officielle
+(historique rendu par le template, `add_generation_prompt=True`) suivie du corps du tour, seul
+supervisé. Texte et tokens sont alors ceux de l'inférence à chaque tour (`calculer_masques`).
 """
 
 from __future__ import annotations
@@ -98,14 +101,7 @@ def calculer_masque(
 ) -> RenduMasque:
     """`input_ids` et `labels` (-100 hors des tours `assistant`) d'une conversation."""
     texte, tours = intervalles_assistant(tokenizer, messages, tools=tools, config=config)
-    try:
-        encodage = tokenizer(texte, add_special_tokens=False, return_offsets_mapping=True)
-        ids = [int(i) for i in encodage["input_ids"]]
-        positions = [(int(a), int(b)) for a, b in encodage["offset_mapping"]]
-    except (NotImplementedError, KeyError, ValueError) as erreur:
-        raise ErreurMasque(
-            f"positions de caractères indisponibles (tokenizer rapide requis) : {erreur}"
-        ) from erreur
+    ids, positions = _tokeniser(tokenizer, texte)
     labels: list[int] = []
     for indice, (a, b) in enumerate(positions):
         dedans = next((t for t in tours if t[0] <= a < t[1]), None)
@@ -118,6 +114,133 @@ def calculer_masque(
         else:
             labels.append(ids[indice])
     return RenduMasque(texte=texte, input_ids=ids, labels=labels, tours=tours)
+
+
+def _tokeniser(tokenizer: Any, texte: str) -> tuple[list[int], list[tuple[int, int]]]:
+    try:
+        encodage = tokenizer(texte, add_special_tokens=False, return_offsets_mapping=True)
+        ids = [int(i) for i in encodage["input_ids"]]
+        positions = [(int(a), int(b)) for a, b in encodage["offset_mapping"]]
+    except (NotImplementedError, KeyError, ValueError) as erreur:
+        raise ErreurMasque(
+            f"positions de caractères indisponibles (tokenizer rapide requis) : {erreur}"
+        ) from erreur
+    return ids, positions
+
+
+def amorce_et_corps(
+    tokenizer: Any,
+    messages: Sequence[Mapping[str, Any]],
+    k: int,
+    *,
+    tools: Sequence[Mapping[str, Any]] | None = None,
+    config: ConfigModele | None = None,
+) -> tuple[str, str]:
+    """Découpage par tour : amorce officielle du message `assistant` `k` et corps de ce tour.
+
+    L'amorce est `apply_chat_template(messages[:k], add_generation_prompt=True)`, le texte
+    envoyé au modèle à l'inférence. Le corps est la suite du rendu de `messages[:k+1]` après
+    l'ouverture du tour : l'amorce entière si le rendu la prolonge, sinon l'amorce privée de
+    `bloc_amorce` (déclaré dans la fiche) si le template n'écrit pas ce bloc dans un tour rendu.
+    """
+    message = messages[k]
+    if message.get("role") != "assistant":
+        raise ValueError(f"le message {k} n'est pas un message assistant")
+    raisonnement = message.get("reasoning_content")
+    if isinstance(raisonnement, str) and raisonnement.strip():
+        raise ErreurMasque(
+            f"le message assistant {k} porte un `reasoning_content` : le découpage par tour "
+            "ne supervise pas de raisonnement (amorce sans raisonnement à l'inférence)"
+        )
+    bloc = config.bloc_amorce if config is not None else None
+    contenu = message.get("content")
+    if bloc and isinstance(contenu, str):
+        marqueurs = [ligne for ligne in bloc.splitlines() if ligne.strip()]
+        present = next((m for m in marqueurs if m in contenu), None)
+        if present is not None:
+            raise ErreurMasque(
+                f"le contenu du message assistant {k} contient « {present} » (balise du bloc "
+                "d'amorce) : le template le réécrirait, aucun bloc n'est ajouté"
+            )
+    options: dict[str, Any] = {"tools": tools, "config": config}
+    try:
+        amorce = apply_chat_template(tokenizer, messages[:k], add_generation_prompt=True, **options)
+    except Exception as erreur:
+        raise ErreurMasque(
+            f"l'amorce du message assistant {k} n'est pas calculable ({erreur})"
+        ) from erreur
+    jusque = apply_chat_template(tokenizer, messages[: k + 1], **options)
+    if jusque.startswith(amorce):
+        corps = jusque[len(amorce) :]
+    elif bloc and amorce.endswith(bloc) and jusque.startswith(amorce[: -len(bloc)]):
+        corps = jusque[len(amorce) - len(bloc) :]
+    else:
+        raise ErreurMasque(
+            f"le rendu du message assistant {k} ne prolonge pas l'amorce de génération"
+            + (" privée de `bloc_amorce`" if bloc else "")
+            + " : ouverture du tour introuvable (bloc_amorce à déclarer, ou kwargs changés)"
+        )
+    if not corps:
+        raise ErreurMasque(f"le message assistant {k} ne produit aucun texte")
+    return amorce, corps
+
+
+def masque_du_tour(
+    tokenizer: Any,
+    messages: Sequence[Mapping[str, Any]],
+    k: int,
+    *,
+    tools: Sequence[Mapping[str, Any]] | None = None,
+    config: ConfigModele | None = None,
+) -> RenduMasque:
+    """Exemple du tour `assistant` `k` : amorce officielle (masquée) puis corps (supervisé).
+
+    Contrôle bloquant au niveau des tokens : la tokenisation de l'amorce seule est exactement
+    le début des `input_ids` de l'exemple, et aucun token ne chevauche la frontière. Le modèle
+    voit donc à l'entraînement les tokens qu'il reçoit à l'inférence avant de générer.
+    """
+    amorce, corps = amorce_et_corps(tokenizer, messages, k, tools=tools, config=config)
+    texte = amorce + corps
+    ids, positions = _tokeniser(tokenizer, texte)
+    ids_amorce, _ = _tokeniser(tokenizer, amorce)
+    debut = len(amorce)
+    if any(a < debut < b for a, b in positions):
+        raise ErreurMasque(f"un token du message {k} chevauche la fin de l'amorce")
+    n_amorce = sum(b <= debut for _, b in positions)
+    if ids[:n_amorce] != ids_amorce:
+        raise ErreurMasque(
+            f"les tokens de l'amorce du message {k} diffèrent de ceux de l'amorce seule"
+        )
+    labels = [IGNORE] * n_amorce + ids[n_amorce:]
+    return RenduMasque(texte=texte, input_ids=ids, labels=labels, tours=[(debut, len(texte))])
+
+
+def calculer_masques(
+    tokenizer: Any,
+    messages: Sequence[Mapping[str, Any]],
+    *,
+    tools: Sequence[Mapping[str, Any]] | None = None,
+    config: ConfigModele | None = None,
+) -> list[RenduMasque]:
+    """Exemples d'une conversation selon `decoupage_masque` de la fiche du Modèle.
+
+    `conversation` (défaut) : un exemple, `calculer_masque`. `par-tour` : un exemple par
+    message `assistant` (`masque_du_tour`), aucun sans tour `assistant`.
+    """
+    if config is None or config.decoupage_masque == "conversation":
+        return [calculer_masque(tokenizer, messages, tools=tools, config=config)]
+    return [
+        masque_du_tour(tokenizer, messages, k, tools=tools, config=config)
+        for k, message in enumerate(messages)
+        if message.get("role") == "assistant"
+    ]
+
+
+def empreinte_decoupage(config: ConfigModele) -> dict[str, Any] | None:
+    """Découpage inscrit dans les invariants d'un Run (`None` : `conversation`, défaut)."""
+    if config.decoupage_masque == "conversation":
+        return None
+    return {"mode": config.decoupage_masque, "bloc_amorce": config.bloc_amorce}
 
 
 def texte_non_masque(tokenizer: Any, rendu: RenduMasque) -> str:

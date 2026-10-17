@@ -44,7 +44,7 @@ from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.schemas.entrainement import EnteteManifesteJeu, EntetePaire
 from slmsp.core.var import dossier_var
 from slmsp.train import environnement
-from slmsp.train.masque import IGNORE, calculer_masque
+from slmsp.train.masque import IGNORE, ErreurMasque, amorce_et_corps, calculer_masques
 from slmsp.train.rendu import apply_chat_template
 
 NOM_MANIFESTE_JEU: Final = "MANIFEST.json"
@@ -324,24 +324,27 @@ def pretokeniser(
 
     `tools` est transmis au template avec les protocoles `natif` et `balises-tool-call` (ce
     dernier réécrit aussi les `tool_calls` en balises). `ErreurMasque` est propagée : un
-    masque non prouvé refuse le Run plutôt que d'entraîner sur un faux masque.
+    masque non prouvé refuse le Run plutôt que d'entraîner sur un faux masque. Avec
+    `decoupage_masque = "par-tour"`, une ligne donne un exemple par tour `assistant`
+    (`masque.calculer_masques`) : `retenus` compte alors des exemples, pas des lignes.
     """
     outils = _avec_tools(config_modele)
     exemples: list[dict[str, list[int]]] = []
     tronques = ecartes = 0
     for ligne in lignes:
-        rendu = calculer_masque(
+        rendus = calculer_masques(
             tokenizer,
             _messages_rendus(ligne.messages, config_modele),
             tools=ligne.tools if outils else None,
             config=config_modele,
         )
-        ids, labels = rendu.input_ids[:longueur_max], rendu.labels[:longueur_max]
-        tronques += len(rendu.input_ids) > longueur_max
-        if all(etiquette == IGNORE for etiquette in labels):
-            ecartes += 1
-            continue
-        exemples.append({"input_ids": ids, "labels": labels})
+        for rendu in rendus:
+            ids, labels = rendu.input_ids[:longueur_max], rendu.labels[:longueur_max]
+            tronques += len(rendu.input_ids) > longueur_max
+            if all(etiquette == IGNORE for etiquette in labels):
+                ecartes += 1
+                continue
+            exemples.append({"input_ids": ids, "labels": labels})
     stats = {
         "lignes": len(lignes),
         "retenus": len(exemples),
@@ -380,6 +383,11 @@ def preparer_preferences(
         exemple = {"prompt": prompt}
         for cle in ("chosen", "rejected"):
             suite = _messages_rendus(getattr(paire, cle), config_modele)
+            if config_modele.decoupage_masque == "par-tour":
+                exemple[cle] = _corps_par_tour(
+                    tokenizer, debut, suite, prompt, numero, cle, options
+                )
+                continue
             complet = apply_chat_template(tokenizer, debut + suite, **options)
             if not complet.startswith(prompt) or len(complet) == len(prompt):
                 raise ManifesteInvalide(
@@ -388,6 +396,33 @@ def preparer_preferences(
             exemple[cle] = complet[len(prompt) :]
         exemples.append(exemple)
     return exemples, {"lignes": len(paires), "retenus": len(exemples)}
+
+
+def _corps_par_tour(
+    tokenizer: Any,
+    debut: list[dict[str, Any]],
+    suite: list[dict[str, Any]],
+    prompt: str,
+    numero: int,
+    cle: str,
+    options: dict[str, Any],
+) -> str:
+    """Découpage par tour : réponse = corps du seul tour `assistant` de `suite`.
+
+    Le prompt est l'amorce officielle (historique et bloc d'amorce compris) : rien du bloc
+    ni d'un tour suivant n'entre dans la réponse, donc dans la perte.
+    """
+    if len(suite) != 1 or suite[0].get("role") != "assistant":
+        raise ManifesteInvalide(
+            f"paire {numero} : « {cle} » doit être un seul message assistant (découpage par tour)"
+        )
+    try:
+        amorce, corps = amorce_et_corps(tokenizer, debut + suite, len(debut), **options)
+    except ErreurMasque as exc:
+        raise ManifesteInvalide(f"paire {numero} : « {cle} » : {exc}") from None
+    if amorce != prompt:  # même appel au template : garde-fou
+        raise ManifesteInvalide(f"paire {numero} : amorce de « {cle} » ≠ prompt")
+    return corps
 
 
 @dataclass

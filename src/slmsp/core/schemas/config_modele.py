@@ -88,6 +88,15 @@ class ConfigModele(SchemaBase):
     embedding: bool = False
     entrainable: bool = True
     """Faux pour un modèle évalué tel quel (poids ternaires, GGUF seul) : `train run` le refuse."""
+    decoupage_masque: Literal["conversation", "par-tour"] = "conversation"
+    """Exemples d'entraînement d'une conversation (`train.masque`, spec-masque-minicpm5) :
+    `conversation`, un exemple supervisé sur tous les tours `assistant` ; `par-tour`, un
+    exemple par tour `assistant`, historique rendu par le template officiel et non supervisé,
+    amorce officielle (`add_generation_prompt`) puis corps du tour, comme à l'inférence."""
+    bloc_amorce: str | None = Field(default=None, min_length=1)
+    """`par-tour` seulement : fin de l'amorce de génération que le template n'écrit pas dans un
+    tour `assistant` rendu (MiniCPM5 avec `enable_thinking = false` : bloc de raisonnement
+    vide). Le corps du tour est pris après l'amorce privée de ce bloc."""
     lm_eval_batch_size: int | None = Field(default=None, gt=0)
     """`--batch_size` de lm_eval sur les poids HF (QCM) ; par défaut `auto`. Un `batch_size` du
     benchmark l'emporte."""
@@ -140,6 +149,12 @@ class ConfigModele(SchemaBase):
         hors_bornes = {u: n for u, n in self.micro_lot.items() if not 0 < n <= self.contexte}
         if hors_bornes:
             raise ValueError(f"micro_lot hors de 1 .. contexte ({self.contexte}) : {hors_bornes}")
+        return self
+
+    @model_validator(mode="after")
+    def _bloc_si_par_tour(self) -> ConfigModele:
+        if self.bloc_amorce is not None and self.decoupage_masque != "par-tour":
+            raise ValueError('bloc_amorce exige decoupage_masque = "par-tour"')
         return self
 
     def micro_lot_pour(self, usage: UsageEmbedding) -> int:

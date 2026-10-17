@@ -44,7 +44,7 @@ from slmsp.inference.serveur import charger_config_modele
 from slmsp.train import chargement, environnement, methodes, variante_unsloth
 from slmsp.train.config import RunConfig, charger_config_couts, charger_run_config
 from slmsp.train.couts import creer_callback, ecrire_mesures
-from slmsp.train.masque import VERSION_MASQUE
+from slmsp.train.masque import VERSION_MASQUE, empreinte_decoupage
 
 TYPE_RUN: Final = "train"
 DOSSIER_CHECKPOINTS: Final = "checkpoints"
@@ -60,6 +60,7 @@ CLES_INVARIANTS: Final = (
     "longueur_max",
     "chat_template_sha256",
     "version_masque",
+    "decoupage_masque",
 )
 DEROGATION_ORPO: Final = (
     "ORPO déroge au protocole de la campagne (FR-34) : paires de préférence "
@@ -71,8 +72,17 @@ FICHIERS_CHECKPOINT: Final = ("trainer_state.json", "optimizer.pt", "scheduler.p
 FICHIERS_ADAPTATEUR: Final = ("adapter_config.json", "adapter_model.safetensors")
 
 
-def invariants(config: RunConfig, *, jeu_build: str, chat_template_sha256: str) -> dict[str, Any]:
+def invariants(
+    config: RunConfig,
+    *,
+    jeu_build: str,
+    chat_template_sha256: str,
+    decoupage_masque: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Éléments qu'une campagne partage (FR-34, AD-18).
+
+    `decoupage_masque` : `masque.empreinte_decoupage` de la fiche du Modèle (mode et bloc
+    d'amorce) ; `None` pour le découpage par défaut, comme dans les runs antérieurs.
 
     Le jeu est identifié par sa version et par le run `data-build` de son MANIFEST, pas par
     le SHA du fichier lu : M4 lit `preferences.jsonl`, M1 à M3 `train.jsonl`, du même build.
@@ -84,6 +94,7 @@ def invariants(config: RunConfig, *, jeu_build: str, chat_template_sha256: str) 
         "longueur_max": config.longueur_max,
         "chat_template_sha256": chat_template_sha256,
         "version_masque": VERSION_MASQUE,
+        "decoupage_masque": dict(decoupage_masque) if decoupage_masque is not None else None,
     }
 
 
@@ -274,7 +285,10 @@ def executer(
     if not exemples:
         raise ManifesteInvalide("aucun exemple supervisé après masque et troncature")
     attendus = invariants(
-        config, jeu_build=str(jeu.manifeste.get("run_id")), chat_template_sha256=template_sha
+        config,
+        jeu_build=str(jeu.manifeste.get("run_id")),
+        chat_template_sha256=template_sha,
+        decoupage_masque=empreinte_decoupage(config_modele),
     )
     resolue: dict[str, Any] = {
         "campagne": config.campagne,
@@ -288,6 +302,7 @@ def executer(
             "contraintes": contraintes,
             "chat_template_kwargs": dict(config_modele.chat_template_kwargs),
             "protocole_outils": config_modele.protocole_outils,
+            "decoupage_masque": empreinte_decoupage(config_modele),
         },
         "arguments_specifiques": specifiques,
         "jeu": jeu.ligne(),

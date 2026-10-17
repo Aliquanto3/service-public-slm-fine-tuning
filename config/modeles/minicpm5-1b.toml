@@ -26,6 +26,12 @@ exclure_vision = false
 # Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
 protocole_outils = "natif"
 chat_template_force = false
+# Masque par tour (spec-masque-minicpm5, décision d'Anaël du 2026-10-17, écart à AD-7 consigné
+# au journal) : l'amorce de génération se termine par un bloc de raisonnement vide que le
+# template n'écrit jamais dans un tour rendu. Chaque tour assistant devient un exemple :
+# historique officiel, amorce officielle (avec le bloc), corps du tour supervisé.
+decoupage_masque = "par-tour"
+bloc_amorce = "<think>\n\n</think>\n\n"
 # lm_eval sur HF bf16, carte de 8 Go : `auto` provoque des OOM CUDA (belebele, french_bench_mc).
 # Valeur prudente, à confirmer par mesure.
 lm_eval_batch_size = 4
