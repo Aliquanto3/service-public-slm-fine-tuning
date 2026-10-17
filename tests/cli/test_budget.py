@@ -50,7 +50,7 @@ def test_critere_11_base_absente_non_creee(capsys: pytest.CaptureFixture[str]) -
     ]
     plafonds = {cle: ligne["plafond_eur"] for cle, ligne in lignes.items()}
     assert plafonds == {
-        ("anthropic", None): 10.0,
+        ("anthropic", None): 18.6,
         ("mistral", None): 30.0,
         ("mistral", "generation"): 25.0,
         ("mistral", "juge"): 5.0,
@@ -92,7 +92,7 @@ def test_critere_11_lecture_seule_octets_identiques(capsys: pytest.CaptureFixtur
     assert lignes[("mistral", "juge")]["depense_eur"] == pytest.approx(cout, abs=1e-6)
     assert lignes[("mistral", None)]["depense_eur"] == pytest.approx(cout, abs=1e-6)
     assert lignes[("anthropic", None)]["reserve_eur"] == pytest.approx(reserve, abs=1e-6)
-    assert lignes[("anthropic", None)]["reste_eur"] == pytest.approx(10 - reserve, abs=1e-6)
+    assert lignes[("anthropic", None)]["reste_eur"] == pytest.approx(18.6 - reserve, abs=1e-6)
     assert lignes[("mistral", "generation")]["depense_eur"] == 0
 
 

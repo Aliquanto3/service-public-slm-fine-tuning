@@ -81,7 +81,7 @@ def test_critere_5_taux_usd_eur_prudent_et_date() -> None:
 def test_budgets_de_depart() -> None:
     config = charger_budgets()
     assert config.campagne_id
-    assert config.postes["anthropic"].plafond_eur == 10
+    assert config.postes["anthropic"].plafond_eur == 18.6  # relevé par Anaël (2026-10-17)
     assert config.postes["anthropic"].sous_postes == {}
     assert config.postes["mistral"].plafond_eur == 30
     assert config.postes["mistral"].sous_postes == {"generation": 25, "juge": 5}
