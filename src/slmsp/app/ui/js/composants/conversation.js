@@ -5,6 +5,7 @@
 import { creerReponse } from "./reponse.js";
 import { confirmer, copierTexte } from "./copie.js";
 import { rendrePanneauSources } from "./sources.js";
+import { creerVerification } from "../vues/verification.js";
 
 function el(balise, classe, texte) {
   const e = document.createElement(balise);
@@ -39,7 +40,8 @@ function exigerOk(reponse) {
  * @param {object} pont Client du pont.
  * @param {{bus: object, tache: string}} contexte
  * @param {object} options `titre`, `intro`, `exemples` (textes d'interface), `juridique` (bool),
- *   `infoHorsLigne` (texte affiché sous le titre en Mode hors ligne, ou absent).
+ *   `infoHorsLigne` (texte affiché sous le titre en Mode hors ligne, ou absent), `verification`
+ *   (bouton « Vérifier en ligne » sous les réponses, story 13.6).
  */
 export function monterConversation(conteneur, pont, { bus, tache }, options) {
   const mode = { horsLigne: true }; // Mode hors ligne par défaut (EXPERIENCE.md)
@@ -134,6 +136,12 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       t.reponse.reessayer.hidden = !relancable;
     }
     vide.hidden = tours.length > 0;
+    majVerifications();
+  }
+
+  /** Le bouton « Vérifier en ligne » n'existe que Connecté, sur une réponse terminée (13.6). */
+  function majVerifications() {
+    for (const t of tours) t.verif?.rafraichir();
   }
 
   function creerTour(question) {
@@ -155,8 +163,21 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       surReessayer: relancer,
     });
     element.append(reponse.el);
+    const verif = options.verification
+      ? creerVerification({
+          reponse,
+          pont,
+          horsLigne,
+          eligible: () => {
+            const fin = tourDe(reponse)?.fin;
+            return fin != null && fin !== "echec" && fin !== "interrompue";
+          },
+          surSources: rafraichirPanneau, // la page vérifiée n'est pas enregistrée dans l'Historique
+        })
+      : null;
+    if (verif) element.append(verif.el);
     fil.append(element);
-    tours.push({ reponse, element, question, fin: null });
+    tours.push({ reponse, element, question, fin: null, verif });
     majBoutons();
     return reponse;
   }
@@ -181,6 +202,7 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     mode.horsLigne = hors;
     racine.dataset.mode = hors ? "hors-ligne" : "connecte";
     info.hidden = !(hors && options.infoHorsLigne);
+    majVerifications();
     rafraichirPanneau();
   }
 

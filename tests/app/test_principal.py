@@ -633,3 +633,92 @@ def test_lancer_la_requete_de_la_passerelle_apparait_dans_la_vue_mode(
     assert domaine_mode.effacer_journal() == {"ok": True}
     assert domaine_mode.journal(None)["entrees"] == []
     assert JournalApplication(stockage).lister() == []
+
+
+# -- Story 13.6 : câblage du vérificateur (FR-12) ---------------------------------------------
+
+
+def _assemblage_verification(mode: Any, index: Any) -> Any:
+    from slmsp.net.client import Passerelle
+    from slmsp.net.journal import JournalMemoire
+
+    passerelle = Passerelle(mode, JournalMemoire())
+    service = SimpleNamespace(
+        mode=mode,
+        llm=SimpleNamespace(appels=[]),
+        recherche=SimpleNamespace(vector_store=index),
+        config=SimpleNamespace(verification=None),
+    )
+    return SimpleNamespace(service=service, passerelle=passerelle)
+
+
+def test_construire_verificateur_lie_passerelle_llm_et_index() -> None:
+    from slmsp.harness.modes import ModeFixe
+
+    demandes: list[str] = []
+
+    class IndexFactice:
+        def contient_url(self, url: str) -> bool:
+            demandes.append(url)
+            return True
+
+    assemblage = _assemblage_verification(ModeFixe("connecte"), IndexFactice())
+    verificateur = principal.construire_verificateur(assemblage)
+    assert verificateur is not None
+    assert verificateur.passerelle is assemblage.passerelle  # le Mode de la passerelle prime
+    assert verificateur.llm is assemblage.service.llm
+    assert verificateur.dans_index is not None
+    assert verificateur.dans_index("https://exemple.invalid/x") is True
+    assert demandes == ["https://exemple.invalid/x"]
+
+
+def test_construire_verificateur_sans_index_ne_retient_aucune_source() -> None:
+    from slmsp.harness.modes import ModeFixe
+
+    verificateur = principal.construire_verificateur(
+        _assemblage_verification(ModeFixe("connecte"), None)
+    )
+    assert verificateur is not None and verificateur.dans_index is not None
+    assert verificateur.dans_index("https://exemple.invalid/x") is False
+    assert principal.construire_verificateur(SimpleNamespace(service=SimpleNamespace())) is None
+
+
+def test_lancer_cable_la_verification_hors_ligne_force_aucune_requete(
+    stockage: Stockage, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Bout en bout : `lancer()` branche le vérificateur sur la passerelle de l'assemblage ;
+    hors ligne forcé, le verdict est `indisponible` et le journal n'a que le refus de Mode."""
+    from slmsp.core.evenements import Source, vers_dict
+    from slmsp.harness.modes import ModeFixe
+
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.delenv(principal.VARIABLE_ARGUMENTS, raising=False)
+    mode = ModeFixe("hors-ligne-force")
+    assemblage = _assemblage_verification(mode, SimpleNamespace(contient_url=lambda _u: True))
+
+    @contextlib.contextmanager
+    def fabrique(modele: str, **options: Any) -> Any:
+        yield assemblage
+
+    web = WebviewFactice()
+    code = principal.lancer(
+        webview=web,
+        stockage=stockage,
+        instance=InstanceUnique(ApiFausse()),
+        fabrique_assemblage=fabrique,
+    )
+    assert code == 0
+    domaine = web.creations[0]["js_api"]._pont._domaines["verification"]
+    source = vers_dict(
+        Source(
+            numero=1,
+            titre="<titre-factice-1>",
+            url="https://www.service-public.gouv.fr/particuliers/vosdroits/F0000",
+            origine="index",
+        )
+    )
+    resultat = domaine.appeler("verifier", "<réponse-factice-1> [1]", [source])
+    assert resultat["ok"] is True
+    assert [e["type"] for e in resultat["evenements"]] == ["verification"]
+    assert resultat["evenements"][0]["verdict"] == "indisponible"
+    assert [e.statut for e in assemblage.passerelle.journal.lister()] == ["bloquee-mode"]

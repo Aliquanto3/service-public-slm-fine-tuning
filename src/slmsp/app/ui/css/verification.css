@@ -1,1 +1,34 @@
-/* Vue « verification » : styles propres à cette vue (module déclaré d'avance par la story 12.4). */
+/* Vue « verification » (story 13.6) : bouton, état et encart de résultat sous une réponse. */
+.verification {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+.verification:empty {
+  display: none;
+}
+.verification-resultat {
+  max-width: 100%;
+  color: var(--ink);
+}
+.verification-resultat p {
+  margin: 0;
+}
+.verification-attente {
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.verification-concordant {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-sm);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-alt);
+}
+.verification-extrait {
+  margin: var(--sp-2) 0 0;
+  color: var(--ink-soft);
+}
+.verification-resultat:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
