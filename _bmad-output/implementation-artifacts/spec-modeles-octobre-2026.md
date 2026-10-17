@@ -129,3 +129,38 @@ Runs `fetch` : `20261017-061207-modeles-5969` (1B), `20261017-061650-modeles-6ca
 - Poids HF téléchargés dans le dépôt principal (`models/`), F16 non téléchargés (`--f16` plus tard).
 - Commandes de Baseline : celles de la première campagne, avec les slugs `minicpm5-2b`, `minicpm5-1b` et `gemma-4-e2b`.
 - Tests : `test_toml_modeles_octobre_2` et `test_toml_modeles_octobre_2_particularites` dans `tests/fetch/test_verifications.py`.
+
+---
+
+# Candidats < 2B (décision du 2026-10-17)
+
+Trois modèles de moins de 2B s'ajoutent, hors `CANDIDATS` (choix le plus réversible). Épinglage (révisions, SHA-256 et tailles) relevé dans l'API HF, puis **recalculé sur les fichiers de `models/`** : tous concordent.
+
+## Fiches
+| Slug | Dépôt HF (révision) | GGUF | Licence | Particularités |
+|---|---|---|---|---|
+| `eurollm-1.7b` | `utter-project/EuroLLM-1.7B-Instruct` (a25c7fa) | `mradermacher/EuroLLM-1.7B-Instruct-GGUF` Q4_K_M (1,05 Go) et `[gguf_f16]` (3,32 Go), communautaire | Apache 2.0 | llama dense, contexte natif 4096, `chat_template_force = true` |
+| `croissantllm-chat` | `croissantllm/CroissantLLMChat-v0.1` (f05665c) | `croissantllm/CroissantLLMChat-v0.1-GGUF` Q4_K_M (872 Mo), officiel, **pas de F16** | MIT | llama dense 1,3 Md, poids HF float32 (2 shards), **contexte natif 2048** |
+| `qwen3.5-0.8b` | `Qwen/Qwen3.5-0.8B` (2fc0636) | `unsloth/Qwen3.5-0.8B-GGUF` Q4_K_M (533 Mo) et `[gguf_f16]` en **BF16** (1,52 Go), communautaire | Apache 2.0 | hybride Gated DeltaNet, `exclure_vision`, `enable_thinking = false`, `chat_template_force = true` |
+
+- Valeurs communes : cache f16, `reasoning = "off"`, `protocole_outils = "natif"` (non sondé), `lm_eval_batch_size = 2` (portable de 6 Go ; jamais `auto`).
+- `config/publication.toml` : trois entrées (apache-2.0, mit, apache-2.0), sans `verifie_le`. Aucune autre liste de slugs à mettre à jour (comme pour les modèles d'octobre ; hors `CANDIDATS`).
+- Les fiches du WIP 8379099 ont été relues : SHA-256 et tailles exacts ; corrigés seulement les renvois de runs périmés et les mentions « F16 non téléchargé ».
+
+## Runs et contrôles 8.1
+Runs `fetch` : `20261017-184442-modeles-29f5` (trois slugs) et `20261017-185344-modeles-9f7d` (`--f16`, eurollm-1.7b et qwen3.5-0.8b).
+| Modèle | dense | fp8 | vision | chat_template | serveur CPU |
+|---|---|---|---|---|---|
+| eurollm-1.7b | ok | ok (bf16) | ok | HF ≠ GGUF, exporté, forcé | prêt |
+| croissantllm-chat | ok | ok (float32) | ok | identiques | prêt |
+| qwen3.5-0.8b | **échec** : 18 couches `linear_attention` sur 24 | ok | ok (exclue) | HF ≠ GGUF, exporté, forcé | prêt |
+
+Le contrôle `dense` n'a pas été modifié.
+
+## Reports et points à confirmer par Anaël
+- **CroissantLLM à contexte 2048** : le prompt RAG de la Tâche Q risque de ne pas tenir (budget de prompt, F2) ; et **sans GGUF F16** (banc « avant » à décider).
+- **Qwen3.5-0.8B écarté par `dense`** : même décision à prendre que pour qwen3.5-2b (admettre `linear_attention` ou non, entraînement sous Windows).
+- **`lm_eval_batch_size = 2`** : valeur prudente, à confirmer par mesure.
+- EuroLLM-1.7B : contexte 4096, inférieur à 8192.
+- La branche part de 03d8ccf, avant le correctif F3 (`da06a86`, champ `lm_eval_batch_size` du schéma) : tant que F3 n'est pas intégré, le champ est ignoré à la lecture ; le test le lit donc dans le TOML brut. Aucun conflit attendu à la fusion.
+- Tests : `test_toml_modeles_moins_2b` et `test_toml_modeles_moins_2b_particularites` dans `tests/fetch/test_verifications.py`.

@@ -26,9 +26,12 @@ exclure_vision = false
 # Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
 protocole_outils = "natif"
 # Template GGUF différent de celui du tokenizer HF (contrôle chat_template, run
-# fetch/20261017-090825-modeles-8a15) : le template HF, exporté sous
+# fetch/20261017-184442-modeles-29f5) : le template HF, exporté sous
 # models/<slug>/chat_template.jinja, est imposé à llama-server.
 chat_template_force = true
+# lm_eval sur HF bf16, portable de 6 Go de VRAM : `auto` provoque des OOM CUDA. Valeur
+# prudente (jamais `auto`), à confirmer par mesure.
+lm_eval_batch_size = 2
 
 [sha256_fichiers]
 "config.json" = "f0c12f25e72422f319f3d995b171b686adcc502811d6a4871851a0a410e7d325" # 712 octets
@@ -46,8 +49,8 @@ fichier = "EuroLLM-1.7B-Instruct.Q4_K_M.gguf"
 sha256 = "1cade17f491ea46a686dbee51fbd52442e0f001f102380c3b9d66b4a77f84093"
 source = "communautaire"
 
-# GGUF F16 de base pour la variante `avant` du banc (non téléchargé le 2026-10-17) :
-# `slmsp fetch modeles eurollm-1.7b --f16`.
+# GGUF F16 de base pour la variante `avant` du banc (téléchargé et vérifié, run
+# fetch/20261017-185344-modeles-9f7d) : `slmsp fetch modeles eurollm-1.7b --f16`.
 [gguf_f16] # 3 316 978 912 octets
 depot = "mradermacher/EuroLLM-1.7B-Instruct-GGUF"
 revision = "2951f08f66429c934c8b01a94347161362430808"

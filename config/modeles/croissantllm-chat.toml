@@ -28,6 +28,9 @@ exclure_vision = false
 # Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
 protocole_outils = "natif"
 chat_template_force = false
+# lm_eval sur HF bf16, portable de 6 Go de VRAM : `auto` provoque des OOM CUDA. Valeur
+# prudente (jamais `auto`), à confirmer par mesure.
+lm_eval_batch_size = 2
 
 [sha256_fichiers]
 "config.json" = "a376a067f76553ab2e65440aaaa9d964bd512625c9c0094db0c2c1f8fb439c13" # 732 octets

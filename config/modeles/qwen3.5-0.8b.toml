@@ -4,6 +4,8 @@
 # communes à l'inférence et à l'entraînement.
 # Même famille que qwen3.5-2b : VLM à attention hybride (Gated DeltaNet), tour vision exclue,
 # aucun --mmproj. GGUF communautaire unsloth (Qwen ne publie pas de GGUF).
+# Contrôle `dense` (story 8.1) en échec : 18 couches linear_attention sur 24, comme
+# qwen3.5-2b ; décision d'Anaël attendue (voir la spec).
 # Raisonnement : le template n'ouvre <think> que si enable_thinking vaut true ; forcé à false.
 
 schema_version = 1
@@ -29,9 +31,12 @@ exclure_vision = true
 # Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
 protocole_outils = "natif"
 # Template GGUF différent de celui du tokenizer HF (contrôle chat_template, run
-# fetch/20261017-090413-modeles-aad1) : le template HF, exporté sous
+# fetch/20261017-184442-modeles-29f5) : le template HF, exporté sous
 # models/<slug>/chat_template.jinja, est imposé à llama-server.
 chat_template_force = true
+# lm_eval sur HF bf16, portable de 6 Go de VRAM : `auto` provoque des OOM CUDA. Valeur
+# prudente (jamais `auto`), à confirmer par mesure.
+lm_eval_batch_size = 2
 
 [sha256_fichiers]
 "chat_template.jinja" = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80" # 7 755 octets
@@ -52,8 +57,8 @@ fichier = "Qwen3.5-0.8B-Q4_K_M.gguf"
 sha256 = "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
 source = "communautaire"
 
-# GGUF de base pour la variante `avant` du banc (non téléchargé le 2026-10-17) :
-# `slmsp fetch modeles qwen3.5-0.8b --f16`.
+# GGUF de base pour la variante `avant` du banc (téléchargé et vérifié, run
+# fetch/20261017-185344-modeles-9f7d) : `slmsp fetch modeles qwen3.5-0.8b --f16`.
 [gguf_f16] # 1 516 744 736 octets, BF16 (pas de F16 publié par unsloth)
 depot = "unsloth/Qwen3.5-0.8B-GGUF"
 revision = "6ab461498e2023f6e3c1baea90a8f0fe38ab64d0"
