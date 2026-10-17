@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -24,6 +25,8 @@ def racine(tmp_path: Path) -> Path:
     shutil.copy(DEPOT / "config" / "modeles" / f"{SLUG}.toml", r / "config" / "modeles")
     shutil.copy(DEPOT / "data" / "registre-licences.toml", r / "data")
     config = (DEPOT / "config" / "publication.toml").read_text(encoding="utf-8")
+    # Forme livrée (sans `verifie_le`), quel que soit l'état relevé dans le dépôt.
+    config = re.sub(r"(?m)^verifie_le = .*\n", "", config)
     config = config.replace(
         f'[modeles."{SLUG}"]\n', f'[modeles."{SLUG}"]\nverifie_le = 2026-10-17\n'
     )

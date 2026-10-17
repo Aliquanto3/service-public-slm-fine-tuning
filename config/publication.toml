@@ -53,12 +53,16 @@ motifs_secrets = [
 # préparation refuse alors le dossier. Valeurs de départ : À CONFIRMER PAR ANAËL.
 [modeles."granite-4.0-1b"]
 licences_compatibles = ["apache-2.0"]
+verifie_le = 2026-10-17  # métadonnée license:apache-2.0 de la fiche HF, relevée par l'orchestrateur ; À VALIDER PAR ANAËL
 
 [modeles."ministral-3-3b"]
 licences_compatibles = ["apache-2.0"]
+verifie_le = 2026-10-17  # métadonnée license:apache-2.0 de la fiche HF, relevée par l'orchestrateur ; À VALIDER PAR ANAËL
 
 [modeles."qwen-4b"]
 licences_compatibles = ["apache-2.0"]
+verifie_le = 2026-10-17  # métadonnée license:apache-2.0 de la fiche HF, relevée par l'orchestrateur ; À VALIDER PAR ANAËL
 
 [modeles."smollm3-3b"]
 licences_compatibles = ["apache-2.0"]
+verifie_le = 2026-10-17  # métadonnée license:apache-2.0 de la fiche HF, relevée par l'orchestrateur ; À VALIDER PAR ANAËL
