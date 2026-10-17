@@ -1,0 +1,34 @@
+# llama.cpp réservé à Bonsai-2-4B (décision d'Anaël du 2026-10-17) : fork PrismML, branche
+# `prism`, qui applique la rotation de Hadamard d'activation (`prism.hadamard.*`) du format
+# ternaire Q2_0. Les autres modèles restent sur la version commune (config/llamacpp.toml,
+# b11429) pour que la Baseline reste comparable ; l'écart de moteur est consigné dans la
+# Baseline de Bonsai (`llamacpp_tag` et `tag_llamacpp` de run.json).
+# Release épinglée par PrismML-Eng/Bonsai-demo (setup.ps1, `$ReleaseTag`, commit db871ea du
+# 2026-10-15), publiée le 2026-10-14. Commit du tag : e3de715222b2667c54a267441159a5729f11155e.
+# Valeurs relevées le 2026-10-17 par l'API GitHub (champ `digest` des assets).
+# Pas d'archive des sources : Bonsai n'est ni converti ni quantifié (`entrainable = false`).
+
+schema_version = 1
+tag = "prism-b10777-e3de715"
+depot = "PrismML-Eng/llama.cpp"
+
+[assets.cpu] # 19 530 958 octets
+nom = "llama-prism-b10777-e3de715-bin-win-cpu-x64.zip"
+sha256 = "cff7eeff19163e6263720618cf98023715b8dac14d0873f5be0918765de323c4"
+
+[assets.cuda] # 313 951 324 octets
+nom = "llama-prism-b10777-e3de715-bin-win-cuda-12.4-x64.zip"
+sha256 = "fa5874a1412e251a6efb13f289e97bacbbb4e7fc6714c1836b4fc6c1dc863462"
+
+# Même archive que celle de b11429 (même SHA-256).
+[assets.cudart] # 391 443 627 octets
+nom = "cudart-llama-bin-win-cuda-12.4-x64.zip"
+sha256 = "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6"
+
+# Chemin relatif à vendor/llama.cpp/<tag>/ → SHA-256, vérifié après extraction.
+[binaires]
+# Valeurs relevées le 2026-10-17 sur l'extraction réelle (`llama-server --version` : build
+# 10777, commit e3de71522).
+"bin-cpu/llama-server.exe" = "42373a44d8847f014337eb152094d44692ddd690d45a0b2c8f13e16244b5ff4b"
+"bin-cuda/llama-server.exe" = "e95c81a7f99b05b4e9c67eba3f6856d777987ff813e6c1f14069c6c599e029d7"
+"bin-cuda/ggml-cuda.dll" = "385ccf238798fb885ceca6d284b0368d244f92a3dd4be21d8300b3f3401a0c27"

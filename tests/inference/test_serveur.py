@@ -602,3 +602,62 @@ def test_reel_deux_instances(vendor_reel: Path, modeles_reels: Path) -> None:
         assert sorted(e["role"] for e in entrees) == ["embedding", "generation"]
         assert {e["pid"] for e in entrees} == {generation.pid, embedding.pid}
     assert _entrees() == []
+
+
+# --- Version de llama.cpp par modèle (décision d'Anaël du 2026-10-17, Bonsai) ---------------
+
+
+def test_version_llamacpp_par_modele() -> None:
+    """Bonsai a sa version réservée ; tous les autres modèles gardent la version commune."""
+    commune = serveur.charger_config_llamacpp()
+    assert commune.tag == "b11429"
+    dossier = Path(__file__).parents[2] / "config" / "modeles"
+    reservees = {}
+    for fichier in sorted(dossier.glob("*.toml")):
+        config = serveur.charger_config_modele(fichier.stem)
+        tag = serveur.config_llamacpp_modele(config).tag
+        if config.llamacpp is None:
+            assert tag == commune.tag, fichier.stem
+        else:
+            reservees[fichier.stem] = tag
+    assert reservees == {"bonsai-2-4b": "prism-b10777-e3de715"}
+
+
+def test_version_llamacpp_absente_refusee() -> None:
+    with pytest.raises(ConfigurationInvalide):
+        serveur.config_llamacpp_modele(config_modele(llamacpp="b1"))
+
+
+def test_champ_llamacpp_valide() -> None:
+    assert config_modele().llamacpp is None
+    assert config_modele(llamacpp="prism-b10777-e3de715").llamacpp == "prism-b10777-e3de715"
+    with pytest.raises(ValueError):
+        config_modele(llamacpp="../b11429")
+
+
+def test_serveur_version_reservee_par_defaut(modeles: Path) -> None:
+    """Sans `config_llamacpp` explicite, le serveur prend la version du modèle, consignée
+    dans sa description (`tag_llamacpp` de run.json)."""
+    s = ServeurLlama(config_modele(llamacpp="prism-b10777-e3de715"), slug=SLUG)
+    assert s.config_llamacpp.tag == "prism-b10777-e3de715"
+    assert s.description()["tag_llamacpp"] == "prism-b10777-e3de715"
+    defaut = ServeurLlama(config_modele(), slug=SLUG)
+    assert defaut.description()["tag_llamacpp"] == serveur.charger_config_llamacpp().tag
+
+
+def test_serveur_version_explicite_incoherente(modeles: Path) -> None:
+    with pytest.raises(ConfigurationInvalide, match="exige llama.cpp"):
+        ServeurLlama(
+            config_modele(llamacpp="prism-b10777-e3de715"),
+            slug=SLUG,
+            config_llamacpp=serveur.charger_config_llamacpp(),
+        )
+
+
+def test_binaire_version_reservee(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Les binaires d'une version réservée sont cherchés sous `vendor/llama.cpp/<tag>/`."""
+    config = serveur.charger_config_llamacpp("prism-b10777-e3de715")
+    monkeypatch.setenv("SLMSP_VENDOR_DIR", str(tmp_path))
+    assert serveur.dossier_llamacpp(config) == (tmp_path / "llama.cpp" / config.tag).resolve()
+    with pytest.raises(ConfigurationInvalide, match="prism-b10777-e3de715"):
+        serveur.binaire("llama-server", "cpu", config=config)

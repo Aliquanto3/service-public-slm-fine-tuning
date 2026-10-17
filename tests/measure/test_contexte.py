@@ -312,3 +312,32 @@ def test_cli_usage_absent_avertit(
                  "--contexte", "2048"])  # fmt: skip
     assert code == CodeSortie.SUCCES
     assert "PAS pu être vérifiée" in capsys.readouterr().err
+
+
+def test_composants_binaires_des_deux_versions(tmp_path: Path, monkeypatch) -> None:
+    """NFR-6 : les binaires de la génération (version réservée) et de l'embedding (commune)
+    sont tous deux comptés ; une seule version garde les clés `binaires-<variante>`."""
+    from slmsp.cli.measure import _composants
+    from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp
+
+    monkeypatch.setenv("SLMSP_VENDOR_DIR", str(tmp_path))
+    for tag in ("b1", "prism-b2-abcdef0"):
+        (tmp_path / "llama.cpp" / tag / "bin-cpu").mkdir(parents=True)
+    (tmp_path / "llama.cpp" / "prism-b2-abcdef0" / "bin-cuda").mkdir()
+
+    def serveur(role: str, tag: str) -> SimpleNamespace:
+        asset = {"nom": "a.zip", "sha256": "0" * 64}
+        cfg = ConfigLlamacpp.model_validate(
+            {"tag": tag, "assets": {"cpu": asset, "cuda": asset, "cudart": asset}}
+        )
+        return SimpleNamespace(role=role, gguf=tmp_path / f"{role}.gguf", config_llamacpp=cfg)
+
+    generation, embedding = serveur("generation", "prism-b2-abcdef0"), serveur("embedding", "b1")
+    deux = _composants([generation, embedding], tmp_path, None)
+    assert {k for k in deux if k.startswith("binaires-")} == {
+        "binaires-prism-b2-abcdef0-cpu",
+        "binaires-prism-b2-abcdef0-cuda",
+        "binaires-b1-cpu",
+    }
+    une = _composants([serveur("generation", "b1"), embedding], tmp_path, None)
+    assert {k for k in une if k.startswith("binaires-")} == {"binaires-cpu"}

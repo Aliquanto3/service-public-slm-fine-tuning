@@ -32,6 +32,7 @@ from slmsp.core.artefacts import Run, nouveau_run
 from slmsp.core.config import dossier_modeles, racine_projet
 from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide
 from slmsp.core.prenoms_insee import OCCURRENCES_MINIMALES, prenoms_depuis_csv_insee
+from slmsp.core.schemas.config_llamacpp import fichier_config
 from slmsp.fetch import benchmarks, llamacpp, modeles, prenoms, sources, verifications
 from slmsp.fetch import config as config_fetch
 from slmsp.fetch.hf import Telechargeur, client_hf, jeton_hf, preparer_hf
@@ -70,6 +71,13 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
 
     p = cibles.add_parser(
         "llamacpp", parents=[commun], help="binaires et sources de llama.cpp (tag figé)"
+    )
+    p.add_argument(
+        "--version",
+        default=None,
+        metavar="TAG",
+        help="version réservée à un modèle (config/llamacpp/<TAG>.toml) ; par défaut, la "
+        "version commune (config/llamacpp.toml)",
     )
     p.set_defaults(func=_llamacpp)
 
@@ -188,7 +196,9 @@ def _client_hf() -> Any:
 def _llamacpp(args: argparse.Namespace) -> int:
     preparer_hf()
     dossier = config_fetch.dossier_config()
-    config = config_fetch.charger_config_llamacpp()
+    version = getattr(args, "version", None)
+    config = config_fetch.charger_config_llamacpp(version=version)
+    fichier = fichier_config(dossier, version)
 
     def pilote(telechargeur: Telechargeur, consigner: Any, run: Run) -> None:
         llamacpp.executer(
@@ -204,7 +214,7 @@ def _llamacpp(args: argparse.Namespace) -> int:
         config_run={"sous_commande": "llamacpp", "tag": config.tag, "depot": config.depot},
         entrees={
             "config/fetch.toml": dossier / "fetch.toml",
-            "config/llamacpp.toml": dossier / "llamacpp.toml",
+            fichier.relative_to(dossier.parent).as_posix(): fichier,
         },
         ouvrir_client=_client_github,
         pilote=pilote,

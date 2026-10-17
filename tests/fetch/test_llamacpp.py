@@ -11,6 +11,7 @@ import pytest
 
 from slmsp.cli import main
 from slmsp.core.artefacts import EspaceInsuffisant
+from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp
 from slmsp.fetch import llamacpp
 from slmsp.fetch.config import charger_config_llamacpp
@@ -328,6 +329,40 @@ def test_cli_llamacpp_de_bout_en_bout(banc, outils, release, cli, sans_sous_proc
     assert all("Authorization" not in r.headers for r in banc.serveur.requetes)
 
 
+def test_cli_version_reservee_sans_sources(banc, outils, release, cli, sans_sous_processus) -> None:
+    """`--version <tag>` lit `config/llamacpp/<tag>.toml` ; sans `[sources]`, rien sous `src/`."""
+    config, _ = release
+    lignes = [f'schema_version = 1\ntag = "{TAG}"\ndepot = "{DEPOT}"\n']
+    for cle, asset in config.assets.items():
+        lignes.append(f'[assets.{cle}]\nnom = "{asset.nom}"\nsha256 = "{asset.sha256}"\n')
+    (cli.config / "llamacpp").mkdir()
+    (cli.config / "llamacpp" / f"{TAG}.toml").write_text("\n".join(lignes), encoding="utf-8")
+    assert main(["fetch", "llamacpp", "--version", TAG, "--racine", str(cli.racine)]) == 0
+    base = cli.racine / "vendor" / "llama.cpp" / TAG
+    assert (base / "bin-cpu" / "llama-server.exe").is_file()
+    assert not (base / "src").exists()
+    run = outils.lire_run(cli.racine)
+    assert run.statuts == ["en_cours", "complet"]
+    assert [ligne["fichier"] for ligne in run.fichiers] == [
+        NOMS[c] for c in ("cpu", "cuda", "cudart")
+    ]
+    assert len(run.extractions) == 3
+    assert len(banc.serveur.requetes) == 7  # API + 3 × 2, aucune archive des sources
+    assert run.manifeste["config"]["tag"] == TAG
+    assert f"config/llamacpp/{TAG}.toml" in run.manifeste["entrees"]
+
+
+def test_version_reservee_tag_incoherent(tmp_path: Path) -> None:
+    (tmp_path / "llamacpp").mkdir()
+    reelle = charger_config_llamacpp(version="prism-b10777-e3de715")
+    texte = (Path(__file__).parents[2] / "config" / "llamacpp" / f"{reelle.tag}.toml").read_text(
+        encoding="utf-8"
+    )
+    (tmp_path / "llamacpp" / "prism-b1-abcdef0.toml").write_text(texte, encoding="utf-8")
+    with pytest.raises(ConfigurationInvalide, match="différent du nom du fichier"):
+        charger_config_llamacpp(tmp_path, version="prism-b1-abcdef0")
+
+
 # --- Configuration versionnée ----------------------------------------------------------
 
 
@@ -338,7 +373,22 @@ def test_config_versionnee() -> None:
     assert config.assets["cpu"].nom == "llama-b11429-bin-win-cpu-x64.zip"
     assert config.assets["cuda"].nom == "llama-b11429-bin-win-cuda-12.4-x64.zip"
     assert config.assets["cudart"].nom == "cudart-llama-bin-win-cuda-12.4-x64.zip"
-    assert config.sources.sha256.startswith("2c140392")
+    assert config.sources is not None and config.sources.sha256.startswith("2c140392")
+
+
+def test_config_reservee_bonsai() -> None:
+    """Version réservée à Bonsai (décision d'Anaël du 2026-10-17) : fork PrismML, sans sources."""
+    config = charger_config_llamacpp(version="prism-b10777-e3de715")
+    assert config.tag == "prism-b10777-e3de715"
+    assert config.depot == "PrismML-Eng/llama.cpp"
+    assert config.assets["cpu"].nom == "llama-prism-b10777-e3de715-bin-win-cpu-x64.zip"
+    assert config.assets["cpu"].sha256.startswith("cff7eeff")
+    assert config.sources is None
+    assert set(config.binaires) == {
+        "bin-cpu/llama-server.exe",
+        "bin-cuda/llama-server.exe",
+        "bin-cuda/ggml-cuda.dll",
+    }
 
 
 @pytest.mark.reseau
@@ -353,3 +403,19 @@ def test_release_reelle_conforme(tmp_path: Path) -> None:
         prevues = llamacpp.lire_release(Telechargeur(client, charger_config_fetch()), config)
     assert {p.nom for p in prevues} == {a.nom for a in config.assets.values()}
     assert all(p.taille for p in prevues)
+
+
+def test_version_invalide_refusee_avant_lecture(tmp_path: Path) -> None:
+    """`--version` est validée par MOTIF_TAG : pas de chemin hors de `config/llamacpp/`."""
+    for faux in ("../llamacpp", "B1", "prism", "a/b"):
+        with pytest.raises(ConfigurationInvalide, match="version llama.cpp invalide"):
+            charger_config_llamacpp(tmp_path, version=faux)
+    assert main(["fetch", "llamacpp", "--version", "../x"]) != 0
+
+
+def test_sources_obligatoires_pour_la_version_commune(tmp_path: Path) -> None:
+    reelle = (Path(__file__).parents[2] / "config" / "llamacpp.toml").read_text(encoding="utf-8")
+    sans = reelle.split("# Archive des sources")[0] + "[binaires]\n"
+    (tmp_path / "llamacpp.toml").write_text(sans, encoding="utf-8")
+    with pytest.raises(ConfigurationInvalide, match="sources"):
+        charger_config_llamacpp(tmp_path)

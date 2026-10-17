@@ -275,3 +275,28 @@ def test_precision_gguf_reelle_consignee(banc) -> None:
     assert precision("ok--avant") == "bf16"
     assert precision("ok--apres") == "q4_k_m"
     assert precision("qcm--avant") is None
+
+
+def _selection(cible: str) -> list:
+    return [SimpleNamespace(config=SimpleNamespace(cible=cible))]
+
+
+@pytest.mark.parametrize(
+    ("modele_ref", "cible", "attendu"),
+    [
+        ("base:bonsai-2-4b", "gguf", "prism-b10777-e3de715"),  # version réservée
+        ("base:granite-4.0-1b", "gguf", "b11429"),  # version commune, inchangée
+        ("base:bonsai-2-4b", "hf", None),  # aucune cible GGUF : pas de llama.cpp
+        ("base:modele-inconnu", "gguf", None),  # configuration absente : le moteur le dira
+    ],
+)
+def test_tag_llamacpp_du_run(tmp_path: Path, modele_ref: str, cible: str, attendu) -> None:
+    assert orchestrateur._tag_llamacpp(modele_ref, tmp_path, _selection(cible)) == attendu
+
+
+def test_tag_llamacpp_consigne_dans_run_json(banc, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(orchestrateur, "_tag_llamacpp", lambda *_a: "prism-b10777-e3de715")
+    ecrire(banc.dossier, "ok")
+    assert lancer_cli(banc, "--socle") == 0
+    run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
+    assert run["llamacpp_tag"] == "prism-b10777-e3de715"
