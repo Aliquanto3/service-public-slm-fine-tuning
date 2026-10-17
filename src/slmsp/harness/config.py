@@ -44,6 +44,20 @@ class ConfigCompteRendu(_Fige):
     chevauchement_paragraphes: int = Field(ge=0)
 
 
+class ConfigVerification(_Fige):
+    """Vérification en ligne d'une page officielle (FR-12, story 13.5).
+
+    Section facultative de `config/harnais.toml` : ses valeurs par défaut s'appliquent si
+    elle est absente.
+    """
+
+    active: bool = True
+    delai_s: float = Field(default=10.0, gt=0)
+    taille_max_octets: int = Field(default=2_000_000, gt=0)
+    caracteres_max_page: int = Field(default=8000, gt=0)
+    max_tokens: int = Field(default=400, gt=0)
+
+
 class ConfigRecherche(_Fige):
     """Recherche dans l'Index local : copie de `config/index.toml` (source unique)."""
 
@@ -56,6 +70,7 @@ class _FichierHarnais(_Fige):
     outils: ConfigOutils
     modes: ConfigModes
     compte_rendu: ConfigCompteRendu
+    verification: ConfigVerification = Field(default_factory=ConfigVerification)
 
 
 class ConfigHarnais(_Fige):
@@ -65,6 +80,7 @@ class ConfigHarnais(_Fige):
     modes: ConfigModes
     compte_rendu: ConfigCompteRendu
     recherche: ConfigRecherche
+    verification: ConfigVerification = Field(default_factory=ConfigVerification)
 
 
 def chemin_config_harnais() -> Path:
@@ -88,6 +104,7 @@ def charger_config_harnais(
         outils=fichier.outils,
         modes=fichier.modes,
         compte_rendu=fichier.compte_rendu,
+        verification=fichier.verification,
         recherche=ConfigRecherche(k=index.k, seuil_pertinence=index.seuil_pertinence),
     )
 
@@ -98,6 +115,7 @@ __all__ = [
     "ConfigModes",
     "ConfigOutils",
     "ConfigRecherche",
+    "ConfigVerification",
     "chemin_config_harnais",
     "charger_config_harnais",
 ]
