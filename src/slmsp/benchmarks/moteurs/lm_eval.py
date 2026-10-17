@@ -93,7 +93,7 @@ def graine(config: BenchmarkConfig) -> int:
 
 
 def lot_modele(slug: str) -> int | None:
-    """`lm_eval_batch_size` de `config/modeles/<slug>.toml`, `None` si absent ou config illisible."""
+    """`lm_eval_batch_size` de `config/modeles/<slug>.toml` ; `None` si absent ou illisible."""
     from slmsp.inference.serveur import charger_config_modele
 
     try:
