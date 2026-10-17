@@ -18,7 +18,13 @@ pytest.importorskip("mistralai")
 from slmsp.core.erreurs import AppelNonConforme, BudgetEpuise, ManifesteInvalide  # noqa: E402
 from slmsp.core.schemas.cassette import Cassette  # noqa: E402
 from slmsp.core.var import dossier_var  # noqa: E402
-from slmsp.data.validate import ControleMistral, lancer_validation, statut_herite  # noqa: E402
+from slmsp.data.validate import (  # noqa: E402
+    ControleMistral,
+    _Rejet,
+    lancer_validation,
+    statut_herite,
+)
+from slmsp.harness.taches import charger_taches  # noqa: E402
 from slmsp.mistral.config import charger_mistral  # noqa: E402
 from slmsp.mistral.journal import journal_pour  # noqa: E402
 
@@ -472,3 +478,39 @@ def test_reponse_tronquee_rejetee(monde: Any) -> None:
     assert resultat.statut == "complet"
     assert motifs(resultat) == ["reponse_tronquee"]
     assert resultat.run.lire_jsonl("valides.jsonl") == []
+
+
+# --- Refus de `build` vérifiés dès `validate` (F4) --------------------------------------------
+
+
+def test_entree_refusee_par_la_tache(monde: Any) -> None:
+    from slmsp.data.validate import LecteurGeneration, ouvrir_generation, valider_session
+
+    generation = une_session(monde, "LC", ["texte"], TEXTE)
+    lecteur = LecteurGeneration(
+        ouvrir_generation(generation.run.run_id, monde.racine), journal_lecture(), monde.racine
+    )
+    (brut,) = lecteur.sessions()
+    double = brut.model_copy(update={"amorce_ids": [*brut.amorce_ids, *brut.amorce_ids]})
+    with pytest.raises(_Rejet) as exc:
+        valider_session(lecteur, double, chemin_outils=OUTILS_MCP, taches=charger_taches())
+    assert exc.value.motif == "entree_refusee"
+
+
+def test_conversation_invalide(monde: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    from slmsp.core.messages import ConversationInvalide
+    from slmsp.data import build
+
+    def refuser(_messages: Any) -> None:
+        raise ConversationInvalide("<conversation-factice>")
+
+    monkeypatch.setattr(build, "valider_conversation", refuser)
+    generation = une_session(monde, "generique", ["demande"], TEXTE)
+    assert motifs(valider(monde, generation)) == ["conversation_invalide"]
+
+
+def test_session_conforme_reste_retenue_avec_la_derivation(monde: Any) -> None:
+    generation = une_session(monde, "generique", ["demande"], TEXTE)
+    resultat = valider(monde, generation)
+    assert motifs(resultat) == []
+    assert len(resultat.run.lire_jsonl("valides.jsonl")) == 1

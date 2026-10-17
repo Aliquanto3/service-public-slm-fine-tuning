@@ -83,7 +83,9 @@ __all__ = [
     "TYPE_RUN",
     "VARIANTES",
     "ContexteBuild",
+    "DerivationRefusee",
     "ResultatBuild",
+    "construire_conversation",
     "lancer_build",
     "rederiver_ligne",
     "serialiser",
@@ -100,6 +102,19 @@ SOURCE_OUTILS: Final = "data.gouv/reponses-outils-mcp"
 TACHES_TEXTE: Final = {"Q": "question", "RD": "demande"}
 """Tâches à entrée texte et emplacement de l'amorce qui la porte."""
 _RE_VERSION: Final = re.compile(r"v([0-9]+)")
+
+
+class DerivationRefusee(ProvenanceInvalide):
+    """Session que la re-dérivation refuse, avec le motif que `validate` consigne (F4).
+
+    Les refus qui ne dépendent ni de la licence ni de la variante sont vérifiés dès `validate`
+    par `construire_conversation` ; `build` les rencontre avec le même code.
+    """
+
+    def __init__(self, motif: str, detail: str) -> None:
+        super().__init__(detail)
+        self.motif = motif
+        self.detail = detail
 
 
 @dataclass(frozen=True)
@@ -126,34 +141,30 @@ class ResultatBuild:
 # --- Re-dérivation d'une ligne -----------------------------------------------------------------
 
 
-def _appel(ctx: ContexteBuild, appel_id: str) -> LigneAppel:
-    """Ligne du journal d'un appel `generation`/`ok` (AC 2, verrou 4), règle partagée avec
-    `validate`."""
-    return ctx.lecteur.appel_generation(appel_id)
-
-
 def _amorce(ctx: ContexteBuild, amorce_id: str) -> Amorce:
     """Amorce du seed dont le texte est vérifié (SHA, ou réponse journalisée si Mistral),
     règle partagée avec `validate`."""
     return ctx.lecteur.amorce_verifiee(amorce_id)
 
 
-def _cassettes(ctx: ContexteBuild, brut: SessionBrute) -> list[Cassette]:
+def _cassettes(lecteur: LecteurGeneration, brut: SessionBrute) -> list[Cassette]:
     cassettes = []
     for chemin in brut.cassettes:
         try:
-            octets = lire(ctx.lecteur.racine / chemin, "data", racine=ctx.lecteur.racine)
+            octets = lire(lecteur.racine / chemin, "data", racine=lecteur.racine)
             cassettes.append(Cassette.model_validate_json(octets))
         except (OSError, ValidationError, SlmspError):
-            raise ProvenanceInvalide(f"cassette {Path(chemin).name} illisible") from None
+            raise DerivationRefusee(
+                "outil_hors_cassette", f"cassette {Path(chemin).name} illisible"
+            ) from None
     return cassettes
 
 
 def _tours_outils(
-    ctx: ContexteBuild, brut: SessionBrute, lignes: Sequence[LigneAppel]
+    lecteur: LecteurGeneration, brut: SessionBrute, lignes: Sequence[LigneAppel]
 ) -> list[dict[str, Any]]:
     """Messages `assistant` journalisés et `tool` des cassettes de la session RD."""
-    cassettes = _cassettes(ctx, brut)
+    cassettes = _cassettes(lecteur, brut)
     messages: list[dict[str, Any]] = []
     for position, ligne in enumerate(lignes):
         message = extraire_message(ligne.reponse_brute)
@@ -162,11 +173,15 @@ def _tours_outils(
         if not appels:
             continue
         if position + 1 >= len(lignes):
-            raise ProvenanceInvalide("dernier appel de la session avec des appels d'outils")
+            raise DerivationRefusee(
+                "conversation_invalide", "dernier appel de la session avec des appels d'outils"
+            )
         try:
             requete = json.loads(lignes[position + 1].requete)["messages"]
         except (ValueError, KeyError, TypeError):
-            raise ProvenanceInvalide("requête journalisée illisible") from None
+            raise DerivationRefusee(
+                "outil_hors_cassette", "requête journalisée illisible"
+            ) from None
         recus = {
             m.get("tool_call_id"): m
             for m in requete
@@ -177,9 +192,10 @@ def _tours_outils(
             if retour is None or not any(
                 Generateur._resultat_de_cassette(retour, appel, c) for c in cassettes
             ):
-                raise ProvenanceInvalide(
+                raise DerivationRefusee(
+                    "outil_hors_cassette",
                     f"appel d'outil {appel.get('id') if isinstance(appel, Mapping) else '?'} : "
-                    "résultat absent des cassettes de la session"
+                    "résultat absent des cassettes de la session",
                 )
             messages.append(dict(retour))
     return messages
@@ -193,20 +209,25 @@ def _entree(
     if tache in TACHES_TEXTE:
         textes = [a.texte for a in amorces if a.emplacement == TACHES_TEXTE[tache]]
         if len(textes) != 1:
-            raise ProvenanceInvalide(
-                f"Tâche {tache} : une amorce « {TACHES_TEXTE[tache]} » attendue ({len(textes)})"
+            raise DerivationRefusee(
+                "entree_refusee",
+                f"Tâche {tache} : une amorce « {TACHES_TEXTE[tache]} » attendue ({len(textes)})",
             )
         return textes[0]
     if tache == "CR":
         if len(lignes) != 2:
-            raise ProvenanceInvalide("Tâche CR : transcription puis compte rendu attendus")
+            raise DerivationRefusee(
+                "entree_refusee", "Tâche CR : transcription puis compte rendu attendus"
+            )
         return {"transcription": extraire_contenu(lignes[0].reponse_brute)}
     if tache == "CO":
         return {"texte": extraire_contenu(lignes[-1].reponse_brute)}
     entree: dict[str, str] = {}
     for amorce in amorces:
         if amorce.emplacement in entree:
-            raise ProvenanceInvalide(f"Tâche {tache} : emplacement {amorce.emplacement} en double")
+            raise DerivationRefusee(
+                "entree_refusee", f"Tâche {tache} : emplacement {amorce.emplacement} en double"
+            )
         entree[amorce.emplacement] = amorce.texte
     return entree
 
@@ -215,9 +236,17 @@ def _sortie(brut: SessionBrute, amorces: Sequence[Amorce], lignes: Sequence[Lign
     if brut.tache == "CO":
         textes = [a.texte for a in amorces if a.emplacement == "texte"]
         if len(textes) != 1:
-            raise ProvenanceInvalide("Tâche CO : une amorce « texte » attendue")
+            raise DerivationRefusee("entree_refusee", "Tâche CO : une amorce « texte » attendue")
         return textes[0]
     return extraire_contenu(lignes[-1].reponse_brute)
+
+
+def _exiger_amorce_liee(amorce: Amorce, brut: SessionBrute) -> None:
+    if amorce.lie_a not in brut.amorce_ids:
+        raise DerivationRefusee(
+            "entree_refusee",
+            f"amorce {amorce.amorce_id} : paramètre sans son amorce liée dans la session",
+        )
 
 
 def sources_de(ctx: ContexteBuild, brut: SessionBrute) -> list[str]:
@@ -226,15 +255,62 @@ def sources_de(ctx: ContexteBuild, brut: SessionBrute) -> list[str]:
     for amorce_id in [*brut.amorce_ids, *brut.amorces_derivees]:
         amorce = _amorce(ctx, amorce_id)
         if amorce.auteur_contenu == "config":
-            if amorce.lie_a not in brut.amorce_ids:
-                raise ProvenanceInvalide(
-                    f"amorce {amorce_id} : paramètre sans son amorce liée dans la session"
-                )
+            _exiger_amorce_liee(amorce, brut)
             continue  # paramètre tiré par graine : aucune source de contenu
         ids.add(amorce.jeu if amorce.auteur_contenu == "public" and amorce.jeu else SOURCE_MISTRAL)
     if brut.cassettes:
         ids.add(SOURCE_OUTILS)
     return sorted(ids)
+
+
+def construire_conversation(
+    lecteur: LecteurGeneration, taches: TableTaches, brut: SessionBrute
+) -> tuple[list[LigneAppel], list[dict[str, Any]]]:
+    """Appels et messages de la session, sans licence ni variante.
+
+    Règle commune à `build` et à `validate` (F4). Tout refus propre à la session est une
+    `DerivationRefusee` (motif `entree_refusee`, `outil_hors_cassette` ou
+    `conversation_invalide`) ; les refus de provenance (appel, amorce) restent des
+    `ProvenanceInvalide`, que `validate` a déjà contrôlés avant.
+    """
+    lignes = [lecteur.appel_generation(appel_id) for appel_id in brut.appel_ids]
+    amorces = [lecteur.amorce_verifiee(amorce_id) for amorce_id in brut.amorce_ids]
+    for amorce_id in brut.amorces_derivees:
+        derivee = lecteur.amorce_verifiee(amorce_id)
+        if derivee.auteur_contenu == "config":
+            _exiger_amorce_liee(derivee, brut)
+    entree = _entree(brut, amorces, lignes)
+    if brut.tache == "generique":
+        if not isinstance(entree, dict) or set(entree) != {"demande"}:
+            raise DerivationRefusee(
+                "entree_refusee", "Tâche generique : une amorce « demande » attendue"
+            )
+        debut: list[dict[str, Any]] = [{"role": "user", "content": entree["demande"]}]
+    else:
+        try:
+            debut = construire_messages(
+                taches.tache(brut.tache),
+                entree,
+                lecteur.passages(brut) or None if brut.tache == "Q" else None,
+            )
+        except (EntreeInvalide, SlmspError) as exc:
+            raise DerivationRefusee(
+                "entree_refusee", f"Tâche {brut.tache} : entrée refusée : {exc}"
+            ) from None
+    if brut.tache == "RD":
+        suite = _tours_outils(lecteur, brut, lignes)
+        if suite[-1].get("role") != "assistant" or "tool_calls" in suite[-1]:
+            raise DerivationRefusee(
+                "conversation_invalide", "Tâche RD : réponse finale sans appel d'outil attendue"
+            )
+    else:
+        suite = [{"role": "assistant", "content": _sortie(brut, amorces, lignes)}]
+    messages = [*debut, *suite]
+    try:
+        valider_conversation(messages)
+    except ConversationInvalide as exc:
+        raise DerivationRefusee("conversation_invalide", f"conversation invalide : {exc}") from None
+    return lignes, messages
 
 
 def rederiver_ligne(ctx: ContexteBuild, brut: SessionBrute) -> LigneEntrainement:
@@ -243,35 +319,7 @@ def rederiver_ligne(ctx: ContexteBuild, brut: SessionBrute) -> LigneEntrainement
     Lève `ProvenanceInvalide` (appel absent ou d'un autre usage, amorce falsifiée, résultat
     d'outil hors cassette, entrée incompatible avec la Tâche) ou une erreur de licence.
     """
-    lignes = [_appel(ctx, appel_id) for appel_id in brut.appel_ids]
-    amorces = [_amorce(ctx, amorce_id) for amorce_id in brut.amorce_ids]
-    for amorce_id in brut.amorces_derivees:
-        _amorce(ctx, amorce_id)
-    entree = _entree(brut, amorces, lignes)
-    if brut.tache == "generique":
-        if not isinstance(entree, dict) or set(entree) != {"demande"}:
-            raise ProvenanceInvalide("Tâche generique : une amorce « demande » attendue")
-        debut: list[dict[str, Any]] = [{"role": "user", "content": entree["demande"]}]
-    else:
-        try:
-            debut = construire_messages(
-                ctx.taches.tache(brut.tache),
-                entree,
-                ctx.lecteur.passages(brut) or None if brut.tache == "Q" else None,
-            )
-        except (EntreeInvalide, SlmspError) as exc:
-            raise ProvenanceInvalide(f"Tâche {brut.tache} : entrée refusée : {exc}") from None
-    if brut.tache == "RD":
-        suite = _tours_outils(ctx, brut, lignes)
-        if suite[-1].get("role") != "assistant" or "tool_calls" in suite[-1]:
-            raise ProvenanceInvalide("Tâche RD : réponse finale sans appel d'outil attendue")
-    else:
-        suite = [{"role": "assistant", "content": _sortie(brut, amorces, lignes)}]
-    messages = [*debut, *suite]
-    try:
-        valider_conversation(messages)
-    except ConversationInvalide as exc:
-        raise ProvenanceInvalide(f"conversation invalide : {exc}") from None
+    lignes, messages = construire_conversation(ctx.lecteur, ctx.taches, brut)
 
     versions: dict[str, int] = {}
     for ligne in lignes:

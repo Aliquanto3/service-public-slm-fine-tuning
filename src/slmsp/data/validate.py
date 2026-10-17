@@ -73,6 +73,7 @@ from slmsp.core.schemas.session_donnees import SessionBrute, SessionPlanifiee
 from slmsp.core.texte import compter_mots, extraire_nombres
 from slmsp.data.extraction import extraire_contenu, extraire_message
 from slmsp.harness.citations import extraire_urls, urls_inventees
+from slmsp.harness.taches import TableTaches, charger_taches
 from slmsp.harness.taches.recherche import contenu_resultat
 from slmsp.mcp.bac_a_sable import BacASable
 from slmsp.mcp.outils import charger_config
@@ -562,18 +563,41 @@ def _source_fidelite(lecteur: LecteurGeneration, brut: SessionBrute) -> str:
     return "\n".join(lecteur.textes_amorces(brut))
 
 
+def _controler_derivation(
+    lecteur: LecteurGeneration, taches: TableTaches, brut: SessionBrute
+) -> None:
+    """Refus de `build` indépendants de la licence : entrée de la Tâche, cassettes, conversation.
+
+    Règle partagée avec `build` (`construire_conversation`, import différé : `build` importe
+    ce module). Les licences et la variante restent propres à `build` (AD-17).
+    """
+    from slmsp.data.build import DerivationRefusee, construire_conversation
+
+    try:
+        construire_conversation(lecteur, taches, brut)
+    except DerivationRefusee as exc:
+        raise _Rejet(exc.motif, exc.detail) from None
+    except ReponseTronquee as exc:
+        raise _Rejet("reponse_tronquee", str(exc)) from None
+    except ProvenanceInvalide as exc:
+        raise _Rejet("appel_invalide", str(exc)) from None
+
+
 def valider_session(
     lecteur: LecteurGeneration,
     brut: SessionBrute,
     *,
     chemin_outils: Path,
     controle: ControleurFidelite | None = None,
+    taches: TableTaches | None = None,
 ) -> None:
     """Valide une session ; lève `_Rejet` (motif de `MOTIFS_VALIDATION`) si elle est écartée."""
     lecteur.controler_provenance(brut)
     outils: list[str] = []
     if brut.tache == "RD":
         outils = _rejouer(lecteur, brut, chemin_outils)
+    if taches is not None:
+        _controler_derivation(lecteur, taches, brut)
     texte = lecteur.reponse_finale(brut)
     fournis = lecteur.textes_amorces(brut)
     if brut.tache == "CR":
@@ -645,6 +669,7 @@ def lancer_validation(
     journal: JournalMistral,
     controle: ControleurFidelite | None = None,
     chemin_outils: str | Path | None = None,
+    taches: TableTaches | None = None,
     consigner: Callable[[str], None] = print,
 ) -> ResultatValidation:
     """Crée `runs/data-validate/<run_id>/` depuis le run `data-generate` `generate_run_id`.
@@ -659,6 +684,8 @@ def lancer_validation(
     rend le run `validate` partiel (`statut_herite`).
     """
     base = Path(racine).resolve()
+    if taches is None:
+        taches = charger_taches()
     outils = Path(
         chemin_outils
         if chemin_outils is not None
@@ -684,7 +711,9 @@ def lancer_validation(
     try:
         for brut in sessions:
             try:
-                valider_session(lecteur, brut, chemin_outils=outils, controle=controle)
+                valider_session(
+                    lecteur, brut, chemin_outils=outils, controle=controle, taches=taches
+                )
             except _Rejet as rejet:
                 run.ajouter_jsonl(
                     NOM_REJETS,
