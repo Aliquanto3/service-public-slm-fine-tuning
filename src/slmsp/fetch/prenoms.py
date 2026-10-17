@@ -42,15 +42,37 @@ def charger_config_prenoms(dossier: Path | None = None) -> ConfigPrenoms:
         raise ConfigurationInvalide(f"{chemin} : [prenoms-insee] illisible ({exc})") from None
 
 
+FICHIER_PRENOMS = Path(__file__).resolve().parents[1] / "app" / "ressources" / "prenoms.txt"
+"""Fichier généré par défaut (chemin seulement : `fetch` n'importe pas `app`)."""
+
+
 def dossier_archive(racine: str | Path) -> Path:
     """`<racine>/data/raw/insee/prenoms`."""
     return Path(racine) / "data" / "raw" / "insee" / "prenoms"
 
 
-def lignes_csv(archive: Path, membre: str) -> list[str]:
+LIMITE_OCTETS_DECOMPRESSES = 128 * 1024 * 1024
+"""Plafond du membre CSV décompressé (le fichier réel fait quelques dizaines de Mo)."""
+
+
+def lignes_csv(
+    archive: Path, membre: str, *, limite: int = LIMITE_OCTETS_DECOMPRESSES
+) -> list[str]:
+    """Lit `membre` de l'archive ; refuse un membre qui dépasse `limite` octets décompressés.
+
+    La taille annoncée (`ZipInfo.file_size`) est contrôlée, puis la lecture par flux est plafonnée
+    à `limite + 1` octets (une taille annoncée mensongère ne contourne pas la borne).
+    """
     try:
         with zipfile.ZipFile(archive) as zf:
-            return zf.read(membre).decode("utf-8").splitlines()
+            info = zf.getinfo(membre)
+            if info.file_size > limite:
+                raise ArchiveInvalide(f"{archive} : {membre} dépasse {limite} octets décompressés")
+            with zf.open(info) as flux:
+                brut = flux.read(limite + 1)
+            if len(brut) > limite:
+                raise ArchiveInvalide(f"{archive} : {membre} dépasse {limite} octets décompressés")
+            return brut.decode("utf-8").splitlines()
     except (zipfile.BadZipFile, KeyError, UnicodeDecodeError) as exc:
         raise ArchiveInvalide(f"{archive} : {membre} illisible ({type(exc).__name__})") from None
 
@@ -77,7 +99,7 @@ def executer(
 ) -> tuple[ResultatFichier, int]:
     """Télécharge et vérifie l'archive, écrit `sortie` ; rend le résultat et le nombre de prénoms.
 
-    `extraire` (`prenoms_depuis_csv_insee`, injecté par la CLI : `fetch` ignore `app`) applique
+    `extraire` (`prenoms_depuis_csv_insee`, `core.prenoms_insee`, passé par la CLI) applique
     les règles de sélection, dont le seuil `minimum` de naissances.
     """
     destination = dossier_archive(racine) / Path(config.url).name
@@ -104,4 +126,4 @@ def executer(
     return resultat, len(prenoms)
 
 
-__all__ = ["ConfigPrenoms", "charger_config_prenoms", "executer", "lignes_csv"]
+__all__ = ["FICHIER_PRENOMS", "ConfigPrenoms", "charger_config_prenoms", "executer", "lignes_csv"]

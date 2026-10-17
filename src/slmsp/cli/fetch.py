@@ -31,6 +31,7 @@ from slmsp import net
 from slmsp.core.artefacts import Run, nouveau_run
 from slmsp.core.config import dossier_modeles, racine_projet
 from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide
+from slmsp.core.prenoms_insee import OCCURRENCES_MINIMALES, prenoms_depuis_csv_insee
 from slmsp.fetch import benchmarks, llamacpp, modeles, prenoms, sources, verifications
 from slmsp.fetch import config as config_fetch
 from slmsp.fetch.hf import Telechargeur, client_hf, jeton_hf, preparer_hf
@@ -107,6 +108,9 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "prenoms",
         parents=[commun],
         help="fichier des prénoms de l'INSEE, d'où `app/ressources/prenoms.txt`",
+    )
+    p.add_argument(
+        "--sortie", type=Path, default=None, help="fichier généré (défaut : app/ressources)"
     )
     p.set_defaults(func=_prenoms)
 
@@ -321,10 +325,17 @@ def _benchmarks(args: argparse.Namespace) -> int:
 
 def _prenoms(args: argparse.Namespace) -> int:
     config = prenoms.charger_config_prenoms()
+    sortie = args.sortie if args.sortie is not None else prenoms.FICHIER_PRENOMS
 
     def pilote(telechargeur: Telechargeur, consigner: Any, _run: Run) -> None:
         _resultat, nombre = prenoms.executer(
-            telechargeur, config, _racine(args), consigner=consigner
+            telechargeur,
+            config,
+            _racine(args),
+            sortie=sortie,
+            extraire=prenoms_depuis_csv_insee,
+            minimum=OCCURRENCES_MINIMALES,
+            consigner=consigner,
         )
         print(f"{nombre} prénoms retenus")
 

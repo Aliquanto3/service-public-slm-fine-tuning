@@ -12,8 +12,8 @@ from slmsp.app.anonymisation import (
     iban_valide,
     lire_prenoms,
     nir_valide,
-    prenoms_depuis_csv_insee,
 )
+from slmsp.core.prenoms_insee import prenoms_depuis_csv_insee
 
 PRENOMS = frozenset({"alphaprenom", "betaprenom", "gammaprenom"})
 
