@@ -138,14 +138,21 @@ class Banc:
     cache: CacheVerdicts
 
     def juge(self, **config_juge: Any) -> JugeMistral:
-        config_mistral = charger_mistral()
+        # Sans réessai : une erreur simulée est vue telle quelle (relances : tests/mistral).
+        config_mistral = charger_mistral().model_copy(update={"reessais_max": 0})
         sdk = fabriquer_sdk(
             config_mistral,
             transport_interne=httpx2.MockTransport(self.faux),
             journal_requetes=JournalMemoire(),
             fichier_env=self.dossier / ".env",
         )
-        client = ClientMistral(config_mistral, self.registre, sdk, dossier_journaux=self.dossier)
+        client = ClientMistral(
+            config_mistral,
+            self.registre,
+            sdk,
+            dossier_journaux=self.dossier,
+            dormir=lambda _: None,
+        )
         config = charger_juges().second.model_copy(update=config_juge)
         return JugeMistral(config, client, self.cache, self.grille)
 

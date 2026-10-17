@@ -45,6 +45,11 @@ META: dict[str, Any] = {
 }
 
 
+def sans_relance(banc: Any) -> Any:
+    """Configuration du banc sans réessai (comportement d'une tentative isolée)."""
+    return banc.config.model_copy(update={"reessais_max": 0})
+
+
 def appeler(client: Any, usage: str = "juge-second", **options: Any) -> ReponseMistral:
     valeurs: dict[str, Any] = {
         "max_tokens": 4000,
@@ -112,7 +117,7 @@ def test_cle_absente_du_journal(banc: Any, doublures: SimpleNamespace) -> None:
     appeler(banc.client(), "validation")
     banc.faux.reponses.append(500)
     with pytest.raises(ErreurApiMistral):
-        appeler(banc.client())
+        appeler(banc.client(sans_relance(banc)))
     cle = doublures.CLE_FACTICE.encode()
     for nom in (JOURNAL_JUGE, JOURNAL_DONNEES):
         for fichier in banc.dossier.glob(f"{nom}*"):
@@ -198,7 +203,7 @@ def test_budget_epuise(banc: Any) -> None:
 def test_erreur_serveur_comptee_au_pire_cas(banc: Any, statut: int) -> None:
     banc.faux.reponses.append(statut)
     with pytest.raises(ErreurApiMistral) as erreur:
-        appeler(banc.client())
+        appeler(banc.client(sans_relance(banc)))
     assert len(banc.faux.requetes) == 1  # aucune relance du SDK
     (ligne,) = banc.lignes_journal(JOURNAL_JUGE)
     assert ligne["statut"] == "erreur" and ligne["statut_http"] == statut
@@ -212,7 +217,7 @@ def test_erreur_serveur_comptee_au_pire_cas(banc: Any, statut: int) -> None:
 def test_erreur_reseau(banc: Any) -> None:
     banc.faux.reponses.append(httpx2.ConnectError("connexion refusée (factice)"))
     with pytest.raises(ErreurApiMistral) as erreur:
-        appeler(banc.client())
+        appeler(banc.client(sans_relance(banc)))
     assert erreur.value.statut_http is None
     (ligne,) = banc.lignes_journal(JOURNAL_JUGE)
     assert ligne["statut"] == "erreur" and ligne["statut_http"] is None
@@ -226,7 +231,7 @@ def test_erreur_reseau(banc: Any) -> None:
 def test_refus_4xx_non_facture(banc: Any, statut: int) -> None:
     banc.faux.reponses.append(statut)
     with pytest.raises(ErreurApiMistral) as erreur:
-        appeler(banc.client())
+        appeler(banc.client(sans_relance(banc)))
     assert erreur.value.statut_http == statut and erreur.value.cout_eur == 0
     assert len(banc.faux.requetes) == 1
     (ligne,) = banc.lignes_journal(JOURNAL_JUGE)

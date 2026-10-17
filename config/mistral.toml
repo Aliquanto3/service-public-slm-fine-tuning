@@ -18,8 +18,32 @@ modeles_autorises = ["mistral-large-latest", "mistral-large-2411", "mistral-larg
 # casse) : modèles Labs, préversions, bêtas, candidats et modèles expérimentaux.
 motifs_interdits = ["labs", "preview", "beta", "-rc", "experimental"]
 
-# Délai d'un appel HTTP à l'API (secondes), passé au SDK `mistralai` (`timeout_ms`).
+# Délais d'un appel HTTP à l'API (secondes), imposés par la passerelle réseau
+# (`slmsp.net.relances.DelaisAppel`) à chaque tentative. `delai_appel` est l'échéance totale
+# d'une tentative (contrôlée à chaque morceau reçu) ; `delai_lecture` borne l'attente de chaque
+# lecture, dont la première (l'API ne répond qu'une fois la génération finie) ; un dépassement
+# est une erreur de transport, relancée comme une 5xx.
+# Échéance totale d'une tentative.
 delai_appel = 300
+# Établissement de la connexion.
+delai_connexion = 10
+# Chaque lecture (et écriture).
+delai_lecture = 300
+
+# Relances sur 429 (limite de débit), 500, 502, 503, 504 et erreur de transport. Chaque
+# tentative a sa réservation, réglée avant la suivante : un 429 à 0, une 5xx ou une erreur de
+# transport au pire cas. L'attente suit `Retry-After` (secondes ou date HTTP) ; sans cet
+# en-tête, `attente_base * 2**(n-1)` bornée par `attente_plafond`, avec gigue. Au-delà de
+# `reessais_max` réessais, ou si l'attente cumulée dépasserait `attente_totale_max`, l'erreur
+# est levée (`ErreurApiMistral`) : le run passe en `partiel-erreur` et peut être repris.
+# Nombre maximal de réessais après la première tentative (0 : aucune relance).
+reessais_max = 5
+# Attente cumulée maximale entre tentatives (secondes).
+attente_totale_max = 600
+# Attente du premier réessai sans Retry-After (secondes), doublée à chaque réessai.
+attente_base = 2
+# Plafond d'une attente exponentielle (secondes).
+attente_plafond = 60
 
 # Journaux des appels, dans `SLMSP_VAR_DIR`. Journal des données (`generation`, `validation`) :
 # lisible par les pipelines `data` et `train` (AD-24) ; son nom doit rester celui de

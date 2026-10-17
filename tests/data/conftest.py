@@ -349,14 +349,15 @@ class Monde:
         )
         env = dossier / ".env"
         env.write_text("MISTRAL_API_KEY=cle-mistral-factice\n", encoding="utf-8")
-        config = charger_mistral()
+        # Sans réessai : une erreur simulée arrête le pipeline (relances : tests/mistral).
+        config = charger_mistral().model_copy(update={"reessais_max": 0})
         sdk = fabriquer_sdk(
             config,
             transport_interne=httpx2.MockTransport(self.faux),
             journal_requetes=JournalMemoire(),
             fichier_env=env,
         )
-        return ClientMistral(config, registre, sdk)
+        return ClientMistral(config, registre, sdk, dormir=lambda _: None)
 
     def aujourd_hui(self) -> date:
         return self.jours.pop(0) if len(self.jours) > 1 else self.jours[0]
