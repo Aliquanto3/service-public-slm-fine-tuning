@@ -83,3 +83,11 @@ Bonsai : mêmes commandes avec `base:bonsai-2-4b`. Le binaire `prism-b10777-e3de
 - Banc : `llamacpp_tag` est rempli seulement pour une sélection avec cible GGUF. Il est laissé vide si la configuration du modèle est introuvable : le moteur signale alors l'erreur lui-même.
 - `version()` (`llama-server --version`) renvoie `b10777` pour le binaire réservé, pas le tag du fork. Rien ne compare ce résultat au tag aujourd'hui ; c'est à garder en tête si un contrôle est ajouté.
 - Débit CPU de Bonsai (environ 6 tok/s) : la génération v1.1 sera longue en CPU. La variante CUDA est épinglée et vérifiée, mais elle n'a pas été essayée (GPU occupé).
+
+## Revue
+Revue du commit e7b651e (rebasé en 5f58408), second avis Haiku puis Opus.
+- medium, second avis, corrigé : `measure run` ne comptait que les binaires de la version de génération. `_composants` consigne maintenant les binaires de chaque version servie (génération et embedding) ; clés `binaires-<tag>-<variante>` s'il y en a deux, inchangées s'il n'y en a qu'une. Test `test_composants_binaires_des_deux_versions`.
+- medium, second avis, écart consigné : seuls `llama-server.exe` et `ggml-cuda.dll` sont épinglés, comme pour b11429 ; les autres DLL (`llama.dll`, `ggml*.dll` CPU) ne le sont pas, ni dans b11429. Épinglage étendu non fait, pour garder le même niveau de contrôle sur les deux versions ; la protection des DLL reste celle des archives, vérifiées par SHA-256 avant extraction, et l'extraction ne remplace aucun fichier. La phrase « binaires vérifiés » désigne donc les seuls binaires épinglés de `[binaires]`, pas tous les fichiers extraits.
+- low, second avis, corrigé : `--version` validé par `MOTIF_TAG` avant toute lecture (`fichier_config`) ; test `test_version_invalide_refusee_avant_lecture`.
+- low, second avis, corrigé : `[sources]` redevient obligatoire pour `config/llamacpp.toml` (`verifier_config`, contrôle contextuel commun aux deux chargeurs) ; test `test_sources_obligatoires_pour_la_version_commune`.
+- low, second avis, rejeté : la cudart n'est pas retéléchargée, `fetch` la réutilise déjà par lien dur (même SHA ; run `20261017-055925-llamacpp-fdce`, « cudart réutilisée »).

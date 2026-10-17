@@ -30,7 +30,7 @@ from slmsp.core.artefacts import ArtefactExistant
 from slmsp.core.canonique import sha256_fichier
 from slmsp.core.config import charger_toml, dossier_modeles, env_sous_processus, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
-from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp, fichier_config
+from slmsp.core.schemas.config_llamacpp import ConfigLlamacpp, fichier_config, verifier_config
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.var import dossier_var, verrou_gpu
 from slmsp.inference import processus
@@ -82,12 +82,9 @@ def charger_config_llamacpp(version: str | None = None) -> ConfigLlamacpp:
 
     Lève `ConfigurationInvalide` (fichier absent ou invalide, `tag` différent de `version`).
     """
-    config = charger_toml(fichier_config(racine_projet() / "config", version), ConfigLlamacpp)
-    if version is not None and config.tag != version:
-        raise ConfigurationInvalide(
-            f"config/llamacpp/{version}.toml : tag {config.tag!r} différent du nom du fichier"
-        )
-    return config
+    return verifier_config(
+        charger_toml(fichier_config(racine_projet() / "config", version), ConfigLlamacpp), version
+    )
 
 
 def config_llamacpp_modele(config: ConfigModele) -> ConfigLlamacpp:

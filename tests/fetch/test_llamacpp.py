@@ -403,3 +403,19 @@ def test_release_reelle_conforme(tmp_path: Path) -> None:
         prevues = llamacpp.lire_release(Telechargeur(client, charger_config_fetch()), config)
     assert {p.nom for p in prevues} == {a.nom for a in config.assets.values()}
     assert all(p.taille for p in prevues)
+
+
+def test_version_invalide_refusee_avant_lecture(tmp_path: Path) -> None:
+    """`--version` est validée par MOTIF_TAG : pas de chemin hors de `config/llamacpp/`."""
+    for faux in ("../llamacpp", "B1", "prism", "a/b"):
+        with pytest.raises(ConfigurationInvalide, match="version llama.cpp invalide"):
+            charger_config_llamacpp(tmp_path, version=faux)
+    assert main(["fetch", "llamacpp", "--version", "../x"]) != 0
+
+
+def test_sources_obligatoires_pour_la_version_commune(tmp_path: Path) -> None:
+    reelle = (Path(__file__).parents[2] / "config" / "llamacpp.toml").read_text(encoding="utf-8")
+    sans = reelle.split("# Archive des sources")[0] + "[binaires]\n"
+    (tmp_path / "llamacpp.toml").write_text(sans, encoding="utf-8")
+    with pytest.raises(ConfigurationInvalide, match="sources"):
+        charger_config_llamacpp(tmp_path)

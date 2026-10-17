@@ -10,11 +10,13 @@ par `config/llamacpp/<tag>.toml`, au même schéma, et rangée sous `vendor/llam
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Annotated, Final, Literal
 
 from pydantic import Field, StringConstraints, field_validator
 
+from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.schemas import SchemaBase, Sha256, SousSchema
 
 ASSETS_REQUIS = ("cpu", "cuda", "cudart")
@@ -29,6 +31,8 @@ def fichier_config(dossier_config: Path, version: str | None = None) -> Path:
     """`<config>/llamacpp.toml` (version commune) ou `<config>/llamacpp/<version>.toml`."""
     if version is None:
         return dossier_config / "llamacpp.toml"
+    if not re.fullmatch(MOTIF_TAG, version):
+        raise ConfigurationInvalide(f"version llama.cpp invalide : {version!r}")
     return dossier_config / "llamacpp" / f"{version}.toml"
 
 
@@ -57,3 +61,16 @@ class ConfigLlamacpp(SchemaBase):
         if set(valeur) != set(ASSETS_REQUIS):
             raise ValueError(f"assets doit contenir exactement {', '.join(ASSETS_REQUIS)}")
         return valeur
+
+
+def verifier_config(config: ConfigLlamacpp, version: str | None) -> ConfigLlamacpp:
+    """Contrôle contextuel : `tag` égal au nom du fichier d'une version réservée ; `[sources]`
+    obligatoire pour la version commune (conversion HF → GGUF)."""
+    if version is None:
+        if config.sources is None:
+            raise ConfigurationInvalide("config/llamacpp.toml : [sources] est obligatoire")
+    elif config.tag != version:
+        raise ConfigurationInvalide(
+            f"config/llamacpp/{version}.toml : tag {config.tag!r} différent du nom du fichier"
+        )
+    return config
