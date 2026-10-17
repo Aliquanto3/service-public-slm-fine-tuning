@@ -31,7 +31,7 @@ from slmsp.core.items import lire_jeu as lire_jeu_evaluation
 from slmsp.core.schemas.amorce import Amorce
 from slmsp.core.texte import normaliser
 from slmsp.data import seed as seed_module
-from slmsp.data.config import ConfigDonnees, charger_config_donnees
+from slmsp.data.config import ConfigDonnees, SeedDonnees, charger_config_donnees
 from slmsp.data.licences import RegistreLicences, UsageInterdit
 from slmsp.data.seed import (
     COLONNES_IDENTIFIANTS,
@@ -1046,7 +1046,7 @@ def test_longueurs_re_tirees_dans_la_configuration(monde: Monde) -> None:
     textes = {a["amorce_id"] for a in amorces if a["emplacement"] == "texte"}
     longueurs = [Amorce.model_validate(a) for a in amorces if a["auteur_contenu"] == "config"]
     assert len(longueurs) == len(textes) == 6
-    admises = {f"{n} mots" for n in config.seed.re_longueurs_mots}
+    admises = set(config.seed.re_longueurs)
     for longueur in longueurs:
         assert longueur.lie_a in textes
         assert longueur.texte in admises
@@ -1066,8 +1066,8 @@ def test_verifier_refuse_une_longueur_sans_amorce_liee(monde: Monde) -> None:
         "amorce_id": "re.longueur_demandee.x",
         "tache": "RE",
         "emplacement": "longueur_demandee",
-        "texte": "80 mots",
-        "sha_texte": sha256_hex("80 mots"),
+        "texte": "courte",
+        "sha_texte": sha256_hex("courte"),
         "auteur_contenu": "config",
         "lie_a": "re.texte.absente",
     }
@@ -1081,7 +1081,8 @@ def test_verifier_refuse_une_longueur_sans_amorce_liee(monde: Monde) -> None:
     [
         ({}, True),
         ({"texte": "<longueur-factice>"}, False),
-        ({"texte": "5 mots"}, False),
+        ({"texte": "80 mots"}, False),
+        ({"texte": "détaillée"}, False),
         ({"emplacement": "texte"}, False),
         ({"lie_a": None}, False),
         ({"appel_id": "a" * 32}, False),
@@ -1093,7 +1094,7 @@ def test_schema_amorce_config(champs: dict[str, Any], admis: bool) -> None:
         "amorce_id": "re.longueur_demandee.x",
         "tache": "RE",
         "emplacement": "longueur_demandee",
-        "texte": "150 mots",
+        "texte": "moyenne",
         "auteur_contenu": "config",
         "lie_a": "re.texte.x",
     } | champs
@@ -1168,3 +1169,36 @@ def test_generate_groupe_longueur_avec_son_texte_et_courrier_par_appel(monde: Mo
     complets, incomplets, ignorees = _groupes(ct, ["type_courrier", "objet", "elements_connus"])
     assert (len(complets), incomplets, ignorees) == (2, 0, 3)  # sujets publics ignorés
     assert all(len({a.appel_id for a in g}) == 1 for g in complets)
+
+
+def test_longueurs_re_hors_evaluation_refusees() -> None:
+
+    assert SeedDonnees().re_longueurs == ["courte", "moyenne", "detaillee"]
+    for invalide in (["détaillée"], ["80 mots"], []):
+        with pytest.raises(ValueError):
+            SeedDonnees(re_longueurs=invalide)
+
+
+def test_mots_admis_de_l_amorce_egaux_a_evaluation_toml() -> None:
+    """Une seule vérité pour les mots admis : le motif de l'amorce `config` et
+    `[re.longueurs]` de `config/evaluation.toml` doivent rester égaux."""
+    import re
+
+    from slmsp.core.config import plafonds_re_evaluation
+    from slmsp.core.schemas.amorce import MOTIF_TEXTE_CONFIG
+
+    assert set(MOTIF_TEXTE_CONFIG.split("|")) == set(plafonds_re_evaluation())
+    assert all(re.fullmatch(MOTIF_TEXTE_CONFIG, mot) for mot in plafonds_re_evaluation())
+    assert set(SeedDonnees().re_longueurs) == set(plafonds_re_evaluation())
+
+
+@pytest.mark.parametrize("contenu", [None, b"\xff\xfe\x00", b"[re\n"])
+def test_evaluation_toml_illisible_rejette_la_configuration_seed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, contenu: bytes | None
+) -> None:
+    (tmp_path / "config").mkdir()
+    if contenu is not None:
+        (tmp_path / "config" / "evaluation.toml").write_bytes(contenu)
+    monkeypatch.setattr("slmsp.core.config.racine_projet", lambda: tmp_path)
+    with pytest.raises(ValueError, match="illisible"):
+        SeedDonnees(re_longueurs=["courte"])

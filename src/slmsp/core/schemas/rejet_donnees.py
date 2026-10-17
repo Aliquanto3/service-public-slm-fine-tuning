@@ -18,6 +18,7 @@ MotifValidation = Literal[
     "url_inventee",
     "valeur_absente",
     "infidele",
+    "longueur_depassee",
 ]
 MotifFiltre = Literal["fuite_ngram", "fuite_cosinus", "doublon"]
 MOTIFS_VALIDATION: Final[tuple[str, ...]] = get_args(MotifValidation)

@@ -7,7 +7,7 @@ implémentées.
 `runs/data-seed/<run_id>/` (`amorces.jsonl`, `comptes.json`) depuis les jeux publics de
 `config/sources.toml`, déjà téléchargés sous `<racine>/data/raw/mediatech/` par
 `slmsp fetch sources` (extra `data` : pyarrow). Les longueurs RE sont tirées dans
-`[seed].re_longueurs_mots` de `config/donnees.toml`. Les scénarios de réunion (`--scenarios N`)
+`[seed].re_longueurs` de `config/donnees.toml`. Les scénarios de réunion (`--scenarios N`)
 et les amorces de courrier type (`--courriers N`, ou `auto` = volume CT x facteur) sont
 générés par Mistral, opt-in (0 par défaut) : ils exigent le gel commité du Jeu d'évaluation
 v1.1 (code 4 sinon). Les amorces CT d'une session déjà journalisée sont réutilisées sans

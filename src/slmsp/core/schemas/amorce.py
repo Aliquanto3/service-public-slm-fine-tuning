@@ -9,7 +9,8 @@ générateur. Sa provenance est l'une de :
 - `anael` : réservé (décision différée d'Anaël) ; le Générateur le refuse ;
 - `config` : un paramètre de configuration tiré par graine, sans contenu rédigé (`lie_a`
   requis, interdit ailleurs : l'amorce jointe dans le même appel). Seuls les emplacements de
-  `EMPLACEMENTS_CONFIG` l'admettent, avec un texte de la forme `<n> mots`.
+  `EMPLACEMENTS_CONFIG` l'admettent, avec pour texte une longueur du Jeu
+  (`courte`, `moyenne`, `detaillee`).
 
 Une amorce `mistral` reprend soit le contenu entier de la réponse journalisée, soit la
 valeur de la clé `emplacement` de l'objet JSON que ce contenu porte (`texte_de_reponse`).
@@ -38,8 +39,8 @@ AuteurAmorce = Literal["public", "mistral", "anael", "config"]
 
 EMPLACEMENTS_CONFIG: Final[frozenset[tuple[str, str]]] = frozenset({("RE", "longueur_demandee")})
 """(Tâche, emplacement) qui admettent une amorce `config`."""
-MOTIF_TEXTE_CONFIG: Final = r"[1-9][0-9]{1,3} mots"
-"""Forme du texte d'une amorce `config` : une longueur en mots (10 à 9999)."""
+MOTIF_TEXTE_CONFIG: Final = r"courte|moyenne|detaillee"
+"""Forme du texte d'une amorce `config` : la longueur demandée du Jeu (clés de `[re.longueurs]`)."""
 
 _RE_CLOTURE = re.compile(r"\A```[A-Za-z]*[ \t]*\n(.*)\n[ \t]*```\Z", re.DOTALL)
 

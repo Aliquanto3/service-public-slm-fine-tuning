@@ -21,7 +21,7 @@ from pydantic import ValidationError
 pytest.importorskip("mistralai")
 
 from slmsp.core.canonique import json_canonique, sha256_hex  # noqa: E402
-from slmsp.core.config import racine_projet  # noqa: E402
+from slmsp.core.config import plafonds_re_evaluation, racine_projet  # noqa: E402
 from slmsp.core.erreurs import ProvenanceInvalide  # noqa: E402
 from slmsp.core.gabarits import GabaritInvalide, valider_gabarit  # noqa: E402
 from slmsp.core.schemas.amorce import Amorce  # noqa: E402
@@ -228,11 +228,12 @@ def test_appel_nominal(monde: Monde) -> None:
 
 
 def test_rendu_groupe_par_emplacement_en_une_passe(monde: Monde) -> None:
-    """Amorces jointes par emplacement dans l'ordre demandé ; un `{x}` d'amorce reste tel quel."""
+    """Amorces jointes par emplacement dans l'ordre demandé ; un `{x}` d'amorce reste tel quel ;
+    `{plafond_mots}` est dérivé de la longueur du Jeu, pas écrit par une amorce."""
     piege = f"<amorce-factice-{secrets.token_hex(2)} {{texte}}>"
     graines = [
-        amorce("texte-a", "RE", "texte"),
-        amorce("longueur", "RE", "longueur_demandee", texte=piege),
+        amorce("texte-a", "RE", "texte", texte=piege),
+        amorce("longueur", "RE", "longueur_demandee", texte="courte"),
         amorce("texte-b", "RE", "texte"),
     ]
     monde.ecrire_seed(graines)
@@ -240,13 +241,44 @@ def test_rendu_groupe_par_emplacement_en_une_passe(monde: Monde) -> None:
     attendue = (
         consigne("re")
         .replace("{texte}", graines[2]["texte"] + "\n\n" + graines[0]["texte"])
-        .replace("{longueur_demandee}", piege)
+        .replace("{longueur_demandee}", "courte")
+        .replace("{plafond_mots}", "80")
     )
     (corps,) = monde.banc.faux.corps()
     assert corps["messages"] == [{"role": "user", "content": attendue}]
+    assert "le résumé ne dépasse pas 80 mots" in corps["messages"][0]["content"]
     assert corps["max_tokens"] == 1500  # front-matter du gabarit
     (ligne,) = monde.banc.lignes_journal(JOURNAL_DONNEES)
     assert json.loads(ligne["amorce_ids"]) == ["texte-b", "longueur", "texte-a"]
+
+
+@pytest.mark.parametrize(("mot", "plafond"), [("courte", 80), ("moyenne", 200), ("detaillee", 400)])
+def test_plafond_mots_derive_de_evaluation_toml(monde: Monde, mot: str, plafond: int) -> None:
+    attendus = plafonds_re_evaluation()
+    assert attendus[mot] == plafond  # [re.longueurs] de config/evaluation.toml
+    monde.ecrire_seed(
+        [amorce("t", "RE", "texte"), amorce("l", "RE", "longueur_demandee", texte=mot)]
+    )
+    generation = monde.generateur().generer("re", ["t", "l"], "session-re", "RE")
+    contenu = generation.messages[0]["content"]
+    assert f"ne dépasse pas {plafond} mots" in contenu
+    assert "{plafond_mots}" not in contenu
+
+
+def test_longueur_inconnue_refusee_avant_l_appel(monde: Monde) -> None:
+    monde.ecrire_seed(
+        [amorce("t", "RE", "texte"), amorce("l", "RE", "longueur_demandee", texte="80 mots")]
+    )
+    with pytest.raises(GabaritInvalide, match="plafond_mots"):
+        monde.generateur().generer("re", ["t", "l"], "s", "RE")
+    monde.rien_n_est_parti()
+
+
+def test_amorce_sur_l_emplacement_plafond_refusee(monde: Monde) -> None:
+    monde.ecrire_seed([amorce("t", "RE", "texte"), amorce("p", "RE", "plafond_mots", texte="9")])
+    with pytest.raises(ProvenanceInvalide, match="plafond_mots"):
+        monde.generateur().generer("re", ["t", "p"], "s", "RE")
+    monde.rien_n_est_parti()
 
 
 def test_estimation_des_tokens(monde: Monde) -> None:
@@ -1001,7 +1033,7 @@ def longueur_re(lie_a: str) -> dict[str, Any]:
         "RE",
         "longueur_demandee",
         auteur="config",
-        texte="150 mots",
+        texte="moyenne",
         lie_a=lie_a,
     )
 
@@ -1011,7 +1043,7 @@ def test_longueur_re_de_configuration_admise_avec_son_texte(monde: Monde) -> Non
     generation = monde.generateur().generer(
         "re", ["re.longueur_demandee.1", "re.texte.1"], "session-re", "RE"
     )
-    assert "150 mots" in generation.messages[0]["content"]
+    assert "moyenne" in generation.messages[0]["content"]
 
 
 def test_longueur_re_sans_son_texte_dans_l_appel_refusee(monde: Monde) -> None:

@@ -264,7 +264,9 @@ class Monde:
         sha: str | None = None,
         **champs: Any,
     ) -> dict[str, Any]:
-        texte = texte if texte is not None else factice("amorce")
+        if texte is None:
+            # RE/longueur_demandee : un mot du Jeu (le générateur en dérive le plafond de mots).
+            texte = "moyenne" if emplacement == "longueur_demandee" else factice("amorce")
         ligne = ligne if ligne is not None else secrets.randbelow(10**6)
         valeurs = {
             "schema_version": 1,

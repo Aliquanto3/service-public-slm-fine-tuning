@@ -8,7 +8,7 @@
   [0,10 ; 0,20] du total (D4) ;
 - `[deduplication]`, `[anti_fuite]` : n-grammes et seuils de l'étape `filter`, dans ]0, 1] ;
 - `[relecture]` : échantillon de relecture humaine ;
-- `[seed]` : paramètres de l'étape `seed` (longueurs de résumé RE en mots, tirées par
+- `[seed]` : paramètres de l'étape `seed` (longueurs de résumé RE du Jeu, tirées par
   graine ; optionnelle, valeurs par défaut ci-dessous) ;
 - `[preferences]` : génération locale de la réponse rejetée des paires ORPO (graine,
   température, longueur maximale ; optionnelle, valeurs par défaut ci-dessous).
@@ -26,7 +26,8 @@ from typing import Annotated, Any, Final, Literal
 
 from pydantic import Field, StrictInt, StringConstraints, field_validator, model_validator
 
-from slmsp.core.config import ModeleConfig, charger_toml, racine_projet
+from slmsp.core.config import ModeleConfig, charger_toml, plafonds_re_evaluation, racine_projet
+from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
 
 __all__ = [
@@ -149,16 +150,28 @@ class PreferencesDonnees(ModeleConfig):
     max_tokens: Annotated[StrictInt, Field(ge=1)] = 1024
 
 
-LongueurMots = Annotated[StrictInt, Field(ge=10, le=9999)]
-
-
 class SeedDonnees(ModeleConfig):
     """Table `[seed]` : paramètres de l'étape `seed` (aucun contenu rédigé)."""
 
-    re_longueurs_mots: list[LongueurMots] = Field(
-        default_factory=lambda: [80, 150, 250], min_length=1
+    re_longueurs: list[str] = Field(
+        default_factory=lambda: ["courte", "moyenne", "detaillee"], min_length=1
     )
-    """Longueurs de résumé (en mots) tirées pour l'emplacement `RE/longueur_demandee`."""
+    """Longueurs de résumé tirées pour `RE/longueur_demandee`, dans la forme du Jeu gelé : clés de
+    `[re.longueurs]` de `config/evaluation.toml` (sans accent)."""
+
+    @field_validator("re_longueurs")
+    @classmethod
+    def _longueurs_connues(cls, valeurs: list[str]) -> list[str]:
+        # ValueError sans la valeur saisie (règle de `charger_toml`) ; un evaluation.toml
+        # illisible (ConfigurationInvalide) est converti de même.
+        try:
+            connues = set(plafonds_re_evaluation())
+        except ConfigurationInvalide:
+            raise ValueError("[re.longueurs] de evaluation.toml illisible") from None
+        if any(v not in connues for v in valeurs):
+            raise ValueError("longueur RE inconnue de [re.longueurs] de evaluation.toml")
+        return valeurs
+
     graine: Annotated[StrictInt, Field(ge=0)] = 42
     """Graine du tirage ; une même amorce de texte reçoit toujours la même longueur."""
 

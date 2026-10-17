@@ -18,7 +18,7 @@ deferred: []
 
 **Problem:** Les gabarits CT et RE ont des emplacements sans source publique (`CT/type_courrier`, `CT/objet`, `CT/elements_connus`, `RE/longueur_demandee`) : `generate` planifie 0 session CT et 0 session RE, d'où un déficit égal à la cible.
 
-**Approach:** (A2b) `seed` fait produire les amorces CT par Mistral, une réponse JSON par sujet public, découpée en trois amorces `mistral` du même appel. La longueur RE devient un paramètre de `config/donnees.toml` (`[seed].re_longueurs_mots`), tiré par graine pour chaque texte RE, sous une provenance `config` sans contenu.
+**Approach:** (A2b) `seed` fait produire les amorces CT par Mistral, une réponse JSON par sujet public, découpée en trois amorces `mistral` du même appel. La longueur RE devient un paramètre de `config/donnees.toml` (`[seed].re_longueurs`), tiré par graine pour chaque texte RE, sous une provenance `config` sans contenu.
 
 ## Boundaries & Constraints
 
@@ -42,7 +42,7 @@ deferred: []
 | Budget | `BudgetEpuise` pendant les appels | run `partiel-budget`, amorces écrites conservées, code 3 | — |
 | Reprise | même sujet, nouveau run | même `session_id`, réponse journalisée réutilisée | — |
 | Sans gel | `--courriers > 0`, v1.1 non commité | aucun run, code 4 | `ManifesteInvalide` |
-| RE | texte RE conservé | amorce `config` `<n> mots`, `lie_a` = texte, `n` dans la liste | `ProvenanceInvalide` si `lie_a` absent |
+| RE | texte RE conservé | amorce `config` `courte`, `moyenne` ou `detaillee`, `lie_a` = texte, valeur dans la liste | `ProvenanceInvalide` si `lie_a` absent |
 
 </intent-contract>
 
@@ -53,7 +53,7 @@ deferred: []
 - `src/slmsp/mistral/generateur.py` -- vérification JSON des amorces Mistral, `lie_a` présent dans l'appel, `reponse_journalisee`.
 - `src/slmsp/data/generate.py` -- `_origine` : une amorce `config` rejoint le groupe de son amorce liée.
 - `src/slmsp/data/build.py` -- accepte `config` (aucune source au Registre) et la découpe JSON.
-- `src/slmsp/data/config.py`, `config/donnees.toml` -- table `[seed]` (`re_longueurs_mots = [80, 150, 250]`, `graine = 42`).
+- `src/slmsp/data/config.py`, `config/donnees.toml` -- table `[seed]` (`re_longueurs = ["courte", "moyenne", "detaillee"]`, `graine = 42`).
 - `src/slmsp/cli/data.py` -- `seed --courriers {N,auto}` (auto = volume CT x facteur), fabrique avec reprise par le journal.
 - `config/prompts/generateur/amorces-ct.md` -- méta-prompt.
 
@@ -95,7 +95,7 @@ deferred: []
 ## À confirmer par Anaël
 
 1. Les deux extensions de schéma : provenance d'amorce `config` (avec `lie_a`), et amorce Mistral égale à une clé de l'objet JSON de la réponse. Le Registre des licences n'est pas modifié.
-2. Les longueurs RE `[80, 150, 250]` mots et la graine 42.
+2. Les longueurs RE `["courte", "moyenne", "detaillee"]` et la graine 42.
 3. Les sujets CT tirés des titres `service-public` (règle `CT/sujet`), qui ancrent et diversifient les demandes.
 4. Volume `auto` = volume CT x facteur (105 appels) : la marge couvre les rejets de schéma, de doublon et d'anti-fuite, puis ceux des étapes suivantes.
 5. Pas de mode JSON forcé (`response_format`) : le gabarit n'accepte que `max_tokens`. Un écart de format se compte en `schema_invalide`. À ajouter si ce taux dépasse 10 %.
@@ -122,3 +122,20 @@ Revue Opus du 2026-10-16, après rebase sur `main` (12.1, 12.2), avec la liste d
 - **info**, relecteur, vérifié : la relance est idempotente avec le vrai `Generateur` et le vrai client (doublure SDK seulement). Un second run `seed` réutilise la réponse journalisée de la session `seed-ct-<sha>`, sans nouvelle requête ni réservation. Test : `test_fabrique_courriers_relance_sans_second_appel`. Le test de l'implémenteur ne s'appuyait que sur une doublure.
 - **info**, relecteur, vérifié : la réservation du budget précède chaque appel (`ClientMistral._appeler`). Avec `BudgetEpuise`, le run passe en `partiel-budget` et la commande sort en code 3. Sans gel v1.1 commité, elle sort en code 4 avant toute fabrique. Le méta-prompt `amorces-ct.md` ne contient aucun exemple ni aucune valeur.
 - **info**, relecteur, reporté (exploitation) : `generer` lève `PrealableNonSatisfait` si le jour change après `conditions_verifiees_le`. Une campagne qui passe minuit s'arrête donc en `partiel-erreur`. La relance du lendemain, après une nouvelle vérification des conditions, ne refacture pas les courriers déjà journalisés. Il faut aussi savoir qu'une erreur d'API (`ErreurApiMistral`) ou `ModeleMistralRefuse` interrompt le run de la même façon. À vérifier pendant la campagne réelle : `budget etat` avant et après une relance, qui doit afficher une dépense identique pour les courriers.
+
+## Changement du 2026-10-17 : longueurs RE du Jeu (décision d'Anaël)
+
+- `[seed].re_longueurs_mots = [80, 150, 250]` est remplacé par `[seed].re_longueurs = ["courte", "moyenne", "detaillee"]`, forme exacte de `longueur_demandee` dans le Jeu v1.1 (sans accent, minuscules ; 5 items chacune). Chaque valeur doit être une clé de `[re.longueurs]` de `config/evaluation.toml` (validation `SeedDonnees`), pour que le contrôle de longueur s'applique. L'amorce `config` porte la valeur seule (`MOTIF_TEXTE_CONFIG`).
+- Les runs seed antérieurs (amorces « n mots ») ne se relisent plus avec ce schéma : reprise par un nouveau seed.
+- Reprise de la campagne : les identifiants de session de `generate` ne contiennent ni le run de seed ni l'`appel_id` ; Q, RD, CO, LC, CT, generique et leurs réponses journalisées sont réutilisés sans dépense. Seuls RE (nouveau texte d'amorce) et les 240 scénarios CR (session `<run_seed>-scenario-NNN`, rappelés par la fabrique) sont à repayer. Piste, à confirmer par Anaël : réutiliser la réponse journalisée d'un scénario par (gabarit, thème), comme pour les courriers (`reponse_journalisee`), pour éviter ~1,7 EUR.
+- Plafond de mots pour le générateur : le gabarit `config/prompts/generateur/re.md` porte l'emplacement réservé `{plafond_mots}` (consigne de forme « le résumé ne dépasse pas N mots », sans exemple, D1.1), dérivé de la `longueur_demandee` par `[re.longueurs]` (courte 80, moyenne 200, detaillee 400). Le message de l'exemple d'entraînement garde le mot nu. L'étape `validate` rejette un résumé RE plus long que ce plafond (motif `longueur_depassee`, mots comptés par `core.texte.compter_mots`). Le gabarit RE change de SHA : seules les sessions RE changent d'identifiant.
+
+## Revue (longueurs RE, 2026-10-17)
+
+- **medium**, second avis 1, corrigé : le générateur n'avait plus de plafond de mots. `{plafond_mots}` ajouté (`mistral/generateur.py`, `EMPLACEMENT_PLAFOND`, ignoré par `planifier`), et `validate` rejette `longueur_depassee`. Tests : `test_plafond_mots_derive_de_evaluation_toml`, `test_re_au_dela_du_plafond_de_sa_longueur_rejete`, longueur inconnue et amorce sur l'emplacement réservé refusées.
+- **low**, second avis 2, corrigé (test) : le motif de `amorce.py` est en couche 0 et lit sans fichier à l'import ; une dérivation à l'import couplerait le schéma à un fichier. `test_mots_admis_de_l_amorce_egaux_a_evaluation_toml` vérifie l'égalité des trois mots.
+- **low**, second avis 3, corrigé : le validateur de `SeedDonnees` lève `ValueError` sans la valeur saisie ; un `evaluation.toml` illisible est converti. Test : `test_longueur_re_inconnue_citee_sans_sa_valeur`.
+- **low**, second avis 4, corrigé : `UnicodeDecodeError` rattrapée. Le chargeur (`plafonds_re_evaluation`) reste dans `core/config.py` : `mistral` (couche 2) en a besoin et ne peut importer `data` (couche 4).
+- **low**, second avis 5, corrigé : tests d'un `evaluation.toml` absent, non UTF-8, TOML invalide, sans section, aux valeurs non entières ou nulles (`tests/core/test_config.py`, `tests/data/test_seed.py`).
+- **low**, second avis 6, corrigé : 5 items RE par valeur dans le Jeu, pas 10.
+- **info**, vérifié sans appel : en recalculant `planifier` sur les amorces du seed `20261017-000207-seed-6ae9` (RE réécrites en mots du Jeu, recherche factice), les identifiants de session de Q (300), RD (420), CO (105), LC (240), CT (105), generique (270) et CR (240) sont tous identiques ; les 105 de RE changent.

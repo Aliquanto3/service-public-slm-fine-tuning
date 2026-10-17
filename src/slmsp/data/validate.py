@@ -22,7 +22,10 @@ Contrôles, dans cet ordre ; le premier qui échoue donne le motif :
    (numérotation, petits comptes) sont ignorés : `valeur_absente`. Pour CO (texte à corriger),
    tout nombre notable du texte de départ doit aussi rester dans la sortie : `infidele`.
    La Tâche `generique` n'a aucune source de référence : ni valeurs ni fidélité.
-4. **Fidélité (CR, LC, RE)** : si un contrôleur est fourni (`ControleMistral`, opt-in), Mistral
+4. **Longueur (RE)** : la sortie ne dépasse pas, en mots (`core.texte.compter_mots`), le plafond
+   de la `longueur_demandee` de l'amorce (`[re.longueurs]` de `config/evaluation.toml`) :
+   `longueur_depassee`.
+5. **Fidélité (CR, LC, RE)** : si un contrôleur est fourni (`ControleMistral`, opt-in), Mistral
    compare le texte à sa source (`usage = validation`, gabarit `validation`) : `infidele`. Jamais
    le Juge Claude (AD-3 verrou 6) ; sans contrôleur, la règle automatique ci-dessus fait foi.
 
@@ -45,7 +48,7 @@ from pydantic import ValidationError
 
 from slmsp.core.artefacts import Run, lire, nouveau_run, ouvrir_run
 from slmsp.core.canonique import json_canonique
-from slmsp.core.config import racine_projet
+from slmsp.core.config import plafonds_re_evaluation, racine_projet
 from slmsp.core.erreurs import (
     AppelNonConforme,
     BudgetEpuise,
@@ -59,7 +62,7 @@ from slmsp.core.schemas.amorce import Amorce
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.rejet_donnees import RejetExemple
 from slmsp.core.schemas.session_donnees import SessionBrute, SessionPlanifiee
-from slmsp.core.texte import extraire_nombres
+from slmsp.core.texte import compter_mots, extraire_nombres
 from slmsp.harness.citations import extraire_urls, urls_inventees
 from slmsp.harness.taches.recherche import contenu_resultat
 from slmsp.mcp.bac_a_sable import BacASable
@@ -264,6 +267,14 @@ class LecteurGeneration:
             textes.append(amorce.texte)
         return textes
 
+    def longueur_demandee(self, brut: SessionBrute) -> str | None:
+        """Texte de l'amorce `longueur_demandee` de la session (RE), sinon `None`."""
+        for amorce_id in brut.amorce_ids:
+            amorce = self.amorces.get(amorce_id)
+            if amorce is not None and amorce.emplacement == "longueur_demandee":
+                return amorce.texte
+        return None
+
     def entree(self, brut: SessionBrute) -> str:
         """Entrée de l'exemple : textes des amorces du seed (hors amorces dérivées)."""
         amorces = []
@@ -403,6 +414,18 @@ def _controler_sources(
             raise _Rejet("infidele", f"{len(perdues)} valeur(s) de la source perdue(s)")
 
 
+def _controler_longueur(texte: str, longueur: str | None) -> None:
+    """Rejette un résumé RE plus long que le plafond de sa `longueur_demandee`."""
+    plafond = plafonds_re_evaluation().get(longueur or "")
+    if plafond is None:
+        raise ProvenanceInvalide(
+            "Tâche RE : longueur_demandee absente ou inconnue de [re.longueurs]"
+        )
+    mots = compter_mots(texte)
+    if mots > plafond:
+        raise _Rejet("longueur_depassee", f"{mots} mots pour un plafond de {plafond}")
+
+
 @dataclass(frozen=True)
 class ResultatValidation:
     """Run produit, statut final et rapport."""
@@ -434,6 +457,8 @@ def valider_session(
     if brut.tache == "CR":
         fournis = [*fournis, _source_fidelite(lecteur, brut)]
     _controler_sources(texte, brut.tache, lecteur.passages(brut), outils, fournis)
+    if brut.tache == "RE":
+        _controler_longueur(texte, lecteur.longueur_demandee(brut))
     if controle is not None and brut.tache in TACHES_CONTROLE_FIDELITE:
         fidele, detail = controle(brut.session_id, _source_fidelite(lecteur, brut), texte)
         if not fidele:

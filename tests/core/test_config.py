@@ -268,3 +268,45 @@ def test_cli_pose_l_environnement_meme_pour_l_aide(
     capsys.readouterr()
     for nom, valeur in TELEMETRIE.items():
         assert os.environ[nom] == valeur
+
+
+# --- Plafonds de mots des résumés RE (`[re.longueurs]` de evaluation.toml) --------------------
+
+
+def _racine_evaluation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, contenu: bytes | None
+) -> None:
+    (tmp_path / "config").mkdir()
+    if contenu is not None:
+        (tmp_path / "config" / "evaluation.toml").write_bytes(contenu)
+    monkeypatch.setattr("slmsp.core.config.racine_projet", lambda: tmp_path)
+
+
+def test_plafonds_re_du_fichier_reel() -> None:
+    from slmsp.core.config import plafonds_re_evaluation
+
+    assert plafonds_re_evaluation() == {"courte": 80, "moyenne": 200, "detaillee": 400}
+
+
+@pytest.mark.parametrize(
+    "contenu",
+    [
+        None,  # fichier absent
+        b"\xff\xfe\x00 pas de l'UTF-8",
+        b"[re.longueurs\ncourte = 80",  # TOML invalide
+        b"[co]\n",  # section absente
+        b"re = 3\n",  # section de mauvais type
+        b"[re.longueurs]\ncourte = 'quatre-vingts'\n",
+        b"[re.longueurs]\ncourte = 0\n",
+        b"[re.longueurs]\n",
+    ],
+)
+def test_plafonds_re_illisibles_donnent_configuration_invalide(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, contenu: bytes | None
+) -> None:
+    from slmsp.core.config import plafonds_re_evaluation
+
+    _racine_evaluation(tmp_path, monkeypatch, contenu)
+    with pytest.raises(ConfigurationInvalide, match=r"\[re\.longueurs\]") as exc:
+        plafonds_re_evaluation()
+    assert "quatre-vingts" not in str(exc.value)

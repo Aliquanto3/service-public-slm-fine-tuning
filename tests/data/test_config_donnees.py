@@ -295,3 +295,11 @@ def test_table_inconnue(tmp_path: Path) -> None:
 def test_fichier_absent(tmp_path: Path) -> None:
     with pytest.raises(ConfigurationInvalide, match="illisible"):
         charger_config_donnees(tmp_path / "absent.toml")
+
+
+def test_longueur_re_inconnue_citee_sans_sa_valeur(tmp_path: Path) -> None:
+    secret = "valeur-saisie-factice"
+    with pytest.raises(ConfigurationInvalide) as exc:
+        _charger(tmp_path, (r"^re_longueurs = .*$", f're_longueurs = ["{secret}"]'))
+    assert "re_longueurs" in str(exc.value)
+    assert secret not in str(exc.value)

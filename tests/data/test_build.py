@@ -433,8 +433,8 @@ def test_longueur_config_exige_son_amorce_liee_dans_la_session() -> None:
         amorce_id="re.longueur_demandee.1",
         tache="RE",
         emplacement="longueur_demandee",
-        texte="150 mots",
-        sha_texte=sha256_hex("150 mots"),
+        texte="moyenne",
+        sha_texte=sha256_hex("moyenne"),
         auteur_contenu="config",
         lie_a="re.texte.1",
     )
