@@ -687,6 +687,7 @@ def test_toml_particularites() -> None:
     granite = charger_config_modele("granite-4.0-1b")
     assert granite.depot_hf == "ibm-granite/granite-4.0-1b" and len(granite.fichiers) == 9
     assert granite.gguf.depot == "ibm-granite/granite-4.0-1b-GGUF"
+    assert granite.lm_eval_batch_size == 2  # portable de 6 Go de VRAM, jamais `auto`
     ministral = charger_config_modele("ministral-3-3b")
     assert ministral.depot_hf.endswith("-BF16") and ministral.exclure_vision
     assert len(ministral.fichiers) == 13

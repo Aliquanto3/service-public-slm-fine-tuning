@@ -24,6 +24,7 @@ Décisions d'Anaël du 2026-10-17 (option 2 et règle de taille). Le contrôle `
 - `config/modeles/qwen3.5-2b.toml` et `qwen3.5-0.8b.toml` : `entrainable = false`, et des commentaires qui renvoient à D8. `train run` les refuse par le mécanisme Bonsai déjà en place.
 - `minicpm5-2b.toml` et `gemma-4-e2b.toml` : en-tête « ÉCARTÉ (taille > 2B…) ». Les fiches sont conservées.
 - `decisions.md` : D8, qui précise D7, puis le registre (un tableau : slug, dépôt HF, paramètres texte servis, statut, raison, date, source).
+- Ajout demandé par l'orchestrateur : `config/modeles/granite-4.0-1b.toml` porte `lm_eval_batch_size = 2`. Sur le portable (6 Go de VRAM), `auto` provoque des OOM. C'est la valeur de départ de `docs/reprise-deuxieme-pc.md` §5, à confirmer par mesure. Test : `test_toml_particularites`.
 - Run réel : `runs/fetch/20261017-194644-modeles-f773` (qwen3.5-0.8b, 5 contrôles ok, 0 octet transféré).
 
 ## Tests

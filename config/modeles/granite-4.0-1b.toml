@@ -25,6 +25,9 @@ chat_template_kwargs = {}
 # natif valide (2/2 items, 4/5 appels attendus appariés, 0 non conforme).
 protocole_outils = "natif"
 chat_template_force = false
+# lm_eval sur HF bf16, portable de 6 Go de VRAM : `auto` provoque des OOM CUDA. Valeur de
+# départ de docs/reprise-deuxieme-pc.md §5, à confirmer par mesure.
+lm_eval_batch_size = 2
 
 [sha256_fichiers]
 "chat_template.jinja" = "9524df67b77a7b25a2dfee898f75b316a157eb9d855b51e32aeac79d7c8a83ce" # 6 418 octets
