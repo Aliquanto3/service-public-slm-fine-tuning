@@ -7,9 +7,9 @@ puis écrit l'empreinte SHA-256 de l'installateur (Q4, pas de signature) dans un
     uv run --no-sync python outils/construire_installateur.py
     uv run --no-sync python outils/construire_installateur.py --iscc <chemin>/ISCC.exe
 
-ISCC est cherché dans : `--iscc`, `SLMSP_ISCC`, `vendor/innosetup/ISCC.exe`,
-`%LOCALAPPDATA%/Programs/Inno Setup 6/ISCC.exe`, puis le PATH. Aucun téléchargement ici
-(hôte jrsoftware.org hors passerelle) : voir `docs/installation-dsi.md`.
+ISCC est cherché dans : `--iscc`, `SLMSP_ISCC`, `vendor/inno-setup` (dépôt, `SLMSP_VENDOR_DIR`),
+`%LOCALAPPDATA%/Programs/Inno Setup 6/ISCC.exe`, puis le PATH. Aucun téléchargement ici :
+voir `outils/installer_inno_setup.py` et `config/outillage.toml`.
 Variante « pack complet » (Q2) : `--pack-complet <MicrosoftEdgeWebView2RuntimeInstallerX64.exe>`.
 """
 
@@ -53,7 +53,9 @@ def trouver_iscc(explicite: str | None = None, env: dict[str, str] | None = None
             if not Path(valeur).is_file():
                 raise ErreurInstallateur(f"ISCC.exe explicite introuvable : {valeur}")
             return Path(valeur)
-    candidats.append(DEPOT / "vendor" / "innosetup" / "ISCC.exe")
+    candidats.append(DEPOT / "vendor" / "inno-setup" / "ISCC.exe")
+    if env.get("SLMSP_VENDOR_DIR"):
+        candidats.append(Path(env["SLMSP_VENDOR_DIR"]) / "inno-setup" / "ISCC.exe")
     local = env.get("LOCALAPPDATA")
     if local:
         candidats.append(Path(local) / "Programs" / "Inno Setup 6" / "ISCC.exe")

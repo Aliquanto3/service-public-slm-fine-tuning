@@ -29,7 +29,7 @@ Commande de build (après `construire_application.py`) :
 `tests/packaging/test_installateur.py` (24) : valeurs du `.iss` (privilèges, dossier, AppId, écrans, lancement coché, WebView2, question de désinstallation, découpage et pack conditionnels), commande ISCC, seuil de découpage, build avec compilateur factice, empreintes des tranches, échecs (ISCC, sortie, paquet, pack), ordre de recherche d'ISCC (explicite absent = échec), pack résolu en absolu, nettoyage des tranches obsolètes, OSError de ISCC, /DIR= limité à Programs, aucun `[UninstallDelete]` sur `{app}`.
 
 ## État d'Inno Setup
-**Non téléchargé** : `jrsoftware.org` n'est dans aucun profil de `config/reseau.toml`, rien n'a été contourné. Donc `.iss` jamais compilé, installation et désinstallation silencieuses non essayées (AC1 à AC4 non vérifiés). L'étape manuelle est dans `docs/installation-dsi.md`.
+Installé le 2026-10-17 : voir « Exécution réelle ».
 
 ## Décisions prises seul
 - `AppId` : GUID généré pour le projet, à ne plus changer.
@@ -59,3 +59,11 @@ Statut : partiel (script, outillage et tests faits ; compilation et essais d'ins
 - low, second avis : concaténation dans `const` : corrigé (constante littérale), test.
 - low, second avis : tests superficiels : complétés (8 tests ajoutés, sans ISCC).
 - Reporté : compilation réelle du `.iss` (`{param:DIR|}`, `Copy`/`Lowercase`, `Log`), à valider au premier ISCC ; effet réel du refus de `/DIR=` en silencieux.
+
+## Exécution réelle (2026-10-17, story 12.13b)
+- **Inno Setup 6.7.3** (dernière 6 stable), https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe (lien de https://jrsoftware.org/isdl.php), 10 592 232 o, SHA-256 `9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732` (calculé à la première lecture, l'éditeur n'en publie pas ; signature Authenticode valide, Pyrsys B.V.). Épinglé dans `config/outillage.toml`, téléchargé par `outils/installer_inno_setup.py` (passerelle `outillage`). Installé par utilisateur (`/CURRENTUSER /VERYSILENT /DIR=vendor\inno-setup`), sans élévation.
+- **Compilation** : `construire_application.py --sans-modele` (59 s, 158 Mo) puis `construire_installateur.py` : le `.iss` compile du premier coup, sans correction (`{param:DIR|}`, `Copy`/`Lowercase`, `Log`, `x64compatible` acceptés). Installateur 62 148 145 o (59 Mo, runtime seul, sans modèle), pas de `DiskSpanning`.
+- **Essais** (poste réel, données réelles sauvegardées puis restaurées) : installation silencieuse (code 0, `%LOCALAPPDATA%\Programs\AssistantSP`, raccourci du menu Démarrer, clé de désinstallation) ; l'exécutable démarre (fenêtre « Assistant », crée `assistant.sqlite`) ; réinstallation par-dessus (code 0, `assistant.sqlite` et marqueur inchangés) ; désinstallation silencieuse (code 0, programme et raccourci retirés, données conservées) ; réinstallation puis désinstallation `/SupprimerDonnees=1` (code 0, dossier de données supprimé) ; `/DIR=C:\Temp\essai-refus` refusé (code 1, motif au journal, rien créé). Comparaison avant/après de `%LOCALAPPDATA%`, `Programs`, menu Démarrer, Bureau et clés de désinstallation : aucune trace hors des deux dossiers de l'Assistant.
+- Non essayé : lancement depuis un partage réseau, WebView2 absent, `DiskSpanning`, build avec modèle (GPU occupé).
+- Test `lent` `test_compilation_reelle` (ISCC dans `vendor/inno-setup` ou `SLMSP_VENDOR_DIR`, ignoré sinon).
+- Écart : `construire_installateur.py` cherche maintenant `vendor/inno-setup` (et non `innosetup`) et `SLMSP_VENDOR_DIR`. À confirmer par Anaël : SHA-256 non recoupé avec une source de l'éditeur.
