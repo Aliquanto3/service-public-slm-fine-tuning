@@ -25,7 +25,7 @@ from slmsp.mcp.outils import OUTILS_AUTORISES
 CONFIG = racine_projet() / "config"
 DOSSIER_PROMPTS = CONFIG / "prompts" / "taches"
 PROMPTS_ATTENDUS = {
-    "Q", "RD", "CR", "CR-morceau", "CR-fusion", "LC", "CO", "RE", "CT", "NR", "TR",
+    "Q", "RD", "CR", "CR-morceau", "CR-fusion", "LC", "CO", "RE", "CT", "NR", "TR", "VE",
 }  # fmt: skip
 
 

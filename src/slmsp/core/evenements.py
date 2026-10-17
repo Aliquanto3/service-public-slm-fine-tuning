@@ -52,15 +52,17 @@ class AppelNonConforme(_Fige):
 
 
 class Source(_Fige):
-    """Source citée : passage de l'Index local ou résultat MCP.
+    """Source citée : passage de l'Index local, résultat MCP ou page vérifiée en ligne.
 
     `numero` est le renvoi `[n]` du texte généré qui la cite (passage de l'Index), s'il existe.
+    `origine = "verification"` : page officielle consultée par la vérification en ligne
+    (FR-12, story 13.5) ; `date` est alors la date de consultation.
     """
 
     numero: int | None = Field(default=None, ge=1)
     titre: str
     url: str
-    origine: Literal["index", "mcp"]
+    origine: Literal["index", "mcp", "verification"]
     date: str | None = None
     extrait: str | None = None
 
@@ -97,6 +99,25 @@ class Repli(_Fige):
     vers: Literal["index"]
 
 
+class Verification(_Fige):
+    """Résultat d'une vérification en ligne d'une page officielle (FR-12, story 13.5).
+
+    `verdict` : `concordant` (la page confirme la réponse), `difference` (la page diffère),
+    `indisponible` (Mode hors ligne, hôte refusé, délai dépassé, page illisible, comparaison
+    non concluante). `url` et `titre` valent `None` si aucune source citée n'a pu être
+    choisie. `date_consultation` est un horodatage ISO 8601 en UTC. `extrait` est le
+    passage de la page qui diffère, recopié tel quel, s'il a pu être retrouvé dans la page.
+    """
+
+    type: Literal["verification"] = "verification"
+    url: str | None
+    titre: str | None
+    date_consultation: str
+    verdict: Literal["concordant", "difference", "indisponible"]
+    phrase: str
+    extrait: str | None = None
+
+
 class Fin(_Fige):
     """Fin du flux, avec la raison et l'usage en tokens s'il est connu.
 
@@ -127,6 +148,7 @@ Evenement = Annotated[
     | Avertissement
     | Progression
     | Repli
+    | Verification
     | Fin
     | Erreur,
     Field(discriminator="type"),

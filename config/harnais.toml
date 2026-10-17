@@ -24,3 +24,16 @@ delai_sonde_s = 3.0
 reserve_sortie_tokens = 1024
 # Paragraphes repris d'un morceau au suivant.
 chevauchement_paragraphes = 1
+
+# Vérification en ligne d'une page officielle (FR-12, story 13.5).
+[verification]
+# FR-12 active (Q7). À false, la vérification rend `indisponible` sans aucune requête.
+active = true
+# Délai maximal de la récupération de la page (connexion et lecture comprises).
+delai_s = 10.0
+# Taille maximale de la page, en octets ; au-delà, la lecture s'arrête (verdict indisponible).
+taille_max_octets = 2000000
+# Caractères du texte extrait de la page transmis au Modèle embarqué pour la comparaison.
+caracteres_max_page = 8000
+# Tokens maximaux de la réponse du Modèle embarqué.
+max_tokens = 400
