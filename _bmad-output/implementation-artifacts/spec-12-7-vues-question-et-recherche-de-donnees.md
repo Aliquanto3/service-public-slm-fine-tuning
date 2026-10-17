@@ -14,9 +14,8 @@ warnings: []
 deferred: []
 ---
 
-> **À valider par Anaël (D1)** : les exemples 2 et 3 de l'écran « Question vide » restent les
-> emplacements `<exemple-à-valider-2>` et `<exemple-à-valider-3>` (`js/vues/question.js`). Aucun
-> texte n'est inventé ; ils s'affichent tels quels tant qu'ils ne sont pas fournis.
+> **Exemples 2 et 3 (décision d'Anaël du 2026-10-17)** : questions publiques tirées des amorces Q
+> du dépôt, sans reformulation (voir « Provenance des exemples »).
 
 ## Intent
 
@@ -51,7 +50,7 @@ deferred: []
 ## Auto Run Result
 
 **Décisions prises seul :**
-- Les 3 exemples : le premier vient d'EXPERIENCE.md ; les deux autres sont des emplacements `<exemple-à-valider-2>` et `<exemple-à-valider-3>` (D1 : je n'invente pas de texte). Clic = remplit la zone de saisie sans envoyer.
+- Les 3 exemples : le premier vient d'EXPERIENCE.md ; les deux autres sont des questions publiques (voir « Provenance des exemples »). Clic = remplit la zone de saisie sans envoyer.
 - Titres d'écran vide (« Posez votre question », « Recherchez des données publiques ») et phrases d'intro : proposés par moi.
 - Contrat du pont 12.5 (aligné en revue) : Régénérer et Réessayer renvoient la question du dernier tour par `envoyer` (pas `regenerer`, qui rejoue le dernier envoi du pont, éventuellement d'une autre Tâche) ; « Nouvelle conversation » appelle `arreter` si un flux est en cours, puis `nouvelle_conversation` ; Mode initial par `appeler("mode.etat")` (`{ok, mode: "connecte"|"hors_ligne"}`, bouchon jusqu'à 12.9) ; évènement de bus `mode:change` `{hors_ligne}` (à émettre par la vue Mode, 12.9). Tant que rien ne répond, le Mode est « hors ligne ».
 - Formes de `ResultatOutil` reconnues : `{content:[{type:"text"}]}` au format texte MCP observé dans les cassettes (`Found n dataset(s)…`, `Row n:`), ou `{colonnes, lignes}` et `{jeux:[…]}`. La date de mise à jour d'une carte n'est affichée que si le résultat la porte (le texte MCP de `search_datasets` n'en a pas).
@@ -82,3 +81,14 @@ Revue Opus du 2026-10-16, après rebase sur main (pont 12.5 fusionné), avec la 
 - low, second avis (9) : emplacements `<exemple-à-valider-2/3>` gardés (D1), note visible en tête de spec.
 - low, revue : `test_arreter_pendant_la_generation` (12.4) échouait par intermittence (pas d'attente de `pret`). Corrigé (attente ajoutée).
 - Reporté : ouverture effective des liens et blocage de la navigation de la WebView dans la vraie fenêtre (12.6) ; à vérifier : clic sur « Ouvrir » connecté ouvre le navigateur système, Ctrl+clic et clic milieu n'ouvrent rien dans l'application.
+
+## Provenance des exemples
+
+Source : amorces publiques de tâche Q, run `data-seed` `20261017-000207-seed-6ae9` (`amorces.jsonl`), jeu `AgentPublic/service-public` révision `7ddda096b33d48dbda8143fc8c349a8b0e031a3a` (Licence Ouverte 2.0), champ `question`. Ce sont des questions de la FAQ de Service-Public (pas des messages bruts d'usagers). Texte repris tel quel, sans reformulation. Choix : les première et troisième lignes du fichier ; aucune question n'a été rédigée.
+
+| Exemple | Identifiant d'amorce | Ligne du jeu |
+|---|---|---|
+| 2. « Peut-on conserver son logement social en cas d'augmentation de revenus ? » | `q.question.service-public.2989.0` | 2989 |
+| 3. « Quelles questions d'urbanisme se poser avant de construire une maison ? » | `q.question.service-public.7902.3` | 7902 |
+
+Anti-fuite : `Protection.motifs()` (`slmsp.data.seed`, versions v1.0, v1.1 et calibrage, 466 items, n-grammes 5, seuil 0,5) ne rend aucun motif pour les deux textes (recouvrement 0,0) ; absents aussi de `eval/` par recherche textuelle.
