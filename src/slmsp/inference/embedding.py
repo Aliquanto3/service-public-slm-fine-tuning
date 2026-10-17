@@ -2,7 +2,8 @@
 
 Vecteurs float32 de `dimension` (1024 pour BGE-M3), renormalisés L2 (le serveur les
 normalise déjà : la renormalisation absorbe l'arrondi). Les textes partent par lots de
-`taille_lot` ; les réponses sont remises dans l'ordre par leur `index`.
+`taille_lot` ; un texte plus long que le contexte (8192 tokens) est tronqué à sa fin.
+Les réponses sont remises dans l'ordre par leur `index`.
 """
 
 from __future__ import annotations
@@ -19,6 +20,10 @@ from slmsp.net import client_local
 DIMENSION: Final = 1024
 TAILLE_LOT: Final = 64
 TAILLE_EXTRAIT: Final = 500
+CONTEXTE_MAX: Final = 8192
+"""Contexte de BGE-M3 (= `-b`/`-ub` du serveur, voir `ServeurLlama.arguments`)."""
+MARGE_TOKENS: Final = 16
+"""Réserve pour les jetons spéciaux ajoutés par le serveur."""
 
 
 class EmbedderLlama:
@@ -30,6 +35,7 @@ class EmbedderLlama:
         *,
         dimension: int = DIMENSION,
         taille_lot: int = TAILLE_LOT,
+        contexte_max: int = CONTEXTE_MAX,
         transport_interne: Any = None,
     ) -> None:
         if dimension <= 0 or taille_lot <= 0:
@@ -37,6 +43,7 @@ class EmbedderLlama:
         self.port = port
         self._dimension = dimension
         self.taille_lot = taille_lot
+        self.contexte_max = contexte_max
         self._http = client_local(port, transport_interne=transport_interne)
         self._url = f"http://127.0.0.1:{port}/v1/embeddings"
 
@@ -52,6 +59,27 @@ class EmbedderLlama:
 
     def __exit__(self, *exc: object) -> None:
         self.fermer()
+
+    def _tronquer(self, texte: str) -> str:
+        """Borne `texte` à `contexte_max` tokens (début conservé), sinon le serveur répond 500.
+
+        Un token fait au moins un caractère : un texte plus court que la limite ne coûte
+        aucun appel. Sinon `/tokenize` compte, puis on coupe au prorata et on revérifie.
+        """
+        limite = self.contexte_max - MARGE_TOKENS
+        for _ in range(8):
+            if len(texte) <= limite:
+                return texte
+            reponse = self._http.post(
+                f"http://127.0.0.1:{self.port}/tokenize", json={"content": texte}
+            )
+            tokens = reponse.json().get("tokens") if reponse.status_code == 200 else None
+            if not isinstance(tokens, list):
+                raise ErreurInference(f"POST /tokenize : HTTP {reponse.status_code}")
+            if len(tokens) <= limite:
+                return texte
+            texte = texte[: max(1, int(len(texte) * limite / len(tokens) * 0.98))]
+        return texte[:limite]
 
     def _lot(self, textes: list[str]) -> NDArray[np.float32]:
         reponse = self._http.post(self._url, json={"input": textes})
@@ -91,6 +119,7 @@ class EmbedderLlama:
             raise TypeError("vectoriser attend des chaînes")
         if not textes:
             return np.zeros((0, self._dimension), dtype=np.float32)
+        textes = [self._tronquer(texte) for texte in textes]
         lots = [
             self._lot(textes[debut : debut + self.taille_lot])
             for debut in range(0, len(textes), self.taille_lot)

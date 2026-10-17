@@ -68,3 +68,13 @@ def test_nombre_de_vecteurs_inattendu(embedder: EmbedderLlama, serveur_factice: 
     serveur_factice.scenario.embeddings = lambda textes: []
     with pytest.raises(ErreurInference):
         embedder.vectoriser(["a"])
+
+
+def test_texte_trop_long_tronque(serveur_factice: Any) -> None:
+    """Un texte au-delà du contexte est tronqué avant l'envoi (sinon HTTP 500 du serveur)."""
+    serveur_factice.scenario.tokens = lambda texte: list(range(len(texte)))
+    with EmbedderLlama(serveur_factice.port, contexte_max=100) as instance:
+        instance.vectoriser(["x" * 1000, "court"])
+    envoyes = serveur_factice.corps("/v1/embeddings")[0]["input"]
+    assert len(envoyes[0]) <= 100 - 16
+    assert envoyes[1] == "court"
