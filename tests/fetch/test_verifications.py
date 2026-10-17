@@ -709,17 +709,32 @@ def test_export_vers_un_dossier_donne_conflit(tmp_path: Path) -> None:
 # --- Configurations versionnées -------------------------------------------------------------
 
 
-def test_cinq_candidats_dans_l_ordre_d4() -> None:
+ANCIENS_CANDIDATS = ("granite-4.0-1b", "ministral-3-3b", "smollm3-3b", "qwen-4b", "ministral-3-8b")
+"""Candidats de l'ordre D4 initial (propriétés propres : GGUF Q4_K_M, contexte 8192…)."""
+
+
+def test_candidats_alignes_sur_le_registre_d8() -> None:
     assert CANDIDATS == (
         "granite-4.0-1b",
-        "ministral-3-3b",
-        "smollm3-3b",
-        "qwen-4b",
-        "ministral-3-8b",
+        "minicpm5-1b",
+        "eurollm-1.7b",
+        "qwen3.5-0.8b",
+        "qwen3.5-2b",
     )
+    assert not set(CANDIDATS) & {"ministral-3-3b", "ministral-3-8b", "smollm3-3b", "qwen-4b"}
+    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:3])
+    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[3:])
 
 
 @pytest.mark.parametrize("slug", CANDIDATS)
+def test_candidat_registre_epingle(slug: str) -> None:
+    config = charger_config_modele(slug)
+    assert len(config.revision) == 40 and config.gguf.revision is not None
+    assert set(config.sha256_fichiers) == set(config.fichiers)
+    assert not config.embedding
+
+
+@pytest.mark.parametrize("slug", ANCIENS_CANDIDATS)
 def test_toml_candidat(slug: str) -> None:
     config = charger_config_modele(slug)
     assert len(config.revision) == 40
@@ -751,7 +766,7 @@ def test_toml_particularites() -> None:
 
 
 MODELES_OCTOBRE = ("qwen3.5-2b", "bonsai-2-4b", "minicpm-v-4.7-1b")
-"""Modèles de base ajoutés le 2026-10-17 (hors CANDIDATS D4)."""
+"""Modèles de base ajoutés le 2026-10-17 (hors ANCIENS_CANDIDATS, ordre D4)."""
 
 
 @pytest.mark.parametrize("slug", MODELES_OCTOBRE)
@@ -778,7 +793,7 @@ def test_toml_modeles_octobre_particularites() -> None:
 
 
 MODELES_MOINS_2B = ("eurollm-1.7b", "qwen3.5-0.8b")
-"""Candidats de moins de 2B ajoutés le 2026-10-17 (hors CANDIDATS D4)."""
+"""Candidats de moins de 2B ajoutés le 2026-10-17 (hors ANCIENS_CANDIDATS, ordre D4)."""
 
 
 @pytest.mark.parametrize("slug", MODELES_MOINS_2B)
@@ -965,7 +980,7 @@ TAILLES_GGUF = {
 
 
 @pytest.mark.reseau
-@pytest.mark.parametrize("slug", CANDIDATS)
+@pytest.mark.parametrize("slug", ANCIENS_CANDIDATS)
 def test_candidat_reel_conforme(slug: str) -> None:
     """Réseau : `X-Linked-Etag` et taille du GGUF à `gguf.revision`, et etag d'un fichier
     LFS de `fichiers`, conformes à la configuration (HEAD seulement)."""
@@ -989,7 +1004,7 @@ def test_candidat_reel_conforme(slug: str) -> None:
 
 
 MODELES_OCTOBRE_2 = ("minicpm5-2b", "minicpm5-1b", "gemma-4-e2b")
-"""Modèles de base ajoutés le 2026-10-17, seconde campagne (hors CANDIDATS D4)."""
+"""Modèles de base ajoutés le 2026-10-17, seconde campagne (hors ANCIENS_CANDIDATS, ordre D4)."""
 
 
 @pytest.mark.parametrize("slug", MODELES_OCTOBRE_2)

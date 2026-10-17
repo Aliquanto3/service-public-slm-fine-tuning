@@ -38,14 +38,18 @@ from typing import Any, BinaryIO, Final, Literal
 from slmsp.core.erreurs import SlmspError
 from slmsp.core.schemas.config_modele import ConfigModele
 
+# Aligné sur le registre des Modèles de base de D8 le 2026-10-17 (décision d'Anaël) : il remplace
+# l'ordre D4 initial (ministral-3-3b, smollm3-3b, qwen-4b, ministral-3-8b, écartés par la
+# règle de taille). D'abord les candidats au fine-tuning, puis les Qwen « Baseline seulement ».
 CANDIDATS: tuple[str, ...] = (
     "granite-4.0-1b",
-    "ministral-3-3b",
-    "smollm3-3b",
-    "qwen-4b",
-    "ministral-3-8b",
+    "minicpm5-1b",
+    "eurollm-1.7b",
+    "qwen3.5-0.8b",
+    "qwen3.5-2b",
 )
-"""Modèles de base candidats, dans l'ordre de passage D4."""
+"""Modèles de base candidats (`fetch modeles --candidats`), dans l'ordre du registre de D8 :
+candidats au fine-tuning, puis Baseline seulement (`entrainable = false`)."""
 
 CONTROLES: Final = ("dense", "fp8", "vision", "chat_template", "serveur")
 

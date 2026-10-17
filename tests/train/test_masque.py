@@ -207,7 +207,7 @@ def test_tour_assistant_vide_refuse() -> None:
 
 # ---- tests lents : tokenizers réels et llama-server (jamais dans la suite par défaut) ----
 
-CANDIDATS = ["granite-4.0-1b", "ministral-3-3b", "smollm3-3b", "qwen-4b"]
+CANDIDATS = ["granite-4.0-1b", "ministral-3-3b", "smollm3-3b", "qwen-4b", "eurollm-1.7b"]
 OUTIL = {
     "type": "function",
     "function": {

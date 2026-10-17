@@ -158,3 +158,5 @@ Paramètres en milliards (B). « Mesuré » : comptage safetensors du 2026-10-17
 | `croissantllm-chat` (fiche supprimée, runs `fetch` conservés) | `croissantllm/CroissantLLMChat-v0.1` | ≈ 1,3 (source) | écarté | licence MIT non admise en sortie ; contexte natif 2048 | 2026-10-17 | `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
 
 Les sources citées sont sous `_bmad-output/implementation-artifacts/`.
+
+Liste `--candidats` alignée sur le registre de D8 le 2026-10-17 (décision d'Anaël) : `verifications.CANDIDATS` = `granite-4.0-1b`, `minicpm5-1b`, `eurollm-1.7b`, `qwen3.5-0.8b`, `qwen3.5-2b`. Elle remplace l'ordre de passage D4 initial, sans le réécrire.
