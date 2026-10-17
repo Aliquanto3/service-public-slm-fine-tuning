@@ -31,7 +31,7 @@ from slmsp.core.items import lire_jeu as lire_jeu_evaluation
 from slmsp.core.schemas.amorce import Amorce
 from slmsp.core.texte import normaliser
 from slmsp.data import seed as seed_module
-from slmsp.data.config import ConfigDonnees, charger_config_donnees
+from slmsp.data.config import ConfigDonnees, SeedDonnees, charger_config_donnees
 from slmsp.data.licences import RegistreLicences, UsageInterdit
 from slmsp.data.seed import (
     COLONNES_IDENTIFIANTS,
@@ -1172,9 +1172,33 @@ def test_generate_groupe_longueur_avec_son_texte_et_courrier_par_appel(monde: Mo
 
 
 def test_longueurs_re_hors_evaluation_refusees() -> None:
-    from slmsp.data.config import SeedDonnees
 
     assert SeedDonnees().re_longueurs == ["courte", "moyenne", "detaillee"]
     for invalide in (["détaillée"], ["80 mots"], []):
         with pytest.raises(ValueError):
             SeedDonnees(re_longueurs=invalide)
+
+
+def test_mots_admis_de_l_amorce_egaux_a_evaluation_toml() -> None:
+    """Une seule vérité pour les mots admis : le motif de l'amorce `config` et
+    `[re.longueurs]` de `config/evaluation.toml` doivent rester égaux."""
+    import re
+
+    from slmsp.core.config import plafonds_re_evaluation
+    from slmsp.core.schemas.amorce import MOTIF_TEXTE_CONFIG
+
+    assert set(MOTIF_TEXTE_CONFIG.split("|")) == set(plafonds_re_evaluation())
+    assert all(re.fullmatch(MOTIF_TEXTE_CONFIG, mot) for mot in plafonds_re_evaluation())
+    assert set(SeedDonnees().re_longueurs) == set(plafonds_re_evaluation())
+
+
+@pytest.mark.parametrize("contenu", [None, b"\xff\xfe\x00", b"[re\n"])
+def test_evaluation_toml_illisible_rejette_la_configuration_seed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, contenu: bytes | None
+) -> None:
+    (tmp_path / "config").mkdir()
+    if contenu is not None:
+        (tmp_path / "config" / "evaluation.toml").write_bytes(contenu)
+    monkeypatch.setattr("slmsp.core.config.racine_projet", lambda: tmp_path)
+    with pytest.raises(ValueError, match="illisible"):
+        SeedDonnees(re_longueurs=["courte"])

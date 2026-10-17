@@ -78,6 +78,7 @@ from slmsp.mcp.outils import charger_config
 from slmsp.mistral.client import ErreurApiMistral, ModeleMistralRefuse
 from slmsp.mistral.generateur import (
     EMPLACEMENT_PASSAGES,
+    EMPLACEMENT_PLAFOND,
     TACHES_OUTILLEES,
     Generateur,
     PrealableNonSatisfait,
@@ -207,7 +208,11 @@ def planifier(
     for tache in ORDRE_TACHES:
         chaine = list(gabarits[tache])
         premier = chaine[0]
-        attendus = [nom for nom in premier.emplacements if nom != EMPLACEMENT_PASSAGES]
+        attendus = [
+            nom
+            for nom in premier.emplacements
+            if nom not in (EMPLACEMENT_PASSAGES, EMPLACEMENT_PLAFOND)
+        ]
         avec_passages = EMPLACEMENT_PASSAGES in premier.emplacements
         de_la_tache = [a for a in amorces if a.tache == tache]
         sures = [a for a in de_la_tache if sha256_hex(normaliser(a.texte)) not in amorces_protegees]

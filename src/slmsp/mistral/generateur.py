@@ -52,7 +52,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from slmsp.core.artefacts import lire
 from slmsp.core.canonique import json_canonique, sha256_hex
-from slmsp.core.config import racine_projet
+from slmsp.core.config import plafonds_re_evaluation, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ProvenanceInvalide, SlmspError
 from slmsp.core.gabarits import GabaritInvalide, GabaritValide, valider_gabarit
 from slmsp.core.messages import ConversationInvalide, valider_conversation
@@ -89,6 +89,10 @@ TOOL_CHOICE: Final = "auto"
 EMPLACEMENT_PASSAGES: Final = "passages"
 """Emplacement réservé : rempli par le rendu injecté des passages de l'Index, jamais par une
 amorce."""
+EMPLACEMENT_PLAFOND: Final = "plafond_mots"
+"""Emplacement réservé : plafond de mots du résumé RE, dérivé de l'amorce `longueur_demandee`
+par `[re.longueurs]` de `config/evaluation.toml` (consigne de forme seulement, D1.1). Jamais
+rempli par une amorce ; le message de l'exemple d'entraînement garde le mot nu du Jeu."""
 
 _RE_GABARIT_ID = re.compile(r"[a-z0-9-]+")
 _RE_SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
@@ -430,6 +434,11 @@ class Generateur:
                 raise ProvenanceInvalide("amorce inconnue de l'artefact seed")
             if amorce.tache != tache:
                 raise ProvenanceInvalide(f"amorce {amorce_id!r} : tâche différente de {tache!r}")
+            if amorce.emplacement == EMPLACEMENT_PLAFOND:
+                raise ProvenanceInvalide(
+                    f"amorce {amorce_id!r} : l'emplacement « plafond_mots » est dérivé de la "
+                    "configuration"
+                )
             if amorce.emplacement == EMPLACEMENT_PASSAGES:
                 raise ProvenanceInvalide(
                     f"amorce {amorce_id!r} : l'emplacement « passages » est réservé aux "
@@ -457,7 +466,7 @@ class Generateur:
         manquants = [
             nom
             for nom in gabarit.emplacements
-            if nom not in groupes and nom != EMPLACEMENT_PASSAGES
+            if nom not in groupes and nom not in (EMPLACEMENT_PASSAGES, EMPLACEMENT_PLAFOND)
         ]
         if manquants:
             raise GabaritInvalide(
@@ -680,6 +689,17 @@ class Generateur:
 
     # --- Appel ---------------------------------------------------------------------------
 
+    @staticmethod
+    def _plafond_mots(valeurs: Mapping[str, str], gabarit_id: str) -> str:
+        """Plafond de mots de la `longueur_demandee` de l'appel (clés de `[re.longueurs]`)."""
+        plafond = plafonds_re_evaluation().get(valeurs.get("longueur_demandee", ""))
+        if plafond is None:
+            raise GabaritInvalide(
+                f"gabarit {gabarit_id!r} : « plafond_mots » exige une amorce longueur_demandee "
+                "connue de [re.longueurs]"
+            )
+        return str(plafond)
+
     def generer(
         self,
         gabarit_id: str,
@@ -718,6 +738,8 @@ class Generateur:
             if not isinstance(rendu, str) or not rendu:
                 raise ProvenanceInvalide(f"session {session_id!r} : rendu des passages vide")
             valeurs[EMPLACEMENT_PASSAGES] = rendu
+        if EMPLACEMENT_PLAFOND in gabarit.emplacements:
+            valeurs[EMPLACEMENT_PLAFOND] = self._plafond_mots(valeurs, gabarit.id)
         consigne = _RE_EMPLACEMENT.sub(lambda m: valeurs[m.group(1)], gabarit.consigne)
         requete = [
             {"role": "user", "content": consigne},

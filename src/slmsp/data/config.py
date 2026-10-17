@@ -26,7 +26,8 @@ from typing import Annotated, Any, Final, Literal
 
 from pydantic import Field, StrictInt, StringConstraints, field_validator, model_validator
 
-from slmsp.core.config import ModeleConfig, charger_toml, longueurs_re_evaluation, racine_projet
+from slmsp.core.config import ModeleConfig, charger_toml, plafonds_re_evaluation, racine_projet
+from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
 
 __all__ = [
@@ -161,13 +162,14 @@ class SeedDonnees(ModeleConfig):
     @field_validator("re_longueurs")
     @classmethod
     def _longueurs_connues(cls, valeurs: list[str]) -> list[str]:
-        connues = set(longueurs_re_evaluation())
-        inconnues = [v for v in valeurs if v not in connues]
-        if inconnues:
-            raise ValueError(
-                f"longueurs RE inconnues de [re.longueurs] : {inconnues} "
-                f"(admises : {sorted(connues)})"
-            )
+        # ValueError sans la valeur saisie (règle de `charger_toml`) ; un evaluation.toml
+        # illisible (ConfigurationInvalide) est converti de même.
+        try:
+            connues = set(plafonds_re_evaluation())
+        except ConfigurationInvalide:
+            raise ValueError("[re.longueurs] de evaluation.toml illisible") from None
+        if any(v not in connues for v in valeurs):
+            raise ValueError("longueur RE inconnue de [re.longueurs] de evaluation.toml")
         return valeurs
 
     graine: Annotated[StrictInt, Field(ge=0)] = 42

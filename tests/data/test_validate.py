@@ -307,3 +307,39 @@ def test_run_d_un_autre_type_refuse(monde: Any) -> None:
             consigner=lambda _ligne: None,
         )
     assert not (monde.racine / "runs" / "data-validate").exists()
+
+
+# --- Longueur des résumés RE ----------------------------------------------------------------
+
+
+def session_re(monde: Any, longueur: str, mots: int) -> Any:
+    seed = monde.ecrire_seed(
+        [
+            monde.amorce("RE", "texte", ligne=1),
+            monde.amorce("RE", "longueur_demandee", ligne=1, texte=longueur),
+        ]
+    )
+    monde.faux.reponses = [{"texte": " ".join(["mot"] * mots)}]
+    return monde.lancer({"RE": 1}, seed=seed)
+
+
+@pytest.mark.parametrize(
+    ("longueur", "mots", "rejet"),
+    [
+        ("courte", 80, False),
+        ("courte", 81, True),
+        ("moyenne", 81, False),
+        ("moyenne", 201, True),
+        ("detaillee", 400, False),
+        ("detaillee", 401, True),
+    ],
+)
+def test_re_au_dela_du_plafond_de_sa_longueur_rejete(
+    monde: Any, longueur: str, mots: int, rejet: bool
+) -> None:
+    resultat = valider(monde, session_re(monde, longueur, mots))
+    assert motifs(resultat) == (["longueur_depassee"] if rejet else [])
+    if rejet:
+        (ligne,) = resultat.run.lire_jsonl("rejets.jsonl")
+        assert str(mots) in ligne["detail"]
+        assert "mot mot" not in ligne["detail"]  # aucun texte généré dans le rejet

@@ -200,11 +200,23 @@ def env_sous_processus(base: Mapping[str, str] | None = None) -> dict[str, str]:
     return env
 
 
-def longueurs_re_evaluation() -> tuple[str, ...]:
-    """Clés de `[re.longueurs]` de `config/evaluation.toml` (longueurs demandées du Jeu, sans
-    accent) ; `ConfigurationInvalide` si le fichier manque ou n'a pas la section."""
+def plafonds_re_evaluation() -> dict[str, int]:
+    """`[re.longueurs]` de `config/evaluation.toml` : plafond de mots par longueur demandée du
+    Jeu (clés sans accent). Les couches `mistral` et `data` la lisent ici (couche 0).
+
+    Lève `ConfigurationInvalide` si le fichier manque, n'est pas de l'UTF-8 valide, n'est pas du
+    TOML ou n'a pas la section ; le message ne cite jamais de valeur.
+    """
     chemin = racine_projet() / "config" / "evaluation.toml"
+    erreur = ConfigurationInvalide(f"{chemin.name} : section [re.longueurs] illisible")
     try:
-        return tuple(tomllib.loads(chemin.read_text(encoding="utf-8"))["re"]["longueurs"])
-    except (OSError, KeyError, TypeError, tomllib.TOMLDecodeError):
-        raise ConfigurationInvalide(f"{chemin.name} : section [re.longueurs] illisible") from None
+        brut = tomllib.loads(chemin.read_text(encoding="utf-8"))["re"]["longueurs"]
+    except (OSError, UnicodeDecodeError, KeyError, TypeError, tomllib.TOMLDecodeError):
+        raise erreur from None
+    if (
+        not isinstance(brut, dict)
+        or not brut
+        or not all(isinstance(v, int) and not isinstance(v, bool) and v >= 1 for v in brut.values())
+    ):
+        raise erreur
+    return dict(brut)
