@@ -205,9 +205,43 @@ def test_tour_assistant_vide_refuse() -> None:
         intervalles_assistant(Vide(), [{"role": "user", "content": "x"}, {"role": "assistant"}])
 
 
+class AmorceRaisonnementVide(TokenizerFactice):
+    """Comme MiniCPM5 avec `enable_thinking = false` : l'amorce de génération ajoute un bloc
+    de raisonnement vide que le rendu des tours `assistant` n'écrit pas."""
+
+    def apply_chat_template(self, messages, *, add_generation_prompt=False, **kw):
+        sortie = super().apply_chat_template(
+            messages, add_generation_prompt=add_generation_prompt, **kw
+        )
+        return sortie + "<think></think>" if add_generation_prompt else sortie
+
+
+@pytest.mark.parametrize("court", [False, True])  # tour court : « aucun texte » trompeur avant
+def test_amorce_absente_du_tour_rendu_refusee(court: bool) -> None:
+    messages = (
+        [{"role": "user", "content": "q"}, {"role": "assistant", "content": "r"}]
+        if court
+        else conversation()
+    )
+    with pytest.raises(ErreurMasque, match="amorce de génération du message .* préfixe"):
+        intervalles_assistant(AmorceRaisonnementVide(), messages)
+
+
 # ---- tests lents : tokenizers réels et llama-server (jamais dans la suite par défaut) ----
 
-CANDIDATS = ["granite-4.0-1b", "ministral-3-3b", "smollm3-3b", "qwen-4b", "eurollm-1.7b"]
+CANDIDATS = [
+    "granite-4.0-1b",
+    "eurollm-1.7b",
+    pytest.param(
+        "minicpm5-1b",
+        marks=pytest.mark.xfail(
+            strict=True,
+            reason="amorce `<think>\\n\\n</think>\\n\\n` (enable_thinking = false) absente des "
+            "tours rendus : décision en attente (spec-candidats-registre)",
+        ),
+    ),
+]
+"""Candidats au fine-tuning du registre D8 (`entrainable = true`)."""
 OUTIL = {
     "type": "function",
     "function": {

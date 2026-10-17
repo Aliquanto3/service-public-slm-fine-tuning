@@ -6,8 +6,8 @@ par fichier : dépôt ou URL, fichier, révision, octets transférés, SHA-256, 
 termine `complet` ou `partiel-erreur`. Les requêtes passent par les clients de
 `slmsp.net` (profil `outillage`) et figurent à son journal des requêtes.
 
-`fetch modeles` prend des slugs ou `--candidats` (les Modèles de base candidats, ordre D4).
-Après le téléchargement, chaque modèle de génération passe les contrôles de
+`fetch modeles` prend des slugs ou `--candidats` (les Modèles de base candidats, dans
+l'ordre du registre D8). Après le téléchargement, chaque modèle de génération passe les contrôles de
 `slmsp.fetch.verifications` (`--sans-serveur` : sans démarrer `llama-server`), inscrits
 dans `controles.jsonl`. Un modèle écarté est signalé sur stderr avec son motif ; le run
 reste `complet` et la commande sort en code 1.
@@ -92,7 +92,7 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     p.add_argument(
         "--candidats",
         action="store_true",
-        help="les Modèles de base candidats, dans l'ordre D4 (exclut les SLUG)",
+        help="les Modèles de base candidats, dans l'ordre du registre D8 (exclut les SLUG)",
     )
     p.add_argument(
         "--sans-serveur",

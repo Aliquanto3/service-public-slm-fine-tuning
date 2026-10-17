@@ -70,9 +70,17 @@ def intervalles_assistant(
             ) from erreur
         debut = len(amorce)
         jusque = apply_chat_template(tokenizer, messages[: k + 1], **options)
-        if len(jusque) <= debut:
+        if len(jusque) <= debut and amorce.startswith(jusque):
             raise ErreurMasque(f"le message assistant {k} ne produit aucun texte")
-        if not texte.startswith(amorce) or not texte.startswith(jusque):
+        if not jusque.startswith(amorce):
+            # Cas de MiniCPM5 avec `enable_thinking = false` : l'amorce de génération se
+            # termine par un bloc de raisonnement vide que le tour rendu ne contient pas.
+            raise ErreurMasque(
+                f"l'amorce de génération du message {k} n'est pas un préfixe du rendu de ce "
+                "tour : le template écrit à la génération un texte absent du tour rendu (par "
+                "exemple un bloc de raisonnement vide) ou réécrit l'historique"
+            )
+        if not texte.startswith(jusque):
             raise ErreurMasque(
                 f"le rendu du message {k} n'est pas un préfixe du rendu complet : "
                 "le template réécrit l'historique (variante `generation` requise)"

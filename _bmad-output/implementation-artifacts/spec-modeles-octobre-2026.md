@@ -15,6 +15,8 @@ deferred: []
 ## Intent
 Décision d'Anaël (17/10) : trois Modèles de base candidats de plus pour la Baseline. Qwen3.5-2B est candidat au fine-tuning. Bonsai-2-4B, ternaire en Q2_0, est le candidat « sans fine-tuning » du chemin no-go. MiniCPM-V-4.7-1B est multimodal, avec la vision exclue. On les épingle comme les candidats de la story 8.1 et on vérifie leur compatibilité avec llama.cpp b11429. Les modèles ne sont pas ajoutés à `CANDIDATS`, qui reste l'ordre D4 : ils se téléchargent par slug.
 
+> Note du 2026-10-17 (spec-candidats-registre) : `CANDIDATS` ne suit plus l'ordre D4 mais le registre de D8 (granite-4.0-1b, minicpm5-1b, eurollm-1.7b, qwen3.5-0.8b, qwen3.5-2b). Les mentions « hors `CANDIDATS` » ci-dessous (sections Approche et Candidats < 2B) décrivent l'état au moment de cette spec.
+
 ## Approach
 - `config/modeles/qwen3.5-2b.toml`, `bonsai-2-4b.toml` et `minicpm-v-4.7-1b.toml` : révisions au SHA de commit, SHA-256 et tailles lus dans l'API Hugging Face via la passerelle du projet (`preparer_hf`, `client_hf`). Les fichiers non LFS sont hachés après lecture. Valeurs communes : `exclure_vision = true`, `reasoning = "off"`, `chat_template_kwargs = { enable_thinking = false }`, contexte 8192, cache f16, `protocole_outils = "natif"` (non sondé, à confirmer par la sonde 8.2).
 - **Qwen3.5-2B** : il n'existe pas de GGUF Qwen officiel (ni ggml-org). On prend le GGUF communautaire unsloth (`Qwen3.5-2B-Q4_K_M.gguf`, comme pour qwen-4b). Le `[gguf_f16]` est le BF16 d'unsloth, qui ne publie pas de F16. Le contrôle `chat_template` a constaté un template GGUF différent de celui du tokenizer HF : `chat_template_force = true`, avec le template exporté.

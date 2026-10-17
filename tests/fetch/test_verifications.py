@@ -975,12 +975,17 @@ TAILLES_GGUF = {
     "smollm3-3b": 1_915_305_312,
     "qwen-4b": 2_497_281_120,
     "ministral-3-8b": 5_198_911_904,
+    # Registre D8 (commentaire `[gguf]` des TOML, relevées le 2026-10-17).
+    "minicpm5-1b": 688_065_920,
+    "eurollm-1.7b": 1_045_157_088,
+    "qwen3.5-0.8b": 532_517_120,
+    "qwen3.5-2b": 1_280_835_840,
 }
 """Tailles des GGUF épinglés (commentaire `[gguf]` des TOML, relevées le 2026-10-12)."""
 
 
 @pytest.mark.reseau
-@pytest.mark.parametrize("slug", ANCIENS_CANDIDATS)
+@pytest.mark.parametrize("slug", dict.fromkeys(ANCIENS_CANDIDATS + CANDIDATS))
 def test_candidat_reel_conforme(slug: str) -> None:
     """Réseau : `X-Linked-Etag` et taille du GGUF à `gguf.revision`, et etag d'un fichier
     LFS de `fichiers`, conformes à la configuration (HEAD seulement)."""
