@@ -496,3 +496,75 @@ def test_echec_sans_trace_signale_un_processus_tue_de_l_exterieur(banc, monkeypa
     )
     with pytest.raises(lm_eval.LmEvalEchoue, match="tué de l'extérieur"):
         lm_eval.executer(config(), banc.contexte())
+
+
+@pytest.mark.parametrize(
+    ("options", "modele", "attendu"),
+    [
+        ({"batch_size": "8"}, 4, "8"),
+        ({}, 4, "4"),
+        ({}, None, "auto"),
+    ],
+)
+def test_priorite_du_lot_benchmark_puis_modele_puis_auto(
+    banc, monkeypatch, options, modele, attendu
+):
+    poser_poids(banc)
+    monkeypatch.setattr(lm_eval, "lot_modele", lambda _slug: modele)
+    sortie = lm_eval.executer(config(options=options), banc.contexte())
+    assert option(banc.appel()["argv"], "--batch_size") == attendu
+    assert sortie.batch_size == attendu
+
+
+def test_lot_minicpm5_epingle_a_4():
+    assert lm_eval.lot_modele("minicpm5-1b") == 4
+
+
+@pytest.mark.parametrize("valeur", [0, -1])
+def test_schema_refuse_un_lot_non_positif(valeur):
+    from pydantic import ValidationError
+
+    from slmsp.inference.serveur import charger_config_modele
+
+    donnees = charger_config_modele("minicpm5-1b").model_dump()
+    donnees["lm_eval_batch_size"] = valeur
+    with pytest.raises(ValidationError):
+        type(charger_config_modele("minicpm5-1b")).model_validate(donnees)
+
+
+@pytest.fixture
+def racine_factice(tmp_path, monkeypatch):
+    """Racine de projet factice ; `config/modeles/` y est créé vide."""
+    from slmsp.inference import serveur
+
+    (tmp_path / "config" / "modeles").mkdir(parents=True)
+    monkeypatch.setattr(lm_eval, "racine_projet", lambda: tmp_path)
+    monkeypatch.setattr(serveur, "racine_projet", lambda: tmp_path)
+    return tmp_path / "config" / "modeles"
+
+
+def _copie_minicpm(destination: Path, remplacement: tuple[str, str] | None = None) -> None:
+    from slmsp.core.config import racine_projet
+
+    texte = (racine_projet() / "config" / "modeles" / "minicpm5-1b.toml").read_text("utf-8")
+    if remplacement:
+        assert remplacement[0] in texte
+        texte = texte.replace(*remplacement)
+    (destination / "m.toml").write_text(texte, encoding="utf-8")
+
+
+def test_lot_modele_chemin_reel_config_absente_journalisee(racine_factice, caplog):
+    with caplog.at_level("WARNING"):
+        assert lm_eval.lot_modele("m") is None
+    assert "config de modèle absente" in caplog.text
+
+
+def test_lot_modele_chemin_reel_valeur_4(racine_factice):
+    _copie_minicpm(racine_factice)
+    assert lm_eval.lot_modele("m") == 4
+
+
+def test_lot_modele_chemin_reel_config_invalide_echoue(racine_factice):
+    _copie_minicpm(racine_factice, ("lm_eval_batch_size = 4", "lm_eval_batch_size = 0"))
+    with pytest.raises(ConfigurationInvalide):
+        lm_eval.lot_modele("m")

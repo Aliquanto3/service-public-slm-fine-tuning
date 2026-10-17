@@ -17,6 +17,7 @@ valeur, `<tache>.<métrique>_stderr` pour l'erreur standard, `<tache>.n_items`.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import shlex
@@ -29,7 +30,7 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 from slmsp.benchmarks.moteurs import ContexteBench, SortieMoteur, lancer_outil
-from slmsp.core.config import dossier_modeles
+from slmsp.core.config import dossier_modeles, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ VARIABLE_JEU_MCQ = "SLMSP_MCQ_EVAL_DIR"
 TACHE_MCQ = "agentpublic_mcq"
 ENV_API_LOCALE = {"OPENAI_API_KEY": "sans-objet-llama-server-local"}
 """`local-chat-completions` exige une clé ; `llama-server` local l'ignore."""
+LOGGER = logging.getLogger("slmsp.benchmarks.lm_eval")
 SEED_DEFAUT = 1234
 """Graine commune (python, numpy, torch, few-shot) si `options.seed` est absent."""
 BATCH_DEFAUT = "auto"
@@ -92,8 +94,27 @@ def graine(config: BenchmarkConfig) -> int:
     return int(config.options.get("seed", SEED_DEFAUT))
 
 
-def taille_lot(config: BenchmarkConfig) -> str:
-    return str(config.options.get("batch_size", BATCH_DEFAUT))
+def lot_modele(slug: str) -> int | None:
+    """`lm_eval_batch_size` de `config/modeles/<slug>.toml`.
+
+    `None` si le fichier est absent (journalisé) ou la clé non posée. Un fichier présent mais
+    invalide lève `ConfigurationInvalide` : retomber sur `auto` ramènerait l'OOM sans signal.
+    """
+    from slmsp.inference.serveur import charger_config_modele
+
+    chemin = racine_projet() / "config" / "modeles" / f"{slug}.toml"
+    if not chemin.exists():
+        LOGGER.warning("config de modèle absente (%s) : lm_eval --batch_size auto", slug)
+        return None
+    return charger_config_modele(slug).lm_eval_batch_size
+
+
+def taille_lot(config: BenchmarkConfig, slug: str | None = None) -> str:
+    """Priorité : `options.batch_size` du benchmark > `lm_eval_batch_size` du modèle > `auto`."""
+    if "batch_size" in config.options:
+        return str(config.options["batch_size"])
+    parametre = lot_modele(slug) if slug else None
+    return str(parametre) if parametre is not None else BATCH_DEFAUT
 
 
 def arguments_communs(config: BenchmarkConfig, sortie: Path) -> list[str]:
@@ -318,7 +339,11 @@ def extraire_erreurs(stderr: str, stdout: str = "") -> str:
 
 
 def _lancer(
-    commande: list[str], dossier_sortie: Path, env: Mapping[str, str], config: BenchmarkConfig
+    commande: list[str],
+    dossier_sortie: Path,
+    env: Mapping[str, str],
+    config: BenchmarkConfig,
+    lot: str = "1",
 ) -> SortieMoteur:
     dossier_sortie.mkdir(parents=True, exist_ok=True)
     fin = lancer_outil(commande, env_supplementaire=env)
@@ -348,7 +373,7 @@ def _lancer(
     sortie = analyser(donnees)
     sortie.details["sortie_json"] = str(chemin)
     sortie.seed = graine(config)
-    sortie.batch_size = taille_lot(config) if config.cible == "hf" else "1"
+    sortie.batch_size = lot
     return sortie
 
 
@@ -436,12 +461,13 @@ def executer(config: BenchmarkConfig, contexte: ContexteBench) -> SortieMoteur:
                 saute=f"poids HF absents ({slug} : ni hf-bf16 ni hf) : GGUF seul, QCM sautés"
             )
         verifier_cache_hf(config)
+        lot = taille_lot(config, slug)
         commande = [
             *commande_lm_eval(),
-            *arguments_hf(poids, taille_lot(config)),
+            *arguments_hf(poids, lot),
             *arguments_communs(config, sortie),
         ]
-        return _lancer(commande, sortie, env, config)
+        return _lancer(commande, sortie, env, config, lot)
     verifier_cache_hf(config)
     try:
         with serveur_llama(config, contexte) as (url, nom):
