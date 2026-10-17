@@ -32,10 +32,17 @@ deferred: []
 ## Décisions
 
 - **Licence : l'échec en bloc est gardé.** AD-17 : « Il échoue si une source manque au Registre. `--variante diffusable` échoue sur toute source dont l'usage n'est pas `diffusable`. » C'est une contrainte du Registre et de la variante, pas un défaut d'une session ; écarter silencieusement des sessions masquerait un Registre incomplet. Écarter et compter est une décision de fond : **à confirmer par Anaël** si elle la souhaite.
-- `lancer_validation` et `valider_session` reçoivent `taches` (défaut `charger_taches()` pour `lancer_validation`) ; la CLI n'est pas modifiée. `valider_session` sans `taches` saute le contrôle (appel direct des tests existants).
+- `lancer_validation` et `valider_session` reçoivent `taches` (défaut `charger_taches()` pour `lancer_validation`) ; la CLI n'est pas modifiée. `valider_session` sans `taches` charge `charger_taches()` (le contrôle de dérivation n'est jamais sauté).
 - `ProvenanceInvalide` reste la base : `DerivationRefusee` en dérive, build l'attrape comme avant.
 
 ## Auto Run Result
 
 - Fichiers : `src/slmsp/data/build.py`, `src/slmsp/data/validate.py`, `src/slmsp/core/schemas/rejet_donnees.py` (3 motifs), `tests/data/test_validate.py` (3 tests).
 - Report : refus `LigneEntrainement`/date et `verifier_octets` non rejoués par validate (non liés à une règle de session ; échec franc voulu).
+
+## Revue
+
+- low | corrigé | `valider_session(taches=None)` sautait `_controler_derivation` en silence : charge désormais `charger_taches()`.
+- low | rejeté (documenté) | `outil_hors_cassette` et `conversation_invalide` quasi inatteignables via validate (`_rejouer` lève `trace_divergente` avant) : gardés en défense en profondeur, car la règle partagée `construire_conversation` peut les lever seule.
+- low | acté | licence et Registre restent des échecs en bloc de build (AD-17), choix assumé, code inchangé.
+- low | rejeté | cassettes RD lues deux fois par session : coût marginal, correctif non trivial.

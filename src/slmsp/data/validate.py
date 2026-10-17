@@ -596,8 +596,7 @@ def valider_session(
     outils: list[str] = []
     if brut.tache == "RD":
         outils = _rejouer(lecteur, brut, chemin_outils)
-    if taches is not None:
-        _controler_derivation(lecteur, taches, brut)
+    _controler_derivation(lecteur, taches if taches is not None else charger_taches(), brut)
     texte = lecteur.reponse_finale(brut)
     fournis = lecteur.textes_amorces(brut)
     if brut.tache == "CR":
