@@ -1,4 +1,4 @@
-# Restaure l'état hors git depuis la release GitHub privée (voir docs/reprise-deuxieme-pc.md).
+﻿# Restaure l'état hors git depuis la release GitHub privée (voir docs/reprise-deuxieme-pc.md).
 # Usage, depuis le dépôt cloné :
 #   powershell -NoProfile -ExecutionPolicy Bypass -File outils/migration/restaurer-etat.ps1
 # Contenu : var (journaux Mistral, registre des budgets, verdicts), data/cache, data/train,

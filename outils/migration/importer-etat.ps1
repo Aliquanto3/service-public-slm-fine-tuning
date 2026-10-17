@@ -1,4 +1,4 @@
-# Importe sur le nouveau PC l'état exporté par exporter-etat.ps1.
+﻿# Importe sur le nouveau PC l'état exporté par exporter-etat.ps1.
 # Usage, depuis le dépôt cloné : powershell -File outils\migration\importer-etat.ps1 -Source E:\slmsp-transfert
 # N'écrase rien d'existant sans -Forcer. Le fichier .env reste à remplir à la main.
 param(

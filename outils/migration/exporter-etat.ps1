@@ -1,4 +1,4 @@
-# Exporte l'état hors git du projet vers un dossier de transfert (disque externe, partage).
+﻿# Exporte l'état hors git du projet vers un dossier de transfert (disque externe, partage).
 # Usage : powershell -File outils\migration\exporter-etat.ps1 -Destination E:\slmsp-transfert [-AvecModeles]
 # Voir docs/reprise-deuxieme-pc.md. Le fichier .env n'est jamais copié.
 param(
