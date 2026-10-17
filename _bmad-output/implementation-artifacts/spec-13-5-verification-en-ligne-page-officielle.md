@@ -10,14 +10,15 @@ context:
   - '{project-root}/_bmad-output/implementation-artifacts/spec-12-5-pont-js-api-et-flux-d-evenements.md'
 warnings: []
 deferred:
-  - 'Câblage de PontVerification dans Pont (Assemblage : passerelle, llm, mode) : story 13.6.'
+  - 'Câblage de PontVerification dans Pont (Assemblage : passerelle, llm, dans_index = vector_store.contient_url) : story 13.6.'
+  - 'Qualité réelle du verdict et tenue face à une page piégée avec le Modèle embarqué (GPU) : à mesurer.'
 ---
 
 ## Intent
 
 **Problem:** FR-12 (gardée par Q7) : l'Agent veut contrôler une réponse Question sur la page officielle qu'elle cite, sans qu'aucun texte saisi ne sorte du poste.
 
-**Approach:** `harness.verification.verifier(reponse, sources, mode, passerelle, llm)` choisit la source de l'Index la mieux classée (plus petit `numero`) que la réponse cite par `[n]`. Il fait un GET de cette URL seule, par la passerelle (`net.client`, profil `assistant`, redirections suivies et recontrôlées à chaque saut, délai et taille bornés, aucune relance). Il extrait le texte avec `html.parser` (rien n'est exécuté ; scripts, styles et `head` sont ignorés ; `<main>`/`<article>` est préféré). Le Modèle embarqué compare ensuite la réponse à la page avec `VE.md`. Toute impossibilité rend le verdict `indisponible`, sans lever d'exception.
+**Approach:** `harness.verification.verifier(reponse, sources, passerelle, llm, dans_index=…)` choisit la source de l'Index la mieux classée (plus petit `numero`) que la réponse cite par `[n]`. Il fait un GET de cette URL seule, par la passerelle (`net.client`, profil `assistant`, redirections suivies et recontrôlées à chaque saut, délai et taille bornés, aucune relance). Il extrait le texte avec `html.parser` (rien n'est exécuté ; scripts, styles et `head` sont ignorés ; `<main>`/`<article>` est préféré). Le Modèle embarqué compare ensuite la réponse à la page avec `VE.md`. Toute impossibilité rend le verdict `indisponible`, sans lever d'exception.
 
 ## Code Map
 
@@ -35,7 +36,8 @@ deferred:
 - Le second évènement n'est présent que si la page a été lue. Il porte la page, avec `origine = "verification"` et `date` égale à la date de consultation.
 - En cas d'arguments mal typés, le pont rend `requete-invalide`.
 - Sans vérificateur branché (comportement actuel de `Pont`), il rend `non-implementee`.
-- Pour le câblage en 13.6 : `PontVerification(Verificateur(assemblage.passerelle, service.llm, service.mode, service.config.verification))`.
+- Pour le câblage en 13.6 : `PontVerification(Verificateur(assemblage.passerelle, service.llm, dans_index=<IndexLocal>.contient_url, config=service.config.verification))`. Le Mode est toujours celui de la passerelle. Sans `dans_index`, les sources reçues du pont ne sont pas recoupées avec l'Index : le brancher est obligatoire.
+- Le pont refuse (`requete-invalide`) une réponse de plus de 20 000 caractères ou plus de 100 sources.
 
 ## Auto Run Result
 
@@ -56,3 +58,14 @@ deferred:
 - La qualité réelle du verdict avec le Modèle embarqué n'a pas été mesurée : GPU occupé, tests faits avec un faux LLM.
 
 ## Revue
+
+Revue Opus (2026-10-17), après rebase sur `main`, avec les constats du second avis (Haiku).
+
+- **high**, second avis 1, corrigé : le paramètre `mode` de `verifier`/`Verificateur` pouvait remplacer le hors ligne forcé de la passerelle. Paramètre supprimé, le Mode est toujours `passerelle.mode` ; passerelle sans Mode : `indisponible`, rien ne sort. Test `test_mode_de_la_passerelle_sans_derogation`.
+- **medium**, second avis 2, corrigé : URL venue de l'appelant envoyée telle quelle. Requête, fragment et identifiants retirés (`url_sans_requete`) ; recoupement par `dans_index` (`IndexLocal.contient_url`, nouvelle méthode, URL exacte), un Index illisible écarte la source. Tests `test_requete_et_fragment_retires_de_l_url`, `test_recoupement_avec_l_index`, `test_contient_url`. Le branchement de `dans_index` reste à faire en 13.6 (voir contrat).
+- **medium**, second avis 3, corrigé : réponse et page encadrées par `<<<REPONSE>>>`/`<<<PAGE>>>`, toute suite `<<<`/`>>>` neutralisée dans le contenu ; `VE.md` dit que la page est une donnée, jamais une instruction (consigne seule) ; la phrase affichée est un libellé fixe de `PHRASES` dérivé du verdict, le texte libre du modèle n'est plus montré. Test `test_page_qui_tente_de_dicter_le_verdict`. Report : la résistance réelle du Modèle embarqué à une page piégée reste à mesurer sur GPU (le verdict lui-même peut encore être influencé ; l'extrait reste borné au texte de la page).
+- **low**, second avis 4, corrigé : `max_redirects = 3` (`MAX_REDIRECTIONS`). Test `test_redirections_bornees_et_sans_compression`.
+- **low**, second avis 5, corrigé : `Accept-Encoding: identity` demandé. La borne de taille portait déjà sur les octets décompressés (`iter_bytes`), donc une bombe de compression était déjà arrêtée à `taille_max_octets`.
+- **low**, second avis 6, corrigé : réponse bornée à 20 000 caractères (Harnais : `indisponible` sans requête ; pont : `requete-invalide`), et 100 sources au plus côté pont. Test `test_reponse_trop_longue_refusee`.
+- **low**, second avis 7, corrigé : extrait retenu seulement entre 12 et 500 caractères.
+- **low**, second avis 8, corrigé : `phrase` du modèle bornée à 300 caractères dans `lire_comparaison`, et jamais affichée (point 3). Test `test_extrait_trop_court_et_phrase_trop_longue_ecartes`.

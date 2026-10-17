@@ -266,6 +266,14 @@ class IndexLocal:
             )
         return resultat
 
+    def contient_url(self, url: str) -> bool:
+        """`True` si au moins un passage de l'Index porte exactement l'URL `url`."""
+        _, connexion = self._ouvert()
+        return (
+            connexion.execute("SELECT 1 FROM chunks WHERE url = ? LIMIT 1", (url,)).fetchone()
+            is not None
+        )
+
     def rechercher(self, vecteur: NDArray[np.float32], k: int) -> list[Passage]:
         """Les `k` passages les plus proches, par score décroissant puis rang croissant."""
         rangs, scores = self.classer(vecteur, k)

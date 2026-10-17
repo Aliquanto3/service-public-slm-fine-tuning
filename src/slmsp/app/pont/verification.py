@@ -24,6 +24,10 @@ from typing import Any
 from slmsp.app.pont.conversation import reponse_erreur
 from slmsp.app.pont.erreurs import NonImplementee
 from slmsp.core.evenements import Evenement, vers_dict
+from slmsp.harness.verification import REPONSE_MAX_CARACTERES
+
+SOURCES_MAX = 100
+"""Nombre maximal de sources reçues ; au-delà, `requete-invalide`."""
 
 Verificateur = Callable[[str, Sequence[Mapping[str, Any]]], Sequence[Evenement]]
 
@@ -42,6 +46,8 @@ class PontVerification:
             or not isinstance(args[0], str)
             or not isinstance(args[1], list)
             or not all(isinstance(s, Mapping) for s in args[1])
+            or len(args[0]) > REPONSE_MAX_CARACTERES
+            or len(args[1]) > SOURCES_MAX
         ):
             return reponse_erreur("requete-invalide", "arguments invalides pour verifier")
         evenements = self._verificateur(args[0], args[1])

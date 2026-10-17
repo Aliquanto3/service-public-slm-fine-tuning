@@ -389,3 +389,11 @@ def test_lecture_et_cli_sans_pyarrow_ni_duckdb() -> None:
         check=False,
     )
     assert resultat.returncode == 0, resultat.stdout + resultat.stderr
+
+
+def test_contient_url(fabrique_index) -> None:
+    factice = fabrique_index()
+    with IndexLocal(factice.dossier) as index:
+        url = factice.lignes[0][4]
+        assert index.contient_url(url) is True
+        assert index.contient_url(url + "-absente") is False

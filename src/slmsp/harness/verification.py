@@ -1,23 +1,29 @@
 """Vérification en ligne d'une page officielle (FR-12, story 13.5, Q7).
 
-`verifier(reponse, sources, mode, passerelle, llm)` contrôle une réponse déjà produite sur
+`verifier(reponse, sources, passerelle, llm)` contrôle une réponse déjà produite sur
 la page officielle qu'elle cite :
 
 1. Choix de la page : la source de l'Index local la mieux classée (plus petit `numero`)
-   parmi celles que la réponse cite par un renvoi `[n]`. Aucune recherche sur le site :
+   parmi celles que la réponse cite par un renvoi `[n]` et, si `dans_index` est fourni, dont
+   l'URL figure réellement dans l'Index (les sources viennent de l'appelant). La requête et
+   le fragment de l'URL sont retirés avant l'envoi. Aucune recherche sur le site :
    la seule Requête sortante est un GET de cette URL, déjà citée. Ni la question, ni la
    réponse, ni aucun texte saisi ne sortent du poste (FR-38).
 2. Récupération par la passerelle unique (AD-4) : profil `assistant` (Liste blanche par
    correspondance exacte, HTTPS), GET seul, redirections suivies mais chaque saut
-   recontrôlé (une redirection hors Liste blanche est bloquée), délai et taille bornés,
-   sans relance. Le Mode hors ligne (forcé ou détecté) refuse la requête avant toute
-   connexion (`bloquee-mode`). L'entrée du journal porte `outil = "verification-page"` et
+   recontrôlé (une redirection hors Liste blanche est bloquée, `MAX_REDIRECTIONS` au plus),
+   délai et taille bornés, sans relance. Le Mode est toujours celui de la passerelle :
+   l'appelant ne peut pas le remplacer, et le Mode hors ligne (forcé ou détecté) refuse la
+   requête avant toute connexion (`bloquee-mode`). L'entrée du journal porte
+   `outil = "verification-page"` et
    `termes = {"url": <url>}`.
 3. Extraction du texte principal par `html.parser` de la bibliothèque standard : rien
    n'est exécuté ; scripts, styles et éléments non textuels sont ignorés ; le contenu de
    `<main>` ou `<article>` est préféré s'il existe.
 4. Comparaison locale par le Modèle embarqué, avec le prompt `config/prompts/taches/VE.md`
-   (consignes seulement, D1.1).
+   (consignes seulement, D1.1). La réponse et la page sont encadrées par des délimiteurs,
+   neutralisés dans leur contenu ; la page est une donnée, jamais une instruction. La phrase
+   affichée est un libellé fixe dérivé du verdict, jamais le texte libre du modèle.
 
 Le résultat est une liste d'évènements : un `Verification` (toujours), suivi d'un
 `Sources` portant la page consultée quand elle a été récupérée.
@@ -35,6 +41,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Literal
+from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import ValidationError
 
@@ -43,7 +50,7 @@ from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import HoteBloque
 from slmsp.core.evenements import Evenement, Jeton, Source, Sources, Verification
 from slmsp.core.gabarits import GabaritInvalide, valider_gabarit
-from slmsp.core.ports import JournalRequetes, LlmPort, ModePort
+from slmsp.core.ports import JournalRequetes, LlmPort
 from slmsp.harness.citations import numeros_cites
 from slmsp.harness.config import ConfigVerification
 from slmsp.harness.prompts import construire_messages
@@ -55,6 +62,18 @@ OUTIL_JOURNAL: Final = "verification-page"
 
 NOM_PROMPT: Final = "VE.md"
 TYPES_HTML: Final = ("text/html", "application/xhtml+xml")
+
+MAX_REDIRECTIONS: Final = 3
+REPONSE_MAX_CARACTERES: Final = 20_000
+"""Taille maximale de la réponse à vérifier (au-delà : `indisponible`, ou refus du pont)."""
+PHRASE_MAX_CARACTERES: Final = 300
+EXTRAIT_MIN_CARACTERES: Final = 12
+EXTRAIT_MAX_CARACTERES: Final = 500
+DEBUT_REPONSE: Final = "<<<REPONSE>>>"
+FIN_REPONSE: Final = "<<<FIN_REPONSE>>>"
+DEBUT_PAGE: Final = "<<<PAGE>>>"
+FIN_PAGE: Final = "<<<FIN_PAGE>>>"
+_RE_DELIMITEUR = re.compile(r"<{3,}|>{3,}")
 
 Verdict = Literal["concordant", "difference", "indisponible"]
 
@@ -69,6 +88,7 @@ PHRASES: Final[Mapping[str, str]] = MappingProxyType(
         "taille": "La page officielle est trop volumineuse pour être vérifiée.",
         "vide": "Le texte de la page officielle n'a pas pu être lu.",
         "comparaison": "La comparaison avec la page officielle n'a pas abouti.",
+        "reponse": "La réponse est trop longue pour être vérifiée.",
         "concordant": "La page officielle confirme la réponse.",
         "difference": "La page officielle diffère de la réponse.",
     }
@@ -97,17 +117,52 @@ def _vers_source(brute: Source | Mapping[str, Any]) -> Source | None:
         return None
 
 
-def choisir_source(reponse: str, sources: Sequence[Source | Mapping[str, Any]]) -> Source | None:
+def url_sans_requete(url: str) -> str | None:
+    """`url` sans requête (`?…`), fragment (`#…`) ni identifiants ; `None` si illisible."""
+    try:
+        morceaux = urlsplit(url)
+        hote = morceaux.hostname
+        port = morceaux.port
+    except ValueError:
+        return None
+    if not morceaux.scheme or not hote:
+        return None
+    if ":" in hote:  # IPv6
+        hote = f"[{hote}]"
+    netloc = hote if port is None else f"{hote}:{port}"
+    return urlunsplit((morceaux.scheme, netloc, morceaux.path, "", ""))
+
+
+def _admise(url: str, dans_index: Callable[[str], bool] | None) -> bool:
+    if dans_index is None:
+        return True
+    try:
+        return bool(dans_index(url))
+    except Exception:  # Index illisible : dans le doute, la source n'est pas vérifiée
+        return False
+
+
+def choisir_source(
+    reponse: str,
+    sources: Sequence[Source | Mapping[str, Any]],
+    dans_index: Callable[[str], bool] | None = None,
+) -> Source | None:
     """Source de l'Index la mieux classée (plus petit `numero`) que `reponse` cite par `[n]`.
 
-    Les sources illisibles, sans `numero` ou d'une autre origine sont ignorées. `None` si
-    aucune ne convient. La Liste blanche n'est pas contrôlée ici : la passerelle le fait.
+    Les sources illisibles, sans `numero`, d'une autre origine ou, si `dans_index` est
+    fourni, dont l'URL est absente de l'Index sont ignorées. L'URL rendue est sans requête
+    ni fragment. `None` si aucune ne convient. La Liste blanche n'est pas contrôlée ici :
+    la passerelle le fait.
     """
-    candidates = [
-        s
-        for s in (_vers_source(b) for b in sources)
-        if s is not None and s.origine == "index" and s.numero is not None
-    ]
+    candidates = []
+    for brute in sources:
+        s = _vers_source(brute)
+        if s is None or s.origine != "index" or s.numero is None:
+            continue
+        nette = url_sans_requete(s.url)
+        if nette is None or not _admise(s.url, dans_index):
+            continue
+        candidates.append(s.model_copy(update={"url": nette}))
     if not candidates or not isinstance(reponse, str):
         return None
     cites = set(numeros_cites(reponse, max(s.numero or 0 for s in candidates)))
@@ -254,12 +309,13 @@ def _decoder(contenu: bytes, type_contenu: str) -> str:
 
 def _recuperer(
     url: str,
-    mode: ModePort | None,
     passerelle: Passerelle,
     config: ConfigVerification,
     transport_interne: Any,
 ) -> str:
     """Texte HTML de `url` ; lève `_Indisponible` sinon."""
+    if passerelle.mode is None:  # le profil assistant exige un Mode : rien ne sort
+        raise _Indisponible("bloquee")
     journal = _JournalEtiquete(passerelle.journal, json_canonique({"url": url}).decode("utf-8"))
     debut = time.monotonic()
     try:
@@ -267,14 +323,17 @@ def _recuperer(
             "assistant",
             passerelle.lib,
             False,
-            mode if mode is not None else passerelle.mode,
+            passerelle.mode,
             journal,
             transport_interne,
             config=passerelle.config,
             liste_blanche=passerelle.liste_blanche,
             follow_redirects=True,
         ) as http:
-            with http.stream("GET", url, timeout=config.delai_s) as reponse:
+            http.max_redirects = MAX_REDIRECTIONS
+            with http.stream(
+                "GET", url, timeout=config.delai_s, headers={"Accept-Encoding": "identity"}
+            ) as reponse:
                 if reponse.status_code != 200:
                     raise _Indisponible("statut")
                 type_contenu = reponse.headers.get("content-type", "")
@@ -332,6 +391,11 @@ def _compacter(texte: str) -> str:
     return " ".join(texte.split()).casefold()
 
 
+def encadrer(texte: str, debut: str, fin: str) -> str:
+    """`texte` entre `debut` et `fin`, après neutralisation de tout `<<<`/`>>>` qu'il contient."""
+    return f"{debut}\n{_RE_DELIMITEUR.sub(' ', texte).strip()}\n{fin}"
+
+
 @dataclass(frozen=True)
 class Comparaison:
     """Verdict lu dans la sortie du Modèle embarqué."""
@@ -358,10 +422,14 @@ def lire_comparaison(sortie: str, texte_page: str) -> Comparaison:
     else:
         return Comparaison("indisponible", None, None)
     phrase = lignes[1] if len(lignes) > 1 else None
+    if phrase is not None and len(phrase) > PHRASE_MAX_CARACTERES:
+        phrase = None
     extrait = None
     if verdict == "difference" and len(lignes) > 2:
         candidat = lignes[2].strip(" «»\"'")
-        if candidat and _compacter(candidat) in _compacter(texte_page):
+        if EXTRAIT_MIN_CARACTERES <= len(candidat) <= EXTRAIT_MAX_CARACTERES and _compacter(
+            candidat
+        ) in _compacter(texte_page):
             extrait = candidat
     return Comparaison(verdict, phrase, extrait)
 
@@ -370,7 +438,11 @@ def _comparer(
     reponse: str, texte_page: str, llm: LlmPort, tache: Tache, config: ConfigVerification
 ) -> Comparaison:
     messages = construire_messages(
-        tache, {"texte": reponse, "document": texte_page[: config.caracteres_max_page]}
+        tache,
+        {
+            "texte": encadrer(reponse, DEBUT_REPONSE, FIN_REPONSE),
+            "document": encadrer(texte_page[: config.caracteres_max_page], DEBUT_PAGE, FIN_PAGE),
+        },
     )
     options = {"temperature": 0.0, "max_tokens": config.max_tokens}
     try:
@@ -388,10 +460,10 @@ def _comparer(
 def verifier(
     reponse: str,
     sources: Sequence[Source | Mapping[str, Any]],
-    mode: ModePort | None,
     passerelle: Passerelle,
     llm: LlmPort,
     *,
+    dans_index: Callable[[str], bool] | None = None,
     config: ConfigVerification | None = None,
     tache: Tache | None = None,
     horloge: Callable[[], datetime] | None = None,
@@ -399,13 +471,16 @@ def verifier(
 ) -> list[Evenement]:
     """Vérifie `reponse` sur la page officielle citée ; voir le docstring du module.
 
-    `mode` vaut par défaut celui de la passerelle. `tache` porte le prompt `VE.md`
-    (chargé par défaut). Ne lève pas : toute impossibilité donne `indisponible`.
+    Le Mode est celui de la passerelle, sans dérogation possible. `dans_index(url)` dit si
+    une URL figure dans l'Index local (par ex. `IndexLocal.contient_url`) ; sans lui, les
+    sources de l'appelant ne sont pas recoupées. `tache` porte le prompt `VE.md` (chargé
+    par défaut). Ne lève pas : toute impossibilité donne `indisponible`.
     """
     config = config if config is not None else ConfigVerification()
     maintenant = (horloge or (lambda: datetime.now(UTC)))()
     date = maintenant.astimezone(UTC).isoformat(timespec="seconds")
-    source = choisir_source(reponse, sources)
+    trop_longue = not isinstance(reponse, str) or len(reponse) > REPONSE_MAX_CARACTERES
+    source = None if trop_longue else choisir_source(reponse, sources, dans_index)
 
     def indisponible(cle: str) -> list[Evenement]:
         return [
@@ -420,6 +495,8 @@ def verifier(
 
     if not config.active:
         return indisponible("desactivee")
+    if trop_longue:
+        return indisponible("reponse")
     if source is None:
         return indisponible("sans-source")
     try:
@@ -427,7 +504,7 @@ def verifier(
             tache = tache if tache is not None else charger_prompt()
         except GabaritInvalide:
             raise _Indisponible("comparaison") from None
-        html = _recuperer(source.url, mode, passerelle, config, transport_interne)
+        html = _recuperer(source.url, passerelle, config, transport_interne)
         page = extraire_texte(html)
         if not page.texte:
             raise _Indisponible("vide")
@@ -443,7 +520,7 @@ def verifier(
             titre=titre,
             date_consultation=date,
             verdict=comparaison.verdict,
-            phrase=comparaison.phrase or PHRASES[comparaison.verdict],
+            phrase=PHRASES[comparaison.verdict],  # libellé fixe : jamais le texte du modèle
             extrait=comparaison.extrait,
         ),
         Sources(
@@ -469,24 +546,35 @@ class Verificateur:
 
     passerelle: Passerelle
     llm: LlmPort
-    mode: ModePort | None = None
+    dans_index: Callable[[str], bool] | None = None
     config: ConfigVerification | None = None
 
     def __call__(
         self, reponse: str, sources: Sequence[Source | Mapping[str, Any]]
     ) -> list[Evenement]:
-        return verifier(reponse, sources, self.mode, self.passerelle, self.llm, config=self.config)
+        return verifier(
+            reponse,
+            sources,
+            self.passerelle,
+            self.llm,
+            dans_index=self.dans_index,
+            config=self.config,
+        )
 
 
 __all__ = [
+    "MAX_REDIRECTIONS",
     "OUTIL_JOURNAL",
     "PHRASES",
+    "REPONSE_MAX_CARACTERES",
     "Comparaison",
     "PageExtraite",
     "Verificateur",
     "charger_prompt",
     "choisir_source",
+    "encadrer",
     "extraire_texte",
     "lire_comparaison",
+    "url_sans_requete",
     "verifier",
 ]
