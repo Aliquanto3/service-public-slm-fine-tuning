@@ -75,3 +75,14 @@ licences_compatibles = ["apache-2.0"]
 
 [modeles."minicpm-v-4.7-1b"]
 licences_compatibles = ["apache-2.0"]
+
+# Ajoutés le 2026-10-17 (seconde campagne, spec-modeles-octobre-2026) : Apache 2.0 lu sur la
+# fiche Hugging Face.
+[modeles."minicpm5-2b"]
+licences_compatibles = ["apache-2.0"]
+
+[modeles."minicpm5-1b"]
+licences_compatibles = ["apache-2.0"]
+
+[modeles."gemma-4-e2b"]
+licences_compatibles = ["apache-2.0"]

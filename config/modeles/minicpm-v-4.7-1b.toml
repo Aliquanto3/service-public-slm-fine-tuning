@@ -1,3 +1,5 @@
+# RETIRÉ DE LA BASELINE par décision d'Anaël du 2026-10-17 (seconde campagne) : config conservée,
+# plus aucun run à lancer (spec-modeles-octobre-2026).
 # MiniCPM-V 4.7 1B (OpenBMB, Apache 2.0) : candidat ajouté par décision d'Anaël du
 # 2026-10-17 (spec-modeles-octobre-2026). Révisions, SHA-256 et tailles relevés le
 # 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes à l'inférence et à

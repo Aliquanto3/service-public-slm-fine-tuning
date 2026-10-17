@@ -91,3 +91,41 @@ Revue du commit e7b651e (rebasé en 5f58408), second avis Haiku puis Opus.
 - low, second avis, corrigé : `--version` validé par `MOTIF_TAG` avant toute lecture (`fichier_config`) ; test `test_version_invalide_refusee_avant_lecture`.
 - low, second avis, corrigé : `[sources]` redevient obligatoire pour `config/llamacpp.toml` (`verifier_config`, contrôle contextuel commun aux deux chargeurs) ; test `test_sources_obligatoires_pour_la_version_commune`.
 - low, second avis, rejeté : la cudart n'est pas retéléchargée, `fetch` la réutilise déjà par lien dur (même SHA ; run `20261017-055925-llamacpp-fdce`, « cudart réutilisée »).
+
+---
+
+# Seconde campagne (décision d'Anaël, 17/10) : MiniCPM5-2B, MiniCPM5-1B et Gemma-4-E2B
+
+**MiniCPM-V-4.7-1B est abandonné** : retiré de la Baseline. Sa config reste (commentaire d'en-tête ajouté), aucun run à lancer.
+
+## Épinglage (SHA de commit, SHA-256 et tailles lus dans l'API HF via la passerelle, 2026-10-17)
+| Slug | Dépôt HF (révision) | GGUF retenu | Licence |
+|---|---|---|---|
+| `minicpm5-2b` | `openbmb/MiniCPM5-2B` (f974000) | `openbmb/MiniCPM5-2B-GGUF` Q4_K_M (1,56 Go) et `[gguf_f16]` (5,04 Go) | Apache 2.0 |
+| `minicpm5-1b` | `openbmb/MiniCPM5-1B` (87179e5) | `openbmb/MiniCPM5-1B-GGUF` Q4_K_M (688 Mo) et `[gguf_f16]` (2,17 Go) | Apache 2.0 |
+| `gemma-4-e2b` | `google/gemma-4-E2B-it` (3e22461) | `google/gemma-4-E2B-it-qat-q4_0-gguf` : `gemma-4-E2B_q4_0-it.gguf` (3,35 Go), pas de `[gguf_f16]` | Apache 2.0 |
+
+- Accès : les trois dépôts HF et les GGUF sont publics (`gated` faux). Aucun blocage Gemma.
+- Gemma : **Q4_0 QAT, pas Q4_K_M**. Dans `eval run`, l'étiquette `q4_k_m` désigne la section `[gguf]` : écart à noter dans le comparatif (comme Bonsai). Google ne publie pas de GGUF F16 officiel : pas de `[gguf_f16]`, banc « avant » à décider (à confirmer par Anaël). Le projecteur `gemma-4-E2B-it-mmproj.gguf` n'est pas épinglé (vision et audio exclues, `exclure_vision`).
+- MiniCPM5 : `exclure_vision = false` (texte seul, aucun `vision_config`). Les trois modèles : contexte 8192, cache f16, `reasoning = "off"`, `enable_thinking = false` (le template MiniCPM5 ouvre `<think>`), `protocole_outils = "natif"` (non sondé, à trancher par la sonde 8.2).
+- `config/publication.toml` : trois entrées Apache 2.0, sans `verifie_le`.
+- `chat_template_force = true` pour `minicpm5-2b` seulement (contrôle `chat_template` : template GGUF différent ; run `fetch/20261017-061650-modeles-6ca4`). Templates HF et GGUF identiques pour `minicpm5-1b` et `gemma-4-e2b`.
+
+## Compatibilité llama.cpp b11429 et contrôles 8.1
+Runs `fetch` : `20261017-061207-modeles-5969` (1B), `20261017-061650-modeles-6ca4` (2B, échec `chat_template` corrigé), `20261017-062639-modeles-81f5` (2B et Gemma, tout ok).
+| Modèle | Architecture GGUF | b11429 | `dense` |
+|---|---|---|---|
+| minicpm5-2b, minicpm5-1b | `llama` (LlamaForCausalLM, 42 couches pour la 2B) | oui, charge en CPU | passe (pas de `layer_types`) |
+| gemma-4-e2b | `gemma4` | oui, charge en CPU | passe (35 couches d'attention, sliding et full) |
+
+## Essais CPU (`--device none -ngl 0`, T = 0, « Quelle est la capitale de la France ? Réponds en une phrase. »)
+- minicpm5-1b : « La capitale de la France est Paris. » à 22,8 tok/s.
+- minicpm5-2b (template HF forcé) : même réponse, 11,1 tok/s.
+- gemma-4-e2b : même réponse, 3,3 tok/s (la machine est chargée par les benchmarks ; le débit est sans doute sous-estimé).
+
+## Reports et points à confirmer par Anaël
+- Gemma : écart de quantification (Q4_0 QAT) et absence de F16 officiel, voir plus haut.
+- Entraînement : MiniCPM5 est un llama dense (aucune difficulté attendue) ; Gemma-4-E2B (embeddings par couche, `gemma4` multimodal) n'a pas été essayé avec l'épinglage transformers : à vérifier avant tout fine-tuning.
+- Poids HF téléchargés dans le dépôt principal (`models/`), F16 non téléchargés (`--f16` plus tard).
+- Commandes de Baseline : celles de la première campagne, avec les slugs `minicpm5-2b`, `minicpm5-1b` et `gemma-4-e2b`.
+- Tests : `test_toml_modeles_octobre_2` et `test_toml_modeles_octobre_2_particularites` dans `tests/fetch/test_verifications.py`.
