@@ -127,6 +127,18 @@ def test_reprise_refusee_si_la_config_change(projet, pile) -> None:
         module_run.executer(modifie, racine=projet.racine, pile=pile, reprendre_run=run_id)
 
 
+def test_modele_non_entrainable_refuse(projet, pile, monkeypatch) -> None:
+    reel = module_run.charger_config_modele
+
+    def non_entrainable(slug: str):
+        return reel(slug).model_copy(update={"entrainable": False})
+
+    monkeypatch.setattr(module_run, "charger_config_modele", non_entrainable)
+    with pytest.raises(ConfigurationInvalide, match="non entraînable"):
+        module_run.executer(projet.ecrire_toml(), racine=projet.racine, pile=pile)
+    assert pile.ordre == [] and not (projet.racine / "runs").exists()
+
+
 def test_gpu_occupe(projet, pile) -> None:
     projet.ecrire_jeu()
     with verrou_gpu(commande="autre"), pytest.raises(RessourceOccupee):

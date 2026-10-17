@@ -80,6 +80,8 @@ class ConfigModele(SchemaBase):
     exclure_vision: bool = False
     chat_template_force: bool = False
     embedding: bool = False
+    entrainable: bool = True
+    """Faux pour un modèle évalué tel quel (poids ternaires, GGUF seul) : `train run` le refuse."""
     pooling: Literal["cls", "mean", "last"] | None = None
 
     @model_validator(mode="after")

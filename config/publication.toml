@@ -62,3 +62,12 @@ licences_compatibles = ["apache-2.0"]
 
 [modeles."smollm3-3b"]
 licences_compatibles = ["apache-2.0"]
+
+# Ajoutés le 2026-10-17 (spec-modeles-octobre-2026) : Apache 2.0 lu sur la fiche Hugging Face.
+# bonsai-2-4b (Apache 2.0, dérivé de Qwen3.5-4B) n'a pas d'entrée : non entraînable, aucun
+# modèle fine-tuné à publier.
+[modeles."qwen3.5-2b"]
+licences_compatibles = ["apache-2.0"]
+
+[modeles."minicpm-v-4.7-1b"]
+licences_compatibles = ["apache-2.0"]

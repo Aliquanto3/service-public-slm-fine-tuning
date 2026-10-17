@@ -666,6 +666,33 @@ def test_toml_particularites() -> None:
     assert huit.depot_hf == huit.gguf.depot and huit.gguf.revision == huit.revision
 
 
+MODELES_OCTOBRE = ("qwen3.5-2b", "bonsai-2-4b", "minicpm-v-4.7-1b")
+"""Modèles de base ajoutés le 2026-10-17 (hors CANDIDATS D4)."""
+
+
+@pytest.mark.parametrize("slug", MODELES_OCTOBRE)
+def test_toml_modeles_octobre(slug: str) -> None:
+    config = charger_config_modele(slug)
+    assert len(config.revision) == 40 and config.gguf.revision is not None
+    assert set(config.sha256_fichiers) == set(config.fichiers)
+    assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
+    assert config.chat_template_kwargs == {"enable_thinking": False}
+    assert config.exclure_vision and not config.embedding
+    assert config.entrainable == (slug != "bonsai-2-4b")
+
+
+def test_toml_modeles_octobre_particularites() -> None:
+    bonsai = charger_config_modele("bonsai-2-4b")
+    assert bonsai.fichiers == [] and bonsai.gguf.fichier.endswith("-Q2_0.gguf")
+    assert bonsai.gguf_f16 is None
+    qwen = charger_config_modele("qwen3.5-2b")
+    assert qwen.gguf.source == "communautaire" and qwen.chat_template_force
+    assert qwen.gguf.fichier.endswith("Q4_K_M.gguf") and qwen.gguf_f16 is not None
+    minicpm = charger_config_modele("minicpm-v-4.7-1b")
+    assert minicpm.gguf.source == "officielle" and minicpm.gguf.fichier.endswith("Q4_K_M.gguf")
+    assert minicpm.gguf_f16 is not None and minicpm.gguf_f16.precision == "f16"
+
+
 # --- Schéma ---------------------------------------------------------------------------------
 
 

@@ -1,0 +1,33 @@
+# Ternary Bonsai 2 4B (Prism ML, Apache 2.0 ; dérivé de Qwen3.5-4B, Apache 2.0) : candidat
+# « sans fine-tuning » du chemin no-go, ajouté par décision d'Anaël du 2026-10-17
+# (spec-modeles-octobre-2026). Révision, SHA-256 et taille relevés le 2026-10-17 via l'API
+# Hugging Face.
+# Poids ternaires {-1, 0, +1}, rotation de Hadamard repliée dans les poids : ce n'est pas
+# une base de fine-tuning (`entrainable = false`, `train run` refuse). GGUF seul.
+# Format Q2_0 : le seul que llama.cpp amont exécute (« recent master », runtime Hadamard
+# d'activation) ; PQ2_0 et PTQ1_0 exigent le fork PrismML. llama.cpp b11429 ne connaît pas
+# le type Q2_0 : montée de version requise (spec-modeles-octobre-2026).
+# Mode non-thinking imposé. La carte recommande T = 0,7 en non-thinking ; l'éval reste
+# gloutonne (protocole commun), écart consigné dans la spec.
+# Tour vision exclue : aucun --mmproj.
+
+schema_version = 1
+depot_hf = "prism-ml/Ternary-Bonsai-2-4B-gguf"
+revision = "8d6557168168f91ea6697a4a49ed2ef622b53adb"
+fichiers = []
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = { enable_thinking = false }
+exclure_vision = true
+# Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
+protocole_outils = "natif"
+chat_template_force = false
+entrainable = false
+
+[gguf] # 1 212 103 520 octets
+depot = "prism-ml/Ternary-Bonsai-2-4B-gguf"
+revision = "8d6557168168f91ea6697a4a49ed2ef622b53adb"
+fichier = "Ternary-Bonsai-2-4B-Q2_0.gguf"
+sha256 = "64a5183b44921bdb5ac4a6f5f92007821d6ebe5c66997d3c147fd214ab9433d4"
+source = "officielle"
