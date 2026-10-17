@@ -89,3 +89,12 @@ class ConfigurationInvalide(SlmspError):
 
 class SecretManquant(SlmspError):
     """Secret absent ou vide dans le fichier `.env` (le message ne cite aucune valeur)."""
+
+
+class ContexteDepasse(SlmspError):
+    """Le prompt et la sortie réservée ne tiennent pas dans le contexte du Modèle (correctif F2).
+
+    Levée par le Harnais quand même un prompt sans passage dépasse le budget, et par le
+    client llama-server (sous-classe `ContexteServeurDepasse`) quand le serveur refuse la
+    requête pour dépassement de contexte. Le service la rend en évènement `contexte-depasse`.
+    """

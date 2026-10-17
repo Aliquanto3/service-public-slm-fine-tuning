@@ -70,6 +70,7 @@ from slmsp.core.evenements import (
 )
 from slmsp.core.messages import valider_conversation
 from slmsp.core.ports import Passage, ToolPort
+from slmsp.harness.budget import borner_passages
 from slmsp.harness.citations import (
     extraire_urls,
     normaliser_url,
@@ -410,8 +411,13 @@ def messages_connecte(
 
 
 def _messages_index(ctx: ContexteTache, demande: str) -> tuple[list[Passage], list[dict[str, Any]]]:
-    """Passages du catalogue et messages complets (prompt avec passages, sans `tools`)."""
-    passages = passages_catalogue(ctx.recherche, demande)
+    """Passages du catalogue, bornés au contexte (`harness.budget`), et messages complets
+    (prompt avec passages, sans `tools`)."""
+    passages = borner_passages(
+        ctx,
+        passages_catalogue(ctx.recherche, demande),
+        lambda liste: ctx.messages_pour(construire_messages(ctx.tache, demande, liste)),
+    )
     return passages, ctx.messages_pour(construire_messages(ctx.tache, demande, passages))
 
 

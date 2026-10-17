@@ -14,7 +14,14 @@ des options transmises au `LlmPort`.
 
 Erreurs d'exécution (modèle, embedder, Index) : un évènement `Erreur` sans détail clôt
 le flux ; le détail part au logger `slmsp.harness`, avec la classe de l'exception, son
-message aux textes saisis masqués et la pile sans variables locales. Le flux se termine
+message aux textes saisis masqués et la pile sans variables locales. Un dépassement du
+contexte du Modèle (`ContexteDepasse`, levée par le budget de prompt ou par le client
+llama-server) donne `Erreur(contexte-depasse)`, journalisée en avertissement sans pile ;
+toute autre exception donne `Erreur(erreur-interne)`.
+
+Longueur de sortie (correctif F2) : sans `max_tokens` dans les options, le service le fixe à
+`config.compte_rendu.reserve_sortie_tokens` pour le compte rendu, à
+`config.generation.max_tokens` pour toute autre Tâche. Le flux se termine
 toujours par un `Fin` ou un `Erreur`. Le délai au premier token (`delai_premier_token_ms`
 de `Fin.usage`) est mesuré depuis le début de l'itération : il compte la recherche.
 """
@@ -30,6 +37,7 @@ from time import perf_counter
 from types import MappingProxyType
 from typing import Any, Final
 
+from slmsp.core.erreurs import ContexteDepasse
 from slmsp.core.evenements import (
     AppelNonConforme,
     AppelOutil,
@@ -56,6 +64,7 @@ from slmsp.harness.config import ConfigHarnais, charger_config_harnais
 from slmsp.harness.prompts import CLES_CONTENU, EntreeInvalide, construire_messages
 from slmsp.harness.recherche_index import RechercheIndex
 from slmsp.harness.taches import (
+    MODULES_TRAITEMENT,
     ContexteTache,
     TableTaches,
     Tache,
@@ -69,6 +78,13 @@ LOGGER: Final = logging.getLogger("slmsp.harness")
 
 CODE_ERREUR: Final = "erreur-interne"
 MESSAGE_ERREUR: Final = "Un problème est survenu. Votre texte est conservé."
+CODE_CONTEXTE: Final = "contexte-depasse"
+MESSAGE_CONTEXTE: Final = (
+    "La demande est trop longue pour le modèle. Raccourcissez le texte ou commencez une "
+    "nouvelle conversation. Votre texte est conservé."
+)
+CLE_MAX_TOKENS: Final = "max_tokens"
+MODULE_COMPTE_RENDU: Final = "compte_rendu"
 MASQUE: Final = "<texte saisi masqué>"
 LONGUEUR_MIN_MASQUE: Final = 4
 """Les fragments saisis plus courts ne sont pas masqués (ils ne révèlent rien)."""
@@ -229,6 +245,7 @@ class AssistantService:
         saisis = [m["content"] for m in conversation if m["role"] == "user"]
         saisis.extend(chaines(entree, cles=False))
         brutes.pop(CLE_ENTREE, None)
+        brutes.setdefault(CLE_MAX_TOKENS, self._max_tokens(fiche))
         ctx = ContexteTache(
             tache=fiche,
             entree=entree,
@@ -242,6 +259,12 @@ class AssistantService:
             mode=self.mode if avec_outils else None,
         )
         return self._flux(traiter, ctx)
+
+    def _max_tokens(self, fiche: Tache) -> int:
+        """`max_tokens` par défaut de la Tâche : réserve du compte rendu, sinon génération."""
+        if MODULES_TRAITEMENT.get(fiche.code) == MODULE_COMPTE_RENDU:
+            return self.config.compte_rendu.reserve_sortie_tokens
+        return self.config.generation.max_tokens
 
     # --- Flux -----------------------------------------------------------------------------
 
@@ -263,6 +286,9 @@ class AssistantService:
                 if isinstance(evenement, Erreur):
                     return
             raise RuntimeError("traitement terminé sans évènement Fin")
+        except ContexteDepasse as exc:
+            self._journaliser(exc, ctx, pile=False)
+            yield Erreur(code=CODE_CONTEXTE, message=MESSAGE_CONTEXTE)
         except Exception as exc:
             self._journaliser(exc, ctx)
             yield Erreur(code=CODE_ERREUR, message=MESSAGE_ERREUR)
@@ -279,16 +305,21 @@ class AssistantService:
         return fin.model_copy(update={"usage": usage or None})
 
     @staticmethod
-    def _journaliser(exc: Exception, ctx: ContexteTache) -> None:
+    def _journaliser(exc: Exception, ctx: ContexteTache, *, pile: bool = True) -> None:
         message = masquer(str(exc), ctx.textes_saisis)
-        pile = "".join(traceback.format_tb(exc.__traceback__))
+        if not pile:
+            LOGGER.warning("Tâche %s : %s : %s", ctx.tache.code, type(exc).__name__, message)
+            return
+        trace = "".join(traceback.format_tb(exc.__traceback__))
         LOGGER.error(
-            "Tâche %s : %s : %s\n%s", ctx.tache.code, type(exc).__name__, message, pile.rstrip()
+            "Tâche %s : %s : %s\n%s", ctx.tache.code, type(exc).__name__, message, trace.rstrip()
         )
 
 
 __all__ = [
+    "CODE_CONTEXTE",
     "CODE_ERREUR",
+    "MESSAGE_CONTEXTE",
     "MESSAGE_ERREUR",
     "AssistantService",
     "masquer",

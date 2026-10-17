@@ -40,6 +40,7 @@ from slmsp.core.balises import (
     PROTOCOLE_BALISES,
     messages_balises,
 )
+from slmsp.core.erreurs import ContexteDepasse
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.inference.processus import ErreurInference
 from slmsp.net import client_local
@@ -50,6 +51,9 @@ OPTIONS_AUTORISEES: Final = frozenset(
 PROTOCOLES: Final = ("natif", "json-generique", PROTOCOLE_BALISES)
 CLES_USAGE: Final = ("prompt_tokens", "completion_tokens", "total_tokens")
 TAILLE_EXTRAIT: Final = 500
+MARQUES_CONTEXTE: Final[tuple[str, ...]] = ("exceed_context_size", "context size")
+"""Marques d'un refus pour dépassement de contexte dans une erreur de llama-server
+(`exceed_context_size_error`, « the request exceeds the available context size »)."""
 """Caractères du corps d'une réponse HTTP en erreur cités dans `ErreurInference`."""
 
 Evenement = Jeton | AppelOutil | AppelNonConforme | Fin
@@ -314,6 +318,22 @@ class LecteurBalises:
         return []
 
 
+class ContexteServeurDepasse(ErreurInference, ContexteDepasse):
+    """llama-server refuse la requête : le prompt dépasse son contexte (correctif F2)."""
+
+
+def est_depassement_contexte(texte: str) -> bool:
+    """Le texte d'erreur de llama-server signale-t-il un dépassement de contexte ?"""
+    minuscules = texte.lower()
+    return any(marque in minuscules for marque in MARQUES_CONTEXTE)
+
+
+def _erreur_serveur(message: str) -> ErreurInference:
+    """`ContexteServeurDepasse` si `message` signale un dépassement de contexte."""
+    classe = ContexteServeurDepasse if est_depassement_contexte(message) else ErreurInference
+    return classe(message)
+
+
 class ClientLlama:
     """`LlmPort` d'un `llama-server` de génération sur `127.0.0.1:<port>`.
 
@@ -480,7 +500,7 @@ class ClientLlama:
         with self._http.stream("POST", self._base + "/v1/chat/completions", json=corps) as reponse:
             if reponse.status_code != 200:
                 reponse.read()
-                raise ErreurInference(
+                raise _erreur_serveur(
                     f"POST /v1/chat/completions : HTTP {reponse.status_code} : "
                     f"{reponse.text[:TAILLE_EXTRAIT]}"
                 )
@@ -498,7 +518,7 @@ class ClientLlama:
                 if not isinstance(morceau, dict):
                     continue
                 if "error" in morceau:
-                    raise ErreurInference(
+                    raise _erreur_serveur(
                         f"/v1/chat/completions : erreur en flux : "
                         f"{json.dumps(morceau['error'], ensure_ascii=False)[:TAILLE_EXTRAIT]}"
                     )
@@ -558,10 +578,12 @@ class ClientLlama:
 
 __all__ = [
     "ClientLlama",
+    "ContexteServeurDepasse",
     "LecteurBalises",
     "OPTIONS_AUTORISEES",
     "PROTOCOLES",
     "appel_canonique",
+    "est_depassement_contexte",
     "messages_balises",
     "schema_json_generique",
 ]

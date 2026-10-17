@@ -10,10 +10,17 @@ from typing import Any
 import jsonschema
 import pytest
 
+from slmsp.core.erreurs import ContexteDepasse
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.core.ports import LlmPort
 from slmsp.inference import client as client_module
-from slmsp.inference.client import ClientLlama, appel_canonique, schema_json_generique
+from slmsp.inference.client import (
+    ClientLlama,
+    ContexteServeurDepasse,
+    appel_canonique,
+    est_depassement_contexte,
+    schema_json_generique,
+)
 from slmsp.inference.processus import ErreurInference
 
 MESSAGES = [
@@ -541,3 +548,40 @@ def test_messages_balises_garde_le_contenu() -> None:
     assert reecrit["content"] == (
         '<texte-factice>\n<tool_call>\n{"name": "heure", "arguments": {}}\n</tool_call>'
     )
+
+
+# --- Dépassement de contexte (correctif F2) ---------------------------------------------------
+
+CORPS_CONTEXTE = (
+    '{"error":{"code":400,"message":"the request exceeds the available context size, '
+    'try increasing it","type":"exceed_context_size_error"}}'
+)
+
+
+def test_http_depassement_de_contexte(client: ClientLlama, serveur_factice: Any) -> None:
+    serveur_factice.scenario.statut_chat = 400
+    serveur_factice.scenario.corps_erreur = CORPS_CONTEXTE
+    with pytest.raises(ContexteServeurDepasse, match="HTTP 400") as info:
+        list(client.generer(MESSAGES))
+    assert isinstance(info.value, ContexteDepasse)
+    assert isinstance(info.value, ErreurInference)
+
+
+def test_erreur_en_flux_de_contexte(client: ClientLlama, serveur_factice: Any, factice) -> None:
+    erreur = {"error": {"message": "context size exceeded", "type": "exceed_context_size_error"}}
+    serveur_factice.scenario.chat = [factice.morceau("a"), erreur]
+    with pytest.raises(ContexteServeurDepasse):
+        list(client.generer(MESSAGES))
+
+
+@pytest.mark.parametrize(
+    ("texte", "attendu"),
+    [
+        ("HTTP 400 : the request exceeds the available context size", True),
+        ('{"type":"exceed_context_size_error"}', True),
+        ("HTTP 400 : requête refusée", False),
+        ("HTTP 500 : contexte", False),
+    ],
+)
+def test_est_depassement_contexte(texte: str, attendu: bool) -> None:
+    assert est_depassement_contexte(texte) is attendu

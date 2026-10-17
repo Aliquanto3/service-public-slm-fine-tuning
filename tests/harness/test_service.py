@@ -54,6 +54,10 @@ from slmsp.harness.taches import redaction as module_redaction
 TYPES = (Jeton, AppelOutil, AppelNonConforme, Sources, Avertissement, Fin, Erreur)
 
 
+MAX_TOKENS = 1024
+"""`generation.max_tokens` de `config/harnais.toml`, ajouté par le service sans option."""
+
+
 def user(texte: str) -> dict[str, str]:
     return {"role": "user", "content": texte}
 
@@ -125,7 +129,7 @@ def test_options_transmises_sans_entree_et_usage(table, config_harnais) -> None:
     evenements = list(
         service(llm, table, config_harnais).repondre("LC", [user(texte)], options=options)
     )
-    assert llm.appels[0]["options"] == {"temperature": 0, "seed": 7}
+    assert llm.appels[0]["options"] == {"temperature": 0, "seed": 7, "max_tokens": MAX_TOKENS}
     assert options["entree"] == {"texte": texte}  # options de l'appelant intactes
     fin = evenements[-1]
     assert isinstance(fin, Fin)
@@ -135,10 +139,24 @@ def test_options_transmises_sans_entree_et_usage(table, config_harnais) -> None:
     assert fin.usage["delai_premier_token_ms"] >= 0
 
 
-def test_sans_options_le_llm_recoit_none(table, config_harnais) -> None:
+def test_sans_options_le_llm_recoit_max_tokens_par_defaut(table, config_harnais) -> None:
     llm = FakeLlm(script(mots(3, "x")))
     list(service(llm, table, config_harnais).repondre("NR", [user(mots(3, "d"))]))
-    assert llm.appels[0]["options"] is None
+    assert llm.appels[0]["options"] == {"max_tokens": config_harnais.generation.max_tokens}
+
+
+def test_max_tokens_de_l_appelant_conserve(table, config_harnais) -> None:
+    llm = FakeLlm(script(mots(3, "x")))
+    options = {"max_tokens": 17}
+    list(service(llm, table, config_harnais).repondre("NR", [user(mots(3, "d"))], options))
+    assert llm.appels[0]["options"] == {"max_tokens": 17}
+
+
+def test_max_tokens_par_defaut_du_compte_rendu(table, config_harnais) -> None:
+    llm = FakeLlm(script(mots(3, "x")))
+    list(service(llm, table, config_harnais).repondre("CR", [user(mots(30, "n"))]))
+    reserve = config_harnais.compte_rendu.reserve_sortie_tokens
+    assert llm.appels[0]["options"] == {"max_tokens": reserve}
 
 
 def test_delai_mesure_par_le_service(table, config_harnais, monkeypatch) -> None:
@@ -340,7 +358,7 @@ def test_contexte_redaction_sans_port_externe(table, config_harnais, monkeypatch
     redaction, question = contextes
     assert redaction.recherche is None and redaction.outils is None and redaction.mode is None
     assert redaction.entree == {"texte": texte}
-    assert dict(redaction.options_llm) == {"seed": 1}
+    assert dict(redaction.options_llm) == {"seed": 1, "max_tokens": MAX_TOKENS}
     assert texte in redaction.textes_saisis
     assert question.recherche is instance.recherche
     assert question.outils is None and question.mode is None
@@ -496,7 +514,7 @@ def test_entree_texte_par_options(table, config_harnais) -> None:
     )
     attendus = ctx.messages_pour(construire_messages(table.tache("Q"), entree, passages))
     assert llm.appels[0]["messages"] == attendus
-    assert llm.appels[0]["options"] == {"seed": 1}
+    assert llm.appels[0]["options"] == {"seed": 1, "max_tokens": MAX_TOKENS}
 
 
 def test_fermeture_du_flux_ferme_le_modele(table, config_harnais) -> None:

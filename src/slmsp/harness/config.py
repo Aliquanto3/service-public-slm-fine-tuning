@@ -37,6 +37,16 @@ class ConfigModes(_Fige):
     delai_sonde_s: float = Field(gt=0)
 
 
+class ConfigGeneration(_Fige):
+    """Longueur de sortie par défaut des Tâches (correctif F2).
+
+    Section facultative de `config/harnais.toml` : sa valeur par défaut s'applique si elle
+    est absente.
+    """
+
+    max_tokens: int = Field(default=1024, gt=0)
+
+
 class ConfigCompteRendu(_Fige):
     """Découpage des comptes rendus longs (story 4.4)."""
 
@@ -71,6 +81,7 @@ class _FichierHarnais(_Fige):
     modes: ConfigModes
     compte_rendu: ConfigCompteRendu
     verification: ConfigVerification = Field(default_factory=ConfigVerification)
+    generation: ConfigGeneration = Field(default_factory=ConfigGeneration)
 
 
 class ConfigHarnais(_Fige):
@@ -81,6 +92,7 @@ class ConfigHarnais(_Fige):
     compte_rendu: ConfigCompteRendu
     recherche: ConfigRecherche
     verification: ConfigVerification = Field(default_factory=ConfigVerification)
+    generation: ConfigGeneration = Field(default_factory=ConfigGeneration)
 
 
 def chemin_config_harnais() -> Path:
@@ -105,12 +117,14 @@ def charger_config_harnais(
         modes=fichier.modes,
         compte_rendu=fichier.compte_rendu,
         verification=fichier.verification,
+        generation=fichier.generation,
         recherche=ConfigRecherche(k=index.k, seuil_pertinence=index.seuil_pertinence),
     )
 
 
 __all__ = [
     "ConfigCompteRendu",
+    "ConfigGeneration",
     "ConfigHarnais",
     "ConfigModes",
     "ConfigOutils",
