@@ -726,6 +726,30 @@ def test_cli_modele_vision_refuse(
     assert not (racine / "runs").exists()
 
 
+@pytest.mark.parametrize("unsloth", [False, True])
+@pytest.mark.parametrize("slug", ["qwen3.5-2b", "qwen3.5-0.8b", "bonsai-2-4b"])
+def test_cli_modele_non_entrainable_refuse(
+    tmp_path: Path,
+    modeles: Path,
+    scenario: Scenario,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    slug: str,
+    unsloth: bool,
+) -> None:
+    """D8 : la sonde refuse comme `train run` (fiches réelles), même avec des poids texte
+    seuls qui passeraient les autres contrôles, et sans lancer le moindre entraînement."""
+    (modeles / slug / "hf").mkdir(parents=True)
+    (modeles / slug / "hf" / "config.json").write_text(json.dumps(CONFIG_GRANITE), encoding="utf-8")
+    monkeypatch.setattr(environnement, "sonder", lambda **_a: pytest.fail("sonde lancée"))
+    monkeypatch.setattr(processus, "executer", lambda *_a, **_k: pytest.fail("unsloth lancé"))
+    racine = tmp_path / "racine"
+    options = ("--modele", slug, *(("--unsloth",) if unsloth else ()))
+    assert _sonde_env(racine, *options) == CodeSortie.ERREUR
+    assert "non entraînable" in capsys.readouterr().err
+    assert not (racine / "runs").exists()
+
+
 def test_cli_unsloth_sous_processus(
     tmp_path: Path, modeles: Path, scenario: Scenario, monkeypatch: pytest.MonkeyPatch
 ) -> None:

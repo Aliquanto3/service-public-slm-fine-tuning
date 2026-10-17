@@ -637,6 +637,54 @@ def test_mamba_ecarte_meme_non_entrainable(tmp_path: Path) -> None:
     assert dense.statut == "echec" and "variante hybride écartée" in dense.detail
 
 
+@pytest.mark.parametrize(
+    ("contenu", "attendu"),
+    [
+        ({"llm_config": {"layer_types": ["attention", "mamba"]}}, "llm_config.1 (mamba)"),
+        (
+            {"thinker_config": {"text_config": {"layer_types": ["attention", "mamba"]}}},
+            "thinker_config.text_config.1 (mamba)",
+        ),
+        ({"layers_block_type": ["attention", "mamba"]}, "layers_block_type.1 (mamba)"),
+        ({"text_config": {"block_types": ["mamba", "attention"]}}, "block_types.0 (mamba)"),
+    ],
+)
+def test_dense_toutes_sous_configs_et_cles_connues(
+    tmp_path: Path, contenu: dict, attendu: str
+) -> None:
+    """Revue : une couche Mamba hors de `text_config` ou sous une autre clé n'est pas dense."""
+    dossier = dossier_hf(tmp_path, **contenu)
+    (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
+    assert dense.statut == "echec" and attendu in dense.detail
+
+
+@pytest.mark.parametrize(
+    "contenu",
+    [
+        {"hybrid_override_pattern": "M-M-M*-"},  # motif Nemotron-H en chaîne
+        {"llm_config": {"layer_types": "attention"}},
+        {"layer_types": []},
+    ],
+)
+def test_dense_format_inconnu_ecarte_par_prudence(tmp_path: Path, contenu: dict) -> None:
+    (dense, _, _) = verifier_config_hf("m", config_modele(), dossier_hf(tmp_path, **contenu))
+    assert dense.statut == "echec" and "format non reconnu" in dense.detail
+
+
+def test_dense_gated_deltanet_sous_llm_config(tmp_path: Path) -> None:
+    dossier = dossier_hf(tmp_path, llm_config=GATED_DELTANET, vision_config={"depth": 2})
+    assert verifier_config_hf("m", config_modele(), dossier)[0].statut == "echec"
+    (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
+    assert dense.statut == "ok" and "llm_config.layer_types" in dense.detail
+
+
+def test_dense_cles_mamba_hors_types_de_couche_restent_denses(tmp_path: Path) -> None:
+    """Granite 4.0 1B (`granitemoehybrid` dense) porte des hyperparamètres `mamba_*`."""
+    dossier = dossier_hf(tmp_path, layer_types=["attention"] * 4, mamba_d_state=256)
+    (dense, _, _) = verifier_config_hf("m", config_modele(), dossier)
+    assert dense.statut == "ok" and dense.detail.startswith("4 couches d'attention")
+
+
 def test_export_oserror_donne_conflit_sans_part(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

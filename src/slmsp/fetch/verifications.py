@@ -2,9 +2,10 @@
 
 Pour chaque modèle de génération, après `slmsp fetch modeles` :
 
-- `dense` : toutes les couches de `config.json` (`layer_types`, à la racine ou sous
-  `text_config`) sont des couches d'attention ; une couche `mamba` ou de type inconnu écarte
-  le modèle. Les couches `linear_attention` (hybride Gated DeltaNet) sont admises pour
+- `dense` : toutes les couches de `config.json` (`layer_types` et les autres clés de
+  `CLES_TYPES_COUCHE`, dans toutes les sous-configurations) sont des couches d'attention ;
+  une couche `mamba` ou de type inconnu, ou une clé de format non reconnu, écarte le modèle.
+  Les couches `linear_attention` (hybride Gated DeltaNet) sont admises pour
   l'inférence et la Baseline (décision D8), si la fiche porte `entrainable = false` ;
 - `fp8` : aucune `quantization_config`, aucun `dtype`/`torch_dtype` en `float8` ;
 - `vision` : un `vision_config` exige `exclure_vision = true` ;
@@ -28,7 +29,7 @@ import hashlib
 import json
 import os
 import struct
-from collections import Counter
+from collections import Counter, deque
 from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -57,6 +58,16 @@ COUCHES_DENSES: Final = frozenset({"attention", "full_attention", "sliding_atten
 COUCHES_INFERENCE_SEULE: Final = frozenset({"linear_attention"})
 """Couches hybrides admises pour l'inférence seulement (Gated DeltaNet, décision D8) : la
 fiche doit porter `entrainable = false`. `mamba` et tout autre type écartent le modèle."""
+CLES_TYPES_COUCHE: Final = (
+    "layer_types",
+    "layers_block_type",
+    "layer_block_types",
+    "block_types",
+    "hybrid_override_pattern",
+)
+"""Clés connues des types de couche (Qwen, Gemma, Granite 4.0 H, Jamba, Nemotron-H…),
+cherchées dans toutes les sous-configurations : une valeur qui n'est pas une liste non vide
+(motif en chaîne, par exemple) écarte le modèle par prudence."""
 DELAI_PROPS: Final = 30.0
 
 
@@ -194,35 +205,55 @@ def _sans_poids_hf(config: ConfigModele) -> bool:
 
 
 def _sous_configs(donnees: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
-    configs = [("", donnees)]
-    texte = donnees.get("text_config")
-    if isinstance(texte, dict):
-        configs.append(("text_config.", texte))
+    """La racine puis toutes les sous-configurations dict, à toute profondeur (`text_config`,
+    `llm_config`, `language_config`…) : le contrôle ne suppose pas le nom de la
+    sous-configuration du modèle texte."""
+    configs: list[tuple[str, dict[str, Any]]] = []
+    file: deque[tuple[str, dict[str, Any]]] = deque([("", donnees)])
+    while file:
+        prefixe, sous = file.popleft()
+        configs.append((prefixe, sous))
+        file.extend((f"{prefixe}{cle}.", v) for cle, v in sous.items() if isinstance(v, dict))
     return configs
 
 
 def _controle_dense(slug: str, donnees: dict[str, Any], config: ConfigModele) -> Controle:
     sources: list[str] = []
+    illisibles: list[str] = []
     comptes: Counter[str] = Counter()
     autres: list[str] = []
     lineaires = 0
     total = 0
     for prefixe, sous in _sous_configs(donnees):
-        types = sous.get("layer_types")
-        if types is None:
-            continue
-        types = [str(t) for t in types]
-        sources.append(f"{prefixe}layer_types")
-        comptes.update(types)
-        total += len(types)
-        lineaires += sum(t in COUCHES_INFERENCE_SEULE for t in types)
-        autres += [
-            f"{prefixe}{i} ({t})"
-            for i, t in enumerate(types)
-            if t not in COUCHES_DENSES and t not in COUCHES_INFERENCE_SEULE
-        ]
+        for cle in CLES_TYPES_COUCHE:
+            brut = sous.get(cle)
+            if brut is None:
+                continue
+            if not isinstance(brut, list) or not brut:
+                illisibles.append(f"{prefixe}{cle}")
+                continue
+            types = [str(t) for t in brut]
+            sources.append(f"{prefixe}{cle}")
+            comptes.update(types)
+            total += len(types)
+            lineaires += sum(t in COUCHES_INFERENCE_SEULE for t in types)
+            marque = prefixe if cle == "layer_types" else f"{prefixe}{cle}."
+            autres += [
+                f"{marque}{i} ({t})"
+                for i, t in enumerate(types)
+                if t not in COUCHES_DENSES and t not in COUCHES_INFERENCE_SEULE
+            ]
+    if illisibles:
+        return Controle(
+            slug,
+            "dense",
+            "echec",
+            f"{', '.join(illisibles)} : liste de types de couche attendue, format non reconnu "
+            "(modèle écarté par prudence)",
+            {"source": ", ".join(illisibles)},
+        )
     if not sources:
-        return Controle(slug, "dense", "ok", "layer_types absent : modèle dense", {})
+        return Controle(slug, "dense", "ok", "aucune clé de types de couche : modèle dense", {})
     valeurs = {"layer_types": dict(comptes), "source": ", ".join(sources)}
     if autres:
         liste = ", ".join(autres[:12])

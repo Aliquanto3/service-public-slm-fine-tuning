@@ -125,11 +125,11 @@ L'architecture fixe la bibliothèque vectorielle et le modèle d'embedding, par 
 
 ## D8. Hybrides Gated DeltaNet et registre des Modèles de base (2026-10-17)
 
-Décisions d'Anaël du 2026-10-17 (option 2 et règle de taille). D8 précise D7 :
+Décisions d'Anaël du 2026-10-17, confirmées en session principale le même jour. Elles remplacent la décision du 2026-10-17 à 09h (`etat-run-2026-10-16.md`, « exclusion des modèles de 2B paramètres et plus ») et la formule « < 2B » de la passation du même fichier : **Qwen3.5-2B reste dans la Baseline**. D8 précise D7 :
 
 - **Mamba reste écarté sous Windows natif** (D2, D7) : un modèle dont `config.json` a une couche `mamba`, ou d'un type inconnu, est écarté par le contrôle `dense` de la story 8.1.
-- **Gated DeltaNet (`linear_attention`) est admis pour l'inférence et la Baseline**, avec `entrainable = false` dans la fiche du modèle. llama.cpp b11429 le sert (contrôles `serveur` ok). Le contrôle `dense` échoue si une fiche à couches `linear_attention` ne porte pas `entrainable = false`, et `train run` refuse un modèle non entraînable.
-  - Motif : sous Windows natif, sans `flash-linear-attention` ni `causal-conv1d`, transformers prend une implémentation torch lente. Seuls l'entraînement et `lm_eval` HF sont touchés.
+- **Gated DeltaNet (`linear_attention`) est admis pour l'inférence et la Baseline** (option retenue parmi celles proposées : admettre ces hybrides en Baseline seulement, plutôt que les écarter ou les entraîner), avec `entrainable = false` dans la fiche du modèle. llama.cpp b11429 le sert (contrôles `serveur` ok). Le contrôle `dense` échoue si une fiche à couches `linear_attention` ne porte pas `entrainable = false`, et `train run` comme `train sonde-env` (avec ou sans `--unsloth`) refusent un modèle non entraînable.
+  - Motif : sous Windows natif, sans `flash-linear-attention` ni `causal-conv1d`, transformers prend une implémentation torch lente. Seuls l'entraînement et `lm_eval` HF sont touchés (source : `spec-modeles-octobre-2026.md`, section « Écarts et points à confirmer par Anaël », contrôle `dense`).
   - **L'entraînement sera rouvert** seulement si un Qwen3.5 sort bien de la Baseline, après un court essai QLoRA qui mesure la vitesse sous Windows.
 - **Règle de taille** : 2B au plus, en paramètres du modèle texte servi, tour vision exclue (cible : PC de 16 Go avec Teams, Edge et Outlook).
   - Méthode de comptage : en-têtes safetensors des dépôts HF (`huggingface_hub.get_safetensors_metadata`), relevés par l'orchestrateur le 2026-10-17. Les modules exclus du modèle servi (tour vision, audio, tête MTP) ne comptent pas.

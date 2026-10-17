@@ -228,7 +228,9 @@ def _sonde_env(args: argparse.Namespace) -> int:
     slug = args.modele
     if args.pas < 1:
         raise ConfigurationInvalide("--pas : au moins 1 pas mesuré")
-    charger_config_modele(slug)  # slug connu de config/modeles/ (ConfigurationInvalide)
+    # Slug connu de config/modeles/, puis refus d'un modèle non entraînable (Bonsai, D8)
+    # avant toute lecture des poids et avant le verrou, avec ou sans --unsloth.
+    environnement.exiger_entrainable(charger_config_modele(slug), slug)
     racine = _racine(args)
     dossier = environnement.dossier_poids(slug, racine=racine)
     config_modele = environnement.lire_config_modele(dossier, racine=racine)

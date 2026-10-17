@@ -52,6 +52,7 @@ from slmsp.core.config import (
     racine_projet,
 )
 from slmsp.core.erreurs import ConfigurationInvalide, SlmspError
+from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.var import dossier_var
 from slmsp.inference import processus
 
@@ -231,6 +232,17 @@ def _sous_configs(config: Mapping[str, Any]) -> Iterable[Mapping[str, Any]]:
     texte = config.get("text_config")
     if isinstance(texte, Mapping):
         yield texte
+
+
+def exiger_entrainable(config: ConfigModele, slug: str) -> None:
+    """Refuse (`ConfigurationInvalide`) un modèle à `entrainable = false` (Bonsai, hybrides
+    Gated DeltaNet de la décision D8) : point de contrôle commun à `train run` et à
+    `train sonde-env` (avec ou sans `--unsloth`), avant toute lecture des poids."""
+    if not config.entrainable:
+        raise ConfigurationInvalide(
+            f"{slug} : modèle non entraînable (`entrainable = false` dans "
+            f"config/modeles/{slug}.toml), évalué sans fine-tuning"
+        )
 
 
 def controler_config_modele(config: Mapping[str, Any], slug: str) -> dict[str, Any]:
@@ -1062,6 +1074,7 @@ __all__ = [
     "dossier_poids",
     "dossier_travail_unsloth",
     "entree_portable",
+    "exiger_entrainable",
     "entree_unsloth",
     "json_sur",
     "lire_config_modele",
