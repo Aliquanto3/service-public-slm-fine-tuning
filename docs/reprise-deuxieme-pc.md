@@ -1,115 +1,74 @@
 # Reprise du projet sur un deuxième PC
 
-Procédure pour reprendre les travaux sur le PC portable : 32 Go de RAM DDR4 et GPU NVIDIA de 6 Go de VRAM.
+PC portable : 32 Go de RAM DDR4, GPU NVIDIA de 6 Go de VRAM.
 - Le code et les tests tournent sur CPU.
-- Les benchmarks et l'essai QLoRA des modèles de moins de 2B doivent tenir sur 6 Go de VRAM avec un batch fixe.
-- Si le fine-tuning bloque sur 6 Go, il reprend sur la tour.
+- Les benchmarks et l'essai QLoRA des modèles de moins de 2B doivent tenir sur 6 Go avec un batch fixe.
+- Si le fine-tuning bloque sur 6 Go, reprendre sur la tour.
 
-Ce qui vit dans git est cloné. Le reste se copie avec `outils/migration/` ou se retélécharge avec `slmsp fetch`.
+Tout vient de GitHub, sans copie de disque à disque :
+- le code et les runs : dépôt privé `Aliquanto3/service-public-slm-fine-tuning` ;
+- l'état machine : release privée `etat-2026-10-17`, environ 10 Mo. Elle contient les journaux Mistral et le registre des budgets, indispensables pour la provenance et les plafonds ;
+- modèles, llama.cpp, sources et index : retéléchargés ou reconstruits par `slmsp`, avec des SHA-256 épinglés.
 
-## 1. Sur la tour, avant de partir
+## 1. Ce que fait Anaël (une fois)
 
-1. Laisser finir les traitements en cours (campagne 9.8, benchmarks). Le script d'export refuse de tourner s'il en reste.
-2. Committer et pousser :
+1. Installer Git, uv, GitHub CLI et Claude Code (avec le plugin `agent-cost-kit`), et avoir un pilote NVIDIA à jour.
    ```powershell
-   git status
-   git push
+   winget install Git.Git astral-sh.uv GitHub.cli
+   gh auth login
    ```
-   `runs/` et `data/cassettes/` sont versionnés.
-3. Exporter l'état hors git :
+2. Cloner au même chemin que sur la tour. La mémoire de Claude Code est rangée selon ce chemin.
    ```powershell
-   powershell -File outils\migration\exporter-etat.ps1 -Destination E:\slmsp-transfert -AvecModeles
+   cd C:\Users\Utilisateur\Documents\GitHub
+   gh repo clone Aliquanto3/service-public-slm-fine-tuning
    ```
-   Contenu de l'export :
+3. Copier `.env.example` en `.env`, puis remplir `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY` et `HF_TOKEN`. Claude ne lit jamais ce fichier.
+4. Ouvrir Claude Code dans le dépôt (Opus, effort medium) et coller le prompt de la section 4.
 
-   | Élément | Taille | Importance |
-   |---|---|---|
-   | `var` : budget, journaux Mistral (`appels-mistral*.sqlite`), verdicts du Juge, requêtes sortantes | ≈ 40 Mo | **Indispensable.** Sans les journaux, build ne peut plus prouver la provenance des données, et il faut tout régénérer en payant. |
-   | `index/` | 456 Mo | — |
-   | `data/raw`, `data/cache` | ≈ 0,9 Go | Retéléchargeable avec `slmsp fetch sources`. La copie évite d'attendre. |
-   | `data/train` | — | — |
-   | Mémoire Claude Code du projet et `CLAUDE.md` globaux | — | — |
-   | Avec `-AvecModeles` : modèles de moins de 2B et BGE-M3 (bge-m3, bge-m3-f16, granite-4.0-1b, minicpm5-1b, qwen3.5-0.8b, eurollm-1.7b, croissantllm-chat) | ≈ 30 Go | — |
+## 2. Ce que fait Claude Code (installation)
 
-   `.env` n'est **jamais** copié.
-
-## 2. Sur le portable
-
-### Prérequis
-
-- Git
-- uv
-- gh
-- un pilote NVIDIA récent (`nvidia-smi` doit répondre)
-- Claude Code avec le plugin `agent-cost-kit`
-- Inno Setup seulement pour reconstruire l'installateur : `outils/installer_inno_setup.py`
-
-### Cloner au même chemin que sur la tour
-
-Cloner au même chemin garde la clé de la mémoire Claude Code.
+Lancer les commandes dans l'ordre, en arrêtant au premier échec. Après `uv sync`, toujours utiliser `uv run --no-sync`.
 
 ```powershell
-cd C:\Users\<vous>\Documents\GitHub
-gh repo clone Aliquanto3/service-public-slm-fine-tuning
-cd service-public-slm-fine-tuning
-```
-
-### Importer l'état
-
-```powershell
-powershell -File outils\migration\importer-etat.ps1 -Source E:\slmsp-transfert
-```
-
-Remettre les `CLAUDE.md` globaux s'ils manquent. Ils se trouvent dans `E:\slmsp-transfert\claude\` :
-- `CLAUDE-global.md` va dans `%USERPROFILE%\.claude\CLAUDE.md` ;
-- `CLAUDE-GitHub.md` va dans `Documents\GitHub\CLAUDE.md`.
-
-### Secrets
-
-Copier `.env.example` en `.env`, puis remplir à la main `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY` et `HF_TOKEN`.
-
-### Environnement Python
-
-```powershell
+git config core.longpaths true
+powershell -NoProfile -ExecutionPolicy Bypass -File outils/migration/restaurer-etat.ps1
 uv sync --extra fetch --extra data --extra judge --extra bench --extra train --extra app
-uv run --no-sync python -m playwright install msedge   # tests UI (-m ui)
-```
-
-Si la roue CUDA de torch ne correspond pas au pilote, voir la règle `pytorch` de `config/reseau.toml` (index `download.pytorch.org`).
-
-### Binaires et modèles
-
-Ces téléchargements sont épinglés et vérifiés par SHA-256.
-
-```powershell
+uv run --no-sync python -m playwright install msedge
 uv run --no-sync slmsp fetch llamacpp
-uv run --no-sync slmsp fetch modeles granite-4.0-1b      # si non copié ; idem pour chaque slug
-uv run --no-sync slmsp fetch modeles minicpm5-1b --f16   # F16 pour BFCL
+uv run --no-sync slmsp fetch sources
+uv run --no-sync slmsp index build
 uv run --no-sync slmsp fetch benchmarks
+uv run --no-sync slmsp fetch modeles bge-m3 bge-m3-f16 granite-4.0-1b minicpm5-1b
+uv run --no-sync slmsp fetch modeles granite-4.0-1b minicpm5-1b --f16
 ```
+
+Points de vigilance :
+- **Vecteurs de l'Index.** `index build` reconstruit l'Index depuis les parquet MediaTech, avec des vecteurs fournis par MediaTech et non recalculés. Vérifier avec `slmsp index info` que la version est `20260926`, comme sur la tour.
+- **Candidats EuroLLM-1.7B, CroissantLLM et Qwen3.5-0.8B.** Leurs fiches ne sont que sur la branche `feat/modeles-moins-2b` (travail interrompu, non relu). Les télécharger depuis cette branche, au moment de les traiter.
+- **Torch et le pilote.** Si la roue CUDA de torch ne correspond pas au pilote, voir la règle `pytorch` de `config/reseau.toml`.
 
 ## 3. Vérifier
 
 ```powershell
 uv run --no-sync python outils/controle_rapide.py
-uv run pytest -q --tb=line -p no:warnings          # suite complète, une fois
-uv run --no-sync slmsp budget etat                 # doit montrer la campagne baseline-2026-10-17 et ses dépenses
+uv run --no-sync slmsp budget etat     # campagne baseline-2026-10-17, génération Mistral 10,64 € dépensés
+uv run --no-sync slmsp index info
 nvidia-smi
+uv run --no-sync pytest -q --tb=line -p no:warnings   # suite complète, une fois (4 992 passés sur la tour)
 ```
 
-Si `slmsp budget etat` montre un registre vide, `var` n'a pas été importé : ne lancer **aucun** appel payant avant de corriger.
+Si `slmsp budget etat` montre un registre vide, la restauration a échoué : ne lancer **aucun** appel payant.
 
-## 4. Particularités du portable (6 Go de VRAM)
+## 4. Prompt de reprise (nouvelle session Claude Code, Opus, effort medium)
 
-- **lm_eval en HF bf16.** Batch fixe obligatoire : `lm_eval_batch_size` dans `config/modeles/<slug>.toml`. La valeur 4 est posée pour minicpm5-1b. Pour granite-4.0-1b et les nouveaux modèles, partir de 2. En mode `auto`, on a vu un OOM même sur 8 Go.
-- **QLoRA (story 11.2).** Charger en 4 bits, avec gradient checkpointing, batch 1 et accumulation. Si un OOM persiste à la séquence cible, revenir sur la tour.
-- **Mesures CPU (H-RAM).** Elles restent indicatives : le portable a 32 Go, la cible 16 Go.
-- **Verrou GPU.** `var/gpu.lock` est propre à chaque machine. Ne pas copier un verrou actif.
+> Reprise du projet slmsp sur ce PC portable (32 Go RAM, GPU 6 Go). Le dépôt est cloné et `.env` est rempli (ne le lis jamais). Lis `docs/reprise-deuxieme-pc.md` et exécute toi-même l'installation (section 2) puis les vérifications (section 3), en t'arrêtant au premier échec pour me le signaler. Ensuite lis la section « Passation » de `_bmad-output/implementation-artifacts/etat-run-2026-10-16.md` et `sprint-status.yaml`, rappelle-moi les décisions en attente, et enchaîne le travail restant dans l'ordre de la passation. Pour l'étape 2 (candidats < 2B), reprends la branche `feat/modeles-moins-2b` (commit WIP non relu). Respecte CLAUDE.md : enchaînement dev-story → second-avis → reviewer, D1 (Claude ne génère jamais de données d'entraînement), appels payants par l'orchestrateur seulement, toujours `uv run --no-sync`, batch lm_eval fixe sur 6 Go de VRAM (jamais `auto`). Fais-moi un point avant tout appel payant non couvert par un plafond existant.
 
-## 5. Reprendre avec Claude Code
+## 5. Particularités du portable (6 Go de VRAM)
 
-L'état détaillé du run est dans `_bmad-output/implementation-artifacts/etat-run-2026-10-16.md`, section « Passation ». Le sprint est dans `_bmad-output/implementation-artifacts/sprint-status.yaml`.
+- **lm_eval en HF bf16.** Un batch fixe est obligatoire : `lm_eval_batch_size` dans `config/modeles/<slug>.toml`. Partir de 2 ; minicpm5-1b est à 4. En `auto`, on a vu un OOM même sur 8 Go.
+- **QLoRA (story 11.2).** Charger en 4 bits, avec le gradient checkpointing, batch 1 et accumulation. Si l'OOM persiste à la séquence cible, revenir sur la tour.
+- **Mesures CPU (H-RAM).** Elles restent indicatives : le portable a 32 Go de RAM, la cible 16 Go.
 
-Prompt de reprise, à coller dans une nouvelle session (Opus, effort medium) :
+## Annexe : transfert par disque
 
-> Reprise du projet slmsp sur le PC portable (32 Go RAM, GPU 6 Go). Lis `docs/reprise-deuxieme-pc.md` (section 3, vérifier l'installation), puis la section « Passation » de `_bmad-output/implementation-artifacts/etat-run-2026-10-16.md` et `sprint-status.yaml`. Vérifie l'installation (contrôle rapide, `slmsp budget etat`, `nvidia-smi`), signale tout écart, puis enchaîne le travail restant dans l'ordre de la passation, en respectant CLAUDE.md (enchaînement dev-story → second-avis → reviewer, D1 : Claude ne génère jamais de données d'entraînement, appels payants par l'orchestrateur seulement, ne jamais lire `.env`). Fais-moi un point avant tout appel payant non couvert par un plafond existant.
+`outils/migration/exporter-etat.ps1` et `importer-etat.ps1` copient le même état, plus les modèles et l'index, par un disque externe : environ 25 Go avec `-AvecModeles`. C'est utile seulement si le réseau est lent.
