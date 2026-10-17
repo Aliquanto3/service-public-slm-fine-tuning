@@ -1,0 +1,58 @@
+# MiniCPM5 2B (OpenBMB, Apache 2.0, sans accès conditionnel) : candidat ajouté par décision
+# d'Anaël du 2026-10-17 (spec-modeles-octobre-2026). Révisions, SHA-256 et tailles relevés
+# le 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes à l'inférence et à
+# l'entraînement.
+# Architecture `llama` dense, texte seul : rien à exclure côté vision.
+# Le template ouvre un bloc de raisonnement ; enable_thinking = false est imposé.
+
+schema_version = 1
+depot_hf = "openbmb/MiniCPM5-2B"
+revision = "f97400052a43d642bbc6e9975e2397e3ae6a6b52"
+fichiers = [
+    "chat_template.jinja",
+    "config.json",
+    "generation_config.json",
+    "model-00000-of-00001.safetensors",
+    "model.safetensors.index.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+]
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = { enable_thinking = false }
+exclure_vision = false
+# Non sondé (sonde H-TOOLS 8.2) : natif par défaut.
+protocole_outils = "natif"
+# Template GGUF différent de celui du tokenizer HF (contrôle chat_template, run
+# fetch/20261017-061650-modeles-6ca4) : le template HF, exporté sous models/<slug>/
+# chat_template.jinja, est imposé à llama-server.
+chat_template_force = true
+
+[sha256_fichiers]
+"chat_template.jinja" = "bc1f78ef8a86b6bdf64a056cf89dd0ac506db4f198ab363d85168e2500ab44dd" # 5 435 octets
+"config.json" = "59613157e5357d62bcb121e04cb90f2170b43d789b142380c12c3d4277d95180" # 704 octets
+"generation_config.json" = "9ac4f32e5f32358697a9f438a3ea89ef80e6ba786c72c49e932f9f21c122fdb1" # 213 octets
+"model-00000-of-00001.safetensors" = "14fb8e7f0a18d53d1f239773758bf581cee7e456a4523a54622c3a245b64402c" # 5 033 557 096 octets
+"model.safetensors.index.json" = "6d839cd76e8395de548a0e6cc310386f66d1ecbb2c75d198a8dfd3d70892b756" # 31 378 octets
+"special_tokens_map.json" = "82d96d7a9e6ced037f12394b7ea6a5b02e6ca87e0d11edaa8d60d9be857ce7db" # 551 octets
+"tokenizer.json" = "3e065a558a034185fe299917b398685c1facd0169a9eea1e629eb30c171fed81" # 9 894 271 octets
+"tokenizer_config.json" = "e9b1064649e771d7a8e15637c68b2d2749724877ba3648bd74a4ece31c26303b" # 94 391 octets
+
+[gguf] # 1 561 318 368 octets
+depot = "openbmb/MiniCPM5-2B-GGUF"
+revision = "2079a22f3beaa4e306449978533478fe0522f4b3"
+fichier = "MiniCPM5-2B-Q4_K_M.gguf"
+sha256 = "ec2d5801640099e97d8d7e8003ad4d81f336e757811f03a26173dddf386602fd"
+source = "officielle"
+
+# GGUF F16 de base pour la variante `avant` du banc (non téléchargé le 2026-10-17) :
+# `slmsp fetch modeles minicpm5-2b --f16`.
+[gguf_f16] # 5 039 006 688 octets
+depot = "openbmb/MiniCPM5-2B-GGUF"
+revision = "2079a22f3beaa4e306449978533478fe0522f4b3"
+fichier = "MiniCPM5-2B-F16.gguf"
+sha256 = "0ffba3682a853295566b98bc38c0ab755d6b2d91b994bc031ed727a08cfcdf25"
+source = "officielle"
+precision = "f16"

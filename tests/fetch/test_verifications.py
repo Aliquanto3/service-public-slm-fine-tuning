@@ -875,3 +875,28 @@ def test_candidat_reel_conforme(slug: str) -> None:
             meta_lfs = telechargeur.metadonnees_hf(url_hf(config.depot_hf, lfs, config.revision))
             assert meta_lfs.sha256 == config.sha256_fichiers[lfs]
             assert meta_lfs.commit == config.revision
+
+
+MODELES_OCTOBRE_2 = ("minicpm5-2b", "minicpm5-1b", "gemma-4-e2b")
+"""Modèles de base ajoutés le 2026-10-17, seconde campagne (hors CANDIDATS D4)."""
+
+
+@pytest.mark.parametrize("slug", MODELES_OCTOBRE_2)
+def test_toml_modeles_octobre_2(slug: str) -> None:
+    config = charger_config_modele(slug)
+    assert len(config.revision) == 40 and config.gguf.revision is not None
+    assert set(config.sha256_fichiers) == set(config.fichiers)
+    assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
+    assert config.chat_template_kwargs == {"enable_thinking": False}
+    assert config.gguf.source == "officielle" and config.entrainable
+    assert config.exclure_vision == (slug == "gemma-4-e2b")
+
+
+def test_toml_modeles_octobre_2_particularites() -> None:
+    for slug in ("minicpm5-2b", "minicpm5-1b"):
+        config = charger_config_modele(slug)
+        assert config.gguf.fichier.endswith("-Q4_K_M.gguf")
+        assert config.gguf_f16 is not None and config.gguf_f16.precision == "f16"
+    assert charger_config_modele("minicpm5-2b").chat_template_force
+    gemma = charger_config_modele("gemma-4-e2b")
+    assert gemma.gguf.fichier == "gemma-4-E2B_q4_0-it.gguf" and gemma.gguf_f16 is None
