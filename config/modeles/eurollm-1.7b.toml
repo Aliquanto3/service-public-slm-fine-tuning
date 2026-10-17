@@ -2,8 +2,9 @@
 # 2B ajouté par décision d'Anaël du 2026-10-17 (spec-modeles-octobre-2026, « Candidats < 2B »).
 # Révisions, SHA-256 et tailles relevés le même jour via l'API Hugging Face. AD-6 : valeurs
 # communes à l'inférence et à l'entraînement.
-# Architecture `llama` dense, texte seul, 35 langues. Contexte natif de 4096 jetons
-# (max_position_embeddings) : contexte inférieur à 8192, voir la spec.
+# Architecture `llama` dense, texte seul, 35 langues. Contexte de 4096 jetons, la valeur
+# prudente : max_position_embeddings du config.json HF vaut 4096, mais l'en-tête du GGUF
+# mradermacher annonce llama.context_length = 8192 ; inférieur à 8192, voir la spec.
 # Pas de GGUF officiel : GGUF communautaire mradermacher (Q4_K_M et f16).
 # Pas de mode raisonnement.
 

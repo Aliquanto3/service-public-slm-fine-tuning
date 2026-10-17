@@ -10,7 +10,6 @@ import hashlib
 import json
 import shutil
 import struct
-import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -708,12 +707,7 @@ def test_toml_modeles_moins_2b(slug: str) -> None:
     assert config.gguf.source == ("officielle" if slug == "croissantllm-chat" else "communautaire")
     assert config.exclure_vision == (slug == "qwen3.5-0.8b")
     assert config.entrainable and not config.embedding
-    brut = tomllib.loads(
-        (Path(__file__).parents[2] / "config" / "modeles" / f"{slug}.toml").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert brut["lm_eval_batch_size"] == 2
+    assert config.lm_eval_batch_size == 2
 
 
 def test_toml_modeles_moins_2b_particularites() -> None:

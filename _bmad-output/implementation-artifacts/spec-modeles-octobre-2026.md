@@ -134,6 +134,8 @@ Runs `fetch` : `20261017-061207-modeles-5969` (1B), `20261017-061650-modeles-6ca
 
 # Candidats < 2B (décision du 2026-10-17)
 
+**CroissantLLM (`croissantllm-chat`) est retiré des candidats** (décision d'Anaël du 2026-10-17) : sa licence MIT n'est pas admise en sortie (`ordre_permissivite` ne contient que `apache-2.0`) et son contexte natif de 2048 jetons est trop court pour le RAG de la Tâche Q. Son entrée de `config/publication.toml` est supprimée ; **restent à supprimer** `config/modeles/croissantllm-chat.toml`, son slug dans `MODELES_MOINS_2B` et ses assertions de `test_toml_modeles_moins_2b` et de `test_toml_modeles_moins_2b_particularites`, et la mention de `outils/migration/exporter-etat.ps1` (suppressions refusées à l'agent de revue par le contrôle de permissions ; le test `test_croissantllm_mit_sans_licence_de_sortie` cité plus bas a été retiré avant commit). Les runs `fetch` gardent la trace de son téléchargement et de ses contrôles ; les fichiers de `models/croissantllm-chat` sont laissés à l'orchestrateur. Les lignes qui le concernent ci-dessous restent comme trace.
+
 Trois modèles de moins de 2B s'ajoutent, hors `CANDIDATS` (choix le plus réversible). Épinglage (révisions, SHA-256 et tailles) relevé dans l'API HF, puis **recalculé sur les fichiers de `models/`** : tous concordent.
 
 ## Fiches
@@ -145,7 +147,7 @@ Trois modèles de moins de 2B s'ajoutent, hors `CANDIDATS` (choix le plus réver
 
 - Valeurs communes : cache f16, `reasoning = "off"`, `protocole_outils = "natif"` (non sondé), `lm_eval_batch_size = 2` (portable de 6 Go ; jamais `auto`).
 - `config/publication.toml` : trois entrées (apache-2.0, mit, apache-2.0), sans `verifie_le`. Aucune autre liste de slugs à mettre à jour (comme pour les modèles d'octobre ; hors `CANDIDATS`).
-- Les fiches du WIP 8379099 ont été relues : SHA-256 et tailles exacts ; corrigés seulement les renvois de runs périmés et les mentions « F16 non téléchargé ».
+- Les fiches du WIP 8379099 (c7e31bc après rebase) ont été relues : SHA-256 et tailles exacts ; corrigés seulement les renvois de runs périmés et les mentions « F16 non téléchargé ».
 
 ## Runs et contrôles 8.1
 Runs `fetch` : `20261017-184442-modeles-29f5` (trois slugs) et `20261017-185344-modeles-9f7d` (`--f16`, eurollm-1.7b et qwen3.5-0.8b).
@@ -161,6 +163,22 @@ Le contrôle `dense` n'a pas été modifié.
 - **CroissantLLM à contexte 2048** : le prompt RAG de la Tâche Q risque de ne pas tenir (budget de prompt, F2) ; et **sans GGUF F16** (banc « avant » à décider).
 - **Qwen3.5-0.8B écarté par `dense`** : même décision à prendre que pour qwen3.5-2b (admettre `linear_attention` ou non, entraînement sous Windows).
 - **`lm_eval_batch_size = 2`** : valeur prudente, à confirmer par mesure.
-- EuroLLM-1.7B : contexte 4096, inférieur à 8192.
-- La branche part de 03d8ccf, avant le correctif F3 (`da06a86`, champ `lm_eval_batch_size` du schéma) : tant que F3 n'est pas intégré, le champ est ignoré à la lecture ; le test le lit donc dans le TOML brut. Aucun conflit attendu à la fusion.
-- Tests : `test_toml_modeles_moins_2b` et `test_toml_modeles_moins_2b_particularites` dans `tests/fetch/test_verifications.py`.
+- EuroLLM-1.7B : contexte 4096, inférieur à 8192. Valeur prudente : `max_position_embeddings` du `config.json` HF vaut 4096, mais l'en-tête du GGUF mradermacher (Q4_K_M et f16) annonce `llama.context_length = 8192` (lu dans `models/` à la revue). Passer à 8192 demande une mesure de qualité au-delà de 4096.
+- Licence de sortie de CroissantLLM (MIT) : sans objet, modèle retiré (voir plus haut).
+- **Licences d'EuroLLM-1.7B et de Qwen3.5-0.8B non revérifiées** depuis l'épinglage (pas de réseau en revue) ; `verifie_le` absent, donc préparation refusée (« non relue ») jusqu'à la relecture d'Anaël.
+- La branche est rebasée sur main 2dc2293, qui contient F3 (champ `lm_eval_batch_size` du schéma) : le test lit `config.lm_eval_batch_size` par le schéma.
+- Les empreintes des fiches consignées dans `runs/fetch/20261017-184442-modeles-29f5/run.json` (et `20261017-185344-modeles-9f7d`) sont celles du WIP (commit 8379099 avant rebase, c7e31bc après), pas celles des fiches commitées : écarts limités à `lm_eval_batch_size`, aux commentaires, et au commentaire de contexte d'EuroLLM ajouté en revue ; révisions, SHA-256 et options servies identiques. Runs non modifiés (traces).
+- Tests : `test_toml_modeles_moins_2b` et `test_toml_modeles_moins_2b_particularites` dans `tests/fetch/test_verifications.py` ; `test_croissantllm_mit_sans_licence_de_sortie` dans `tests/publication/test_preparer.py`.
+
+## Revue
+Revue de c7e31bc et 9f459f5 (rebasés sur main 2dc2293), second avis Haiku puis Opus.
+- medium, second avis, écarté (sans objet) : CroissantLLM (MIT) n'avait pas de licence de sortie, `mit` absente de `ordre_permissivite` et de `config/licences/` (constat exact) ; le modèle est retiré par décision d'Anaël (licence MIT non admise, contexte 2048). Ni licence MIT ni texte ajoutés.
+- low, second avis, corrigé : la spec disait la branche partie de 03d8ccf, avant F3 ; faux depuis le rebase.
+- low, second avis, corrigé : le test lit `config.lm_eval_batch_size` par le schéma, plus le TOML brut (`tomllib` retiré).
+- low, second avis, consigné : empreintes des fiches des runs = celles du WIP ; runs laissés tels quels.
+- low, second avis, corrigé : contexte EuroLLM, commentaire et spec précisés (HF 4096, GGUF 8192, 4096 gardé), vérifié sur les GGUF de `models/`.
+- low, second avis, corrigé (commentaire) : `verifie_le` absent et licences non revérifiées, explicités dans `config/publication.toml` ; `verifie_le` non posé.
+- low, revue, sans objet (modèle retiré) : poids HF float32 de CroissantLLM contre « lm_eval sur HF bf16 » ; `lm_eval.py` charge de toute façon `dtype=bfloat16`.
+- low, revue, reporté : `outils/migration/exporter-etat.ps1` (ligne 45) copie encore `models\croissantllm-chat` ; inoffensif (`Copier` avertit si le dossier manque), à retirer avec le dossier.
+- low, revue, vérifié : aucun consommateur ne suppose 8192 (`contexte` lu par fiche dans `serveur`, `measure`, `assemblage`) ; `test_version_llamacpp_par_modele`, qui parcourt toutes les fiches, passe.
+- Complexité : aucun constat (configuration et tests seulement).
