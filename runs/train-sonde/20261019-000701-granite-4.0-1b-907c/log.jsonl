@@ -1,0 +1,3 @@
+{"message":"chargement de granite-4.0-1b (qlora, base bf16)"}
+{"message":"longueur 4096 (bf16) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 4096 (bf16) : debordement, perte 12.055950164794922, VRAM réservée 8952741888"}
