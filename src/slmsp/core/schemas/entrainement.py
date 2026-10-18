@@ -117,6 +117,10 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     conditions_mistral: ConditionsMistral
     modeles_generateurs: list[str]
     version_extracteur: int = Field(ge=1)
+    mode_outils: Literal["local", "connecte"] = "local"
+    """Début de conversation des Tâches à outils : `local` (v1, « Passages… / Demande : … »
+    sans passage) ou `connecte` (demande seule, comme `messages_connecte`). Fait partie de
+    l'empreinte du jeu."""
 
 
 # --- Paires de préférence ORPO (story 9.7, FR-34, D-nuit-A1-21) ---------------------------------

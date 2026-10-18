@@ -38,6 +38,7 @@ from slmsp.data.validate import (  # noqa: E402
     ouvrir_generation,
 )
 from slmsp.harness.taches import charger_taches  # noqa: E402
+from slmsp.harness.taches.recherche import messages_connecte  # noqa: E402
 from slmsp.mcp.outils import charger_outils  # noqa: E402
 
 from .conftest import CONFIG, OUTILS_MCP  # noqa: E402
@@ -171,6 +172,12 @@ def test_build_toutes_les_taches(monde: Any, doublures: Any) -> None:
         o["function"]["name"] for o in charger_outils(OUTILS_MCP)
     ]
     assert lignes["Q"].tools == []
+    # RD (Tâche à outils) : début du Mode connecté, demande seule ; les autres Tâches gardent
+    # le rendu de `construire_messages` (Q : passages, demande précédée de son libellé).
+    demande_rd = lignes["RD"].messages[1]["content"]
+    assert lignes["RD"].messages[1] == messages_connecte(taches.tache("RD"), demande_rd, None)[1]
+    assert "Passages" not in demande_rd and "Demande :" not in demande_rd
+    assert lignes["Q"].messages[1]["content"].startswith("Passages")
     assert "data.gouv/reponses-outils-mcp" in lignes["RD"].meta.source
     # CR : transcription = 1er appel, compte rendu = 2e ; CO : entrée = texte fautif de Mistral.
     assert phrase("tr", 12) in lignes["CR"].messages[1]["content"]
@@ -198,6 +205,7 @@ def test_manifest_et_run(monde: Any, doublures: Any) -> None:
     assert manifeste.registre["sha256"] == RegistreLicences.charger(racine=racine_projet()).sha256
     assert manifeste.modeles_generateurs == ["mistral-large-2512"]
     assert manifeste.conditions_mistral.url is not None
+    assert manifeste.mode_outils == "connecte"
     assert resultat.run.manifeste.type == "data-build"
     assert resultat.run.manifeste.parents == [filtre.run.run_id]
     assert resultat.run.statut_courant() == "complet"

@@ -70,6 +70,7 @@ from slmsp.data.validate import (
 )
 from slmsp.harness.prompts import EntreeInvalide, construire_messages
 from slmsp.harness.taches import TableTaches
+from slmsp.harness.taches.recherche import messages_connecte
 from slmsp.mcp.outils import charger_outils
 from slmsp.mistral.generateur import Generateur
 from slmsp.mistral.journal import JournalMistral, LigneAppel
@@ -101,6 +102,8 @@ SOURCE_MISTRAL: Final = "mistral/reponses-generateur"
 SOURCE_OUTILS: Final = "data.gouv/reponses-outils-mcp"
 TACHES_TEXTE: Final = {"Q": "question", "RD": "demande"}
 """Tâches à entrée texte et emplacement de l'amorce qui la porte."""
+MODE_OUTILS: Final = "connecte"
+"""Début de conversation des Tâches à outils : celui du Mode connecté (consigné au MANIFEST)."""
 _RE_VERSION: Final = re.compile(r"v([0-9]+)")
 
 
@@ -287,12 +290,20 @@ def construire_conversation(
             )
         debut: list[dict[str, Any]] = [{"role": "user", "content": entree["demande"]}]
     else:
+        tache = taches.tache(brut.tache)
         try:
-            debut = construire_messages(
-                taches.tache(brut.tache),
-                entree,
-                lecteur.passages(brut) or None if brut.tache == "Q" else None,
-            )
+            if tache.outils_autorises:
+                # Tâche à outils : début du Mode connecté (demande seule), le seul mode du
+                # Harnais qui envoie `tools` ; même fonction que l'inférence (AD-6, AD-7).
+                if not isinstance(entree, str):
+                    raise EntreeInvalide(f"Tâche {brut.tache} : entrée texte attendue")
+                debut = messages_connecte(tache, entree, None)
+            else:
+                debut = construire_messages(
+                    tache,
+                    entree,
+                    lecteur.passages(brut) or None if brut.tache == "Q" else None,
+                )
         except (EntreeInvalide, SlmspError) as exc:
             raise DerivationRefusee(
                 "entree_refusee", f"Tâche {brut.tache} : entrée refusée : {exc}"
@@ -543,6 +554,7 @@ def lancer_build(
             {m for ligne in lignes for m in ligne.meta.generateur.split("+")}
         ),
         version_extracteur=VERSION_EXTRACTEUR,
+        mode_outils=MODE_OUTILS,
     )
     (dossier / NOM_MANIFEST).write_bytes(json_canonique(manifeste.model_dump(mode="json")) + b"\n")
 
