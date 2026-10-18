@@ -1,0 +1,57 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 45,
+   "precision": 0.9,
+   "erreurs": {
+    "simple_102": "Optional parameter 'unit' not provided and not marked as optional.",
+    "simple_238": "aucun appel émis",
+    "simple_32": "aucun appel émis",
+    "simple_35": "Invalid value for parameter 'operating_hours': 11. Expected one of [23].",
+    "simple_42": "Invalid value for parameter 'capacitance': 1e-05. Expected one of [0.0001]."
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 38,
+   "precision": 0.76,
+   "erreurs": {
+    "multiple_123": "aucun appel émis",
+    "multiple_124": "aucun appel émis",
+    "multiple_149": "aucun appel émis",
+    "multiple_153": "aucun appel émis",
+    "multiple_157": "aucun appel émis",
+    "multiple_169": "aucun appel émis",
+    "multiple_21": "aucun appel émis",
+    "multiple_25": "aucun appel émis",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional.",
+    "multiple_60": "aucun appel émis",
+    "multiple_63": "aucun appel émis",
+    "multiple_90": "Invalid value for parameter 'cuisine': []. Expected one of [['Seafood']]."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 36,
+   "precision": 0.72,
+   "erreurs": {
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_131": "appel émis sans fonction pertinente",
+    "irrelevance_157": "appel émis sans fonction pertinente",
+    "irrelevance_159": "appel émis sans fonction pertinente",
+    "irrelevance_16": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_172": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_22": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_29": "appel émis sans fonction pertinente",
+    "irrelevance_38": "appel émis sans fonction pertinente",
+    "irrelevance_60": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

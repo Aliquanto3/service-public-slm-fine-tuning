@@ -1,0 +1,48 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 48,
+   "precision": 0.96,
+   "erreurs": {
+    "simple_35": "Invalid value for parameter 'operating_hours': 11. Expected one of [23].",
+    "simple_8": "aucun appel émis"
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 41,
+   "precision": 0.82,
+   "erreurs": {
+    "multiple_123": "aucun appel émis",
+    "multiple_124": "aucun appel émis",
+    "multiple_149": "aucun appel émis",
+    "multiple_21": "aucun appel émis",
+    "multiple_29": "aucun appel émis",
+    "multiple_4": "aucun appel émis",
+    "multiple_46": "Invalid value for parameter 'elements': []. Expected one of [['Sam', 'Alice', 'Jack']].",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional.",
+    "multiple_7": "aucun appel émis"
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 39,
+   "precision": 0.78,
+   "erreurs": {
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_131": "appel émis sans fonction pertinente",
+    "irrelevance_157": "appel émis sans fonction pertinente",
+    "irrelevance_159": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_172": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_29": "appel émis sans fonction pertinente",
+    "irrelevance_38": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}
