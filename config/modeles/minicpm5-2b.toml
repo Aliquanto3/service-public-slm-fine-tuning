@@ -24,6 +24,9 @@ fichiers = [
 ]
 contexte = 8192
 cache_kv = "f16"
+# lm_eval sur HF bf16, portable de 6 Go : batch fixe (jamais `auto`) ; minicpm5-1b monte à 5 063 Mio
+# en batch 4, le 2B (2,5 fois plus de paramètres) part à 2.
+lm_eval_batch_size = 2
 reasoning = "off"
 chat_template_kwargs = { enable_thinking = false }
 exclure_vision = false
