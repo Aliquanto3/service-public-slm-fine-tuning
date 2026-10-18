@@ -1019,7 +1019,9 @@ def test_toml_modeles_octobre_2(slug: str) -> None:
     assert set(config.sha256_fichiers) == set(config.fichiers)
     assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
     assert config.chat_template_kwargs == {"enable_thinking": False}
-    assert config.gguf.source == "officielle" and config.entrainable
+    assert config.gguf.source == "officielle"
+    # minicpm5-2b : référence de Baseline seulement (taille > 2B, décision du 2026-10-18).
+    assert config.entrainable == (slug != "minicpm5-2b")
     assert config.exclure_vision == (slug == "gemma-4-e2b")
 
 

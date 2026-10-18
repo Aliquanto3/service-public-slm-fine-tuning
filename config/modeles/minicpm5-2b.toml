@@ -1,5 +1,5 @@
-# ÉCARTÉ (taille > 2B, décision du 2026-10-17, voir le registre de decisions.md) : fiche
-# conservée, plus aucun run à lancer.
+# RÉFÉRENCE DE BASELINE (décision d'Anaël du 2026-10-18) : taille > 2B (2,52 B), donc hors des
+# candidats au fine-tuning ; Baseline seulement, entrainable = false, comme qwen3.5-2b.
 # MiniCPM5 2B (OpenBMB, Apache 2.0, sans accès conditionnel) : candidat ajouté par décision
 # d'Anaël du 2026-10-17 (spec-modeles-octobre-2026). Révisions, SHA-256 et tailles relevés
 # le 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes à l'inférence et à
@@ -10,6 +10,8 @@
 schema_version = 1
 depot_hf = "openbmb/MiniCPM5-2B"
 revision = "f97400052a43d642bbc6e9975e2397e3ae6a6b52"
+# Baseline seulement : taille > 2B (règle D8), pas une limite d'architecture.
+entrainable = false
 fichiers = [
     "chat_template.jinja",
     "config.json",
