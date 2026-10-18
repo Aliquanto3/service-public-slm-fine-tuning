@@ -1,0 +1,15 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\minicpm5-2b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: 2000.0, num_fewshot: 0, batch_size: 2
+|              Tasks              |Version|Filter|n-shot|Metric|   |Value |   |Stderr|
+|---------------------------------|------:|------|-----:|------|---|-----:|---|-----:|
+|global_mmlu_fr                   |      0|none  |     0|acc   |↑  |0.5225|±  |0.0247|
+| - global_mmlu_fr_business       |      0|none  |     0|acc   |↑  |0.5172|±  |0.0662|
+| - global_mmlu_fr_humanities     |      0|none  |     0|acc   |↑  |0.6176|±  |0.0484|
+| - global_mmlu_fr_medical        |      0|none  |     0|acc   |↑  |0.4444|±  |0.0840|
+| - global_mmlu_fr_other          |      0|none  |     0|acc   |↑  |0.6250|±  |0.0653|
+| - global_mmlu_fr_social_sciences|      0|none  |     0|acc   |↑  |0.4804|±  |0.0497|
+| - global_mmlu_fr_stem           |      0|none  |     0|acc   |↑  |0.3478|±  |0.0710|
+
+|    Groups    |Version|Filter|n-shot|Metric|   |Value |   |Stderr|
+|--------------|------:|------|-----:|------|---|-----:|---|-----:|
+|global_mmlu_fr|      0|none  |     0|acc   |↑  |0.5225|±  |0.0247|
+

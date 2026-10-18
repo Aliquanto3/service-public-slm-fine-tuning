@@ -1,0 +1,15 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\minicpm5-2b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: 500.0, num_fewshot: 3, batch_size: 2
+|            Tasks            |Version|Filter|n-shot| Metric |   |Value |   |Stderr|
+|-----------------------------|-------|------|-----:|--------|---|-----:|---|-----:|
+|french_bench_mc_agrege       |      1|none  |     3|acc     |↑  |0.5118|±  |0.0172|
+| - french_bench_arc_challenge|Yaml   |none  |     3|acc     |↑  |0.3560|±  |0.0214|
+|                             |       |none  |     3|acc_norm|↑  |0.3880|±  |0.0218|
+| - french_bench_grammar      |Yaml   |none  |     3|acc     |↑  |0.6807|±  |0.0429|
+| - french_bench_hellaswag    |Yaml   |none  |     3|acc     |↑  |0.3720|±  |0.0216|
+|                             |       |none  |     3|acc_norm|↑  |0.4700|±  |0.0223|
+| - french_bench_vocab        |Yaml   |none  |     3|acc     |↑  |0.6387|±  |0.0442|
+
+|        Groups        |Version|Filter|n-shot|Metric|   |Value |   |Stderr|
+|----------------------|------:|------|-----:|------|---|-----:|---|-----:|
+|french_bench_mc_agrege|      1|none  |     3|acc   |↑  |0.5118|±  |0.0172|
+
