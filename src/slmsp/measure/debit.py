@@ -32,6 +32,10 @@ class MesureQuestion:
     debit_tps: float | None
     tokens_estimes: bool
     prompt_tokens: int | None = None
+    brouillon_proposes: int | None = None
+    """`timings.draft_n` du serveur (décodage spéculatif), `None` s'il ne l'expose pas."""
+    brouillon_acceptes: int | None = None
+    """`timings.draft_n_accepted`, `None` s'il ne l'expose pas."""
 
 
 def mesurer_question(
@@ -43,6 +47,8 @@ def mesurer_question(
     jetons = 0
     usage: int | None = None
     prompt: int | None = None
+    proposes: int | None = None
+    acceptes: int | None = None
     for evenement in evenements:
         if isinstance(evenement, Erreur):
             raise MesureEchouee(f"{evenement.code} : {evenement.message}")
@@ -55,6 +61,9 @@ def mesurer_question(
             usage = valeur if isinstance(valeur, int) and valeur > 0 else None
             brut = evenement.usage.get("prompt_tokens")
             prompt = brut if isinstance(brut, int) and brut > 0 else None
+            draft, accepte = evenement.usage.get("draft_n"), evenement.usage.get("draft_n_accepted")
+            if isinstance(draft, int) and isinstance(accepte, int):
+                proposes, acceptes = draft, accepte
     fin = horloge()
     if premier is None:
         raise MesureEchouee("aucun jeton généré")
@@ -62,7 +71,9 @@ def mesurer_question(
     duree = fin - premier
     # Un seul token ou une durée nulle ne donne pas de débit.
     debit = (tokens - 1) / duree if tokens > 1 and duree > 0 else None
-    return MesureQuestion(premier - debut, tokens, duree, debit, usage is None, prompt)
+    return MesureQuestion(
+        premier - debut, tokens, duree, debit, usage is None, prompt, proposes, acceptes
+    )
 
 
 def mediane_p95(valeurs: list[float]) -> tuple[float, float]:

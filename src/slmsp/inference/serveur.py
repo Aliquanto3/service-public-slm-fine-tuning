@@ -20,6 +20,7 @@ import re
 import socket
 import sys
 import time
+from collections.abc import Mapping
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
@@ -333,6 +334,109 @@ def quantifier(
     )
 
 
+# --- Décodage spéculatif ---------------------------------------------------------------------
+
+ModeSpeculatif = Literal["brouillon", "ngram"]
+MODES_SPECULATIFS: Final = get_args(ModeSpeculatif)
+
+TYPE_SPEC_BROUILLON: Final = "draft-simple"
+TYPE_SPEC_NGRAM: Final = "ngram-simple"
+"""`--spec-type` de llama-server b11429 : un modèle brouillon séparé, ou la recherche de
+n-grammes dans le contexte (sans second modèle)."""
+
+N_MAX_BROUILLON_DEFAUT: Final = 3
+"""`--spec-draft-n-max` par défaut de llama-server (tokens proposés par tour)."""
+
+
+@dataclass(frozen=True)
+class Speculatif:
+    """Décodage spéculatif de `llama-server` (le texte reste celui du modèle cible).
+
+    `brouillon` : `slug` d'un autre modèle de base (GGUF de sa fiche, même vocabulaire que
+    la cible) ; `ngram` : aucun second modèle. `n_max` (`--spec-draft-n-max`) ne vaut que
+    pour `brouillon`.
+    """
+
+    mode: ModeSpeculatif
+    brouillon: str | None = None
+    n_max: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.mode not in MODES_SPECULATIFS:
+            raise ConfigurationInvalide(
+                f"mode spéculatif inconnu : {self.mode!r} "
+                f"(attendu : {', '.join(MODES_SPECULATIFS)})"
+            )
+        if self.mode == "brouillon":
+            if not isinstance(self.brouillon, str):
+                raise ConfigurationInvalide("décodage spéculatif `brouillon` : slug requis")
+            _verifier_slug(self.brouillon)
+        elif self.brouillon is not None:
+            raise ConfigurationInvalide("le mode `ngram` n'a pas de modèle brouillon")
+        if self.n_max is not None:
+            if self.mode != "brouillon":
+                raise ConfigurationInvalide("n_max ne vaut que pour le mode `brouillon`")
+            if isinstance(self.n_max, bool) or not isinstance(self.n_max, int) or self.n_max < 1:
+                raise ConfigurationInvalide(
+                    f"n_max invalide : entier >= 1 attendu ({self.n_max!r})"
+                )
+
+    @classmethod
+    def depuis(cls, valeur: Speculatif | Mapping[str, Any] | None) -> Speculatif | None:
+        """`None` reste `None` ; un dict est validé (clés `mode`, `brouillon`, `n_max`)."""
+        if valeur is None or isinstance(valeur, Speculatif):
+            return valeur
+        inconnues = set(valeur) - {"mode", "brouillon", "n_max"}
+        if inconnues or "mode" not in valeur:
+            raise ConfigurationInvalide(
+                f"décodage spéculatif invalide : clés {sorted(valeur)} (mode requis)"
+            )
+        return cls(valeur["mode"], valeur.get("brouillon"), valeur.get("n_max"))
+
+    def decrire(self) -> dict[str, Any]:
+        return {"mode": self.mode, "brouillon": self.brouillon, "n_max": self.n_max}
+
+
+def _vocab_size(slug: str) -> int | None:
+    """`vocab_size` du `config.json` local de `slug`, `None` s'il est absent ou illisible."""
+    chemin = dossier_modeles() / slug / "config.json"
+    try:
+        valeur = json.loads(chemin.read_text(encoding="utf-8")).get("vocab_size")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return valeur if isinstance(valeur, int) else None
+
+
+def verifier_vocabulaire_brouillon(
+    cible: ConfigModele, slug_cible: str | None, brouillon: str
+) -> None:
+    """Refuse un brouillon dont le vocabulaire diffère de la cible (`ConfigurationInvalide`).
+
+    Compare le SHA-256 de `tokenizer.json` des deux fiches (obligatoire) et, quand les
+    `config.json` des deux modèles sont téléchargés, leur `vocab_size`.
+    """
+    config = charger_config_modele(brouillon)
+    sha_cible = cible.sha256_fichiers.get("tokenizer.json")
+    sha_brouillon = config.sha256_fichiers.get("tokenizer.json")
+    if sha_cible is None or sha_brouillon is None:
+        raise ConfigurationInvalide(
+            f"brouillon {brouillon} : SHA de tokenizer.json absent d'une fiche, vocabulaire "
+            "non vérifiable"
+        )
+    if sha_cible != sha_brouillon:
+        raise ConfigurationInvalide(
+            f"brouillon {brouillon} : tokenizer.json différent de celui de la cible "
+            f"({sha_brouillon[:12]} contre {sha_cible[:12]}) ; le brouillon exige le même "
+            "vocabulaire"
+        )
+    if slug_cible is not None:
+        v_cible, v_brouillon = _vocab_size(slug_cible), _vocab_size(brouillon)
+        if v_cible is not None and v_brouillon is not None and v_cible != v_brouillon:
+            raise ConfigurationInvalide(
+                f"brouillon {brouillon} : vocab_size {v_brouillon} différent de {v_cible}"
+            )
+
+
 # --- Serveur ---------------------------------------------------------------------------------
 
 
@@ -365,6 +469,7 @@ class ServeurLlama:
         journal: str | os.PathLike[str] | None = None,
         usage: UsageEmbedding = "passage",
         parallele: int = 1,
+        speculatif: Speculatif | Mapping[str, Any] | None = None,
     ) -> None:
         _verifier_variante(variante)
         if parallele < 1:
@@ -385,6 +490,14 @@ class ServeurLlama:
             )
         if usage not in get_args(UsageEmbedding):
             raise ValueError(f"usage d'embedding inconnu : {usage!r}")
+        self.speculatif = Speculatif.depuis(speculatif)
+        if self.speculatif is not None:
+            if config.embedding:
+                raise ConfigurationInvalide(
+                    "décodage spéculatif : réservé à un serveur de génération"
+                )
+            if self.speculatif.brouillon is not None:
+                verifier_vocabulaire_brouillon(config, slug, self.speculatif.brouillon)
         self.config = config
         self.usage: UsageEmbedding = usage
         self.variante: Variante = variante
@@ -442,6 +555,15 @@ class ServeurLlama:
         return dossier_modeles() / self.slug / "gguf" / nom
 
     @property
+    def gguf_brouillon(self) -> Path | None:
+        """GGUF du modèle brouillon (`<modèles>/<slug>/gguf/<fichier>`), `None` sans brouillon."""
+        if self.speculatif is None or self.speculatif.brouillon is None:
+            return None
+        config = charger_config_modele(self.speculatif.brouillon)
+        nom = PurePosixPath(config.gguf.fichier).name
+        return dossier_modeles() / self.speculatif.brouillon / "gguf" / nom
+
+    @property
     def chat_template(self) -> Path | None:
         if not self.config.chat_template_force:
             return None
@@ -494,6 +616,36 @@ class ServeurLlama:
                 ]
             if config.chat_template_force:
                 arguments += ["--chat-template-file", str(self.chat_template)]
+            arguments += self._arguments_speculatifs()
+        return arguments
+
+    def _arguments_speculatifs(self) -> list[str]:
+        """Options de décodage spéculatif (llama-server b11429) ; vide par défaut.
+
+        Brouillon : `-md`, `--spec-type draft-simple`, cache KV du brouillon comme celui de
+        la cible (`-ctkd`/`-ctvd`), threads du brouillon comme ceux de la cible (`-td`),
+        `--spec-draft-n-max`. Le serveur n'a pas d'option de contexte du brouillon : il suit
+        celui de la cible. Ngram : `--spec-type ngram-simple`, sans second modèle.
+        """
+        spec = self.speculatif
+        if spec is None:
+            return []
+        if spec.mode == "ngram":
+            return ["--spec-type", TYPE_SPEC_NGRAM]
+        arguments = [
+            "-md",
+            str(self.gguf_brouillon),
+            "--spec-type",
+            TYPE_SPEC_BROUILLON,
+            "-ctkd",
+            self.config.cache_kv,
+            "-ctvd",
+            self.config.cache_kv,
+            "--spec-draft-n-max",
+            str(spec.n_max if spec.n_max is not None else N_MAX_BROUILLON_DEFAUT),
+        ]
+        if self.config.threads is not None:
+            arguments += ["-td", str(self.config.threads)]
         return arguments
 
     # -- Cycle de vie --
@@ -525,6 +677,9 @@ class ServeurLlama:
     def _verifier_fichiers(self) -> None:
         if not self.gguf.is_file():
             raise ConfigurationInvalide(f"GGUF absent : {self.gguf}")
+        brouillon = self.gguf_brouillon
+        if brouillon is not None and not brouillon.is_file():
+            raise ConfigurationInvalide(f"GGUF du brouillon absent : {brouillon}")
         modele = self.chat_template
         if modele is not None and not modele.is_file():
             raise ConfigurationInvalide(f"chat template forcé absent : {modele}")
@@ -619,6 +774,11 @@ class ServeurLlama:
                 chat_template_force=self.config.chat_template_force,
                 protocole_outils=self.config.protocole_outils,
             )
+        if self.speculatif is not None:
+            description["speculatif"] = self.speculatif.decrire()
+            brouillon = self.gguf_brouillon
+            if brouillon is not None:
+                description["gguf_brouillon"] = brouillon.name
         if self._port is not None:
             programme = len(self.programme())
             description["arguments"] = self.arguments(self._port)[programme:]
@@ -655,6 +815,7 @@ __all__ = [
     "ErreurInference",
     "INTERVALLE_SONDE",
     "ServeurLlama",
+    "Speculatif",
     "Variante",
     "binaire",
     "charger_config_llamacpp",
@@ -666,6 +827,7 @@ __all__ = [
     "dossier_llamacpp",
     "dossier_vendor",
     "port_libre",
+    "verifier_vocabulaire_brouillon",
     "quantifier",
     "verifier_fichier",
     "version",
