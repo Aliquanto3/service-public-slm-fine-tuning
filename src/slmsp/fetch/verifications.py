@@ -45,6 +45,7 @@ CANDIDATS: tuple[str, ...] = (
     "granite-4.0-1b",
     "minicpm5-1b",
     "eurollm-1.7b",
+    "minicpm5-2b",
     "qwen3.5-0.8b",
     "qwen3.5-2b",
 )

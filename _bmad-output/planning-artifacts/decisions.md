@@ -131,7 +131,7 @@ Décisions d'Anaël du 2026-10-17, confirmées en session principale le même jo
 - **Gated DeltaNet (`linear_attention`) est admis pour l'inférence et la Baseline** (option retenue parmi celles proposées : admettre ces hybrides en Baseline seulement, plutôt que les écarter ou les entraîner), avec `entrainable = false` dans la fiche du modèle. llama.cpp b11429 le sert (contrôles `serveur` ok). Le contrôle `dense` échoue si une fiche à couches `linear_attention` ne porte pas `entrainable = false`, et `train run` comme `train sonde-env` (avec ou sans `--unsloth`) refusent un modèle non entraînable.
   - Motif : sous Windows natif, sans `flash-linear-attention` ni `causal-conv1d`, transformers prend une implémentation torch lente. Seuls l'entraînement et `lm_eval` HF sont touchés (source : `spec-modeles-octobre-2026.md`, section « Écarts et points à confirmer par Anaël », contrôle `dense`).
   - **L'entraînement sera rouvert** seulement si un Qwen3.5 sort bien de la Baseline, après un court essai QLoRA qui mesure la vitesse sous Windows.
-- **Règle de taille** : 2B au plus, en paramètres du modèle texte servi, tour vision exclue (cible : PC de 16 Go avec Teams, Edge et Outlook).
+- **Règle de taille** : 2,5B au plus (relevée de 2B le 2026-10-18 par Anaël, après la Baseline de MiniCPM5-2B, meilleure que granite sur 7 Tâches sur 8), en paramètres du modèle texte servi, tour vision exclue (cible : PC de 16 Go avec Teams, Edge et Outlook). Les modèles écartés « taille > 2B » du registre dépassent aussi 2,5B.
   - Méthode de comptage : en-têtes safetensors des dépôts HF (`huggingface_hub.get_safetensors_metadata`), relevés par l'orchestrateur le 2026-10-17. Les modules exclus du modèle servi (tour vision, audio, tête MTP) ne comptent pas.
 
 ### Registre des Modèles de base candidats
@@ -145,7 +145,7 @@ Paramètres en milliards (B). « Mesuré » : comptage safetensors du 2026-10-17
 | `eurollm-1.7b` | `utter-project/EuroLLM-1.7B-Instruct` | 1,66 (mesuré) | candidat au fine-tuning | llama dense ; contexte 4096 | 2026-10-17 | `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
 | `qwen3.5-0.8b` | `Qwen/Qwen3.5-0.8B` | 0,75 (mesuré : 0,87 au total, dont 0,12 de vision et MTP exclus) | Baseline seulement | hybride Gated DeltaNet, `entrainable = false` | 2026-10-17 | D8 ; `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
 | `qwen3.5-2b` | `Qwen/Qwen3.5-2B` | 1,88 (mesuré : 2,27 au total, dont 0,39 de vision et MTP exclus) | Baseline seulement | hybride Gated DeltaNet, `entrainable = false` | 2026-10-17 | D8 (règle de taille) ; `spec-modeles-octobre-2026.md` |
-| `minicpm5-2b` | `openbmb/MiniCPM5-2B` | 2,52 (mesuré, texte seul) | Baseline seulement (référence) | taille > 2B, `entrainable = false` ; écarté le 2026-10-17, réintégré comme référence le 2026-10-18 (Anaël) | 2026-10-18 | D8 ; `etat-run-2026-10-17-portable.md` |
+| `minicpm5-2b` | `openbmb/MiniCPM5-2B` | 2,52 (mesuré, texte seul) | candidat au fine-tuning | llama dense, texte seul ; écarté le 2026-10-17 (taille > 2B), réintégré comme référence puis candidat le 2026-10-18 (règle relevée à 2,5B, Anaël) ; masque par défaut validé sur le tokenizer réel | 2026-10-18 | D8 ; `etat-run-2026-10-17-portable.md` |
 | `gemma-4-e2b` | `google/gemma-4-E2B-it` | 4,65 (mesuré : 5,12 au total ; hors vision et audio, dont 2,39 d'embeddings par couche) | écarté | taille > 2B | 2026-10-17 | D8 ; `etat-run-2026-10-16.md` (décision de 09h, « 5B réels ») |
 | `ministral-3-3b` | `mistralai/Ministral-3-3B-Instruct-2512-BF16` | ≈ 3 (nom) | écarté | taille > 2B, cible 16 Go | 2026-10-17 | `etat-run-2026-10-16.md` (décision de 09h, passation) |
 | `ministral-3-8b` | `mistralai/Ministral-3-8B-Instruct-2512-GGUF` | ≈ 8 (nom) | écarté | taille > 2B, cible 16 Go | 2026-10-17 | `etat-run-2026-10-16.md` (passation : seuls les modèles < 2B restent candidats) |
@@ -159,4 +159,4 @@ Paramètres en milliards (B). « Mesuré » : comptage safetensors du 2026-10-17
 
 Les sources citées sont sous `_bmad-output/implementation-artifacts/`.
 
-Liste `--candidats` alignée sur le registre de D8 le 2026-10-17 (décision d'Anaël) : `verifications.CANDIDATS` = `granite-4.0-1b`, `minicpm5-1b`, `eurollm-1.7b`, `qwen3.5-0.8b`, `qwen3.5-2b`. Elle remplace l'ordre de passage D4 initial, sans le réécrire.
+Liste `--candidats` alignée sur le registre de D8 le 2026-10-17 (décision d'Anaël) : `verifications.CANDIDATS` = `granite-4.0-1b`, `minicpm5-1b`, `eurollm-1.7b`, `qwen3.5-0.8b`, `qwen3.5-2b`. Elle remplace l'ordre de passage D4 initial, sans le réécrire. Le 2026-10-18, `minicpm5-2b` y est ajouté après `eurollm-1.7b` (règle relevée à 2,5B).

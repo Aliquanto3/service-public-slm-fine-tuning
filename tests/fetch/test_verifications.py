@@ -718,12 +718,13 @@ def test_candidats_alignes_sur_le_registre_d8() -> None:
         "granite-4.0-1b",
         "minicpm5-1b",
         "eurollm-1.7b",
+        "minicpm5-2b",
         "qwen3.5-0.8b",
         "qwen3.5-2b",
     )
     assert not set(CANDIDATS) & {"ministral-3-3b", "ministral-3-8b", "smollm3-3b", "qwen-4b"}
-    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:3])
-    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[3:])
+    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:4])
+    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[4:])
 
 
 @pytest.mark.parametrize("slug", CANDIDATS)
@@ -1019,9 +1020,7 @@ def test_toml_modeles_octobre_2(slug: str) -> None:
     assert set(config.sha256_fichiers) == set(config.fichiers)
     assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
     assert config.chat_template_kwargs == {"enable_thinking": False}
-    assert config.gguf.source == "officielle"
-    # minicpm5-2b : référence de Baseline seulement (taille > 2B, décision du 2026-10-18).
-    assert config.entrainable == (slug != "minicpm5-2b")
+    assert config.gguf.source == "officielle" and config.entrainable
     assert config.exclure_vision == (slug == "gemma-4-e2b")
 
 
