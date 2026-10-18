@@ -45,8 +45,25 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         default="cpu",
         help="variante de llama-server pour les GGUF (cuda : verrou GPU)",
     )
+    p.add_argument(
+        "--parallele",
+        type=_entier_positif,
+        default=1,
+        metavar="N",
+        help="requêtes simultanées pour les GGUF (llama-server --parallel N ; défaut 1)",
+    )
     p.add_argument("--racine", default=None, help="racine des écritures runs/ et data/")
     p.set_defaults(func=_run)
+
+
+def _entier_positif(valeur: str) -> int:
+    try:
+        n = int(valeur)
+    except ValueError:
+        n = 0
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"entier >= 1 attendu : {valeur!r}")
+    return n
 
 
 def _liste(_args: argparse.Namespace) -> int:
@@ -83,6 +100,7 @@ def _run(args: argparse.Namespace) -> int:
         selection,
         racine=racine,
         variante_llamacpp=args.variante_llamacpp,
+        parallele=args.parallele,
         affichage=lambda ligne: print(ligne, flush=True),
     )
     print(f"bench run : {rapport.statut} ; run {rapport.run.run_id} : {rapport.run.dossier}")

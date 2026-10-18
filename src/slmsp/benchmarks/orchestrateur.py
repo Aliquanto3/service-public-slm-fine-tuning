@@ -168,7 +168,13 @@ def _executer_un(
         jeu_version=sortie.jeu_version or _jeu_version(config),
         outil=sortie.outil,
         outil_version=sortie.outil_version,
-        details=sortie.details,
+        # `batch_size` garde son sens (lot d'un appel) ; la concurrence des requêtes
+        # vers llama-server est consignée à part, pour les seules cibles GGUF.
+        details=(
+            {**sortie.details, "parallele": contexte.parallele}
+            if config.cible == "gguf"
+            else sortie.details
+        ),
         duree_s=time.monotonic() - debut,
     )
 
@@ -198,6 +204,7 @@ def lancer(
     *,
     racine: str | Path,
     variante_llamacpp: str = "cpu",
+    parallele: int = 1,
     affichage: Callable[[str], None] = lambda _ligne: None,
 ) -> RapportBench:
     """Exécute la sélection sous le verrou GPU si nécessaire et rend le rapport.
@@ -211,6 +218,8 @@ def lancer(
         raise ConfigurationInvalide(
             f"modèle invalide : {modele_ref!r} (attendu : base:<slug> ou ft:<run_id>)"
         ) from None
+    if parallele < 1:
+        raise ConfigurationInvalide(f"parallele doit être >= 1 : {parallele}")
     racine = Path(racine).resolve()
     verrou = (
         verrou_gpu(commande=f"slmsp bench run --modele {modele_ref}")
@@ -225,6 +234,7 @@ def lancer(
                 "benchmarks": [s.config.nom for s in selection],
                 "variantes": {s.config.nom: s.variantes for s in selection},
                 "variante_llamacpp": variante_llamacpp,
+                "parallele": parallele,
             },
             racine=racine,
             modele_ref=modele_ref,
@@ -236,6 +246,7 @@ def lancer(
             "run": run,
             "racine": racine,
             "variante_llamacpp": variante_llamacpp,
+            "parallele": parallele,
         }
         try:
             for choix in selection:

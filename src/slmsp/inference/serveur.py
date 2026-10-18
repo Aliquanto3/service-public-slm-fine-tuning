@@ -364,8 +364,11 @@ class ServeurLlama:
         delai_demarrage: float = DELAI_DEMARRAGE,
         journal: str | os.PathLike[str] | None = None,
         usage: UsageEmbedding = "passage",
+        parallele: int = 1,
     ) -> None:
         _verifier_variante(variante)
+        if parallele < 1:
+            raise ValueError(f"parallele doit être >= 1 : {parallele}")
         if slug is None and gguf is None:
             raise ValueError("slug ou gguf requis")
         if slug is not None:
@@ -385,6 +388,8 @@ class ServeurLlama:
         self.config = config
         self.usage: UsageEmbedding = usage
         self.variante: Variante = variante
+        # Slots simultanés de génération ; l'embedding reste à 1 (batch de micro-lots).
+        self.parallele = 1 if config.embedding else parallele
         self.slug = slug
         self._gguf = None if gguf is None else Path(gguf)
         self._config_llamacpp = config_llamacpp
@@ -414,6 +419,11 @@ class ServeurLlama:
     def contexte(self) -> int:
         """`-c` du serveur : le micro-lot en embedding, `config.contexte` en génération."""
         return self.micro_lot if self.config.embedding else self.config.contexte
+
+    @property
+    def contexte_serveur(self) -> int:
+        """`-c` réel : llama-server partage `-c` entre les slots, d'où `contexte × parallele`."""
+        return self.contexte * self.parallele
 
     @property
     def config_llamacpp(self) -> ConfigLlamacpp:
@@ -454,15 +464,18 @@ class ServeurLlama:
             "-m",
             str(self.gguf),
             "-c",
-            str(self.contexte),
+            str(self.contexte_serveur),
             "-ctk",
             config.cache_kv,
             "-ctv",
             config.cache_kv,
             "--parallel",
-            "1",
+            str(self.parallele),
             "--no-webui",
         ]
+        if self.parallele > 1:
+            # Un KV par slot : chaque requête reste bornée à `contexte` tokens.
+            arguments.append("--no-kv-unified")
         if config.threads is not None:
             arguments += ["-t", str(config.threads)]
         if config.embedding:
@@ -593,7 +606,7 @@ class ServeurLlama:
             "contexte": self.contexte,
             "cache_kv": self.config.cache_kv,
             "threads": self.config.threads,
-            "parallel": 1,
+            "parallel": self.parallele,
         }
         if self.config.embedding:
             description.update(

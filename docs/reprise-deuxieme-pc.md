@@ -3,6 +3,7 @@
 PC portable : 32 Go de RAM DDR4, GPU NVIDIA de 6 Go de VRAM.
 - Le code et les tests tournent sur CPU.
 - Les benchmarks et l'essai QLoRA des modèles de moins de 2B doivent tenir sur 6 Go avec un batch fixe.
+- Benchmarks GGUF : sur GPU, `--variante-llamacpp cuda --parallele 4` (requêtes simultanées, `-c` de llama-server multiplié par N, donc plus de VRAM) ; mesures de charge (`measure run`) toujours sur CPU, séquentielles.
 - Si le fine-tuning bloque sur 6 Go, reprendre sur la tour.
 
 Tout vient de GitHub, sans copie de disque à disque :

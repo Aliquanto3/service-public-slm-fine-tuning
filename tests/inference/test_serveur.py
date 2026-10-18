@@ -724,3 +724,30 @@ def test_binaire_version_reservee(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     assert serveur.dossier_llamacpp(config) == (tmp_path / "llama.cpp" / config.tag).resolve()
     with pytest.raises(ConfigurationInvalide, match="prism-b10777-e3de715"):
         serveur.binaire("llama-server", "cpu", config=config)
+
+
+def test_arguments_parallele_partagent_le_contexte_entre_les_slots(vendor_factice, modeles) -> None:
+    un = ServeurLlama(config_modele(), "cpu", slug=SLUG, config_llamacpp=vendor_factice.config)
+    quatre = ServeurLlama(
+        config_modele(), "cpu", slug=SLUG, config_llamacpp=vendor_factice.config, parallele=4
+    )
+    a1, a4 = un.arguments(5555), quatre.arguments(5555)
+    assert (a1[a1.index("-c") + 1], a1[a1.index("--parallel") + 1]) == ("4096", "1")
+    assert (a4[a4.index("-c") + 1], a4[a4.index("--parallel") + 1]) == ("16384", "4")
+    assert quatre.contexte == 4096  # contexte par requête inchangé
+    assert "--no-kv-unified" in a4 and "--no-kv-unified" not in a1
+    assert quatre.description()["parallel"] == 4 and un.description()["parallel"] == 1
+
+
+def test_parallele_invalide_et_embedding_reste_a_un(vendor_factice, tmp_path) -> None:
+    with pytest.raises(ValueError, match="parallele"):
+        ServeurLlama(config_modele(), "cpu", slug=SLUG, parallele=0)
+    instance = ServeurLlama(
+        config_modele(**EMBEDDING),
+        gguf=tmp_path / "bge.gguf",
+        config_llamacpp=vendor_factice.config,
+        parallele=4,
+    )
+    arguments = instance.arguments(7000)
+    assert arguments[arguments.index("--parallel") + 1] == "1"
+    assert arguments[arguments.index("-c") + 1] == "4096"

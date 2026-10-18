@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import dataclasses
 import importlib.util
 import json
 import sys
+import threading
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -258,3 +261,58 @@ def test_verdicts_perimes_supprimes(banc, monkeypatch):
     monkeypatch.setenv(bfcl.VARIABLE_COMMANDE, f'"{sys.executable}" "{nul}"')
     with pytest.raises(bfcl.BfclEchoue, match="illisibles"):
         bfcl.executer(config(categories=["irrelevance"]), contexte(banc), llm=LlmFactice())
+
+
+def test_parallele_conserve_l_ordre_et_les_parametres(banc):
+    class LlmLent(LlmFactice):
+        def generer(self, messages, *, tools=None, options=None):
+            time.sleep(0.05 if "_0" in str(messages) or "0" in messages[-1]["content"] else 0.0)
+            yield from super().generer(messages, tools=tools, options=options)
+
+    attendu = None
+    for parallele in (1, 4):
+        llm = LlmLent()
+        ctx = dataclasses.replace(contexte(banc), parallele=parallele)
+        bfcl.executer(config(effectif=3), ctx, llm=llm)
+        donnees = sorties(banc)["categories"]
+        ids = [[x["id"] for x in lignes] for lignes in donnees.values()]
+        assert ids == [[f"{c}_{i}" for i in range(3)] for c in donnees]
+        assert all(a["options"] == llm.appels[0]["options"] for a in llm.appels)
+        assert len(llm.appels) == 9
+        if attendu is None:
+            attendu = donnees
+        assert donnees == attendu
+
+
+class EnVol:
+    """Compte les appels simultanés ; chaque appel dure `duree` secondes."""
+
+    def __init__(self, duree=0.05):
+        self.duree, self.courant, self.pic = duree, 0, 0
+        self.verrou = threading.Lock()
+
+    def __enter__(self):
+        with self.verrou:
+            self.courant += 1
+            self.pic = max(self.pic, self.courant)
+        time.sleep(self.duree)
+
+    def __exit__(self, *exc):
+        with self.verrou:
+            self.courant -= 1
+
+
+# Le jeu factice a 3 questions par catégorie : à N = 4, le pic est borné à 3.
+@pytest.mark.parametrize(("parallele", "pic"), [(1, 1), (2, 2), (4, 3)])
+def test_parallele_met_n_requetes_en_vol(banc, parallele, pic):
+    en_vol = EnVol()
+
+    class LlmCompte(LlmFactice):
+        def generer(self, messages, *, tools=None, options=None):
+            with en_vol:
+                return list(super().generer(messages, tools=tools, options=options))
+
+    ctx = dataclasses.replace(contexte(banc), parallele=parallele)
+    sortie = bfcl.executer(config(effectif=4, categories=["simple"]), ctx, llm=LlmCompte())
+    assert en_vol.pic == pic
+    assert sortie.batch_size == "1"

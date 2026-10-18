@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -246,7 +247,12 @@ def test_outil_tiers_recoit_l_environnement_assaini(monkeypatch: pytest.MonkeyPa
 
 
 def test_registre_paresseux_n_importe_pas_les_moteurs_reels() -> None:
-    assert "lm_eval" not in sys.modules and "sacrebleu" not in sys.modules
+    # Processus neuf : d'autres tests du même processus importent déjà ces modules.
+    code = (
+        "import sys, slmsp.benchmarks.orchestrateur;"
+        "assert 'lm_eval' not in sys.modules and 'sacrebleu' not in sys.modules"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)
     assert set(moteurs.MOTEURS) == {"lm_eval", "traduction", "bfcl"}
 
 
@@ -300,3 +306,37 @@ def test_tag_llamacpp_consigne_dans_run_json(banc, monkeypatch: pytest.MonkeyPat
     assert lancer_cli(banc, "--socle") == 0
     run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
     assert run["llamacpp_tag"] == "prism-b10777-e3de715"
+
+
+def test_parallele_consigne_dans_run_json_et_contexte(banc) -> None:
+    vus = []
+    moteurs._ENREGISTRES["factice"] = lambda config, contexte: (
+        vus.append(contexte.parallele) or SortieMoteur(scores={"acc": 1.0})
+    )
+    ecrire(banc.dossier, "ok")
+    assert lancer_cli(banc, "--socle", "--parallele", "4") == 0
+    run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
+    assert vus == [4] and run["config"]["parallele"] == 4
+    (resultat,) = dossier_run(banc).glob("ok--*.json")
+    donnees = json.loads(resultat.read_text(encoding="utf-8"))
+    assert donnees["details"]["parallele"] == 4
+
+
+def test_parallele_defaut_a_un(banc) -> None:
+    ecrire(banc.dossier, "ok")
+    assert lancer_cli(banc, "--socle") == 0
+    run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
+    assert run["config"]["parallele"] == 1
+
+
+@pytest.mark.parametrize("valeur", ["0", "-2", "abc"])
+def test_parallele_invalide_refuse_par_la_cli(banc, valeur, capsys) -> None:
+    ecrire(banc.dossier, "ok")
+    assert lancer_cli(banc, "--socle", "--parallele", valeur) != 0
+    assert "--parallele" in capsys.readouterr().err
+    assert not (banc.racine / "runs").exists()
+
+
+def test_parallele_invalide_refuse_par_lancer(banc) -> None:
+    with pytest.raises(ConfigurationInvalide, match="parallele"):
+        orchestrateur.lancer("base:modele-test", [], racine=banc.racine, parallele=0)

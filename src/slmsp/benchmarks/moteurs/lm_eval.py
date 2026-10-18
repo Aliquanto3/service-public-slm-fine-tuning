@@ -149,13 +149,14 @@ def arguments_hf(poids: Path, batch_size: str = BATCH_DEFAUT) -> list[str]:
     ]
 
 
-def arguments_serveur(url: str, modele: str) -> list[str]:
+def arguments_serveur(url: str, modele: str, parallele: int = 1) -> list[str]:
     """Backend `local-chat-completions` vers `url` (`http://127.0.0.1:<port>/v1/...`)."""
     return [
         "--model",
         "local-chat-completions",
         "--model_args",
-        f"model={modele},base_url={url},num_concurrent=1,max_retries=3,tokenized_requests=False",
+        f"model={modele},base_url={url},num_concurrent={parallele},max_retries=3,"
+        "tokenized_requests=False",
         "--apply_chat_template",
     ]
 
@@ -437,6 +438,7 @@ def serveur_llama(config: BenchmarkConfig, contexte: ContexteBench) -> Iterator[
         slug=slug,
         gguf=gguf,
         prendre_verrou_gpu=False,
+        parallele=contexte.parallele,
     )
     with serveur:
         yield url_chat(serveur.port), slug
@@ -473,7 +475,7 @@ def executer(config: BenchmarkConfig, contexte: ContexteBench) -> SortieMoteur:
         with serveur_llama(config, contexte) as (url, nom):
             commande = [
                 *commande_lm_eval(),
-                *arguments_serveur(url, nom),
+                *arguments_serveur(url, nom, contexte.parallele),
                 *arguments_communs(config, sortie),
             ]
             return _lancer(commande, sortie, {**env, **ENV_API_LOCALE}, config)

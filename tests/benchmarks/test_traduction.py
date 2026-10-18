@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
+import threading
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -194,3 +197,67 @@ def test_charger_paire_lit_les_parquet_wmt14_et_flores(tmp_path):
     )
     with pytest.raises(FileNotFoundError):
         traduction.charger_paire("flores-200", flores, "fr-de", None)
+
+
+def test_parallele_conserve_l_ordre_des_hypotheses(tmp_path):
+    poser(tmp_path, "en-fr", n=4)
+
+    class LlmLent:
+        def generer(self, messages, *, tools=None, options=None):
+            texte = messages[1]["content"]
+            time.sleep(0.05 if "<source-0>" in texte else 0.0)
+            yield Jeton(texte=f"<hyp:{texte.split('<source-')[1][0]}>")
+            yield Fin(raison="terminee")
+
+    vues = {}
+
+    def calculer(hypotheses, references):
+        vues[len(vues)] = hypotheses
+        return 1.0, "sig"
+
+    for parallele in (1, 4):
+        ctx = dataclasses.replace(contexte(tmp_path), parallele=parallele)
+        sortie = traduction.executer(
+            config(paires_flores=[], wmt14_phrases=4), ctx, llm=LlmLent(), calculer=calculer
+        )
+        assert sortie.batch_size == "1"
+    attendu = [f"<hyp:{i}>" for i in range(4)]
+    assert vues == {0: attendu, 1: attendu}
+
+
+class EnVol:
+    """Compte les appels simultanés ; chaque appel dure `duree` secondes."""
+
+    def __init__(self, duree=0.05):
+        self.duree, self.courant, self.pic = duree, 0, 0
+        self.verrou = threading.Lock()
+
+    def __enter__(self):
+        with self.verrou:
+            self.courant += 1
+            self.pic = max(self.pic, self.courant)
+        time.sleep(self.duree)
+
+    def __exit__(self, *exc):
+        with self.verrou:
+            self.courant -= 1
+
+
+@pytest.mark.parametrize(("parallele", "pic"), [(1, 1), (4, 4)])
+def test_parallele_met_n_traductions_en_vol(tmp_path, parallele, pic):
+    poser(tmp_path, "en-fr", n=4)
+    en_vol = EnVol()
+
+    class LlmCompte:
+        def generer(self, messages, *, tools=None, options=None):
+            with en_vol:
+                return [Jeton(texte="<hyp>"), Fin(raison="terminee")]
+
+    ctx = dataclasses.replace(contexte(tmp_path), parallele=parallele)
+    traduction.executer(
+        config(paires_flores=[], wmt14_phrases=4),
+        ctx,
+        llm=LlmCompte(),
+        calculer=lambda h, r: (1.0, "sig"),
+    )
+    assert en_vol.pic == pic

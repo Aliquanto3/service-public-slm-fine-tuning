@@ -46,11 +46,27 @@ class ContexteBench:
     run: Run
     racine: Path
     variante_llamacpp: str = "cpu"
+    parallele: int = 1
 
     @property
     def dossier_jeux(self) -> Path:
         """`<racine>/data/raw/benchmarks` (rempli par `slmsp fetch benchmarks`)."""
         return self.racine / "data" / "raw" / "benchmarks"
+
+
+def appliquer_ordonne[T, R](
+    fonction: Callable[[T], R], elements: Sequence[T], parallele: int = 1
+) -> list[R]:
+    """`[fonction(e) for e in elements]`, avec `parallele` appels en vol ; ordre conservé.
+
+    À `parallele` = 1 (ou un seul élément) : boucle séquentielle, sans pool de threads.
+    """
+    if parallele <= 1 or len(elements) <= 1:
+        return [fonction(e) for e in elements]
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=min(parallele, len(elements))) as pool:
+        return list(pool.map(fonction, elements))
 
 
 @dataclass
@@ -129,6 +145,7 @@ def lancer_outil(
 __all__ = [
     "MOTEURS",
     "ContexteBench",
+    "appliquer_ordonne",
     "SortieMoteur",
     "charger_moteur",
     "enregistrer_moteur",

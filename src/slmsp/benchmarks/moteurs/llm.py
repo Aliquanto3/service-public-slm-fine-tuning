@@ -45,6 +45,7 @@ def llm_gguf(config: BenchmarkConfig, contexte: ContexteBench) -> Iterator[LlmPo
         slug=slug,
         gguf=gguf,
         prendre_verrou_gpu=False,
+        parallele=contexte.parallele,
     )
     with serveur:
         yield serveur.client()
