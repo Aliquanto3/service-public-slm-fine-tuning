@@ -1,0 +1,12 @@
+{"message":"chargement de minicpm5-2b (qlora, base fp32-kbit)"}
+{"message":"longueur 2048 (fp32-kbit) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 2048 (fp32-kbit) : ok, perte 12.194476127624512, VRAM réservée 5446303744"}
+{"message":"longueur 4096 (fp32-kbit) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 4096 (fp32-kbit) : debordement, perte 11.97575569152832, VRAM réservée 6218055680"}
+{"message":"chargement de minicpm5-2b (qlora, base bf16)"}
+{"message":"longueur 2048 (bf16) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 2048 (bf16) : ok, perte 12.22275161743164, VRAM réservée 3474980864"}
+{"message":"longueur 4096 (bf16) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 4096 (bf16) : ok, perte 11.952878952026367, VRAM réservée 3999268864"}
+{"message":"longueur 8192 (bf16) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 8192 (bf16) : ok, perte 11.890710830688477, VRAM réservée 4938792960"}

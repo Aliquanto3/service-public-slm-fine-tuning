@@ -1,0 +1,24 @@
+# Run court de validation de precision_base sur MiniCPM5-2B (100 pas, 2048 tokens),
+# comparé entre fp32-kbit et bf16 avant les configs de campagne (story C).
+# Lancement : uv run --no-sync slmsp train run --config config/runs/val-qlora-bf16-minicpm5-2b.toml
+
+campagne = "validation-bf16-minicpm5-2b"
+modele = "minicpm5-2b"
+methode = "qlora"
+jeu_version = "v2"
+graine = 1234
+longueur_max = 2048
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+pas_max = 100
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
