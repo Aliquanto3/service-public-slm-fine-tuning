@@ -2,7 +2,7 @@
 title: 'Décodage spéculatif de llama-server mesurable par `slmsp measure run`'
 type: 'feature'
 created: '2026-10-18'
-status: review
+status: done
 review_loop_iteration: 0
 followup_review_recommended: false
 context:
@@ -48,3 +48,21 @@ Exposé par llama-server b11429 dans `timings` du dernier morceau du flux `/v1/c
 - Statut : done. Le RAM est mesuré tel quel ; la taille installée ajoute le GGUF du brouillon (`tailles_octets.brouillon`).
 - Décisions seul : `ngram-simple` (demandé, valeurs par défaut de llama-server) ; `--brouillon-n-max` refusé hors mode `brouillon` ; GGUF du brouillon = celui de la fiche (Q4_K_M), pas de choix de quantification.
 - À confirmer par Anaël : `draft-simple` explicite alors que `-md` seul suffit peut-être ; `ngram-mod` / `ngram-map-k` non essayés.
+
+## Échantillonnage de la mesure
+
+`measure run` n'envoie aucune option d'échantillonnage : le serveur applique ses défauts (température 0,8, top-k 40, top-p 0,95, min-p 0,05, graine aléatoire), avec ou sans décodage spéculatif. Le débit spéculatif est donc comparé **à méthode identique** à la mesure de référence (`aucun`), qui reste comparable aux mesures déjà faites. Le spéculatif de llama.cpp conserve la distribution de la cible ; les sorties diffèrent d'un run à l'autre dans les deux cas, et le taux d'acceptation consigné (plus bas qu'à température 0) dit ce que le brouillon apporte dans les conditions réelles de service. Forcer la température 0 en spéculatif seulement aurait mesuré une autre méthode que la référence.
+
+## Revue
+
+Revue Opus du 2026-10-18 sur 437ee38 (main non avancé : pas de rebase).
+
+- low, second avis 1 : corrigé. `_speculatif` vérifie la fiche et le vocabulaire du brouillon avant l'assemblage, ce qui donne le code USAGE (tests `test_cli_vocabulaire_different_sort_en_usage`, `test_cli_fiche_du_brouillon_absente_sort_en_usage`).
+- low, second avis 2 : corrigé, avec une précision. Mesuré sur le vrai llama-server b11429 CPU, `ngram-simple` n'a renvoyé aucun `draft_n` (25 et 111 tokens, sortie répétitive, température 0) : le serveur omet le champ quand aucun token n'est proposé. Le détail devient « taux-non-expose (… aucun token proposé, ou serveur qui ne l'expose pas) », et « taux-expose, aucun token propose » quand `draft_n` vaut 0.
+- medium, second avis 3 : corrigé. `mesurer_question(exiger_usage=True)` en spéculatif refuse le repli sur le nombre de morceaux (`MesureEchouee`) ; la référence garde l'approximation consignée. Constat réel, mais l'écart observé est faible : 24 morceaux pour 25 `completion_tokens`, car llama-server envoie un morceau par token accepté.
+- medium, second avis 4 : traité par la documentation (section Échantillonnage), sans changer la méthode de la référence. Motif : méthode identique, taux consigné.
+- low, second avis 5 : corrigé. `ServeurLlama` refuse le spéculatif hors variante `cpu` (VRAM du brouillon non budgétée).
+- info, second avis 6 : confirmé, sans défaut. Seul `measure run` passe `speculatif` à `assembler`.
+- info, second avis 7 : vérifié. `test_reel_demarrage_avec_brouillon` passe sur `bin-cpu` (MiniCPM5-2B + 1B, `draft_n` 20, 20 acceptés), et `--spec-type ngram-simple` est accepté par le serveur.
+- Complexité : aucun constat (agrégation linéaire, une seule fois en fin de mesure).
+- Reporté : `ngram-simple` ne propose rien dans nos essais courts. Il faut voir à la mesure réelle si le débit ngram diffère de `aucun`, sinon essayer `ngram-mod` ou `ngram-map-k`.

@@ -13,7 +13,7 @@ import pytest
 from slmsp.cli import CodeSortie, main
 from slmsp.core.evenements import Fin, Jeton
 from slmsp.measure.config import ConfigMesures, SeuilsNfr
-from slmsp.measure.debit import mesurer_question
+from slmsp.measure.debit import MesureEchouee, mesurer_question
 from slmsp.measure.protocole import mesurer
 
 MODELE = "base:minicpm5-2b"
@@ -186,3 +186,47 @@ def test_composants_ajoutent_le_gguf_du_brouillon(tmp_path: Path, monkeypatch) -
     )
     composants = _composants([serveur], tmp_path, None)
     assert composants["brouillon"] == tmp_path / "brouillon.gguf"
+
+
+def _flux_sans_usage(*_a: object):
+    yield Jeton(texte="a")
+    yield Jeton(texte="b")
+    yield Fin(raison="terminee", usage=None)
+
+
+def test_speculatif_exige_completion_tokens(tmp_path: Path) -> None:
+    """Revue : en spéculatif, le nombre de morceaux ne remplace pas completion_tokens."""
+    with pytest.raises(MesureEchouee, match="completion_tokens"):
+        mesurer_question(_flux_sans_usage(), exiger_usage=True)
+    with pytest.raises(MesureEchouee, match="completion_tokens"):
+        mesurer(
+            lambda _q: _flux_sans_usage(), _config(), modele=MODELE, racine=tmp_path,
+            speculatif=SPEC, echantillonneur=RamFactice(),
+        )  # fmt: skip
+    # sans spéculatif, l'approximation consignée reste admise (mesures de référence)
+    resultat = mesurer(
+        lambda _q: _flux_sans_usage(), _config(), modele=MODELE, racine=tmp_path,
+        echantillonneur=RamFactice(),
+    )  # fmt: skip
+    assert resultat.details["tokens_estimes_par_jetons"] is True
+
+
+def test_aucun_token_propose_est_dit(tmp_path: Path) -> None:
+    resultat = mesurer(
+        _repondre({"draft_n": 0, "draft_n_accepted": 0}), _config(), modele=MODELE,
+        racine=tmp_path, speculatif={"mode": "ngram", "brouillon": None, "n_max": None},
+        echantillonneur=RamFactice(),
+    )  # fmt: skip
+    assert resultat.valeurs["speculatif_taux_acceptation"] is None
+    assert resultat.details["speculatif"] == "taux-expose, aucun token propose"
+
+
+def test_cli_vocabulaire_different_sort_en_usage(tmp_path: Path, monkeypatch, capsys) -> None:
+    recu = _lancer_cli(tmp_path, monkeypatch, "--brouillon", "qwen3.5-0.8b")
+    assert recu["code"] == CodeSortie.USAGE and "speculatif" not in recu
+    assert "tokenizer.json" in capsys.readouterr().err
+
+
+def test_cli_fiche_du_brouillon_absente_sort_en_usage(tmp_path: Path, monkeypatch) -> None:
+    recu = _lancer_cli(tmp_path, monkeypatch, "--brouillon", "inexistant-9b")
+    assert recu["code"] == CodeSortie.USAGE and "speculatif" not in recu

@@ -118,6 +118,17 @@ def _taux_speculatif(mesures: list[MesureQuestion]) -> dict[str, float | int | N
     }
 
 
+def _detail_speculatif(taux: Mapping[str, float | int | None] | None) -> str:
+    """Ce que le serveur a exposé du décodage spéculatif, sans conclure au-delà."""
+    if taux is None:
+        # llama-server b11429 omet draft_n quand aucun token n'a été proposé (vu en ngram).
+        return "taux-non-expose (aucun draft_n dans les timings : aucun token proposé, ou "
+        "serveur qui ne l'expose pas)"
+    if not taux["speculatif_tokens_proposes"]:
+        return "taux-expose, aucun token propose"
+    return "taux-expose"
+
+
 def mesurer(
     repondre: Callable[[str], Iterable[Evenement]],
     config: ConfigMesures,
@@ -182,7 +193,9 @@ def mesurer(
             for rang in range(config.echauffement + config.repetitions):
                 question = questions[rang % len(questions)]
                 try:
-                    mesure = mesurer_question(repondre(question), horloge)
+                    mesure = mesurer_question(
+                        repondre(question), horloge, exiger_usage=speculatif is not None
+                    )
                 except MesureEchouee as exc:
                     if verifier_contexte and est_erreur_de_contexte(str(exc)):
                         raise ContexteInsuffisant(
@@ -238,15 +251,7 @@ def mesurer(
                 ),
                 "tokens_par_repetition": [m.tokens for m in mesures],
                 "tokens_estimes_par_jetons": any(m.tokens_estimes for m in mesures),
-                **(
-                    {
-                        "speculatif": "taux-expose"
-                        if taux_spec is not None
-                        else "taux-non-expose (aucun draft_n dans les timings du serveur)"
-                    }
-                    if speculatif is not None
-                    else {}
-                ),
+                **({"speculatif": _detail_speculatif(taux_spec)} if speculatif is not None else {}),
                 "unite": "Go = 1024³ octets ; ram = pic de la somme des working sets de l'arbre",
             },
             conformite=conformite,

@@ -106,10 +106,18 @@ def _plafond_sortie(service: Any, fiche: Any) -> int | None:
     return plafond(fiche) if callable(plafond) else None
 
 
-def _speculatif(args: argparse.Namespace) -> Any:
-    """`Speculatif` demandé par les options, `None` pour aucun ; `ConfigurationInvalide` sinon."""
+def _speculatif(args: argparse.Namespace, slug: str) -> Any:
+    """`Speculatif` demandé par les options, `None` pour aucun ; `ConfigurationInvalide` sinon.
+
+    La fiche et le vocabulaire du brouillon sont vérifiés ici, pour que leur refus sorte en
+    code USAGE et non au démarrage du serveur.
+    """
     from slmsp.core.erreurs import ConfigurationInvalide
-    from slmsp.inference.serveur import Speculatif
+    from slmsp.inference.serveur import (
+        Speculatif,
+        charger_config_modele,
+        verifier_vocabulaire_brouillon,
+    )
 
     mode = args.speculatif
     if args.brouillon is not None:
@@ -120,7 +128,10 @@ def _speculatif(args: argparse.Namespace) -> Any:
         if args.brouillon_n_max is not None:
             raise ConfigurationInvalide("--brouillon-n-max exige --speculatif brouillon")
         return None
-    return Speculatif(mode, args.brouillon, args.brouillon_n_max)
+    speculatif = Speculatif(mode, args.brouillon, args.brouillon_n_max)
+    if speculatif.brouillon is not None:
+        verifier_vocabulaire_brouillon(charger_config_modele(slug), slug, speculatif.brouillon)
+    return speculatif
 
 
 def _run(args: argparse.Namespace) -> int:
@@ -135,7 +146,7 @@ def _run(args: argparse.Namespace) -> int:
     try:
         slug = slug_modele(args.modele)
         maximum = charger_config_modele(slug).contexte
-        speculatif = _speculatif(args)
+        speculatif = _speculatif(args, slug)
     except (ModeleInvalide, ConfigurationInvalide) as exc:
         print(f"slmsp : {exc}", file=sys.stderr)
         return int(CodeSortie.USAGE)

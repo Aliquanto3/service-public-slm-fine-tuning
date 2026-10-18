@@ -5,7 +5,8 @@ l'embedding de la requête, la recherche dans l'Index et le traitement du prompt
 est (tokens - 1) divisé par la durée entre le premier jeton et la fin : N tokens ne
 couvrent que N-1 intervalles.
 Les tokens sont ceux de `Fin.usage["completion_tokens"]` s'il est fourni, sinon le nombre de
-`Jeton` reçus (approximation consignée).
+`Jeton` reçus (approximation consignée). `exiger_usage` (décodage spéculatif, dont les tokens
+acceptés arrivent groupés) refuse cette approximation : `MesureEchouee` sans `completion_tokens`.
 """
 
 from __future__ import annotations
@@ -39,7 +40,10 @@ class MesureQuestion:
 
 
 def mesurer_question(
-    evenements: Iterable[Evenement], horloge: Callable[[], float] = time.perf_counter
+    evenements: Iterable[Evenement],
+    horloge: Callable[[], float] = time.perf_counter,
+    *,
+    exiger_usage: bool = False,
 ) -> MesureQuestion:
     """Consomme le flux d'évènements d'une Question et en tire les temps."""
     debut = horloge()
@@ -67,6 +71,11 @@ def mesurer_question(
     fin = horloge()
     if premier is None:
         raise MesureEchouee("aucun jeton généré")
+    if exiger_usage and usage is None:
+        raise MesureEchouee(
+            "usage.completion_tokens absent : débit non mesurable en décodage spéculatif "
+            "(le nombre de morceaux reçus n'est pas un compte de tokens fiable)"
+        )
     tokens = usage if usage is not None else jetons
     duree = fin - premier
     # Un seul token ou une durée nulle ne donne pas de débit.

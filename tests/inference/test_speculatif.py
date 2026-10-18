@@ -165,3 +165,13 @@ def test_client_recupere_les_timings_du_flux(serveur_factice) -> None:
     assert fin.usage is not None
     assert (fin.usage["draft_n"], fin.usage["draft_n_accepted"]) == (6, 4)
     assert fin.usage["completion_tokens"] == 1
+
+
+def test_cuda_refuse_tant_que_non_mesure(vendor_factice, modeles: Path) -> None:
+    """Revue : pas de budget VRAM pour le brouillon, la variante cuda est refusée."""
+    config = charger_config_modele(CIBLE)
+    with pytest.raises(ConfigurationInvalide, match="cuda"):
+        ServeurLlama(
+            config, "cuda", slug=CIBLE, config_llamacpp=vendor_factice.config,
+            speculatif={"mode": "ngram"},
+        )  # fmt: skip

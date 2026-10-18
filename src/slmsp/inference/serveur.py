@@ -496,6 +496,11 @@ class ServeurLlama:
                 raise ConfigurationInvalide(
                     "décodage spéculatif : réservé à un serveur de génération"
                 )
+            if variante != "cpu":
+                # Non mesuré : ni contrôle ni budget de la VRAM du brouillon et de son cache.
+                raise ConfigurationInvalide(
+                    f"décodage spéculatif : variante {variante} non mesurée (cpu seulement)"
+                )
             if self.speculatif.brouillon is not None:
                 verifier_vocabulaire_brouillon(config, slug, self.speculatif.brouillon)
         self.config = config
