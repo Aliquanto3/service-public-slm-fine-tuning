@@ -338,8 +338,38 @@ def test_requete_hors_contexte_ecartee_et_suivantes_generees(tmp_path: Path) -> 
     assert resultat.rapport["ecartees_par_motif"] == {"contexte": 1}
     ecartees = ouvrir_run(resultat.run.run_id, racine=tmp_path).lire_jsonl("ecartees.jsonl")
     assert ecartees == [{"rang": 1, "motif": "contexte"}]
+    journal = JournalLocal()
+    with sqlite3.connect(journal.chemin) as connexion:
+        lignes_journal = connexion.execute(
+            "SELECT statut, reponse_brute, requete FROM appels ORDER BY horodatage"
+        ).fetchall()
+    connexion.close()
+    assert [ligne[0] for ligne in lignes_journal] == ["ok", "contexte", "ok"]
+    assert lignes_journal[1][1] == b""
+    assert json.loads(lignes_journal[1][2])["rang"] == 1
+    # la ligne suivante garde sa graine (graine + rang), malgré l'écart
+    assert llm.appels[2]["options"]["seed"] == CONFIG.graine + 2
     manifeste = json.loads((resultat.dossier / "MANIFEST.json").read_text("utf-8"))
     assert manifeste["ecartees_par_motif"] == {"contexte": 1}
+
+
+class LlmOutilPuisErreur:
+    """Appel d'outil, puis erreur d'inférence : le flux doit s'arrêter à l'appel d'outil."""
+
+    def generer(
+        self, messages: Sequence[Any], *, tools: Any = None, options: Any = None
+    ) -> Iterator[Any]:
+        yield AppelOutil(id="a", nom="<outil-factice>", arguments={})
+        raise ErreurInference("<erreur-apres-outil-factice>")
+
+    def compter_tokens(self, messages: Sequence[Any], tools: Any = None) -> int:
+        return 0
+
+
+def test_arret_anticipe_a_l_appel_d_outil(tmp_path: Path) -> None:
+    build = ecrire_jeu_sft(tmp_path, 1)
+    with pytest.raises(ManifesteInvalide, match="non_texte"):
+        lancer(tmp_path, build, LlmOutilPuisErreur())
 
 
 def test_autre_erreur_http_arrete_le_build(tmp_path: Path) -> None:

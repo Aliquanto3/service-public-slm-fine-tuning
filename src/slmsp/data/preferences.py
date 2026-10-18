@@ -134,16 +134,15 @@ def _generer(
     """
     morceaux: list[str] = []
     try:
-        evenements = list(llm.generer(prompt, tools=tools, options=options))
+        for evenement in llm.generer(prompt, tools=tools, options=options):
+            if isinstance(evenement, Jeton):
+                morceaux.append(evenement.texte)
+            elif isinstance(evenement, AppelOutil | AppelNonConforme):
+                return None, "non_texte"
+            elif isinstance(evenement, Fin):
+                return "".join(morceaux), _MOTIFS_FIN.get(evenement.raison)
     except ContexteDepasse:  # requête plus longue que le contexte du serveur : ligne écartée
         return "", "contexte"
-    for evenement in evenements:
-        if isinstance(evenement, Jeton):
-            morceaux.append(evenement.texte)
-        elif isinstance(evenement, AppelOutil | AppelNonConforme):
-            return None, "non_texte"
-        elif isinstance(evenement, Fin):
-            return "".join(morceaux), _MOTIFS_FIN.get(evenement.raison)
     return "".join(morceaux), "interrompue"
 
 
