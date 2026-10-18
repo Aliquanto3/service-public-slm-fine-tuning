@@ -1,0 +1,1 @@
+{"arguments_specifiques":{},"dossier_poids":"$SLMSP_MODELS_DIR/minicpm5-2b/hf","dossier_sortie":"runs/train-sonde/20261018-155149-minicpm5-2b-6710/entraineur-unsloth","graine":1234,"longueur":4096,"lora":{"alpha":32,"r":16},"pas":1,"pas_chauffe":1,"vocab":130560}

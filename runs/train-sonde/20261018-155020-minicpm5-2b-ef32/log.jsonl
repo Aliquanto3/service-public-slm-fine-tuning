@@ -1,0 +1,5 @@
+{"message":"chargement de minicpm5-2b (qlora)"}
+{"message":"longueur 2048 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 2048 : ok, perte 12.204891204833984, VRAM réservée 5446303744"}
+{"message":"longueur 4096 : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 4096 : debordement, perte 11.96826171875, VRAM réservée 6218055680"}
