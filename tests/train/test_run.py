@@ -331,7 +331,7 @@ def test_run_reel_modele_minuscule(projet) -> None:
                 {"role": "user", "content": f"t{i} t3"},
                 {"role": "assistant", "content": f"t{10 + i} t{20 + i}"},
             ],
-            "tache": "tache-factice",
+            "tache": "RD",
             "meta": {"appel_ids": [f"appel-{i}"]},
         }
         lignes.append(ligne)

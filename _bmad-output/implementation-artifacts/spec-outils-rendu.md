@@ -2,8 +2,8 @@
 title: "Rendu des appels d'outils à l'entraînement, aligné sur l'inférence (R7)"
 type: 'bugfix'
 created: '2026-10-17'
-status: 'draft'
-baseline_commit: '62831f8'
+status: 'review'
+baseline_commit: 'c16fb39'
 review_loop_iteration: 0
 followup_review_recommended: true
 context:
@@ -11,9 +11,6 @@ context:
   - '{project-root}/_bmad-output/implementation-artifacts/spec-masque-minicpm5.md (R2, R3, R7)'
 warnings:
   - "oversized : spec d'enquête, mesures comprises."
-  - "INFÉRENCE INCORRECTE pour eurollm-1.7b (touche la Baseline) : llama-server b11429 reçoit les `tools` mais ne les rend pas. Le prompt ne les décrit pas, aucun format d'appel n'est imposé, et le modèle ne peut pas appeler d'outil en Mode connecté. Mesuré, voir §4."
-  - "ÉCART DE FORMAT DES DONNÉES RD, hors outils (second avis, high, vérifié) : le premier message `user` des 91 lignes RD suit le format du Mode local sans passage (« Passages de l'Index local : / Aucun passage… / Demande : … »), alors que le Mode connecté, le seul qui envoie les outils, envoie la demande seule (`messages_connecte`). Égalité avec le Harnais : 0 sur 91 en Mode connecté, 91 sur 91 avec `construire_messages(tache, demande, None)`. Voir §0."
-  - "Écart train/inférence nouveau, hors arguments, pour granite-4.0-1b et minicpm5-1b : l'ordre des clés de `tools`. train.jsonl stocke les outils en JSON canonique (clés triées), l'inférence les envoie dans l'ordre de config/outils-mcp.toml. 0 rendu égal sur 205 avec les outils de train.jsonl."
 deferred: []
 ---
 
@@ -30,7 +27,9 @@ EuroLLM est aligné, mais seulement parce que ni l'entraînement ni l'inférence
 
 Un test lent d'égalité HF / llama-server, sur des conversations avec outils, garantit les deux. Le cas EuroLLM est une décision d'Anaël (§4).
 
-## §0. Premier message RD : ni Mode connecté ni Mode local (hors outils, décision d'Anaël)
+## §0. Premier message RD : ni Mode connecté ni Mode local (hors outils)
+**Décision d'Anaël du 2026-10-18 : normaliser au build, dans une autre story (branche feat/rd-connecte). Traité ailleurs : R7 ne touche pas `data/build.py`.** Le constat ci-dessous reste la référence.
+
 Constat vérifié dans le code et par un rendu du Harnais contre les 91 lignes RD, sans appel :
 - **Côté données.** `data/build.py` (l. 291) construit le début de conversation par `construire_messages(tache, entree, None)`. Le prompt RD déclare l'emplacement `passages` ; sans passages, il rend donc `AUCUN_PASSAGE`. Les 91 lignes commencent ainsi : 91 sur 91 égales à ce rendu.
 - **Mode connecté** (`recherche.messages_connecte`, l. 396-410). Le prompt perd l'emplacement `passages`, et le message `user` est la demande seule : 0 sur 91 égal. C'est le seul mode qui envoie `tools` (l. 440-451).
@@ -39,7 +38,7 @@ Constat vérifié dans le code et par un rendu du Harnais contre les 91 lignes R
 - Le prompt système est identique : 91 sur 91 égaux à celui du Harnais (`config/prompts/taches/RD.md`).
 - Si les lignes RD étaient lues comme du Mode local, l'écart serait pire, car ce mode n'offre pas d'outils. L'écart le plus petit est avec le Mode connecté : seul le message `user` diffère.
 
-Options (à trancher par Anaël, hors périmètre de R7) :
+Options (tranchées, voir ci-dessus) :
 - **Normaliser au build.** `build.py` compose le début RD par `messages_connecte`, puis `slmsp data build` refabrique les lignes depuis le journal et les cassettes, de façon déterministe, sans appel Mistral, dans une nouvelle version (v1 n'est pas réécrite). Effet de bord : les réponses de Mistral ont été générées avec le prompt « Aucun passage… ». Elles restent cohérentes avec les résultats d'outils, mais le contexte de génération diffère légèrement du prompt d'entraînement.
 - **Adapter au chargement.** Pour une ligne qui déclare des outils, `train/chargement.py` remplace le message `user` par celui de `messages_connecte` (la demande est extraite après « Demande :\n »). Les données ne bougent pas, mais la transformation reste cachée et fragile (analyse d'un texte rendu). Elle doit entrer dans l'empreinte.
 - **Régénérer** : exclu. D1 interdit à Claude de générer, et une campagne Mistral serait payante.
@@ -55,6 +54,10 @@ Méthode. Le côté inférence est `/apply-template` avec le corps du client : `
 | outils `charger_outils()`, arguments en chaîne (rendu actuel) | 205 | **91** (114 `UndefinedError`) | 205 |
 | outils `charger_outils()`, arguments en objet (**proposé**) | **205** | **205** | **205** |
 
+Mesure de l'orchestrateur du 2026-10-18 (règle de taille relevée à 2,5B, **minicpm5-2b** candidat entraînable), avec la normalisation proposée : **205 / 205** rendus égaux à `/apply-template` pour minicpm5-2b sur les lignes RD de v1.
+
+Mesure de la story (test lent `test_jeu_v1_rendu_identique_a_llama_server`, chemin réel `_messages_rendus` et `_tools_rendus`, CPU, GGUF Q4_K_M) : granite-4.0-1b 205/205, minicpm5-1b 205/205, minicpm5-2b 205/205. Conversation factice à deux tours d'appel (`test_rendu_identique_a_llama_server_jinja`) : 3/3 préfixes égaux sur les trois.
+
 Autres constats, tous mesurés :
 - **llama-server ignore la forme des arguments.** Avec les mêmes messages, arguments en chaîne ou en objet, son rendu est identique pour les trois modèles. `content` absent ou `null` dans un tour d'appel ne change rien non plus. On ne sait donc pas quelle forme il passe au template ; on sait seulement que son rendu est égal au rendu HF avec objets.
 - **granite** : l'unique écart porte sur les lignes `<tools>`. HF suit l'ordre trié de train.jsonl (`{"function": {"description", "name", "parameters"}, "type"}`), llama-server écrit `{"type", "function": {"name", "description", "parameters"}}`. llama-server reconstruit l'enveloppe mais garde l'ordre interne de `parameters` : avec les outils triés de train.jsonl, son rendu diffère encore de celui de l'inférence réelle (`llama_train != llama_inf`). On ne peut donc pas retrouver l'ordre de l'inférence à partir de train.jsonl ; il faut relire `config/outils-mcp.toml`. Son SHA, `9517c4c7…`, est celui de `sha_outils_mcp` dans MANIFEST.json.
@@ -69,7 +72,7 @@ Autres constats, tous mesurés :
 
 Les deux côtés déclarent les outils au même moment. À l'inférence, `iterations_max = 5`, et les lignes RD ont au plus 3 tours d'appel : les outils sont donc offerts à chaque tour, comme à l'entraînement.
 
-**Q3, mécanisme proposé** (dans `train/chargement.py`, appliqué avant `calculer_masques` et dans `preparer_preferences`) :
+**Q3, mécanisme (implémenté)** (dans `train/chargement.py`, appliqué avant `calculer_masques` et dans `preparer_preferences`) :
 - `_tools_rendus(ligne)` reprend la règle de l'inférence (`recherche.py`, l. 440) :
   - `[o for o in charger_outils() if nom(o) in tache.outils_autorises]`, où la Tâche de la ligne vient de `config/taches.toml`. Les noms de la ligne ne servent pas de source ;
   - pour une ligne sans outils, ou d'une Tâche sans `outils_autorises`, pas de `tools` ;
@@ -79,9 +82,9 @@ Les deux côtés déclarent les outils au même moment. À l'inférence, `iterat
 - `_messages_rendus`, hors `balises-tool-call` (inchangé) : `arguments` en chaîne passe par `json.loads`, qui garde l'ordre des clés. Le résultat doit être un dict, sinon `ManifesteInvalide`. Le message est copié, jamais modifié. Un `arguments` déjà en objet n'est pas touché.
 - **Pas de sonde du template ni de champ de fiche.** llama-server rend la même chose quelle que soit la forme des arguments, et le décodage systématique égale son rendu sur les trois templates (615 préfixes). Une sonde à la llama.cpp (rendre un appel en chaîne et en objet, puis garder la forme qui ne lève pas) ajouterait du code sans cas qui la distingue. Elle reste la solution de repli si le test lent trouve un template qui rend la chaîne autrement que `tojson(objet)`.
 - **Où** : la normalisation précède `calculer_masques` dans `pretokeniser`, **et** le rendu du prompt, de `chosen` et de `rejected` dans `preparer_preferences` (ORPO, y compris `_corps_par_tour`). Les deux chemins sont testés.
-- **Empreinte** : le texte rendu change pour les lignes RD. On ajoute `rendu_outils: 1` à `CLES_INVARIANTS` (`train/run.py`), archivé dans `run.json`. L'absence de la clé dans un run antérieur vaut « rendu d'avant R7 ». `VERSION_MASQUE` ne change pas : `masque.py` est en revue sur une autre branche.
+- **Empreinte** : le texte rendu change pour les lignes RD. On ajoute `rendu_outils: 1` à `CLES_INVARIANTS` (`train/run.py`), archivé dans `run.json`. L'absence de la clé dans un run antérieur vaut « rendu d'avant R7 ». `VERSION_MASQUE` ne change pas (le masque par tour de feat/masque-minicpm5 est fusionné).
 - **Test lent** : `test_rendu_identique_a_llama_server_jinja` est étendu ainsi (marqueur `lent`, CPU, saute si le GGUF manque) :
-  - slugs : les candidats entraînables du registre (granite-4.0-1b, minicpm5-1b, eurollm-1.7b) ;
+  - slugs : les candidats entraînables du registre, calculés depuis `verifications.CANDIDATS` filtré par `entrainable` (granite-4.0-1b, minicpm5-1b, minicpm5-2b au 2026-10-18) ;
   - conversation factice (D1) avec deux tours d'appel et des arguments en chaîne. Elle comprend un appel à deux clés dans un ordre non trié, et des valeurs qui opposent `tojson` de transformers (`json.dumps(ensure_ascii=False)`) et celui de minja : accent (`"<é-factice>"`), apostrophe (`"<l'apostrophe-factice>"`), guillemet échappé, entier, flottant (`1.5`), booléen et liste. L'égalité n'est prouvée sur le jeu v1 que pour des chaînes accentuées et 2 entiers ;
   - côté entraînement, les outils sont donnés triés, comme dans train.jsonl, et passent par le vrai chemin (`_messages_rendus`, `_tools_rendus`) ;
   - côté inférence, `ClientLlama._messages` et `charger_outils()` ;
@@ -100,7 +103,9 @@ Les deux côtés déclarent les outils au même moment. À l'inférence, `iterat
 - **minicpm5-1b** (`par-tour`) : 205 exemples sur 617 contiennent des outils, dont 114 qui supervisent un tour d'appel et 91 une réponse finale. Aujourd'hui, tout Run échoue sur ces lignes. Après correctif, le corps des 114 tours d'appel est le format `<function …>` que llama-server rend dans l'historique. Les comptes de tokens de spec-masque-minicpm5 (1 202 229) ont été mesurés avec les outils triés : il faut les remesurer.
 - Le découpage lui-même ne change pas : la normalisation précède le masque.
 
-## §4. EuroLLM : ce que fait l'inférence et options (décision d'Anaël)
+## §4. EuroLLM : ce que fait l'inférence et options
+**Décision d'Anaël du 2026-10-18 : option D, déjà faite sur main (`entrainable = false`). Rien à coder dans R7.**
+
 **Constat.** En Mode connecté sur RD, EuroLLM ne voit jamais les outils et ne peut pas en appeler. Le Harnais ne reçoit aucun appel valide et termine sur la réponse texte du premier tour, sans passages de l'Index : en Mode connecté, le premier tour n'en contient pas (AD-14). Si la Baseline d'EuroLLM a été mesurée sur RD en Mode connecté, elle l'a été dans ces conditions.
 
 À l'entraînement, le rendu est identique à celui de l'inférence. Mais 91 des 114 tours d'appel n'ont pas de texte, et leur corps supervisé se réduit à `<|im_end|>` : le modèle apprendrait à rendre une réponse vide au premier tour de RD.
@@ -126,7 +131,7 @@ La « reproduction du format générique de llama-server » n'est pas une option
 
 ## Boundaries
 - **Toujours** : la référence est le rendu de llama-server sur les messages du client. Les données ne sont jamais modifiées. Les normalisations ne s'appliquent qu'au rendu.
-- **Jamais** : de slug en dur, de régénération de data/train/v1, de changement du client d'inférence ni de `balises-tool-call`. On ne touche pas aux fichiers de feat/masque-minicpm5 avant sa fusion. Le correctif s'implémente après elle, sur `chargement.py` et `run.py`.
+- **Jamais** : de slug en dur, de régénération de data/train/v1, de changement du client d'inférence ni de `balises-tool-call`. Le correctif porte sur `chargement.py` et `run.py` (la fusion de feat/masque-minicpm5 est faite).
 
 ## Risques et points non vérifiés
 - La règle interne de llama.cpp n'est pas connue : seul son comportement sur trois templates est observé. Un template futur qui rend une chaîne autrement que `tojson(objet)` casserait l'égalité. Le test lent le détectera, sans le prévenir.
@@ -148,11 +153,12 @@ La « reproduction du format générique de llama-server » n'est pas une option
 - Prompts de train.jsonl face au Harnais : le système est vérifié (91 sur 91) et le message `user` est en écart (§0).
 
 ## Auto Run Result
-- Statut : draft. Spec seule, sans code. Aucun appel payant, aucun téléchargement, aucune donnée générée ni modifiée.
-- Mesures : 7 lancements CPU de llama-server (rendus, sonde générative, sonde H-TOOLS, reproduction json-generique), un à la fois. Scripts dans le scratchpad, non versionnés ; leur logique devient le test lent proposé.
-- Second avis (Haiku) intégré le 2026-10-17 : points 1 à 10, dont le §0, l'option E, la sonde et la troncature.
-- À confirmer par Anaël :
-  - l'option EuroLLM (§4) ;
-  - le format du premier message RD (§0) ;
-  - la troncature des résultats d'outils ;
-  - la question de la Baseline d'EuroLLM sur RD en Mode connecté.
+- Statut : review. Code et tests faits (commit de la branche feat/outils-rendu), aucun appel payant, aucune donnée générée ni modifiée.
+- Code : `train/chargement.py` (`_messages_rendus` décode les `arguments` et retire `content: null` hors `balises-tool-call` ; `_tools_rendus` ; `controler_outils_mcp`, appelé par `charger_jeu` quand le MANIFEST porte `sha_outils_mcp` et que des lignes ont des outils ; `_tools_rendus` dans `pretokeniser` et `preparer_preferences`, donc aussi `_corps_par_tour`) et `train/run.py` (`rendu_outils: 1` dans `CLES_INVARIANTS`, constante `VERSION_RENDU_OUTILS`).
+- Tests : `tests/train/test_rendu_outils.py` (18, rapides) ; `tests/train/test_masque.py` : `test_rendu_identique_a_llama_server_jinja` étendu et `test_jeu_v1_rendu_identique_a_llama_server` (lents, trois candidats entraînables). Le second lit `SLMSP_TRAIN_V1` (chemin de train.jsonl) à défaut de `data/train/v1/` de la racine. Les fixtures de `tests/train/conftest.py` prennent la Tâche RD et ses vrais outils, le faux tokenizer n'écrit plus que leurs noms.
+- Décisions prises seul :
+  - les outils de la ligne sont comparés par nom et par définition (dicts), sans exiger le même ordre dans la ligne ;
+  - le contrôle de `sha_outils_mcp` est dans `charger_jeu` (un MANIFEST sans la clé n'est pas contrôlé) ;
+  - `content: null` n'est retiré, comme le décodage, que hors `balises-tool-call` (chemin inchangé).
+- Écart découvert, non corrigé (à confirmer par Anaël) : pour minicpm5-1b et minicpm5-2b, une valeur d'argument `null` est rendue `None` par transformers et vide par llama-server ; une liste, `['…']` contre un texte nu. Granite égale llama-server sur ces cas. Le jeu v1 n'en contient pas, et les schémas de `config/outils-mcp.toml` n'admettent que chaîne, entier et `null` (`anyOf string|null`). Le test lent exclut `null` et les listes. Un `null` émis par un minicpm5 fine-tuné ne serait pas rendu comme à l'inférence : correctif possible, une normalisation propre à ce template, à décider.
+- Reste à faire hors R7 : §0 (feat/rd-connecte), remesure des comptes de tokens de spec-masque-minicpm5 (1 202 229, mesurés avec les outils triés), troncature des résultats d'outils.

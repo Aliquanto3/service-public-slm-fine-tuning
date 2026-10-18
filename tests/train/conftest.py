@@ -42,7 +42,8 @@ class TokenizerFactice:
         self, messages, *, tools=None, tokenize=False, add_generation_prompt=False, **kwargs
     ):
         self.appels_tools.append(tools)
-        sortie = "<|tools|>" + json.dumps(tools) + "<|end|>\n" if tools else ""
+        noms = ",".join(t["function"]["name"] for t in tools or [])
+        sortie = f"<|tools|>{noms}<|end|>\n" if tools else ""
         for m in messages:
             sortie += f"<|{m['role']}|>" + (m.get("content") or "") + "<|end|>\n"
         return sortie + ("<|assistant|>" if add_generation_prompt else "")
@@ -55,6 +56,15 @@ class TokenizerFactice:
         return {"input_ids": ids, "offset_mapping": positions}
 
 
+def outils_factices() -> list[dict[str, Any]]:
+    """Outils que l'inférence offre à la Tâche RD (`config/outils-mcp.toml`, ordre du fichier)."""
+    from slmsp.harness.taches import charger_taches
+    from slmsp.mcp.outils import charger_outils
+
+    autorises = set(charger_taches().tache("RD").outils_autorises)
+    return [o for o in charger_outils() if o["function"]["name"] in autorises]
+
+
 def ligne_factice(numero: int, *, appel_id: str | None = None, mots: int = 1) -> dict[str, Any]:
     reponse = " ".join(f"<réponse-factice-{numero}-{i}>" for i in range(mots))
     return {
@@ -63,8 +73,8 @@ def ligne_factice(numero: int, *, appel_id: str | None = None, mots: int = 1) ->
             {"role": "user", "content": f"<question-factice-{numero}>"},
             {"role": "assistant", "content": reponse},
         ],
-        "tools": [{"type": "function", "function": {"name": "outil_factice"}}],
-        "tache": "tache-factice",
+        "tools": outils_factices(),
+        "tache": "RD",
         "meta": {"appel_ids": [appel_id or f"appel-{numero}"], "session_id": f"s-{numero}"},
     }
 
@@ -78,8 +88,8 @@ def paire_factice(numero: int, *, appel_id: str | None = None) -> dict[str, Any]
         ],
         "chosen": [{"role": "assistant", "content": f"<retenue-factice-{numero}>"}],
         "rejected": [{"role": "assistant", "content": f"<rejetee-factice-{numero}>"}],
-        "tools": [{"type": "function", "function": {"name": "outil_factice"}}],
-        "tache": "tache-factice",
+        "tools": outils_factices(),
+        "tache": "RD",
         "meta": {
             "appel_ids": [appel_id or f"appel-{numero}"],
             "appel_local_id": f"local-{numero}",

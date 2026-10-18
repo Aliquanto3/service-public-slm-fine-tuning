@@ -53,6 +53,8 @@ NOM_JEU: Final = "jeu.json"
 NOM_ENTRAINEMENT: Final = "entrainement.jsonl"
 NOM_LOG: Final = "log.jsonl"
 PREFIXE_BLOQUE: Final = "bloqué : "
+VERSION_RENDU_OUTILS: Final = 1
+"""Rendu des outils (R7) : `tools` du fichier de config, arguments décodés. Absent = avant R7."""
 CLES_INVARIANTS: Final = (
     "jeu_version",
     "jeu_build",
@@ -61,6 +63,7 @@ CLES_INVARIANTS: Final = (
     "chat_template_sha256",
     "version_masque",
     "decoupage_masque",
+    "rendu_outils",
 )
 DEROGATION_ORPO: Final = (
     "ORPO déroge au protocole de la campagne (FR-34) : paires de préférence "
@@ -95,6 +98,7 @@ def invariants(
         "longueur_max": config.longueur_max,
         "chat_template_sha256": chat_template_sha256,
         "version_masque": VERSION_MASQUE,
+        "rendu_outils": VERSION_RENDU_OUTILS,
     }
     if decoupage_masque is not None:  # absente au défaut : run.json des runs antérieurs intact
         resultat["decoupage_masque"] = dict(decoupage_masque)

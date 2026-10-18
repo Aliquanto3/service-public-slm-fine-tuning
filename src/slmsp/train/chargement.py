@@ -21,10 +21,12 @@ après coupe est écarté et compté.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Final
 
@@ -38,11 +40,14 @@ from slmsp.core.artefacts import (
     ouvrir_sqlite_lecture,
 )
 from slmsp.core.balises import PROTOCOLE_BALISES, messages_balises
+from slmsp.core.canonique import sha256_fichier
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspError
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.schemas.entrainement import EnteteManifesteJeu, EntetePaire
 from slmsp.core.var import dossier_var
+from slmsp.mcp.outils import NOM_CONFIG as NOM_CONFIG_OUTILS
+from slmsp.mcp.outils import charger_outils
 from slmsp.train import environnement
 from slmsp.train.masque import IGNORE, ErreurMasque, amorce_et_corps, calculer_masques
 from slmsp.train.rendu import apply_chat_template
@@ -155,6 +160,7 @@ def charger_jeu(version: str, *, racine: str | Path | None = None, fichier: str 
             ) from None
     if not lignes:
         raise ManifesteInvalide(f"{donnees_chemin} : jeu vide")
+    controler_outils_mcp(brut_manifeste, lignes)
     return Jeu(version, fichier, sha, brut_manifeste, lignes)
 
 
@@ -295,17 +301,101 @@ def sha_chat_template(tokenizer: Any) -> str:
     return hashlib.sha256(texte.encode("utf-8")).hexdigest()
 
 
+def _arguments_decodes(message: Mapping[str, Any]) -> list[dict[str, Any]] | None:
+    """`tool_calls` d'un message avec `arguments` décodés (ordre des clés gardé), ou None."""
+    appels = message.get("tool_calls")
+    if not appels:
+        return None
+    decodes: list[dict[str, Any]] = []
+    for appel in appels:
+        fonction = appel.get("function") if isinstance(appel, Mapping) else None
+        arguments = fonction.get("arguments") if isinstance(fonction, Mapping) else None
+        if isinstance(arguments, str):
+            try:
+                arguments = json.loads(arguments)
+            except json.JSONDecodeError:
+                raise ManifesteInvalide(
+                    f"arguments d'appel d'outil illisibles : {arguments[:80]!r}"
+                ) from None
+            if not isinstance(arguments, dict):
+                raise ManifesteInvalide("arguments d'appel d'outil : un objet JSON est attendu")
+            appel = {**appel, "function": {**fonction, "arguments": arguments}}  # type: ignore[dict-item]
+        decodes.append(dict(appel))
+    return decodes
+
+
 def _messages_rendus(
     messages: Sequence[Mapping[str, Any]], config_modele: ConfigModele
 ) -> list[dict[str, Any]]:
-    """Messages passés au template : `tool_calls` réécrits en balises pour `balises-tool-call`.
+    """Messages passés au template, normalisés comme à l'inférence (rendu de llama-server).
 
-    Même réécriture qu'à l'inférence (`inference.client`), sans quoi le template de SmolLM3
-    ferait disparaître les appels des tours `assistant` supervisés.
+    `balises-tool-call` : `tool_calls` réécrits en balises, comme à l'inférence
+    (`inference.client`), sans quoi le template de SmolLM3 ferait disparaître les appels des
+    tours `assistant` supervisés. Sinon : `arguments` en chaîne décodés en objets (clés dans
+    l'ordre) et `content: null` retiré, car llama-server rend un objet et ignore un `null`
+    (les templates appellent `.items()` sur les arguments). Les messages ne sont jamais modifiés.
     """
     if config_modele.protocole_outils == PROTOCOLE_BALISES:
         return messages_balises(messages)
-    return [dict(message) for message in messages]
+    rendus: list[dict[str, Any]] = []
+    for message in messages:
+        rendu = dict(message)
+        if rendu.get("content", "") is None:
+            del rendu["content"]
+        appels = _arguments_decodes(rendu)
+        if appels is not None:
+            rendu["tool_calls"] = appels
+        rendus.append(rendu)
+    return rendus
+
+
+@lru_cache(maxsize=8)
+def _outils_attendus(code_tache: str, racine: str) -> tuple[dict[str, Any], ...]:
+    """Outils d'inférence de la Tâche : `charger_outils()` restreint à `outils_autorises`."""
+    from slmsp.harness.taches import TacheInconnue, charger_taches
+
+    try:
+        tache = charger_taches().tache(code_tache)
+    except TacheInconnue as exc:
+        raise ManifesteInvalide(str(exc)) from None
+    autorises = set(tache.outils_autorises)
+    return tuple(o for o in charger_outils() if (o.get("function") or {}).get("name") in autorises)
+
+
+def _tools_rendus(ligne: _Ligne | _Paire) -> list[dict[str, Any]] | None:
+    """`tools` rendus à l'entraînement : ceux que la Tâche offre à l'inférence (`recherche.py`).
+
+    Source : `config/outils-mcp.toml`, dans l'ordre du fichier (le JSON canonique de
+    train.jsonl trie les clés, d'où un rendu différent de l'inférence). Lève `ManifesteInvalide`
+    si les outils de la ligne ne sont pas exactement ceux de la Tâche (mêmes noms, mêmes
+    définitions). Sans outils dans la ligne, pas de `tools`.
+    """
+    if not ligne.tools:
+        return None
+    attendus = _outils_attendus(ligne.tache, str(racine_projet()))
+    par_nom = {(o.get("function") or {}).get("name"): o for o in ligne.tools}
+    if len(par_nom) != len(ligne.tools) or par_nom != {o["function"]["name"]: o for o in attendus}:
+        raise ManifesteInvalide(
+            f"Tâche {ligne.tache} : les outils de la ligne diffèrent de config/outils-mcp.toml "
+            f"restreint à ses outils autorisés (jeu {sorted(map(str, par_nom))})"
+        )
+    return copy.deepcopy(list(attendus))
+
+
+def controler_outils_mcp(manifeste: Mapping[str, Any], lignes: Sequence[Any]) -> None:
+    """`sha_outils_mcp` du MANIFEST = SHA de `config/outils-mcp.toml` (si des outils sont rendus).
+
+    Un MANIFEST sans cette clé (jeu de test) n'est pas contrôlé.
+    """
+    attendu = manifeste.get("sha_outils_mcp")
+    if attendu is None or not any(ligne.tools for ligne in lignes):
+        return
+    sha = sha256_fichier(racine_projet() / "config" / NOM_CONFIG_OUTILS)
+    if sha != attendu:
+        raise ManifesteInvalide(
+            f"config/{NOM_CONFIG_OUTILS} (SHA-256 {sha}) a changé depuis le build du jeu "
+            f"(« sha_outils_mcp » {attendu}) : les outils rendus ne sont plus ceux des données"
+        )
 
 
 def _avec_tools(config_modele: ConfigModele) -> bool:
@@ -335,7 +425,7 @@ def pretokeniser(
         rendus = calculer_masques(
             tokenizer,
             _messages_rendus(ligne.messages, config_modele),
-            tools=ligne.tools if outils else None,
+            tools=_tools_rendus(ligne) if outils else None,
             config=config_modele,
         )
         for rendu in rendus:
@@ -375,7 +465,7 @@ def preparer_preferences(
     exemples: list[dict[str, str]] = []
     for numero, paire in enumerate(paires, start=1):
         options: dict[str, Any] = {
-            "tools": paire.tools if outils else None,
+            "tools": _tools_rendus(paire) if outils else None,
             "config": config_modele,
         }
         debut = _messages_rendus(paire.prompt, config_modele)
