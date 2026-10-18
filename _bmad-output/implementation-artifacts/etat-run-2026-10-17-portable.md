@@ -57,6 +57,12 @@ Reprise sur le PC portable (32 Go, RTX 3060 6 Go) depuis `docs/reprise-deuxieme-
   EuroLLM est au niveau du hasard sur belebele et MMLU (4 choix) : à vérifier (template ou modèle base ?).
 - **Traduction minicpm5-1b** (F16) : chrF moyen 30,9 ; fr-ar 0,7 (à vérifier : sorties hors langue ?).
 
+## MiniCPM5-2B, référence de Baseline (décision d'Anaël du 2026-10-18)
+- Réintégré comme référence (2,52 B > règle de 2B, `entrainable = false`), enveloppe de 6 € (campagne `baseline-2026-10-18b`). Gemma 4 E2B : non (trop gros, décision d'Anaël).
+- Si sa Baseline égale ou dépasse granite, Anaël peut relever la règle à 2,5B et le rendre entraînable.
+- **Contrôle du masque** (tokenizer réel, CPU, toutes les lignes de data/train/v1) : le masque par défaut (`conversation`) suffit, sans découpage par tour, contrairement au 1B. 412 lignes ok ; les 91 lignes RD échouent comme pour minicpm5-1b (R7 : arguments des `tool_calls` en chaîne JSON, le template attend un objet). granite : 503/503. À noter : l'échec du 2B est une `UndefinedError` brute (pas d'`ErreurMasque` hors découpage par tour).
+- VRAM d'entraînement à confirmer : vocabulaire de 130 560 non lié, ≈ 1 Go de logits par séquence de 4096 en bf16.
+
 ## Incident de la nuit : cache HF des jeux lm_eval absent
 Aucune commande ne le remplit et `restaurer-etat.ps1` ne le copie pas ; 7 benchmarks HF de minicpm5-1b ont échoué la première fois. Rempli à la main : `snapshot_download` aux révisions de `[options.jeux_hf]`, `refs/main` écrit sur la révision épinglée, puis `load_dataset(..., revision=<épinglée>)` en ligne pour créer le cache `datasets` (hors ligne, datasets 5 ne lit pas les seuls snapshots). 515 Mo. **À outiller** (sous-commande `fetch` ou export d'état) : story à créer.
 
