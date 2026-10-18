@@ -123,6 +123,12 @@ Décisions prises seul :
 
 Reports : la mesure réelle `train sonde-env --modele qwen3.5-2b --precision-base bf16 --longueurs 2048,4096` (GPU) après B2 ; le contrôle sur la vraie pile triton/fla n'est pas exécuté ici (mocks seulement).
 
+### Revue B1
+
+- medium, corrigé : `a_couches_gdn` et `_sous_configs` (train/environnement.py) ne lisaient que la racine et `text_config` ; un `llm_config` GDN, admis par le contrôle `dense`, passait `train run` sans fla. `_sous_configs` parcourt désormais toute sous-configuration dict (comme `fetch/verifications.py`) ; test `test_a_couches_gdn_sous_llm_config`. Effet de bord voulu : les contrôles Mamba, FP8 et `arguments_specifiques` voient aussi ces sous-configurations ; aucun effet sur les modèles denses (MiniCPM5, Granite) sans `layer_types` imbriqué.
+- low, écarté : `sonde-env --unsloth` n'appelle pas `controler_noyaux_gdn` ; Unsloth ne sert que granite (dense), le contrôle serait sans objet.
+- low, écarté : `noyaux.json` en fin de segment ; l'événement `noyaux` de `log.jsonl` est écrit avant `train()` (run.py), donc une trace subsiste après un plantage.
+
 ## Story B2 : chargement multimodal, vision gelée, sonde, `train run`, masque, fiches
 
 **Critères d'acceptation**

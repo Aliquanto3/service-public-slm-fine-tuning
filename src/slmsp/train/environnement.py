@@ -186,7 +186,7 @@ def noyaux_gdn_disponibles() -> dict[str, Any]:
 
 
 def a_couches_gdn(config_poids: Mapping[str, Any]) -> bool:
-    """Une couche `linear_attention` figure dans `layer_types` (racine ou `text_config`)."""
+    """Une couche `linear_attention` figure dans `layer_types` (racine ou sous-config)."""
     for sous in _sous_configs(config_poids):
         couches = sous.get("layer_types")
         if isinstance(couches, list) and any(str(c) == "linear_attention" for c in couches):
@@ -406,10 +406,13 @@ def lire_config_modele(dossier: Path, *, racine: str | Path | None = None) -> di
 
 
 def _sous_configs(config: Mapping[str, Any]) -> Iterable[Mapping[str, Any]]:
-    yield config
-    texte = config.get("text_config")
-    if isinstance(texte, Mapping):
-        yield texte
+    """La racine puis toute sous-configuration dict, à toute profondeur (`text_config`,
+    `llm_config`, `language_config`…), comme `fetch/verifications.py`."""
+    file: list[Mapping[str, Any]] = [config]
+    while file:
+        sous = file.pop(0)
+        yield sous
+        file.extend(v for v in sous.values() if isinstance(v, Mapping))
 
 
 def exiger_entrainable(config: ConfigModele, slug: str) -> None:

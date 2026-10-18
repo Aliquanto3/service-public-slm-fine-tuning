@@ -1174,6 +1174,13 @@ def test_noyaux_gdn_disponibles_avec_fla(monkeypatch: pytest.MonkeyPatch) -> Non
     assert dispo["fla-core"] == "v-fla-core" and dispo["triton-windows"] == "v-triton-windows"
 
 
+def test_a_couches_gdn_sous_llm_config() -> None:
+    gdn = {"llm_config": {"layer_types": ["linear_attention", "full_attention"]}}
+    assert environnement.a_couches_gdn(gdn)
+    assert environnement.a_couches_gdn({"a": {"b": {"layer_types": ["linear_attention"]}}})
+    assert not environnement.a_couches_gdn({"llm_config": {"layer_types": ["full_attention"]}})
+
+
 def test_a_couches_gdn_sous_text_config() -> None:
     assert environnement.a_couches_gdn(CONFIG_QWEN35)
     assert environnement.a_couches_gdn({"layer_types": ["linear_attention"]})
