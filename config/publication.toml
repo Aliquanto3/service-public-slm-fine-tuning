@@ -97,3 +97,9 @@ licences_compatibles = ["apache-2.0"]
 
 [modeles."qwen3.5-0.8b"]
 licences_compatibles = ["apache-2.0"]
+
+# Ajouté le 2026-10-18 (spec-granite-petits) : métadonnée license:apache-2.0 de la fiche HF,
+# relevée en revue. `verifie_le` absent tant qu'Anaël n'a pas relu la licence. Les Granite H
+# (`entrainable = false`) n'ont pas d'entrée : aucun modèle fine-tuné à publier.
+[modeles."granite-4.0-350m"]
+licences_compatibles = ["apache-2.0"]

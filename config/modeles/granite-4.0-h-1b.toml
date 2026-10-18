@@ -1,4 +1,4 @@
-# Granite 4.0 H 1B (IBM), variante hybride Mamba-2 (`granitemoehybrid`, 5 couches d'attention sur 40).
+# Granite 4.0 H 1B (IBM), variante hybride Mamba-2 (`granitemoehybrid`, 4 couches d'attention sur 40).
 # Ajouté pour la Baseline le 2026-10-18 (décision D8 d'Anaël, decisions.md : Granite 4.0 H admis
 # quand llama.cpp les sert sous Windows). Révisions, SHA-256 et tailles relevés le même jour via
 # l'API Hugging Face. AD-6 : valeurs communes à l'inférence et à l'entraînement.

@@ -653,27 +653,72 @@ def test_mamba_ecarte_sans_entrainable_false(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("contenu", "attendu"),
+    ("contenu", "source", "index"),
     [
-        ({"llm_config": {"layer_types": ["attention", "mamba"]}}, "llm_config.layer_types"),
+        (
+            {"llm_config": {"layer_types": ["attention", "mamba"]}},
+            "llm_config.layer_types",
+            "llm_config.1",
+        ),
         (
             {"thinker_config": {"text_config": {"layer_types": ["attention", "mamba"]}}},
             "thinker_config.text_config.layer_types",
+            "thinker_config.text_config.1",
         ),
-        ({"layers_block_type": ["attention", "mamba"]}, "layers_block_type"),
-        ({"text_config": {"block_types": ["mamba", "attention"]}}, "text_config.block_types"),
+        ({"layers_block_type": ["attention", "mamba"]}, "layers_block_type", "layers_block_type.1"),
+        (
+            {"text_config": {"block_types": ["mamba", "attention"]}},
+            "text_config.block_types",
+            "text_config.block_types.0",
+        ),
     ],
 )
 def test_dense_toutes_sous_configs_et_cles_connues(
-    tmp_path: Path, contenu: dict, attendu: str
+    tmp_path: Path, contenu: dict, source: str, index: str
 ) -> None:
     """Revue : une couche Mamba hors de `text_config` ou sous une autre clé est repérée : elle
-    exige `entrainable = false`, et la source est nommée quand elle est admise."""
+    exige `entrainable = false`, la source est nommée quand elle est admise, et l'index exact
+    de la couche est nommé quand son type est inconnu."""
     dossier = dossier_hf(tmp_path, **contenu)
     (refuse, _, _) = verifier_config_hf("m", config_modele(), dossier)
-    assert refuse.statut == "echec" and "1 couche(s) mamba" in refuse.detail
+    assert refuse.statut == "echec"
+    assert refuse.detail == (
+        "1 couche(s) mamba sur 2 : hybride Mamba admis pour l'inférence seulement, "
+        "inscrire entrainable = false (décision D8)"
+    )
     (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
-    assert dense.statut == "ok" and attendu in dense.detail
+    assert dense.statut == "ok" and dense.valeurs["source"] == source
+    assert dense.detail == (
+        "hybride Mamba admis pour l'inférence, non entraînable : "
+        f"1 couche(s) mamba sur 2 ({source})"
+    )
+    inconnu = json.loads(json.dumps(contenu).replace('"mamba"', '"couche_x"'))
+    (ecarte, _, _) = verifier_config_hf(
+        "m", config_modele(entrainable=False), dossier_hf(tmp_path, **inconnu)
+    )
+    assert ecarte.statut == "echec" and f"{index} (couche_x)" in ecarte.detail
+
+
+@pytest.mark.parametrize("entrainable", [True, False])
+def test_dense_melange_gated_deltanet_et_mamba(tmp_path: Path, entrainable: bool) -> None:
+    """Revue : un mélange linear_attention + mamba est refusé s'il est entraînable, admis sinon,
+    avec un libellé qui nomme les deux familles."""
+    dossier = dossier_hf(
+        tmp_path, layer_types=["linear_attention", "mamba", "mamba", "full_attention"]
+    )
+    (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=entrainable), dossier)
+    if entrainable:
+        assert dense.statut == "echec"
+        assert dense.detail == (
+            "3 couche(s) linear_attention+mamba sur 4 : hybride Gated DeltaNet et Mamba admis "
+            "pour l'inférence seulement, inscrire entrainable = false (décision D8)"
+        )
+    else:
+        assert dense.statut == "ok"
+        assert dense.detail == (
+            "hybride Gated DeltaNet et Mamba admis pour l'inférence, non entraînable : "
+            "3 couche(s) linear_attention+mamba sur 4 (layer_types)"
+        )
 
 
 @pytest.mark.parametrize(
