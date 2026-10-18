@@ -30,6 +30,7 @@ from slmsp.core.schemas.entrainement import (
 from slmsp.core.var import dossier_var
 from slmsp.data.config import PreferencesDonnees, charger_config_donnees
 from slmsp.data.preferences import lancer_preferences, normaliser
+from slmsp.inference.client import ContexteServeurDepasse, ErreurInference
 from slmsp.inference.journal_local import NOM_JOURNAL_LOCAL, JournalLocal
 
 SLUG = "granite-4.0-1b"
@@ -308,3 +309,41 @@ def test_run_de_paires_refuse_comme_source(tmp_path: Path) -> None:
     resultat = lancer(tmp_path, build, LlmScripte("<rejetee-factice-1>"))
     with pytest.raises(ManifesteInvalide, match="jeu SFT attendu"):
         lancer(tmp_path, resultat.run.run_id, LlmScripte("<rejetee-factice-1>"))
+
+
+class LlmContexte(LlmScripte):
+    """Lève `erreur` à l'appel `rang_erreur` (1-based), sinon répond comme `LlmScripte`."""
+
+    def __init__(self, rang_erreur: int, erreur: Exception, *reponses: Any) -> None:
+        super().__init__(*reponses)
+        self.rang_erreur = rang_erreur
+        self.erreur = erreur
+
+    def generer(
+        self, messages: Sequence[Any], *, tools: Any = None, options: Any = None
+    ) -> Iterator[Any]:
+        if len(self.appels) + 1 == self.rang_erreur:
+            self.appels.append({})
+            raise self.erreur
+        yield from super().generer(messages, tools=tools, options=options)
+
+
+def test_requete_hors_contexte_ecartee_et_suivantes_generees(tmp_path: Path) -> None:
+    build = ecrire_jeu_sft(tmp_path, 3)
+    llm = LlmContexte(
+        2, ContexteServeurDepasse("HTTP 400 <exceed_context_size_error-factice>"), "<rejetee-1>"
+    )
+    resultat = lancer(tmp_path, build, llm)
+    assert resultat.rapport["nb_paires"] == 2
+    assert resultat.rapport["ecartees_par_motif"] == {"contexte": 1}
+    ecartees = ouvrir_run(resultat.run.run_id, racine=tmp_path).lire_jsonl("ecartees.jsonl")
+    assert ecartees == [{"rang": 1, "motif": "contexte"}]
+    manifeste = json.loads((resultat.dossier / "MANIFEST.json").read_text("utf-8"))
+    assert manifeste["ecartees_par_motif"] == {"contexte": 1}
+
+
+def test_autre_erreur_http_arrete_le_build(tmp_path: Path) -> None:
+    build = ecrire_jeu_sft(tmp_path, 3)
+    llm = LlmContexte(2, ErreurInference("HTTP 500 : <erreur-factice>"), "<rejetee-1>")
+    with pytest.raises(ErreurInference, match="500"):
+        lancer(tmp_path, build, llm)

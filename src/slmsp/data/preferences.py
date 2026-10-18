@@ -36,7 +36,7 @@ from pydantic import ValidationError
 
 from slmsp.core.artefacts import Run, lire, nouveau_run, ouvrir_run
 from slmsp.core.canonique import json_canonique, sha256_hex
-from slmsp.core.erreurs import ManifesteInvalide, ProvenanceInvalide
+from slmsp.core.erreurs import ContexteDepasse, ManifesteInvalide, ProvenanceInvalide
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.core.messages import ConversationInvalide, valider_conversation
 from slmsp.core.ports import LlmPort
@@ -129,10 +129,15 @@ def _generer(
 
     `texte` est `None` pour un appel d'outil (motif `non_texte`) ; `motif` vaut `tronquee`
     (`Fin` de raison `longueur`) ou `interrompue` (raison `interrompue`, ou flux sans `Fin`),
-    `None` pour une génération terminée normalement.
+    `contexte` (`ContexteDepasse` : la requête ne tient pas dans le contexte du serveur), `None`
+    pour une génération terminée normalement. Les autres erreurs du serveur remontent.
     """
     morceaux: list[str] = []
-    for evenement in llm.generer(prompt, tools=tools, options=options):
+    try:
+        evenements = list(llm.generer(prompt, tools=tools, options=options))
+    except ContexteDepasse:  # requête plus longue que le contexte du serveur : ligne écartée
+        return "", "contexte"
+    for evenement in evenements:
         if isinstance(evenement, Jeton):
             morceaux.append(evenement.texte)
         elif isinstance(evenement, AppelOutil | AppelNonConforme):
