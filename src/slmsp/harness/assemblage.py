@@ -136,6 +136,7 @@ def assembler(
     outils: ToolPort | None = None,
     threads: int | None = None,
     contexte: int | None = None,
+    speculatif: Any = None,
 ) -> Iterator[Assemblage]:
     """Assemble l'Assistant pour `modele` (`base:<slug>`) et la Tâche `tache` (Q par défaut).
 
@@ -144,6 +145,8 @@ def assembler(
     de la Tâche a un emplacement `passages`. `threads` plafonne ceux des deux serveurs
     (jamais au-dessus de la valeur de leur configuration). `contexte` remplace le contexte du
     seul serveur de génération (mesure à contexte réduit) ; l'appelant l'a validé.
+    `speculatif` (`Speculatif` ou dict, défaut aucun) active le décodage spéculatif du seul
+    serveur de génération.
     """
     slug = slug_modele(modele)
     table = charger_taches()
@@ -172,11 +175,13 @@ def assembler(
         if llm is None:
             from slmsp.inference.serveur import ServeurLlama, charger_config_modele
 
+            options = {} if speculatif is None else {"speculatif": speculatif}
             serveur = pile.enter_context(
                 ServeurLlama(
                     avec_contexte(plafonner(charger_config_modele(slug)), contexte),
                     variante,
                     slug=slug,
+                    **options,
                 )  # type: ignore[arg-type]
             )
             serveurs.append(serveur)

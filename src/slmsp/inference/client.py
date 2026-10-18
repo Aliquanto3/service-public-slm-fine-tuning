@@ -51,6 +51,9 @@ OPTIONS_AUTORISEES: Final = frozenset(
 )
 PROTOCOLES: Final = ("natif", "json-generique", PROTOCOLE_BALISES)
 CLES_USAGE: Final = ("prompt_tokens", "completion_tokens", "total_tokens")
+CLES_TIMINGS_SPECULATIF: Final = ("draft_n", "draft_n_accepted")
+"""Champs de `timings` (dernier morceau du flux) du décodage spéculatif : tokens proposés par
+le brouillon et acceptés par la cible. Absents sans décodage spéculatif."""
 TAILLE_EXTRAIT: Final = 500
 """Caractères du corps d'une réponse HTTP en erreur cités dans `ErreurInference`."""
 TYPE_CONTEXTE: Final = "exceed_context_size_error"
@@ -515,6 +518,7 @@ class ClientLlama:
         raison_finale: str | None = None
         termine = False
         usage: dict[str, int] = {}
+        speculatif: dict[str, int] = {}
 
         with self._http.stream("POST", self._base + "/v1/chat/completions", json=corps) as reponse:
             if reponse.status_code != 200:
@@ -549,6 +553,14 @@ class ClientLlama:
                         for cle in CLES_USAGE
                         if isinstance(morceau["usage"].get(cle), int)
                     }
+                if isinstance(morceau.get("timings"), dict):
+                    speculatif.update(
+                        {
+                            cle: int(morceau["timings"][cle])
+                            for cle in CLES_TIMINGS_SPECULATIF
+                            if isinstance(morceau["timings"].get(cle), int)
+                        }
+                    )
                 for choix in morceau.get("choices") or []:
                     delta = choix.get("delta") or {}
                     raisonnement = delta.get("reasoning_content")
@@ -592,6 +604,7 @@ class ClientLlama:
             yield from balises.finir(raison)
         for index in sorted(appels):
             yield _appel_natif(appels[index])
+        usage.update(speculatif)
         if premier is not None:
             usage["delai_premier_token_ms"] = round((premier - debut) * 1000)
         yield Fin(raison=raison, usage=usage or None)

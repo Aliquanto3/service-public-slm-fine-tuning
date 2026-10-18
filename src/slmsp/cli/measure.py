@@ -1,6 +1,8 @@
 """Sous-commande `slmsp measure run` : mesures techniques FR-26 (NFR-1 à NFR-3, NFR-6).
 
     slmsp measure run --modele base:<slug> [--quantification q4_k_m] [--racine DOSSIER]
+                       [--speculatif {aucun,brouillon,ngram}] [--brouillon <slug>]
+                       [--brouillon-n-max N]
 
 Assemble l'Assistant complet comme `slmsp ask` (deux `llama-server` en variante `cpu`,
 threads plafonnés par `config/mesures.toml`, Index local chargé), mesure des Questions avec
@@ -42,6 +44,27 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         help="taille de contexte (tokens) du serveur de génération, au plus celle de "
         "config/modeles/<slug>.toml ; consignée dans run.json et resultat.json",
     )
+    p.add_argument(
+        "--speculatif",
+        choices=("aucun", "brouillon", "ngram"),
+        default=None,
+        help="décodage spéculatif de llama-server (défaut : aucun) ; `brouillon` exige "
+        "--brouillon ; consigné dans run.json et resultat.json",
+    )
+    p.add_argument(
+        "--brouillon",
+        default=None,
+        metavar="SLUG",
+        help="modèle brouillon (slug de config/modeles, même vocabulaire que la cible) ; "
+        "implique --speculatif brouillon",
+    )
+    p.add_argument(
+        "--brouillon-n-max",
+        type=int,
+        default=None,
+        metavar="N",
+        help="tokens proposés par tour (--spec-draft-n-max de llama-server, défaut 3)",
+    )
     p.add_argument("--racine", type=Path, default=None, help="racine de index/ et runs/")
     p.set_defaults(func=_run)
 
@@ -51,6 +74,9 @@ def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[
     from slmsp.inference.serveur import dossier_llamacpp
 
     composants: dict[str, Path] = {s.role: s.gguf for s in serveurs}
+    brouillon = next((g for s in serveurs if (g := getattr(s, "gguf_brouillon", None))), None)
+    if brouillon is not None:
+        composants["brouillon"] = brouillon
     if version is not None:
         composants["index"] = dossier_index(racine) / version
     # NFR-6 : tous les binaires installés (bin-cpu et bin-cuda si présent), sans sous-estimer,
@@ -80,6 +106,34 @@ def _plafond_sortie(service: Any, fiche: Any) -> int | None:
     return plafond(fiche) if callable(plafond) else None
 
 
+def _speculatif(args: argparse.Namespace, slug: str) -> Any:
+    """`Speculatif` demandé par les options, `None` pour aucun ; `ConfigurationInvalide` sinon.
+
+    La fiche et le vocabulaire du brouillon sont vérifiés ici, pour que leur refus sorte en
+    code USAGE et non au démarrage du serveur.
+    """
+    from slmsp.core.erreurs import ConfigurationInvalide
+    from slmsp.inference.serveur import (
+        Speculatif,
+        charger_config_modele,
+        verifier_vocabulaire_brouillon,
+    )
+
+    mode = args.speculatif
+    if args.brouillon is not None:
+        if mode not in (None, "brouillon"):
+            raise ConfigurationInvalide(f"--brouillon incompatible avec --speculatif {mode}")
+        mode = "brouillon"
+    if mode in (None, "aucun"):
+        if args.brouillon_n_max is not None:
+            raise ConfigurationInvalide("--brouillon-n-max exige --speculatif brouillon")
+        return None
+    speculatif = Speculatif(mode, args.brouillon, args.brouillon_n_max)
+    if speculatif.brouillon is not None:
+        verifier_vocabulaire_brouillon(charger_config_modele(slug), slug, speculatif.brouillon)
+    return speculatif
+
+
 def _run(args: argparse.Namespace) -> int:
     from slmsp.cli._assemblage import ModeleInvalide, assembler, slug_modele
     from slmsp.core.erreurs import ConfigurationInvalide
@@ -92,6 +146,7 @@ def _run(args: argparse.Namespace) -> int:
     try:
         slug = slug_modele(args.modele)
         maximum = charger_config_modele(slug).contexte
+        speculatif = _speculatif(args, slug)
     except (ModeleInvalide, ConfigurationInvalide) as exc:
         print(f"slmsp : {exc}", file=sys.stderr)
         return int(CodeSortie.USAGE)
@@ -121,6 +176,7 @@ def _run(args: argparse.Namespace) -> int:
             racine=racine,
             threads=config.plafond_threads,
             contexte=args.contexte,
+            speculatif=speculatif,
         ) as assemblage,
     ):
         if args.quantification is not None:
@@ -151,6 +207,7 @@ def _run(args: argparse.Namespace) -> int:
                 contexte=contexte,
                 verifier_contexte=args.contexte is not None,
                 max_tokens=_plafond_sortie(assemblage.service, fiche),
+                speculatif=None if speculatif is None else speculatif.decrire(),
             )
         except ContexteInsuffisant as exc:
             print(f"slmsp : {exc}", file=sys.stderr)

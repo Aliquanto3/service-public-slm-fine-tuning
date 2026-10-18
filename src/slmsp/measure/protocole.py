@@ -104,6 +104,31 @@ def _conformite(valeurs: dict[str, float | None], config: ConfigMesures) -> dict
     }
 
 
+def _taux_speculatif(mesures: list[MesureQuestion]) -> dict[str, float | int | None] | None:
+    """Tokens proposés, acceptés et taux d'acceptation sur les répétitions ; `None` sans données."""
+    relevees = [m for m in mesures if m.brouillon_proposes is not None]
+    if not relevees:
+        return None
+    proposes = sum(m.brouillon_proposes or 0 for m in relevees)
+    acceptes = sum(m.brouillon_acceptes or 0 for m in relevees)
+    return {
+        "speculatif_tokens_proposes": proposes,
+        "speculatif_tokens_acceptes": acceptes,
+        "speculatif_taux_acceptation": acceptes / proposes if proposes else None,
+    }
+
+
+def _detail_speculatif(taux: Mapping[str, float | int | None] | None) -> str:
+    """Ce que le serveur a exposé du décodage spéculatif, sans conclure au-delà."""
+    if taux is None:
+        # llama-server b11429 omet draft_n quand aucun token n'a été proposé (vu en ngram).
+        return "taux-non-expose (aucun draft_n dans les timings : aucun token proposé, ou "
+        "serveur qui ne l'expose pas)"
+    if not taux["speculatif_tokens_proposes"]:
+        return "taux-expose, aucun token propose"
+    return "taux-expose"
+
+
 def mesurer(
     repondre: Callable[[str], Iterable[Evenement]],
     config: ConfigMesures,
@@ -117,6 +142,7 @@ def mesurer(
     contexte: int | None = None,
     verifier_contexte: bool = False,
     max_tokens: int | None = None,
+    speculatif: Mapping[str, Any] | None = None,
     echantillonneur: Callable[..., EchantillonneurRam] = EchantillonneurRam,
     horloge: Callable[[], float] = time.perf_counter,
 ) -> ResultatMesure:
@@ -128,6 +154,9 @@ def mesurer(
     sans plafond. Le délai au premier token compte aussi les mesures du budget de prompt.
     `verifier_contexte` (contexte imposé par l'appelant) refuse un prompt qui ne tient pas ;
     sinon aucune vérification n'est ajoutée.
+    `speculatif` (configuration du décodage spéculatif, ou `None`) est consignée dans les
+    paramètres ; les tokens proposés et acceptés par le brouillon (`timings` du serveur) vont
+    dans `valeurs`, ou leur absence dans `details` si le serveur ne les expose pas.
     En cas d'erreur, le run est terminé `partiel-erreur` et l'erreur relancée.
     """
     racine = (Path(racine) if racine is not None else racine_ecriture()).resolve()
@@ -145,6 +174,8 @@ def mesurer(
         parametres["contexte"] = contexte
     if max_tokens is not None:
         parametres["max_tokens"] = max_tokens
+    if speculatif is not None:
+        parametres["speculatif"] = dict(speculatif)
     seuils = config.seuils.model_dump()
     run = nouveau_run(
         "measure",
@@ -162,7 +193,9 @@ def mesurer(
             for rang in range(config.echauffement + config.repetitions):
                 question = questions[rang % len(questions)]
                 try:
-                    mesure = mesurer_question(repondre(question), horloge)
+                    mesure = mesurer_question(
+                        repondre(question), horloge, exiger_usage=speculatif is not None
+                    )
                 except MesureEchouee as exc:
                     if verifier_contexte and est_erreur_de_contexte(str(exc)):
                         raise ContexteInsuffisant(
@@ -187,6 +220,9 @@ def mesurer(
             "premier_token_s_p95": premier_p95,
             "taille_installee_go": sum(tailles.values()) / GO,
         }
+        taux_spec = _taux_speculatif(mesures) if speculatif is not None else None
+        if taux_spec is not None:
+            valeurs.update(taux_spec)
         conformite = _conformite(valeurs, config)
         exigences = ("nfr-1", "nfr-2", "nfr-3", "nfr-6")
         echecs = [n for n in exigences if not conformite[n]]
@@ -215,6 +251,7 @@ def mesurer(
                 ),
                 "tokens_par_repetition": [m.tokens for m in mesures],
                 "tokens_estimes_par_jetons": any(m.tokens_estimes for m in mesures),
+                **({"speculatif": _detail_speculatif(taux_spec)} if speculatif is not None else {}),
                 "unite": "Go = 1024³ octets ; ram = pic de la somme des working sets de l'arbre",
             },
             conformite=conformite,
