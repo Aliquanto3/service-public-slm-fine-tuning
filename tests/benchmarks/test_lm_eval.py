@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import sys
 from contextlib import contextmanager
@@ -568,3 +569,17 @@ def test_lot_modele_chemin_reel_config_invalide_echoue(racine_factice):
     _copie_minicpm(racine_factice, ("lm_eval_batch_size = 4", "lm_eval_batch_size = 0"))
     with pytest.raises(ConfigurationInvalide):
         lm_eval.lot_modele("m")
+
+
+def test_num_concurrent_suit_le_parallele_du_contexte(banc, monkeypatch):
+    @contextmanager
+    def faux_serveur(cfg, contexte):
+        yield lm_eval.url_chat(8123), "modele-factice"
+
+    monkeypatch.setattr(lm_eval, "serveur_llama", faux_serveur)
+    cfg = config("ifeval", cible="gguf", fewshot=0, limite=None)
+    lm_eval.executer(cfg, banc.contexte())
+    assert "num_concurrent=1," in option(banc.appel()["argv"], "--model_args")
+    contexte = dataclasses.replace(banc.contexte(), parallele=4)
+    lm_eval.executer(cfg, contexte)
+    assert "num_concurrent=4," in option(banc.appel()["argv"], "--model_args")

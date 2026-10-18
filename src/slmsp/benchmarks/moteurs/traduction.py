@@ -27,7 +27,7 @@ from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from slmsp.benchmarks.moteurs import ContexteBench, SortieMoteur
+from slmsp.benchmarks.moteurs import ContexteBench, SortieMoteur, appliquer_ordonne
 from slmsp.benchmarks.moteurs.llm import llm_gguf
 from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.evenements import Jeton
@@ -219,7 +219,11 @@ def executer(
                 return SortieMoteur(saute=f"modèle non servable ({contexte.variante}) : {exc}")
         for cle, phrases in a_traiter:
             source, cible = cle.rsplit(".", 1)[-1].split("-")
-            hypotheses = [traduire(llm, tache, source, cible, s) for s, _ in phrases]
+            hypotheses = appliquer_ordonne(
+                lambda s, llm=llm, de=source, vers=cible: traduire(llm, tache, de, vers, s[0]),
+                phrases,
+                contexte.parallele,
+            )
             score, signature = calculer(hypotheses, [r for _, r in phrases])
             scores[f"{cle}.chrf"] = score
             if cle in cles_wmt:
@@ -237,7 +241,7 @@ def executer(
         outil="sacrebleu",
         outil_version=_version_sacrebleu(),
         seed=SEED_DEFAUT,
-        batch_size="1",
+        batch_size=str(contexte.parallele),
         details={
             "signatures": signatures,
             "paires_sautees": sautees,

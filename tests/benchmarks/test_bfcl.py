@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import dataclasses
 import importlib.util
 import json
 import sys
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -258,3 +260,24 @@ def test_verdicts_perimes_supprimes(banc, monkeypatch):
     monkeypatch.setenv(bfcl.VARIABLE_COMMANDE, f'"{sys.executable}" "{nul}"')
     with pytest.raises(bfcl.BfclEchoue, match="illisibles"):
         bfcl.executer(config(categories=["irrelevance"]), contexte(banc), llm=LlmFactice())
+
+
+def test_parallele_conserve_l_ordre_et_les_parametres(banc):
+    class LlmLent(LlmFactice):
+        def generer(self, messages, *, tools=None, options=None):
+            time.sleep(0.05 if "_0" in str(messages) or "0" in messages[-1]["content"] else 0.0)
+            yield from super().generer(messages, tools=tools, options=options)
+
+    attendu = None
+    for parallele in (1, 4):
+        llm = LlmLent()
+        ctx = dataclasses.replace(contexte(banc), parallele=parallele)
+        bfcl.executer(config(effectif=3), ctx, llm=llm)
+        donnees = sorties(banc)["categories"]
+        ids = [[x["id"] for x in lignes] for lignes in donnees.values()]
+        assert ids == [[f"{c}_{i}" for i in range(3)] for c in donnees]
+        assert all(a["options"] == llm.appels[0]["options"] for a in llm.appels)
+        assert len(llm.appels) == 9
+        if attendu is None:
+            attendu = donnees
+        assert donnees == attendu

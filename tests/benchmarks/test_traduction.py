@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -194,3 +196,29 @@ def test_charger_paire_lit_les_parquet_wmt14_et_flores(tmp_path):
     )
     with pytest.raises(FileNotFoundError):
         traduction.charger_paire("flores-200", flores, "fr-de", None)
+
+
+def test_parallele_conserve_l_ordre_des_hypotheses(tmp_path):
+    poser(tmp_path, "en-fr", n=4)
+
+    class LlmLent:
+        def generer(self, messages, *, tools=None, options=None):
+            texte = messages[1]["content"]
+            time.sleep(0.05 if "<source-0>" in texte else 0.0)
+            yield Jeton(texte=f"<hyp:{texte.split('<source-')[1][0]}>")
+            yield Fin(raison="terminee")
+
+    vues = {}
+
+    def calculer(hypotheses, references):
+        vues[len(vues)] = hypotheses
+        return 1.0, "sig"
+
+    for parallele in (1, 4):
+        ctx = dataclasses.replace(contexte(tmp_path), parallele=parallele)
+        sortie = traduction.executer(
+            config(paires_flores=[], wmt14_phrases=4), ctx, llm=LlmLent(), calculer=calculer
+        )
+        assert sortie.batch_size == str(parallele)
+    attendu = [f"<hyp:{i}>" for i in range(4)]
+    assert vues == {0: attendu, 1: attendu}

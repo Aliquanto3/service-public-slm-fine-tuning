@@ -300,3 +300,34 @@ def test_tag_llamacpp_consigne_dans_run_json(banc, monkeypatch: pytest.MonkeyPat
     assert lancer_cli(banc, "--socle") == 0
     run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
     assert run["llamacpp_tag"] == "prism-b10777-e3de715"
+
+
+def test_parallele_consigne_dans_run_json_et_contexte(banc) -> None:
+    vus = []
+    moteurs._ENREGISTRES["factice"] = lambda config, contexte: (
+        vus.append(contexte.parallele) or SortieMoteur(scores={"acc": 1.0})
+    )
+    ecrire(banc.dossier, "ok")
+    assert lancer_cli(banc, "--socle", "--parallele", "4") == 0
+    run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
+    assert vus == [4] and run["config"]["parallele"] == 4
+
+
+def test_parallele_defaut_a_un(banc) -> None:
+    ecrire(banc.dossier, "ok")
+    assert lancer_cli(banc, "--socle") == 0
+    run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
+    assert run["config"]["parallele"] == 1
+
+
+@pytest.mark.parametrize("valeur", ["0", "-2", "abc"])
+def test_parallele_invalide_refuse_par_la_cli(banc, valeur, capsys) -> None:
+    ecrire(banc.dossier, "ok")
+    assert lancer_cli(banc, "--socle", "--parallele", valeur) != 0
+    assert "--parallele" in capsys.readouterr().err
+    assert not (banc.racine / "runs").exists()
+
+
+def test_parallele_invalide_refuse_par_lancer(banc) -> None:
+    with pytest.raises(ConfigurationInvalide, match="parallele"):
+        orchestrateur.lancer("base:modele-test", [], racine=banc.racine, parallele=0)

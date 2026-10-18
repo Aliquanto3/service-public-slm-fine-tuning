@@ -28,7 +28,7 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from slmsp.benchmarks.moteurs import ContexteBench, SortieMoteur, lancer_outil
+from slmsp.benchmarks.moteurs import ContexteBench, SortieMoteur, appliquer_ordonne, lancer_outil
 from slmsp.benchmarks.moteurs.llm import llm_gguf
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
@@ -248,13 +248,12 @@ def executer(
                 return SortieMoteur(saute=f"modèle non servable ({contexte.variante}) : {exc}")
         for categorie in categories:
             questions, reponses = charger_categorie(dossier, categorie, effectif)
+            sorties = appliquer_ordonne(
+                lambda q, llm=llm: appeler(llm, q), questions, contexte.parallele
+            )
             donnees["categories"][categorie] = [
-                {
-                    **appeler(llm, q),
-                    "fonctions": q["function"],
-                    "reponse": reponses.get(str(q["id"])),
-                }
-                for q in questions
+                {**sortie, "fonctions": q["function"], "reponse": reponses.get(str(q["id"]))}
+                for q, sortie in zip(questions, sorties, strict=True)
             ]
     sortie_dir = contexte.run.dossier / "bfcl" / contexte.variante
     sortie_dir.mkdir(parents=True, exist_ok=True)
@@ -262,7 +261,7 @@ def executer(
     entree.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
     resultat = analyser(verifier(entree, verdicts_json), categories)
     resultat.seed = SEED
-    resultat.batch_size = "1"
+    resultat.batch_size = str(contexte.parallele)
     resultat.details["sorties_json"] = str(entree)
     return resultat
 
