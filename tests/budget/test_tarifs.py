@@ -81,10 +81,14 @@ def test_critere_5_taux_usd_eur_prudent_et_date() -> None:
 def test_budgets_de_depart() -> None:
     config = charger_budgets()
     assert config.campagne_id
-    assert config.postes["anthropic"].plafond_eur == 10.09  # campagne baseline-2026-10-18c
+    # Les plafonds changent à chaque campagne : on vérifie leur cohérence, pas leurs valeurs.
+    assert set(config.postes) == {"anthropic", "mistral"}
+    assert config.postes["anthropic"].plafond_eur > 0
     assert config.postes["anthropic"].sous_postes == {}
-    assert config.postes["mistral"].plafond_eur == 12.06
-    assert config.postes["mistral"].sous_postes == {"generation": 8.75, "juge": 3.21}
+    mistral = config.postes["mistral"]
+    assert set(mistral.sous_postes) == {"generation", "juge"}
+    assert all(v > 0 for v in mistral.sous_postes.values())
+    assert sum(mistral.sous_postes.values()) <= mistral.plafond_eur + 1e-9
     assert config.marge_eur >= 0
     assert config.majoration_entree >= 1
 

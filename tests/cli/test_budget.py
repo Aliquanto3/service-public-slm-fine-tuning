@@ -49,11 +49,13 @@ def test_critere_11_base_absente_non_creee(capsys: pytest.CaptureFixture[str]) -
         ("mistral", "juge"),
     ]
     plafonds = {cle: ligne["plafond_eur"] for cle, ligne in lignes.items()}
+    config = charger_budgets()
+    mistral = config.postes["mistral"]
     assert plafonds == {
-        ("anthropic", None): 10.09,
-        ("mistral", None): 12.06,
-        ("mistral", "generation"): 8.75,
-        ("mistral", "juge"): 3.21,
+        ("anthropic", None): config.postes["anthropic"].plafond_eur,
+        ("mistral", None): mistral.plafond_eur,
+        ("mistral", "generation"): mistral.sous_postes["generation"],
+        ("mistral", "juge"): mistral.sous_postes["juge"],
     }
     for ligne in releve["lignes"]:
         assert set(ligne) == {
@@ -92,7 +94,9 @@ def test_critere_11_lecture_seule_octets_identiques(capsys: pytest.CaptureFixtur
     assert lignes[("mistral", "juge")]["depense_eur"] == pytest.approx(cout, abs=1e-6)
     assert lignes[("mistral", None)]["depense_eur"] == pytest.approx(cout, abs=1e-6)
     assert lignes[("anthropic", None)]["reserve_eur"] == pytest.approx(reserve, abs=1e-6)
-    assert lignes[("anthropic", None)]["reste_eur"] == pytest.approx(10.09 - reserve, abs=1e-6)
+    assert lignes[("anthropic", None)]["reste_eur"] == pytest.approx(
+        charger_budgets().postes["anthropic"].plafond_eur - reserve, abs=1e-6
+    )
     assert lignes[("mistral", "generation")]["depense_eur"] == 0
 
 
@@ -187,7 +191,8 @@ def test_releve_signale_un_ecart_avec_les_plafonds_inscrits(
             (json.dumps(inscrits), registre.campagne_id),
         )
     avant = registre.chemin.read_bytes()
-    ecart = "mistral.juge : 4 € inscrit, 3.21 € dans budgets.toml"
+    juge = charger_budgets().postes["mistral"].sous_postes["juge"]
+    ecart = f"mistral.juge : 4 € inscrit, {juge:g} € dans budgets.toml"
 
     assert _json(capsys)["ecarts"] == [ecart]
     assert main(["budget", "etat"]) == CodeSortie.SUCCES
