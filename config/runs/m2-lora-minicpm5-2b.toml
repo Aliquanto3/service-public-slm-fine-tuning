@@ -5,7 +5,7 @@
 # 2026-10-18 (runs/train-sonde/20261018-230834-minicpm5-2b-d244) : en bf16, 8192 tokens
 # tiennent dans 4,6 Gio ; en fp32-kbit, débordement dès 4096. Troncature : 8192 garde 100 %
 # de la supervision du jeu v2.
-# Lancement : uv run --extra train slmsp train run --config config/runs/m2-lora-minicpm5-2b.toml
+# Lancement : uv run --no-sync slmsp train run --config config/runs/m2-lora-minicpm5-2b.toml
 
 campagne = "minicpm5-2b-v2"
 modele = "minicpm5-2b"

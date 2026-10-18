@@ -115,6 +115,9 @@ def test_campagne_v2_invariants(campagne: str) -> None:
 
 def test_tous_les_toml_de_runs_se_chargent() -> None:
     fichiers = sorted(_RUNS.glob("*.toml"))
-    assert len(fichiers) >= 15
+    noms = {f.name for f in fichiers}
+    for methode in ("m1-qlora", "m2-lora", "m3-dora", "m4-orpo"):
+        assert f"{methode}-minicpm5-2b.toml" in noms
+        assert f"{methode}-granite-4.0-1b-v2.toml" in noms
     for f in fichiers:
         charger_run_config(f)

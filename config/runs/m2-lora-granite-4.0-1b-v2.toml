@@ -4,7 +4,7 @@
 # precision_base = bf16 dans les quatre (invariant de campagne). longueur_max = 8192 À
 # CONFIRMER par une sonde, pas encore faite :
 #   sonde-env --modele granite-4.0-1b --precision-base bf16 --longueurs 8192
-# Lancement : uv run --extra train slmsp train run --config config/runs/m2-lora-granite-4.0-1b-v2.toml
+# Lancement : uv run --no-sync slmsp train run --config config/runs/m2-lora-granite-4.0-1b-v2.toml
 
 campagne = "granite-4.0-1b-v2"
 modele = "granite-4.0-1b"
