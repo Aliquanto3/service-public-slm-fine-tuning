@@ -45,7 +45,7 @@ Qualité = moyenne des 8 Scores de Tâche. Graphiques de Pareto (privés) : http
 - Unsloth refuse minicpm5-2b (« untrained tokens »), et ce n'est plus nécessaire.
 
 ## En cours au moment du /clear
-- **Benchmarks des trois Granite** (GGUF cuda `--parallele 4`, puis HF) : tâche de fond lancée par `scratchpad/suite`, script `reprise_h350m.ps1`, qui tient `gpu.lock`. Le script se termine par `=== fin`. Ensuite, commiter les runs `runs/bench/2026101818*` et suivants.
+- **Benchmarks des trois Granite** (GGUF cuda `--parallele 4`, puis HF ; démarrés à 18:37, fin estimée vers 21-22 h). Le script `reprise_h350m.ps1` tourne en tâche de fond et tient `gpu.lock`. Sa sortie est dans `C:\Users\Anael\AppData\Local\Temp\claude\C--Users-Anael-dev-service-public-slm-fine-tuning\8425203b-8fb9-480d-859b-87874a7321c6\tasks\bphw1hiqu.output` et se termine par `=== fin`. Pour savoir s'il tourne encore, lire `%LOCALAPPDATA%\slmsp\var\gpu.lock` ou chercher un processus `slmsp bench run`. Ensuite, commiter les runs `runs/bench/2026101818*` et suivants.
 - **Bloqueur de veille** actif (processus PowerShell). L'arrêter une fois le GPU libre et les mesures faites.
 
 ## À faire, dans l'ordre
