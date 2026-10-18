@@ -315,6 +315,7 @@ def _ecrire_version(
         build_run_id=build_run_id,
         jeu_sft_version=version_sft,
         sha256_train=manifeste_sft["sha256_train"],
+        sha_outils_mcp=manifeste_sft.get("sha_outils_mcp"),
         sha256_preferences=sha_preferences,
         nb_paires=len(paires),
         comptes_par_tache=comptes,

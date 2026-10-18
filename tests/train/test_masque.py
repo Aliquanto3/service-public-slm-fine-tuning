@@ -21,6 +21,7 @@ from slmsp.core.config import dossier_modeles
 from slmsp.core.erreurs import ManifesteInvalide
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.fetch.config import charger_config_modele
+from slmsp.fetch.verifications import CANDIDATS as CANDIDATS_REGISTRE
 from slmsp.train import chargement
 from slmsp.train.masque import (
     IGNORE,
@@ -552,26 +553,217 @@ def test_minicpm5_reel_par_tour_egal_a_l_amorce_officielle(nom: str) -> None:
         assert rendu.texte.endswith("<|im_end|>\n")
 
 
+def candidats_entrainables() -> list[str]:
+    """Candidats au fine-tuning du registre (`verifications.CANDIDATS`, `entrainable`)."""
+    return [slug for slug in CANDIDATS_REGISTRE if charger_config_modele(slug).entrainable]
+
+
+def conversation_outils_chaines() -> list[dict[str, Any]]:
+    """Deux tours d'appel, arguments en chaîne JSON comme au client (D1 : tout est factice).
+
+    Le premier tour porte deux appels : l'un à clés non triées, accent, apostrophe, guillemet
+    échappé, entier, flottant et booléen (opposent le `tojson` de transformers à celui de
+    minja) ; l'autre sans argument. Le second tour n'a pas de texte. Sont exclus `null` et les
+    listes : minicpm5 les rend autrement en Python (`None`, `['…']`) et en minja (vide, texte
+    nu) ; le jeu v1 n'en contient pas (spec-outils-rendu, risques).
+    """
+    riches = {
+        "zeta": "<é-factice>",
+        "alpha": '<l\'apostrophe-factice> et "<guillemet-factice>"',
+        "entier": 3,
+        "flottant": 1.5,
+        "booleen": True,
+    }
+
+    def appel(numero: int, nom: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "id": f"call000{numero}",
+            "type": "function",
+            "function": {"name": nom, "arguments": json.dumps(arguments, ensure_ascii=False)},
+        }
+
+    return [
+        {"role": "system", "content": "<système-factice>"},
+        {"role": "user", "content": "<question-factice-1>"},
+        {
+            "role": "assistant",
+            "content": "<réponse-factice-0>",
+            "tool_calls": [appel(1, "search_datasets", riches), appel(2, "list_tools", {})],
+        },
+        {"role": "tool", "tool_call_id": "call0001", "content": "<résultat-factice-1>"},
+        {"role": "tool", "tool_call_id": "call0002", "content": "<résultat-factice-2>"},
+        {
+            "role": "assistant",
+            "tool_calls": [appel(3, "search_datasets", {"query": "<requête-factice>"})],
+        },
+        {"role": "tool", "tool_call_id": "call0003", "content": "<résultat-factice-3>"},
+        {"role": "assistant", "content": "<réponse-factice-1>"},
+    ]
+
+
+def _comparer_prefixes(
+    slug: str, lignes: list[dict[str, Any]], client: Any, tok: Any, config: ConfigModele
+) -> tuple[int, list[str]]:
+    """Rendus égaux et écarts, sur chaque préfixe qui précède un tour `assistant`.
+
+    Inférence : corps du client (`messages` du client, `tools` de `charger_outils()`) envoyé à
+    `/apply-template`. Entraînement : chemin réel (`_messages_rendus`, `_tools_rendus`), avec
+    les outils de la ligne triés comme dans train.jsonl.
+    """
+    from slmsp.mcp.outils import charger_outils
+
+    outils_inference = charger_outils()
+    egaux, ecarts = 0, []
+    for numero, brut in enumerate(lignes, start=1):
+        ligne = chargement._Ligne.model_validate(brut)
+        for i, message in enumerate(ligne.messages):
+            if i == 0 or message["role"] != "assistant":
+                continue
+            prefixe = ligne.messages[:i]
+            corps: dict[str, Any] = {"messages": client._messages(prefixe)}
+            if ligne.tools:
+                corps["tools"] = outils_inference
+            if config.chat_template_kwargs:
+                corps["chat_template_kwargs"] = config.chat_template_kwargs
+            distant = client._post("/apply-template", corps)["prompt"]
+            local = apply_chat_template(
+                tok,
+                chargement._messages_rendus(prefixe, config),
+                tools=chargement._tools_rendus(ligne),
+                config=config,
+                add_generation_prompt=True,
+            )
+            if local == distant:
+                egaux += 1
+            else:
+                ecarts.append(f"{slug} ligne {numero} préfixe {i}")
+    return egaux, ecarts
+
+
+USER_SUIVANT: dict[str, Any] = {"role": "user", "content": "<question-suivante-factice>"}
+
+
+def _comparer_textes_supervises(
+    slug: str, lignes: list[dict[str, Any]], client: Any, tok: Any, config: ConfigModele
+) -> tuple[int, list[str]]:
+    """Texte d'entraînement complet (tours supervisés et balise de fin) face à llama-server.
+
+    Pour chaque exemple de `calculer_masques` (chemin réel de `pretokeniser`), la conversation
+    jusqu'au tour supervisé, suivie d'un message `user` factice, est rendue par
+    `/apply-template` : le tour y est dans l'historique, sous la forme que l'inférence montre
+    au modèle. Le texte d'entraînement doit en être un préfixe exact ; en `par-tour`, si le
+    template n'écrit pas `bloc_amorce` dans un tour d'historique, l'amorce privée du bloc,
+    suivie du corps supervisé, doit l'être.
+    """
+    egaux, ecarts = 0, []
+    bloc = config.bloc_amorce
+    for numero, brut in enumerate(lignes, start=1):
+        ligne = chargement._Ligne.model_validate(brut)
+        rendus = calculer_masques(
+            tok,
+            chargement._messages_rendus(ligne.messages, config),
+            tools=chargement._tools_rendus(ligne),
+            config=config,
+        )
+        if config.decoupage_masque == "conversation":
+            fins = [len(ligne.messages)]
+        else:
+            fins = [k + 1 for k, m in enumerate(ligne.messages) if m["role"] == "assistant"]
+        for fin, rendu in zip(fins, rendus, strict=True):
+            corps: dict[str, Any] = {
+                "messages": client._messages([*ligne.messages[:fin], USER_SUIVANT])
+            }
+            if ligne.tools:
+                corps["tools"] = chargement._tools_rendus(ligne)
+            if config.chat_template_kwargs:
+                corps["chat_template_kwargs"] = config.chat_template_kwargs
+            distant = client._post("/apply-template", corps)["prompt"]
+            texte = rendu.texte
+            egal = distant.startswith(texte)
+            if not egal and bloc and config.decoupage_masque == "par-tour":
+                debut = rendu.tours[-1][0]
+                amorce = texte[:debut]
+                egal = amorce.endswith(bloc) and distant.startswith(
+                    amorce[: -len(bloc)] + texte[debut:]
+                )
+            if egal:
+                egaux += 1
+            else:
+                ecarts.append(f"{slug} ligne {numero} tour jusqu'à {fin}")
+    return egaux, ecarts
+
+
+def _gguf(slug: str) -> Path:
+    gguf = next((dossier_modeles() / slug / "gguf").glob("*Q4_K_M.gguf"), None)
+    gguf = gguf or next((dossier_modeles() / slug / "gguf").glob("*.gguf"), None)
+    if gguf is None:
+        pytest.skip(f"GGUF absent pour {slug}")
+    return gguf
+
+
 @pytest.mark.lent
-@pytest.mark.parametrize("slug", ["granite-4.0-1b", "smollm3-3b", "minicpm5-1b"])
+@pytest.mark.parametrize("slug", candidats_entrainables())
 def test_rendu_identique_a_llama_server_jinja(slug: str) -> None:
-    """Critère 3 : `/apply-template` de `llama-server --jinja` rend le même texte."""
+    """Critère 3 et R7 : `/apply-template` de `llama-server --jinja` rend le même texte.
+
+    Conversation factice à deux tours d'appel, arguments en chaîne, sur CPU (variante `cpu`,
+    sans verrou GPU). Les outils de la ligne sont triés, comme dans train.jsonl.
+    """
     pytest.importorskip("transformers")
+    from slmsp.inference.serveur import ServeurLlama
+    from slmsp.mcp.outils import charger_outils
+    from slmsp.train.rendu import charger_tokenizer
+
+    gguf = _gguf(slug)
+    tok = charger_tokenizer(_dossier_hf(slug))
+    config = charger_config_modele(slug)
+    triees = [json.loads(json.dumps(o, sort_keys=True)) for o in charger_outils()]
+    ligne = {
+        "messages": conversation_outils_chaines(),
+        "tools": triees,
+        "tache": "RD",
+        "meta": {"appel_ids": ["appel-factice"]},
+    }
+    with ServeurLlama(config, "cpu", slug=slug, gguf=gguf) as serveur, serveur.client() as client:
+        egaux, ecarts = _comparer_prefixes(slug, [ligne], client, tok, config)
+        supervises, ecarts_supervises = _comparer_textes_supervises(
+            slug, [ligne], client, tok, config
+        )
+    assert not ecarts and egaux == 3
+    attendus = 1 if config.decoupage_masque == "conversation" else 3
+    assert not ecarts_supervises and supervises == attendus
+
+
+@pytest.mark.lent
+@pytest.mark.parametrize("slug", candidats_entrainables())
+def test_jeu_v1_rendu_identique_a_llama_server(slug: str) -> None:
+    """Mesure de R7 sur data/train/v1 : chaque préfixe des lignes RD égal à llama-server.
+
+    Lit les données, n'en génère aucune. Saute si le jeu est absent.
+    """
+    pytest.importorskip("transformers")
+    from slmsp.core.config import racine_projet
     from slmsp.inference.serveur import ServeurLlama
     from slmsp.train.rendu import charger_tokenizer
 
-    gguf = next((dossier_modeles() / slug / "gguf").glob("*.gguf"), None)
-    if gguf is None:
-        pytest.skip(f"GGUF absent pour {slug}")
+    jeu = Path(os.environ.get("SLMSP_TRAIN_V1") or racine_projet() / "data/train/v1/train.jsonl")
+    if not jeu.is_file():
+        pytest.skip(f"jeu absent : {jeu}")
+    lignes = [json.loads(t) for t in jeu.read_text(encoding="utf-8").splitlines() if t.strip()]
+    lignes = [ligne for ligne in lignes if ligne.get("tools")]
+    assert lignes, "aucune ligne à outils dans le jeu"
+    gguf = _gguf(slug)
     tok = charger_tokenizer(_dossier_hf(slug))
     config = charger_config_modele(slug)
-    messages = conversation_outils()[:4]  # se termine par le message `tool`
-    local = apply_chat_template(
-        tok, messages, tools=[OUTIL], config=config, add_generation_prompt=True
+    with ServeurLlama(config, "cpu", slug=slug, gguf=gguf) as serveur, serveur.client() as client:
+        egaux, ecarts = _comparer_prefixes(slug, lignes, client, tok, config)
+        supervises, ecarts_supervises = _comparer_textes_supervises(
+            slug, lignes, client, tok, config
+        )
+    print(
+        f"{slug} : préfixes {egaux} égaux, {len(ecarts)} écarts ; textes supervisés "
+        f"{supervises} égaux, {len(ecarts_supervises)} écarts ; {len(lignes)} lignes"
     )
-    with ServeurLlama(config, slug=slug, gguf=gguf) as serveur, serveur.client() as client:
-        corps: dict[str, Any] = {"messages": messages, "tools": [OUTIL]}
-        if config.chat_template_kwargs:
-            corps["chat_template_kwargs"] = config.chat_template_kwargs
-        distant = client._post("/apply-template", corps)["prompt"]
-    assert local == distant
+    assert not ecarts, ecarts[:5]
+    assert not ecarts_supervises, ecarts_supervises[:5]
+    assert egaux > 0 and supervises > 0
