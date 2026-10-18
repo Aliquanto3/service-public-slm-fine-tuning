@@ -241,7 +241,7 @@ def executer(
         outil="sacrebleu",
         outil_version=_version_sacrebleu(),
         seed=SEED_DEFAUT,
-        batch_size=str(contexte.parallele),
+        batch_size="1",
         details={
             "signatures": signatures,
             "paires_sautees": sautees,

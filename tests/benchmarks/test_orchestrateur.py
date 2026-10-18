@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -246,7 +247,12 @@ def test_outil_tiers_recoit_l_environnement_assaini(monkeypatch: pytest.MonkeyPa
 
 
 def test_registre_paresseux_n_importe_pas_les_moteurs_reels() -> None:
-    assert "lm_eval" not in sys.modules and "sacrebleu" not in sys.modules
+    # Processus neuf : d'autres tests du même processus importent déjà ces modules.
+    code = (
+        "import sys, slmsp.benchmarks.orchestrateur;"
+        "assert 'lm_eval' not in sys.modules and 'sacrebleu' not in sys.modules"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)
     assert set(moteurs.MOTEURS) == {"lm_eval", "traduction", "bfcl"}
 
 
@@ -311,6 +317,9 @@ def test_parallele_consigne_dans_run_json_et_contexte(banc) -> None:
     assert lancer_cli(banc, "--socle", "--parallele", "4") == 0
     run = json.loads((dossier_run(banc) / "run.json").read_text(encoding="utf-8"))
     assert vus == [4] and run["config"]["parallele"] == 4
+    (resultat,) = dossier_run(banc).glob("ok--*.json")
+    donnees = json.loads(resultat.read_text(encoding="utf-8"))
+    assert donnees["details"]["parallele"] == 4
 
 
 def test_parallele_defaut_a_un(banc) -> None:

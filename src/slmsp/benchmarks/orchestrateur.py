@@ -168,7 +168,13 @@ def _executer_un(
         jeu_version=sortie.jeu_version or _jeu_version(config),
         outil=sortie.outil,
         outil_version=sortie.outil_version,
-        details=sortie.details,
+        # `batch_size` garde son sens (lot d'un appel) ; la concurrence des requêtes
+        # vers llama-server est consignée à part, pour les seules cibles GGUF.
+        details=(
+            {**sortie.details, "parallele": contexte.parallele}
+            if config.cible == "gguf"
+            else sortie.details
+        ),
         duree_s=time.monotonic() - debut,
     )
 

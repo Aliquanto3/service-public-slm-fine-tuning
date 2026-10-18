@@ -473,6 +473,9 @@ class ServeurLlama:
             str(self.parallele),
             "--no-webui",
         ]
+        if self.parallele > 1:
+            # Un KV par slot : chaque requête reste bornée à `contexte` tokens.
+            arguments.append("--no-kv-unified")
         if config.threads is not None:
             arguments += ["-t", str(config.threads)]
         if config.embedding:

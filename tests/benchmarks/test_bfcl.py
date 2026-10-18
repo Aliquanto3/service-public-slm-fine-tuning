@@ -6,6 +6,7 @@ import dataclasses
 import importlib.util
 import json
 import sys
+import threading
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -281,3 +282,37 @@ def test_parallele_conserve_l_ordre_et_les_parametres(banc):
         if attendu is None:
             attendu = donnees
         assert donnees == attendu
+
+
+class EnVol:
+    """Compte les appels simultanés ; chaque appel dure `duree` secondes."""
+
+    def __init__(self, duree=0.05):
+        self.duree, self.courant, self.pic = duree, 0, 0
+        self.verrou = threading.Lock()
+
+    def __enter__(self):
+        with self.verrou:
+            self.courant += 1
+            self.pic = max(self.pic, self.courant)
+        time.sleep(self.duree)
+
+    def __exit__(self, *exc):
+        with self.verrou:
+            self.courant -= 1
+
+
+# Le jeu factice a 3 questions par catégorie : à N = 4, le pic est borné à 3.
+@pytest.mark.parametrize(("parallele", "pic"), [(1, 1), (2, 2), (4, 3)])
+def test_parallele_met_n_requetes_en_vol(banc, parallele, pic):
+    en_vol = EnVol()
+
+    class LlmCompte(LlmFactice):
+        def generer(self, messages, *, tools=None, options=None):
+            with en_vol:
+                return list(super().generer(messages, tools=tools, options=options))
+
+    ctx = dataclasses.replace(contexte(banc), parallele=parallele)
+    sortie = bfcl.executer(config(effectif=4, categories=["simple"]), ctx, llm=LlmCompte())
+    assert en_vol.pic == pic
+    assert sortie.batch_size == "1"

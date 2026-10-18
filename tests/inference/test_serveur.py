@@ -735,6 +735,7 @@ def test_arguments_parallele_partagent_le_contexte_entre_les_slots(vendor_factic
     assert (a1[a1.index("-c") + 1], a1[a1.index("--parallel") + 1]) == ("4096", "1")
     assert (a4[a4.index("-c") + 1], a4[a4.index("--parallel") + 1]) == ("16384", "4")
     assert quatre.contexte == 4096  # contexte par requête inchangé
+    assert "--no-kv-unified" in a4 and "--no-kv-unified" not in a1
     assert quatre.description()["parallel"] == 4 and un.description()["parallel"] == 1
 
 

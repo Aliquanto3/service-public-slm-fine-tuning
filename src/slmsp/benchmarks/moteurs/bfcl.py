@@ -261,7 +261,7 @@ def executer(
     entree.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
     resultat = analyser(verifier(entree, verdicts_json), categories)
     resultat.seed = SEED
-    resultat.batch_size = str(contexte.parallele)
+    resultat.batch_size = "1"
     resultat.details["sorties_json"] = str(entree)
     return resultat
 
