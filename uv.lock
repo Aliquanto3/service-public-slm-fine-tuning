@@ -10,6 +10,9 @@ supported-markers = [
 conflicts = [[
     { package = "slmsp", extra = "fetch" },
     { package = "slmsp", extra = "train" },
+], [
+    { package = "slmsp", extra = "fetch" },
+    { package = "slmsp", extra = "gdn" },
 ]]
 
 [[package]]
@@ -187,7 +190,7 @@ name = "cffi"
 version = "2.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-gdn') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz", hash = "sha256:dd31f52ea1086513bb9df30f8fcee9b8918323ae067a3d5b78bc826a000712be", size = 530807, upload-time = "2026-08-03T21:21:18.939Z" }
 wheels = [
@@ -264,7 +267,7 @@ name = "cryptography"
 version = "50.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-gdn') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9d/af/182eb91b0df3fe75c4d9f26fe70684569566745f6ba7e5c9c73a862c5252/cryptography-50.0.2.tar.gz", hash = "sha256:7b46165bb56eb4704e2eaaf86f3c940d19154535d9b0ca7d6d590b04060e00d5", size = 880623, upload-time = "2026-09-30T15:30:04.884Z" }
 wheels = [
@@ -294,8 +297,8 @@ dependencies = [
     { name = "dill" },
     { name = "filelock" },
     { name = "fsspec", extra = ["http"] },
-    { name = "huggingface-hub", version = "1.33.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "huggingface-hub", version = "2.2.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
+    { name = "huggingface-hub", version = "1.33.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "huggingface-hub", version = "2.2.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-fetch'" },
     { name = "multiprocess" },
     { name = "numpy" },
     { name = "packaging" },
@@ -348,6 +351,15 @@ wheels = [
 ]
 
 [[package]]
+name = "einops"
+version = "0.8.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/77/850bef8d72ffb9219f0b1aac23fbc1bf7d038ee6ea666f331fa273031aa2/einops-0.8.2.tar.gz", hash = "sha256:609da665570e5e265e27283aab09e7f279ade90c4f01bcfca111f3d3e13f2827", size = 56261, upload-time = "2026-01-26T04:13:17.638Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/09/f8d8f8f31e4483c10a906437b4ce31bdf3d6d417b73fe33f1a8b59e34228/einops-0.8.2-py3-none-any.whl", hash = "sha256:54058201ac7087911181bfec4af6091bb59380360f069276601256a76af08193", size = 65638, upload-time = "2026-01-26T04:13:18.546Z" },
+]
+
+[[package]]
 name = "eval-type-backport"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -364,8 +376,8 @@ dependencies = [
     { name = "datasets" },
     { name = "dill" },
     { name = "fsspec", extra = ["http"] },
-    { name = "huggingface-hub", version = "1.33.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "huggingface-hub", version = "2.2.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
+    { name = "huggingface-hub", version = "1.33.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "huggingface-hub", version = "2.2.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-5-slmsp-fetch'" },
     { name = "multiprocess" },
     { name = "numpy" },
     { name = "packaging" },
@@ -386,6 +398,31 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/35/c8/1d457d9150ff948f2ce6ada7715e0eeebbe5d3b58a45271a1e222474bcd3/filelock-4.1.1.tar.gz", hash = "sha256:7ba0927482c5a814b0a7f391d029ccdb8010f576f0a74c0dcde1811e8bc4c1b6", size = 563430, upload-time = "2026-10-11T16:11:54.373Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/8b/f837f52905395ba4510fe61f753c24833fb0a9c76e21267bb9f828b664a9/filelock-4.1.1-py3-none-any.whl", hash = "sha256:3f4a557945a7b0f95efeb1f432267affe5d45ac8ddde2aed1b97ebb62382c089", size = 132460, upload-time = "2026-10-11T16:11:52.753Z" },
+]
+
+[[package]]
+name = "fla-core"
+version = "0.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "einops" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/94/85/20bdc0fbbbaeec27b5b198e0dbbbc51161a267066a4aebd9e4b413637c6c/fla_core-0.5.2.tar.gz", hash = "sha256:9360fc412f784c1c8f05c320ec2902d5d968764178c9b8a92efc919e17a39680", size = 587835, upload-time = "2026-07-27T18:26:19.424Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/ed/dfe19c4da779957eb6a42a26812f9b4e2280bf757a17a71933ff59ffcb98/fla_core-0.5.2-py3-none-any.whl", hash = "sha256:5e830c85bad3d0d34677f98ac7074d08687a3756f0f0499d95ceb96eb6920761", size = 819225, upload-time = "2026-07-27T18:26:16.147Z" },
+]
+
+[[package]]
+name = "flash-linear-attention"
+version = "0.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fla-core" },
+    { name = "transformers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d2/76/c180949eae5161b9fcf4c928cab52f0c257ce84c1a59b4462b1d2b6e5883/flash_linear_attention-0.5.2.tar.gz", hash = "sha256:c053d3a75c8f5b725063f719ae6bce0f4d9dac6da32735be8ae7d485a6c9820f", size = 208110, upload-time = "2026-07-27T18:26:20.536Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/d2/2070e3cf2148c5cce99ca4876633c4b7b89ec085323600bd3d47aeacd306/flash_linear_attention-0.5.2-py3-none-any.whl", hash = "sha256:dcf405d81f5426393b59037097aa700d0f4a841465d5028d5aa543f4502f2400", size = 399590, upload-time = "2026-07-27T18:26:17.912Z" },
 ]
 
 [[package]]
@@ -448,8 +485,8 @@ name = "httpcore"
 version = "1.0.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "certifi", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "h11", marker = "extra == 'extra-5-slmsp-train'" },
+    { name = "certifi", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "h11", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/06/94/82699a10bca87a5556c9c59b5963f2d039dbd239f25bc2a63907a05a14cb/httpcore-1.0.9.tar.gz", hash = "sha256:6e34463af53fd2ab5d807f399a9b45ea31c3dfa2276f15a2c3f00afff6e176e8", size = 85484, upload-time = "2025-04-24T22:06:22.219Z" }
 wheels = [
@@ -474,10 +511,10 @@ name = "httpx"
 version = "0.28.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "anyio", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "certifi", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "httpcore", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "idna", marker = "extra == 'extra-5-slmsp-train'" },
+    { name = "anyio", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "certifi", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "httpcore", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "idna", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
 wheels = [
@@ -508,15 +545,15 @@ resolution-markers = [
     "sys_platform == 'win32'",
 ]
 dependencies = [
-    { name = "click", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "filelock", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "fsspec", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "hf-xet", marker = "(platform_machine == 'AMD64' and extra == 'extra-5-slmsp-train') or (platform_machine == 'aarch64' and extra == 'extra-5-slmsp-train') or (platform_machine == 'amd64' and extra == 'extra-5-slmsp-train') or (platform_machine == 'arm64' and extra == 'extra-5-slmsp-train') or (platform_machine == 'x86_64' and extra == 'extra-5-slmsp-train') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
-    { name = "httpx", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "packaging", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "pyyaml", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "tqdm", marker = "extra == 'extra-5-slmsp-train'" },
-    { name = "typing-extensions", marker = "extra == 'extra-5-slmsp-train'" },
+    { name = "click", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "filelock", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "fsspec", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "hf-xet", marker = "(platform_machine == 'AMD64' and extra != 'extra-5-slmsp-fetch') or (platform_machine == 'aarch64' and extra != 'extra-5-slmsp-fetch') or (platform_machine == 'amd64' and extra != 'extra-5-slmsp-fetch') or (platform_machine == 'arm64' and extra != 'extra-5-slmsp-fetch') or (platform_machine == 'x86_64' and extra != 'extra-5-slmsp-fetch') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-gdn') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
+    { name = "httpx", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "packaging", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "pyyaml", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "tqdm", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
+    { name = "typing-extensions", marker = "extra == 'extra-5-slmsp-gdn' or extra == 'extra-5-slmsp-train' or extra != 'extra-5-slmsp-fetch'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/25/2a/484d112c0d8fc5f665d7b65137ac9cdb2953c982391598c3597968a12ee7/huggingface_hub-1.33.0.tar.gz", hash = "sha256:367be21a201db9523eddf8aeac7048f2602c1b308691c97640d5e72ed188007e", size = 1043548, upload-time = "2026-09-24T09:49:29.971Z" }
 wheels = [
@@ -531,15 +568,15 @@ resolution-markers = [
     "sys_platform == 'win32'",
 ]
 dependencies = [
-    { name = "click", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
-    { name = "filelock", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
-    { name = "fsspec", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
-    { name = "hf-xet", marker = "(platform_machine == 'AMD64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'AMD64' and extra != 'extra-5-slmsp-train') or (platform_machine == 'ARM64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'ARM64' and extra != 'extra-5-slmsp-train') or (platform_machine == 'aarch64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'aarch64' and extra != 'extra-5-slmsp-train') or (platform_machine == 'amd64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'amd64' and extra != 'extra-5-slmsp-train') or (platform_machine == 'arm64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'arm64' and extra != 'extra-5-slmsp-train') or (platform_machine == 'x86_64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'x86_64' and extra != 'extra-5-slmsp-train') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
-    { name = "httpx2", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
-    { name = "packaging", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
-    { name = "pyyaml", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
-    { name = "tqdm", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
-    { name = "typing-extensions", marker = "extra == 'extra-5-slmsp-fetch' or extra != 'extra-5-slmsp-train'" },
+    { name = "click", marker = "extra == 'extra-5-slmsp-fetch'" },
+    { name = "filelock", marker = "extra == 'extra-5-slmsp-fetch'" },
+    { name = "fsspec", marker = "extra == 'extra-5-slmsp-fetch'" },
+    { name = "hf-xet", marker = "(platform_machine == 'AMD64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'ARM64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'aarch64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'amd64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'arm64' and extra == 'extra-5-slmsp-fetch') or (platform_machine == 'x86_64' and extra == 'extra-5-slmsp-fetch') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-gdn') or (extra == 'extra-5-slmsp-fetch' and extra == 'extra-5-slmsp-train')" },
+    { name = "httpx2", marker = "extra == 'extra-5-slmsp-fetch'" },
+    { name = "packaging", marker = "extra == 'extra-5-slmsp-fetch'" },
+    { name = "pyyaml", marker = "extra == 'extra-5-slmsp-fetch'" },
+    { name = "tqdm", marker = "extra == 'extra-5-slmsp-fetch'" },
+    { name = "typing-extensions", marker = "extra == 'extra-5-slmsp-fetch'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/12/47/6858d63643e66fb4f6585c3cfd4029c0b2bc1ae21688cee9b3335f20a10d/huggingface_hub-2.2.0.tar.gz", hash = "sha256:5d1b47537394e4215cb858aa12fd493d0f7ef7f58990f5dcd24bc173107b2871", size = 1041026, upload-time = "2026-10-08T15:30:59.971Z" }
 wheels = [
@@ -1496,6 +1533,10 @@ data = [
 fetch = [
     { name = "huggingface-hub", version = "2.2.0", source = { registry = "https://pypi.org/simple" } },
 ]
+gdn = [
+    { name = "flash-linear-attention" },
+    { name = "triton-windows" },
+]
 judge = [
     { name = "anthropic" },
 ]
@@ -1521,6 +1562,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'judge'", specifier = "==1.13.0" },
     { name = "bitsandbytes", marker = "extra == 'train'", specifier = "==0.50.2" },
     { name = "duckdb", marker = "extra == 'data'", specifier = "==1.5.6" },
+    { name = "flash-linear-attention", marker = "extra == 'gdn'", specifier = "==0.5.2" },
     { name = "huggingface-hub", marker = "extra == 'fetch'", specifier = "==2.2.0" },
     { name = "immutabledict", marker = "extra == 'bench'", specifier = "==4.2.1" },
     { name = "jsonschema", specifier = "==4.26.0" },
@@ -1541,9 +1583,10 @@ requires-dist = [
     { name = "sacrebleu", marker = "extra == 'bench'", specifier = "==2.6.0" },
     { name = "torch", marker = "extra == 'train'", specifier = "==2.14.1", index = "https://download.pytorch.org/whl/cu130" },
     { name = "transformers", marker = "extra == 'train'", specifier = "==5.17.0" },
+    { name = "triton-windows", marker = "sys_platform == 'win32' and extra == 'gdn'", specifier = "==3.8.0.post29" },
     { name = "trl", marker = "extra == 'train'", specifier = "==1.13.0" },
 ]
-provides-extras = ["fetch", "data", "judge", "bench", "train", "app"]
+provides-extras = ["fetch", "data", "judge", "bench", "train", "gdn", "app"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1728,6 +1771,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/0e/9e/750649904a065007a838981785b2bd8d9ff26154c6c341ac67d0b7f82c68/transformers-5.17.0.tar.gz", hash = "sha256:a153be279169b55b92d8000bf4af294aed684503d091cca7804da2dd8a9de000", size = 9817878, upload-time = "2026-09-09T15:39:56.886Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl", hash = "sha256:78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801", size = 12295140, upload-time = "2026-09-09T15:39:53.746Z" },
+]
+
+[[package]]
+name = "triton-windows"
+version = "3.8.0.post29"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/bc/b027bba13beb00cd4993a33b7fa89a84ef3a42ecd05d8a0e346526a7dc80/triton_windows-3.8.0.post29-cp312-cp312-win_amd64.whl", hash = "sha256:937ba2ee53b6e664709898537de3eb9eab427a498c04da58f2bd42e1af93e298", size = 52810080, upload-time = "2026-09-28T21:58:35.034Z" },
+    { url = "https://files.pythonhosted.org/packages/89/54/a450dc8f9daf8df9d86630b1feffc9f19a14d5474f507657a22505a41343/triton_windows-3.8.0.post29-cp312-cp312-win_arm64.whl", hash = "sha256:525bc89392c08d6d8531407e0c4f5b1dff35d9a484647b6e5af616a004dd9d5e", size = 48390313, upload-time = "2026-09-28T21:58:42.016Z" },
 ]
 
 [[package]]

@@ -25,7 +25,7 @@ LOURDS = {
     "duckdb",
     "pyarrow",
 }
-EXTRAS = {"fetch", "data", "judge", "bench", "train", "app"}
+EXTRAS = {"fetch", "data", "judge", "bench", "train", "app", "gdn"}
 
 
 def _nom(exigence: str) -> str:
@@ -55,6 +55,17 @@ def test_extras_et_torch_dans_train_seulement(pyproject: dict) -> None:
     assert EXTRAS <= set(extras)
     avec_torch = {nom for nom, deps in extras.items() if "torch" in {_nom(d) for d in deps}}
     assert avec_torch == {"train"}
+
+
+def test_extra_gdn_en_conflit_avec_fetch(pyproject: dict) -> None:
+    gdn = pyproject["project"]["optional-dependencies"]["gdn"]
+    assert {_nom(d) for d in gdn} == {"triton-windows", "flash-linear-attention"}
+    assert "triton-windows==3.8.0.post29 ; sys_platform == 'win32'" in gdn
+    assert "flash-linear-attention==0.5.2" in gdn
+    assert not any("[" in d for d in gdn)  # ni [cuda] ni [cpu] : ils tirent triton (Linux)
+    conflits = pyproject["tool"]["uv"]["conflicts"]
+    assert [{"extra": "fetch"}, {"extra": "gdn"}] in conflits
+    assert [{"extra": "fetch"}, {"extra": "train"}] in conflits
 
 
 def test_torch_depuis_index_cuda_explicite(pyproject: dict) -> None:

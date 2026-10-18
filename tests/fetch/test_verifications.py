@@ -618,12 +618,13 @@ def test_dense_admet_gated_deltanet_non_entrainable(tmp_path: Path) -> None:
     assert verifications.ecartes([dense]) == {}
 
 
-def test_dense_gated_deltanet_exige_entrainable_false(tmp_path: Path) -> None:
+def test_dense_gated_deltanet_entrainable_admis(tmp_path: Path) -> None:
     dossier = dossier_hf(tmp_path, text_config=GATED_DELTANET)
     (dense, _, _) = verifier_config_hf("m", config_modele(), dossier)
-    assert dense.statut == "echec"
+    assert dense.statut == "ok"
     assert "3 couche(s) linear_attention sur 4" in dense.detail
-    assert "inscrire entrainable = false" in dense.detail
+    assert "hybride Gated DeltaNet entraînable" in dense.detail
+    assert "noyaux fla requis à l'entraînement (extra gdn)" in dense.detail
 
 
 def test_dense_type_inconnu_ecarte_meme_non_entrainable(tmp_path: Path) -> None:
@@ -736,7 +737,7 @@ def test_dense_format_inconnu_ecarte_par_prudence(tmp_path: Path, contenu: dict)
 
 def test_dense_gated_deltanet_sous_llm_config(tmp_path: Path) -> None:
     dossier = dossier_hf(tmp_path, llm_config=GATED_DELTANET, vision_config={"depth": 2})
-    assert verifier_config_hf("m", config_modele(), dossier)[0].statut == "echec"
+    assert verifier_config_hf("m", config_modele(), dossier)[0].statut == "ok"
     (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
     assert dense.statut == "ok" and "llm_config.layer_types" in dense.detail
 

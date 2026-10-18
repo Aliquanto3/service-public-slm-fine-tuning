@@ -33,9 +33,12 @@ from __future__ import annotations
 import gc
 import importlib
 import importlib.metadata
+import importlib.util
 import json
+import logging
 import math
 import random
+import re
 import shutil
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -55,6 +58,7 @@ from slmsp.core.erreurs import ConfigurationInvalide, SlmspError
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.var import dossier_var
 from slmsp.inference import processus
+from slmsp.train.config import LONGUEUR_MAX_REPLI_TORCH
 
 METHODES_SONDE: Final = ("qlora", "lora")
 """Méthodes qu'exécute la sonde : QLoRA nf4 (M1) ou LoRA bf16 (M2)."""
@@ -139,12 +143,179 @@ def charger_pile() -> Pile:
 def versions_pile() -> dict[str, str | None]:
     """Versions installées de la pile (`None` si le paquet manque), sans l'importer."""
     versions: dict[str, str | None] = {}
-    for nom in ("torch", "transformers", "trl", "peft", "bitsandbytes", "accelerate", "datasets"):
+    noms = ("torch", "transformers", "trl", "peft", "bitsandbytes", "accelerate", "datasets")
+    for nom in (*noms, *PAQUETS_GDN):
         try:
             versions[nom] = importlib.metadata.version(nom)
         except importlib.metadata.PackageNotFoundError:
             versions[nom] = None
     return versions
+
+
+PAQUETS_GDN: Final = ("triton-windows", "fla-core", "flash-linear-attention")
+"""Distributions de l'extra `gdn` (noyaux du chemin rapide Gated DeltaNet)."""
+COMMANDE_EXTRA_GDN: Final = (
+    "uv sync --extra data --extra judge --extra bench --extra train --extra gdn --extra app"
+)
+NOYAUX_GDN: Final = {
+    "chunk_gated_delta_rule": ("chunk_gated_delta_rule", "torch_chunk_gated_delta_rule"),
+    "causal_conv1d": ("causal_conv1d_fn",),
+}
+"""Noyau contrôlé -> noms de la fonction décorée dans le module de modélisation."""
+PREFIXES_CHEMIN_RAPIDE: Final = ("fla.", "causal_conv1d")
+_MOTIF_REPLI: Final = re.compile(r"`?(\w+)`? is falling back to its reference PyTorch")
+
+
+def noyaux_gdn_disponibles() -> dict[str, Any]:
+    """`fla` et `triton` sont-ils importables ? Versions des paquets de l'extra `gdn`.
+
+    Sans importer torch ni fla : `find_spec` et `importlib.metadata` seulement.
+    """
+    resultat: dict[str, Any] = {}
+    for nom in ("fla", "triton"):
+        try:
+            resultat[nom] = importlib.util.find_spec(nom) is not None
+        except (ImportError, ValueError):
+            resultat[nom] = False
+    for nom in PAQUETS_GDN:
+        try:
+            resultat[nom] = importlib.metadata.version(nom)
+        except importlib.metadata.PackageNotFoundError:
+            resultat[nom] = None
+    return resultat
+
+
+def a_couches_gdn(config_poids: Mapping[str, Any]) -> bool:
+    """Une couche `linear_attention` figure dans `layer_types` (racine ou `text_config`)."""
+    for sous in _sous_configs(config_poids):
+        couches = sous.get("layer_types")
+        if isinstance(couches, list) and any(str(c) == "linear_attention" for c in couches):
+            return True
+    return False
+
+
+class CollecteAvertissements(logging.Handler):
+    """Collecte les avertissements du logger `transformers` (repli sur l'implémentation torch).
+
+    Utilisable en `with` : `warning_once` ne part qu'au premier appel du processus.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.messages: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            texte = record.getMessage()
+        except Exception:  # pragma: no cover - message mal formé
+            return
+        if "falling back" in texte:
+            self.messages.append(texte)
+
+    def __enter__(self) -> CollecteAvertissements:
+        logging.getLogger("transformers").addHandler(self)
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        logging.getLogger("transformers").removeHandler(self)
+
+
+def _module_modelisation(pile: Pile, config_poids: Mapping[str, Any]) -> Any | None:
+    architectures = config_poids.get("architectures")
+    if not isinstance(architectures, list) or not architectures:
+        return None
+    try:
+        classe = getattr(pile.transformers, str(architectures[0]))
+        return importlib.import_module(classe.__module__)
+    except Exception:
+        return None
+
+
+def _implementation_retenue(fonction: Any) -> Any | None:
+    """Implémentation gardée dans la fermeture de la fonction décorée (`implementation`)."""
+    code = getattr(fonction, "__code__", None)
+    fermeture = getattr(fonction, "__closure__", None)
+    if code is None or not fermeture:
+        return None
+    for nom, cellule in zip(code.co_freevars, fermeture, strict=False):
+        if nom == "implementation":
+            try:
+                return cellule.cell_contents
+            except ValueError:
+                return None
+    return None
+
+
+def controler_noyaux_gdn(
+    pile: Pile, config_poids: Mapping[str, Any], *, avertissements: Iterable[str] = ()
+) -> dict[str, Any] | None:
+    """Chemin rapide (`fla`) ou repli (`torch`) des noyaux Gated DeltaNet ; `None` si dense.
+
+    Source principale : la fermeture des fonctions décorées du module de modélisation, lisible
+    dès l'import de la pile (transformers résout l'implémentation à l'import). `fla` désigne
+    le chemin rapide (module `fla.*` ou `causal_conv1d`). Une implémentation illisible compte
+    comme `torch` (refus prudent). Complément : les avertissements « is falling back » du
+    premier pas, qui l'emportent sur la fermeture.
+    """
+    if not a_couches_gdn(config_poids):
+        return None
+    module = _module_modelisation(pile, config_poids)
+    avertissements = list(avertissements)
+    resultat: dict[str, Any] = {}
+    for noyau, noms in NOYAUX_GDN.items():
+        source = "torch"
+        for nom in noms:
+            fonction = getattr(module, nom, None) if module is not None else None
+            implementation = _implementation_retenue(fonction) if fonction is not None else None
+            if implementation is not None:
+                origine = str(getattr(implementation, "__module__", "") or "")
+                if origine.startswith(PREFIXES_CHEMIN_RAPIDE):
+                    source = "fla"
+                break
+        resultat[noyau] = source
+    for texte in avertissements:
+        trouve = _MOTIF_REPLI.search(texte)
+        nom = trouve.group(1) if trouve else texte
+        for noyau, noms in NOYAUX_GDN.items():
+            if noyau in nom or any(n in nom for n in noms):
+                resultat[noyau] = "torch"
+    resultat["replis"] = [noyau for noyau in NOYAUX_GDN if resultat[noyau] == "torch"]
+    resultat["avertissements"] = avertissements
+    return resultat
+
+
+def exiger_noyaux_gdn(
+    config_poids: Mapping[str, Any],
+    slug: str,
+    *,
+    repli_torch: bool,
+    controle: Mapping[str, Any] | None = None,
+) -> None:
+    """Refuse (`ConfigurationInvalide`) un modèle à couches `linear_attention` sans chemin rapide.
+
+    Sans `controle` : `fla` et `triton` doivent être importables. Avec le `controle` de
+    `controler_noyaux_gdn` : `chunk_gated_delta_rule` ne doit pas être en repli torch.
+    `repli_torch = true` lève le refus (borné à 4096 tokens par `RunConfig`). Le repli de
+    `causal_conv1d` est admis. Sans couche `linear_attention`, sans objet.
+    """
+    if repli_torch or not a_couches_gdn(config_poids):
+        return
+    if controle is None:
+        dispo = noyaux_gdn_disponibles()
+        manquants = [nom for nom in ("fla", "triton") if not dispo.get(nom)]
+        if manquants:
+            raise ConfigurationInvalide(
+                f"{slug} : couches `linear_attention` (Gated DeltaNet) mais {', '.join(manquants)} "
+                f"non importable : chemin rapide absent. Installer l'extra `gdn` : "
+                f"{COMMANDE_EXTRA_GDN} (sinon `repli_torch = true`, longueur_max <= "
+                f"{LONGUEUR_MAX_REPLI_TORCH}, plus lent)"
+            )
+    elif controle.get("chunk_gated_delta_rule") == "torch":
+        raise ConfigurationInvalide(
+            f"{slug} : `chunk_gated_delta_rule` en repli torch (noyau fla non retenu par "
+            "transformers) ; vérifier l'extra `gdn` ou inscrire `repli_torch = true` "
+            f"(longueur_max <= {LONGUEUR_MAX_REPLI_TORCH}, plus lent)"
+        )
 
 
 # --- Contrôles ----------------------------------------------------------------------------
@@ -796,6 +967,9 @@ def sonder(
             sonde["erreur"] = motif
             return ResultatSonde(sonde=sonde, statut="partiel-erreur", motif=motif)
 
+    noyaux = controler_noyaux_gdn(pile, config_modele)  # consigné, jamais bloquant
+    if noyaux is not None:
+        sonde["noyaux_gdn"] = noyaux
     materiel = controler_materiel(pile.torch)
     sonde["controles_materiel"] = materiel.ligne()
     if materiel.bloquant is not None:
@@ -857,18 +1031,22 @@ def sonder(
                     f"longueur {longueur} ({etiquette}) : {pas} pas après "
                     f"{PAS_CHAUFFE} pas de chauffe"
                 )
-                mesure = mesurer_longueur(
-                    pile,
-                    modele,
-                    tokenizer,
-                    longueur=int(longueur),
-                    pas=int(pas),
-                    graine=int(graine),
-                    vocab=vocab,
-                    dossier_sortie=dossier_travail,
-                    memoire_totale=materiel.memoire_totale or 0,
-                    specifiques=specifiques,
-                )
+                collecte = CollecteAvertissements()
+                with collecte:
+                    mesure = mesurer_longueur(
+                        pile,
+                        modele,
+                        tokenizer,
+                        longueur=int(longueur),
+                        pas=int(pas),
+                        graine=int(graine),
+                        vocab=vocab,
+                        dossier_sortie=dossier_travail,
+                        memoire_totale=materiel.memoire_totale or 0,
+                        specifiques=specifiques,
+                    )
+                if noyaux is not None:  # souvent vide après la première longueur (warning_once)
+                    mesure["avertissements_noyaux"] = list(collecte.messages)
                 mesure["precision_base"] = etiquette
                 sonde["mesures"].append(mesure)
                 journal(

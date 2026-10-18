@@ -50,6 +50,9 @@ PrecisionBase = Literal["fp32-kbit", "bf16"]
 (embeddings, normes et conv1d en fp32) ; `bf16` garde la base en bf16 (moins de VRAM)."""
 PRECISION_BASE_DEFAUT: Final = "fp32-kbit"
 
+LONGUEUR_MAX_REPLI_TORCH: Final = 4096
+"""Borne de `repli_torch` (enquête du 2026-10-18 : 536 à 633 tokens/s jusqu'à 4096)."""
+
 MOTIF_NOM_RUN: Final = r"^[a-z0-9.-]+$"
 """Nom d'un TOML de run (slug du `run_id`, AD-21) et d'une campagne."""
 
@@ -94,6 +97,9 @@ class RunConfig(ModeleConfig):
     l'entraînement en lora et pissa (bf16 sans quantification, jamais castée), mais invariant de
     campagne comme ailleurs : leurs TOML déclarent la précision de la campagne (`bf16` pour
     rejoindre une campagne en `bf16`)."""
+    repli_torch: bool = False
+    """Hybrides Gated DeltaNet : autorise le repli torch si les noyaux fla manquent (lent ;
+    borné à `longueur_max <= 4096`, non mesuré au-delà). Absent du `toml` résolu au défaut."""
     sft_run_id: Annotated[str, StringConstraints(pattern=MOTIF_RUN_ID)] | None = None
     """ORPO seulement : Run SFT dont l'adaptateur sert de point de départ."""
 
@@ -105,6 +111,11 @@ class RunConfig(ModeleConfig):
             raise ValueError("sft_run_id n'est permis qu'avec methode = orpo")
         if self.methode == "qlora-unsloth" and self.precision_base != PRECISION_BASE_DEFAUT:
             raise ValueError("precision_base ne s'applique pas à qlora-unsloth (pile Unsloth)")
+        if self.repli_torch and self.longueur_max > LONGUEUR_MAX_REPLI_TORCH:
+            raise ValueError(
+                f"repli_torch = true exige longueur_max <= {LONGUEUR_MAX_REPLI_TORCH} "
+                "(repli torch non mesuré au-delà sous Windows)"
+            )
         return self
 
 

@@ -402,3 +402,113 @@ def test_run_reel_modele_minuscule(projet) -> None:
     (dossier,) = (projet.racine / "runs" / "train").iterdir()
     assert (dossier / "checkpoints" / "checkpoint-2").is_dir()
     assert (dossier / "adaptateur").is_dir() and (dossier / "couts.json").is_file()
+
+
+# --- Hybrides Gated DeltaNet : noyaux fla (story B1) -----------------------------------------
+
+CONFIG_HYBRIDE = {
+    "model_type": "qwen3_5",
+    "architectures": ["FauxQwen35ForConditionalGeneration"],
+    "vocab_size": 100,
+    "text_config": {"layer_types": ["linear_attention", "linear_attention", "full_attention"]},
+}
+
+
+def _hybride(projet, pile, monkeypatch, *, chunk: str, fla_installe: bool = True) -> None:
+    """Fiche factice à couches `linear_attention` (les fiches Qwen3.5 restent non entraînables)."""
+    (projet.modeles / "granite-4.0-1b" / "hf" / "config.json").write_text(
+        json.dumps(CONFIG_HYBRIDE), encoding="utf-8"
+    )
+    origine = "fla.ops.gated_delta_rule" if chunk == "fla" else "transformers.models.qwen3_5"
+
+    def implementation(*_a, **_k) -> None:
+        return None
+
+    implementation.__module__ = origine
+
+    def enveloppe(*args, **kwargs):
+        return implementation(*args, **kwargs)
+
+    module = type(sys)("faux_modeling_qwen35_run")
+    module.torch_chunk_gated_delta_rule = enveloppe
+    module.causal_conv1d_fn = enveloppe
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    pile.transformers.FauxQwen35ForConditionalGeneration = type(
+        "FauxQwen35ForConditionalGeneration", (), {"__module__": module.__name__}
+    )
+    monkeypatch.setattr(
+        module_run.environnement,
+        "noyaux_gdn_disponibles",
+        lambda: {"fla": fla_installe, "triton": fla_installe},
+    )
+
+
+def test_run_hybride_refuse_sans_fla_avant_verrou(projet, pile, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="fla", fla_installe=False)
+
+    def charger_pile_interdit():
+        raise AssertionError("pile chargée avant le refus")
+
+    monkeypatch.setattr(module_run.environnement, "charger_pile", charger_pile_interdit)
+    with pytest.raises(ConfigurationInvalide, match=r"--extra gdn"):
+        module_run.executer(projet.ecrire_toml(), racine=projet.racine, pile=None)
+    assert pile.ordre == [] and not (projet.racine / "runs").exists()
+
+
+def test_run_hybride_refuse_si_repli_sans_option(projet, pile, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="torch")
+    with pytest.raises(ConfigurationInvalide, match="repli torch"):
+        module_run.executer(projet.ecrire_toml(), racine=projet.racine, pile=pile)
+    assert pile.trainers == [] and not (projet.racine / "runs").exists()
+
+
+def test_run_hybride_repli_torch_alerte(projet, pile, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="torch", fla_installe=False)
+    run_id = _executer(projet, pile, projet.ecrire_toml(repli_torch=True))
+    run = ouvrir_run(run_id, racine=projet.racine)
+    noyaux = _json(run.dossier / "noyaux.json")
+    assert (
+        noyaux["chunk_gated_delta_rule"] == "torch" and "chunk_gated_delta_rule" in noyaux["replis"]
+    )
+    evenements = [ligne["evenement"] for ligne in run.lire_jsonl("log.jsonl")]
+    assert "noyaux" in evenements and "alerte" in evenements
+    assert run.manifeste.config["toml"]["repli_torch"] is True
+
+
+def test_run_noyaux_hors_run_json_et_invariants(projet, pile, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="fla")
+    run_id = _executer(projet, pile, projet.ecrire_toml())
+    run = ouvrir_run(run_id, racine=projet.racine)
+    assert _json(run.dossier / "noyaux.json")["chunk_gated_delta_rule"] == "fla"
+    evenements = [ligne["evenement"] for ligne in run.lire_jsonl("log.jsonl")]
+    assert "noyaux" in evenements and "alerte" not in evenements
+    config = run.manifeste.config
+    assert "repli_torch" not in config["toml"]  # absente au défaut
+    assert "noyaux" not in json.dumps(config)
+    assert not any("noyaux" in cle for cle in module_run.CLES_INVARIANTS)
+
+
+def test_reprise_run_anterieur_sans_repli_torch(projet, pile, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    toml = projet.ecrire_toml()
+    terminer = module_run.Run.terminer
+
+    def arret(self, statut, *args, **kw):
+        if statut == "complet":
+            raise KeyboardInterrupt
+        return terminer(self, statut, *args, **kw)
+
+    monkeypatch.setattr(module_run.Run, "terminer", arret)
+    with pytest.raises(KeyboardInterrupt):
+        module_run.executer(toml, racine=projet.racine, pile=pile, sortie=lambda _m: None)
+    monkeypatch.setattr(module_run.Run, "terminer", terminer)
+    (dossier,) = (projet.racine / "runs" / "train").iterdir()
+    # Un run créé avant B1 n'a pas la clé : la config résolue d'aujourd'hui doit le reprendre.
+    assert (
+        "repli_torch" not in ouvrir_run(dossier.name, racine=projet.racine).manifeste.config["toml"]
+    )
+    assert _executer(projet, pile, toml, reprendre_run=dossier.name) == dossier.name

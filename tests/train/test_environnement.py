@@ -1093,3 +1093,204 @@ def test_sonde_reelle_granite(
     assert mesure["statut"] == "ok" and mesure["perte_finie"] is True
     assert 0 < mesure["max_memory_reserved"] <= sonde["controles_materiel"]["memoire_totale"]
     assert mesure["tokens_par_s"] > 0
+
+
+# --- Noyaux Gated DeltaNet (story B1) --------------------------------------------------------
+
+CONFIG_QWEN35 = {
+    "model_type": "qwen3_5",
+    "architectures": ["FauxQwen35ForConditionalGeneration"],
+    "vocab_size": 400,
+    "text_config": {"layer_types": ["linear_attention"] * 3 + ["full_attention"]},
+}
+ORIGINES_NOYAUX = {"fla": "fla.ops.gated_delta_rule", "torch": "transformers.models.qwen3_5"}
+
+
+def _decorer(implementation: Any):
+    """Schéma de `use_kernel_func_from_hub_with_fallback` : la fermeture garde
+    `implementation`."""
+
+    def enveloppe(*args: Any, **kwargs: Any) -> Any:
+        return implementation(*args, **kwargs)
+
+    return enveloppe
+
+
+def faux_modele_gdn(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    chunk: str = "fla",
+    conv: str = "torch",
+    scenario: Scenario | None = None,
+) -> environnement.Pile:
+    """Pile simulée dont `transformers` expose une classe d'un faux module de modélisation.
+
+    `chunk` et `conv` : origine (`fla` ou `torch`) de l'implémentation retenue.
+    """
+
+    def implementation(origine: str):
+        def fonction(*_a: Any, **_k: Any) -> None:
+            return None
+
+        fonction.__module__ = ORIGINES_NOYAUX[origine]
+        return fonction
+
+    module = type(sys)("faux_modeling_qwen35")
+    module.torch_chunk_gated_delta_rule = _decorer(implementation(chunk))
+    module.causal_conv1d_fn = _decorer(implementation(conv))
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    classe = type("FauxQwen35ForConditionalGeneration", (), {"__module__": module.__name__})
+    pile = pile_simulee(scenario or Scenario())
+    pile.transformers.FauxQwen35ForConditionalGeneration = classe
+    return pile
+
+
+def test_versions_pile_porte_les_paquets_gdn() -> None:
+    versions = environnement.versions_pile()
+    assert {"triton-windows", "fla-core", "flash-linear-attention"} <= set(versions)
+
+
+def test_noyaux_gdn_disponibles_sans_fla(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(environnement.importlib.util, "find_spec", lambda _nom: None)
+
+    def absent(nom: str) -> str:
+        raise environnement.importlib.metadata.PackageNotFoundError(nom)
+
+    monkeypatch.setattr(environnement.importlib.metadata, "version", absent)
+    assert environnement.noyaux_gdn_disponibles() == {
+        "fla": False,
+        "triton": False,
+        "triton-windows": None,
+        "fla-core": None,
+        "flash-linear-attention": None,
+    }
+
+
+def test_noyaux_gdn_disponibles_avec_fla(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(environnement.importlib.util, "find_spec", lambda _nom: object())
+    monkeypatch.setattr(environnement.importlib.metadata, "version", lambda nom: f"v-{nom}")
+    dispo = environnement.noyaux_gdn_disponibles()
+    assert dispo["fla"] is True and dispo["triton"] is True
+    assert dispo["fla-core"] == "v-fla-core" and dispo["triton-windows"] == "v-triton-windows"
+
+
+def test_a_couches_gdn_sous_text_config() -> None:
+    assert environnement.a_couches_gdn(CONFIG_QWEN35)
+    assert environnement.a_couches_gdn({"layer_types": ["linear_attention"]})
+    assert not environnement.a_couches_gdn(CONFIG_GRANITE)
+    assert not environnement.a_couches_gdn({"text_config": {"layer_types": ["full_attention"]}})
+
+
+def test_controler_noyaux_gdn_chemin_rapide(monkeypatch: pytest.MonkeyPatch) -> None:
+    pile = faux_modele_gdn(monkeypatch, chunk="fla", conv="fla")
+    assert environnement.controler_noyaux_gdn(pile, CONFIG_QWEN35) == {
+        "chunk_gated_delta_rule": "fla",
+        "causal_conv1d": "fla",
+        "replis": [],
+        "avertissements": [],
+    }
+
+
+def test_controler_noyaux_gdn_repli_detecte(monkeypatch: pytest.MonkeyPatch) -> None:
+    pile = faux_modele_gdn(monkeypatch, chunk="torch", conv="torch")
+    controle = environnement.controler_noyaux_gdn(pile, CONFIG_QWEN35)
+    assert controle["chunk_gated_delta_rule"] == "torch" and controle["causal_conv1d"] == "torch"
+    assert controle["replis"] == ["chunk_gated_delta_rule", "causal_conv1d"]
+
+
+def test_controler_noyaux_gdn_causal_conv1d_seul_en_repli_admis(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pile = faux_modele_gdn(monkeypatch, chunk="fla", conv="torch")
+    controle = environnement.controler_noyaux_gdn(pile, CONFIG_QWEN35)
+    assert controle["replis"] == ["causal_conv1d"]
+    environnement.exiger_noyaux_gdn(CONFIG_QWEN35, "m", repli_torch=False, controle=controle)
+
+
+def test_controler_noyaux_gdn_avertissement_l_emporte(monkeypatch: pytest.MonkeyPatch) -> None:
+    pile = faux_modele_gdn(monkeypatch, chunk="fla", conv="fla")
+    message = (
+        "`chunk_gated_delta_rule` is falling back to its reference PyTorch implementation "
+        "because `flash-linear-attention` is not installed."
+    )
+    controle = environnement.controler_noyaux_gdn(pile, CONFIG_QWEN35, avertissements=[message])
+    assert controle["chunk_gated_delta_rule"] == "torch" and controle["causal_conv1d"] == "fla"
+    assert controle["avertissements"] == [message]
+
+
+def test_controler_noyaux_gdn_modele_dense_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    pile = faux_modele_gdn(monkeypatch)
+    assert environnement.controler_noyaux_gdn(pile, CONFIG_GRANITE) is None
+
+
+def test_controler_noyaux_gdn_implementation_illisible_vaut_repli() -> None:
+    pile = pile_simulee(Scenario())  # aucune classe d'architecture : prudence, refus
+    controle = environnement.controler_noyaux_gdn(pile, CONFIG_QWEN35)
+    assert controle["chunk_gated_delta_rule"] == "torch"
+
+
+def test_collecte_avertissements_capture_le_logger_transformers() -> None:
+    import logging
+
+    journal = logging.getLogger("transformers")
+    with environnement.CollecteAvertissements() as collecte:
+        journal.warning("`causal_conv1d_fn` is falling back to its reference PyTorch")
+        journal.warning("sans rapport")
+    journal.warning("`x` is falling back, après la collecte")
+    assert len(collecte.messages) == 1 and "causal_conv1d_fn" in collecte.messages[0]
+
+
+def test_exiger_noyaux_gdn_refuse_sans_fla(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        environnement, "noyaux_gdn_disponibles", lambda: {"fla": False, "triton": True}
+    )
+    with pytest.raises(ConfigurationInvalide, match=r"fla non importable.*--extra gdn"):
+        environnement.exiger_noyaux_gdn(CONFIG_QWEN35, "qwen", repli_torch=False)
+
+
+def test_exiger_noyaux_gdn_refuse_si_chunk_en_repli(monkeypatch: pytest.MonkeyPatch) -> None:
+    pile = faux_modele_gdn(monkeypatch, chunk="torch")
+    controle = environnement.controler_noyaux_gdn(pile, CONFIG_QWEN35)
+    with pytest.raises(ConfigurationInvalide, match="repli torch"):
+        environnement.exiger_noyaux_gdn(CONFIG_QWEN35, "qwen", repli_torch=False, controle=controle)
+    environnement.exiger_noyaux_gdn(CONFIG_QWEN35, "qwen", repli_torch=True, controle=controle)
+
+
+def test_exiger_noyaux_gdn_repli_explicite(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        environnement, "noyaux_gdn_disponibles", lambda: {"fla": False, "triton": False}
+    )
+    environnement.exiger_noyaux_gdn(CONFIG_QWEN35, "qwen", repli_torch=True)
+
+
+def test_exiger_noyaux_gdn_modele_dense_sans_objet(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        environnement, "noyaux_gdn_disponibles", lambda: {"fla": False, "triton": False}
+    )
+    environnement.exiger_noyaux_gdn(CONFIG_GRANITE, "granite", repli_torch=False)
+
+
+def test_sonde_consigne_noyaux_sans_refuser(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pile = faux_modele_gdn(monkeypatch, chunk="torch", conv="torch")
+    resultat = environnement.sonder(
+        slug="qwen-factice",
+        dossier=tmp_path / "poids",
+        config_modele=CONFIG_QWEN35,
+        longueurs=(16, 32),
+        pas=2,
+        dossier_travail=tmp_path / "travail",
+        pile=pile,
+    )
+    assert resultat.statut == "complet"  # la sonde mesure, ne refuse jamais pour les noyaux
+    noyaux = resultat.sonde["noyaux_gdn"]
+    assert noyaux["chunk_gated_delta_rule"] == "torch"
+    assert "chunk_gated_delta_rule" in noyaux["replis"]
+    assert all(m["avertissements_noyaux"] == [] for m in resultat.sonde["mesures"])
+
+
+def test_sonde_modele_dense_sans_noyaux_gdn(tmp_path: Path) -> None:
+    resultat = _sonder(Scenario(), tmp_path)
+    assert "noyaux_gdn" not in resultat.sonde
+    assert all("avertissements_noyaux" not in m for m in resultat.sonde["mesures"])

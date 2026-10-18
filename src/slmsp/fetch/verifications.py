@@ -68,7 +68,8 @@ COUCHES_DENSES: Final = frozenset({"attention", "full_attention", "sliding_atten
 COUCHES_INFERENCE_SEULE: Final = frozenset({"linear_attention", "mamba"})
 """Couches hybrides admises pour l'inférence seulement (Gated DeltaNet, décision D8 ; Mamba,
 révision D8 du 2026-10-18, llama.cpp les servant sous Windows) : la fiche doit porter
-`entrainable = false`. Tout autre type écarte le modèle."""
+`entrainable = false`, sauf `linear_attention` seul, entraînable avec les noyaux fla (extra
+`gdn`, la garde vit dans `train`). Tout autre type écarte le modèle."""
 FAMILLES_HYBRIDES: Final = {"linear_attention": "Gated DeltaNet", "mamba": "Mamba"}
 """Libellé de famille de chaque type de `COUCHES_INFERENCE_SEULE` (détail du contrôle `dense`)."""
 CLES_TYPES_COUCHE: Final = (
@@ -283,7 +284,16 @@ def _controle_dense(slug: str, donnees: dict[str, Any], config: ConfigModele) ->
         nombre = sum(lineaires.values())
         types_hybrides = "+".join(sorted(lineaires))
         famille = " et ".join(FAMILLES_HYBRIDES[t] for t in sorted(lineaires))
-        if config.entrainable:
+        if config.entrainable and "linear_attention" in lineaires and "mamba" not in lineaires:
+            return Controle(
+                slug,
+                "dense",
+                "ok",
+                f"hybride Gated DeltaNet entraînable : {nombre} couche(s) {types_hybrides} sur "
+                f"{total}, noyaux fla requis à l'entraînement (extra gdn)",
+                valeurs,
+            )
+        if config.entrainable:  # Mamba, seul ou mélangé : inférence et Baseline seulement
             return Controle(
                 slug,
                 "dense",

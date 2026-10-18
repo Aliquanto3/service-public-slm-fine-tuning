@@ -35,6 +35,13 @@ train = [
     "bitsandbytes==0.50.2",
     "accelerate==1.15.0",
 ]
+# Noyaux du chemin rapide Gated DeltaNet (Qwen3.5). Sans `[cuda]` ni `[cpu]` : ceux de `fla-core`
+# tirent `triton>=3.3` (paquet Linux). En conflit avec `fetch` : flash-linear-attention déclare
+# `transformers` sans épinglage, que `fetch` (huggingface-hub 2.2.0) ne tolère pas à 5.17.0.
+gdn = [
+    "triton-windows==3.8.0.post29 ; sys_platform == 'win32'",
+    "flash-linear-attention==0.5.2",
+]
 app = ["pywebview==6.2.1", "pyinstaller==6.22.3"]
 
 [project.scripts]
@@ -57,7 +64,10 @@ build-backend = "uv_build"
 environments = ["sys_platform == 'win32'"]
 # transformers 5.17.0 (épinglé pour Unsloth) exige huggingface-hub<2 alors que l'extra
 # `fetch` épingle huggingface-hub 2.2.0 : les deux extras ne s'installent pas ensemble.
-conflicts = [[{ extra = "fetch" }, { extra = "train" }]]
+conflicts = [
+    [{ extra = "fetch" }, { extra = "train" }],
+    [{ extra = "fetch" }, { extra = "gdn" }],
+]
 
 # torch CUDA (AD-28, D-nuit-A1-17) : roue torch-2.14.1+cu130-cp312-win_amd64.
 [[tool.uv.index]]

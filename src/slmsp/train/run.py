@@ -57,6 +57,7 @@ DOSSIER_ADAPTATEUR: Final = "adaptateur"
 NOM_JEU: Final = "jeu.json"
 NOM_ENTRAINEMENT: Final = "entrainement.jsonl"
 NOM_LOG: Final = "log.jsonl"
+NOM_NOYAUX: Final = "noyaux.json"
 PREFIXE_BLOQUE: Final = "bloqué : "
 VERSION_RENDU_OUTILS: Final = 1
 """Rendu des outils (R7) : `tools` du fichier de config, arguments décodés. Absent = avant R7."""
@@ -195,10 +196,13 @@ def _charger_tokenizer(pile: environnement.Pile, dossier: Path) -> Any:
 
 
 def _toml_resolu(config: RunConfig) -> dict[str, Any]:
-    """TOML résolu de `run.json` ; `precision_base` absente au défaut (reprise des runs d'avant)."""
+    """TOML résolu de `run.json` ; `precision_base` et `repli_torch` absentes au défaut
+    (reprise des runs d'avant)."""
     toml = config.model_dump(mode="json")
     if toml.get("precision_base") == PRECISION_BASE_DEFAUT:
         del toml["precision_base"]
+    if not toml.get("repli_torch"):
+        toml.pop("repli_torch", None)
     return toml
 
 
@@ -260,6 +264,8 @@ def executer(
     contraintes = chargement.controler_contraintes(
         config_poids, config.modele, exclure_vision=config_modele.exclure_vision
     )
+    # Hybride Gated DeltaNet sans fla : refus avant le chargement de la pile et avant le verrou.
+    environnement.exiger_noyaux_gdn(config_poids, config.modele, repli_torch=config.repli_torch)
     specifiques = (
         environnement.arguments_specifiques(config_poids) if plan.entraineur != "orpo" else {}
     )
@@ -298,6 +304,10 @@ def executer(
                 f"pile d'entraînement indisponible ({type(exc).__name__} : {exc}) ; "
                 "installer l'extra : uv sync --extra train"
             ) from None
+    controle_noyaux = environnement.controler_noyaux_gdn(pile, config_poids)
+    environnement.exiger_noyaux_gdn(
+        config_poids, config.modele, repli_torch=config.repli_torch, controle=controle_noyaux
+    )
     tokenizer = _charger_tokenizer(pile, dossier)
     template_sha = chargement.sha_chat_template(tokenizer)
     exemples: list[dict[str, Any]]
@@ -369,6 +379,8 @@ def executer(
                 exemples=exemples,
                 specifiques=specifiques,
                 adaptateur_sft=adaptateur_sft,
+                config_poids=config_poids,
+                controle_noyaux=controle_noyaux,
                 reprise=reprendre_run is not None,
                 racine=racine,
                 cpu=cpu,
@@ -382,6 +394,19 @@ def executer(
         run.terminer("complet")
     sortie(f"train run : run {run.run_id} complet")
     return 0
+
+
+def _ecrire_noyaux(run: Run, controle: Mapping[str, Any] | None) -> None:
+    """`noyaux.json` du segment (`noyaux-2.json`, etc. aux reprises : un artefact n'est jamais
+    réécrit)."""
+    if controle is None:
+        return
+    rang = 1
+    nom = NOM_NOYAUX
+    while (run.dossier / nom).exists():
+        rang += 1
+        nom = f"noyaux-{rang}.json"
+    run.ecrire(nom, json_canonique(environnement.json_sur(controle)) + b"\n")
 
 
 def _entrainer_unsloth(
@@ -430,6 +455,8 @@ def _entrainer(
     exemples: list[dict[str, Any]],
     specifiques: Mapping[str, Any],
     adaptateur_sft: Path | None,
+    config_poids: Mapping[str, Any],
+    controle_noyaux: Mapping[str, Any] | None = None,
     reprise: bool,
     racine: Path,
     cpu: bool,
@@ -502,9 +529,31 @@ def _entrainer(
         arguments=arguments,
         callbacks=[callback],
     )
+    if controle_noyaux is not None:
+        run.ajouter_jsonl(
+            NOM_LOG, {"evenement": "noyaux", **environnement.json_sur(controle_noyaux)}
+        )
+        if config.repli_torch:
+            run.ajouter_jsonl(
+                NOM_LOG,
+                {
+                    "evenement": "alerte",
+                    "message": "repli torch (repli_torch = true) : entraînement plus lent, "
+                    "noyaux fla non exigés",
+                },
+            )
+    collecte = environnement.CollecteAvertissements()
     try:
-        entraineur.train(resume_from_checkpoint=str(depart) if depart is not None else None)
+        with collecte:
+            entraineur.train(resume_from_checkpoint=str(depart) if depart is not None else None)
     finally:
+        if controle_noyaux is not None:  # hors run.json : complété des avertissements du pas
+            _ecrire_noyaux(
+                run,
+                environnement.controler_noyaux_gdn(
+                    pile, config_poids, avertissements=collecte.messages
+                ),
+            )
         try:
             mesures = callback.mesures()
         except RuntimeError:  # l'entraînement n'a pas commencé

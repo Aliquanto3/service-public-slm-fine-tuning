@@ -46,8 +46,10 @@ uv run --no-sync slmsp fetch benchmarks
 uv run --no-sync slmsp fetch modeles bge-m3 bge-m3-f16 granite-4.0-1b minicpm5-1b
 uv run --no-sync slmsp fetch modeles granite-4.0-1b minicpm5-1b --f16
 # Phase 2 : environnement de travail, comme sur la tour (retire fetch, installe torch cu130)
-uv sync --extra data --extra judge --extra bench --extra train --extra app
+uv sync --extra data --extra judge --extra bench --extra train --extra gdn --extra app
 ```
+
+L'extra `gdn` (triton-windows 3.8.0.post29, flash-linear-attention 0.5.2) fournit les noyaux du chemin rapide Gated DeltaNet des Qwen3.5 : sans lui, `train run` refuse un modèle à couches `linear_attention` (sauf `repli_torch = true`, plus lent, `longueur_max <= 4096`). Il est en conflit avec `fetch` pour la même raison que `train` et ne figure donc jamais en phase 1.
 
 Pour télécharger un modèle plus tard, repasser par la phase 1, puis revenir à la phase 2.
 

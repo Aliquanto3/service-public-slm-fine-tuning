@@ -108,6 +108,21 @@ deferred:
 
 **Fichiers** : `pyproject.toml`, `uv.lock`, `docs/reprise-deuxieme-pc.md`, `tests/test_pyproject.py`, `src/slmsp/train/environnement.py`, `src/slmsp/train/config.py`, `src/slmsp/train/run.py`, `src/slmsp/cli/train.py`, `src/slmsp/fetch/verifications.py`, et les tests cités.
 
+### Auto Run Result (B1, 2026-10-19)
+
+Statut : fait. Branche `feat/qwen35-b1`. `uv lock` (uv 0.13.1, `revision = 5` inchangée) n'ajoute que `einops` 0.8.2, `fla-core` 0.5.2, `flash-linear-attention` 0.5.2 et `triton-windows` 3.8.0.post29, plus la ligne de conflit `[fetch, gdn]` et la réécriture des marqueurs d'extras qui en découle ; aucune version existante ne change.
+
+Décisions prises seul :
+- **Noms réels des fonctions décorées.** Dans transformers 5.17.0, le noyau GDN s'appelle `torch_chunk_gated_delta_rule` dans le module de modélisation (le nom passé au décorateur est `chunk_gated_delta_rule`). `controler_noyaux_gdn` cherche les deux noms. Une implémentation illisible (module, fonction ou fermeture introuvable) compte comme `torch` : refus prudent.
+- **Sens de `"fla"`** pour `causal_conv1d` : chemin rapide, soit un module `fla.*` ou `causal_conv1d*`. Seul `causal_conv1d` en repli est admis (`exiger_noyaux_gdn` ne regarde que `chunk_gated_delta_rule`).
+- **`noyaux.json` est écrit une seule fois par segment**, en fin d'entraînement (bloc `finally`), car un artefact n'est jamais réécrit ; l'événement `noyaux` de `log.jsonl` part, lui, avant l'entraînement. Aux reprises : `noyaux-2.json`, etc.
+- **Collecte des avertissements** par un `logging.Handler` posé sur le logger `transformers` (`CollecteAvertissements`), pendant `train()` (run) et pendant chaque longueur (sonde : clé `avertissements_noyaux` par mesure, `noyaux_gdn` au niveau racine de `sonde.json`). Ces clés n'apparaissent que pour un modèle à couches `linear_attention`.
+- **`LONGUEUR_MAX_REPLI_TORCH`** vit dans `train/config.py` (importé par `environnement.py`).
+- **Contrôle `dense`** : `linear_attention` seul + `entrainable = true` donne `ok` ; tout ce qui contient `mamba` reste `echec` avec le libellé inchangé (le test du mélange n'a donc pas eu à changer). `test_dense_gated_deltanet_sous_llm_config` a été réaligné (cas entraînable : `ok`).
+- La sonde refuse toujours `vision_config` (`controler_config_modele`) : sa mesure sur Qwen3.5 attend B2.
+
+Reports : la mesure réelle `train sonde-env --modele qwen3.5-2b --precision-base bf16 --longueurs 2048,4096` (GPU) après B2 ; le contrôle sur la vraie pile triton/fla n'est pas exécuté ici (mocks seulement).
+
 ## Story B2 : chargement multimodal, vision gelée, sonde, `train run`, masque, fiches
 
 **Critères d'acceptation**

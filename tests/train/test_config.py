@@ -121,3 +121,13 @@ def test_tous_les_toml_de_runs_se_chargent() -> None:
         assert f"{methode}-granite-4.0-1b-v2.toml" in noms
     for f in fichiers:
         charger_run_config(f)
+
+
+def test_repli_torch_borne_a_4096(tmp_path: Path) -> None:
+    base = BASE.replace("longueur_max = 64", "longueur_max = 4096") + 'methode = "qlora"\n'
+    assert charger_run_config(_toml(tmp_path, base)).repli_torch is False
+    assert charger_run_config(_toml(tmp_path, base + "repli_torch = true\n")).repli_torch is True
+    trop_long = BASE.replace("longueur_max = 64", "longueur_max = 4097") + 'methode = "qlora"\n'
+    assert charger_run_config(_toml(tmp_path, trop_long)).repli_torch is False  # sans option
+    with pytest.raises(ConfigurationInvalide, match="longueur_max <= 4096"):
+        charger_run_config(_toml(tmp_path, trop_long + "repli_torch = true\n"))
