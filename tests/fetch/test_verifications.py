@@ -717,14 +717,14 @@ def test_candidats_alignes_sur_le_registre_d8() -> None:
     assert CANDIDATS == (
         "granite-4.0-1b",
         "minicpm5-1b",
-        "eurollm-1.7b",
         "minicpm5-2b",
+        "eurollm-1.7b",
         "qwen3.5-0.8b",
         "qwen3.5-2b",
     )
     assert not set(CANDIDATS) & {"ministral-3-3b", "ministral-3-8b", "smollm3-3b", "qwen-4b"}
-    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:4])
-    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[4:])
+    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:3])
+    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[3:])
 
 
 @pytest.mark.parametrize("slug", CANDIDATS)
@@ -806,7 +806,7 @@ def test_toml_modeles_moins_2b(slug: str) -> None:
     assert config.gguf.fichier.lower().endswith("q4_k_m.gguf")
     assert config.gguf.source == "communautaire"
     assert config.exclure_vision == (slug == "qwen3.5-0.8b")
-    assert config.entrainable == (slug != "qwen3.5-0.8b") and not config.embedding
+    assert config.entrainable == (slug not in ("qwen3.5-0.8b", "eurollm-1.7b")) and not config.embedding
     assert config.lm_eval_batch_size == 2
 
 

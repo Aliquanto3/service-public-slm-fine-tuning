@@ -40,12 +40,13 @@ from slmsp.core.schemas.config_modele import ConfigModele
 
 # Aligné sur le registre des Modèles de base de D8 le 2026-10-17 (décision d'Anaël) : il remplace
 # l'ordre D4 initial (ministral-3-3b, smollm3-3b, qwen-4b, ministral-3-8b, écartés par la
-# règle de taille). D'abord les candidats au fine-tuning, puis les Qwen « Baseline seulement ».
+# règle de taille). D'abord les candidats au fine-tuning, puis les « Baseline seulement »
+# (eurollm-1.7b depuis le 2026-10-18, puis les Qwen).
 CANDIDATS: tuple[str, ...] = (
     "granite-4.0-1b",
     "minicpm5-1b",
-    "eurollm-1.7b",
     "minicpm5-2b",
+    "eurollm-1.7b",
     "qwen3.5-0.8b",
     "qwen3.5-2b",
 )

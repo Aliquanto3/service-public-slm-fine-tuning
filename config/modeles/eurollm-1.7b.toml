@@ -11,6 +11,10 @@
 schema_version = 1
 depot_hf = "utter-project/EuroLLM-1.7B-Instruct"
 revision = "a25c7fa65fc2a644e6270b8940dbe295b51da681"
+# Baseline seulement (décision d'Anaël du 2026-10-18, option D de spec-outils-rendu §4) : le
+# template ignore 	ools et 	ool_calls, aucun protocole d'outils ne marche (sonde H-TOOLS), et
+# la Baseline est la plus faible des candidats (RD 0, MMLU au niveau du hasard).
+entrainable = false
 fichiers = [
     "config.json",
     "generation_config.json",
