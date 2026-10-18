@@ -17,7 +17,10 @@ schema_version = 1
 # Campagne baseline-2026-10-18b close le 2026-10-18 avec : anthropic 2,91 € et mistral 0,21 € (juge) dépensés.
 # Anaël a approuvé le 2026-10-18 : reste de 3,09 € reporté, + 2 € (Granite 4.0 350M) et + 5 € (Granite 4.0 H
 # 350M et H 1B), soit 10,09 € pour anthropic.
-campagne_id = "baseline-2026-10-18c"
+# Campagne baseline-2026-10-18c close le 2026-10-18 avec : anthropic 7,00 € et mistral 1,26 € (juge) dépensés.
+# Anaël a approuvé le 2026-10-18 au soir : reste de 3,09 € reporté + 12 € pour noter les quatre runs de la campagne
+# MiniCPM5-2B (M1 à M4), soit 15,09 € pour anthropic.
+campagne_id = "finetune-minicpm5-2b-2026-10-19"
 
 # Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
 # réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
@@ -30,15 +33,15 @@ majoration_entree = 1.25
 [postes.anthropic]
 # PRD : 10 €. Relevé par Anaël le 2026-10-16 et le 2026-10-17 (10 $ ≈ 8,6 € + 5 € + 5 €), Baseline
 # complète et trois nouveaux Modèles de base candidats.
-plafond_eur = 10.09  # 3,09 € reportés + 2 € + 5 €, approuvés le 2026-10-18
+plafond_eur = 15.09  # 3,09 € reportés + 12 €, approuvés le 2026-10-18 au soir (évaluation des fine-tunings)
 
 [postes.mistral]
-plafond_eur = 12.06  # 30 € − 6,17 € − 11,29 € − 0,22 € − 0,21 €
+plafond_eur = 10.80  # 30 € − 6,17 € − 11,29 € − 0,22 € − 0,21 € − 1,26 €
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
 generation = 8.75  # 25 € − 5,51 € − 10,64 €
-juge = 3.21  # 5 € − 0,66 € − 0,65 € − 0,23 € − 0,21 €
+juge = 1.95  # 5 € − 0,66 € − 0,65 € − 0,23 € − 0,21 € − 1,26 €
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]
