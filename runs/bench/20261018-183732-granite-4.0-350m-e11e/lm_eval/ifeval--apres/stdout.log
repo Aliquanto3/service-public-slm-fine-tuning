@@ -1,0 +1,8 @@
+local-chat-completions ({'model': 'granite-4.0-350m', 'base_url': 'http://127.0.0.1:61672/v1/chat/completions', 'num_concurrent': 4, 'max_retries': 3, 'tokenized_requests': False}), gen_kwargs: ({}), limit: None, num_fewshot: 0, batch_size: 1
+|Tasks |Version|Filter|n-shot|        Metric         |   |Value |   |Stderr|
+|------|------:|------|-----:|-----------------------|---|-----:|---|------|
+|ifeval|      4|none  |     0|inst_level_loose_acc   |↑  |0.5600|±  |   N/A|
+|      |       |none  |     0|inst_level_strict_acc  |↑  |0.5252|±  |   N/A|
+|      |       |none  |     0|prompt_level_loose_acc |↑  |0.4473|±  |0.0214|
+|      |       |none  |     0|prompt_level_strict_acc|↑  |0.4122|±  |0.0212|
+

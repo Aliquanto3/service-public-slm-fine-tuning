@@ -1,0 +1,67 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 43,
+   "precision": 0.86,
+   "erreurs": {
+    "simple_127": "Invalid value for parameter 'discount_rate': 10.0. Expected one of [0.1].",
+    "simple_17": "Invalid value for parameter 'formatted': False. Expected one of [True, ''].",
+    "simple_249": "Invalid value for parameter 'till_century': 1400. Expected one of [14].",
+    "simple_284": "aucun appel émis",
+    "simple_35": "Optional parameter 'operating_hours' not provided and not marked as optional.",
+    "simple_42": "Invalid value for parameter 'inductance': 5e-05. Expected one of [0.05].",
+    "simple_7": "Optional parameter 'unit' not provided and not marked as optional."
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 41,
+   "precision": 0.82,
+   "erreurs": {
+    "multiple_118": "Invalid value for parameter 'category': 'drama'. Expected one of ['', 'all']. Case insensitive.",
+    "multiple_119": "Invalid value for parameter 'operation': '>='. Expected one of ['>'].",
+    "multiple_148": "aucun appel émis",
+    "multiple_153": "Invalid value for parameter 'event': 'Treaty of Lisbon signing'. Expected one of ['Treaty of Lisbon', 'Signing of the Treaty of Lisbon']. Case insensitive.",
+    "multiple_169": "Invalid value for parameter 'key': 'C sharp major'. Expected one of ['C#', 'C sharp']. Case insensitive.",
+    "multiple_180": "Invalid value for parameter 'game': 'Super Smash Bros.'. Expected one of ['Zelda']. Case insensitive.",
+    "multiple_188": "Invalid value for parameter 'products': ['tomatoes']. Expected one of [['tomatoes', 'pet food'], ['pet food', 'tomatoes'], ['Tomatoes', 'Pet food'], ['Pet food', 'Tomatoes']].",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional.",
+    "multiple_7": "Wrong number of functions."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 25,
+   "precision": 0.5,
+   "erreurs": {
+    "irrelevance_11": "appel émis sans fonction pertinente",
+    "irrelevance_119": "appel émis sans fonction pertinente",
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_138": "appel émis sans fonction pertinente",
+    "irrelevance_142": "appel émis sans fonction pertinente",
+    "irrelevance_148": "appel émis sans fonction pertinente",
+    "irrelevance_153": "appel émis sans fonction pertinente",
+    "irrelevance_157": "appel émis sans fonction pertinente",
+    "irrelevance_159": "appel émis sans fonction pertinente",
+    "irrelevance_16": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_171": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_199": "appel émis sans fonction pertinente",
+    "irrelevance_206": "appel émis sans fonction pertinente",
+    "irrelevance_22": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_23": "appel émis sans fonction pertinente",
+    "irrelevance_25": "appel émis sans fonction pertinente",
+    "irrelevance_29": "appel émis sans fonction pertinente",
+    "irrelevance_4": "appel émis sans fonction pertinente",
+    "irrelevance_46": "appel émis sans fonction pertinente",
+    "irrelevance_60": "appel émis sans fonction pertinente",
+    "irrelevance_63": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

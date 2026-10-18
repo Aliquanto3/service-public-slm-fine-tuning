@@ -1,0 +1,6 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\granite-4.0-350m\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: None, num_fewshot: 0, batch_size: 4
+|      Tasks       |Version|Filter|n-shot|    Metric     |   | Value |   |Stderr|
+|------------------|------:|------|-----:|---------------|---|------:|---|-----:|
+|crows_pairs_french|      1|none  |     0|likelihood_diff|↓  |17.2074|±  |0.4101|
+|                  |       |none  |     0|pct_stereotype |↓  | 0.4323|±  |0.0121|
+

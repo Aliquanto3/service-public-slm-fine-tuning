@@ -1,0 +1,55 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 47,
+   "precision": 0.94,
+   "erreurs": {
+    "simple_277": "Optional parameter 'information' not provided and not marked as optional.",
+    "simple_35": "Invalid value for parameter 'operating_hours': 11. Expected one of [23].",
+    "simple_42": "Invalid value for parameter 'capacitance': 0.1. Expected one of [0.0001]."
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 45,
+   "precision": 0.9,
+   "erreurs": {
+    "multiple_169": "Invalid value for parameter 'key': 'C sharp major'. Expected one of ['C#', 'C sharp']. Case insensitive.",
+    "multiple_186": "Invalid value for parameter 'recipe_type': 'brownies'. Expected one of ['dessert']. Case insensitive.",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional.",
+    "multiple_7": "Wrong number of functions.",
+    "multiple_77": "Function name 'artwork_search.find' not found in model output."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 29,
+   "precision": 0.58,
+   "erreurs": {
+    "irrelevance_118": "appel émis sans fonction pertinente",
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_131": "appel émis sans fonction pertinente",
+    "irrelevance_148": "appel émis sans fonction pertinente",
+    "irrelevance_157": "appel émis sans fonction pertinente",
+    "irrelevance_159": "appel émis sans fonction pertinente",
+    "irrelevance_16": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_172": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_199": "appel émis sans fonction pertinente",
+    "irrelevance_206": "appel émis sans fonction pertinente",
+    "irrelevance_218": "appel émis sans fonction pertinente",
+    "irrelevance_22": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_237": "appel émis sans fonction pertinente",
+    "irrelevance_25": "appel émis sans fonction pertinente",
+    "irrelevance_29": "appel émis sans fonction pertinente",
+    "irrelevance_4": "appel émis sans fonction pertinente",
+    "irrelevance_63": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

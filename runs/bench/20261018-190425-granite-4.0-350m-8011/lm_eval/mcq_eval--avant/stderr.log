@@ -1,0 +1,47 @@
+2026-10-18:19:10:29 INFO     [_cli.run:391] Including path: C:\Users\Anael\dev\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-18:19:10:29 INFO     [_cli.run:392] Selected Tasks: ['agentpublic_mcq']
+2026-10-18:19:10:31 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-18:19:10:31 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\granite-4.0-350m\\hf', 'dtype': 'bfloat16'}
+2026-10-18:19:10:38 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-18:19:10:38 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/226 [00:00<?, ?it/s]
+Loading weights:  30%|██▉       | 67/226 [00:00<00:00, 661.74it/s]
+Loading weights:  61%|██████    | 137/226 [00:00<00:00, 672.72it/s]
+Loading weights:  97%|█████████▋| 219/226 [00:00<00:00, 721.38it/s]
+Loading weights: 100%|██████████| 226/226 [00:00<00:00, 729.95it/s]
+2026-10-18:19:10:40 WARNING  [api.task:861] agentpublic_mcq: Custom kwargs can be passed to `--metadata` in console (as json string) or to the TaskManager.
+For example --metadata='{"max_seq_lengths":[4096, 8192]}'. For details see task Readme.
+2026-10-18:19:10:40 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-18:19:10:40 INFO     [evaluator_utils:506] Task: agentpublic_mcq (C:\Users\Anael\dev\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval\agentpublic_mcq\agentpublic_mcq.yaml)
+2026-10-18:19:10:40 WARNING  [evaluator:335] Overwriting default num_fewshot of agentpublic_mcq from None to 0
+2026-10-18:19:10:40 INFO     [api.task:312] Building contexts for agentpublic_mcq on rank 0...
+
+  0%|          | 0/42 [00:00<?, ?it/s]
+100%|██████████| 42/42 [00:00<00:00, 1317.90it/s]
+2026-10-18:19:10:40 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/200 [00:00<?, ?it/s]
+Tokenizing inputs: 100%|██████████| 200/200 [00:00<00:00, 4193.74it/s]
+
+Running loglikelihood requests:   0%|          | 0/200 [00:00<?, ?it/s]
+Running loglikelihood requests:   0%|          | 1/200 [00:00<01:31,  2.17it/s]
+Running loglikelihood requests:   4%|▍         | 9/200 [00:00<00:09, 20.06it/s]
+Running loglikelihood requests:  10%|█         | 21/200 [00:00<00:04, 40.59it/s]
+Running loglikelihood requests:  16%|█▋        | 33/200 [00:00<00:03, 54.44it/s]
+Running loglikelihood requests:  22%|██▎       | 45/200 [00:00<00:02, 65.91it/s]
+Running loglikelihood requests:  28%|██▊       | 57/200 [00:01<00:01, 74.29it/s]
+Running loglikelihood requests:  34%|███▍      | 69/200 [00:01<00:01, 80.00it/s]
+Running loglikelihood requests:  39%|███▉      | 78/200 [00:01<00:01, 82.36it/s]
+Running loglikelihood requests:  44%|████▍     | 89/200 [00:01<00:01, 85.22it/s]
+Running loglikelihood requests:  50%|█████     | 101/200 [00:01<00:01, 88.01it/s]
+Running loglikelihood requests:  56%|█████▋    | 113/200 [00:01<00:00, 90.11it/s]
+Running loglikelihood requests:  62%|██████▏   | 123/200 [00:01<00:00, 90.05it/s]
+Running loglikelihood requests:  66%|██████▋   | 133/200 [00:01<00:00, 83.28it/s]
+Running loglikelihood requests:  72%|███████▎  | 145/200 [00:02<00:00, 86.55it/s]
+Running loglikelihood requests:  78%|███████▊  | 157/200 [00:02<00:00, 85.79it/s]
+Running loglikelihood requests:  84%|████████▍ | 169/200 [00:02<00:00, 88.36it/s]
+Running loglikelihood requests:  90%|█████████ | 181/200 [00:02<00:00, 89.16it/s]
+Running loglikelihood requests:  96%|█████████▋| 193/200 [00:02<00:00, 91.90it/s]
+Running loglikelihood requests: 100%|██████████| 200/200 [00:02<00:00, 75.13it/s]
+2026-10-18:19:10:45 INFO     [loggers.evaluation_tracker:247] Saving results aggregated

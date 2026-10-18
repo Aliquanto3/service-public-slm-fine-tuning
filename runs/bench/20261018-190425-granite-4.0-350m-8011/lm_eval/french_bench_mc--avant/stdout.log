@@ -1,0 +1,15 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\granite-4.0-350m\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: 500.0, num_fewshot: 3, batch_size: 4
+|            Tasks            |Version|Filter|n-shot| Metric |   |Value |   |Stderr|
+|-----------------------------|-------|------|-----:|--------|---|-----:|---|-----:|
+|french_bench_mc_agrege       |      1|none  |     3|acc     |↑  |0.4180|±  |0.0175|
+| - french_bench_arc_challenge|Yaml   |none  |     3|acc     |↑  |0.2400|±  |0.0191|
+|                             |       |none  |     3|acc_norm|↑  |0.2800|±  |0.0201|
+| - french_bench_grammar      |Yaml   |none  |     3|acc     |↑  |0.6134|±  |0.0448|
+| - french_bench_hellaswag    |Yaml   |none  |     3|acc     |↑  |0.3060|±  |0.0206|
+|                             |       |none  |     3|acc_norm|↑  |0.3640|±  |0.0215|
+| - french_bench_vocab        |Yaml   |none  |     3|acc     |↑  |0.5126|±  |0.0460|
+
+|        Groups        |Version|Filter|n-shot|Metric|   |Value|   |Stderr|
+|----------------------|------:|------|-----:|------|---|----:|---|-----:|
+|french_bench_mc_agrege|      1|none  |     3|acc   |↑  |0.418|±  |0.0175|
+
