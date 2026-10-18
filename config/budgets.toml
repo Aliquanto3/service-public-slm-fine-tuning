@@ -9,7 +9,10 @@ schema_version = 1
 # Campagne baseline-2026-10-16 close le 2026-10-17 avec : anthropic 8,49 € et mistral 6,17 € (génération
 # 5,51 €, juge 0,66 €) dépensés. Le registre interdit de changer un plafond en cours de campagne : la
 # campagne suivante reprend les plafonds approuvés par Anaël, diminués de ces dépenses.
-campagne_id = "baseline-2026-10-17"
+# Campagne baseline-2026-10-17 close le 2026-10-18 avec : anthropic 7,89 € et mistral 11,29 € (génération
+# 10,64 €, juge 0,65 €) dépensés. Le reste anthropic (2,21 €) ne couvrait pas une notation : Anaël a approuvé
+# le 2026-10-17 une nouvelle campagne de 5 € pour anthropic, sans aller au-delà.
+campagne_id = "baseline-2026-10-18"
 
 # Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
 # réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
@@ -22,15 +25,15 @@ majoration_entree = 1.25
 [postes.anthropic]
 # PRD : 10 €. Relevé par Anaël le 2026-10-16 et le 2026-10-17 (10 $ ≈ 8,6 € + 5 € + 5 €), Baseline
 # complète et trois nouveaux Modèles de base candidats.
-plafond_eur = 10.1  # 18,6 € approuvés − 8,49 € dépensés en baseline-2026-10-16
+plafond_eur = 5.0  # nouvelle campagne approuvée le 2026-10-17 (le reste de 2,21 € est abandonné)
 
 [postes.mistral]
-plafond_eur = 23.8  # 30 € − 6,17 €
+plafond_eur = 12.5  # 30 € − 6,17 € − 11,29 €
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
-generation = 19.4  # 25 € − 5,51 €
-juge = 4.3  # 5 € − 0,66 €
+generation = 8.75  # 25 € − 5,51 € − 10,64 €
+juge = 3.65  # 5 € − 0,66 € − 0,65 €
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]
