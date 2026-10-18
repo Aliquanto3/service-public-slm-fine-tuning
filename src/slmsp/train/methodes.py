@@ -32,7 +32,13 @@ from typing import Any, Final, Literal
 from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.train.config import RunConfig
 from slmsp.train.couts import ARGUMENTS_TRAINER
-from slmsp.train.environnement import ErreurQuantification, Pile
+from slmsp.train.environnement import (
+    CIBLES_TOUTES_LINEAIRES,
+    ErreurQuantification,
+    Pile,
+    cibles_lora,
+    classe_modele,
+)
 
 Entraineur = Literal["sft", "orpo", "unsloth"]
 
@@ -61,8 +67,10 @@ PLANS: Final[Mapping[str, PlanMethode]] = {
     "qlora-unsloth": PlanMethode("qlora-unsloth", True, entraineur="unsloth"),
 }
 
-CIBLES_LORA: Final = "all-linear"
-"""Toutes les couches linéaires sauf la tête de sortie : ni `embed_tokens` ni `lm_head`."""
+CIBLES_LORA: Final = CIBLES_TOUTES_LINEAIRES
+"""Toutes les couches linéaires sauf la tête de sortie : ni `embed_tokens` ni `lm_head`.
+Un modèle `multimodal` reçoit une regex sur `language_model` (`cibles_lora`, défini dans
+`environnement` pour être partagé avec la sonde)."""
 
 
 def plan_methode(methode: str) -> PlanMethode:
@@ -85,15 +93,15 @@ def config_bnb(pile: Pile) -> Any:
     )
 
 
-def config_lora(pile: Pile, plan: PlanMethode, config: RunConfig) -> Any:
-    """`LoraConfig` du Run : rang, alpha et dropout du TOML, options de la méthode."""
+def config_lora(pile: Pile, plan: PlanMethode, config: RunConfig, cibles: str = CIBLES_LORA) -> Any:
+    """`LoraConfig` du Run : rang, alpha et dropout du TOML, options de la méthode, `cibles`."""
     hp = config.hyperparametres
     return pile.peft.LoraConfig(
         r=hp.lora_rang,
         lora_alpha=hp.lora_alpha,
         lora_dropout=hp.lora_dropout,
         bias="none",
-        target_modules=CIBLES_LORA,
+        target_modules=cibles,
         task_type="CAUSAL_LM",
         **plan.lora,
     )
@@ -205,16 +213,19 @@ def charger_modele(
     *,
     cpu: bool = False,
     precision_base: str = "fp32-kbit",
+    multimodal: str | None = None,
 ) -> Any:
     """Poids du Modèle de base, en nf4 4 bits ou en bf16 selon le plan (GPU 0, ou CPU).
 
     `precision_base` ne joue que pour une base quantifiée : sans quantification, le cast
-    `prepare_model_for_kbit_training` n'a jamais été appelé.
+    `prepare_model_for_kbit_training` n'a jamais été appelé. La classe vient de
+    `environnement.classe_modele` (`multimodal` de la fiche).
 
     Seule une erreur d'import ou de bitsandbytes devient `ErreurQuantification` ; une
     erreur de mémoire et toute autre exception sont propagées telles quelles (W4.3).
     """
     torch = pile.torch
+    classe = classe_modele(pile, multimodal)
     arguments: dict[str, Any] = {
         "dtype": torch.float32 if cpu else torch.bfloat16,
         "attn_implementation": "sdpa",
@@ -223,15 +234,13 @@ def charger_modele(
     if not cpu:
         arguments["device_map"] = {"": 0}
     if not plan.quantification_4bits:
-        modele = pile.transformers.AutoModelForCausalLM.from_pretrained(str(dossier), **arguments)
+        modele = classe.from_pretrained(str(dossier), **arguments)
     else:
         try:
             if pile.bitsandbytes is None:
                 pile.bitsandbytes = importlib.import_module("bitsandbytes")
             arguments["quantization_config"] = config_bnb(pile)
-            modele = pile.transformers.AutoModelForCausalLM.from_pretrained(
-                str(dossier), **arguments
-            )
+            modele = classe.from_pretrained(str(dossier), **arguments)
             modele = preparer_base_quantifiee(pile, modele, precision_base)
         except Exception as exc:
             if _est_oom(pile, exc) or not _vient_de_bitsandbytes(exc):
@@ -243,9 +252,17 @@ def charger_modele(
     return modele
 
 
-def poser_adaptateur(pile: Pile, modele: Any, plan: PlanMethode, config: RunConfig) -> Any:
-    """Adaptateur PEFT neuf ; l'appelant a posé la graine avant (W4.4)."""
-    return pile.peft.get_peft_model(modele, config_lora(pile, plan, config))
+def poser_adaptateur(
+    pile: Pile,
+    modele: Any,
+    plan: PlanMethode,
+    config: RunConfig,
+    multimodal: str | None = None,
+) -> Any:
+    """Adaptateur PEFT neuf ; l'appelant a posé la graine avant (W4.4). Cibles de
+    `cibles_lora` : `language_model` seul pour un modèle `multimodal`."""
+    cibles = cibles_lora(modele, multimodal)
+    return pile.peft.get_peft_model(modele, config_lora(pile, plan, config, cibles))
 
 
 def creer_entraineur(

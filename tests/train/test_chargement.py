@@ -105,6 +105,28 @@ def test_vision_exclue_acceptee() -> None:
     assert resume["vision_config"] == "exclu"
 
 
+def test_contraintes_multimodal_garde_vision_config(factices) -> None:
+    """Story B2 : `geler-vision` garde le `vision_config` (tour chargée, gelée)."""
+    config = factices.config_qwen35
+    resume = chargement.controler_contraintes(
+        config, "qwen3.5-2b", exclure_vision=True, multimodal="geler-vision"
+    )
+    assert resume["vision_config"] == "gelee"
+    assert resume["couches"] == ["full_attention", "linear_attention"]
+    texte = {cle: valeur for cle, valeur in config.items() if cle != "vision_config"}
+    with pytest.raises(ConfigurationInvalide, match="aucun `vision_config`"):
+        chargement.controler_contraintes(
+            texte, "qwen3.5-2b", exclure_vision=True, multimodal="geler-vision"
+        )
+    with pytest.raises(ConfigurationInvalide, match="Mamba"):
+        chargement.controler_contraintes(
+            {**config, "text_config": {"layers_block_type": ["mamba"]}},
+            "m",
+            exclure_vision=True,
+            multimodal="geler-vision",
+        )
+
+
 def test_pretokenisation_tronque_ids_et_labels_ensemble(factices) -> None:
     tokenizer = factices.Tokenizer()
     config = charger_config_modele("granite-4.0-1b")

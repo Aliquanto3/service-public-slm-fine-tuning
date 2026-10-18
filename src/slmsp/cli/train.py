@@ -237,11 +237,15 @@ def _sonde_env(args: argparse.Namespace) -> int:
         raise ConfigurationInvalide("--pas : au moins 1 pas mesuré")
     # Slug connu de config/modeles/, puis refus d'un modèle non entraînable (Bonsai, D8)
     # avant toute lecture des poids et avant le verrou, avec ou sans --unsloth.
-    environnement.exiger_entrainable(charger_config_modele(slug), slug)
+    fiche = charger_config_modele(slug)
+    environnement.exiger_entrainable(fiche, slug)
+    if args.unsloth:  # envs/unsloth/sonde.py charge AutoModelForCausalLM
+        environnement.exiger_sans_unsloth_multimodal(fiche, slug)
     racine = _racine(args)
     dossier = environnement.dossier_poids(slug, racine=racine)
     config_modele = environnement.lire_config_modele(dossier, racine=racine)
-    environnement.controler_config_modele(config_modele, slug)  # refus avant le verrou
+    # Refus avant le verrou (vision sans `multimodal`, Mamba, FP8).
+    environnement.controler_config_modele(config_modele, slug, multimodal=fiche.multimodal)
     provenance = provenance_code()
 
     commande = f"slmsp train sonde-env --modele {slug} --methode {args.methode}"
@@ -267,7 +271,9 @@ def _sonde_env(args: argparse.Namespace) -> int:
         )
         print(f"run {run.run_id} : {run.dossier}", flush=True)
         try:
-            code = _executer_sonde(args, run, slug, dossier, config_modele, racine)
+            code = _executer_sonde(
+                args, run, slug, dossier, config_modele, racine, multimodal=fiche.multimodal
+            )
         except KeyboardInterrupt:
             run.terminer("interrompu", "arrêt demandé")
             raise
@@ -284,6 +290,8 @@ def _executer_sonde(
     dossier: Path,
     config_modele: dict[str, Any],
     racine: Path,
+    *,
+    multimodal: str | None = None,
 ) -> int:
     def journal(message: str) -> None:
         run.ajouter_jsonl(NOM_LOG, {"message": message})
@@ -298,6 +306,7 @@ def _executer_sonde(
         pas=args.pas,
         graine=environnement.GRAINE,
         precision_base=args.precision_base,
+        multimodal=multimodal,
         dossier_travail=run.dossier / DOSSIER_ENTRAINEUR,
         journal=journal,
         racine=racine,
@@ -344,6 +353,7 @@ def _executer_sonde(
         pas_reussi=resultat.pas_reussi,
         motif_quantification=resultat.motif_quantification,
         unsloth=unsloth,
+        multimodal=multimodal,
     )
     _ecrire_json(run, NOM_METHODES, methodes)
     run.terminer(statut, motif)

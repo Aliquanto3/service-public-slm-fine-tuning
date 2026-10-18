@@ -90,6 +90,28 @@ CAPACITE_FP8: Final = (8, 9)
 LORA_RANG: Final = 16
 LORA_ALPHA: Final = 32
 
+MULTIMODAL_GELER_VISION: Final = "geler-vision"
+"""`ConfigModele.multimodal` : classe multimodale, tour vision gelée, LoRA sur le langage."""
+CIBLES_TOUTES_LINEAIRES: Final = "all-linear"
+"""Toutes les couches linéaires sauf la tête de sortie : ni `embed_tokens` ni `lm_head`."""
+SOUS_MODELE_LANGAGE: Final = "language_model"
+CLASSES_LINEAIRES: Final = ("Linear", "Linear4bit")
+MODULES_EXCLUS_LORA: Final = ("lm_head", "embed_tokens")
+COMPOSANTS_VISION: Final = ("visual", "vision_tower", "vision_model")
+"""Composants de nom d'un paramètre de la tour vision (Qwen3.5 : `model.visual.*`)."""
+MOTIF_UNSLOTH_MULTIMODAL: Final = (
+    "qlora-unsloth non pris en charge pour un modèle multimodal (envs/unsloth charge "
+    "AutoModelForCausalLM, sans geler la tour vision)"
+)
+
+
+def exiger_sans_unsloth_multimodal(config: ConfigModele, slug: str) -> None:
+    """Refuse (`ConfigurationInvalide`) Unsloth pour un modèle `multimodal`, avant le verrou :
+    `train run` en `qlora-unsloth` et `train sonde-env --unsloth`."""
+    if config.multimodal is not None:
+        raise ConfigurationInvalide(f"{slug} : {MOTIF_UNSLOTH_MULTIMODAL}")
+
+
 MARQUEUR_RESULTAT: Final = "SLMSP-RESULTAT "
 """Préfixe de la ligne de résultat JSON du sous-processus Unsloth."""
 DOSSIER_TRAVAIL_UNSLOTH: Final = "unsloth"
@@ -426,12 +448,23 @@ def exiger_entrainable(config: ConfigModele, slug: str) -> None:
         )
 
 
-def controler_config_modele(config: Mapping[str, Any], slug: str) -> dict[str, Any]:
+def controler_config_modele(
+    config: Mapping[str, Any], slug: str, *, multimodal: str | None = None
+) -> dict[str, Any]:
     """Refuse (`ConfigurationInvalide`) les poids FP8, une couche Mamba, un encodeur vision.
+
+    Un `vision_config` passe avec `multimodal = "geler-vision"` (fiche du modèle) : la tour
+    est chargée puis gelée. `multimodal` sans `vision_config` est refusé.
 
     Renvoie le résumé des contrôles passés (type de modèle, couches, quantification).
     """
-    if "vision_config" in config:
+    vision = "vision_config" in config
+    if multimodal is not None and not vision:
+        raise ConfigurationInvalide(
+            f'{slug} : `multimodal = "{multimodal}"` dans config/modeles/{slug}.toml, mais '
+            "aucun `vision_config` dans config.json (modèle texte : retirer `multimodal`)"
+        )
+    if vision and multimodal != MULTIMODAL_GELER_VISION:
         raise ConfigurationInvalide(
             f"{slug} : modèle multimodal (`vision_config` présent) ; la sonde ne charge pas "
             "l'encodeur vision (Ministral 3 hors sonde)"
@@ -451,6 +484,9 @@ def controler_config_modele(config: Mapping[str, Any], slug: str) -> dict[str, A
                 f"{slug} : couche Mamba dans `layer_types` (modèle hybride écarté)"
             )
     couches = config.get("layer_types")
+    texte = config.get("text_config")
+    if couches is None and isinstance(texte, Mapping):  # Qwen3.5 : sous `text_config`
+        couches = texte.get("layer_types")
     return {
         "model_type": config.get("model_type"),
         "architectures": config.get("architectures"),
@@ -458,7 +494,71 @@ def controler_config_modele(config: Mapping[str, Any], slug: str) -> dict[str, A
         "vocab_size": config.get("vocab_size"),
         "torch_dtype": config.get("torch_dtype") or config.get("dtype"),
         "quantization_config": "quantization_config" in config,
-        "vision_config": False,
+        "vision_config": "gelee" if vision else False,
+    }
+
+
+def classe_modele(pile: Pile, multimodal: str | None) -> Any:
+    """Seul point de choix de la classe des poids : `AutoModelForImageTextToText` pour
+    `geler-vision` (tour vision chargée, gelée), `AutoModelForCausalLM` sinon. `multimodal`
+    est la valeur de la fiche (`ConfigModele.multimodal`)."""
+    if multimodal == MULTIMODAL_GELER_VISION:
+        return pile.transformers.AutoModelForImageTextToText
+    if multimodal is not None:
+        raise ConfigurationInvalide(f"multimodal inconnu : {multimodal!r}")
+    return pile.transformers.AutoModelForCausalLM
+
+
+def cibles_lora(modele: Any, multimodal: str | None) -> str:
+    """`target_modules` du LoRA : `all-linear` sans `multimodal` ; avec `geler-vision`, une
+    regex sur les couches linéaires (`Linear`, `Linear4bit`) de `language_model` seul, ni
+    `lm_head` ni `embed_tokens` (TRL `chunked_nll` refuse `lm_head`)."""
+    if multimodal is None:
+        return CIBLES_TOUTES_LINEAIRES
+    noms = sorted(
+        {
+            nom.rsplit(".", 1)[-1]
+            for nom, module in modele.named_modules()
+            if type(module).__name__ in CLASSES_LINEAIRES
+            and SOUS_MODELE_LANGAGE in nom.split(".")
+            and nom.rsplit(".", 1)[-1] not in MODULES_EXCLUS_LORA
+        }
+    )
+    if not noms:
+        raise ConfigurationInvalide(
+            f"aucune couche linéaire sous `{SOUS_MODELE_LANGAGE}` : LoRA multimodal impossible"
+        )
+    return rf".*{SOUS_MODELE_LANGAGE}.*\.({'|'.join(re.escape(n) for n in noms)})$"
+
+
+def verifier_gel_vision(modele: Any) -> dict[str, Any]:
+    """Compte les paramètres entraînables et ceux de la tour vision, après la pose de
+    l'adaptateur et avant `train()`. Lève `ConfigurationInvalide` si un paramètre
+    entraînable est hors de `language_model` (tour vision, tête, embeddings)."""
+    entrainables = vision = vision_entrainables = 0
+    hors_langage: list[str] = []
+    for nom, parametre in modele.named_parameters():
+        composants = nom.split(".")
+        nombre = int(parametre.numel())
+        est_vision = any(c in COMPOSANTS_VISION for c in composants)
+        if est_vision:
+            vision += nombre
+        if not parametre.requires_grad:
+            continue
+        entrainables += nombre
+        if est_vision:
+            vision_entrainables += nombre
+        if SOUS_MODELE_LANGAGE not in composants:
+            hors_langage.append(nom)
+    if hors_langage:
+        raise ConfigurationInvalide(
+            f"{len(hors_langage)} paramètre(s) entraînable(s) hors de `{SOUS_MODELE_LANGAGE}` "
+            f"(tour vision non gelée ?) : {', '.join(hors_langage[:5])}"
+        )
+    return {
+        "parametres_entrainables": entrainables,
+        "vision_parametres": vision,
+        "vision_entrainables": vision_entrainables,
     }
 
 
@@ -577,18 +677,24 @@ def tokens_aleatoires(
 
 
 def charger_modele(
-    pile: Pile, dossier: Path, methode: str, precision_base: str = "fp32-kbit"
+    pile: Pile,
+    dossier: Path,
+    methode: str,
+    precision_base: str = "fp32-kbit",
+    multimodal: str | None = None,
 ) -> Any:
     """Charge les poids en 4 bits nf4 (`qlora`) ou en bf16 (`lora`), sur le GPU 0.
 
     `precision_base` ne joue qu'en `qlora` : `fp32-kbit` (cast de `prepare_model_for_kbit_training`)
-    ou `bf16` (sans ce cast, `enable_input_require_grads` seul).
+    ou `bf16` (sans ce cast, `enable_input_require_grads` seul). La classe vient de
+    `classe_modele` (`multimodal` de la fiche).
 
     Un échec du chargement 4 bits (bitsandbytes absent ou en panne) lève
     `ErreurQuantification` ; une erreur de mémoire CUDA est propagée telle quelle.
     """
     torch = pile.torch
     transformers = pile.transformers
+    classe = classe_modele(pile, multimodal)
     arguments: dict[str, Any] = {
         "dtype": torch.bfloat16,
         "device_map": {"": 0},
@@ -605,7 +711,7 @@ def charger_modele(
                 bnb_4bit_compute_dtype=torch.bfloat16,
                 bnb_4bit_use_double_quant=True,
             )
-            modele = transformers.AutoModelForCausalLM.from_pretrained(str(dossier), **arguments)
+            modele = classe.from_pretrained(str(dossier), **arguments)
         except torch.cuda.OutOfMemoryError:
             raise
         except Exception as exc:  # bitsandbytes : ImportError, RuntimeError, OSError…
@@ -621,7 +727,7 @@ def charger_modele(
                 gradient_checkpointing_kwargs={"use_reentrant": False},
             )
     elif methode == "lora":
-        modele = transformers.AutoModelForCausalLM.from_pretrained(str(dossier), **arguments)
+        modele = classe.from_pretrained(str(dossier), **arguments)
     else:
         raise ConfigurationInvalide(
             f"méthode de sonde inconnue : {methode!r} (attendu : {', '.join(METHODES_SONDE)})"
@@ -630,14 +736,14 @@ def charger_modele(
     return modele
 
 
-def poser_lora(pile: Pile, modele: Any) -> Any:
-    """Adaptateur LoRA PEFT (rang 16, alpha 32, toutes les couches linéaires)."""
+def poser_lora(pile: Pile, modele: Any, multimodal: str | None = None) -> Any:
+    """Adaptateur LoRA PEFT (rang 16, alpha 32, cibles de `cibles_lora`)."""
     config = pile.peft.LoraConfig(
         r=LORA_RANG,
         lora_alpha=LORA_ALPHA,
         lora_dropout=0.0,
         bias="none",
-        target_modules="all-linear",
+        target_modules=cibles_lora(modele, multimodal),
         task_type="CAUSAL_LM",
     )
     return pile.peft.get_peft_model(modele, config)
@@ -810,11 +916,13 @@ def methodes_disponibles(
     pas_reussi: bool,
     motif_quantification: str | None = None,
     unsloth: Mapping[str, Any] | None = None,
+    multimodal: str | None = None,
 ) -> dict[str, Any]:
     """Disponibilité de chaque méthode du spine, et replis appliqués (`methodes.json`).
 
     Statuts : `verifiee` (un pas fini a tourné), `deduite` (même pile qu'une méthode
-    vérifiée), `indisponible` (échec constaté, avec motif), `non-sondee`.
+    vérifiée), `indisponible` (échec constaté, avec motif), `non-sondee`. Un modèle
+    `multimodal` n'a pas `qlora-unsloth` (`MOTIF_UNSLOTH_MULTIMODAL`).
     """
     methodes: dict[str, dict[str, Any]] = {}
     replis: list[str] = []
@@ -846,7 +954,9 @@ def methodes_disponibles(
         for nom in ("orpo", "rslora", "pissa"):
             poser(nom, "deduite", f"TRL + PEFT vérifiés par {methode_effective}")
 
-    if unsloth is None:
+    if multimodal is not None:
+        poser("qlora-unsloth", "indisponible", MOTIF_UNSLOTH_MULTIMODAL)
+    elif unsloth is None:
         poser("qlora-unsloth", "non-sondee", "sonde Unsloth non demandée (--unsloth)")
     elif unsloth.get("ok"):
         poser("qlora-unsloth", "verifiee", "pas Unsloth réussi dans envs/unsloth")
@@ -918,6 +1028,7 @@ def sonder(
     pas: int = PAS_DEFAUT,
     graine: int = GRAINE,
     precision_base: str = "fp32-kbit",
+    multimodal: str | None = None,
     dossier_travail: Path,
     pile: Pile | None = None,
     journal: Callable[[str], None] = lambda _m: None,
@@ -928,7 +1039,9 @@ def sonder(
     Ne lève pas pour un échec constaté (CUDA absente, bitsandbytes en panne, OOM) : il est
     consigné dans le résultat, avec le statut du run (`complet`, `degrade`,
     `partiel-erreur`). Les chemins de `sonde` sont portables (`chemin_portable`, relatifs
-    à `racine` pour ceux du run).
+    à `racine` pour ceux du run). `config_modele` est `config.json` ; `multimodal` vient de
+    la fiche (`geler-vision` : classe multimodale, gel de la vision vérifié à chaque
+    chargement, `sonde.json["gel_vision"]`).
     """
     _verifier_parametres(methode, longueurs, pas, precision_base)
     appliquer_environnement_impose()
@@ -953,8 +1066,12 @@ def sonder(
         "graine": int(graine),
         "donnees": "tokens aléatoires (graine fixe), aucune donnée réelle",
         "versions": versions_pile(),
-        "controles_modele": controler_config_modele(config_modele, slug),
-        "lora": {"r": LORA_RANG, "alpha": LORA_ALPHA, "target_modules": "all-linear"},
+        "controles_modele": controler_config_modele(config_modele, slug, multimodal=multimodal),
+        "lora": {  # cible multimodale relevée sur le modèle chargé (`cibles_lora`)
+            "r": LORA_RANG,
+            "alpha": LORA_ALPHA,
+            "target_modules": CIBLES_TOUTES_LINEAIRES if multimodal is None else None,
+        },
         "env_impose": dict(ENV_IMPOSE),
         "arguments_entrainement": arguments_affiches,
         "arguments_specifiques": specifiques,
@@ -995,7 +1112,7 @@ def sonder(
             variante_courante = rang
             journal(f"chargement de {slug} ({methode}, base {variante})")
             try:
-                modele = charger_modele(pile, dossier, methode, variante)
+                modele = charger_modele(pile, dossier, methode, variante, multimodal)
             except ErreurQuantification as exc:
                 motif_quantification = str(exc)
                 sonde["erreur_quantification"] = motif_quantification
@@ -1011,11 +1128,19 @@ def sonder(
                 effective = "lora"
                 replis.append(f"sans bitsandbytes : LoRA bf16 sur {SLUG_REPLI_BF16} seulement")
                 journal(f"repli : {replis[-1]}")
-                modele = charger_modele(pile, dossier, "lora")
+                modele = charger_modele(pile, dossier, "lora", multimodal=multimodal)
             etiquette = variante if effective == "qlora" else PRECISION_SANS_OBJET
             etiquettes.append(etiquette)
             sonde["methode"] = effective
-            modele = poser_lora(pile, modele)
+            sonde["lora"]["target_modules"] = cibles_lora(modele, multimodal)
+            modele = poser_lora(pile, modele, multimodal)
+            if multimodal is not None:  # à chaque chargement (`les-deux` : un par précision)
+                gel = {"precision_base": etiquette, **verifier_gel_vision(modele)}
+                sonde.setdefault("gel_vision", []).append(gel)
+                journal(
+                    f"gel de la vision ({etiquette}) : {gel['parametres_entrainables']} "
+                    f"paramètres entraînables, {gel['vision_entrainables']} en vision"
+                )
             tokenizer = charger_tokenizer(pile, dossier)
             vocab = int(config_modele.get("vocab_size") or len(tokenizer))
             vocab = min(vocab, len(tokenizer)) if len(tokenizer) else vocab

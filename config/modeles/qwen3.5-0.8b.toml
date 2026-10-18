@@ -2,11 +2,12 @@
 # 2B ajouté par décision d'Anaël du 2026-10-17 (spec-modeles-octobre-2026, « Candidats < 2B »).
 # Révisions, SHA-256 et tailles relevés le même jour via l'API Hugging Face. AD-6 : valeurs
 # communes à l'inférence et à l'entraînement.
-# Même famille que qwen3.5-2b : VLM à attention hybride (Gated DeltaNet), tour vision exclue,
-# aucun --mmproj. GGUF communautaire unsloth (Qwen ne publie pas de GGUF).
-# 18 couches linear_attention sur 24, comme qwen3.5-2b : hybride Gated DeltaNet admis pour
-# l'inférence et la Baseline seulement (décision D8 du 2026-10-17, decisions.md), d'où
-# `entrainable = false` ; le contrôle `dense` passe à cette condition.
+# Même famille que qwen3.5-2b : VLM à attention hybride (Gated DeltaNet), 18 couches
+# linear_attention sur 24, sous `text_config`. GGUF communautaire unsloth (Qwen ne publie pas
+# de GGUF). Entraînable depuis la révision de D8 du 2026-10-18 (decisions.md,
+# spec-qwen35-entrainable) : extra `gdn` requis, runs en `precision_base = "bf16"`.
+# `multimodal = "geler-vision"` : tour vision chargée et gelée, LoRA sur `language_model`
+# seul. `exclure_vision = true` ne règle que l'inférence du Harnais (aucun --mmproj).
 # Raisonnement : le template n'ouvre <think> que si enable_thinking vaut true ; forcé à false.
 
 schema_version = 1
@@ -38,8 +39,19 @@ chat_template_force = true
 # lm_eval sur HF bf16, portable de 6 Go de VRAM : `auto` provoque des OOM CUDA. Valeur
 # prudente (jamais `auto`), à confirmer par mesure.
 lm_eval_batch_size = 2
-# Baseline seulement (D8) : `train run` refuse ce modèle.
-entrainable = false
+# Candidat au fine-tuning (D8 révisé le 2026-10-18).
+entrainable = true
+multimodal = "geler-vision"
+# Le template réécrit l'historique (ErreurMasque en `conversation` dès deux tours) : un exemple
+# par tour (G1 à G4 sur le tokenizer réel). Avec enable_thinking = false, l'amorce de génération
+# finit par un bloc de raisonnement vide que le template n'écrit pas dans un tour d'historique
+# (comme MiniCPM5) : sans `bloc_amorce`, les 205 textes supervisés de v1 diffèrent de
+# llama-server (story B2).
+decoupage_masque = "par-tour"
+bloc_amorce = "<think>\n\n</think>\n\n"
+# Le template écrit ce bloc aussi dans les tours assistant qui suivent la dernière question :
+# le contrôle « textes supervisés » compte ces blocs un à un au lieu de les retirer en bloc.
+bloc_amorce_historique = true
 
 [sha256_fichiers]
 "chat_template.jinja" = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80" # 7 755 octets
