@@ -161,6 +161,7 @@ Paramètres en milliards (B). « Mesuré » : comptage safetensors du 2026-10-17
 | Granite 4.0 H tiny (pas de fiche) | `ibm-granite/granite-4.0-h-tiny` | ≈ 7 (nom) | écarté | taille > 2,5B | 2026-10-18 | D8 (révision du 2026-10-18) |
 | Granite 4.0 H small (pas de fiche) | `ibm-granite/granite-4.0-h-small` | ≈ 32 (nom) | écarté | taille > 2,5B | 2026-10-18 | D8 (révision du 2026-10-18) |
 | `croissantllm-chat` (fiche supprimée, runs `fetch` conservés) | `croissantllm/CroissantLLMChat-v0.1` | ≈ 1,3 (source) | écarté | licence MIT non admise en sortie ; contexte natif 2048 | 2026-10-17 | `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
+| Wyat-1-800M (pas de fiche) | `teilomillet/wyat-1-800m` | ≈ 0,8 (base `Qwen/Qwen3.5-0.8B-Base`) | écarté | modèle de décision (choix, probabilité, note) sans génération de texte ; runtime Python propre, ni `config.json` standard ni GGUF ; composants entraînés sous licence non commerciale (dérivés de FalseReject, CC BY-NC 4.0) ; résultats auto-déclarés (DMBench French v4) | 2026-10-18 | fiche HF lue le 2026-10-18 (Anaël a demandé l'examen) |
 
 Décisions d'Anaël du 2026-10-18 (Granite) :
 
