@@ -50,10 +50,10 @@ def test_critere_11_base_absente_non_creee(capsys: pytest.CaptureFixture[str]) -
     ]
     plafonds = {cle: ligne["plafond_eur"] for cle, ligne in lignes.items()}
     assert plafonds == {
-        ("anthropic", None): 10.1,
-        ("mistral", None): 23.8,
-        ("mistral", "generation"): 19.4,
-        ("mistral", "juge"): 4.3,
+        ("anthropic", None): 5.0,
+        ("mistral", None): 12.5,
+        ("mistral", "generation"): 8.75,
+        ("mistral", "juge"): 3.65,
     }
     for ligne in releve["lignes"]:
         assert set(ligne) == {
@@ -92,7 +92,7 @@ def test_critere_11_lecture_seule_octets_identiques(capsys: pytest.CaptureFixtur
     assert lignes[("mistral", "juge")]["depense_eur"] == pytest.approx(cout, abs=1e-6)
     assert lignes[("mistral", None)]["depense_eur"] == pytest.approx(cout, abs=1e-6)
     assert lignes[("anthropic", None)]["reserve_eur"] == pytest.approx(reserve, abs=1e-6)
-    assert lignes[("anthropic", None)]["reste_eur"] == pytest.approx(10.1 - reserve, abs=1e-6)
+    assert lignes[("anthropic", None)]["reste_eur"] == pytest.approx(5.0 - reserve, abs=1e-6)
     assert lignes[("mistral", "generation")]["depense_eur"] == 0
 
 
@@ -187,7 +187,7 @@ def test_releve_signale_un_ecart_avec_les_plafonds_inscrits(
             (json.dumps(inscrits), registre.campagne_id),
         )
     avant = registre.chemin.read_bytes()
-    ecart = "mistral.juge : 4 € inscrit, 4.3 € dans budgets.toml"
+    ecart = "mistral.juge : 4 € inscrit, 3.65 € dans budgets.toml"
 
     assert _json(capsys)["ecarts"] == [ecart]
     assert main(["budget", "etat"]) == CodeSortie.SUCCES
