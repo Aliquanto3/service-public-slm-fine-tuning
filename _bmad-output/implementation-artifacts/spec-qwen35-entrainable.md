@@ -21,7 +21,6 @@ warnings:
 deferred:
   - 'mmproj de base épinglé (`[gguf_mmproj]` communautaire) : pas tant qu''il n''y a pas de cas d''usage vision (décision d''Anaël du 2026-10-18)'
   - 'publication du mmproj dans le dossier de publication : B3 ne publie que le GGUF texte'
-  - 'ORPO sur un modèle multimodal, si TRL ne le prend pas en charge (B2.6) : story dédiée'
 ---
 
 ## Intent
@@ -209,6 +208,15 @@ Décisions prises seul :
 - Incident : une écriture `.NET` à chemin relatif a modifié `src/slmsp/train/environnement.py` du dépôt principal (3 lignes) ; restauré aussitôt par `git restore` (fichier propre au départ ; sans effet sur l'entraînement en cours, module déjà importé).
 
 Reports : mesures GPU par l'orchestrateur, après fusion : `uv run --no-sync slmsp train sonde-env --modele qwen3.5-2b --precision-base bf16 --longueurs 2048,4096,8192`, puis de même pour `qwen3.5-0.8b` (attendu : `chunk_gated_delta_rule = fla`, `vision_entrainables = 0`, environ 16,8 M paramètres entraînables pour 2B) ; un `train run` SFT court sur v1 avec `precision_base = "bf16"`. `config/publication.toml` inchangé (licence non relue).
+
+### Revue B2
+
+- medium, corrigé : `_comparer_textes_supervises` retirait tous les `bloc_amorce` de l'amorce (`replace`) et laissait passer un bloc interne en trop ; l'élargissement valait aussi pour MiniCPM5. Contrôle rétabli strict : seul le bloc final est retiré. Exception explicite, limitée aux fiches Qwen3.5 : option `bloc_amorce_historique = true` (schéma, validée avec `bloc_amorce`), qui compte exactement les blocs de tête de tour attendus (tours `assistant` après la dernière question) ; un bloc de trop ou de moins est un écart (`_amorce_sans_blocs`, test `test_amorce_sans_blocs_controle_strict`). Remplace la décision « test R7 réaligné » de l'Auto Run Result.
+- medium, corrigé : MiniCPM5, Granite et EuroLLM repassent par le prédicat strict d'origine (bloc final seul, ou préfixe exact).
+- low, rejeté dans sa forme : corriger la référence (sans question suivante) est impossible, `llama-server` refuse de prolonger un message `assistant` à appels d'outil (HTTP 400) ; la question factice reste donc, d'où l'option de fiche.
+- low, corrigé : `test_orpo_reel_conditionnelle_minuscule` vérifie l'absence de colonne ou d'entrée de lot `pixel`, `image`, `grid`.
+- Ajouté : `test_gel_vision_sur_les_vrais_poids_qwen35_0_8b` (lent, CPU) : tour vision de plus de 100 M de paramètres, 0 entraînable, LoRA sous `language_model` seul. Aucune régression dense constatée.
+- Compteurs réels (R7, llama-server CPU, v1, 91 lignes) : préfixes 205/205 pour minicpm5-1b, minicpm5-2b, granite-4.0-1b, granite-4.0-350m, qwen3.5-0.8b, qwen3.5-2b. Textes supervisés : 205/205 pour minicpm5-1b, qwen3.5-0.8b et qwen3.5-2b (`par-tour`) ; 91/91 pour minicpm5-2b, granite-4.0-1b, granite-4.0-350m (`conversation`, un exemple par ligne).
 
 ## Story B3 : export multimodal
 

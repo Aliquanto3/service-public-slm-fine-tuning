@@ -666,5 +666,9 @@ def test_orpo_reel_conditionnelle_minuscule(tmp_path: Path) -> None:
     entraineur = ORPOTrainer(
         model=modele, args=arguments, train_dataset=jeu, processing_class=tokenizer
     )
+    # Aucune entrée vision dans les paires ni dans un lot : le modèle n'est alimenté qu'en texte.
+    colonnes = set(entraineur.train_dataset.column_names)
+    lot = entraineur.data_collator([entraineur.train_dataset[0]])
+    assert not [c for c in colonnes | set(lot) if "pixel" in c or "image" in c or "grid" in c]
     entraineur.train()
     assert entraineur.state.global_step == 1

@@ -102,6 +102,10 @@ class ConfigModele(SchemaBase):
     """`par-tour` seulement : fin de l'amorce de génération que le template n'écrit pas dans un
     tour `assistant` rendu (MiniCPM5 avec `enable_thinking = false` : bloc de raisonnement
     vide). Le corps du tour est pris après l'amorce privée de ce bloc."""
+    bloc_amorce_historique: bool = False
+    """Qwen3.5 : le template écrit aussi `bloc_amorce` en tête de chaque tour `assistant` qui suit
+    la dernière question (et l'efface dès qu'une question suit). N'agit que sur le contrôle
+    « textes supervisés » face à llama-server, qui compte alors exactement ces blocs."""
     lm_eval_batch_size: int | None = Field(default=None, gt=0)
     """`--batch_size` de lm_eval sur les poids HF (QCM) ; par défaut `auto`. Un `batch_size` du
     benchmark l'emporte."""
@@ -162,6 +166,8 @@ class ConfigModele(SchemaBase):
             raise ValueError('bloc_amorce exige decoupage_masque = "par-tour"')
         if self.bloc_amorce is not None and not self.bloc_amorce.strip():
             raise ValueError("bloc_amorce doit contenir au moins un marqueur non blanc")
+        if self.bloc_amorce_historique and self.bloc_amorce is None:
+            raise ValueError("bloc_amorce_historique exige bloc_amorce")
         return self
 
     def micro_lot_pour(self, usage: UsageEmbedding) -> int:

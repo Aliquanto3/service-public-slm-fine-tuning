@@ -50,6 +50,9 @@ multimodal = "geler-vision"
 # llama-server (story B2).
 decoupage_masque = "par-tour"
 bloc_amorce = "<think>\n\n</think>\n\n"
+# Le template écrit ce bloc aussi dans les tours assistant qui suivent la dernière question :
+# le contrôle « textes supervisés » compte ces blocs un à un au lieu de les retirer en bloc.
+bloc_amorce_historique = true
 
 [sha256_fichiers]
 "chat_template.jinja" = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80" # 7 755 octets

@@ -672,6 +672,29 @@ def _comparer_prefixes(
 USER_SUIVANT: dict[str, Any] = {"role": "user", "content": "<question-suivante-factice>"}
 
 
+def _amorce_sans_blocs(
+    amorce: str, historique: list[dict[str, Any]], config: ConfigModele
+) -> str | None:
+    """Amorce privée du seul bloc final ; `None` si elle n'a pas la forme attendue.
+
+    Avec `bloc_amorce_historique`, les blocs de tête de tour que l'inférence efface une fois la
+    question suivante posée sont retirés aussi, mais leur nombre doit être exactement celui des
+    tours `assistant` de `historique` après la dernière question : un bloc de trop ou de moins
+    est un écart, il n'est pas absorbé.
+    """
+    bloc = config.bloc_amorce
+    if not bloc or not amorce.endswith(bloc):
+        return None
+    reste = amorce[: -len(bloc)]
+    if not config.bloc_amorce_historique:
+        return reste
+    derniere = max((i for i, m in enumerate(historique) if m["role"] == "user"), default=-1)
+    attendus = sum(1 for m in historique[derniere + 1 :] if m["role"] == "assistant")
+    if reste.count(bloc) != attendus:
+        return None
+    return reste.replace(bloc, "")
+
+
 def _comparer_textes_supervises(
     slug: str, lignes: list[dict[str, Any]], client: Any, tok: Any, config: ConfigModele
 ) -> tuple[int, list[str]]:
@@ -682,9 +705,11 @@ def _comparer_textes_supervises(
     `/apply-template` : le tour y est dans l'historique, sous la forme que l'inférence montre
     au modèle. Le texte d'entraînement doit en être un préfixe exact ; en `par-tour`, si le
     template n'écrit pas `bloc_amorce` dans un tour d'historique, l'amorce privée du bloc,
-    suivie du corps supervisé, doit l'être. Qwen3.5 (story B2) écrit le bloc dans les tours
-    `assistant` qui suivent la dernière question, et l'efface dès qu'une question suit : tous
-    les blocs de l'amorce sont alors retirés (MiniCPM5 n'en a qu'un, en fin d'amorce).
+    suivie du corps supervisé, doit l'être. Contrôle strict : seul le bloc final est retiré de
+    l'amorce. Exception de la fiche (`bloc_amorce_historique`, Qwen3.5, story B2) : le template
+    écrit aussi le bloc dans les tours `assistant` qui suivent la dernière question et
+    l'efface dès que la question factice suit ; l'amorce doit alors en contenir exactement un
+    par tour de ce genre (voir `_amorce_sans_blocs`). MiniCPM5 et Granite n'y sont pas soumis.
     """
     egaux, ecarts = 0, []
     bloc = config.bloc_amorce
@@ -713,15 +738,36 @@ def _comparer_textes_supervises(
             egal = distant.startswith(texte)
             if not egal and bloc and config.decoupage_masque == "par-tour":
                 debut = rendu.tours[-1][0]
-                amorce = texte[:debut]
-                egal = amorce.endswith(bloc) and distant.startswith(
-                    amorce.replace(bloc, "") + texte[debut:]
-                )
+                amorce = _amorce_sans_blocs(texte[:debut], ligne.messages[: fin - 1], config)
+                egal = amorce is not None and distant.startswith(amorce + texte[debut:])
             if egal:
                 egaux += 1
             else:
                 ecarts.append(f"{slug} ligne {numero} tour jusqu'à {fin}")
     return egaux, ecarts
+
+
+def test_amorce_sans_blocs_controle_strict() -> None:
+    """Le contrôle « textes supervisés » ne retire que le bloc final, sauf option de la fiche
+    (Qwen3.5), qui compte exactement les blocs de tête de tour : un bloc de trop échoue."""
+    b = "<B>"
+    minicpm = config_par_tour(b)
+    qwen = minicpm.model_copy(update={"bloc_amorce_historique": True})
+    with pytest.raises(ValidationError, match="bloc_amorce_historique"):
+        ConfigModele.model_validate(
+            {**charger_config_modele("granite-4.0-1b").model_dump(), "bloc_amorce_historique": True}
+        )
+    assert charger_config_modele("qwen3.5-2b").bloc_amorce_historique
+    assert not charger_config_modele("minicpm5-1b").bloc_amorce_historique
+    hist = [{"role": "user"}, {"role": "assistant"}, {"role": "tool"}]
+    assert _amorce_sans_blocs("U" + b + "A" + b, hist, minicpm) == "U" + b + "A"
+    assert _amorce_sans_blocs("UA" + b, hist, minicpm) == "UA"
+    assert _amorce_sans_blocs("UA", hist, minicpm) is None
+    assert _amorce_sans_blocs("U" + b + "A" + b, hist, qwen) == "UA"
+    assert _amorce_sans_blocs("U" + b + "A" + b + b, hist, qwen) is None  # bloc de trop
+    assert _amorce_sans_blocs("UA" + b, hist, qwen) is None  # bloc manquant
+    avant = [{"role": "user"}, {"role": "assistant"}, {"role": "user"}, {"role": "tool"}]
+    assert _amorce_sans_blocs("UAU" + b, avant, qwen) == "UAU"  # aucun bloc après la question
 
 
 def _gguf(slug: str) -> Path:

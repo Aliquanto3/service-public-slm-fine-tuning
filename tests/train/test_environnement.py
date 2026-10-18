@@ -1454,3 +1454,29 @@ def test_cli_sonde_multimodale(
     assert "noyaux_gdn" in sonde  # consigné, jamais bloquant pour la sonde
     unsloth = _json(run / "methodes.json")["methodes"]["qlora-unsloth"]
     assert unsloth["statut"] == "indisponible" and "multimodal" in unsloth["motif"]
+
+
+@pytest.mark.lent
+def test_gel_vision_sur_les_vrais_poids_qwen35_0_8b() -> None:
+    """Critère B2 sur de vrais poids (CPU, bf16) : la classe multimodale charge la tour vision
+    (plus de 100 M de paramètres), le LoRA ne cible que `language_model`, rien n'est
+    entraînable en vision, ni dans `lm_head` ni dans les embeddings."""
+    for nom in ("torch", "transformers", "peft"):
+        pytest.importorskip(nom)
+    import peft  # noqa: PLC0415
+    import torch  # noqa: PLC0415
+    import transformers  # noqa: PLC0415
+
+    dossier = Path(os.environ.get("SLMSP_MODELS_DIR") or "models") / "qwen3.5-0.8b" / "hf"
+    if not (dossier / "config.json").is_file():
+        pytest.skip(f"poids absents : {dossier}")
+    modele = transformers.AutoModelForImageTextToText.from_pretrained(
+        str(dossier), dtype=torch.bfloat16
+    )
+    cible = environnement.cibles_lora(modele, "geler-vision")
+    lora = peft.LoraConfig(r=4, lora_alpha=8, target_modules=cible, task_type="CAUSAL_LM")
+    modele = peft.get_peft_model(modele, lora)
+    gel = environnement.verifier_gel_vision(modele)
+    assert gel["vision_parametres"] > 100_000_000 and gel["vision_entrainables"] == 0
+    entrainables = [n for n, p in modele.named_parameters() if p.requires_grad]
+    assert entrainables and all("lora_" in n and "language_model" in n for n in entrainables)
