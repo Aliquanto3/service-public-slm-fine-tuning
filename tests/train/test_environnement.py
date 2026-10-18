@@ -94,6 +94,7 @@ class Scenario:
         self.reserve: dict[int, int] = {}
         self.perte = 2.5
         self.chargements: list[dict[str, Any]] = []
+        self.appels_base: list[str] = []
         self.configs: list[dict[str, Any]] = []
         self.jeux: list[dict[str, Any]] = []
         self.vidages = 0
@@ -117,6 +118,9 @@ def pile_simulee(scenario: Scenario) -> environnement.Pile:
     class Modele:
         def __init__(self) -> None:
             self.config = SimpleNamespace(use_cache=True)
+
+        def enable_input_require_grads(self) -> None:
+            scenario.appels_base.append("grads")
 
     class AutoModelForCausalLM:
         @staticmethod
@@ -148,7 +152,9 @@ def pile_simulee(scenario: Scenario) -> environnement.Pile:
         TrainerCallback=Rappel,
     )
     peft = SimpleNamespace(
-        prepare_model_for_kbit_training=lambda modele, **_kw: modele,
+        prepare_model_for_kbit_training=lambda modele, **_kw: (
+            scenario.appels_base.append("kbit") or modele
+        ),
         LoraConfig=lambda **kw: kw,
         get_peft_model=lambda modele, _config: modele,
     )
@@ -430,6 +436,70 @@ def test_sonde_nominale(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
         assert mesure["max_memory_reserved"] == 3 * GO
         assert mesure["max_memory_allocated"] == mesure["longueur"] * 1000
         assert len(mesure["durees_pas_s"]) == 3
+
+
+def test_sonde_precision_par_defaut_appelle_le_cast_kbit(tmp_path: Path) -> None:
+    scenario = Scenario()
+    resultat = _sonder(scenario, tmp_path, longueurs=(16,))
+    assert scenario.appels_base == ["kbit"]
+    assert {m["precision_base"] for m in resultat.sonde["mesures"]} == {"fp32-kbit"}
+
+
+def test_sonde_precision_bf16_sans_cast(tmp_path: Path) -> None:
+    scenario = Scenario()
+    resultat = _sonder(scenario, tmp_path, longueurs=(16,), precision_base="bf16")
+    assert scenario.appels_base == ["grads"]
+    assert resultat.sonde["precisions_base"] == ["bf16"]
+    assert {m["precision_base"] for m in resultat.sonde["mesures"]} == {"bf16"}
+
+
+def test_sonde_les_deux_precisions_distinguees(tmp_path: Path) -> None:
+    scenario = Scenario(oom={64})
+    resultat = _sonder(scenario, tmp_path, precision_base="les-deux")
+    assert scenario.appels_base == ["kbit", "grads"]
+    assert len(scenario.chargements) == 2
+    sonde = resultat.sonde
+    assert [(m["precision_base"], m["longueur"]) for m in sonde["mesures"]] == [
+        (p, n) for p in ("fp32-kbit", "bf16") for n in (16, 32, 64)
+    ]
+    assert sonde["longueur_max_ok_par_precision"] == {"fp32-kbit": 32, "bf16": 32}
+    assert [m["statut"] for m in sonde["mesures"][:3]] == ["ok", "ok", "oom"]
+
+
+def test_sonde_les_deux_en_lora_ne_mesure_qu_une_fois(tmp_path: Path) -> None:
+    scenario = Scenario()
+    resultat = _sonder(scenario, tmp_path, methode="lora", precision_base="les-deux")
+    assert resultat.sonde["precisions_base"] == ["fp32-kbit"] and scenario.appels_base == []
+
+
+def test_sonde_precision_inconnue(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationInvalide, match="precision_base inconnue"):
+        _sonder(Scenario(), tmp_path, precision_base="fp16")
+
+
+def test_cli_sonde_les_deux(
+    tmp_path: Path, modeles: Path, scenario: Scenario, capsys: pytest.CaptureFixture[str]
+) -> None:
+    racine = tmp_path / "racine"
+    assert _sonde_env(racine, "--precision-base", "les-deux") == CodeSortie.SUCCES
+    run = _run_unique(racine)
+    assert _json(run / "run.json")["config"]["precision_base"] == "les-deux"
+    mesures = _json(run / "sonde.json")["mesures"]
+    assert [(m["precision_base"], m["longueur"]) for m in mesures] == [
+        ("fp32-kbit", 16),
+        ("fp32-kbit", 32),
+        ("bf16", 16),
+        ("bf16", 32),
+    ]
+    sortie = capsys.readouterr().out
+    assert "(fp32-kbit)" in sortie and "(bf16)" in sortie
+
+
+def test_cli_precision_defaut_inchangee(tmp_path: Path, modeles: Path, scenario: Scenario) -> None:
+    racine = tmp_path / "racine"
+    assert _sonde_env(racine) == CodeSortie.SUCCES
+    assert _json(_run_unique(racine) / "run.json")["config"]["precision_base"] == "fp32-kbit"
+    assert scenario.appels_base == ["kbit"]
 
 
 def test_sonde_sans_cuda(tmp_path: Path) -> None:

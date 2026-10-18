@@ -130,7 +130,10 @@ def test_decoupage_par_defaut_absent_de_la_config_resolue(projet, pile) -> None:
     config = ouvrir_run(dossier.name, racine=projet.racine).manifeste.config
     assert "decoupage_masque" not in config["invariants"]
     assert "decoupage_masque" not in config["modele"]
-    assert set(config["invariants"]) == set(module_run.CLES_INVARIANTS) - {"decoupage_masque"}
+    assert set(config["invariants"]) == set(module_run.CLES_INVARIANTS) - {
+        "decoupage_masque",
+        "precision_base",
+    }
     pile.interrompre_apres = None
     assert _executer(projet, pile, toml, reprendre_run=dossier.name) == dossier.name
 
@@ -146,6 +149,55 @@ def test_invariants_portent_le_decoupage_par_tour(projet) -> None:
     )
     sans = module_run.invariants(config, jeu_build="b", chat_template_sha256="s")
     assert avec == {**sans, "decoupage_masque": empreinte} and "decoupage_masque" not in sans
+
+
+def test_invariant_precision_base_et_retrocompatibilite(projet, pile) -> None:
+    from slmsp.train.config import charger_run_config
+
+    defaut = charger_run_config(projet.ecrire_toml("m1-defaut"))
+    bf16 = charger_run_config(projet.ecrire_toml("m1-bf16", precision_base="bf16"))
+    sans = module_run.invariants(defaut, jeu_build="b", chat_template_sha256="s")
+    avec = module_run.invariants(bf16, jeu_build="b", chat_template_sha256="s")
+    assert "precision_base" not in sans  # run d'avant : clé absente = fp32-kbit
+    assert avec == {**sans, "precision_base": "bf16"}
+
+
+def test_campagne_refuse_une_precision_base_differente(projet, pile) -> None:
+    projet.ecrire_jeu()
+    _executer(projet, pile, projet.ecrire_toml("m1-defaut"))  # run sans la clé
+    with pytest.raises(ConfigurationInvalide, match="« precision_base » diffère"):
+        module_run.executer(
+            projet.ecrire_toml("m3-bf16", methode="dora", precision_base="bf16"),
+            racine=projet.racine,
+            pile=pile,
+        )
+
+
+def test_run_bf16_archive_la_precision_et_se_reprend(projet, pile) -> None:
+    projet.ecrire_jeu()
+    toml = projet.ecrire_toml(
+        precision_base="bf16", hyperparametres={"pas_max": 6, "pas_sauvegarde": 2}
+    )
+    pile.interrompre_apres = 4
+    with pytest.raises(KeyboardInterrupt):
+        module_run.executer(toml, racine=projet.racine, pile=pile, sortie=lambda _m: None)
+    (dossier,) = (projet.racine / "runs" / "train").iterdir()
+    config = ouvrir_run(dossier.name, racine=projet.racine).manifeste.config
+    assert config["invariants"]["precision_base"] == "bf16"
+    assert config["toml"]["precision_base"] == "bf16"
+    assert pile.appels_base == ["grads"]
+    pile.interrompre_apres = None
+    assert _executer(projet, pile, toml, reprendre_run=dossier.name) == dossier.name
+    assert pile.appels_base == ["grads", "grads"]
+
+
+def test_run_defaut_appelle_prepare_kbit_et_omet_la_cle(projet, pile) -> None:
+    projet.ecrire_jeu()
+    _executer(projet, pile, projet.ecrire_toml())
+    assert pile.appels_base == ["kbit"]
+    (dossier,) = (projet.racine / "runs" / "train").iterdir()
+    config = ouvrir_run(dossier.name, racine=projet.racine).manifeste.config
+    assert "precision_base" not in config["toml"]
 
 
 def test_reprise_refusee_si_la_config_change(projet, pile) -> None:

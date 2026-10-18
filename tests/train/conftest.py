@@ -228,6 +228,8 @@ class PileFactice:
 
     ordre: list[str] = field(default_factory=list)
     lora: list[dict[str, Any]] = field(default_factory=list)
+    appels_base: list[str] = field(default_factory=list)
+    """`kbit` (prepare_model_for_kbit_training) et `grads` (enable_input_require_grads)."""
     trainers: list[Any] = field(default_factory=list)
     interrompre_apres: int | None = None
     """Le faux entraîneur lève `KeyboardInterrupt` après ce nombre de pas."""
@@ -246,6 +248,9 @@ class PileFactice:
         class Modele:
             def __init__(self) -> None:
                 self.config = SimpleNamespace(use_cache=True)
+
+            def enable_input_require_grads(self) -> None:
+                pile.appels_base.append("grads")
 
             def save_pretrained(self, dossier: str) -> None:
                 Path(dossier).mkdir(parents=True)
@@ -286,7 +291,9 @@ class PileFactice:
         self.peft = SimpleNamespace(
             LoraConfig=lora_config,
             get_peft_model=get_peft_model,
-            prepare_model_for_kbit_training=lambda modele, **kw: modele,
+            prepare_model_for_kbit_training=lambda modele, **kw: (
+                pile.appels_base.append("kbit") or modele
+            ),
             PeftModel=SimpleNamespace(
                 from_pretrained=lambda modele, chemin, **kw: (
                     pile.ordre.append(f"sft:{Path(chemin).parent.name}") or modele

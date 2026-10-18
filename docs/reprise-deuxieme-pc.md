@@ -86,6 +86,7 @@ Si `slmsp budget etat` montre un registre vide, la restauration a échoué : ne 
 
 - **lm_eval en HF bf16.** Un batch fixe est obligatoire : `lm_eval_batch_size` dans `config/modeles/<slug>.toml`. Partir de 2 ; minicpm5-1b est à 4. En `auto`, on a vu un OOM même sur 8 Go.
 - **QLoRA (story 11.2).** Charger en 4 bits, avec le gradient checkpointing, batch 1 et accumulation. Si l'OOM persiste à la séquence cible, revenir sur la tour.
+- **Entraînement 4096 à 8192 tokens.** `precision_base = "bf16"` dans le TOML de run (qlora, dora, orpo, rslora) évite le cast fp32 de `prepare_model_for_kbit_training` ; MiniCPM5-2B tient alors 4096 tokens en 3,72 Gio et 8192 en 4,69. À valider par un court run ; la sonde `slmsp train sonde-env --precision-base les-deux` mesure les deux variantes.
 - **Mesures CPU (H-RAM).** Elles restent indicatives : le portable a 32 Go de RAM, la cible 16 Go.
 
 ## Annexe : transfert par disque

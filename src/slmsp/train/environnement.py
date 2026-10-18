@@ -59,6 +59,11 @@ from slmsp.inference import processus
 METHODES_SONDE: Final = ("qlora", "lora")
 """Méthodes qu'exécute la sonde : QLoRA nf4 (M1) ou LoRA bf16 (M2)."""
 
+PRECISIONS_BASE: Final = ("fp32-kbit", "bf16")
+"""Précisions de la base d'un run quantifié (`train.config.PrecisionBase`)."""
+PRECISION_LES_DEUX: Final = "les-deux"
+"""Option de la sonde : chaque longueur est mesurée dans les deux précisions."""
+
 METHODES: Final = ("qlora", "lora", "dora", "orpo", "rslora", "pissa", "qlora-unsloth")
 """Méthodes et variantes du spine dont `methodes.json` donne la disponibilité."""
 
@@ -395,8 +400,13 @@ def tokens_aleatoires(
 # --- Chargement ---------------------------------------------------------------------------
 
 
-def charger_modele(pile: Pile, dossier: Path, methode: str) -> Any:
+def charger_modele(
+    pile: Pile, dossier: Path, methode: str, precision_base: str = "fp32-kbit"
+) -> Any:
     """Charge les poids en 4 bits nf4 (`qlora`) ou en bf16 (`lora`), sur le GPU 0.
+
+    `precision_base` ne joue qu'en `qlora` : `fp32-kbit` (cast de `prepare_model_for_kbit_training`)
+    ou `bf16` (sans ce cast, `enable_input_require_grads` seul).
 
     Un échec du chargement 4 bits (bitsandbytes absent ou en panne) lève
     `ErreurQuantification` ; une erreur de mémoire CUDA est propagée telle quelle.
@@ -426,11 +436,14 @@ def charger_modele(pile: Pile, dossier: Path, methode: str) -> Any:
             raise ErreurQuantification(
                 f"chargement 4 bits nf4 impossible : {type(exc).__name__} : {exc}"
             ) from exc
-        modele = pile.peft.prepare_model_for_kbit_training(
-            modele,
-            use_gradient_checkpointing=True,
-            gradient_checkpointing_kwargs={"use_reentrant": False},
-        )
+        if precision_base == "bf16":
+            modele.enable_input_require_grads()
+        else:
+            modele = pile.peft.prepare_model_for_kbit_training(
+                modele,
+                use_gradient_checkpointing=True,
+                gradient_checkpointing_kwargs={"use_reentrant": False},
+            )
     elif methode == "lora":
         modele = transformers.AutoModelForCausalLM.from_pretrained(str(dossier), **arguments)
     else:
@@ -692,7 +705,21 @@ class ResultatSonde:
     replis: list[str] = field(default_factory=list)
 
 
-def _verifier_parametres(methode: str, longueurs: Sequence[int], pas: int) -> None:
+def variantes_precision(methode: str, precision_base: str) -> tuple[str, ...]:
+    """Précisions à mesurer : `les-deux` en `qlora` ; `lora` (sans cast) n'en mesure qu'une."""
+    if precision_base == PRECISION_LES_DEUX:
+        return PRECISIONS_BASE if methode == "qlora" else ("fp32-kbit",)
+    return (precision_base,)
+
+
+def _verifier_parametres(
+    methode: str, longueurs: Sequence[int], pas: int, precision_base: str = "fp32-kbit"
+) -> None:
+    if precision_base not in (*PRECISIONS_BASE, PRECISION_LES_DEUX):
+        raise ConfigurationInvalide(
+            f"precision_base inconnue : {precision_base!r} "
+            f"(attendu : {', '.join((*PRECISIONS_BASE, PRECISION_LES_DEUX))})"
+        )
     if methode not in METHODES_SONDE:
         raise ConfigurationInvalide(
             f"méthode de sonde inconnue : {methode!r} (attendu : {', '.join(METHODES_SONDE)})"
@@ -712,6 +739,7 @@ def sonder(
     longueurs: Sequence[int] = LONGUEURS_DEFAUT,
     pas: int = PAS_DEFAUT,
     graine: int = GRAINE,
+    precision_base: str = "fp32-kbit",
     dossier_travail: Path,
     pile: Pile | None = None,
     journal: Callable[[str], None] = lambda _m: None,
@@ -724,7 +752,7 @@ def sonder(
     `partiel-erreur`). Les chemins de `sonde` sont portables (`chemin_portable`, relatifs
     à `racine` pour ceux du run).
     """
-    _verifier_parametres(methode, longueurs, pas)
+    _verifier_parametres(methode, longueurs, pas, precision_base)
     appliquer_environnement_impose()
     specifiques = arguments_specifiques(config_modele)
     arguments_affiches = arguments_entrainement(
@@ -740,6 +768,7 @@ def sonder(
         "dossier_poids": chemin_portable(dossier, racine=racine),
         "methode_demandee": methode,
         "methode": None,
+        "precision_base_demandee": precision_base,
         "longueurs": [int(n) for n in longueurs],
         "pas": int(pas),
         "pas_chauffe": PAS_CHAUFFE,
@@ -772,56 +801,74 @@ def sonder(
     effective = methode
     motif_quantification: str | None = None
     replis: list[str] = []
+    variantes = variantes_precision(methode, precision_base)
+    sonde["precisions_base"] = list(variantes)
     modele = None
     try:
-        journal(f"chargement de {slug} ({methode})")
-        try:
-            modele = charger_modele(pile, dossier, methode)
-        except ErreurQuantification as exc:
-            motif_quantification = str(exc)
-            sonde["erreur_quantification"] = motif_quantification
-            if slug != SLUG_REPLI_BF16:
-                motif = f"{motif_quantification} ; repli LoRA bf16 réservé à {SLUG_REPLI_BF16}"
-                sonde["erreur"] = motif
-                return ResultatSonde(
-                    sonde=sonde,
-                    statut="partiel-erreur",
-                    motif=motif,
-                    motif_quantification=motif_quantification,
+        for variante in variantes:
+            if effective != methode:  # repli LoRA bf16 : la précision de la base n'a plus d'objet
+                break
+            journal(f"chargement de {slug} ({methode}, base {variante})")
+            try:
+                modele = charger_modele(pile, dossier, methode, variante)
+            except ErreurQuantification as exc:
+                motif_quantification = str(exc)
+                sonde["erreur_quantification"] = motif_quantification
+                if slug != SLUG_REPLI_BF16:
+                    motif = f"{motif_quantification} ; repli LoRA bf16 réservé à {SLUG_REPLI_BF16}"
+                    sonde["erreur"] = motif
+                    return ResultatSonde(
+                        sonde=sonde,
+                        statut="partiel-erreur",
+                        motif=motif,
+                        motif_quantification=motif_quantification,
+                    )
+                effective = "lora"
+                replis.append(f"sans bitsandbytes : LoRA bf16 sur {SLUG_REPLI_BF16} seulement")
+                journal(f"repli : {replis[-1]}")
+                modele = charger_modele(pile, dossier, "lora")
+            sonde["methode"] = effective
+            modele = poser_lora(pile, modele)
+            tokenizer = charger_tokenizer(pile, dossier)
+            vocab = int(config_modele.get("vocab_size") or len(tokenizer))
+            vocab = min(vocab, len(tokenizer)) if len(tokenizer) else vocab
+            arret = False
+            for longueur in longueurs:
+                if arret:
+                    sonde["mesures"].append(
+                        {
+                            "longueur": int(longueur),
+                            "statut": "non-tentee",
+                            "precision_base": variante,
+                        }
+                    )
+                    continue
+                journal(
+                    f"longueur {longueur} ({variante}) : {pas} pas après "
+                    f"{PAS_CHAUFFE} pas de chauffe"
                 )
-            effective = "lora"
-            replis.append(f"sans bitsandbytes : LoRA bf16 sur {SLUG_REPLI_BF16} seulement")
-            journal(f"repli : {replis[-1]}")
-            modele = charger_modele(pile, dossier, "lora")
-        sonde["methode"] = effective
-        modele = poser_lora(pile, modele)
-        tokenizer = charger_tokenizer(pile, dossier)
-        vocab = int(config_modele.get("vocab_size") or len(tokenizer))
-        vocab = min(vocab, len(tokenizer)) if len(tokenizer) else vocab
-        arret = False
-        for longueur in longueurs:
-            if arret:
-                sonde["mesures"].append({"longueur": int(longueur), "statut": "non-tentee"})
-                continue
-            journal(f"longueur {longueur} : {pas} pas après {PAS_CHAUFFE} pas de chauffe")
-            mesure = mesurer_longueur(
-                pile,
-                modele,
-                tokenizer,
-                longueur=int(longueur),
-                pas=int(pas),
-                graine=int(graine),
-                vocab=vocab,
-                dossier_sortie=dossier_travail,
-                memoire_totale=materiel.memoire_totale or 0,
-                specifiques=specifiques,
-            )
-            sonde["mesures"].append(mesure)
-            journal(
-                f"longueur {longueur} : {mesure['statut']}, perte {mesure.get('perte')}, "
-                f"VRAM réservée {mesure.get('max_memory_reserved')}"
-            )
-            arret = mesure["statut"] != "ok"
+                mesure = mesurer_longueur(
+                    pile,
+                    modele,
+                    tokenizer,
+                    longueur=int(longueur),
+                    pas=int(pas),
+                    graine=int(graine),
+                    vocab=vocab,
+                    dossier_sortie=dossier_travail,
+                    memoire_totale=materiel.memoire_totale or 0,
+                    specifiques=specifiques,
+                )
+                mesure["precision_base"] = variante
+                sonde["mesures"].append(mesure)
+                journal(
+                    f"longueur {longueur} ({variante}) : {mesure['statut']}, "
+                    f"perte {mesure.get('perte')}, "
+                    f"VRAM réservée {mesure.get('max_memory_reserved')}"
+                )
+                arret = mesure["statut"] != "ok"
+            modele = None
+            _liberer(pile)
     except BaseException as exc:
         if isinstance(exc, Exception) and _est_oom(pile, exc):
             motif = f"mémoire GPU insuffisante au chargement : {type(exc).__name__}"
@@ -834,6 +881,10 @@ def sonder(
 
     reussies = [m for m in sonde["mesures"] if m.get("statut") == "ok" and m.get("perte_finie")]
     sonde["longueur_max_ok"] = max((m["longueur"] for m in reussies), default=None)
+    sonde["longueur_max_ok_par_precision"] = {
+        v: max((m["longueur"] for m in reussies if m.get("precision_base") == v), default=None)
+        for v in variantes
+    }
     sonde["replis"] = replis
     pas_reussi = bool(reussies)
     if not pas_reussi:

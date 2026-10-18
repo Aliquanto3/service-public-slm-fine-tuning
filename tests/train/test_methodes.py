@@ -112,6 +112,30 @@ def test_chargement_4_bits(pile, tmp_path: Path) -> None:
     assert "quantization_config" not in pile.arguments_modele
 
 
+@pytest.mark.parametrize("methode", ["qlora", "dora", "orpo", "rslora"])
+def test_precision_defaut_appelle_prepare_kbit(pile, tmp_path: Path, methode: str) -> None:
+    methodes.charger_modele(pile, tmp_path, methodes.plan_methode(methode))
+    assert pile.appels_base == ["kbit"]
+
+
+@pytest.mark.parametrize("methode", ["qlora", "dora", "orpo", "rslora"])
+def test_precision_bf16_sans_prepare_kbit(pile, tmp_path: Path, methode: str) -> None:
+    modele = methodes.charger_modele(
+        pile, tmp_path, methodes.plan_methode(methode), precision_base="bf16"
+    )
+    assert pile.appels_base == ["grads"]  # enable_input_require_grads, pas de cast fp32
+    assert modele.config.use_cache is False
+
+
+@pytest.mark.parametrize("precision", ["fp32-kbit", "bf16"])
+def test_precision_sans_effet_hors_quantification(pile, tmp_path: Path, precision: str) -> None:
+    for methode in ("lora", "pissa"):
+        methodes.charger_modele(
+            pile, tmp_path, methodes.plan_methode(methode), precision_base=precision
+        )
+    assert pile.appels_base == []
+
+
 @pytest.mark.parametrize(
     ("erreur", "attendue"),
     [

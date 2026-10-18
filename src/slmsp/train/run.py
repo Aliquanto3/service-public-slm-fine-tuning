@@ -42,7 +42,12 @@ from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide
 from slmsp.core.var import verrou_gpu
 from slmsp.inference.serveur import charger_config_modele
 from slmsp.train import chargement, environnement, methodes, variante_unsloth
-from slmsp.train.config import RunConfig, charger_config_couts, charger_run_config
+from slmsp.train.config import (
+    PRECISION_BASE_DEFAUT,
+    RunConfig,
+    charger_config_couts,
+    charger_run_config,
+)
 from slmsp.train.couts import creer_callback, ecrire_mesures
 from slmsp.train.masque import VERSION_MASQUE, empreinte_decoupage
 
@@ -64,7 +69,10 @@ CLES_INVARIANTS: Final = (
     "version_masque",
     "decoupage_masque",
     "rendu_outils",
+    "precision_base",
 )
+DEFAUTS_INVARIANTS: Final = {"precision_base": PRECISION_BASE_DEFAUT}
+"""Valeur d'un invariant absent d'un run antérieur (la clé n'est écrite que hors défaut)."""
 DEROGATION_ORPO: Final = (
     "ORPO déroge au protocole de la campagne (FR-34) : paires de préférence "
     "(réponse rejetée générée par le Modèle de base), point de départ = adaptateur SFT"
@@ -100,6 +108,8 @@ def invariants(
         "version_masque": VERSION_MASQUE,
         "rendu_outils": VERSION_RENDU_OUTILS,
     }
+    if config.precision_base != PRECISION_BASE_DEFAUT:  # absente au défaut, comme avant
+        resultat["precision_base"] = config.precision_base
     if decoupage_masque is not None:  # absente au défaut : run.json des runs antérieurs intact
         resultat["decoupage_masque"] = dict(decoupage_masque)
     return resultat
@@ -125,10 +135,12 @@ def verifier_campagne(
         if config.get("campagne") != campagne or not isinstance(enregistres, Mapping):
             continue
         for cle in CLES_INVARIANTS:
-            if enregistres.get(cle) != attendus.get(cle):
+            defaut = DEFAUTS_INVARIANTS.get(cle)
+            if enregistres.get(cle, defaut) != attendus.get(cle, defaut):
                 raise ConfigurationInvalide(
                     f"campagne {campagne} : « {cle} » diffère du run {run.run_id} "
-                    f"({enregistres.get(cle)!r} enregistré, {attendus.get(cle)!r} demandé)"
+                    f"({enregistres.get(cle, defaut)!r} enregistré, "
+                    f"{attendus.get(cle, defaut)!r} demandé)"
                 )
         compares.append(run.run_id)
     return compares
@@ -297,9 +309,14 @@ def executer(
         chat_template_sha256=template_sha,
         decoupage_masque=empreinte_decoupage(config_modele),
     )
+    toml_resolu = config.model_dump(mode="json")
+    if (
+        config.precision_base == PRECISION_BASE_DEFAUT
+    ):  # absente au défaut : reprise des runs d'avant
+        del toml_resolu["precision_base"]
     resolue: dict[str, Any] = {
         "campagne": config.campagne,
-        "toml": config.model_dump(mode="json"),
+        "toml": toml_resolu,
         "plan": plan.ligne(),
         "invariants": attendus,
         "modele": {
@@ -457,7 +474,9 @@ def _entrainer(
         return
 
     pile.transformers.set_seed(config.graine)  # avant le chargement et l'adaptateur (W4.4)
-    modele = methodes.charger_modele(pile, dossier, plan, cpu=cpu)
+    modele = methodes.charger_modele(
+        pile, dossier, plan, cpu=cpu, precision_base=config.precision_base
+    )
     if adaptateur_sft is not None:
         modele = pile.peft.PeftModel.from_pretrained(modele, str(adaptateur_sft), is_trainable=True)
     else:

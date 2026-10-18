@@ -181,8 +181,35 @@ def _vient_de_bitsandbytes(exc: BaseException) -> bool:
     return "bitsandbytes" in texte or "bnb" in texte.split()
 
 
-def charger_modele(pile: Pile, dossier: Path, plan: PlanMethode, *, cpu: bool = False) -> Any:
+def preparer_base_quantifiee(pile: Pile, modele: Any, precision_base: str) -> Any:
+    """Prépare une base 4 bits au gradient checkpointing (`precision_base`, voir `RunConfig`).
+
+    `fp32-kbit` : `prepare_model_for_kbit_training` (embeddings, normes et conv1d en fp32).
+    `bf16` : sans ce cast ; `enable_input_require_grads` suffit à faire circuler le gradient
+    avec le checkpointing (poids LoRA fp32, comme PEFT les crée).
+    """
+    if precision_base == "bf16":
+        modele.enable_input_require_grads()
+        return modele
+    return pile.peft.prepare_model_for_kbit_training(
+        modele,
+        use_gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
+    )
+
+
+def charger_modele(
+    pile: Pile,
+    dossier: Path,
+    plan: PlanMethode,
+    *,
+    cpu: bool = False,
+    precision_base: str = "fp32-kbit",
+) -> Any:
     """Poids du Modèle de base, en nf4 4 bits ou en bf16 selon le plan (GPU 0, ou CPU).
+
+    `precision_base` ne joue que pour une base quantifiée : sans quantification, le cast
+    `prepare_model_for_kbit_training` n'a jamais été appelé.
 
     Seule une erreur d'import ou de bitsandbytes devient `ErreurQuantification` ; une
     erreur de mémoire et toute autre exception sont propagées telles quelles (W4.3).
@@ -205,11 +232,7 @@ def charger_modele(pile: Pile, dossier: Path, plan: PlanMethode, *, cpu: bool = 
             modele = pile.transformers.AutoModelForCausalLM.from_pretrained(
                 str(dossier), **arguments
             )
-            modele = pile.peft.prepare_model_for_kbit_training(
-                modele,
-                use_gradient_checkpointing=True,
-                gradient_checkpointing_kwargs={"use_reentrant": False},
-            )
+            modele = preparer_base_quantifiee(pile, modele, precision_base)
         except Exception as exc:
             if _est_oom(pile, exc) or not _vient_de_bitsandbytes(exc):
                 raise

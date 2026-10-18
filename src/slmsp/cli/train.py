@@ -84,6 +84,13 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         help="qlora (nf4 4 bits + LoRA, défaut) ou lora (bf16)",
     )
     p.add_argument(
+        "--precision-base",
+        choices=(*environnement.PRECISIONS_BASE, environnement.PRECISION_LES_DEUX),
+        default="fp32-kbit",
+        help="précision de la base quantifiée : fp32-kbit (prepare_model_for_kbit_training, "
+        "défaut), bf16 (sans ce cast) ou les-deux (chaque longueur dans les deux variantes)",
+    )
+    p.add_argument(
         "--longueurs",
         type=_longueurs,
         default=list(environnement.LONGUEURS_DEFAUT),
@@ -246,6 +253,7 @@ def _sonde_env(args: argparse.Namespace) -> int:
                 "sous_commande": "sonde-env",
                 "modele": slug,
                 "methode": args.methode,
+                "precision_base": args.precision_base,
                 "longueurs": list(args.longueurs),
                 "pas": args.pas,
                 "pas_chauffe": environnement.PAS_CHAUFFE,
@@ -289,6 +297,7 @@ def _executer_sonde(
         longueurs=args.longueurs,
         pas=args.pas,
         graine=environnement.GRAINE,
+        precision_base=args.precision_base,
         dossier_travail=run.dossier / DOSSIER_ENTRAINEUR,
         journal=journal,
         racine=racine,
@@ -341,7 +350,8 @@ def _executer_sonde(
 
     for mesure in resultat.sonde.get("mesures", []):
         print(
-            f"{mesure.get('statut', '?'):<12} longueur {mesure.get('longueur')} : "
+            f"{mesure.get('statut', '?'):<12} longueur {mesure.get('longueur')} "
+            f"({mesure.get('precision_base', '?')}) : "
             f"perte {mesure.get('perte')}, VRAM réservée {mesure.get('max_memory_reserved')}, "
             f"{mesure.get('tokens_par_s')} tokens/s"
         )

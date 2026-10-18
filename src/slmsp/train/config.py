@@ -45,6 +45,11 @@ def charger_config_couts(dossier: str | Path | None = None) -> ConfigCouts:
 Methode = Literal["qlora", "lora", "dora", "orpo", "rslora", "pissa", "qlora-unsloth"]
 """M1 `qlora`, M2 `lora`, M3 `dora`, M4 `orpo` ; variantes `rslora`, `pissa`, `qlora-unsloth`."""
 
+PrecisionBase = Literal["fp32-kbit", "bf16"]
+"""Précision de la base d'un run quantifié : `fp32-kbit` passe par `prepare_model_for_kbit_training`
+(embeddings, normes et conv1d en fp32) ; `bf16` garde la base en bf16 (moins de VRAM)."""
+PRECISION_BASE_DEFAUT: Final = "fp32-kbit"
+
 MOTIF_NOM_RUN: Final = r"^[a-z0-9.-]+$"
 """Nom d'un TOML de run (slug du `run_id`, AD-21) et d'une campagne."""
 
@@ -84,6 +89,9 @@ class RunConfig(ModeleConfig):
     graine: int = Field(ge=0)
     longueur_max: int = Field(ge=8)
     hyperparametres: HyperParametres = Field(default_factory=HyperParametres)
+    precision_base: PrecisionBase = PRECISION_BASE_DEFAUT
+    """Méthodes quantifiées (qlora, dora, orpo, rslora) : voir `PrecisionBase`. Sans effet sur
+    lora et pissa (bf16 sans quantification, `prepare_model_for_kbit_training` non appelé)."""
     sft_run_id: Annotated[str, StringConstraints(pattern=MOTIF_RUN_ID)] | None = None
     """ORPO seulement : Run SFT dont l'adaptateur sert de point de départ."""
 
@@ -93,6 +101,8 @@ class RunConfig(ModeleConfig):
             raise ValueError("methode = orpo exige sft_run_id (ORPO après SFT)")
         if self.methode != "orpo" and self.sft_run_id is not None:
             raise ValueError("sft_run_id n'est permis qu'avec methode = orpo")
+        if self.methode == "qlora-unsloth" and self.precision_base != PRECISION_BASE_DEFAUT:
+            raise ValueError("precision_base ne s'applique pas à qlora-unsloth (pile Unsloth)")
         return self
 
 

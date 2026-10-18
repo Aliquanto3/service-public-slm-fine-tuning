@@ -45,6 +45,8 @@ BASE = (
         ('methode = "qlora"\nsft_run_id = "20261016-120000-m1-abcd"\n', "sft_run_id"),
         ('methode = "sft"\n', "methode"),
         ('methode = "qlora"\ninconnu = 1\n', "inconnu"),
+        ('methode = "qlora"\nprecision_base = "fp16"\n', "precision_base"),
+        ('methode = "qlora-unsloth"\nprecision_base = "bf16"\n', "qlora-unsloth"),
         ('methode = "qlora"\n[hyperparametres]\nsave_total_limit = 2\n', "save_total_limit"),
     ],
 )
@@ -71,3 +73,9 @@ def test_defauts() -> None:
     )
     assert config.hyperparametres.pas_max is None
     assert config.hyperparametres.lora_rang == 16
+    assert config.precision_base == "fp32-kbit"
+
+
+def test_precision_base_bf16_acceptee(tmp_path: Path) -> None:
+    contenu = BASE + 'methode = "qlora"\nprecision_base = "bf16"\n'
+    assert charger_run_config(_toml(tmp_path, contenu)).precision_base == "bf16"
