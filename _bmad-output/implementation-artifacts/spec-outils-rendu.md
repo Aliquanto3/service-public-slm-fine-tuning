@@ -158,7 +158,31 @@ La « reproduction du format générique de llama-server » n'est pas une option
 - Tests : `tests/train/test_rendu_outils.py` (18, rapides) ; `tests/train/test_masque.py` : `test_rendu_identique_a_llama_server_jinja` étendu et `test_jeu_v1_rendu_identique_a_llama_server` (lents, trois candidats entraînables). Le second lit `SLMSP_TRAIN_V1` (chemin de train.jsonl) à défaut de `data/train/v1/` de la racine. Les fixtures de `tests/train/conftest.py` prennent la Tâche RD et ses vrais outils, le faux tokenizer n'écrit plus que leurs noms.
 - Décisions prises seul :
   - les outils de la ligne sont comparés par nom et par définition (dicts), sans exiger le même ordre dans la ligne ;
-  - le contrôle de `sha_outils_mcp` est dans `charger_jeu` (un MANIFEST sans la clé n'est pas contrôlé) ;
+  - le contrôle de `sha_outils_mcp` est dans `charger_jeu` (revue : un jeu à outils sans SHA déclaré est refusé ; les paires ORPO le reprennent du jeu SFT source) ;
   - `content: null` n'est retiré, comme le décodage, que hors `balises-tool-call` (chemin inchangé).
-- Écart découvert, non corrigé (à confirmer par Anaël) : pour minicpm5-1b et minicpm5-2b, une valeur d'argument `null` est rendue `None` par transformers et vide par llama-server ; une liste, `['…']` contre un texte nu. Granite égale llama-server sur ces cas. Le jeu v1 n'en contient pas, et les schémas de `config/outils-mcp.toml` n'admettent que chaîne, entier et `null` (`anyOf string|null`). Le test lent exclut `null` et les listes. Un `null` émis par un minicpm5 fine-tuné ne serait pas rendu comme à l'inférence : correctif possible, une normalisation propre à ce template, à décider.
+- Écart découvert, non corrigé (à confirmer par Anaël) : pour minicpm5-1b et minicpm5-2b, une valeur d'argument `null` est rendue `None` par transformers et vide par llama-server ; une liste, `['…']` contre un texte nu. Granite égale llama-server sur ces cas. Le jeu v1 n'en contient pas, et les schémas de `config/outils-mcp.toml` n'admettent que chaîne, entier et `null` (`anyOf string|null`). Le test lent exclut `null` et les listes. Un `null` émis par un minicpm5 fine-tuné ne serait pas rendu comme à l'inférence : correctif possible, une normalisation propre à ce template, à décider. Revue : à l'entraînement, `null`, liste et objet imbriqué dans des arguments sont refusés (`ManifesteInvalide`), jamais rendus en écart silencieux ; le cas de l'inférence reste à décider.
 - Reste à faire hors R7 : §0 (feat/rd-connecte), remesure des comptes de tokens de spec-masque-minicpm5 (1 202 229, mesurés avec les outils triés), troncature des résultats d'outils.
+
+## Revue
+Revue Opus du 2026-10-18, une passe, branche rebasée sur main (62a109a, sans conflit). Parité mesurée en CPU (llama-server b11429, GGUF Q4_K_M), après correctifs, sur les 91 lignes RD de v1 :
+
+| Modèle | Préfixes avec amorce | Textes supervisés complets (balise de fin comprise) |
+|---|---|---|
+| granite-4.0-1b (`conversation`) | 205 / 205 | 91 / 91 |
+| minicpm5-1b (`par-tour`) | 205 / 205 | 205 / 205 |
+| minicpm5-2b (`conversation`) | 205 / 205 | 91 / 91 |
+
+Conversation factice à deux tours d'appel : 3/3 préfixes et tous les textes supervisés égaux sur les trois.
+
+| Sévérité | Source | Constat | Suite | Motif |
+|---|---|---|---|---|
+| medium | second avis 1 | `controler_outils_mcp` inopérant sans `sha_outils_mcp`, donc toujours en ORPO (`ManifestePreferences` sans la clé). | Corrigé | `ManifestePreferences.sha_outils_mcp` optionnel (compatible), rempli par `data/preferences.py` depuis le MANIFEST SFT. Au chargement, à défaut de clé, le SHA est lu dans le MANIFEST du jeu `jeu_sft_version`. Un jeu à outils sans SHA déclaré est **refusé** : les outils rendus viennent de la config et non des lignes, rien ne prouverait qu'ils sont ceux du build, et `data build` écrit toujours la clé (seuls des MANIFEST faits main sont touchés). Fixtures de test : la clé est écrite pour un jeu à outils. |
+| medium | second avis 2 | `_arguments_decodes` acceptait `null`, listes, objets imbriqués et `arguments` ni chaîne ni objet ; rendus différents de llama-server pour minicpm5. | Corrigé | Valeurs admises : chaîne, entier, flottant, booléen (couvertes par le test lent). `null`, liste, objet imbriqué, `NaN`/`Infinity` et `arguments` non chaîne non objet lèvent `ManifesteInvalide` (message citant R7). v1 n'en contient aucun (suite lente verte). |
+| medium | second avis 3 | Le texte supervisé (tour `assistant`, balise de fin) n'était jamais comparé à llama-server. | Corrigé | `_comparer_textes_supervises` (test_masque.py) : pour chaque exemple de `calculer_masques` (chemin de `pretokeniser`), le texte d'entraînement doit être un préfixe exact de `/apply-template` sur la conversation jusqu'au tour, suivie d'un `user` factice ; en `par-tour`, l'amorce privée de `bloc_amorce` suivie du corps (le template n'écrit pas le bloc dans l'historique). Comptes ci-dessus. |
+| low | second avis 4 | Tests de parité lents, hors suite par défaut. | Consigné | Voulu : marqueur `lent`, CPU (`ServeurLlama` variante `cpu`), sautés sans GGUF ; à lancer par `pytest -m lent tests/train/test_masque.py -k llama_server` (`SLMSP_TRAIN_V1` pour un worktree). |
+| low | second avis 5 | `_messages_rendus` normalise aussi en `json-generique`. | Rejeté | Le « inchangé » de la spec vise `balises-tool-call`. En `json-generique` le client envoie les mêmes messages (`ClientLlama._messages`), et llama-server rend l'historique de la même façon : la normalisation reste la bonne. Aucun candidat entraînable n'est en `json-generique`. |
+| low | second avis 6 | `content: None` retiré quel que soit le rôle. | Rejeté | Le contrat des messages (`core.messages`) n'admet `content: null` que pour `assistant` ; ailleurs la ligne est déjà invalide au build. Retirer l'absence reste équivalent à llama-server. |
+| low | second avis 7 | Comparaison des outils sans ordre. | Consigné | Correct : le rendu suit l'ordre de `config/outils-mcp.toml`, non celui de la ligne. |
+| low | second avis 8 | Un run postérieur à R7 est refusé dans une campagne qui contient un run antérieur (`rendu_outils` absent). | Consigné | Voulu : le texte des lignes RD a changé, les runs ne sont pas comparables. |
+| low | second avis 9 | `data/preferences.py` génère `rejected` avec les outils triés de la ligne. | Reporté | Construction des données, hors R7 (déjà dans « Risques »). Vérifier à la première campagne ORPO que le prompt de génération égale celui de l'inférence. |
+| — | revue | Complexité : 0 constat. | — | Aucune structure qui grossit à l'exécution n'est parcourue à chaque événement (outils mis en cache par Tâche, contrôle du SHA en un passage). |

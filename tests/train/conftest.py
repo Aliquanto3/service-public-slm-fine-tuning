@@ -65,6 +65,15 @@ def outils_factices() -> list[dict[str, Any]]:
     return [o for o in charger_outils() if o["function"]["name"] in autorises]
 
 
+def sha_outils_mcp() -> str:
+    """SHA-256 de `config/outils-mcp.toml` du projet, comme dans le MANIFEST d'un build."""
+    from slmsp.core.canonique import sha256_fichier
+    from slmsp.core.config import racine_projet
+    from slmsp.mcp.outils import NOM_CONFIG
+
+    return sha256_fichier(racine_projet() / "config" / NOM_CONFIG)
+
+
 def ligne_factice(numero: int, *, appel_id: str | None = None, mots: int = 1) -> dict[str, Any]:
     reponse = " ".join(f"<réponse-factice-{numero}-{i}>" for i in range(mots))
     return {
@@ -123,6 +132,8 @@ class Projet:
             "run_id": f"20261016-120000-{version}-abcd",
             f"sha256_{Path(fichier).stem}": hashlib.sha256(brut).hexdigest(),
         }
+        if any(ligne.get("tools") for ligne in lignes):  # écrit par `data build` (R7)
+            contenu["sha_outils_mcp"] = sha_outils_mcp()
         contenu.update(manifeste or {})
         (dossier / "MANIFEST.json").write_text(json.dumps(contenu), encoding="utf-8")
         ids = {a for ligne in lignes for a in ligne["meta"]["appel_ids"]}

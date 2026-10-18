@@ -116,7 +116,9 @@ def test_tools_rendus_ligne_divergente_refusee(factices) -> None:
 
 def test_sha_outils_mcp_controle(factices) -> None:
     ligne = ligne_rd(factices)
-    chargement.controler_outils_mcp({}, [ligne])  # clé absente : pas de contrôle
+    with pytest.raises(ManifesteInvalide, match="sans « sha_outils_mcp »"):
+        chargement.controler_outils_mcp({}, [ligne])  # clé absente : jeu à outils refusé
+    chargement.controler_outils_mcp({}, [ligne_rd(factices, tools=[])])  # sans outils : rien
     chargement.controler_outils_mcp({"sha_outils_mcp": "0" * 64}, [ligne_rd(factices, tools=[])])
     with pytest.raises(ManifesteInvalide, match="sha_outils_mcp"):
         chargement.controler_outils_mcp({"sha_outils_mcp": "0" * 64}, [ligne])
@@ -125,6 +127,45 @@ def test_sha_outils_mcp_controle(factices) -> None:
 
     sha = sha256_fichier(racine_projet() / "config" / "outils-mcp.toml")
     chargement.controler_outils_mcp({"sha_outils_mcp": sha}, [ligne])
+
+
+def test_sha_outils_mcp_herite_du_jeu_sft_pour_les_paires(projet, factices) -> None:
+    """Paires ORPO : MANIFEST sans la clé, SHA lu dans celui du jeu SFT (`jeu_sft_version`)."""
+    projet.ecrire_jeu("v1", manifeste={"sha_outils_mcp": "0" * 64})
+    paires = [factices.paire(1)]
+    projet.ecrire_jeu(
+        "v2",
+        paires,
+        fichier="preferences.jsonl",
+        manifeste={"sha_outils_mcp": None, "jeu_sft_version": "v1"},
+    )
+    with pytest.raises(ManifesteInvalide, match="a changé"):
+        chargement.charger_jeu("v2", racine=projet.racine, fichier="preferences.jsonl")
+    projet.ecrire_jeu("v1")  # SHA du projet
+    jeu = chargement.charger_jeu("v2", racine=projet.racine, fichier="preferences.jsonl")
+    assert len(jeu.lignes) == 1
+    projet.ecrire_jeu("v3", paires, fichier="preferences.jsonl", manifeste={"sha_outils_mcp": None})
+    with pytest.raises(ManifesteInvalide, match="sans « sha_outils_mcp »"):
+        chargement.charger_jeu("v3", racine=projet.racine, fichier="preferences.jsonl")
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        '{"query": null}',
+        '{"query": ["<a-factice>"]}',
+        '{"query": {"x": 1}}',
+        '{"query": NaN}',
+        None,
+        ["<a-factice>"],
+        3,
+    ],
+)
+def test_arguments_sans_rendu_prouve_refuses(arguments: Any) -> None:
+    """`null`, liste, objet imbriqué, constante non JSON, `arguments` ni chaîne ni objet."""
+    config = charger_config_modele("minicpm5-1b")
+    with pytest.raises(ManifesteInvalide, match="arguments d'appel d'outil"):
+        chargement._messages_rendus(messages_avec_appel(arguments), config)
 
 
 # ---- les deux chemins : pretokeniser et preparer_preferences --------------------------------

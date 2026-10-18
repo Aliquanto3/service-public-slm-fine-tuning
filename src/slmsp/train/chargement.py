@@ -160,7 +160,7 @@ def charger_jeu(version: str, *, racine: str | Path | None = None, fichier: str 
             ) from None
     if not lignes:
         raise ManifesteInvalide(f"{donnees_chemin} : jeu vide")
-    controler_outils_mcp(brut_manifeste, lignes)
+    controler_outils_mcp(brut_manifeste, lignes, racine=racine)
     return Jeu(version, fichier, sha, brut_manifeste, lignes)
 
 
@@ -301,8 +301,35 @@ def sha_chat_template(tokenizer: Any) -> str:
     return hashlib.sha256(texte.encode("utf-8")).hexdigest()
 
 
+VALEURS_ARGUMENTS: Final = (str, int, float, bool)
+"""Types de valeur d'argument dont le rendu HF égale celui de llama-server (test lent, R7)."""
+
+
+def _refuser_constante(constante: str) -> Any:
+    raise ManifesteInvalide(f"arguments d'appel d'outil : {constante} hors JSON strict")
+
+
+def _controler_valeurs(arguments: Mapping[str, Any]) -> None:
+    """Refuse une valeur `null`, une liste ou un objet imbriqué (rendus autrement, R7).
+
+    Pour minicpm5, transformers rend `None` et `['…']` là où llama-server (minja) rend un
+    vide et un texte nu (spec-outils-rendu) : un écart silencieux du texte supervisé.
+    """
+    for cle, valeur in arguments.items():
+        if not isinstance(valeur, VALEURS_ARGUMENTS):
+            raise ManifesteInvalide(
+                f"arguments d'appel d'outil : valeur de « {cle} » de type "
+                f"{type(valeur).__name__} ; seuls chaîne, entier, flottant et booléen ont un "
+                "rendu prouvé égal à llama-server (R7, spec-outils-rendu)"
+            )
+
+
 def _arguments_decodes(message: Mapping[str, Any]) -> list[dict[str, Any]] | None:
-    """`tool_calls` d'un message avec `arguments` décodés (ordre des clés gardé), ou None."""
+    """`tool_calls` d'un message avec `arguments` décodés (ordre des clés gardé), ou None.
+
+    Lève `ManifesteInvalide` si `arguments` n'est ni une chaîne JSON d'objet ni un objet, ou si
+    une valeur n'est pas un scalaire non nul (`_controler_valeurs`).
+    """
     appels = message.get("tool_calls")
     if not appels:
         return None
@@ -312,7 +339,7 @@ def _arguments_decodes(message: Mapping[str, Any]) -> list[dict[str, Any]] | Non
         arguments = fonction.get("arguments") if isinstance(fonction, Mapping) else None
         if isinstance(arguments, str):
             try:
-                arguments = json.loads(arguments)
+                arguments = json.loads(arguments, parse_constant=_refuser_constante)
             except json.JSONDecodeError:
                 raise ManifesteInvalide(
                     f"arguments d'appel d'outil illisibles : {arguments[:80]!r}"
@@ -320,6 +347,12 @@ def _arguments_decodes(message: Mapping[str, Any]) -> list[dict[str, Any]] | Non
             if not isinstance(arguments, dict):
                 raise ManifesteInvalide("arguments d'appel d'outil : un objet JSON est attendu")
             appel = {**appel, "function": {**fonction, "arguments": arguments}}  # type: ignore[dict-item]
+        elif not isinstance(arguments, Mapping):
+            raise ManifesteInvalide(
+                "arguments d'appel d'outil : une chaîne JSON d'objet ou un objet est attendu "
+                f"(reçu {type(arguments).__name__}, R7)"
+            )
+        _controler_valeurs(arguments)
         decodes.append(dict(appel))
     return decodes
 
@@ -382,14 +415,38 @@ def _tools_rendus(ligne: _Ligne | _Paire) -> list[dict[str, Any]] | None:
     return copy.deepcopy(list(attendus))
 
 
-def controler_outils_mcp(manifeste: Mapping[str, Any], lignes: Sequence[Any]) -> None:
-    """`sha_outils_mcp` du MANIFEST = SHA de `config/outils-mcp.toml` (si des outils sont rendus).
-
-    Un MANIFEST sans cette clé (jeu de test) n'est pas contrôlé.
-    """
+def _sha_outils_declare(manifeste: Mapping[str, Any], racine: str | Path | None) -> str | None:
+    """`sha_outils_mcp` du MANIFEST, ou celui du jeu SFT source (`jeu_sft_version`) des paires."""
     attendu = manifeste.get("sha_outils_mcp")
-    if attendu is None or not any(ligne.tools for ligne in lignes):
+    source = manifeste.get("jeu_sft_version")
+    if attendu is not None or not isinstance(source, str):
+        return attendu
+    try:
+        chemin = chemin_autorise(dossier_jeu(source, racine=racine), "train", racine=racine)
+        brut = json.loads(lire(chemin / NOM_MANIFESTE_JEU, "train", racine=racine))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, SlmspError):
+        return None
+    return brut.get("sha_outils_mcp") if isinstance(brut, Mapping) else None
+
+
+def controler_outils_mcp(
+    manifeste: Mapping[str, Any], lignes: Sequence[Any], *, racine: str | Path | None = None
+) -> None:
+    """`sha_outils_mcp` déclaré = SHA de `config/outils-mcp.toml`, si des lignes ont des outils.
+
+    Le SHA vient du MANIFEST, ou, pour des paires ORPO dont le MANIFEST ne le porte pas, de
+    celui du jeu SFT source (`jeu_sft_version`). Un jeu à outils sans SHA déclaré est refusé :
+    les outils rendus viennent de la config, non des lignes, et rien ne prouverait qu'ils sont
+    ceux du build (`data build` écrit toujours la clé).
+    """
+    if not any(ligne.tools for ligne in lignes):
         return
+    attendu = _sha_outils_declare(manifeste, racine)
+    if attendu is None:
+        raise ManifesteInvalide(
+            "jeu à outils sans « sha_outils_mcp » (ni dans son MANIFEST ni dans celui du jeu "
+            f"SFT source) : config/{NOM_CONFIG_OUTILS} ne peut être contrôlé (R7)"
+        )
     sha = sha256_fichier(racine_projet() / "config" / NOM_CONFIG_OUTILS)
     if sha != attendu:
         raise ManifesteInvalide(

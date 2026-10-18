@@ -640,6 +640,59 @@ def _comparer_prefixes(
     return egaux, ecarts
 
 
+USER_SUIVANT: dict[str, Any] = {"role": "user", "content": "<question-suivante-factice>"}
+
+
+def _comparer_textes_supervises(
+    slug: str, lignes: list[dict[str, Any]], client: Any, tok: Any, config: ConfigModele
+) -> tuple[int, list[str]]:
+    """Texte d'entraînement complet (tours supervisés et balise de fin) face à llama-server.
+
+    Pour chaque exemple de `calculer_masques` (chemin réel de `pretokeniser`), la conversation
+    jusqu'au tour supervisé, suivie d'un message `user` factice, est rendue par
+    `/apply-template` : le tour y est dans l'historique, sous la forme que l'inférence montre
+    au modèle. Le texte d'entraînement doit en être un préfixe exact ; en `par-tour`, si le
+    template n'écrit pas `bloc_amorce` dans un tour d'historique, l'amorce privée du bloc,
+    suivie du corps supervisé, doit l'être.
+    """
+    egaux, ecarts = 0, []
+    bloc = config.bloc_amorce
+    for numero, brut in enumerate(lignes, start=1):
+        ligne = chargement._Ligne.model_validate(brut)
+        rendus = calculer_masques(
+            tok,
+            chargement._messages_rendus(ligne.messages, config),
+            tools=chargement._tools_rendus(ligne),
+            config=config,
+        )
+        if config.decoupage_masque == "conversation":
+            fins = [len(ligne.messages)]
+        else:
+            fins = [k + 1 for k, m in enumerate(ligne.messages) if m["role"] == "assistant"]
+        for fin, rendu in zip(fins, rendus, strict=True):
+            corps: dict[str, Any] = {
+                "messages": client._messages([*ligne.messages[:fin], USER_SUIVANT])
+            }
+            if ligne.tools:
+                corps["tools"] = chargement._tools_rendus(ligne)
+            if config.chat_template_kwargs:
+                corps["chat_template_kwargs"] = config.chat_template_kwargs
+            distant = client._post("/apply-template", corps)["prompt"]
+            texte = rendu.texte
+            egal = distant.startswith(texte)
+            if not egal and bloc and config.decoupage_masque == "par-tour":
+                debut = rendu.tours[-1][0]
+                amorce = texte[:debut]
+                egal = amorce.endswith(bloc) and distant.startswith(
+                    amorce[: -len(bloc)] + texte[debut:]
+                )
+            if egal:
+                egaux += 1
+            else:
+                ecarts.append(f"{slug} ligne {numero} tour jusqu'à {fin}")
+    return egaux, ecarts
+
+
 def _gguf(slug: str) -> Path:
     gguf = next((dossier_modeles() / slug / "gguf").glob("*Q4_K_M.gguf"), None)
     gguf = gguf or next((dossier_modeles() / slug / "gguf").glob("*.gguf"), None)
@@ -673,7 +726,12 @@ def test_rendu_identique_a_llama_server_jinja(slug: str) -> None:
     }
     with ServeurLlama(config, "cpu", slug=slug, gguf=gguf) as serveur, serveur.client() as client:
         egaux, ecarts = _comparer_prefixes(slug, [ligne], client, tok, config)
+        supervises, ecarts_supervises = _comparer_textes_supervises(
+            slug, [ligne], client, tok, config
+        )
     assert not ecarts and egaux == 3
+    attendus = 1 if config.decoupage_masque == "conversation" else 3
+    assert not ecarts_supervises and supervises == attendus
 
 
 @pytest.mark.lent
@@ -699,6 +757,13 @@ def test_jeu_v1_rendu_identique_a_llama_server(slug: str) -> None:
     config = charger_config_modele(slug)
     with ServeurLlama(config, "cpu", slug=slug, gguf=gguf) as serveur, serveur.client() as client:
         egaux, ecarts = _comparer_prefixes(slug, lignes, client, tok, config)
-    print(f"{slug} : {egaux} rendus égaux, {len(ecarts)} écarts sur {len(lignes)} lignes")
+        supervises, ecarts_supervises = _comparer_textes_supervises(
+            slug, lignes, client, tok, config
+        )
+    print(
+        f"{slug} : préfixes {egaux} égaux, {len(ecarts)} écarts ; textes supervisés "
+        f"{supervises} égaux, {len(ecarts_supervises)} écarts ; {len(lignes)} lignes"
+    )
     assert not ecarts, ecarts[:5]
-    assert egaux > 0
+    assert not ecarts_supervises, ecarts_supervises[:5]
+    assert egaux > 0 and supervises > 0

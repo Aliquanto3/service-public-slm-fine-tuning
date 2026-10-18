@@ -204,6 +204,8 @@ class ManifestePreferences(EnteteManifesteJeu, SchemaBase):
     """Run `data-build` du jeu SFT dont viennent les réponses choisies."""
     jeu_sft_version: VersionJeu
     sha256_train: Sha256
+    sha_outils_mcp: Sha256 | None = None
+    """Repris du jeu SFT source : outils rendus à l'entraînement contrôlés (R7)."""
     sha256_preferences: Sha256
     nb_paires: int = Field(ge=1)
     comptes_par_tache: dict[str, int]
