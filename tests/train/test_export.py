@@ -13,6 +13,7 @@ import json
 import os
 import struct
 import sys
+from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import Any
@@ -35,6 +36,8 @@ from slmsp.train import environnement
 from slmsp.train import export as module_export
 
 SLUG = "granite-4.0-1b"
+SLUG_MM = "qwen3.5-0.8b"
+MODULE_LORA_LANGAGE = "base_model.model.model.language_model.layers.0.self_attn.q_proj"
 TEMPLATE = "{# template-factice-export #}"
 SHA_TEMPLATE = hashlib.sha256(TEMPLATE.encode()).hexdigest()
 
@@ -130,7 +133,11 @@ class ModeleFactice:
 
 
 class PileExport:
-    def __init__(self, poids: dict[str, Tenseur] | None = None) -> None:
+    def __init__(
+        self,
+        poids: dict[str, Tenseur] | None = None,
+        modules_lora: Sequence[str] = (MODULE_LORA_LANGAGE,),
+    ) -> None:
         self.ordre: list[str] = []
         self.verrou_tenu: bool | None = None
         self.charge: dict[str, Any] = {}
@@ -149,7 +156,14 @@ class PileExport:
 
         def appliquer(modele: ModeleFactice, dossier: str) -> SimpleNamespace:
             pile.ordre.append(f"adaptateur:{Path(dossier).parent.name}")
-            return SimpleNamespace(merge_and_unload=lambda: pile.ordre.append("merge") or modele)
+            return SimpleNamespace(
+                merge_and_unload=lambda: pile.ordre.append("merge") or modele,
+                named_modules=lambda: [(f"{m}.lora_A.default", None) for m in modules_lora],
+            )
+
+        def charger_conditionnelle(dossier: str, **options: Any) -> ModeleFactice:
+            pile.ordre.append("classe:conditionnelle")
+            return charger_modele(dossier, **options)
 
         def tokenizer(dossier: str, **_options: Any) -> SimpleNamespace:
             def enregistrer(sortie: str) -> None:
@@ -161,6 +175,7 @@ class PileExport:
         self.torch = TorchFactice()
         self.transformers = SimpleNamespace(
             AutoModelForCausalLM=SimpleNamespace(from_pretrained=charger_modele),
+            AutoModelForImageTextToText=SimpleNamespace(from_pretrained=charger_conditionnelle),
             AutoTokenizer=SimpleNamespace(from_pretrained=tokenizer),
         )
         self.peft = SimpleNamespace(PeftModel=SimpleNamespace(from_pretrained=appliquer))
@@ -623,3 +638,351 @@ def test_cli_template_different(projet, cli, monkeypatch) -> None:
 @pytest.mark.parametrize("arguments", [[], ["--depuis", "x", "--base", SLUG]])
 def test_cli_usage(arguments: list[str]) -> None:
     assert main(["export", *arguments]) == CodeSortie.USAGE
+
+
+# --- Export multimodal (story B3) --------------------------------------------------------------
+
+FICHIERS_PRE = ("chat_template.jinja", "preprocessor_config.json", "video_preprocessor_config.json")
+VISION_VIDE = {"tenseurs": 1, "ecarts": [], "absents": [], "mtp_ignores": 0, "bloquants": []}
+
+
+def base_multimodale(projet: Any) -> Path:
+    """Poids factices de `SLUG_MM` avec les fichiers du préprocesseur."""
+    base = projet.modeles / SLUG_MM / "hf"
+    base.mkdir(parents=True)
+    (base / "config.json").write_text(json.dumps({"model_type": "qwen3_5"}), encoding="utf-8")
+    (base / "model.safetensors").write_bytes(b"<poids-base-factices>")
+    for nom in FICHIERS_PRE:
+        (base / nom).write_text(f"<{nom}-factice>", encoding="utf-8")
+    return base
+
+
+@pytest.fixture
+def vision_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Le contrôle de vision lit des safetensors : les fusions factices n'en écrivent pas."""
+    monkeypatch.setattr(module_export, "controler_vision_inchangee", lambda b, f: VISION_VIDE)
+
+
+def exporter_mm(projet: Any, source: Any, outils: Outils, pile: PileExport) -> Any:
+    return exporter(projet, source, outils, pile, controles=cli_export.controler_format(SLUG_MM))
+
+
+def test_fusion_multimodale_classe_conditionnelle(projet, vision_ok) -> None:
+    base_multimodale(projet)
+    train_id = run_train(projet, modele=SLUG_MM)
+    pile = PileExport()
+    source = module_export.source_depuis_run(train_id, racine=projet.racine)
+    run = exporter_mm(projet, source, Outils(), pile)
+    assert run.statut_courant() == "complet"
+    assert pile.ordre[:4] == [
+        "classe:conditionnelle",
+        "base:float32",
+        "adaptateur:" + train_id,
+        "merge",
+    ]
+    assert run.manifeste.config["multimodal"] == "geler-vision"
+
+
+def test_fusion_temoin_multimodal(projet, vision_ok) -> None:
+    base_multimodale(projet)
+    pile = PileExport()
+    run = exporter_mm(projet, module_export.source_temoin(SLUG_MM), Outils(), pile)
+    assert run.statut_courant() == "complet"
+    assert "classe:conditionnelle" in pile.ordre and "merge" not in pile.ordre
+    assert (run.dossier / "mmproj-f16.gguf").is_file()
+
+
+def test_fusion_copie_preprocessor(projet, tmp_path) -> None:
+    base = base_multimodale(projet)
+    sortie = tmp_path / "hf-f16"
+    module_export.fusionner(PileExport(), base, [], sortie, multimodal="geler-vision")
+    for nom in FICHIERS_PRE:
+        assert (sortie / nom).read_text(encoding="utf-8") == f"<{nom}-factice>"
+    (base / "preprocessor_config.json").unlink()
+    with pytest.raises(ConfigurationInvalide, match="preprocessor_config"):
+        module_export.fusionner(
+            PileExport(), base, [], tmp_path / "autre", multimodal="geler-vision"
+        )
+
+
+def test_fusion_dense_sans_preprocessor(projet, tmp_path) -> None:
+    sortie = tmp_path / "hf-f16"
+    module_export.fusionner(PileExport(), projet.modeles / SLUG / "hf", [], sortie)
+    assert not any((sortie / nom).exists() for nom in FICHIERS_PRE)
+
+
+# Contrôle de la vision : vrais safetensors minuscules.
+
+
+def _ecrire(dossier: Path, tenseurs: dict[str, Any]) -> Path:
+    safetensors_torch = pytest.importorskip("safetensors.torch")
+    dossier.mkdir(parents=True, exist_ok=True)
+    safetensors_torch.save_file(tenseurs, str(dossier / "model.safetensors"))
+    return dossier
+
+
+def _vision(tmp_path: Path, modifier: Any = None) -> tuple[Path, Path]:
+    torch = pytest.importorskip("torch")
+    generateur = torch.Generator().manual_seed(0)
+    visuel = torch.randn(4, 4, generator=generateur).to(torch.bfloat16)
+    langage = torch.randn(4, 4, generator=generateur)
+    base = _ecrire(
+        tmp_path / "base",
+        {
+            "model.visual.blocks.0.w": visuel,
+            "model.visual.merger.b": visuel.clone(),
+            "model.language_model.w": langage.to(torch.bfloat16),
+            "mtp.layers.0.w": langage.to(torch.bfloat16),
+        },
+    )
+    fusionne = {
+        "model.visual.blocks.0.w": visuel.to(torch.float16),
+        "model.visual.merger.b": visuel.clone().to(torch.float16),
+        "model.language_model.w": (langage + 0.5).to(torch.float16),
+    }
+    if modifier is not None:
+        modifier(fusionne)
+    return base, _ecrire(tmp_path / "fusionne", fusionne)
+
+
+def test_vision_inchangee_ok(tmp_path) -> None:
+    base, fusionne = _vision(tmp_path)
+    bilan = module_export.controler_vision_inchangee(base, fusionne)
+    assert bilan["bloquants"] == [] and bilan["tenseurs"] == 2 and bilan["ecarts"] == []
+
+
+def test_vision_modifiee_bloquante(tmp_path) -> None:
+    def modifier(t: dict[str, Any]) -> None:
+        t["model.visual.merger.b"] = t["model.visual.merger.b"] + 1
+
+    base, fusionne = _vision(tmp_path, modifier)
+    bilan = module_export.controler_vision_inchangee(base, fusionne)
+    assert bilan["ecarts"] == ["model.visual.merger.b"] and bilan["bloquants"]
+
+
+def test_vision_absente_bloquante(tmp_path) -> None:
+    base, fusionne = _vision(tmp_path, lambda t: t.pop("model.visual.blocks.0.w"))
+    bilan = module_export.controler_vision_inchangee(base, fusionne)
+    assert bilan["absents"] == ["model.visual.blocks.0.w"] and bilan["bloquants"]
+
+
+def test_mtp_absent_admis(tmp_path) -> None:
+    base, fusionne = _vision(tmp_path)  # `mtp.*` dans la base seulement
+    bilan = module_export.controler_vision_inchangee(base, fusionne)
+    assert bilan["mtp_ignores"] == 1 and bilan["bloquants"] == []
+
+
+def test_vision_modifiee_arrete_l_export_avant_la_conversion(projet, monkeypatch) -> None:
+    base_multimodale(projet)
+    bilan = {"tenseurs": 2, "ecarts": ["model.visual.w"], "absents": [], "bloquants": ["écart"]}
+    monkeypatch.setattr(module_export, "controler_vision_inchangee", lambda b, f: bilan)
+    outils = Outils()
+    run = exporter_mm(projet, module_export.source_temoin(SLUG_MM), outils, PileExport())
+    assert run.statut_courant() == "partiel-erreur" and outils.appels == []
+    export = json.loads((run.dossier / "export.json").read_text(encoding="utf-8"))
+    assert export["vision"]["ecarts"] == ["model.visual.w"]
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "base_model.model.model.visual.blocks.0.attn.qkv",
+        "base_model.model.lm_head",
+        "base_model.model.model.language_model.embed_tokens",
+    ],
+)
+def test_adaptateur_regex_hors_language_model_refuse(projet, vision_ok, module: str) -> None:
+    base_multimodale(projet)
+    train_id = run_train(projet, modele=SLUG_MM)
+    fichier = projet.racine / "runs" / "train" / train_id / "adaptateur" / "adapter_config.json"
+    regex = r".*language_model.*\.(q_proj|k_proj)$"
+    fichier.write_text(
+        json.dumps({"peft_type": "LORA", "r": 16, "target_modules": regex}), encoding="utf-8"
+    )
+    source = module_export.source_depuis_run(train_id, racine=projet.racine)
+    # La regex en chaîne est acceptée telle quelle ; le contrôle porte sur le modèle PEFT chargé.
+    assert module_export.controler_adaptateur(fichier.parent, racine=projet.racine)["r"] == 16
+    pile = PileExport(modules_lora=[MODULE_LORA_LANGAGE, module])
+    with pytest.raises(ConfigurationInvalide, match="hors de"):
+        exporter_mm(projet, source, Outils(), pile)
+
+
+def test_export_multimodal_produit_mmproj(projet, vision_ok) -> None:
+    base = base_multimodale(projet)
+    train_id = run_train(projet, modele=SLUG_MM)
+    outils = Outils()
+    source = module_export.source_depuis_run(train_id, racine=projet.racine)
+    run = exporter_mm(projet, source, outils, PileExport())
+    assert run.statut_courant() == "complet"
+    texte, quantification, mmproj = outils.appels
+    assert texte[0] == "convertir" and texte[1]["sans_mtp"] is True and "mmproj" not in texte[1]
+    assert quantification[0] == "quantifier"
+    assert mmproj[1]["mmproj"] is True and "sans_mtp" not in mmproj[1]
+    assert mmproj[1]["type_sortie"] == "f16"
+    export = json.loads((run.dossier / "export.json").read_text(encoding="utf-8"))
+    assert export["fichiers"] == {
+        "f16": "modele-f16.gguf",
+        "q4_k_m": "modele-q4_k_m.gguf",
+        "mmproj": "mmproj-f16.gguf",
+        "hf": "hf-f16",
+    }
+    assert export["multimodal"] == "geler-vision" and export["vision"]["bloquants"] == []
+    assert export["llamacpp_tag"] == serveur.charger_config_llamacpp().tag
+    for cle in ("f16", "q4_k_m", "mmproj"):
+        contenu = (run.dossier / export["fichiers"][cle]).read_bytes()
+        assert export["sha256"][cle] == hashlib.sha256(contenu).hexdigest()
+    # Les lecteurs de `export.json` ne changent pas.
+    for q in modele_ref.QUANTIFICATIONS:
+        assert modele_ref.resoudre(f"ft:{run.run_id}", q, racine=projet.racine).precision == q
+    assert module_export.octets_prevus(base, multimodal="geler-vision") > (
+        module_export.octets_prevus(base)
+    )
+
+
+def test_export_dense_inchange(projet) -> None:
+    """Non-régression : un modèle dense (sans `multimodal`) garde la chaîne d'origine."""
+    train_id = run_train(projet)
+    pile, outils = PileExport(), Outils()
+    source = module_export.source_depuis_run(train_id, racine=projet.racine)
+    run = exporter(projet, source, outils, pile)
+    assert pile.ordre == [
+        "base:float32",
+        "adaptateur:" + train_id,
+        "merge",
+        "to:float16",
+        "save",
+        "tokenizer",
+    ]
+    assert [a[0] for a in outils.appels] == ["convertir", "quantifier"]
+    # Ni `--mmproj` ni `--no-mtp` : les options passées à la conversion sont celles d'avant B3.
+    assert set(outils.appels[0][1]) == {"type_sortie", "python", "delai", "journal"}
+    export = json.loads((run.dossier / "export.json").read_text(encoding="utf-8"))
+    assert set(export) == {
+        "fichiers",
+        "precisions",
+        "chat_template_sha256_attendu",
+        "fusion",
+        "controles",
+    }
+    assert export["fichiers"] == {
+        "f16": "modele-f16.gguf",
+        "q4_k_m": "modele-q4_k_m.gguf",
+        "hf": "hf-f16",
+    }
+    config = run.manifeste.config
+    assert "multimodal" not in config and config["conversion"] == {"outtype": "f16"}
+    assert not (run.dossier / "mmproj-f16.gguf").exists()
+    assert not (run.dossier / "sonde-vision.json").exists()
+
+
+# Sonde vision.
+
+
+class ServeurVisionFactice:
+    def __init__(self, *, vision: bool = True, reponse: str = "<réponse-factice>") -> None:
+        self.vision, self.reponse = vision, reponse
+        self.requetes: list[tuple[Any, ...]] = []
+        self.options: dict[str, Any] = {}
+        self.port = 12345
+
+    def __call__(self, config: Any, variante: str, **options: Any) -> ServeurVisionFactice:
+        self.options = {"variante": variante, **options}
+        return self
+
+    def __enter__(self) -> ServeurVisionFactice:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        pass
+
+    def http(self, port: int) -> SimpleNamespace:
+        def get(url: str, **_o: Any) -> SimpleNamespace:
+            self.requetes.append(("GET", url))
+            return SimpleNamespace(json=lambda: {"modalities": {"vision": self.vision}})
+
+        def post(url: str, *, json: Any, **_o: Any) -> SimpleNamespace:
+            self.requetes.append(("POST", url, json))
+            corps = {"choices": [{"message": {"content": self.reponse}}]}
+            return SimpleNamespace(status_code=200, json=lambda: corps, text="")
+
+        return SimpleNamespace(get=get, post=post, close=lambda: None)
+
+
+def test_png_synthetique_valide() -> None:
+    import zlib
+
+    png = cli_export.png_uni(8, 4)
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
+    idat = png.index(b"IDAT")
+    taille = int.from_bytes(png[idat - 4 : idat], "big")
+    assert len(zlib.decompress(png[idat + 4 : idat + 4 + taille])) == 4 * (1 + 8 * 3)
+
+
+@pytest.mark.parametrize(
+    ("factice", "valide"),
+    [
+        (ServeurVisionFactice(), True),
+        (ServeurVisionFactice(vision=False), False),
+        (ServeurVisionFactice(reponse="  "), False),
+    ],
+)
+def test_sonde_vision_unitaire(tmp_path, factice, valide) -> None:
+    bilan = cli_export.sonder_vision(
+        tmp_path / "q.gguf", tmp_path / "m.gguf", SLUG_MM, fabrique=factice, http=factice.http
+    )
+    assert bilan["valide"] is valide
+    assert factice.options["mmproj"] == tmp_path / "m.gguf"
+    assert factice.options["variante"] == "cpu"
+    if valide:
+        contenu = factice.requetes[-1][2]["messages"][0]["content"]
+        assert contenu[1]["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+def test_sonde_vision_serveur_en_panne(tmp_path) -> None:
+    def fabrique(*_a: Any, **_k: Any) -> Any:
+        raise serveur.ErreurInference("llama-server mort au démarrage")
+
+    bilan = cli_export.sonder_vision(tmp_path / "q", tmp_path / "m", SLUG_MM, fabrique=fabrique)
+    assert bilan["valide"] is False and "mort au démarrage" in bilan["motif"]
+
+
+def _sonde_vision_factice(valide: bool, appels: list[Path]) -> Any:
+    def sonde(gguf: Path, mmproj: Path, slug: str) -> dict[str, Any]:
+        appels.append(mmproj)
+        return {
+            "valide": valide,
+            "modalite_vision": valide,
+            "reponse_non_vide": valide,
+            "motif": None if valide else "pas de vision",
+        }
+
+    return sonde
+
+
+@pytest.mark.parametrize("valide", [True, False])
+def test_sonde_vision_cli(projet, cli, monkeypatch, vision_ok, valide) -> None:
+    base_multimodale(projet)
+    monkeypatch.setattr(sonde_outils, "sonder", _sonde_factice(True, []))
+    appels: list[Path] = []
+    monkeypatch.setattr(cli_export, "sonder_vision", _sonde_vision_factice(valide, appels))
+    train_id = run_train(projet, modele=SLUG_MM)
+    code = main(["export", "--depuis", train_id, "--racine", str(projet.racine)])
+    (dossier,) = (projet.racine / "runs" / "export").iterdir()
+    assert appels == [dossier / "mmproj-f16.gguf"]
+    bilan = json.loads((dossier / "sonde-vision.json").read_text(encoding="utf-8"))
+    assert bilan["valide"] is valide
+    statut = ouvrir_run(dossier.name, racine=projet.racine).statut_courant()
+    assert (code, statut) == ((0, "complet") if valide else (1, "degrade"))
+
+
+def test_cli_sans_sonde_saute_la_vision(projet, cli, monkeypatch, vision_ok) -> None:
+    base_multimodale(projet)
+    monkeypatch.setattr(cli_export, "sonder_vision", lambda *a: pytest.fail("sonde lancée"))
+    commande = ["export", "--base", SLUG_MM, "--sans-sonde", "--racine", str(projet.racine)]
+    assert main(commande) == CodeSortie.SUCCES
+
+
+def test_cli_dense_sans_sonde_vision(projet, cli, monkeypatch) -> None:
+    monkeypatch.setattr(sonde_outils, "sonder", _sonde_factice(True, []))
+    monkeypatch.setattr(cli_export, "sonder_vision", lambda *a: pytest.fail("sonde lancée"))
+    assert main(["export", "--base", SLUG, "--racine", str(projet.racine)]) == CodeSortie.SUCCES

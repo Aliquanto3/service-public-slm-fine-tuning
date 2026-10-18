@@ -16,6 +16,10 @@ Une fois le run `complet` (CA3) : `ft:<run_id>` est résolu par `evaluation.mode
 d'H-TOOLS) passe sur le Q4_K_M ; son bilan va dans `sonde-outils.json` du run d'export.
 La sonde reprend `gpu.lock` elle-même en variante `cuda`, après la libération par l'export.
 
+Pour une fiche `multimodal`, une sonde vision suit (`sonde-vision.json`) : llama-server (cpu)
+sur le Q4_K_M avec le `mmproj`, modalité vision annoncée par `/props`, puis une image
+synthétique et une réponse non vide (son contenu n'est pas jugé).
+
 Une sonde non valide fait passer le run d'export en `degrade` (motif consigné) :
 `evaluation.modele_ref` refuse alors `ft:<run_id>`, sauf `accepter_degrade=True` explicite.
 
@@ -26,7 +30,10 @@ non valide, 5 GPU occupé.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
+import struct
+import zlib
 from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any, Final
@@ -36,7 +43,8 @@ from slmsp.core.canonique import json_canonique
 from slmsp.core.config import dossier_modeles, racine_ecriture
 from slmsp.core.erreurs import CodeSortie
 from slmsp.fetch.verifications import GgufInvalide, lire_metadonnees_gguf
-from slmsp.inference.serveur import VARIANTES, charger_config_modele
+from slmsp.inference.serveur import VARIANTES, ServeurLlama, charger_config_modele
+from slmsp.net.client import client_local
 from slmsp.train import export as train_export
 
 CLE_TEMPLATE: Final = "tokenizer.chat_template"
@@ -48,6 +56,9 @@ CLES_TOKENIZER: Final = (
 )
 SUFFIXES_ARCHITECTURE: Final = ("block_count", "embedding_length", "attention.head_count")
 NOM_SONDE: Final = "sonde-outils.json"
+NOM_SONDE_VISION: Final = "sonde-vision.json"
+DELAI_REQUETE_VISION: Final = 600.0
+"""Délai (s) d'une requête de la sonde vision (CPU, première image)."""
 
 
 def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
@@ -68,7 +79,9 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         default="cpu",
         help="variante llama.cpp de la sonde d'outils (défaut : cpu)",
     )
-    p.add_argument("--sans-sonde", action="store_true", help="ne pas lancer la sonde d'outils")
+    p.add_argument(
+        "--sans-sonde", action="store_true", help="ne pas lancer les sondes (outils, vision)"
+    )
     p.add_argument(
         "--python",
         type=Path,
@@ -127,7 +140,7 @@ def controler_format(slug: str) -> Any:
         alertes: list[str] = []
         templates: dict[str, str | None] = {}
         for quantification, nom in export["fichiers"].items():
-            if quantification == "hf":
+            if quantification in ("hf", "mmproj"):  # ni GGUF texte ni chat template
                 continue
             try:
                 templates[quantification] = sha_template(run.dossier / nom)
@@ -205,7 +218,100 @@ def _exporter(args: argparse.Namespace) -> int:
         print(f"{ref} {quantification} : {resolu.gguf.name} (précision {resolu.precision})")
     if args.sans_sonde:
         return int(CodeSortie.SUCCES)
-    return _sonder(run, ref, args.variante, racine)
+    code = _sonder(run, ref, args.variante, racine)
+    if code == int(CodeSortie.SUCCES) and charger_config_modele(source.slug).multimodal:
+        return _sonder_vision(run, source.slug)
+    return code
+
+
+def png_uni(
+    largeur: int = 64, hauteur: int = 64, rvb: tuple[int, int, int] = (200, 60, 60)
+) -> bytes:
+    """PNG uni en mémoire (zlib et struct, sans Pillow) pour la sonde vision."""
+
+    def bloc(type_: bytes, donnees: bytes) -> bytes:
+        crc = zlib.crc32(type_ + donnees) & 0xFFFFFFFF
+        return struct.pack(">I", len(donnees)) + type_ + donnees + struct.pack(">I", crc)
+
+    ligne = b"\x00" + bytes(rvb) * largeur
+    entete = struct.pack(">IIBBBBB", largeur, hauteur, 8, 2, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + bloc(b"IHDR", entete)
+        + bloc(b"IDAT", zlib.compress(ligne * hauteur))
+        + bloc(b"IEND", b"")
+    )
+
+
+def sonder_vision(
+    gguf: Path, mmproj: Path, slug: str, *, fabrique: Any = ServeurLlama, http: Any = client_local
+) -> dict[str, Any]:
+    """Démarre llama-server (cpu) sur `gguf` avec `mmproj`, contrôle `/props` puis une image.
+
+    Renvoie `{"valide", "modalite_vision", "reponse_non_vide", "motif"}` ; ne lève pas.
+    """
+    bilan: dict[str, Any] = {"modalite_vision": False, "reponse_non_vide": False, "motif": None}
+    try:
+        config = charger_config_modele(slug)
+        with fabrique(
+            config, "cpu", slug=slug, gguf=gguf, mmproj=mmproj, prendre_verrou_gpu=False
+        ) as serveur:
+            client = http(serveur.port)
+            try:
+                base = f"http://127.0.0.1:{serveur.port}"
+                props = client.get(base + "/props", timeout=60).json()
+                bilan["modalite_vision"] = bool((props.get("modalities") or {}).get("vision"))
+                if not bilan["modalite_vision"]:
+                    bilan["motif"] = "/props n'annonce pas la modalité vision"
+                else:
+                    image = base64.b64encode(png_uni()).decode("ascii")
+                    corps = {
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": "Décris cette image."},
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {"url": f"data:image/png;base64,{image}"},
+                                    },
+                                ],
+                            }
+                        ],
+                        "max_tokens": 32,
+                        "temperature": 0,
+                    }
+                    reponse = client.post(
+                        base + "/v1/chat/completions", json=corps, timeout=DELAI_REQUETE_VISION
+                    )
+                    if reponse.status_code != 200:
+                        bilan["motif"] = f"HTTP {reponse.status_code} : {reponse.text[:200]}"
+                    else:
+                        message = reponse.json()["choices"][0]["message"]
+                        texte = message.get("content") or message.get("reasoning_content") or ""
+                        bilan["reponse_non_vide"] = bool(str(texte).strip())
+                        if not bilan["reponse_non_vide"]:
+                            bilan["motif"] = "réponse vide à l'image"
+            finally:
+                client.close()
+    except Exception as exc:  # démarrage, réseau, JSON : l'échec est le résultat de la sonde
+        bilan["motif"] = f"{type(exc).__name__} : {exc}"[:300]
+    bilan["valide"] = bilan["modalite_vision"] and bilan["reponse_non_vide"]
+    return bilan
+
+
+def _sonder_vision(run: Run, slug: str) -> int:
+    bilan = sonder_vision(
+        run.dossier / "modele-q4_k_m.gguf", run.dossier / train_export.NOM_MMPROJ, slug
+    )
+    run.ecrire(NOM_SONDE_VISION, json_canonique(bilan) + b"\n")
+    etat = "valide" if bilan["valide"] else f"non valide ({bilan['motif']})"
+    print(f"sonde vision sur ft:{run.run_id} q4_k_m + mmproj : {etat}")
+    if not bilan["valide"]:
+        run.terminer("degrade", f"sonde vision non valide ({bilan['motif']})"[:500])
+        print(f"slmsp : export {run.run_id} degrade : ft:{run.run_id} refusé par l'évaluation")
+        return int(CodeSortie.ERREUR)
+    return int(CodeSortie.SUCCES)
 
 
 def _sonder(run: Run, ref: str, variante: str, racine: Path) -> int:
@@ -233,4 +339,12 @@ def _sonder(run: Run, ref: str, variante: str, racine: Path) -> int:
     return int(CodeSortie.SUCCES)
 
 
-__all__ = ["controler_format", "enregistrer", "gguf_officiel", "metadonnees", "sha_template"]
+__all__ = [
+    "controler_format",
+    "enregistrer",
+    "gguf_officiel",
+    "metadonnees",
+    "png_uni",
+    "sha_template",
+    "sonder_vision",
+]
