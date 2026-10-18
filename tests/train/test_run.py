@@ -93,6 +93,8 @@ def test_jeu_absent_consigne_bloque(projet, pile) -> None:
     ]
     assert etat[-1]["statut"] == "partiel-erreur"
     assert etat[-1]["motif"].startswith("bloqué : aucun jeu construit")
+    toml = ouvrir_run(dossier.name, racine=projet.racine).manifeste.config["toml"]
+    assert "precision_base" not in toml  # absente au défaut, comme dans un run lancé
 
 
 def test_reprise_sur_le_dernier_checkpoint(projet, pile) -> None:

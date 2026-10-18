@@ -194,13 +194,21 @@ def _charger_tokenizer(pile: environnement.Pile, dossier: Path) -> Any:
     return tokenizer
 
 
+def _toml_resolu(config: RunConfig) -> dict[str, Any]:
+    """TOML résolu de `run.json` ; `precision_base` absente au défaut (reprise des runs d'avant)."""
+    toml = config.model_dump(mode="json")
+    if toml.get("precision_base") == PRECISION_BASE_DEFAUT:
+        del toml["precision_base"]
+    return toml
+
+
 def _bloquer(
     nom: str, config: RunConfig, motif: str, *, racine: Path, sortie: Callable[[str], None]
 ) -> int:
     run = nouveau_run(
         TYPE_RUN,
         nom,
-        {"campagne": config.campagne, "toml": config.model_dump(mode="json")},
+        {"campagne": config.campagne, "toml": _toml_resolu(config)},
         graine=config.graine,
         racine=racine,
         jeu_version=config.jeu_version,
@@ -309,11 +317,7 @@ def executer(
         chat_template_sha256=template_sha,
         decoupage_masque=empreinte_decoupage(config_modele),
     )
-    toml_resolu = config.model_dump(mode="json")
-    if (
-        config.precision_base == PRECISION_BASE_DEFAUT
-    ):  # absente au défaut : reprise des runs d'avant
-        del toml_resolu["precision_base"]
+    toml_resolu = _toml_resolu(config)
     resolue: dict[str, Any] = {
         "campagne": config.campagne,
         "toml": toml_resolu,

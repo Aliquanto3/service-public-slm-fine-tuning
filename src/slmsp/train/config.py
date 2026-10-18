@@ -91,7 +91,9 @@ class RunConfig(ModeleConfig):
     hyperparametres: HyperParametres = Field(default_factory=HyperParametres)
     precision_base: PrecisionBase = PRECISION_BASE_DEFAUT
     """Méthodes quantifiées (qlora, dora, orpo, rslora) : voir `PrecisionBase`. Sans effet sur
-    lora et pissa (bf16 sans quantification, `prepare_model_for_kbit_training` non appelé)."""
+    l'entraînement en lora et pissa (bf16 sans quantification, jamais castée), mais invariant de
+    campagne comme ailleurs : leurs TOML déclarent la précision de la campagne (`bf16` pour
+    rejoindre une campagne en `bf16`)."""
     sft_run_id: Annotated[str, StringConstraints(pattern=MOTIF_RUN_ID)] | None = None
     """ORPO seulement : Run SFT dont l'adaptateur sert de point de départ."""
 

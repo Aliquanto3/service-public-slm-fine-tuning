@@ -63,6 +63,8 @@ PRECISIONS_BASE: Final = ("fp32-kbit", "bf16")
 """Précisions de la base d'un run quantifié (`train.config.PrecisionBase`)."""
 PRECISION_LES_DEUX: Final = "les-deux"
 """Option de la sonde : chaque longueur est mesurée dans les deux précisions."""
+PRECISION_SANS_OBJET: Final = "sans-objet"
+"""Étiquette des mesures `lora` (base bf16 non quantifiée, jamais castée), repli compris."""
 
 METHODES: Final = ("qlora", "lora", "dora", "orpo", "rslora", "pissa", "qlora-unsloth")
 """Méthodes et variantes du spine dont `methodes.json` donne la disponibilité."""
@@ -706,9 +708,11 @@ class ResultatSonde:
 
 
 def variantes_precision(methode: str, precision_base: str) -> tuple[str, ...]:
-    """Précisions à mesurer : `les-deux` en `qlora` ; `lora` (sans cast) n'en mesure qu'une."""
+    """Précisions à mesurer : `les-deux` en `qlora` ; `lora` (sans cast) n'en a pas."""
+    if methode != "qlora":
+        return (PRECISION_SANS_OBJET,)
     if precision_base == PRECISION_LES_DEUX:
-        return PRECISIONS_BASE if methode == "qlora" else ("fp32-kbit",)
+        return PRECISIONS_BASE
     return (precision_base,)
 
 
@@ -802,12 +806,16 @@ def sonder(
     motif_quantification: str | None = None
     replis: list[str] = []
     variantes = variantes_precision(methode, precision_base)
-    sonde["precisions_base"] = list(variantes)
+    sonde["precisions_base"] = list(variantes)  # remplacée par les précisions mesurées
+    etiquettes: list[str] = []  # précisions réellement mesurées (`sans-objet` après repli)
+    erreur_chargement: str | None = None
+    variante_courante = 0
     modele = None
     try:
-        for variante in variantes:
+        for rang, variante in enumerate(variantes):
             if effective != methode:  # repli LoRA bf16 : la précision de la base n'a plus d'objet
                 break
+            variante_courante = rang
             journal(f"chargement de {slug} ({methode}, base {variante})")
             try:
                 modele = charger_modele(pile, dossier, methode, variante)
@@ -827,6 +835,8 @@ def sonder(
                 replis.append(f"sans bitsandbytes : LoRA bf16 sur {SLUG_REPLI_BF16} seulement")
                 journal(f"repli : {replis[-1]}")
                 modele = charger_modele(pile, dossier, "lora")
+            etiquette = variante if effective == "qlora" else PRECISION_SANS_OBJET
+            etiquettes.append(etiquette)
             sonde["methode"] = effective
             modele = poser_lora(pile, modele)
             tokenizer = charger_tokenizer(pile, dossier)
@@ -839,12 +849,12 @@ def sonder(
                         {
                             "longueur": int(longueur),
                             "statut": "non-tentee",
-                            "precision_base": variante,
+                            "precision_base": etiquette,
                         }
                     )
                     continue
                 journal(
-                    f"longueur {longueur} ({variante}) : {pas} pas après "
+                    f"longueur {longueur} ({etiquette}) : {pas} pas après "
                     f"{PAS_CHAUFFE} pas de chauffe"
                 )
                 mesure = mesurer_longueur(
@@ -859,10 +869,10 @@ def sonder(
                     memoire_totale=materiel.memoire_totale or 0,
                     specifiques=specifiques,
                 )
-                mesure["precision_base"] = variante
+                mesure["precision_base"] = etiquette
                 sonde["mesures"].append(mesure)
                 journal(
-                    f"longueur {longueur} ({variante}) : {mesure['statut']}, "
+                    f"longueur {longueur} ({etiquette}) : {mesure['statut']}, "
                     f"perte {mesure.get('perte')}, "
                     f"VRAM réservée {mesure.get('max_memory_reserved')}"
                 )
@@ -872,27 +882,47 @@ def sonder(
     except BaseException as exc:
         if isinstance(exc, Exception) and _est_oom(pile, exc):
             motif = f"mémoire GPU insuffisante au chargement : {type(exc).__name__}"
-            sonde["erreur"] = motif
-            return ResultatSonde(sonde=sonde, statut="partiel-erreur", motif=motif)
-        raise
+            if variante_courante == 0:
+                sonde["erreur"] = motif
+                sonde["precisions_base"] = list(variantes)
+                return ResultatSonde(sonde=sonde, statut="partiel-erreur", motif=motif)
+            # Variante suivante (`les-deux`) : les mesures des précédentes sont gardées.
+            erreur_chargement = f"{motif} (base {variantes[variante_courante]})"
+            for reste in variantes[variante_courante:]:
+                if reste not in etiquettes:
+                    etiquettes.append(reste)
+                faites = {m["longueur"] for m in sonde["mesures"] if m["precision_base"] == reste}
+                sonde["mesures"].extend(
+                    {"longueur": int(n), "statut": "non-tentee", "precision_base": reste}
+                    for n in longueurs
+                    if int(n) not in faites
+                )
+        else:
+            raise
     finally:
         del modele
         _liberer(pile)
 
     reussies = [m for m in sonde["mesures"] if m.get("statut") == "ok" and m.get("perte_finie")]
-    sonde["longueur_max_ok"] = max((m["longueur"] for m in reussies), default=None)
+    sonde["precisions_base"] = etiquettes
     sonde["longueur_max_ok_par_precision"] = {
         v: max((m["longueur"] for m in reussies if m.get("precision_base") == v), default=None)
-        for v in variantes
+        for v in etiquettes
     }
+    # Celle de la première précision mesurée (`fp32-kbit`, le défaut des runs, en `les-deux`) :
+    # un maximum toutes précisions confondues annoncerait une longueur qu'aucun run par défaut
+    # ne tient.
+    sonde["longueur_max_ok"] = sonde["longueur_max_ok_par_precision"].get(etiquettes[0])
+    if erreur_chargement is not None:
+        sonde["erreur_chargement"] = erreur_chargement
     sonde["replis"] = replis
     pas_reussi = bool(reussies)
     if not pas_reussi:
         motif = "aucun pas d'entraînement réussi avec une perte finie"
         sonde["erreur"] = motif
         statut, motif_run = "partiel-erreur", motif
-    elif replis:
-        statut, motif_run = "degrade", "; ".join(replis)
+    elif replis or erreur_chargement is not None:
+        statut, motif_run = "degrade", "; ".join([*replis, *filter(None, [erreur_chargement])])
     else:
         statut, motif_run = "complet", None
     return ResultatSonde(

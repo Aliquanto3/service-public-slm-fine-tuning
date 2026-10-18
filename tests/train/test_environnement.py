@@ -91,6 +91,10 @@ class Scenario:
         self.memoire = 8 * GO
         self.echec_4bits: Exception | None = None
         self.oom: set[int] = set()
+        self.oom_kbit: set[int] = set()
+        """Longueurs en OOM seulement après `prepare_model_for_kbit_training` (base fp32)."""
+        self.oom_chargement: int | None = None
+        """Rang (0, 1, …) du chargement des poids qui lève un OOM."""
         self.reserve: dict[int, int] = {}
         self.perte = 2.5
         self.chargements: list[dict[str, Any]] = []
@@ -126,6 +130,8 @@ def pile_simulee(scenario: Scenario) -> environnement.Pile:
         @staticmethod
         def from_pretrained(chemin: str, **arguments: Any) -> Modele:
             scenario.chargements.append({"chemin": chemin, **arguments})
+            if scenario.oom_chargement == len(scenario.chargements) - 1:
+                raise OOMSimule("CUDA out of memory (simulé, chargement)")
             if "quantization_config" in arguments and scenario.echec_4bits is not None:
                 raise scenario.echec_4bits
             return Modele()
@@ -175,7 +181,8 @@ def pile_simulee(scenario: Scenario) -> environnement.Pile:
             longueur = self.args["max_length"]
             cuda.alloue = longueur * 1000
             cuda.reserve = scenario.reserve.get(longueur, 3 * GO)
-            if longueur in scenario.oom:
+            kbit = scenario.appels_base[-1:] == ["kbit"]
+            if longueur in scenario.oom or (kbit and longueur in scenario.oom_kbit):
                 raise OOMSimule("CUDA out of memory (simulé)")
             for _ in range(self.args["max_steps"]):
                 for rappel in self.rappels:
@@ -469,7 +476,51 @@ def test_sonde_les_deux_precisions_distinguees(tmp_path: Path) -> None:
 def test_sonde_les_deux_en_lora_ne_mesure_qu_une_fois(tmp_path: Path) -> None:
     scenario = Scenario()
     resultat = _sonder(scenario, tmp_path, methode="lora", precision_base="les-deux")
-    assert resultat.sonde["precisions_base"] == ["fp32-kbit"] and scenario.appels_base == []
+    assert resultat.sonde["precisions_base"] == ["sans-objet"] and scenario.appels_base == []
+    assert {m["precision_base"] for m in resultat.sonde["mesures"]} == {"sans-objet"}
+    assert resultat.sonde["longueur_max_ok_par_precision"] == {"sans-objet": 64}
+
+
+def test_sonde_les_deux_longueur_max_racine_celle_du_defaut(tmp_path: Path) -> None:
+    """Racine = fp32-kbit (défaut des runs), pas le maximum des deux précisions."""
+    scenario = Scenario(oom_kbit={32, 64})
+    resultat = _sonder(scenario, tmp_path, precision_base="les-deux")
+    sonde = resultat.sonde
+    assert sonde["longueur_max_ok_par_precision"] == {"fp32-kbit": 16, "bf16": 64}
+    assert sonde["longueur_max_ok"] == 16
+    assert resultat.statut == "complet"
+
+
+def test_sonde_bf16_seule_longueur_max_racine(tmp_path: Path) -> None:
+    scenario = Scenario(oom_kbit={32, 64})
+    resultat = _sonder(scenario, tmp_path, precision_base="bf16")
+    assert resultat.sonde["longueur_max_ok"] == 64
+
+
+def test_sonde_les_deux_oom_au_chargement_de_la_seconde_garde_la_premiere(
+    tmp_path: Path,
+) -> None:
+    scenario = Scenario(oom_chargement=1)
+    resultat = _sonder(scenario, tmp_path, precision_base="les-deux")
+    sonde = resultat.sonde
+    assert resultat.statut == "degrade" and resultat.pas_reussi
+    assert "base bf16" in (resultat.motif or "") and "base bf16" in sonde["erreur_chargement"]
+    assert sonde["longueur_max_ok_par_precision"] == {"fp32-kbit": 64, "bf16": None}
+    assert sonde["longueur_max_ok"] == 64
+    assert [(m["precision_base"], m["statut"]) for m in sonde["mesures"]] == [
+        ("fp32-kbit", "ok"),
+        ("fp32-kbit", "ok"),
+        ("fp32-kbit", "ok"),
+        ("bf16", "non-tentee"),
+        ("bf16", "non-tentee"),
+        ("bf16", "non-tentee"),
+    ]
+
+
+def test_sonde_oom_au_premier_chargement_reste_en_echec(tmp_path: Path) -> None:
+    resultat = _sonder(Scenario(oom_chargement=0), tmp_path, precision_base="les-deux")
+    assert resultat.statut == "partiel-erreur"
+    assert "erreur" in resultat.sonde
 
 
 def test_sonde_precision_inconnue(tmp_path: Path) -> None:

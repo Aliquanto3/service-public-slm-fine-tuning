@@ -171,3 +171,66 @@ def test_entraineur_sft_recoit_le_collateur(pile, tmp_path: Path) -> None:
         callbacks=["cb"],
     )
     assert entraineur.collateur is collateur and entraineur.callbacks == ["cb"]
+
+
+# --- Test réel : base bf16 non quantifiée, PEFT, gradient checkpointing (CPU) ----------------
+
+
+def _modele_minuscule_bf16():
+    torch = pytest.importorskip("torch")
+    transformers = pytest.importorskip("transformers")
+    pytest.importorskip("peft")
+    torch.manual_seed(0)
+    config = transformers.LlamaConfig(
+        vocab_size=64,
+        hidden_size=16,
+        intermediate_size=32,
+        num_hidden_layers=2,
+        num_attention_heads=2,
+        num_key_value_heads=2,
+    )
+    return torch, transformers.LlamaForCausalLM(config).to(torch.bfloat16)
+
+
+def test_bf16_reel_adaptateurs_fp32_base_bf16_gradient_avec_checkpointing() -> None:
+    """Chemin `bf16` réel : pas de cast, LoRA fp32, gradient jusqu'aux adaptateurs."""
+    torch, modele = _modele_minuscule_bf16()
+    from types import SimpleNamespace  # noqa: PLC0415
+
+    import peft  # noqa: PLC0415
+
+    pile = SimpleNamespace(peft=peft, torch=torch)
+    modele = methodes.preparer_base_quantifiee(pile, modele, "bf16")
+    modele.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+    config = _config("qlora")
+    modele = methodes.poser_adaptateur(pile, modele, methodes.plan_methode("qlora"), config)
+    modele.train()
+    assert modele.base_model.model.is_gradient_checkpointing
+
+    lora = {n: p for n, p in modele.named_parameters() if "lora_" in n}
+    base = {n: p for n, p in modele.named_parameters() if "lora_" not in n}
+    assert lora and all(p.dtype == torch.float32 and p.requires_grad for p in lora.values())
+    assert all(p.dtype == torch.bfloat16 and not p.requires_grad for p in base.values())
+
+    entree = torch.randint(0, 64, (1, 12))
+    sortie = modele(input_ids=entree, labels=entree)
+    assert torch.isfinite(sortie.loss)
+    sortie.loss.backward()
+    # lora_B est nul à l'initialisation : son gradient, lui, ne l'est pas.
+    gradients_b = [p.grad for n, p in lora.items() if "lora_B" in n]
+    assert gradients_b and all(g is not None for g in gradients_b)
+    assert any(float(g.abs().sum()) > 0 for g in gradients_b)
+    assert all(p.grad is None for p in base.values())
+
+
+def test_fp32_kbit_reel_caste_la_base_non_quantifiee() -> None:
+    """Témoin : `prepare_model_for_kbit_training` passe les normes en fp32 (évité en bf16)."""
+    torch, modele = _modele_minuscule_bf16()
+    from types import SimpleNamespace  # noqa: PLC0415
+
+    import peft  # noqa: PLC0415
+
+    modele.is_loaded_in_4bit = True  # comme une base nf4 (le cast ne vise que les bases k-bit)
+    modele = methodes.preparer_base_quantifiee(SimpleNamespace(peft=peft), modele, "fp32-kbit")
+    normes = [p for n, p in modele.named_parameters() if "norm" in n]
+    assert normes and all(p.dtype == torch.float32 for p in normes)
