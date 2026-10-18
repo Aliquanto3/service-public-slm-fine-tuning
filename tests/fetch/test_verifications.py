@@ -806,7 +806,10 @@ def test_toml_modeles_moins_2b(slug: str) -> None:
     assert config.gguf.fichier.lower().endswith("q4_k_m.gguf")
     assert config.gguf.source == "communautaire"
     assert config.exclure_vision == (slug == "qwen3.5-0.8b")
-    assert config.entrainable == (slug not in ("qwen3.5-0.8b", "eurollm-1.7b")) and not config.embedding
+    assert (
+        config.entrainable == (slug not in ("qwen3.5-0.8b", "eurollm-1.7b"))
+        and not config.embedding
+    )
     assert config.lm_eval_batch_size == 2
 
 
