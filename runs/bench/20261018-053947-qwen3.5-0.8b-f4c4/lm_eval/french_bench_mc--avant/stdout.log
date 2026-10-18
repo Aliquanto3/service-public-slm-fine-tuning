@@ -1,0 +1,15 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\qwen3.5-0.8b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: 500.0, num_fewshot: 3, batch_size: 2
+|            Tasks            |Version|Filter|n-shot| Metric |   |Value |   |Stderr|
+|-----------------------------|-------|------|-----:|--------|---|-----:|---|-----:|
+|french_bench_mc_agrege       |      1|none  |     3|acc     |↑  |0.4716|±  |0.0173|
+| - french_bench_arc_challenge|Yaml   |none  |     3|acc     |↑  |0.2940|±  |0.0204|
+|                             |       |none  |     3|acc_norm|↑  |0.3060|±  |0.0206|
+| - french_bench_grammar      |Yaml   |none  |     3|acc     |↑  |0.6471|±  |0.0440|
+| - french_bench_hellaswag    |Yaml   |none  |     3|acc     |↑  |0.3320|±  |0.0211|
+|                             |       |none  |     3|acc_norm|↑  |0.3960|±  |0.0219|
+| - french_bench_vocab        |Yaml   |none  |     3|acc     |↑  |0.6134|±  |0.0448|
+
+|        Groups        |Version|Filter|n-shot|Metric|   |Value |   |Stderr|
+|----------------------|------:|------|-----:|------|---|-----:|---|-----:|
+|french_bench_mc_agrege|      1|none  |     3|acc   |↑  |0.4716|±  |0.0173|
+

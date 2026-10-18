@@ -1,0 +1,15 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\qwen3.5-0.8b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: 2000.0, num_fewshot: 0, batch_size: 2
+|              Tasks              |Version|Filter|n-shot|Metric|   |Value |   |Stderr|
+|---------------------------------|------:|------|-----:|------|---|-----:|---|-----:|
+|global_mmlu_fr                   |      0|none  |     0|acc   |↑  |0.4350|±  |0.0247|
+| - global_mmlu_fr_business       |      0|none  |     0|acc   |↑  |0.4138|±  |0.0652|
+| - global_mmlu_fr_humanities     |      0|none  |     0|acc   |↑  |0.5098|±  |0.0497|
+| - global_mmlu_fr_medical        |      0|none  |     0|acc   |↑  |0.3611|±  |0.0812|
+| - global_mmlu_fr_other          |      0|none  |     0|acc   |↑  |0.3393|±  |0.0638|
+| - global_mmlu_fr_social_sciences|      0|none  |     0|acc   |↑  |0.4020|±  |0.0488|
+| - global_mmlu_fr_stem           |      0|none  |     0|acc   |↑  |0.5435|±  |0.0743|
+
+|    Groups    |Version|Filter|n-shot|Metric|   |Value|   |Stderr|
+|--------------|------:|------|-----:|------|---|----:|---|-----:|
+|global_mmlu_fr|      0|none  |     0|acc   |↑  |0.435|±  |0.0247|
+

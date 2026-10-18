@@ -1,0 +1,59 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 42,
+   "precision": 0.84,
+   "erreurs": {
+    "simple_225": "aucun appel émis",
+    "simple_238": "aucun appel émis",
+    "simple_277": "Optional parameter 'information' not provided and not marked as optional.",
+    "simple_298": "Invalid value for parameter 'key': 'C'. Expected one of ['C#']. Case insensitive.",
+    "simple_341": "Invalid value for parameter 'suit': 'heart'. Expected one of ['hearts']. Case insensitive.",
+    "simple_35": "Invalid value for parameter 'location': 'New York'. Expected one of ['New York, NY']. Case insensitive.",
+    "simple_42": "Invalid value for parameter 'inductance': 5e-05. Expected one of [0.05].",
+    "simple_45": "Invalid value for parameter 'phase_transition': 'boiling'. Expected one of ['vaporization']. Case insensitive."
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 40,
+   "precision": 0.8,
+   "erreurs": {
+    "multiple_119": "Invalid value for parameter 'operation': '<'. Expected one of ['>'].",
+    "multiple_123": "Invalid value for parameter 'favorable_outcomes': 1. Expected one of [4].",
+    "multiple_138": "aucun appel émis",
+    "multiple_153": "aucun appel émis",
+    "multiple_159": "Invalid value for parameter 'length': 12. Expected one of [30].",
+    "multiple_165": "Invalid value for parameter 'model': 'Les Paul'. Expected one of ['Gibson Les Paul']. Case insensitive.",
+    "multiple_186": "Invalid value for parameter 'recipe_type': 'brownies'. Expected one of ['dessert']. Case insensitive.",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional.",
+    "multiple_7": "aucun appel émis",
+    "multiple_8": "Function name 'realestate.find_properties' not found in model output."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 35,
+   "precision": 0.7,
+   "erreurs": {
+    "irrelevance_11": "appel émis sans fonction pertinente",
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_148": "appel émis sans fonction pertinente",
+    "irrelevance_149": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_17": "appel émis sans fonction pertinente",
+    "irrelevance_172": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_218": "appel émis sans fonction pertinente",
+    "irrelevance_22": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_25": "appel émis sans fonction pertinente",
+    "irrelevance_60": "appel émis sans fonction pertinente",
+    "irrelevance_63": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

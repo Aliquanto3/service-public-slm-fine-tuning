@@ -1,0 +1,1357 @@
+2026-10-18:05:37:04 WARNING  [config.evaluate_config:337] --limit SHOULD ONLY BE USED FOR TESTING. REAL METRICS SHOULD NOT BE COMPUTED USING LIMIT.
+2026-10-18:05:37:20 INFO     [_cli.run:391] Including path: C:\Users\Anael\dev\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-18:05:37:20 INFO     [_cli.run:392] Selected Tasks: ['mmlu']
+2026-10-18:05:37:22 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-18:05:37:22 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\eurollm-1.7b\\hf', 'dtype': 'bfloat16'}
+2026-10-18:05:37:29 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-18:05:37:30 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/219 [00:00<?, ?it/s]
+Loading weights:   4%|▍         | 9/219 [00:00<00:02, 81.24it/s]
+Loading weights:  14%|█▎        | 30/219 [00:00<00:01, 145.25it/s]
+Loading weights:  21%|██        | 45/219 [00:00<00:01, 140.77it/s]
+Loading weights:  30%|██▉       | 65/219 [00:00<00:01, 148.45it/s]
+Loading weights:  39%|███▉      | 86/219 [00:00<00:00, 162.54it/s]
+Loading weights:  47%|████▋     | 103/219 [00:00<00:00, 159.28it/s]
+Loading weights:  54%|█████▍    | 119/219 [00:00<00:00, 155.93it/s]
+Loading weights:  63%|██████▎   | 137/219 [00:00<00:00, 156.42it/s]
+Loading weights:  72%|███████▏  | 157/219 [00:01<00:00, 164.03it/s]
+Loading weights:  80%|███████▉  | 175/219 [00:01<00:00, 150.31it/s]
+Loading weights:  91%|█████████▏| 200/219 [00:01<00:00, 164.97it/s]
+Loading weights: 100%|██████████| 219/219 [00:01<00:00, 161.96it/s]
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'abstract_algebra' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\abstract_algebra\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:38 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'anatomy' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\anatomy\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:39 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'astronomy' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\astronomy\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:40 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'college_biology' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\college_biology\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:42 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'college_chemistry' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\college_chemistry\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:42 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'college_computer_science' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\college_computer_science\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:43 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'college_mathematics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\college_mathematics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:44 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'college_physics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\college_physics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:45 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'computer_security' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\computer_security\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:46 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'conceptual_physics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\conceptual_physics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:46 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'electrical_engineering' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\electrical_engineering\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:48 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'elementary_mathematics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\elementary_mathematics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:49 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_biology' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_biology\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:51 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_chemistry' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_chemistry\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:51 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_computer_science' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_computer_science\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:52 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_mathematics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_mathematics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:55 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_physics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_physics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:57 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_statistics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_statistics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:58 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'machine_learning' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\machine_learning\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:03 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'business_ethics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\business_ethics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:40 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'clinical_knowledge' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\clinical_knowledge\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:41 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'college_medicine' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\college_medicine\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:44 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'global_facts' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\global_facts\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:50 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'human_aging' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\human_aging\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:00 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'management' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\management\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:04 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'marketing' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\marketing\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:05 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'medical_genetics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\medical_genetics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:06 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'miscellaneous' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\miscellaneous\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:06 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'nutrition' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\nutrition\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:08 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'professional_accounting' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\professional_accounting\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:10 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'professional_medicine' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\professional_medicine\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:12 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'virology' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\virology\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:16 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'econometrics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\econometrics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:47 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_geography' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_geography\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:53 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_government_and_politics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_government_and_politics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:54 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_macroeconomics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_macroeconomics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:55 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_microeconomics' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_microeconomics\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:56 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_psychology' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_psychology\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:57 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'human_sexuality' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\human_sexuality\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:01 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'professional_psychology' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\professional_psychology\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:12 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'public_relations' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\public_relations\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:13 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'security_studies' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\security_studies\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:14 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'sociology' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\sociology\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:15 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'us_foreign_policy' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\us_foreign_policy\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:15 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'formal_logic' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\formal_logic\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:49 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_european_history' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_european_history\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:53 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_us_history' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_us_history\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:59 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'high_school_world_history' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\high_school_world_history\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:54:59 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'international_law' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\international_law\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:01 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'jurisprudence' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\jurisprudence\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:02 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'logical_fallacies' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\logical_fallacies\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:03 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'moral_disputes' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\moral_disputes\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:07 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'moral_scenarios' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\moral_scenarios\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:08 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'philosophy' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\philosophy\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:09 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'prehistory' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\prehistory\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:10 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'professional_law' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\professional_law\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:11 2026).
+Using the latest cached version of the dataset since cais/mmlu couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'world_religions' at C:\Users\Anael\dev\service-public-slm-fine-tuning\models\.cache-hf\datasets\cais___mmlu\world_religions\0.0.0\c30699e8356da336a370243923dbaf21066bb9fe (last modified on Sun Oct 18 04:55:17 2026).
+2026-10-18:05:37:35 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-18:05:37:35 INFO     [evaluator_utils:488] Group: mmlu
+2026-10-18:05:37:35 INFO     [evaluator_utils:488]   Group: mmlu_stem
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_abstract_algebra (mmlu\default\mmlu_abstract_algebra.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_anatomy (mmlu\default\mmlu_anatomy.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_astronomy (mmlu\default\mmlu_astronomy.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_college_biology (mmlu\default\mmlu_college_biology.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_college_chemistry (mmlu\default\mmlu_college_chemistry.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_college_computer_science (mmlu\default\mmlu_college_computer_science.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_college_mathematics (mmlu\default\mmlu_college_mathematics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_college_physics (mmlu\default\mmlu_college_physics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_computer_security (mmlu\default\mmlu_computer_security.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_conceptual_physics (mmlu\default\mmlu_conceptual_physics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_electrical_engineering (mmlu\default\mmlu_electrical_engineering.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_elementary_mathematics (mmlu\default\mmlu_elementary_mathematics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_biology (mmlu\default\mmlu_high_school_biology.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_chemistry (mmlu\default\mmlu_high_school_chemistry.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_computer_science (mmlu\default\mmlu_high_school_computer_science.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_mathematics (mmlu\default\mmlu_high_school_mathematics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_physics (mmlu\default\mmlu_high_school_physics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_statistics (mmlu\default\mmlu_high_school_statistics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_machine_learning (mmlu\default\mmlu_machine_learning.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:488]   Group: mmlu_other
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_business_ethics (mmlu\default\mmlu_business_ethics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_clinical_knowledge (mmlu\default\mmlu_clinical_knowledge.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_college_medicine (mmlu\default\mmlu_college_medicine.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_global_facts (mmlu\default\mmlu_global_facts.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_human_aging (mmlu\default\mmlu_human_aging.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_management (mmlu\default\mmlu_management.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_marketing (mmlu\default\mmlu_marketing.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_medical_genetics (mmlu\default\mmlu_medical_genetics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_miscellaneous (mmlu\default\mmlu_miscellaneous.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_nutrition (mmlu\default\mmlu_nutrition.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_professional_accounting (mmlu\default\mmlu_professional_accounting.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_professional_medicine (mmlu\default\mmlu_professional_medicine.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_virology (mmlu\default\mmlu_virology.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:488]   Group: mmlu_social_sciences
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_econometrics (mmlu\default\mmlu_econometrics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_geography (mmlu\default\mmlu_high_school_geography.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_government_and_politics (mmlu\default\mmlu_high_school_government_and_politics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_macroeconomics (mmlu\default\mmlu_high_school_macroeconomics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_microeconomics (mmlu\default\mmlu_high_school_microeconomics.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_psychology (mmlu\default\mmlu_high_school_psychology.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_human_sexuality (mmlu\default\mmlu_human_sexuality.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_professional_psychology (mmlu\default\mmlu_professional_psychology.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_public_relations (mmlu\default\mmlu_public_relations.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_security_studies (mmlu\default\mmlu_security_studies.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_sociology (mmlu\default\mmlu_sociology.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_us_foreign_policy (mmlu\default\mmlu_us_foreign_policy.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:488]   Group: mmlu_humanities
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_formal_logic (mmlu\default\mmlu_formal_logic.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_european_history (mmlu\default\mmlu_high_school_european_history.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_us_history (mmlu\default\mmlu_high_school_us_history.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_high_school_world_history (mmlu\default\mmlu_high_school_world_history.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_international_law (mmlu\default\mmlu_international_law.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_jurisprudence (mmlu\default\mmlu_jurisprudence.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_logical_fallacies (mmlu\default\mmlu_logical_fallacies.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_moral_disputes (mmlu\default\mmlu_moral_disputes.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_moral_scenarios (mmlu\default\mmlu_moral_scenarios.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_philosophy (mmlu\default\mmlu_philosophy.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_prehistory (mmlu\default\mmlu_prehistory.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_professional_law (mmlu\default\mmlu_professional_law.yaml)
+2026-10-18:05:37:35 INFO     [evaluator_utils:496]     Task: mmlu_world_religions (mmlu\default\mmlu_world_religions.yaml)
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_abstract_algebra from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_anatomy from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_astronomy from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_college_biology from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_college_chemistry from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_college_computer_science from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_college_mathematics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_college_physics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_computer_security from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_conceptual_physics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_electrical_engineering from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_elementary_mathematics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_biology from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_chemistry from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_computer_science from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_mathematics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_physics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_statistics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_machine_learning from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_business_ethics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_clinical_knowledge from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_college_medicine from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_global_facts from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_human_aging from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_management from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_marketing from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_medical_genetics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_miscellaneous from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_nutrition from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_professional_accounting from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_professional_medicine from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_virology from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_econometrics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_geography from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_government_and_politics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_macroeconomics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_microeconomics from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_psychology from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_human_sexuality from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_professional_psychology from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_public_relations from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_security_studies from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_sociology from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_us_foreign_policy from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_formal_logic from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_european_history from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_us_history from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_high_school_world_history from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_international_law from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_jurisprudence from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_logical_fallacies from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_moral_disputes from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_moral_scenarios from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_philosophy from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_prehistory from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_professional_law from None to 0
+2026-10-18:05:37:35 WARNING  [evaluator:335] Overwriting default num_fewshot of mmlu_world_religions from None to 0
+2026-10-18:05:37:35 INFO     [api.task:312] Building contexts for mmlu_abstract_algebra on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 791.59it/s]
+2026-10-18:05:37:35 INFO     [api.task:312] Building contexts for mmlu_anatomy on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 784.37it/s]
+2026-10-18:05:37:35 INFO     [api.task:312] Building contexts for mmlu_astronomy on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 928.26it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_college_biology on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1062.89it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_college_chemistry on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 882.97it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_college_computer_science on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 952.12it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_college_mathematics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1047.68it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_college_physics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1063.41it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_computer_security on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 791.55it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_conceptual_physics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1063.76it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_electrical_engineering on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 790.16it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_elementary_mathematics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1047.57it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_high_school_biology on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1023.85it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_high_school_chemistry on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 776.18it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_high_school_computer_science on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1050.48it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_high_school_mathematics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 782.20it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_high_school_physics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 776.73it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_high_school_statistics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1039.87it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_machine_learning on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 750.16it/s]
+2026-10-18:05:37:36 INFO     [api.task:312] Building contexts for mmlu_business_ethics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1123.61it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_clinical_knowledge on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 786.76it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_college_medicine on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 788.31it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_global_facts on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1056.44it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_human_aging on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1054.44it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_management on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 775.51it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_marketing on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1044.47it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_medical_genetics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 790.98it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_miscellaneous on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1049.24it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_nutrition on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 764.90it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_professional_accounting on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 807.04it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_professional_medicine on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 785.00it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_virology on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1049.04it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_econometrics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 795.92it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_high_school_geography on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1050.28it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_high_school_government_and_politics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1036.94it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_high_school_macroeconomics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 782.39it/s]
+2026-10-18:05:37:37 INFO     [api.task:312] Building contexts for mmlu_high_school_microeconomics on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1047.01it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_high_school_psychology on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 784.02it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_human_sexuality on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1042.77it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_professional_psychology on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1045.25it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_public_relations on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 784.33it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_security_studies on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1053.58it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_sociology on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 795.35it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_us_foreign_policy on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 784.23it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_formal_logic on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1048.96it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_high_school_european_history on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 939.90it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_high_school_us_history on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1058.76it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_high_school_world_history on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 781.48it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_international_law on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 783.31it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_jurisprudence on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1053.34it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_logical_fallacies on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 791.60it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_moral_disputes on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1049.81it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_moral_scenarios on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 788.33it/s]
+2026-10-18:05:37:38 INFO     [api.task:312] Building contexts for mmlu_philosophy on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 783.80it/s]
+2026-10-18:05:37:39 INFO     [api.task:312] Building contexts for mmlu_prehistory on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 1058.65it/s]
+2026-10-18:05:37:39 INFO     [api.task:312] Building contexts for mmlu_professional_law on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 791.44it/s]
+2026-10-18:05:37:39 INFO     [api.task:312] Building contexts for mmlu_world_religions on rank 0...
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+100%|██████████| 50/50 [00:00<00:00, 785.57it/s]
+2026-10-18:05:37:39 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/11400 [00:00<?, ?it/s]
+Tokenizing inputs:   4%|▍         | 472/11400 [00:00<00:02, 4223.05it/s]
+Tokenizing inputs:   8%|▊         | 895/11400 [00:00<00:02, 3979.43it/s]
+Tokenizing inputs:  11%|█▏        | 1293/11400 [00:00<00:02, 3812.12it/s]
+Tokenizing inputs:  15%|█▌        | 1717/11400 [00:00<00:02, 3825.70it/s]
+Tokenizing inputs:  20%|█▉        | 2233/11400 [00:00<00:02, 4121.73it/s]
+Tokenizing inputs:  23%|██▎       | 2675/11400 [00:00<00:02, 4080.94it/s]
+Tokenizing inputs:  27%|██▋       | 3083/11400 [00:00<00:02, 3944.99it/s]
+Tokenizing inputs:  31%|███       | 3478/11400 [00:00<00:02, 3830.83it/s]
+Tokenizing inputs:  34%|███▍      | 3862/11400 [00:00<00:02, 3716.51it/s]
+Tokenizing inputs:  37%|███▋      | 4234/11400 [00:01<00:01, 3605.37it/s]
+Tokenizing inputs:  41%|████      | 4640/11400 [00:01<00:01, 3706.68it/s]
+Tokenizing inputs:  45%|████▌     | 5138/11400 [00:01<00:01, 4049.10it/s]
+Tokenizing inputs:  49%|████▉     | 5634/11400 [00:01<00:01, 4310.00it/s]
+Tokenizing inputs:  53%|█████▎    | 6068/11400 [00:01<00:01, 3905.75it/s]
+Tokenizing inputs:  57%|█████▋    | 6467/11400 [00:01<00:01, 3521.21it/s]
+Tokenizing inputs:  60%|█████▉    | 6831/11400 [00:02<00:02, 2212.74it/s]
+Tokenizing inputs:  63%|██████▎   | 7237/11400 [00:02<00:01, 2511.22it/s]
+Tokenizing inputs:  67%|██████▋   | 7659/11400 [00:02<00:01, 2804.35it/s]
+Tokenizing inputs:  71%|███████   | 8074/11400 [00:02<00:01, 3035.87it/s]
+Tokenizing inputs:  74%|███████▍  | 8420/11400 [00:02<00:01, 2948.73it/s]
+Tokenizing inputs:  77%|███████▋  | 8763/11400 [00:02<00:00, 2985.97it/s]
+Tokenizing inputs:  80%|███████▉  | 9083/11400 [00:02<00:00, 2740.60it/s]
+Tokenizing inputs:  82%|████████▏ | 9374/11400 [00:03<00:01, 1968.12it/s]
+Tokenizing inputs:  84%|████████▍ | 9610/11400 [00:03<00:01, 1688.50it/s]
+Tokenizing inputs:  88%|████████▊ | 9986/11400 [00:03<00:00, 2037.36it/s]
+Tokenizing inputs:  91%|█████████▏| 10416/11400 [00:03<00:00, 2458.74it/s]
+Tokenizing inputs:  95%|█████████▍| 10811/11400 [00:03<00:00, 2732.49it/s]
+Tokenizing inputs:  98%|█████████▊| 11119/11400 [00:03<00:00, 2647.29it/s]
+Tokenizing inputs: 100%|██████████| 11400/11400 [00:03<00:00, 3040.94it/s]
+
+Running loglikelihood requests:   0%|          | 0/11400 [00:00<?, ?it/s]
+Running loglikelihood requests:   0%|          | 1/11400 [00:01<3:37:56,  1.15s/it]
+Running loglikelihood requests:   0%|          | 9/11400 [00:01<25:42,  7.39it/s]  
+Running loglikelihood requests:   0%|          | 17/11400 [00:01<15:49, 11.99it/s]
+Running loglikelihood requests:   0%|          | 25/11400 [00:02<11:59, 15.81it/s]
+Running loglikelihood requests:   0%|          | 33/11400 [00:02<10:09, 18.65it/s]
+Running loglikelihood requests:   0%|          | 41/11400 [00:02<09:06, 20.77it/s]
+Running loglikelihood requests:   0%|          | 49/11400 [00:03<08:21, 22.64it/s]
+Running loglikelihood requests:   0%|          | 57/11400 [00:03<07:47, 24.28it/s]
+Running loglikelihood requests:   1%|          | 65/11400 [00:03<07:37, 24.78it/s]
+Running loglikelihood requests:   1%|          | 73/11400 [00:03<07:20, 25.70it/s]
+Running loglikelihood requests:   1%|          | 81/11400 [00:04<07:05, 26.60it/s]
+Running loglikelihood requests:   1%|          | 89/11400 [00:04<07:02, 26.77it/s]
+Running loglikelihood requests:   1%|          | 97/11400 [00:04<06:57, 27.06it/s]
+Running loglikelihood requests:   1%|          | 105/11400 [00:05<06:44, 27.91it/s]
+Running loglikelihood requests:   1%|          | 113/11400 [00:05<06:32, 28.73it/s]
+Running loglikelihood requests:   1%|          | 121/11400 [00:05<06:28, 29.06it/s]
+Running loglikelihood requests:   1%|          | 129/11400 [00:05<06:24, 29.35it/s]
+Running loglikelihood requests:   1%|          | 137/11400 [00:06<06:15, 29.99it/s]
+Running loglikelihood requests:   1%|▏         | 145/11400 [00:06<06:12, 30.25it/s]
+Running loglikelihood requests:   1%|▏         | 153/11400 [00:06<06:08, 30.51it/s]
+Running loglikelihood requests:   1%|▏         | 161/11400 [00:06<05:57, 31.40it/s]
+Running loglikelihood requests:   1%|▏         | 169/11400 [00:07<05:49, 32.15it/s]
+Running loglikelihood requests:   2%|▏         | 177/11400 [00:07<05:48, 32.23it/s]
+Running loglikelihood requests:   2%|▏         | 185/11400 [00:07<05:47, 32.29it/s]
+Running loglikelihood requests:   2%|▏         | 193/11400 [00:07<05:42, 32.74it/s]
+Running loglikelihood requests:   2%|▏         | 201/11400 [00:08<05:37, 33.15it/s]
+Running loglikelihood requests:   2%|▏         | 209/11400 [00:08<05:29, 33.92it/s]
+Running loglikelihood requests:   2%|▏         | 217/11400 [00:08<05:29, 33.95it/s]
+Running loglikelihood requests:   2%|▏         | 225/11400 [00:08<05:24, 34.47it/s]
+Running loglikelihood requests:   2%|▏         | 233/11400 [00:08<05:20, 34.82it/s]
+Running loglikelihood requests:   2%|▏         | 241/11400 [00:09<05:21, 34.66it/s]
+Running loglikelihood requests:   2%|▏         | 249/11400 [00:09<05:18, 34.97it/s]
+Running loglikelihood requests:   2%|▏         | 257/11400 [00:09<05:16, 35.24it/s]
+Running loglikelihood requests:   2%|▏         | 265/11400 [00:09<05:14, 35.40it/s]
+Running loglikelihood requests:   2%|▏         | 273/11400 [00:10<05:08, 36.01it/s]
+Running loglikelihood requests:   2%|▏         | 281/11400 [00:10<05:08, 36.02it/s]
+Running loglikelihood requests:   3%|▎         | 289/11400 [00:10<05:01, 36.80it/s]
+Running loglikelihood requests:   3%|▎         | 297/11400 [00:10<04:59, 37.06it/s]
+Running loglikelihood requests:   3%|▎         | 305/11400 [00:10<04:54, 37.70it/s]
+Running loglikelihood requests:   3%|▎         | 313/11400 [00:11<04:54, 37.66it/s]
+Running loglikelihood requests:   3%|▎         | 321/11400 [00:11<04:50, 38.08it/s]
+Running loglikelihood requests:   3%|▎         | 329/11400 [00:11<04:52, 37.86it/s]
+Running loglikelihood requests:   3%|▎         | 337/11400 [00:11<04:48, 38.29it/s]
+Running loglikelihood requests:   3%|▎         | 345/11400 [00:11<04:46, 38.62it/s]
+Running loglikelihood requests:   3%|▎         | 353/11400 [00:12<04:48, 38.30it/s]
+Running loglikelihood requests:   3%|▎         | 361/11400 [00:12<04:45, 38.64it/s]
+Running loglikelihood requests:   3%|▎         | 369/11400 [00:12<04:43, 38.86it/s]
+Running loglikelihood requests:   3%|▎         | 377/11400 [00:12<04:38, 39.58it/s]
+Running loglikelihood requests:   3%|▎         | 385/11400 [00:13<04:39, 39.46it/s]
+Running loglikelihood requests:   3%|▎         | 393/11400 [00:13<04:37, 39.63it/s]
+Running loglikelihood requests:   4%|▎         | 401/11400 [00:13<04:35, 39.96it/s]
+Running loglikelihood requests:   4%|▎         | 409/11400 [00:13<04:33, 40.19it/s]
+Running loglikelihood requests:   4%|▎         | 417/11400 [00:13<04:31, 40.41it/s]
+Running loglikelihood requests:   4%|▎         | 425/11400 [00:13<04:30, 40.57it/s]
+Running loglikelihood requests:   4%|▍         | 433/11400 [00:14<04:30, 40.54it/s]
+Running loglikelihood requests:   4%|▍         | 441/11400 [00:14<04:28, 40.76it/s]
+Running loglikelihood requests:   4%|▍         | 449/11400 [00:14<04:28, 40.78it/s]
+Running loglikelihood requests:   4%|▍         | 457/11400 [00:14<04:26, 41.13it/s]
+Running loglikelihood requests:   4%|▍         | 465/11400 [00:14<04:24, 41.29it/s]
+Running loglikelihood requests:   4%|▍         | 473/11400 [00:15<04:12, 43.31it/s]
+Running loglikelihood requests:   4%|▍         | 481/11400 [00:15<04:03, 44.91it/s]
+Running loglikelihood requests:   4%|▍         | 489/11400 [00:15<04:00, 45.28it/s]
+Running loglikelihood requests:   4%|▍         | 497/11400 [00:15<03:54, 46.40it/s]
+Running loglikelihood requests:   4%|▍         | 505/11400 [00:15<03:54, 46.44it/s]
+Running loglikelihood requests:   4%|▍         | 513/11400 [00:15<03:50, 47.14it/s]
+Running loglikelihood requests:   5%|▍         | 521/11400 [00:16<03:48, 47.61it/s]
+Running loglikelihood requests:   5%|▍         | 529/11400 [00:16<03:50, 47.15it/s]
+Running loglikelihood requests:   5%|▍         | 537/11400 [00:16<03:48, 47.60it/s]
+Running loglikelihood requests:   5%|▍         | 545/11400 [00:16<03:45, 48.09it/s]
+Running loglikelihood requests:   5%|▍         | 553/11400 [00:16<03:44, 48.41it/s]
+Running loglikelihood requests:   5%|▍         | 561/11400 [00:16<03:42, 48.63it/s]
+Running loglikelihood requests:   5%|▍         | 569/11400 [00:17<03:42, 48.77it/s]
+Running loglikelihood requests:   5%|▌         | 577/11400 [00:17<03:42, 48.65it/s]
+Running loglikelihood requests:   5%|▌         | 585/11400 [00:17<03:42, 48.60it/s]
+Running loglikelihood requests:   5%|▌         | 593/11400 [00:17<03:42, 48.48it/s]
+Running loglikelihood requests:   5%|▌         | 601/11400 [00:17<03:41, 48.71it/s]
+Running loglikelihood requests:   5%|▌         | 609/11400 [00:17<03:41, 48.75it/s]
+Running loglikelihood requests:   5%|▌         | 617/11400 [00:18<03:41, 48.64it/s]
+Running loglikelihood requests:   5%|▌         | 625/11400 [00:18<03:42, 48.54it/s]
+Running loglikelihood requests:   6%|▌         | 633/11400 [00:18<03:41, 48.70it/s]
+Running loglikelihood requests:   6%|▌         | 641/11400 [00:18<03:39, 49.01it/s]
+Running loglikelihood requests:   6%|▌         | 649/11400 [00:18<03:37, 49.38it/s]
+Running loglikelihood requests:   6%|▌         | 657/11400 [00:18<03:36, 49.52it/s]
+Running loglikelihood requests:   6%|▌         | 665/11400 [00:19<03:35, 49.71it/s]
+Running loglikelihood requests:   6%|▌         | 673/11400 [00:19<03:37, 49.24it/s]
+Running loglikelihood requests:   6%|▌         | 681/11400 [00:19<03:36, 49.44it/s]
+Running loglikelihood requests:   6%|▌         | 689/11400 [00:19<03:36, 49.47it/s]
+Running loglikelihood requests:   6%|▌         | 697/11400 [00:19<03:35, 49.57it/s]
+Running loglikelihood requests:   6%|▌         | 705/11400 [00:19<03:37, 49.09it/s]
+Running loglikelihood requests:   6%|▋         | 713/11400 [00:20<03:38, 48.88it/s]
+Running loglikelihood requests:   6%|▋         | 721/11400 [00:20<03:40, 48.49it/s]
+Running loglikelihood requests:   6%|▋         | 729/11400 [00:20<03:39, 48.54it/s]
+Running loglikelihood requests:   6%|▋         | 737/11400 [00:20<03:39, 48.51it/s]
+Running loglikelihood requests:   7%|▋         | 745/11400 [00:20<03:39, 48.55it/s]
+Running loglikelihood requests:   7%|▋         | 753/11400 [00:20<03:39, 48.59it/s]
+Running loglikelihood requests:   7%|▋         | 761/11400 [00:21<03:39, 48.44it/s]
+Running loglikelihood requests:   7%|▋         | 769/11400 [00:21<03:38, 48.67it/s]
+Running loglikelihood requests:   7%|▋         | 777/11400 [00:21<03:37, 48.84it/s]
+Running loglikelihood requests:   7%|▋         | 785/11400 [00:21<03:32, 49.88it/s]
+Running loglikelihood requests:   7%|▋         | 793/11400 [00:21<03:33, 49.72it/s]
+Running loglikelihood requests:   7%|▋         | 801/11400 [00:21<03:29, 50.56it/s]
+Running loglikelihood requests:   7%|▋         | 809/11400 [00:21<03:31, 50.17it/s]
+Running loglikelihood requests:   7%|▋         | 817/11400 [00:22<03:28, 50.76it/s]
+Running loglikelihood requests:   7%|▋         | 825/11400 [00:22<03:30, 50.32it/s]
+Running loglikelihood requests:   7%|▋         | 833/11400 [00:22<03:27, 50.88it/s]
+Running loglikelihood requests:   7%|▋         | 841/11400 [00:22<03:25, 51.30it/s]
+Running loglikelihood requests:   7%|▋         | 849/11400 [00:22<03:24, 51.59it/s]
+Running loglikelihood requests:   8%|▊         | 857/11400 [00:22<03:26, 50.95it/s]
+Running loglikelihood requests:   8%|▊         | 865/11400 [00:23<03:24, 51.48it/s]
+Running loglikelihood requests:   8%|▊         | 873/11400 [00:23<03:23, 51.82it/s]
+Running loglikelihood requests:   8%|▊         | 881/11400 [00:23<03:26, 50.98it/s]
+Running loglikelihood requests:   8%|▊         | 889/11400 [00:23<03:24, 51.41it/s]
+Running loglikelihood requests:   8%|▊         | 897/11400 [00:23<03:23, 51.65it/s]
+Running loglikelihood requests:   8%|▊         | 905/11400 [00:23<03:22, 51.81it/s]
+Running loglikelihood requests:   8%|▊         | 913/11400 [00:24<03:21, 52.02it/s]
+Running loglikelihood requests:   8%|▊         | 921/11400 [00:24<03:21, 52.12it/s]
+Running loglikelihood requests:   8%|▊         | 929/11400 [00:24<03:20, 52.23it/s]
+Running loglikelihood requests:   8%|▊         | 937/11400 [00:24<03:20, 52.23it/s]
+Running loglikelihood requests:   8%|▊         | 945/11400 [00:24<03:20, 52.23it/s]
+Running loglikelihood requests:   8%|▊         | 953/11400 [00:24<03:19, 52.45it/s]
+Running loglikelihood requests:   8%|▊         | 961/11400 [00:24<03:18, 52.51it/s]
+Running loglikelihood requests:   8%|▊         | 969/11400 [00:25<03:18, 52.56it/s]
+Running loglikelihood requests:   9%|▊         | 977/11400 [00:25<03:16, 53.07it/s]
+Running loglikelihood requests:   9%|▊         | 985/11400 [00:25<03:16, 52.95it/s]
+Running loglikelihood requests:   9%|▊         | 993/11400 [00:25<03:16, 52.84it/s]
+Running loglikelihood requests:   9%|▉         | 1001/11400 [00:25<03:17, 52.74it/s]
+Running loglikelihood requests:   9%|▉         | 1009/11400 [00:25<03:13, 53.72it/s]
+Running loglikelihood requests:   9%|▉         | 1017/11400 [00:25<03:14, 53.35it/s]
+Running loglikelihood requests:   9%|▉         | 1025/11400 [00:26<03:08, 55.07it/s]
+Running loglikelihood requests:   9%|▉         | 1033/11400 [00:26<03:07, 55.38it/s]
+Running loglikelihood requests:   9%|▉         | 1041/11400 [00:26<03:05, 55.69it/s]
+Running loglikelihood requests:   9%|▉         | 1049/11400 [00:26<03:01, 57.01it/s]
+Running loglikelihood requests:   9%|▉         | 1057/11400 [00:26<03:02, 56.72it/s]
+Running loglikelihood requests:   9%|▉         | 1065/11400 [00:26<03:02, 56.59it/s]
+Running loglikelihood requests:   9%|▉         | 1073/11400 [00:26<02:59, 57.66it/s]
+Running loglikelihood requests:   9%|▉         | 1081/11400 [00:27<03:01, 56.85it/s]
+Running loglikelihood requests:  10%|▉         | 1089/11400 [00:27<02:58, 57.71it/s]
+Running loglikelihood requests:  10%|▉         | 1097/11400 [00:27<02:56, 58.34it/s]
+Running loglikelihood requests:  10%|▉         | 1105/11400 [00:27<02:58, 57.71it/s]
+Running loglikelihood requests:  10%|▉         | 1113/11400 [00:27<02:55, 58.50it/s]
+Running loglikelihood requests:  10%|▉         | 1121/11400 [00:27<02:54, 58.96it/s]
+Running loglikelihood requests:  10%|▉         | 1129/11400 [00:27<02:57, 57.99it/s]
+Running loglikelihood requests:  10%|▉         | 1137/11400 [00:28<02:57, 57.70it/s]
+Running loglikelihood requests:  10%|█         | 1145/11400 [00:28<02:55, 58.56it/s]
+Running loglikelihood requests:  10%|█         | 1153/11400 [00:28<02:53, 59.16it/s]
+Running loglikelihood requests:  10%|█         | 1161/11400 [00:28<02:51, 59.65it/s]
+Running loglikelihood requests:  10%|█         | 1169/11400 [00:28<02:53, 58.81it/s]
+Running loglikelihood requests:  10%|█         | 1177/11400 [00:28<02:52, 59.17it/s]
+Running loglikelihood requests:  10%|█         | 1185/11400 [00:28<02:54, 58.55it/s]
+Running loglikelihood requests:  10%|█         | 1193/11400 [00:28<02:53, 58.90it/s]
+Running loglikelihood requests:  11%|█         | 1201/11400 [00:29<02:51, 59.50it/s]
+Running loglikelihood requests:  11%|█         | 1209/11400 [00:29<02:46, 61.26it/s]
+Running loglikelihood requests:  11%|█         | 1217/11400 [00:29<02:46, 61.16it/s]
+Running loglikelihood requests:  11%|█         | 1225/11400 [00:29<02:43, 62.35it/s]
+Running loglikelihood requests:  11%|█         | 1233/11400 [00:29<02:44, 61.82it/s]
+Running loglikelihood requests:  11%|█         | 1241/11400 [00:29<02:45, 61.56it/s]
+Running loglikelihood requests:  11%|█         | 1249/11400 [00:29<02:41, 62.82it/s]
+Running loglikelihood requests:  11%|█         | 1257/11400 [00:30<02:39, 63.64it/s]
+Running loglikelihood requests:  11%|█         | 1265/11400 [00:30<02:37, 64.18it/s]
+Running loglikelihood requests:  11%|█         | 1273/11400 [00:30<02:39, 63.48it/s]
+Running loglikelihood requests:  11%|█         | 1281/11400 [00:30<02:37, 64.10it/s]
+Running loglikelihood requests:  11%|█▏        | 1289/11400 [00:30<02:36, 64.61it/s]
+Running loglikelihood requests:  11%|█▏        | 1297/11400 [00:30<02:35, 64.91it/s]
+Running loglikelihood requests:  11%|█▏        | 1305/11400 [00:30<02:39, 63.46it/s]
+Running loglikelihood requests:  12%|█▏        | 1313/11400 [00:30<02:37, 64.14it/s]
+Running loglikelihood requests:  12%|█▏        | 1321/11400 [00:30<02:35, 64.68it/s]
+Running loglikelihood requests:  12%|█▏        | 1329/11400 [00:31<02:34, 65.05it/s]
+Running loglikelihood requests:  12%|█▏        | 1337/11400 [00:31<02:30, 66.92it/s]
+Running loglikelihood requests:  12%|█▏        | 1345/11400 [00:31<02:31, 66.54it/s]
+Running loglikelihood requests:  12%|█▏        | 1353/11400 [00:31<02:31, 66.25it/s]
+Running loglikelihood requests:  12%|█▏        | 1361/11400 [00:31<02:31, 66.12it/s]
+Running loglikelihood requests:  12%|█▏        | 1369/11400 [00:31<02:31, 66.09it/s]
+Running loglikelihood requests:  12%|█▏        | 1377/11400 [00:31<02:32, 65.55it/s]
+Running loglikelihood requests:  12%|█▏        | 1385/11400 [00:31<02:32, 65.81it/s]
+Running loglikelihood requests:  12%|█▏        | 1393/11400 [00:32<02:32, 65.70it/s]
+Running loglikelihood requests:  12%|█▏        | 1401/11400 [00:32<02:32, 65.73it/s]
+Running loglikelihood requests:  12%|█▏        | 1409/11400 [00:32<02:28, 67.41it/s]
+Running loglikelihood requests:  12%|█▏        | 1417/11400 [00:32<02:29, 66.95it/s]
+Running loglikelihood requests:  12%|█▎        | 1425/11400 [00:32<02:29, 66.59it/s]
+Running loglikelihood requests:  13%|█▎        | 1433/11400 [00:32<02:30, 66.35it/s]
+Running loglikelihood requests:  13%|█▎        | 1441/11400 [00:32<02:30, 66.01it/s]
+Running loglikelihood requests:  13%|█▎        | 1449/11400 [00:32<02:27, 67.56it/s]
+Running loglikelihood requests:  13%|█▎        | 1457/11400 [00:33<02:28, 66.97it/s]
+Running loglikelihood requests:  13%|█▎        | 1465/11400 [00:33<02:29, 66.32it/s]
+Running loglikelihood requests:  13%|█▎        | 1473/11400 [00:33<02:28, 66.73it/s]
+Running loglikelihood requests:  13%|█▎        | 1481/11400 [00:33<02:28, 66.92it/s]
+Running loglikelihood requests:  13%|█▎        | 1489/11400 [00:33<02:25, 68.22it/s]
+Running loglikelihood requests:  13%|█▎        | 1497/11400 [00:33<02:27, 67.18it/s]
+Running loglikelihood requests:  13%|█▎        | 1505/11400 [00:33<02:24, 68.34it/s]
+Running loglikelihood requests:  13%|█▎        | 1513/11400 [00:33<02:26, 67.56it/s]
+Running loglikelihood requests:  13%|█▎        | 1521/11400 [00:33<02:27, 66.94it/s]
+Running loglikelihood requests:  13%|█▎        | 1529/11400 [00:34<02:24, 68.31it/s]
+Running loglikelihood requests:  13%|█▎        | 1537/11400 [00:34<02:26, 67.51it/s]
+Running loglikelihood requests:  14%|█▎        | 1545/11400 [00:34<02:23, 68.80it/s]
+Running loglikelihood requests:  14%|█▎        | 1553/11400 [00:34<02:25, 67.80it/s]
+Running loglikelihood requests:  14%|█▎        | 1561/11400 [00:34<02:22, 68.96it/s]
+Running loglikelihood requests:  14%|█▍        | 1569/11400 [00:34<02:24, 68.00it/s]
+Running loglikelihood requests:  14%|█▍        | 1577/11400 [00:34<02:22, 69.00it/s]
+Running loglikelihood requests:  14%|█▍        | 1585/11400 [00:34<02:24, 68.02it/s]
+Running loglikelihood requests:  14%|█▍        | 1593/11400 [00:35<02:21, 69.08it/s]
+Running loglikelihood requests:  14%|█▍        | 1601/11400 [00:35<02:24, 67.97it/s]
+Running loglikelihood requests:  14%|█▍        | 1609/11400 [00:35<02:17, 71.10it/s]
+Running loglikelihood requests:  14%|█▍        | 1617/11400 [00:35<02:17, 71.18it/s]
+Running loglikelihood requests:  14%|█▍        | 1625/11400 [00:35<02:13, 73.37it/s]
+Running loglikelihood requests:  14%|█▍        | 1633/11400 [00:35<02:14, 72.82it/s]
+Running loglikelihood requests:  14%|█▍        | 1641/11400 [00:35<02:13, 73.19it/s]
+Running loglikelihood requests:  14%|█▍        | 1649/11400 [00:35<02:11, 74.20it/s]
+Running loglikelihood requests:  15%|█▍        | 1657/11400 [00:35<02:09, 75.25it/s]
+Running loglikelihood requests:  15%|█▍        | 1665/11400 [00:36<02:12, 73.69it/s]
+Running loglikelihood requests:  15%|█▍        | 1673/11400 [00:36<02:11, 74.08it/s]
+Running loglikelihood requests:  15%|█▍        | 1681/11400 [00:36<02:10, 74.46it/s]
+Running loglikelihood requests:  15%|█▍        | 1689/11400 [00:36<02:08, 75.74it/s]
+Running loglikelihood requests:  15%|█▍        | 1697/11400 [00:36<02:06, 76.57it/s]
+Running loglikelihood requests:  15%|█▍        | 1705/11400 [00:36<02:09, 75.00it/s]
+Running loglikelihood requests:  15%|█▌        | 1713/11400 [00:36<02:07, 76.06it/s]
+Running loglikelihood requests:  15%|█▌        | 1721/11400 [00:36<02:07, 76.08it/s]
+Running loglikelihood requests:  15%|█▌        | 1729/11400 [00:36<02:08, 75.30it/s]
+Running loglikelihood requests:  15%|█▌        | 1737/11400 [00:36<02:06, 76.22it/s]
+Running loglikelihood requests:  15%|█▌        | 1745/11400 [00:37<02:05, 76.95it/s]
+Running loglikelihood requests:  15%|█▌        | 1753/11400 [00:37<02:08, 75.21it/s]
+Running loglikelihood requests:  15%|█▌        | 1761/11400 [00:37<02:06, 76.29it/s]
+Running loglikelihood requests:  16%|█▌        | 1769/11400 [00:37<02:05, 76.91it/s]
+Running loglikelihood requests:  16%|█▌        | 1777/11400 [00:37<02:08, 75.06it/s]
+Running loglikelihood requests:  16%|█▌        | 1785/11400 [00:37<02:06, 75.96it/s]
+Running loglikelihood requests:  16%|█▌        | 1793/11400 [00:37<02:05, 76.65it/s]
+Running loglikelihood requests:  16%|█▌        | 1801/11400 [00:37<02:04, 77.16it/s]
+Running loglikelihood requests:  16%|█▌        | 1809/11400 [00:37<02:06, 75.55it/s]
+Running loglikelihood requests:  16%|█▌        | 1817/11400 [00:38<02:05, 76.46it/s]
+Running loglikelihood requests:  16%|█▌        | 1825/11400 [00:38<02:04, 76.94it/s]
+Running loglikelihood requests:  16%|█▌        | 1833/11400 [00:38<02:06, 75.36it/s]
+Running loglikelihood requests:  16%|█▌        | 1841/11400 [00:38<02:05, 76.27it/s]
+Running loglikelihood requests:  16%|█▌        | 1849/11400 [00:38<02:04, 76.89it/s]
+Running loglikelihood requests:  16%|█▋        | 1857/11400 [00:38<02:03, 77.40it/s]
+Running loglikelihood requests:  16%|█▋        | 1865/11400 [00:38<02:06, 75.60it/s]
+Running loglikelihood requests:  16%|█▋        | 1873/11400 [00:38<02:05, 75.97it/s]
+Running loglikelihood requests:  16%|█▋        | 1881/11400 [00:38<02:03, 77.11it/s]
+Running loglikelihood requests:  17%|█▋        | 1889/11400 [00:38<02:02, 77.65it/s]
+Running loglikelihood requests:  17%|█▋        | 1897/11400 [00:39<02:05, 75.75it/s]
+Running loglikelihood requests:  17%|█▋        | 1905/11400 [00:39<02:04, 76.51it/s]
+Running loglikelihood requests:  17%|█▋        | 1913/11400 [00:39<02:03, 77.13it/s]
+Running loglikelihood requests:  17%|█▋        | 1921/11400 [00:39<02:05, 75.62it/s]
+Running loglikelihood requests:  17%|█▋        | 1929/11400 [00:39<02:04, 76.25it/s]
+Running loglikelihood requests:  17%|█▋        | 1937/11400 [00:39<02:02, 76.95it/s]
+Running loglikelihood requests:  17%|█▋        | 1945/11400 [00:39<02:02, 77.39it/s]
+Running loglikelihood requests:  17%|█▋        | 1953/11400 [00:39<02:01, 77.70it/s]
+Running loglikelihood requests:  17%|█▋        | 1961/11400 [00:39<02:01, 77.92it/s]
+Running loglikelihood requests:  17%|█▋        | 1969/11400 [00:39<02:00, 77.98it/s]
+Running loglikelihood requests:  17%|█▋        | 1977/11400 [00:40<02:00, 78.10it/s]
+Running loglikelihood requests:  17%|█▋        | 1985/11400 [00:40<02:00, 78.33it/s]
+Running loglikelihood requests:  17%|█▋        | 1993/11400 [00:40<01:59, 78.39it/s]
+Running loglikelihood requests:  18%|█▊        | 2001/11400 [00:40<01:59, 78.47it/s]
+Running loglikelihood requests:  18%|█▊        | 2009/11400 [00:40<01:59, 78.69it/s]
+Running loglikelihood requests:  18%|█▊        | 2017/11400 [00:40<02:02, 76.32it/s]
+Running loglikelihood requests:  18%|█▊        | 2026/11400 [00:40<01:57, 79.71it/s]
+Running loglikelihood requests:  18%|█▊        | 2034/11400 [00:40<01:57, 79.39it/s]
+Running loglikelihood requests:  18%|█▊        | 2042/11400 [00:40<01:58, 79.21it/s]
+Running loglikelihood requests:  18%|█▊        | 2050/11400 [00:41<01:58, 79.13it/s]
+Running loglikelihood requests:  18%|█▊        | 2058/11400 [00:41<01:58, 78.94it/s]
+Running loglikelihood requests:  18%|█▊        | 2066/11400 [00:41<01:58, 78.93it/s]
+Running loglikelihood requests:  18%|█▊        | 2074/11400 [00:41<01:58, 78.73it/s]
+Running loglikelihood requests:  18%|█▊        | 2082/11400 [00:41<01:58, 78.63it/s]
+Running loglikelihood requests:  18%|█▊        | 2090/11400 [00:41<01:58, 78.62it/s]
+Running loglikelihood requests:  18%|█▊        | 2098/11400 [00:41<02:01, 76.44it/s]
+Running loglikelihood requests:  18%|█▊        | 2106/11400 [00:41<02:00, 76.89it/s]
+Running loglikelihood requests:  19%|█▊        | 2114/11400 [00:41<01:59, 77.46it/s]
+Running loglikelihood requests:  19%|█▊        | 2122/11400 [00:41<01:59, 77.74it/s]
+Running loglikelihood requests:  19%|█▊        | 2130/11400 [00:42<01:59, 77.87it/s]
+Running loglikelihood requests:  19%|█▉        | 2138/11400 [00:42<01:58, 78.07it/s]
+Running loglikelihood requests:  19%|█▉        | 2146/11400 [00:42<01:58, 78.13it/s]
+Running loglikelihood requests:  19%|█▉        | 2154/11400 [00:42<01:58, 78.25it/s]
+Running loglikelihood requests:  19%|█▉        | 2162/11400 [00:42<01:58, 78.15it/s]
+Running loglikelihood requests:  19%|█▉        | 2170/11400 [00:42<01:57, 78.41it/s]
+Running loglikelihood requests:  19%|█▉        | 2178/11400 [00:42<01:57, 78.71it/s]
+Running loglikelihood requests:  19%|█▉        | 2186/11400 [00:42<01:59, 77.23it/s]
+Running loglikelihood requests:  19%|█▉        | 2197/11400 [00:42<01:47, 85.64it/s]
+Running loglikelihood requests:  19%|█▉        | 2206/11400 [00:42<01:47, 85.90it/s]
+Running loglikelihood requests:  19%|█▉        | 2215/11400 [00:43<01:46, 86.36it/s]
+Running loglikelihood requests:  20%|█▉        | 2224/11400 [00:43<01:45, 86.59it/s]
+Running loglikelihood requests:  20%|█▉        | 2233/11400 [00:43<02:14, 68.27it/s]
+Running loglikelihood requests:  20%|█▉        | 2249/11400 [00:43<02:05, 72.95it/s]
+Running loglikelihood requests:  20%|█▉        | 2257/11400 [00:43<02:03, 74.22it/s]
+Running loglikelihood requests:  20%|█▉        | 2265/11400 [00:43<02:03, 74.09it/s]
+Running loglikelihood requests:  20%|█▉        | 2273/11400 [00:43<02:01, 75.31it/s]
+Running loglikelihood requests:  20%|██        | 2281/11400 [00:43<01:59, 76.18it/s]
+Running loglikelihood requests:  20%|██        | 2289/11400 [00:44<01:58, 76.88it/s]
+Running loglikelihood requests:  20%|██        | 2297/11400 [00:44<01:57, 77.48it/s]
+Running loglikelihood requests:  20%|██        | 2305/11400 [00:44<01:56, 77.98it/s]
+Running loglikelihood requests:  20%|██        | 2313/11400 [00:44<01:56, 78.07it/s]
+Running loglikelihood requests:  20%|██        | 2321/11400 [00:44<01:56, 77.98it/s]
+Running loglikelihood requests:  20%|██        | 2333/11400 [00:44<01:41, 89.40it/s]
+Running loglikelihood requests:  21%|██        | 2343/11400 [00:44<01:38, 92.25it/s]
+Running loglikelihood requests:  21%|██        | 2353/11400 [00:44<02:01, 74.41it/s]
+Running loglikelihood requests:  21%|██        | 2362/11400 [00:44<01:55, 77.98it/s]
+Running loglikelihood requests:  21%|██        | 2371/11400 [00:45<01:51, 80.71it/s]
+Running loglikelihood requests:  21%|██        | 2380/11400 [00:45<01:48, 82.91it/s]
+Running loglikelihood requests:  21%|██        | 2389/11400 [00:45<01:46, 84.61it/s]
+Running loglikelihood requests:  21%|██        | 2398/11400 [00:45<01:45, 85.72it/s]
+Running loglikelihood requests:  21%|██        | 2407/11400 [00:45<01:43, 86.47it/s]
+Running loglikelihood requests:  21%|██        | 2416/11400 [00:45<01:42, 87.25it/s]
+Running loglikelihood requests:  21%|██▏       | 2425/11400 [00:45<02:12, 67.65it/s]
+Running loglikelihood requests:  21%|██▏       | 2433/11400 [00:45<02:07, 70.15it/s]
+Running loglikelihood requests:  21%|██▏       | 2448/11400 [00:46<01:39, 90.06it/s]
+Running loglikelihood requests:  22%|██▏       | 2458/11400 [00:46<02:00, 74.31it/s]
+Running loglikelihood requests:  22%|██▏       | 2467/11400 [00:46<01:54, 77.74it/s]
+Running loglikelihood requests:  22%|██▏       | 2476/11400 [00:46<01:50, 80.49it/s]
+Running loglikelihood requests:  22%|██▏       | 2485/11400 [00:46<01:47, 82.68it/s]
+Running loglikelihood requests:  22%|██▏       | 2494/11400 [00:46<01:45, 84.20it/s]
+Running loglikelihood requests:  22%|██▏       | 2503/11400 [00:46<01:43, 85.59it/s]
+Running loglikelihood requests:  22%|██▏       | 2512/11400 [00:46<01:42, 86.38it/s]
+Running loglikelihood requests:  22%|██▏       | 2521/11400 [00:46<02:08, 68.93it/s]
+Running loglikelihood requests:  22%|██▏       | 2529/11400 [00:47<02:04, 71.34it/s]
+Running loglikelihood requests:  22%|██▏       | 2537/11400 [00:47<02:01, 72.86it/s]
+Running loglikelihood requests:  22%|██▏       | 2553/11400 [00:47<01:55, 76.37it/s]
+Running loglikelihood requests:  22%|██▏       | 2562/11400 [00:47<01:52, 78.88it/s]
+Running loglikelihood requests:  23%|██▎       | 2575/11400 [00:47<01:37, 90.97it/s]
+Running loglikelihood requests:  23%|██▎       | 2585/11400 [00:47<01:58, 74.43it/s]
+Running loglikelihood requests:  23%|██▎       | 2598/11400 [00:47<01:41, 86.36it/s]
+Running loglikelihood requests:  23%|██▎       | 2609/11400 [00:48<01:57, 74.60it/s]
+Running loglikelihood requests:  23%|██▎       | 2618/11400 [00:48<01:53, 77.58it/s]
+Running loglikelihood requests:  23%|██▎       | 2632/11400 [00:48<01:35, 91.76it/s]
+Running loglikelihood requests:  23%|██▎       | 2642/11400 [00:48<01:58, 74.00it/s]
+Running loglikelihood requests:  23%|██▎       | 2651/11400 [00:48<01:54, 76.69it/s]
+Running loglikelihood requests:  23%|██▎       | 2660/11400 [00:48<01:49, 79.72it/s]
+Running loglikelihood requests:  23%|██▎       | 2669/11400 [00:48<01:46, 81.82it/s]
+Running loglikelihood requests:  23%|██▎       | 2678/11400 [00:48<01:44, 83.22it/s]
+Running loglikelihood requests:  24%|██▎       | 2687/11400 [00:49<01:43, 84.56it/s]
+Running loglikelihood requests:  24%|██▎       | 2696/11400 [00:49<01:42, 85.12it/s]
+Running loglikelihood requests:  24%|██▎       | 2705/11400 [00:49<02:10, 66.38it/s]
+Running loglikelihood requests:  24%|██▍       | 2721/11400 [00:49<01:53, 76.61it/s]
+Running loglikelihood requests:  24%|██▍       | 2737/11400 [00:49<01:41, 85.22it/s]
+Running loglikelihood requests:  24%|██▍       | 2753/11400 [00:49<01:36, 89.37it/s]
+Running loglikelihood requests:  24%|██▍       | 2769/11400 [00:49<01:31, 93.94it/s]
+Running loglikelihood requests:  24%|██▍       | 2785/11400 [00:50<01:30, 95.37it/s]
+Running loglikelihood requests:  25%|██▍       | 2801/11400 [00:50<01:29, 96.27it/s]
+Running loglikelihood requests:  25%|██▍       | 2817/11400 [00:50<01:28, 96.75it/s]
+Running loglikelihood requests:  25%|██▍       | 2833/11400 [00:50<01:27, 97.49it/s]
+Running loglikelihood requests:  25%|██▍       | 2849/11400 [00:50<01:26, 98.91it/s]
+Running loglikelihood requests:  25%|██▌       | 2865/11400 [00:50<01:24, 100.41it/s]
+Running loglikelihood requests:  25%|██▌       | 2881/11400 [00:51<01:23, 101.72it/s]
+Running loglikelihood requests:  25%|██▌       | 2897/11400 [00:51<01:24, 100.55it/s]
+Running loglikelihood requests:  26%|██▌       | 2913/11400 [00:51<01:25, 99.70it/s] 
+Running loglikelihood requests:  26%|██▌       | 2929/11400 [00:51<01:23, 100.96it/s]
+Running loglikelihood requests:  26%|██▌       | 2945/11400 [00:51<01:24, 100.18it/s]
+Running loglikelihood requests:  26%|██▌       | 2961/11400 [00:51<01:23, 101.55it/s]
+Running loglikelihood requests:  26%|██▌       | 2977/11400 [00:52<01:23, 100.70it/s]
+Running loglikelihood requests:  26%|██▋       | 2993/11400 [00:52<01:22, 101.89it/s]
+Running loglikelihood requests:  26%|██▋       | 3009/11400 [00:52<01:23, 100.84it/s]
+Running loglikelihood requests:  27%|██▋       | 3025/11400 [00:52<01:22, 102.04it/s]
+Running loglikelihood requests:  27%|██▋       | 3041/11400 [00:52<01:22, 100.90it/s]
+Running loglikelihood requests:  27%|██▋       | 3057/11400 [00:52<01:22, 101.16it/s]
+Running loglikelihood requests:  27%|██▋       | 3073/11400 [00:52<01:20, 103.05it/s]
+Running loglikelihood requests:  27%|██▋       | 3089/11400 [00:53<01:21, 101.57it/s]
+Running loglikelihood requests:  27%|██▋       | 3105/11400 [00:53<01:20, 102.52it/s]
+Running loglikelihood requests:  27%|██▋       | 3121/11400 [00:53<01:20, 102.95it/s]
+Running loglikelihood requests:  28%|██▊       | 3137/11400 [00:53<01:19, 103.56it/s]
+Running loglikelihood requests:  28%|██▊       | 3153/11400 [00:53<01:21, 101.81it/s]
+Running loglikelihood requests:  28%|██▊       | 3169/11400 [00:53<01:20, 102.58it/s]
+Running loglikelihood requests:  28%|██▊       | 3185/11400 [00:54<01:19, 103.30it/s]
+Running loglikelihood requests:  28%|██▊       | 3201/11400 [00:54<01:19, 103.72it/s]
+Running loglikelihood requests:  28%|██▊       | 3217/11400 [00:54<01:18, 104.16it/s]
+Running loglikelihood requests:  28%|██▊       | 3233/11400 [00:54<01:19, 102.44it/s]
+Running loglikelihood requests:  28%|██▊       | 3249/11400 [00:54<01:19, 102.96it/s]
+Running loglikelihood requests:  29%|██▊       | 3265/11400 [00:54<01:18, 103.35it/s]
+Running loglikelihood requests:  29%|██▉       | 3281/11400 [00:55<01:18, 103.62it/s]
+Running loglikelihood requests:  29%|██▉       | 3297/11400 [00:55<01:18, 103.23it/s]
+Running loglikelihood requests:  29%|██▉       | 3313/11400 [00:55<01:18, 103.48it/s]
+Running loglikelihood requests:  29%|██▉       | 3329/11400 [00:55<01:19, 101.81it/s]
+Running loglikelihood requests:  29%|██▉       | 3345/11400 [00:55<01:18, 102.27it/s]
+Running loglikelihood requests:  29%|██▉       | 3361/11400 [00:55<01:18, 102.75it/s]
+Running loglikelihood requests:  30%|██▉       | 3377/11400 [00:55<01:17, 103.24it/s]
+Running loglikelihood requests:  30%|██▉       | 3393/11400 [00:56<01:19, 101.19it/s]
+Running loglikelihood requests:  30%|██▉       | 3409/11400 [00:56<01:18, 102.03it/s]
+Running loglikelihood requests:  30%|███       | 3425/11400 [00:56<01:17, 102.41it/s]
+Running loglikelihood requests:  30%|███       | 3441/11400 [00:56<01:17, 102.51it/s]
+Running loglikelihood requests:  30%|███       | 3457/11400 [00:56<01:17, 102.30it/s]
+Running loglikelihood requests:  30%|███       | 3473/11400 [00:56<01:16, 103.76it/s]
+Running loglikelihood requests:  31%|███       | 3489/11400 [00:57<01:16, 104.08it/s]
+Running loglikelihood requests:  31%|███       | 3505/11400 [00:57<01:15, 104.04it/s]
+Running loglikelihood requests:  31%|███       | 3521/11400 [00:57<01:15, 104.44it/s]
+Running loglikelihood requests:  31%|███       | 3537/11400 [00:57<01:16, 102.50it/s]
+Running loglikelihood requests:  31%|███       | 3553/11400 [00:57<01:16, 101.97it/s]
+Running loglikelihood requests:  31%|███▏      | 3569/11400 [00:57<01:14, 105.18it/s]
+Running loglikelihood requests:  31%|███▏      | 3585/11400 [00:57<01:14, 104.78it/s]
+Running loglikelihood requests:  32%|███▏      | 3601/11400 [00:58<01:15, 102.68it/s]
+Running loglikelihood requests:  32%|███▏      | 3617/11400 [00:58<01:14, 105.15it/s]
+Running loglikelihood requests:  32%|███▏      | 3633/11400 [00:58<01:15, 103.39it/s]
+Running loglikelihood requests:  32%|███▏      | 3649/11400 [00:58<01:14, 103.93it/s]
+Running loglikelihood requests:  32%|███▏      | 3665/11400 [00:58<01:14, 104.37it/s]
+Running loglikelihood requests:  32%|███▏      | 3681/11400 [00:58<01:14, 103.43it/s]
+Running loglikelihood requests:  32%|███▏      | 3697/11400 [00:59<01:14, 103.40it/s]
+Running loglikelihood requests:  33%|███▎      | 3713/11400 [00:59<01:12, 105.96it/s]
+Running loglikelihood requests:  33%|███▎      | 3729/11400 [00:59<01:12, 105.65it/s]
+Running loglikelihood requests:  33%|███▎      | 3745/11400 [00:59<01:12, 105.51it/s]
+Running loglikelihood requests:  33%|███▎      | 3761/11400 [00:59<01:12, 105.19it/s]
+Running loglikelihood requests:  33%|███▎      | 3777/11400 [00:59<01:12, 105.14it/s]
+Running loglikelihood requests:  33%|███▎      | 3793/11400 [00:59<01:12, 104.94it/s]
+Running loglikelihood requests:  33%|███▎      | 3809/11400 [01:00<01:12, 104.90it/s]
+Running loglikelihood requests:  34%|███▎      | 3825/11400 [01:00<01:10, 107.04it/s]
+Running loglikelihood requests:  34%|███▎      | 3841/11400 [01:00<01:11, 106.34it/s]
+Running loglikelihood requests:  34%|███▍      | 3857/11400 [01:00<01:11, 105.99it/s]
+Running loglikelihood requests:  34%|███▍      | 3873/11400 [01:00<01:11, 105.67it/s]
+Running loglikelihood requests:  34%|███▍      | 3889/11400 [01:00<01:11, 105.33it/s]
+Running loglikelihood requests:  34%|███▍      | 3905/11400 [01:00<01:11, 104.82it/s]
+Running loglikelihood requests:  34%|███▍      | 3921/11400 [01:01<01:11, 104.48it/s]
+Running loglikelihood requests:  35%|███▍      | 3937/11400 [01:01<01:11, 104.85it/s]
+Running loglikelihood requests:  35%|███▍      | 3953/11400 [01:01<01:09, 106.94it/s]
+Running loglikelihood requests:  35%|███▍      | 3969/11400 [01:01<01:07, 110.74it/s]
+Running loglikelihood requests:  35%|███▍      | 3985/11400 [01:01<01:06, 111.12it/s]
+Running loglikelihood requests:  35%|███▌      | 4001/11400 [01:01<01:06, 111.28it/s]
+Running loglikelihood requests:  35%|███▌      | 4021/11400 [01:02<01:01, 119.76it/s]
+Running loglikelihood requests:  35%|███▌      | 4037/11400 [01:02<01:02, 117.48it/s]
+Running loglikelihood requests:  36%|███▌      | 4053/11400 [01:02<01:03, 115.66it/s]
+Running loglikelihood requests:  36%|███▌      | 4069/11400 [01:02<01:03, 114.59it/s]
+Running loglikelihood requests:  36%|███▌      | 4085/11400 [01:02<01:04, 114.07it/s]
+Running loglikelihood requests:  36%|███▌      | 4101/11400 [01:02<01:04, 113.43it/s]
+Running loglikelihood requests:  36%|███▌      | 4117/11400 [01:02<01:04, 113.12it/s]
+Running loglikelihood requests:  36%|███▋      | 4133/11400 [01:03<01:04, 112.89it/s]
+Running loglikelihood requests:  36%|███▋      | 4149/11400 [01:03<01:04, 112.07it/s]
+Running loglikelihood requests:  37%|███▋      | 4165/11400 [01:03<01:04, 111.60it/s]
+Running loglikelihood requests:  37%|███▋      | 4181/11400 [01:03<01:05, 110.93it/s]
+Running loglikelihood requests:  37%|███▋      | 4197/11400 [01:03<01:04, 110.97it/s]
+Running loglikelihood requests:  37%|███▋      | 4213/11400 [01:03<01:04, 111.33it/s]
+Running loglikelihood requests:  37%|███▋      | 4229/11400 [01:03<01:02, 114.04it/s]
+Running loglikelihood requests:  37%|███▋      | 4245/11400 [01:04<01:02, 113.58it/s]
+Running loglikelihood requests:  37%|███▋      | 4261/11400 [01:04<01:03, 112.99it/s]
+Running loglikelihood requests:  38%|███▊      | 4277/11400 [01:04<01:03, 112.63it/s]
+Running loglikelihood requests:  38%|███▊      | 4293/11400 [01:04<01:03, 112.44it/s]
+Running loglikelihood requests:  38%|███▊      | 4309/11400 [01:04<01:03, 111.66it/s]
+Running loglikelihood requests:  38%|███▊      | 4325/11400 [01:04<01:03, 111.66it/s]
+Running loglikelihood requests:  38%|███▊      | 4341/11400 [01:04<01:03, 111.30it/s]
+Running loglikelihood requests:  38%|███▊      | 4357/11400 [01:05<01:03, 111.55it/s]
+Running loglikelihood requests:  38%|███▊      | 4373/11400 [01:05<01:02, 111.78it/s]
+Running loglikelihood requests:  38%|███▊      | 4389/11400 [01:05<01:02, 111.72it/s]
+Running loglikelihood requests:  39%|███▊      | 4405/11400 [01:05<01:01, 114.11it/s]
+Running loglikelihood requests:  39%|███▉      | 4421/11400 [01:05<01:01, 113.50it/s]
+Running loglikelihood requests:  39%|███▉      | 4437/11400 [01:05<01:01, 112.95it/s]
+Running loglikelihood requests:  39%|███▉      | 4453/11400 [01:05<01:00, 115.34it/s]
+Running loglikelihood requests:  39%|███▉      | 4469/11400 [01:05<01:00, 114.23it/s]
+Running loglikelihood requests:  39%|███▉      | 4485/11400 [01:06<01:00, 113.51it/s]
+Running loglikelihood requests:  39%|███▉      | 4501/11400 [01:06<00:59, 115.80it/s]
+Running loglikelihood requests:  40%|███▉      | 4517/11400 [01:06<00:59, 114.91it/s]
+Running loglikelihood requests:  40%|███▉      | 4533/11400 [01:06<01:00, 114.34it/s]
+Running loglikelihood requests:  40%|███▉      | 4549/11400 [01:06<01:00, 113.87it/s]
+Running loglikelihood requests:  40%|████      | 4565/11400 [01:06<00:59, 115.55it/s]
+Running loglikelihood requests:  40%|████      | 4581/11400 [01:06<00:59, 114.24it/s]
+Running loglikelihood requests:  40%|████      | 4597/11400 [01:07<00:59, 113.90it/s]
+Running loglikelihood requests:  40%|████      | 4613/11400 [01:07<00:59, 113.39it/s]
+Running loglikelihood requests:  41%|████      | 4629/11400 [01:07<01:00, 112.80it/s]
+Running loglikelihood requests:  41%|████      | 4645/11400 [01:07<01:00, 112.02it/s]
+Running loglikelihood requests:  41%|████      | 4661/11400 [01:07<01:00, 111.95it/s]
+Running loglikelihood requests:  41%|████      | 4677/11400 [01:07<01:00, 111.90it/s]
+Running loglikelihood requests:  41%|████      | 4693/11400 [01:07<00:58, 114.27it/s]
+Running loglikelihood requests:  41%|████▏     | 4709/11400 [01:08<01:00, 111.37it/s]
+Running loglikelihood requests:  41%|████▏     | 4725/11400 [01:08<00:59, 111.65it/s]
+Running loglikelihood requests:  42%|████▏     | 4741/11400 [01:08<00:59, 111.70it/s]
+Running loglikelihood requests:  42%|████▏     | 4757/11400 [01:08<00:58, 113.01it/s]
+Running loglikelihood requests:  42%|████▏     | 4773/11400 [01:08<00:58, 113.72it/s]
+Running loglikelihood requests:  42%|████▏     | 4789/11400 [01:08<00:58, 113.13it/s]
+Running loglikelihood requests:  42%|████▏     | 4805/11400 [01:08<00:58, 112.95it/s]
+Running loglikelihood requests:  42%|████▏     | 4821/11400 [01:09<00:58, 112.37it/s]
+Running loglikelihood requests:  42%|████▏     | 4837/11400 [01:09<00:58, 112.47it/s]
+Running loglikelihood requests:  43%|████▎     | 4853/11400 [01:09<00:58, 112.38it/s]
+Running loglikelihood requests:  43%|████▎     | 4869/11400 [01:09<00:58, 112.44it/s]
+Running loglikelihood requests:  43%|████▎     | 4885/11400 [01:09<00:58, 112.13it/s]
+Running loglikelihood requests:  43%|████▎     | 4901/11400 [01:09<00:58, 111.87it/s]
+Running loglikelihood requests:  43%|████▎     | 4917/11400 [01:09<00:58, 111.77it/s]
+Running loglikelihood requests:  43%|████▎     | 4933/11400 [01:10<00:57, 111.85it/s]
+Running loglikelihood requests:  43%|████▎     | 4949/11400 [01:10<00:56, 114.52it/s]
+Running loglikelihood requests:  44%|████▎     | 4965/11400 [01:10<00:56, 113.67it/s]
+Running loglikelihood requests:  44%|████▎     | 4981/11400 [01:10<00:57, 112.06it/s]
+Running loglikelihood requests:  44%|████▍     | 4997/11400 [01:10<00:56, 113.17it/s]
+Running loglikelihood requests:  44%|████▍     | 5013/11400 [01:10<00:55, 115.17it/s]
+Running loglikelihood requests:  44%|████▍     | 5029/11400 [01:10<00:56, 113.29it/s]
+Running loglikelihood requests:  44%|████▍     | 5045/11400 [01:11<00:56, 111.79it/s]
+Running loglikelihood requests:  44%|████▍     | 5061/11400 [01:11<00:55, 114.33it/s]
+Running loglikelihood requests:  45%|████▍     | 5077/11400 [01:11<00:54, 116.26it/s]
+Running loglikelihood requests:  45%|████▍     | 5093/11400 [01:11<00:54, 114.85it/s]
+Running loglikelihood requests:  45%|████▍     | 5109/11400 [01:11<00:53, 116.56it/s]
+Running loglikelihood requests:  45%|████▍     | 5125/11400 [01:11<00:53, 117.83it/s]
+Running loglikelihood requests:  45%|████▌     | 5141/11400 [01:11<00:53, 116.01it/s]
+Running loglikelihood requests:  45%|████▌     | 5157/11400 [01:12<00:54, 114.78it/s]
+Running loglikelihood requests:  45%|████▌     | 5173/11400 [01:12<00:53, 116.69it/s]
+Running loglikelihood requests:  46%|████▌     | 5189/11400 [01:12<00:52, 117.80it/s]
+Running loglikelihood requests:  46%|████▌     | 5205/11400 [01:12<00:53, 115.90it/s]
+Running loglikelihood requests:  46%|████▌     | 5221/11400 [01:12<00:52, 117.26it/s]
+Running loglikelihood requests:  46%|████▌     | 5237/11400 [01:12<00:52, 118.25it/s]
+Running loglikelihood requests:  46%|████▌     | 5253/11400 [01:12<00:52, 116.30it/s]
+Running loglikelihood requests:  46%|████▌     | 5269/11400 [01:13<00:53, 114.86it/s]
+Running loglikelihood requests:  46%|████▋     | 5285/11400 [01:13<00:52, 116.18it/s]
+Running loglikelihood requests:  46%|████▋     | 5301/11400 [01:13<00:52, 116.34it/s]
+Running loglikelihood requests:  47%|████▋     | 5317/11400 [01:13<00:52, 115.75it/s]
+Running loglikelihood requests:  47%|████▋     | 5333/11400 [01:13<00:51, 116.86it/s]
+Running loglikelihood requests:  47%|████▋     | 5349/11400 [01:13<00:51, 117.20it/s]
+Running loglikelihood requests:  47%|████▋     | 5365/11400 [01:13<00:50, 118.56it/s]
+Running loglikelihood requests:  47%|████▋     | 5381/11400 [01:13<00:51, 116.29it/s]
+Running loglikelihood requests:  47%|████▋     | 5397/11400 [01:14<00:51, 117.62it/s]
+Running loglikelihood requests:  47%|████▋     | 5413/11400 [01:14<00:50, 118.73it/s]
+Running loglikelihood requests:  48%|████▊     | 5429/11400 [01:14<00:51, 116.72it/s]
+Running loglikelihood requests:  48%|████▊     | 5445/11400 [01:14<00:51, 116.39it/s]
+Running loglikelihood requests:  48%|████▊     | 5461/11400 [01:14<00:49, 119.29it/s]
+Running loglikelihood requests:  48%|████▊     | 5477/11400 [01:14<00:50, 117.22it/s]
+Running loglikelihood requests:  48%|████▊     | 5493/11400 [01:14<00:51, 115.61it/s]
+Running loglikelihood requests:  48%|████▊     | 5509/11400 [01:15<00:51, 114.47it/s]
+Running loglikelihood requests:  48%|████▊     | 5525/11400 [01:15<00:51, 114.04it/s]
+Running loglikelihood requests:  49%|████▊     | 5541/11400 [01:15<00:51, 113.42it/s]
+Running loglikelihood requests:  49%|████▊     | 5557/11400 [01:15<00:51, 113.00it/s]
+Running loglikelihood requests:  49%|████▉     | 5573/11400 [01:15<00:50, 115.23it/s]
+Running loglikelihood requests:  49%|████▉     | 5589/11400 [01:15<00:50, 114.47it/s]
+Running loglikelihood requests:  49%|████▉     | 5605/11400 [01:15<00:50, 113.83it/s]
+Running loglikelihood requests:  49%|████▉     | 5621/11400 [01:16<00:51, 112.95it/s]
+Running loglikelihood requests:  49%|████▉     | 5637/11400 [01:16<00:51, 112.28it/s]
+Running loglikelihood requests:  50%|████▉     | 5653/11400 [01:16<00:51, 112.15it/s]
+Running loglikelihood requests:  50%|████▉     | 5669/11400 [01:16<00:50, 113.88it/s]
+Running loglikelihood requests:  50%|████▉     | 5685/11400 [01:16<00:50, 112.97it/s]
+Running loglikelihood requests:  50%|█████     | 5701/11400 [01:16<00:50, 112.23it/s]
+Running loglikelihood requests:  50%|█████     | 5717/11400 [01:16<00:49, 114.41it/s]
+Running loglikelihood requests:  50%|█████     | 5733/11400 [01:17<00:50, 113.09it/s]
+Running loglikelihood requests:  50%|█████     | 5749/11400 [01:17<00:48, 115.76it/s]
+Running loglikelihood requests:  51%|█████     | 5765/11400 [01:17<00:49, 114.55it/s]
+Running loglikelihood requests:  51%|█████     | 5781/11400 [01:17<00:49, 113.96it/s]
+Running loglikelihood requests:  51%|█████     | 5797/11400 [01:17<00:49, 113.45it/s]
+Running loglikelihood requests:  51%|█████     | 5813/11400 [01:17<00:49, 113.08it/s]
+Running loglikelihood requests:  51%|█████     | 5829/11400 [01:17<00:48, 115.38it/s]
+Running loglikelihood requests:  51%|█████▏    | 5845/11400 [01:18<00:48, 114.06it/s]
+Running loglikelihood requests:  51%|█████▏    | 5861/11400 [01:18<00:48, 113.33it/s]
+Running loglikelihood requests:  52%|█████▏    | 5877/11400 [01:18<00:47, 115.45it/s]
+Running loglikelihood requests:  52%|█████▏    | 5893/11400 [01:18<00:48, 114.30it/s]
+Running loglikelihood requests:  52%|█████▏    | 5909/11400 [01:18<00:48, 113.51it/s]
+Running loglikelihood requests:  52%|█████▏    | 5925/11400 [01:18<00:47, 115.53it/s]
+Running loglikelihood requests:  52%|█████▏    | 5941/11400 [01:18<00:47, 114.36it/s]
+Running loglikelihood requests:  52%|█████▏    | 5957/11400 [01:19<00:47, 113.40it/s]
+Running loglikelihood requests:  52%|█████▏    | 5973/11400 [01:19<00:47, 115.26it/s]
+Running loglikelihood requests:  53%|█████▎    | 5989/11400 [01:19<00:47, 113.73it/s]
+Running loglikelihood requests:  53%|█████▎    | 6005/11400 [01:19<00:47, 113.90it/s]
+Running loglikelihood requests:  53%|█████▎    | 6021/11400 [01:19<00:46, 114.53it/s]
+Running loglikelihood requests:  53%|█████▎    | 6037/11400 [01:19<00:46, 115.72it/s]
+Running loglikelihood requests:  53%|█████▎    | 6053/11400 [01:19<00:46, 114.75it/s]
+Running loglikelihood requests:  53%|█████▎    | 6069/11400 [01:19<00:46, 114.02it/s]
+Running loglikelihood requests:  53%|█████▎    | 6085/11400 [01:20<00:45, 116.04it/s]
+Running loglikelihood requests:  54%|█████▎    | 6101/11400 [01:20<00:46, 114.39it/s]
+Running loglikelihood requests:  54%|█████▎    | 6117/11400 [01:20<00:45, 115.88it/s]
+Running loglikelihood requests:  54%|█████▍    | 6133/11400 [01:20<00:45, 114.72it/s]
+Running loglikelihood requests:  54%|█████▍    | 6149/11400 [01:20<00:45, 116.14it/s]
+Running loglikelihood requests:  54%|█████▍    | 6165/11400 [01:20<00:45, 114.88it/s]
+Running loglikelihood requests:  54%|█████▍    | 6181/11400 [01:20<00:44, 116.45it/s]
+Running loglikelihood requests:  54%|█████▍    | 6197/11400 [01:21<00:45, 114.83it/s]
+Running loglikelihood requests:  55%|█████▍    | 6213/11400 [01:21<00:45, 113.99it/s]
+Running loglikelihood requests:  55%|█████▍    | 6229/11400 [01:21<00:44, 115.85it/s]
+Running loglikelihood requests:  55%|█████▍    | 6245/11400 [01:21<00:44, 115.21it/s]
+Running loglikelihood requests:  55%|█████▍    | 6261/11400 [01:21<00:44, 115.94it/s]
+Running loglikelihood requests:  55%|█████▌    | 6277/11400 [01:21<00:43, 117.35it/s]
+Running loglikelihood requests:  55%|█████▌    | 6293/11400 [01:21<00:44, 115.78it/s]
+Running loglikelihood requests:  55%|█████▌    | 6309/11400 [01:22<00:44, 115.34it/s]
+Running loglikelihood requests:  55%|█████▌    | 6325/11400 [01:22<00:43, 117.15it/s]
+Running loglikelihood requests:  56%|█████▌    | 6341/11400 [01:22<00:43, 115.74it/s]
+Running loglikelihood requests:  56%|█████▌    | 6357/11400 [01:22<00:43, 116.61it/s]
+Running loglikelihood requests:  56%|█████▌    | 6373/11400 [01:22<00:42, 117.17it/s]
+Running loglikelihood requests:  56%|█████▌    | 6389/11400 [01:22<00:42, 117.51it/s]
+Running loglikelihood requests:  56%|█████▌    | 6405/11400 [01:22<00:43, 115.92it/s]
+Running loglikelihood requests:  56%|█████▋    | 6421/11400 [01:23<00:42, 116.99it/s]
+Running loglikelihood requests:  56%|█████▋    | 6437/11400 [01:23<00:42, 115.73it/s]
+Running loglikelihood requests:  57%|█████▋    | 6453/11400 [01:23<00:42, 116.69it/s]
+Running loglikelihood requests:  57%|█████▋    | 6469/11400 [01:23<00:42, 115.04it/s]
+Running loglikelihood requests:  57%|█████▋    | 6485/11400 [01:23<00:42, 116.00it/s]
+Running loglikelihood requests:  57%|█████▋    | 6501/11400 [01:23<00:41, 117.97it/s]
+Running loglikelihood requests:  57%|█████▋    | 6517/11400 [01:23<00:42, 115.86it/s]
+Running loglikelihood requests:  57%|█████▋    | 6533/11400 [01:23<00:41, 117.79it/s]
+Running loglikelihood requests:  57%|█████▋    | 6549/11400 [01:24<00:40, 118.54it/s]
+Running loglikelihood requests:  58%|█████▊    | 6565/11400 [01:24<00:41, 116.43it/s]
+Running loglikelihood requests:  58%|█████▊    | 6581/11400 [01:24<00:42, 114.64it/s]
+Running loglikelihood requests:  58%|█████▊    | 6597/11400 [01:24<00:41, 116.39it/s]
+Running loglikelihood requests:  58%|█████▊    | 6613/11400 [01:24<00:40, 117.56it/s]
+Running loglikelihood requests:  58%|█████▊    | 6629/11400 [01:24<00:40, 118.54it/s]
+Running loglikelihood requests:  58%|█████▊    | 6645/11400 [01:24<00:39, 119.33it/s]
+Running loglikelihood requests:  58%|█████▊    | 6661/11400 [01:25<00:40, 117.32it/s]
+Running loglikelihood requests:  59%|█████▊    | 6677/11400 [01:25<00:40, 115.93it/s]
+Running loglikelihood requests:  59%|█████▊    | 6693/11400 [01:25<00:40, 116.21it/s]
+Running loglikelihood requests:  59%|█████▉    | 6709/11400 [01:25<00:40, 115.69it/s]
+Running loglikelihood requests:  59%|█████▉    | 6725/11400 [01:25<00:39, 116.90it/s]
+Running loglikelihood requests:  59%|█████▉    | 6741/11400 [01:25<00:39, 117.89it/s]
+Running loglikelihood requests:  59%|█████▉    | 6757/11400 [01:25<00:39, 116.32it/s]
+Running loglikelihood requests:  59%|█████▉    | 6773/11400 [01:26<00:40, 115.17it/s]
+Running loglikelihood requests:  60%|█████▉    | 6789/11400 [01:26<00:40, 114.46it/s]
+Running loglikelihood requests:  60%|█████▉    | 6805/11400 [01:26<00:40, 113.38it/s]
+Running loglikelihood requests:  60%|█████▉    | 6821/11400 [01:26<00:40, 114.04it/s]
+Running loglikelihood requests:  60%|█████▉    | 6837/11400 [01:26<00:39, 116.06it/s]
+Running loglikelihood requests:  60%|██████    | 6853/11400 [01:26<00:39, 114.69it/s]
+Running loglikelihood requests:  60%|██████    | 6869/11400 [01:26<00:39, 116.17it/s]
+Running loglikelihood requests:  60%|██████    | 6885/11400 [01:27<00:39, 115.01it/s]
+Running loglikelihood requests:  61%|██████    | 6901/11400 [01:27<00:39, 113.99it/s]
+Running loglikelihood requests:  61%|██████    | 6917/11400 [01:27<00:38, 115.89it/s]
+Running loglikelihood requests:  61%|██████    | 6933/11400 [01:27<00:38, 114.66it/s]
+Running loglikelihood requests:  61%|██████    | 6949/11400 [01:27<00:38, 116.44it/s]
+Running loglikelihood requests:  61%|██████    | 6965/11400 [01:27<00:38, 114.64it/s]
+Running loglikelihood requests:  61%|██████    | 6981/11400 [01:27<00:38, 114.30it/s]
+Running loglikelihood requests:  61%|██████▏   | 6997/11400 [01:27<00:37, 115.96it/s]
+Running loglikelihood requests:  62%|██████▏   | 7013/11400 [01:28<00:38, 114.81it/s]
+Running loglikelihood requests:  62%|██████▏   | 7029/11400 [01:28<00:38, 113.62it/s]
+Running loglikelihood requests:  62%|██████▏   | 7045/11400 [01:28<00:37, 115.95it/s]
+Running loglikelihood requests:  62%|██████▏   | 7061/11400 [01:28<00:37, 115.12it/s]
+Running loglikelihood requests:  62%|██████▏   | 7077/11400 [01:28<00:36, 117.06it/s]
+Running loglikelihood requests:  62%|██████▏   | 7093/11400 [01:28<00:37, 115.75it/s]
+Running loglikelihood requests:  62%|██████▏   | 7109/11400 [01:28<00:36, 116.96it/s]
+Running loglikelihood requests:  62%|██████▎   | 7125/11400 [01:29<00:37, 115.32it/s]
+Running loglikelihood requests:  63%|██████▎   | 7141/11400 [01:29<00:36, 116.89it/s]
+Running loglikelihood requests:  63%|██████▎   | 7157/11400 [01:29<00:36, 115.24it/s]
+Running loglikelihood requests:  63%|██████▎   | 7173/11400 [01:29<00:36, 114.28it/s]
+Running loglikelihood requests:  63%|██████▎   | 7189/11400 [01:29<00:36, 116.17it/s]
+Running loglikelihood requests:  63%|██████▎   | 7205/11400 [01:29<00:36, 115.12it/s]
+Running loglikelihood requests:  63%|██████▎   | 7221/11400 [01:29<00:36, 116.03it/s]
+Running loglikelihood requests:  63%|██████▎   | 7237/11400 [01:30<00:35, 117.36it/s]
+Running loglikelihood requests:  64%|██████▎   | 7253/11400 [01:30<00:35, 115.46it/s]
+Running loglikelihood requests:  64%|██████▍   | 7269/11400 [01:30<00:35, 115.28it/s]
+Running loglikelihood requests:  64%|██████▍   | 7285/11400 [01:30<00:35, 116.87it/s]
+Running loglikelihood requests:  64%|██████▍   | 7301/11400 [01:30<00:34, 117.81it/s]
+Running loglikelihood requests:  64%|██████▍   | 7317/11400 [01:30<00:35, 116.02it/s]
+Running loglikelihood requests:  64%|██████▍   | 7333/11400 [01:30<00:34, 117.32it/s]
+Running loglikelihood requests:  64%|██████▍   | 7349/11400 [01:31<00:35, 115.69it/s]
+Running loglikelihood requests:  65%|██████▍   | 7365/11400 [01:31<00:35, 114.58it/s]
+Running loglikelihood requests:  65%|██████▍   | 7381/11400 [01:31<00:34, 116.37it/s]
+Running loglikelihood requests:  65%|██████▍   | 7397/11400 [01:31<00:34, 117.49it/s]
+Running loglikelihood requests:  65%|██████▌   | 7413/11400 [01:31<00:34, 115.86it/s]
+Running loglikelihood requests:  65%|██████▌   | 7429/11400 [01:31<00:33, 117.16it/s]
+Running loglikelihood requests:  65%|██████▌   | 7445/11400 [01:31<00:34, 115.53it/s]
+Running loglikelihood requests:  65%|██████▌   | 7461/11400 [01:31<00:33, 116.90it/s]
+Running loglikelihood requests:  66%|██████▌   | 7477/11400 [01:32<00:33, 117.05it/s]
+Running loglikelihood requests:  66%|██████▌   | 7493/11400 [01:32<00:33, 116.09it/s]
+Running loglikelihood requests:  66%|██████▌   | 7509/11400 [01:32<00:33, 117.10it/s]
+Running loglikelihood requests:  66%|██████▌   | 7525/11400 [01:32<00:33, 115.59it/s]
+Running loglikelihood requests:  66%|██████▌   | 7541/11400 [01:32<00:32, 117.08it/s]
+Running loglikelihood requests:  66%|██████▋   | 7557/11400 [01:32<00:33, 115.53it/s]
+Running loglikelihood requests:  66%|██████▋   | 7573/11400 [01:32<00:32, 116.88it/s]
+Running loglikelihood requests:  67%|██████▋   | 7589/11400 [01:33<00:32, 118.17it/s]
+Running loglikelihood requests:  67%|██████▋   | 7605/11400 [01:33<00:31, 118.97it/s]
+Running loglikelihood requests:  67%|██████▋   | 7621/11400 [01:33<00:32, 117.26it/s]
+Running loglikelihood requests:  67%|██████▋   | 7637/11400 [01:33<00:32, 115.92it/s]
+Running loglikelihood requests:  67%|██████▋   | 7653/11400 [01:33<00:32, 115.12it/s]
+Running loglikelihood requests:  67%|██████▋   | 7669/11400 [01:33<00:31, 116.97it/s]
+Running loglikelihood requests:  67%|██████▋   | 7685/11400 [01:33<00:31, 118.35it/s]
+Running loglikelihood requests:  68%|██████▊   | 7701/11400 [01:34<00:31, 116.42it/s]
+Running loglikelihood requests:  68%|██████▊   | 7717/11400 [01:34<00:31, 117.66it/s]
+Running loglikelihood requests:  68%|██████▊   | 7733/11400 [01:34<00:30, 118.62it/s]
+Running loglikelihood requests:  68%|██████▊   | 7749/11400 [01:34<00:31, 116.32it/s]
+Running loglikelihood requests:  68%|██████▊   | 7765/11400 [01:34<00:30, 117.79it/s]
+Running loglikelihood requests:  68%|██████▊   | 7781/11400 [01:34<00:31, 115.90it/s]
+Running loglikelihood requests:  68%|██████▊   | 7797/11400 [01:34<00:30, 117.42it/s]
+Running loglikelihood requests:  69%|██████▊   | 7813/11400 [01:34<00:30, 118.51it/s]
+Running loglikelihood requests:  69%|██████▊   | 7829/11400 [01:35<00:29, 119.13it/s]
+Running loglikelihood requests:  69%|██████▉   | 7845/11400 [01:35<00:30, 117.28it/s]
+Running loglikelihood requests:  69%|██████▉   | 7861/11400 [01:35<00:29, 118.29it/s]
+Running loglikelihood requests:  69%|██████▉   | 7877/11400 [01:35<00:30, 116.71it/s]
+Running loglikelihood requests:  69%|██████▉   | 7893/11400 [01:35<00:30, 116.72it/s]
+Running loglikelihood requests:  69%|██████▉   | 7909/11400 [01:35<00:29, 117.39it/s]
+Running loglikelihood requests:  70%|██████▉   | 7925/11400 [01:35<00:29, 117.60it/s]
+Running loglikelihood requests:  70%|██████▉   | 7941/11400 [01:36<00:28, 120.23it/s]
+Running loglikelihood requests:  70%|██████▉   | 7957/11400 [01:36<00:29, 117.25it/s]
+Running loglikelihood requests:  70%|██████▉   | 7973/11400 [01:36<00:29, 117.84it/s]
+Running loglikelihood requests:  70%|███████   | 7989/11400 [01:36<00:28, 118.04it/s]
+Running loglikelihood requests:  70%|███████   | 8005/11400 [01:36<00:28, 118.80it/s]
+Running loglikelihood requests:  70%|███████   | 8021/11400 [01:36<00:28, 119.66it/s]
+Running loglikelihood requests:  70%|███████   | 8037/11400 [01:36<00:27, 120.24it/s]
+Running loglikelihood requests:  71%|███████   | 8053/11400 [01:36<00:27, 120.62it/s]
+Running loglikelihood requests:  71%|███████   | 8069/11400 [01:37<00:28, 117.98it/s]
+Running loglikelihood requests:  71%|███████   | 8085/11400 [01:37<00:27, 118.83it/s]
+Running loglikelihood requests:  71%|███████   | 8101/11400 [01:37<00:27, 119.47it/s]
+Running loglikelihood requests:  71%|███████   | 8117/11400 [01:37<00:27, 119.38it/s]
+Running loglikelihood requests:  71%|███████▏  | 8133/11400 [01:37<00:27, 119.25it/s]
+Running loglikelihood requests:  71%|███████▏  | 8149/11400 [01:37<00:27, 119.42it/s]
+Running loglikelihood requests:  72%|███████▏  | 8165/11400 [01:37<00:26, 121.69it/s]
+Running loglikelihood requests:  72%|███████▏  | 8181/11400 [01:38<00:27, 119.03it/s]
+Running loglikelihood requests:  72%|███████▏  | 8197/11400 [01:38<00:26, 121.49it/s]
+Running loglikelihood requests:  72%|███████▏  | 8213/11400 [01:38<00:26, 118.69it/s]
+Running loglikelihood requests:  72%|███████▏  | 8229/11400 [01:38<00:26, 119.46it/s]
+Running loglikelihood requests:  72%|███████▏  | 8245/11400 [01:38<00:26, 120.05it/s]
+Running loglikelihood requests:  72%|███████▏  | 8261/11400 [01:38<00:26, 120.49it/s]
+Running loglikelihood requests:  73%|███████▎  | 8277/11400 [01:38<00:25, 120.59it/s]
+Running loglikelihood requests:  73%|███████▎  | 8293/11400 [01:39<00:26, 117.78it/s]
+Running loglikelihood requests:  73%|███████▎  | 8309/11400 [01:39<00:25, 121.01it/s]
+Running loglikelihood requests:  73%|███████▎  | 8325/11400 [01:39<00:25, 118.78it/s]
+Running loglikelihood requests:  73%|███████▎  | 8341/11400 [01:39<00:25, 119.16it/s]
+Running loglikelihood requests:  73%|███████▎  | 8357/11400 [01:39<00:25, 119.83it/s]
+Running loglikelihood requests:  73%|███████▎  | 8373/11400 [01:39<00:25, 120.15it/s]
+Running loglikelihood requests:  74%|███████▎  | 8389/11400 [01:39<00:25, 119.86it/s]
+Running loglikelihood requests:  74%|███████▎  | 8405/11400 [01:39<00:24, 120.01it/s]
+Running loglikelihood requests:  74%|███████▍  | 8421/11400 [01:40<00:24, 120.27it/s]
+Running loglikelihood requests:  74%|███████▍  | 8437/11400 [01:40<00:25, 117.74it/s]
+Running loglikelihood requests:  74%|███████▍  | 8453/11400 [01:40<00:24, 118.50it/s]
+Running loglikelihood requests:  74%|███████▍  | 8469/11400 [01:40<00:24, 119.09it/s]
+Running loglikelihood requests:  74%|███████▍  | 8485/11400 [01:40<00:24, 118.96it/s]
+Running loglikelihood requests:  75%|███████▍  | 8501/11400 [01:40<00:23, 120.97it/s]
+Running loglikelihood requests:  75%|███████▍  | 8517/11400 [01:40<00:24, 117.57it/s]
+Running loglikelihood requests:  75%|███████▍  | 8533/11400 [01:41<00:24, 118.25it/s]
+Running loglikelihood requests:  75%|███████▍  | 8549/11400 [01:41<00:23, 118.88it/s]
+Running loglikelihood requests:  75%|███████▌  | 8565/11400 [01:41<00:23, 119.48it/s]
+Running loglikelihood requests:  75%|███████▌  | 8581/11400 [01:41<00:23, 119.80it/s]
+Running loglikelihood requests:  75%|███████▌  | 8597/11400 [01:41<00:23, 119.72it/s]
+Running loglikelihood requests:  76%|███████▌  | 8613/11400 [01:41<00:23, 120.05it/s]
+Running loglikelihood requests:  76%|███████▌  | 8629/11400 [01:41<00:23, 120.07it/s]
+Running loglikelihood requests:  76%|███████▌  | 8645/11400 [01:41<00:22, 120.11it/s]
+Running loglikelihood requests:  76%|███████▌  | 8661/11400 [01:42<00:22, 120.35it/s]
+Running loglikelihood requests:  76%|███████▌  | 8677/11400 [01:42<00:22, 120.35it/s]
+Running loglikelihood requests:  76%|███████▋  | 8693/11400 [01:42<00:22, 120.16it/s]
+Running loglikelihood requests:  76%|███████▋  | 8709/11400 [01:42<00:22, 120.34it/s]
+Running loglikelihood requests:  77%|███████▋  | 8725/11400 [01:42<00:22, 120.48it/s]
+Running loglikelihood requests:  77%|███████▋  | 8741/11400 [01:42<00:22, 120.23it/s]
+Running loglikelihood requests:  77%|███████▋  | 8757/11400 [01:42<00:22, 118.26it/s]
+Running loglikelihood requests:  77%|███████▋  | 8773/11400 [01:43<00:22, 118.26it/s]
+Running loglikelihood requests:  77%|███████▋  | 8789/11400 [01:43<00:21, 118.76it/s]
+Running loglikelihood requests:  77%|███████▋  | 8805/11400 [01:43<00:21, 119.20it/s]
+Running loglikelihood requests:  77%|███████▋  | 8821/11400 [01:43<00:21, 122.02it/s]
+Running loglikelihood requests:  78%|███████▊  | 8837/11400 [01:43<00:21, 120.14it/s]
+Running loglikelihood requests:  78%|███████▊  | 8853/11400 [01:43<00:21, 119.13it/s]
+Running loglikelihood requests:  78%|███████▊  | 8869/11400 [01:43<00:21, 119.63it/s]
+Running loglikelihood requests:  78%|███████▊  | 8885/11400 [01:43<00:20, 119.92it/s]
+Running loglikelihood requests:  78%|███████▊  | 8901/11400 [01:44<00:20, 119.97it/s]
+Running loglikelihood requests:  78%|███████▊  | 8917/11400 [01:44<00:20, 120.20it/s]
+Running loglikelihood requests:  78%|███████▊  | 8933/11400 [01:44<00:20, 123.12it/s]
+Running loglikelihood requests:  78%|███████▊  | 8949/11400 [01:44<00:20, 122.23it/s]
+Running loglikelihood requests:  79%|███████▊  | 8965/11400 [01:44<00:20, 121.68it/s]
+Running loglikelihood requests:  79%|███████▉  | 8981/11400 [01:44<00:19, 121.52it/s]
+Running loglikelihood requests:  79%|███████▉  | 8997/11400 [01:44<00:19, 121.22it/s]
+Running loglikelihood requests:  79%|███████▉  | 9013/11400 [01:45<00:20, 118.47it/s]
+Running loglikelihood requests:  79%|███████▉  | 9029/11400 [01:45<00:19, 119.33it/s]
+Running loglikelihood requests:  79%|███████▉  | 9045/11400 [01:45<00:19, 122.22it/s]
+Running loglikelihood requests:  79%|███████▉  | 9061/11400 [01:45<00:19, 121.82it/s]
+Running loglikelihood requests:  80%|███████▉  | 9077/11400 [01:45<00:19, 121.67it/s]
+Running loglikelihood requests:  80%|███████▉  | 9093/11400 [01:45<00:18, 121.56it/s]
+Running loglikelihood requests:  80%|███████▉  | 9109/11400 [01:45<00:18, 121.54it/s]
+Running loglikelihood requests:  80%|████████  | 9125/11400 [01:45<00:18, 121.25it/s]
+Running loglikelihood requests:  80%|████████  | 9141/11400 [01:46<00:18, 120.91it/s]
+Running loglikelihood requests:  80%|████████  | 9157/11400 [01:46<00:18, 123.80it/s]
+Running loglikelihood requests:  80%|████████  | 9173/11400 [01:46<00:17, 125.26it/s]
+Running loglikelihood requests:  81%|████████  | 9189/11400 [01:46<00:17, 124.46it/s]
+Running loglikelihood requests:  81%|████████  | 9205/11400 [01:46<00:17, 126.17it/s]
+Running loglikelihood requests:  81%|████████  | 9221/11400 [01:46<00:17, 124.84it/s]
+Running loglikelihood requests:  81%|████████  | 9237/11400 [01:46<00:17, 123.57it/s]
+Running loglikelihood requests:  81%|████████  | 9253/11400 [01:46<00:17, 125.68it/s]
+Running loglikelihood requests:  81%|████████▏ | 9269/11400 [01:47<00:17, 124.19it/s]
+Running loglikelihood requests:  81%|████████▏ | 9285/11400 [01:47<00:16, 126.26it/s]
+Running loglikelihood requests:  82%|████████▏ | 9301/11400 [01:47<00:16, 124.52it/s]
+Running loglikelihood requests:  82%|████████▏ | 9317/11400 [01:47<00:16, 126.40it/s]
+Running loglikelihood requests:  82%|████████▏ | 9333/11400 [01:47<00:16, 127.63it/s]
+Running loglikelihood requests:  82%|████████▏ | 9349/11400 [01:47<00:16, 125.69it/s]
+Running loglikelihood requests:  82%|████████▏ | 9365/11400 [01:47<00:16, 124.27it/s]
+Running loglikelihood requests:  82%|████████▏ | 9381/11400 [01:47<00:16, 125.79it/s]
+Running loglikelihood requests:  82%|████████▏ | 9397/11400 [01:48<00:16, 124.58it/s]
+Running loglikelihood requests:  83%|████████▎ | 9413/11400 [01:48<00:15, 126.42it/s]
+Running loglikelihood requests:  83%|████████▎ | 9429/11400 [01:48<00:14, 134.53it/s]
+Running loglikelihood requests:  83%|████████▎ | 9461/11400 [01:48<00:11, 168.90it/s]
+Running loglikelihood requests:  83%|████████▎ | 9485/11400 [01:48<00:11, 169.79it/s]
+Running loglikelihood requests:  83%|████████▎ | 9509/11400 [01:48<00:11, 171.43it/s]
+Running loglikelihood requests:  84%|████████▎ | 9533/11400 [01:48<00:10, 174.31it/s]
+Running loglikelihood requests:  84%|████████▍ | 9551/11400 [01:48<00:10, 174.82it/s]
+Running loglikelihood requests:  84%|████████▍ | 9573/11400 [01:49<00:10, 171.98it/s]
+Running loglikelihood requests:  84%|████████▍ | 9591/11400 [01:49<00:10, 165.02it/s]
+Running loglikelihood requests:  84%|████████▍ | 9608/11400 [01:49<00:10, 165.58it/s]
+Running loglikelihood requests:  84%|████████▍ | 9629/11400 [01:49<00:10, 163.12it/s]
+Running loglikelihood requests:  85%|████████▍ | 9653/11400 [01:49<00:10, 168.82it/s]
+Running loglikelihood requests:  85%|████████▍ | 9673/11400 [01:49<00:09, 176.19it/s]
+Running loglikelihood requests:  85%|████████▌ | 9693/11400 [01:49<00:10, 167.82it/s]
+Running loglikelihood requests:  85%|████████▌ | 9717/11400 [01:49<00:09, 172.20it/s]
+Running loglikelihood requests:  85%|████████▌ | 9741/11400 [01:50<00:09, 170.83it/s]
+Running loglikelihood requests:  86%|████████▌ | 9759/11400 [01:50<00:09, 172.10it/s]
+Running loglikelihood requests:  86%|████████▌ | 9777/11400 [01:50<00:09, 168.90it/s]
+Running loglikelihood requests:  86%|████████▌ | 9797/11400 [01:50<00:09, 161.90it/s]
+Running loglikelihood requests:  86%|████████▌ | 9821/11400 [01:50<00:09, 167.20it/s]
+Running loglikelihood requests:  86%|████████▋ | 9845/11400 [01:50<00:08, 173.12it/s]
+Running loglikelihood requests:  87%|████████▋ | 9869/11400 [01:50<00:08, 171.60it/s]
+Running loglikelihood requests:  87%|████████▋ | 9893/11400 [01:50<00:08, 174.38it/s]
+Running loglikelihood requests:  87%|████████▋ | 9911/11400 [01:51<00:08, 174.94it/s]
+Running loglikelihood requests:  87%|████████▋ | 9929/11400 [01:51<00:08, 175.60it/s]
+Running loglikelihood requests:  87%|████████▋ | 9949/11400 [01:51<00:08, 167.53it/s]
+Running loglikelihood requests:  87%|████████▋ | 9973/11400 [01:51<00:08, 171.81it/s]
+Running loglikelihood requests:  88%|████████▊ | 9997/11400 [01:51<00:08, 170.40it/s]
+Running loglikelihood requests:  88%|████████▊ | 10021/11400 [01:51<00:07, 173.98it/s]
+Running loglikelihood requests:  88%|████████▊ | 10045/11400 [01:51<00:07, 175.95it/s]
+Running loglikelihood requests:  88%|████████▊ | 10069/11400 [01:52<00:07, 173.52it/s]
+Running loglikelihood requests:  89%|████████▊ | 10093/11400 [01:52<00:07, 171.85it/s]
+Running loglikelihood requests:  89%|████████▊ | 10117/11400 [01:52<00:07, 174.09it/s]
+Running loglikelihood requests:  89%|████████▉ | 10135/11400 [01:52<00:07, 174.77it/s]
+Running loglikelihood requests:  89%|████████▉ | 10157/11400 [01:52<00:07, 175.66it/s]
+Running loglikelihood requests:  89%|████████▉ | 10178/11400 [01:52<00:06, 183.07it/s]
+Running loglikelihood requests:  89%|████████▉ | 10197/11400 [01:52<00:07, 169.84it/s]
+Running loglikelihood requests:  90%|████████▉ | 10221/11400 [01:52<00:06, 173.35it/s]
+Running loglikelihood requests:  90%|████████▉ | 10245/11400 [01:53<00:06, 175.50it/s]
+Running loglikelihood requests:  90%|█████████ | 10265/11400 [01:53<00:06, 180.75it/s]
+Running loglikelihood requests:  90%|█████████ | 10285/11400 [01:53<00:06, 170.98it/s]
+Running loglikelihood requests:  90%|█████████ | 10309/11400 [01:53<00:06, 174.28it/s]
+Running loglikelihood requests:  91%|█████████ | 10333/11400 [01:53<00:06, 172.52it/s]
+Running loglikelihood requests:  91%|█████████ | 10357/11400 [01:53<00:05, 175.15it/s]
+Running loglikelihood requests:  91%|█████████ | 10381/11400 [01:53<00:05, 176.90it/s]
+Running loglikelihood requests:  91%|█████████ | 10399/11400 [01:53<00:05, 177.23it/s]
+Running loglikelihood requests:  91%|█████████▏| 10417/11400 [01:54<00:05, 167.84it/s]
+Running loglikelihood requests:  92%|█████████▏| 10434/11400 [01:54<00:05, 163.15it/s]
+Running loglikelihood requests:  92%|█████████▏| 10451/11400 [01:54<00:05, 159.77it/s]
+Running loglikelihood requests:  92%|█████████▏| 10467/11400 [01:54<00:05, 159.11it/s]
+Running loglikelihood requests:  92%|█████████▏| 10485/11400 [01:54<00:06, 151.69it/s]
+Running loglikelihood requests:  92%|█████████▏| 10509/11400 [01:54<00:05, 161.25it/s]
+Running loglikelihood requests:  92%|█████████▏| 10533/11400 [01:54<00:05, 163.52it/s]
+Running loglikelihood requests:  93%|█████████▎| 10557/11400 [01:54<00:05, 165.02it/s]
+Running loglikelihood requests:  93%|█████████▎| 10581/11400 [01:55<00:04, 169.62it/s]
+Running loglikelihood requests:  93%|█████████▎| 10605/11400 [01:55<00:04, 172.86it/s]
+Running loglikelihood requests:  93%|█████████▎| 10629/11400 [01:55<00:04, 175.22it/s]
+Running loglikelihood requests:  93%|█████████▎| 10653/11400 [01:55<00:04, 172.98it/s]
+Running loglikelihood requests:  94%|█████████▎| 10677/11400 [01:55<00:04, 175.31it/s]
+Running loglikelihood requests:  94%|█████████▍| 10701/11400 [01:55<00:03, 176.83it/s]
+Running loglikelihood requests:  94%|█████████▍| 10725/11400 [01:55<00:03, 178.00it/s]
+Running loglikelihood requests:  94%|█████████▍| 10748/11400 [01:55<00:03, 189.69it/s]
+Running loglikelihood requests:  94%|█████████▍| 10768/11400 [01:56<00:03, 181.87it/s]
+Running loglikelihood requests:  95%|█████████▍| 10788/11400 [01:56<00:03, 185.89it/s]
+Running loglikelihood requests:  95%|█████████▍| 10807/11400 [01:56<00:03, 171.85it/s]
+Running loglikelihood requests:  95%|█████████▍| 10829/11400 [01:56<00:03, 170.86it/s]
+Running loglikelihood requests:  95%|█████████▌| 10853/11400 [01:56<00:03, 175.71it/s]
+Running loglikelihood requests:  95%|█████████▌| 10877/11400 [01:56<00:02, 177.44it/s]
+Running loglikelihood requests:  96%|█████████▌| 10895/11400 [01:56<00:02, 177.11it/s]
+Running loglikelihood requests:  96%|█████████▌| 10917/11400 [01:56<00:02, 173.49it/s]
+Running loglikelihood requests:  96%|█████████▌| 10941/11400 [01:57<00:02, 161.98it/s]
+Running loglikelihood requests:  96%|█████████▌| 10958/11400 [01:57<00:03, 145.72it/s]
+Running loglikelihood requests:  96%|█████████▋| 10973/11400 [01:57<00:03, 130.68it/s]
+Running loglikelihood requests:  96%|█████████▋| 10989/11400 [01:57<00:03, 125.18it/s]
+Running loglikelihood requests:  97%|█████████▋| 11005/11400 [01:57<00:03, 118.68it/s]
+Running loglikelihood requests:  97%|█████████▋| 11021/11400 [01:57<00:03, 116.98it/s]
+Running loglikelihood requests:  97%|█████████▋| 11037/11400 [01:57<00:03, 113.24it/s]
+Running loglikelihood requests:  97%|█████████▋| 11053/11400 [01:58<00:02, 123.16it/s]
+Running loglikelihood requests:  97%|█████████▋| 11077/11400 [01:58<00:02, 140.49it/s]
+Running loglikelihood requests:  97%|█████████▋| 11101/11400 [01:58<00:01, 152.60it/s]
+Running loglikelihood requests:  98%|█████████▊| 11125/11400 [01:58<00:01, 157.38it/s]
+Running loglikelihood requests:  98%|█████████▊| 11149/11400 [01:58<00:01, 164.22it/s]
+Running loglikelihood requests:  98%|█████████▊| 11173/11400 [01:58<00:01, 167.69it/s]
+Running loglikelihood requests:  98%|█████████▊| 11197/11400 [01:58<00:01, 169.33it/s]
+Running loglikelihood requests:  98%|█████████▊| 11221/11400 [01:59<00:01, 172.84it/s]
+Running loglikelihood requests:  99%|█████████▊| 11245/11400 [01:59<00:00, 179.44it/s]
+Running loglikelihood requests:  99%|█████████▉| 11269/11400 [01:59<00:00, 180.37it/s]
+Running loglikelihood requests:  99%|█████████▉| 11293/11400 [01:59<00:00, 180.81it/s]
+Running loglikelihood requests:  99%|█████████▉| 11317/11400 [01:59<00:00, 180.94it/s]
+Running loglikelihood requests:  99%|█████████▉| 11337/11400 [01:59<00:00, 184.33it/s]
+Running loglikelihood requests: 100%|█████████▉| 11357/11400 [01:59<00:00, 173.91it/s]
+Running loglikelihood requests: 100%|█████████▉| 11381/11400 [01:59<00:00, 176.65it/s]
+Running loglikelihood requests: 100%|██████████| 11400/11400 [02:00<00:00, 95.00it/s] 
+2026-10-18:05:39:45 INFO     [loggers.evaluation_tracker:247] Saving results aggregated

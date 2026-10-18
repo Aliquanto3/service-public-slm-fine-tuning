@@ -1,0 +1,56 @@
+2026-10-17:20:06:29 INFO     [_cli.run:391] Including path: C:\Users\Anael\dev\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval
+2026-10-17:20:06:29 INFO     [_cli.run:392] Selected Tasks: ['agentpublic_mcq']
+2026-10-17:20:06:31 INFO     [evaluator:214] Setting random seed to 1234 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-10-17:20:06:31 INFO     [evaluator:239] Initializing hf model, with arguments: {'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\minicpm5-1b\\hf', 'dtype': 'bfloat16'}
+2026-10-17:20:06:55 INFO     [models.huggingface:289] Using device 'cuda:0'
+2026-10-17:20:06:55 INFO     [models.huggingface:582] Model parallel was set to False, max memory was not set, and device map was set to {'': 'cuda:0'}
+
+Loading weights:   0%|          | 0/219 [00:00<?, ?it/s]
+Loading weights:   5%|▍         | 10/219 [00:00<00:02, 90.47it/s]
+Loading weights:  13%|█▎        | 28/219 [00:00<00:01, 117.57it/s]
+Loading weights:  21%|██▏       | 47/219 [00:00<00:01, 144.56it/s]
+Loading weights:  31%|███       | 68/219 [00:00<00:00, 165.19it/s]
+Loading weights:  39%|███▉      | 85/219 [00:00<00:00, 166.38it/s]
+Loading weights:  49%|████▉     | 108/219 [00:00<00:00, 180.52it/s]
+Loading weights:  58%|█████▊    | 127/219 [00:00<00:00, 167.88it/s]
+Loading weights:  66%|██████▌   | 145/219 [00:00<00:00, 163.15it/s]
+Loading weights:  74%|███████▍  | 163/219 [00:01<00:00, 158.72it/s]
+Loading weights:  82%|████████▏ | 180/219 [00:01<00:00, 156.06it/s]
+Loading weights:  91%|█████████▏| 200/219 [00:01<00:00, 162.49it/s]
+Loading weights: 100%|██████████| 219/219 [00:01<00:00, 165.80it/s]
+2026-10-17:20:06:59 WARNING  [api.task:861] agentpublic_mcq: Custom kwargs can be passed to `--metadata` in console (as json string) or to the TaskManager.
+For example --metadata='{"max_seq_lengths":[4096, 8192]}'. For details see task Readme.
+2026-10-17:20:06:59 INFO     [evaluator_utils:472] Selected tasks:
+2026-10-17:20:06:59 INFO     [evaluator_utils:506] Task: agentpublic_mcq (C:\Users\Anael\dev\service-public-slm-fine-tuning\src\slmsp\benchmarks\taches_lmeval\agentpublic_mcq\agentpublic_mcq.yaml)
+2026-10-17:20:06:59 WARNING  [evaluator:335] Overwriting default num_fewshot of agentpublic_mcq from None to 0
+2026-10-17:20:06:59 INFO     [api.task:312] Building contexts for agentpublic_mcq on rank 0...
+
+  0%|          | 0/42 [00:00<?, ?it/s]
+100%|██████████| 42/42 [00:00<00:00, 823.89it/s]
+2026-10-17:20:06:59 INFO     [evaluator:589] Running loglikelihood requests
+
+Tokenizing inputs:   0%|          | 0/200 [00:00<?, ?it/s]
+Tokenizing inputs: 100%|██████████| 200/200 [00:00<00:00, 4913.49it/s]
+
+Running loglikelihood requests:   0%|          | 0/200 [00:00<?, ?it/s]
+Running loglikelihood requests:   0%|          | 1/200 [00:00<02:55,  1.14it/s]
+Running loglikelihood requests:   4%|▍         | 9/200 [00:01<00:16, 11.38it/s]
+Running loglikelihood requests:   8%|▊         | 17/200 [00:01<00:08, 22.03it/s]
+Running loglikelihood requests:  14%|█▍        | 29/200 [00:01<00:04, 37.59it/s]
+Running loglikelihood requests:  20%|██        | 41/200 [00:01<00:03, 51.10it/s]
+Running loglikelihood requests:  26%|██▋       | 53/200 [00:01<00:02, 59.53it/s]
+Running loglikelihood requests:  32%|███▎      | 65/200 [00:01<00:01, 70.01it/s]
+Running loglikelihood requests:  38%|███▊      | 77/200 [00:01<00:01, 75.75it/s]
+Running loglikelihood requests:  44%|████▍     | 89/200 [00:01<00:01, 81.68it/s]
+Running loglikelihood requests:  50%|████▉     | 99/200 [00:02<00:01, 79.69it/s]
+Running loglikelihood requests:  54%|█████▍    | 108/200 [00:02<00:01, 77.95it/s]
+Running loglikelihood requests:  58%|█████▊    | 117/200 [00:02<00:01, 76.65it/s]
+Running loglikelihood requests:  64%|██████▍   | 129/200 [00:02<00:00, 78.90it/s]
+Running loglikelihood requests:  70%|███████   | 141/200 [00:02<00:00, 83.99it/s]
+Running loglikelihood requests:  75%|███████▌  | 150/200 [00:02<00:00, 84.87it/s]
+Running loglikelihood requests:  80%|████████  | 161/200 [00:02<00:00, 86.40it/s]
+Running loglikelihood requests:  86%|████████▋ | 173/200 [00:02<00:00, 87.71it/s]
+Running loglikelihood requests:  92%|█████████▎| 185/200 [00:03<00:00, 93.13it/s]
+Running loglikelihood requests:  98%|█████████▊| 195/200 [00:03<00:00, 94.31it/s]
+Running loglikelihood requests: 100%|██████████| 200/200 [00:03<00:00, 63.24it/s]
+2026-10-17:20:07:04 INFO     [loggers.evaluation_tracker:247] Saving results aggregated

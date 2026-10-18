@@ -1,0 +1,6 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\eurollm-1.7b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: None, num_fewshot: 0, batch_size: 2
+|     Tasks     |Version|Filter|n-shot| Metric |   |Value |   |Stderr|
+|---------------|------:|------|-----:|--------|---|-----:|---|-----:|
+|agentpublic_mcq|      1|none  |     0|acc     |↑  |0.0952|±  |0.0458|
+|               |       |none  |     0|acc_norm|↑  |0.2143|±  |0.0641|
+

@@ -1,0 +1,76 @@
+{
+ "bfcl_eval_version": "2026.3.23",
+ "categories": {
+  "simple": {
+   "n_items": 50,
+   "n_corrects": 43,
+   "precision": 0.86,
+   "erreurs": {
+    "simple_127": "Invalid value for parameter 'discount_rate': 10.0. Expected one of [0.1].",
+    "simple_181": "Invalid value for parameter 'court_location': 'Los Angeles court'. Expected one of ['Los Angeles']. Case insensitive.",
+    "simple_277": "Optional parameter 'information' not provided and not marked as optional.",
+    "simple_298": "Invalid value for parameter 'key': 'C'. Expected one of ['C#']. Case insensitive.",
+    "simple_341": "Invalid value for parameter 'suit': 'heart'. Expected one of ['hearts']. Case insensitive.",
+    "simple_35": "Invalid value for parameter 'location': 'New York'. Expected one of ['New York, NY']. Case insensitive.",
+    "simple_45": "Invalid value for parameter 'phase_transition': 'boiling'. Expected one of ['vaporization']. Case insensitive."
+   }
+  },
+  "multiple": {
+   "n_items": 50,
+   "n_corrects": 42,
+   "precision": 0.84,
+   "erreurs": {
+    "multiple_119": "Invalid value for parameter 'operation': '<'. Expected one of ['>'].",
+    "multiple_131": "Invalid value for parameter 'detailed': True. Expected one of ['', False].",
+    "multiple_138": "Invalid value for parameter 'case_id': 'R vs Adams legal case'. Expected one of ['R vs Adams', 'R_vs_Adams']. Case insensitive.",
+    "multiple_153": "Invalid value for parameter 'event': 'Treaty of Lisbon signing'. Expected one of ['Treaty of Lisbon', 'Signing of the Treaty of Lisbon']. Case insensitive.",
+    "multiple_165": "Invalid value for parameter 'model': 'Les Paul'. Expected one of ['Gibson Les Paul']. Case insensitive.",
+    "multiple_51": "Optional parameter 'n_rolls' not provided and not marked as optional.",
+    "multiple_7": "Wrong number of functions.",
+    "multiple_8": "Function name 'realestate.find_properties' not found in model output."
+   }
+  },
+  "irrelevance": {
+   "n_items": 50,
+   "n_corrects": 15,
+   "precision": 0.3,
+   "erreurs": {
+    "irrelevance_1": "appel émis sans fonction pertinente",
+    "irrelevance_11": "appel émis sans fonction pertinente",
+    "irrelevance_118": "appel émis sans fonction pertinente",
+    "irrelevance_123": "appel émis sans fonction pertinente",
+    "irrelevance_124": "appel émis sans fonction pertinente",
+    "irrelevance_128": "appel émis sans fonction pertinente",
+    "irrelevance_131": "appel émis sans fonction pertinente",
+    "irrelevance_138": "appel émis sans fonction pertinente",
+    "irrelevance_148": "appel émis sans fonction pertinente",
+    "irrelevance_153": "appel émis sans fonction pertinente",
+    "irrelevance_157": "appel émis sans fonction pertinente",
+    "irrelevance_159": "appel émis sans fonction pertinente",
+    "irrelevance_16": "appel émis sans fonction pertinente",
+    "irrelevance_165": "appel émis sans fonction pertinente",
+    "irrelevance_17": "appel émis sans fonction pertinente",
+    "irrelevance_170": "appel émis sans fonction pertinente",
+    "irrelevance_172": "appel émis sans fonction pertinente",
+    "irrelevance_182": "appel émis sans fonction pertinente",
+    "irrelevance_201": "appel émis sans fonction pertinente",
+    "irrelevance_218": "appel émis sans fonction pertinente",
+    "irrelevance_22": "appel émis sans fonction pertinente",
+    "irrelevance_223": "appel émis sans fonction pertinente",
+    "irrelevance_235": "appel émis sans fonction pertinente",
+    "irrelevance_237": "appel émis sans fonction pertinente",
+    "irrelevance_25": "appel émis sans fonction pertinente",
+    "irrelevance_29": "appel émis sans fonction pertinente",
+    "irrelevance_38": "appel émis sans fonction pertinente",
+    "irrelevance_4": "appel émis sans fonction pertinente",
+    "irrelevance_46": "appel émis sans fonction pertinente",
+    "irrelevance_60": "appel émis sans fonction pertinente",
+    "irrelevance_63": "appel émis sans fonction pertinente",
+    "irrelevance_69": "appel émis sans fonction pertinente",
+    "irrelevance_7": "appel émis sans fonction pertinente",
+    "irrelevance_8": "appel émis sans fonction pertinente",
+    "irrelevance_90": "appel émis sans fonction pertinente"
+   }
+  }
+ }
+}

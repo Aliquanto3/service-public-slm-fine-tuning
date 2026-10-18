@@ -1,0 +1,15 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\granite-4.0-1b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: 2000.0, num_fewshot: 0, batch_size: 2
+|              Tasks              |Version|Filter|n-shot|Metric|   |Value |   |Stderr|
+|---------------------------------|------:|------|-----:|------|---|-----:|---|-----:|
+|global_mmlu_fr                   |      0|none  |     0|acc   |↑  |0.4650|±  |0.0249|
+| - global_mmlu_fr_business       |      0|none  |     0|acc   |↑  |0.5517|±  |0.0659|
+| - global_mmlu_fr_humanities     |      0|none  |     0|acc   |↑  |0.4902|±  |0.0497|
+| - global_mmlu_fr_medical        |      0|none  |     0|acc   |↑  |0.4167|±  |0.0833|
+| - global_mmlu_fr_other          |      0|none  |     0|acc   |↑  |0.4643|±  |0.0672|
+| - global_mmlu_fr_social_sciences|      0|none  |     0|acc   |↑  |0.4902|±  |0.0497|
+| - global_mmlu_fr_stem           |      0|none  |     0|acc   |↑  |0.2826|±  |0.0671|
+
+|    Groups    |Version|Filter|n-shot|Metric|   |Value|   |Stderr|
+|--------------|------:|------|-----:|------|---|----:|---|-----:|
+|global_mmlu_fr|      0|none  |     0|acc   |↑  |0.465|±  |0.0249|
+

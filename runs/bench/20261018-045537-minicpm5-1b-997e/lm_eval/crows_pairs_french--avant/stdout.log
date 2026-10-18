@@ -1,0 +1,6 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\minicpm5-1b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: None, num_fewshot: 0, batch_size: 4
+|      Tasks       |Version|Filter|n-shot|    Metric     |   |Value |   |Stderr|
+|------------------|------:|------|-----:|---------------|---|-----:|---|-----:|
+|crows_pairs_french|      1|none  |     0|likelihood_diff|↓  |5.6344|±  |0.1404|
+|                  |       |none  |     0|pct_stereotype |↓  |0.4335|±  |0.0121|
+

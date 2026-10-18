@@ -1,0 +1,6 @@
+hf ({'pretrained': 'C:\\Users\\Anael\\dev\\service-public-slm-fine-tuning\\models\\qwen3.5-0.8b\\hf', 'dtype': 'bfloat16'}), gen_kwargs: ({}), limit: None, num_fewshot: 0, batch_size: 2
+|      Tasks      |Version|Filter|n-shot| Metric |   |Value |   |Stderr|
+|-----------------|------:|------|-----:|--------|---|-----:|---|-----:|
+|belebele_fra_Latn|      0|none  |     0|acc     |↑  |0.5811|±  |0.0165|
+|                 |       |none  |     0|acc_norm|↑  |0.5811|±  |0.0165|
+
