@@ -127,7 +127,7 @@ L'architecture fixe la bibliothèque vectorielle et le modèle d'embedding, par 
 
 Décisions d'Anaël du 2026-10-17, confirmées en session principale le même jour. Elles remplacent la décision du 2026-10-17 à 09h (`etat-run-2026-10-16.md`, « exclusion des modèles de 2B paramètres et plus ») et la formule « < 2B » de la passation du même fichier : **Qwen3.5-2B reste dans la Baseline**. D8 précise D7 :
 
-- **Mamba reste écarté sous Windows natif** (D2, D7) : un modèle dont `config.json` a une couche `mamba`, ou d'un type inconnu, est écarté par le contrôle `dense` de la story 8.1.
+- **Mamba restait écarté sous Windows natif** (D2, D7) : un modèle dont `config.json` a une couche `mamba`, ou d'un type inconnu, était écarté par le contrôle `dense` de la story 8.1. **Révisé le 2026-10-18** (voir plus bas) : `mamba` est admis comme `linear_attention`, en Baseline seulement ; un type inconnu reste écarté.
 - **Gated DeltaNet (`linear_attention`) est admis pour l'inférence et la Baseline** (option retenue parmi celles proposées : admettre ces hybrides en Baseline seulement, plutôt que les écarter ou les entraîner), avec `entrainable = false` dans la fiche du modèle. llama.cpp b11429 le sert (contrôles `serveur` ok). Le contrôle `dense` échoue si une fiche à couches `linear_attention` ne porte pas `entrainable = false`, et `train run` comme `train sonde-env` (avec ou sans `--unsloth`) refusent un modèle non entraînable.
   - Motif : sous Windows natif, sans `flash-linear-attention` ni `causal-conv1d`, transformers prend une implémentation torch lente. Seuls l'entraînement et `lm_eval` HF sont touchés (source : `spec-modeles-octobre-2026.md`, section « Écarts et points à confirmer par Anaël », contrôle `dense`).
   - **L'entraînement sera rouvert** seulement si un Qwen3.5 sort bien de la Baseline, après un court essai QLoRA qui mesure la vitesse sous Windows.
@@ -143,6 +143,9 @@ Paramètres en milliards (B). « Mesuré » : comptage safetensors du 2026-10-17
 | `granite-4.0-1b` | `ibm-granite/granite-4.0-1b` | 1,63 (mesuré) | candidat au fine-tuning | `granitemoehybrid` sans couche Mamba (variante dense) | 2026-10-17 | D4, D7 ; `etat-run-2026-10-16.md` (décision de 09h, passation) |
 | `minicpm5-1b` | `openbmb/MiniCPM5-1B` | 1,08 (mesuré) | candidat au fine-tuning | llama dense, texte seul | 2026-10-17 | `spec-modeles-octobre-2026.md` (seconde campagne) ; `etat-run-2026-10-16.md` (décision de 09h) |
 | `eurollm-1.7b` | `utter-project/EuroLLM-1.7B-Instruct` | 1,66 (mesuré) | Baseline seulement | llama dense ; contexte 4096 ; `entrainable = false` le 2026-10-18 (Anaël, option D de `spec-outils-rendu.md` §4) : template sans outils, aucun protocole valide, Baseline la plus faible | 2026-10-18 | `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
+| `granite-4.0-350m` | `ibm-granite/granite-4.0-350m` | 0,35 (mesuré) | candidat au fine-tuning | `granitemoehybrid` dense (28 couches d'attention, aucune Mamba), même architecture que `granite-4.0-1b` ; GGUF officiel `-GGUF` | 2026-10-18 | D8 (décision d'Anaël du 2026-10-18) |
+| `granite-4.0-h-350m` | `ibm-granite/granite-4.0-h-350m` | 0,34 (mesuré) | Baseline seulement | hybride Mamba-2 (28 couches mamba sur 32), `entrainable = false` ; GGUF officiel `-GGUF` ; entraînement rouvert après l'enquête WSL2 | 2026-10-18 | D8 (révision du 2026-10-18) |
+| `granite-4.0-h-1b` | `ibm-granite/granite-4.0-h-1b` | 1,46 (mesuré) | Baseline seulement | hybride Mamba-2 (35 couches mamba sur 40), `entrainable = false` ; GGUF officiel `-GGUF` ; entraînement rouvert après l'enquête WSL2 | 2026-10-18 | D8 (révision du 2026-10-18) |
 | `qwen3.5-0.8b` | `Qwen/Qwen3.5-0.8B` | 0,75 (mesuré : 0,87 au total, dont 0,12 de vision et MTP exclus) | Baseline seulement | hybride Gated DeltaNet, `entrainable = false` | 2026-10-17 | D8 ; `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
 | `qwen3.5-2b` | `Qwen/Qwen3.5-2B` | 1,88 (mesuré : 2,27 au total, dont 0,39 de vision et MTP exclus) | Baseline seulement | hybride Gated DeltaNet, `entrainable = false` | 2026-10-17 | D8 (règle de taille) ; `spec-modeles-octobre-2026.md` |
 | `minicpm5-2b` | `openbmb/MiniCPM5-2B` | 2,52 (mesuré, texte seul) | candidat au fine-tuning | llama dense, texte seul ; écarté le 2026-10-17 (taille > 2B), réintégré comme référence puis candidat le 2026-10-18 (règle relevée à 2,5B, Anaël) ; masque par défaut validé sur le tokenizer réel | 2026-10-18 | D8 ; `etat-run-2026-10-17-portable.md` |
@@ -154,8 +157,17 @@ Paramètres en milliards (B). « Mesuré » : comptage safetensors du 2026-10-17
 | `bonsai-2-4b` | `prism-ml/Ternary-Bonsai-2-4B-gguf` | ≈ 4 (source) | écarté | ternaire Q2_0, non entraînable (`entrainable = false`), taille > 2B | 2026-10-17 | `spec-modeles-octobre-2026.md` ; `etat-run-2026-10-16.md` (décision de 09h, « 4B ») |
 | `minicpm-v-4.7-1b` | `openbmb/MiniCPM-V-4.7-1B` | non mesuré | écarté | retiré de la Baseline (seconde campagne) | 2026-10-17 | `spec-modeles-octobre-2026.md` ; `etat-run-2026-10-16.md` |
 | LFM2.5 (pas de fiche) | non épinglé | non mesuré | écarté | licence LFM 1.0 (usage commercial limité aux entités de moins de 10 M$ de chiffre d'affaires) | 2026-10-17 | `etat-run-2026-10-16.md` (candidats ajoutés) |
-| Granite 4.0 H (pas de fiche) | non épinglé | non mesuré | écarté | hybride Mamba, Windows natif | 2026-10-12 | D2, D7 |
+| Granite 4.0 H micro (pas de fiche) | `ibm-granite/granite-4.0-h-micro` | ≈ 3 (nom) | écarté | taille > 2,5B | 2026-10-18 | D8 (révision du 2026-10-18) |
+| Granite 4.0 H tiny (pas de fiche) | `ibm-granite/granite-4.0-h-tiny` | ≈ 7 (nom) | écarté | taille > 2,5B | 2026-10-18 | D8 (révision du 2026-10-18) |
+| Granite 4.0 H small (pas de fiche) | `ibm-granite/granite-4.0-h-small` | ≈ 32 (nom) | écarté | taille > 2,5B | 2026-10-18 | D8 (révision du 2026-10-18) |
 | `croissantllm-chat` (fiche supprimée, runs `fetch` conservés) | `croissantllm/CroissantLLMChat-v0.1` | ≈ 1,3 (source) | écarté | licence MIT non admise en sortie ; contexte natif 2048 | 2026-10-17 | `spec-modeles-octobre-2026.md` (« Candidats < 2B ») |
+
+Décisions d'Anaël du 2026-10-18 (Granite) :
+
+- **Granite 4.0 350M dense** ajouté à la Baseline et au fine-tuning (même architecture que `granite-4.0-1b`).
+- **Granite 4.0 H (hybrides Mamba) admis en Baseline quand llama.cpp les sert sous Windows** : révision de D2 et du premier point de D8 (Mamba n'est plus écarté sous Windows natif). L'entraînement peut se faire hors Windows natif (WSL2/Linux), tant que l'inférence reste réalisable sous Windows. `granite-4.0-h-350m` et `granite-4.0-h-1b` sont en `entrainable = false` pour l'instant, comme les Qwen3.5 ; leur entraînement sera rouvert après l'enquête WSL2. Le contrôle `dense` admet `mamba` à cette seule condition (`COUCHES_INFERENCE_SEULE`) ; un type de couche inconnu reste écarté.
+- Les autres Granite H (micro, tiny, small) dépassent la règle de 2,5B : écartés, motif « taille ».
+- `CANDIDATS` : `granite-4.0-1b`, `granite-4.0-350m`, `minicpm5-1b`, `minicpm5-2b`, `eurollm-1.7b`, `granite-4.0-h-350m`, `granite-4.0-h-1b`, `qwen3.5-0.8b`, `qwen3.5-2b`.
 
 Les sources citées sont sous `_bmad-output/implementation-artifacts/`.
 

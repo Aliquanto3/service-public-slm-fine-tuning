@@ -222,9 +222,9 @@ def test_dense(tmp_path: Path) -> None:
 def test_hybride_ecarte_en_nommant_les_couches(tmp_path: Path) -> None:
     (dense, fp8, vision) = verifier_config_hf("m", config_modele(), dossier_hf(tmp_path, "hybride"))
     assert (dense.statut, fp8.statut, vision.statut) == ("echec", "ok", "ok")
-    assert "5 couche(s) sur 6 hors attention" in dense.detail
-    assert "0 (mamba)" in dense.detail and "5 (mamba)" in dense.detail
-    assert "3 (" not in dense.detail
+    assert "5 couche(s) mamba sur 6" in dense.detail
+    assert "hybride Mamba admis pour l'inférence seulement" in dense.detail
+    assert "inscrire entrainable = false" in dense.detail
     assert verifications.ecartes([dense, fp8, vision]) == {"m": [f"dense : {dense.detail}"]}
 
 
@@ -232,7 +232,7 @@ def test_hybride_ecarte_en_nommant_les_couches(tmp_path: Path) -> None:
     ("contenu", "attendu"),
     [
         ({"text_config": {"layer_types": ["full_attention", "sliding_attention"]}}, "ok"),
-        ({"text_config": {"layer_types": ["full_attention", "mamba"]}}, "echec"),
+        ({"text_config": {"layer_types": ["full_attention", "mamba"]}}, "echec"),  # entraînable
         ({"model_type": "qwen3"}, "ok"),
     ],
 )
@@ -593,7 +593,10 @@ def test_gguf_en_sous_dossier_meme_chemin_pour_fetch_controles_et_serveur(
     "contenu",
     [
         {"layer_types": ["full_attention", "couche_inconnue", "full_attention"]},
-        {"layer_types": ["attention"] * 2, "text_config": {"layer_types": ["attention", "mamba"]}},
+        {
+            "layer_types": ["attention"] * 2,
+            "text_config": {"layer_types": ["attention", "couche_x"]},
+        },
     ],
 )
 def test_dense_liste_fermee_et_toutes_les_sous_configs(tmp_path: Path, contenu: dict) -> None:
@@ -623,39 +626,54 @@ def test_dense_gated_deltanet_exige_entrainable_false(tmp_path: Path) -> None:
     assert "inscrire entrainable = false" in dense.detail
 
 
-@pytest.mark.parametrize("intrus", ["mamba", "couche_inconnue"])
-def test_dense_hybride_mixte_ecarte_meme_non_entrainable(tmp_path: Path, intrus: str) -> None:
-    dossier = dossier_hf(tmp_path, layer_types=["linear_attention", intrus, "full_attention"])
+def test_dense_type_inconnu_ecarte_meme_non_entrainable(tmp_path: Path) -> None:
+    dossier = dossier_hf(
+        tmp_path, layer_types=["linear_attention", "couche_inconnue", "full_attention"]
+    )
     (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
     assert dense.statut == "echec"
-    assert f"1 ({intrus})" in dense.detail and "linear_attention)" not in dense.detail
+    assert "1 (couche_inconnue)" in dense.detail and "linear_attention)" not in dense.detail
 
 
-def test_mamba_ecarte_meme_non_entrainable(tmp_path: Path) -> None:
+def test_mamba_admis_si_non_entrainable(tmp_path: Path) -> None:
+    """Granite 4.0 H (révision D8 du 2026-10-18) : inférence et Baseline seulement."""
     dossier = dossier_hf(tmp_path, "hybride")
     (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
-    assert dense.statut == "echec" and "variante hybride écartée" in dense.detail
+    assert dense.statut == "ok"
+    assert "hybride Mamba admis pour l'inférence, non entraînable" in dense.detail
+    assert "5 couche(s) mamba sur 6" in dense.detail
+    assert dense.valeurs["layer_types"] == {"mamba": 5, "attention": 1}
+    assert verifications.ecartes([dense]) == {}
+
+
+def test_mamba_ecarte_sans_entrainable_false(tmp_path: Path) -> None:
+    dossier = dossier_hf(tmp_path, "hybride")
+    (dense, _, _) = verifier_config_hf("m", config_modele(), dossier)
+    assert dense.statut == "echec" and "inscrire entrainable = false" in dense.detail
 
 
 @pytest.mark.parametrize(
     ("contenu", "attendu"),
     [
-        ({"llm_config": {"layer_types": ["attention", "mamba"]}}, "llm_config.1 (mamba)"),
+        ({"llm_config": {"layer_types": ["attention", "mamba"]}}, "llm_config.layer_types"),
         (
             {"thinker_config": {"text_config": {"layer_types": ["attention", "mamba"]}}},
-            "thinker_config.text_config.1 (mamba)",
+            "thinker_config.text_config.layer_types",
         ),
-        ({"layers_block_type": ["attention", "mamba"]}, "layers_block_type.1 (mamba)"),
-        ({"text_config": {"block_types": ["mamba", "attention"]}}, "block_types.0 (mamba)"),
+        ({"layers_block_type": ["attention", "mamba"]}, "layers_block_type"),
+        ({"text_config": {"block_types": ["mamba", "attention"]}}, "text_config.block_types"),
     ],
 )
 def test_dense_toutes_sous_configs_et_cles_connues(
     tmp_path: Path, contenu: dict, attendu: str
 ) -> None:
-    """Revue : une couche Mamba hors de `text_config` ou sous une autre clé n'est pas dense."""
+    """Revue : une couche Mamba hors de `text_config` ou sous une autre clé est repérée : elle
+    exige `entrainable = false`, et la source est nommée quand elle est admise."""
     dossier = dossier_hf(tmp_path, **contenu)
+    (refuse, _, _) = verifier_config_hf("m", config_modele(), dossier)
+    assert refuse.statut == "echec" and "1 couche(s) mamba" in refuse.detail
     (dense, _, _) = verifier_config_hf("m", config_modele(entrainable=False), dossier)
-    assert dense.statut == "echec" and attendu in dense.detail
+    assert dense.statut == "ok" and attendu in dense.detail
 
 
 @pytest.mark.parametrize(
@@ -716,15 +734,18 @@ ANCIENS_CANDIDATS = ("granite-4.0-1b", "ministral-3-3b", "smollm3-3b", "qwen-4b"
 def test_candidats_alignes_sur_le_registre_d8() -> None:
     assert CANDIDATS == (
         "granite-4.0-1b",
+        "granite-4.0-350m",
         "minicpm5-1b",
         "minicpm5-2b",
         "eurollm-1.7b",
+        "granite-4.0-h-350m",
+        "granite-4.0-h-1b",
         "qwen3.5-0.8b",
         "qwen3.5-2b",
     )
     assert not set(CANDIDATS) & {"ministral-3-3b", "ministral-3-8b", "smollm3-3b", "qwen-4b"}
-    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:3])
-    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[3:])
+    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:4])
+    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[4:])
 
 
 @pytest.mark.parametrize("slug", CANDIDATS)
@@ -811,6 +832,26 @@ def test_toml_modeles_moins_2b(slug: str) -> None:
         and not config.embedding
     )
     assert config.lm_eval_batch_size == 2
+
+
+MODELES_GRANITE_PETITS = ("granite-4.0-350m", "granite-4.0-h-350m", "granite-4.0-h-1b")
+"""Granite ajoutés pour la Baseline le 2026-10-18 (D8)."""
+
+
+@pytest.mark.parametrize("slug", MODELES_GRANITE_PETITS)
+def test_toml_granite_petits(slug: str) -> None:
+    config = charger_config_modele(slug)
+    assert config.depot_hf == f"ibm-granite/{slug}"
+    assert len(config.revision) == 40 and config.gguf.revision is not None
+    assert set(config.sha256_fichiers) == set(config.fichiers)
+    assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
+    assert config.gguf.depot == f"ibm-granite/{slug}-GGUF" and config.gguf.source == "officielle"
+    assert config.gguf.fichier == f"{slug}-Q4_K_M.gguf"
+    assert config.gguf_f16 is not None and config.gguf_f16.precision == "bf16"
+    assert config.gguf_f16.depot == config.gguf.depot
+    assert not config.embedding and not config.exclure_vision
+    assert config.entrainable == (slug == "granite-4.0-350m")
+    assert config.lm_eval_batch_size == (2 if slug == "granite-4.0-h-1b" else 4)
 
 
 def test_toml_modeles_moins_2b_particularites() -> None:
@@ -949,7 +990,7 @@ def test_cli_candidats_de_bout_en_bout(
         encoding="utf-8"
     ) == TEMPLATE_HF
     sortie = capsys.readouterr()
-    assert "modèle écarté : hybride-b : dense : 5 couche(s) sur 6 hors attention" in sortie.err
+    assert "modèle écarté : hybride-b : dense : 5 couche(s) mamba sur 6" in sortie.err
     assert "dense-a" not in sortie.err
     assert "modèle(s) écarté(s) : 1" in sortie.out
 

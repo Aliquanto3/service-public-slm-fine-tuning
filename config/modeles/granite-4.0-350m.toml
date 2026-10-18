@@ -1,0 +1,61 @@
+# Granite 4.0 350M (IBM), variante dense (`granitemoehybrid`, 28 couches d'attention, aucune couche Mamba).
+# Ajouté pour la Baseline le 2026-10-18 (décision D8 d'Anaël, decisions.md) ; entraînable : même
+# architecture que granite-4.0-1b. Révisions, SHA-256 et tailles relevés le même jour via l'API
+# Hugging Face. AD-6 : valeurs communes à l'inférence et à l'entraînement.
+
+schema_version = 1
+depot_hf = "ibm-granite/granite-4.0-350m"
+revision = "bd8a1497065c0d6ba1ef19af6b0d2b14bacf71c2"
+fichiers = [
+    "chat_template.jinja",
+    "config.json",
+    "generation_config.json",
+    "merges.txt",
+    "model.safetensors",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+]
+# Contexte de granite-4.0-1b conservé (8192) : le natif est plus large (32 768 / 131 072),
+# 8192 borne la KV cache sur le portable.
+contexte = 8192
+cache_kv = "f16"
+reasoning = "off"
+chat_template_kwargs = {}
+# Non sondé (sonde H-TOOLS 8.2) : natif par défaut, template Granite 4.0 identique à celui de
+# granite-4.0-1b. `chat_template_force` : à confirmer par le contrôle `chat_template` de
+# `slmsp fetch modeles` (false chez granite-4.0-1b).
+protocole_outils = "natif"
+chat_template_force = false
+# lm_eval sur HF bf16, portable de 6 Go de VRAM : `auto` provoque des OOM CUDA. Valeur
+# prudente (jamais `auto`), à confirmer par mesure.
+lm_eval_batch_size = 4
+
+[sha256_fichiers]
+"chat_template.jinja" = "9524df67b77a7b25a2dfee898f75b316a157eb9d855b51e32aeac79d7c8a83ce" # 6 418 octets
+"config.json" = "089690e22b9eafadcdd385afa5b6f3ea2446674ff5398c71df23be059d7c795d" # 1 764 octets
+"generation_config.json" = "7c04cb9d2ba771f7528fba5a7104999cdaf7566d02b5fbd58472829f62716177" # 147 octets
+"merges.txt" = "b6fe424e334903f7fb84d3a106d9730455f4744b9fe3c21ee136d97a00e72502" # 916 646 octets
+"model.safetensors" = "21bc1ccaf0eb6a8a503addd93cb7422df71129de0a641a5525e4a665813b6dfc" # 704 786 224 octets
+"special_tokens_map.json" = "c08676c49fd7969a3130f72be6d4bf34da66aa484a6e21dffe359893a1bd5f2e" # 579 octets
+"tokenizer.json" = "e2bad66439538cb4d5a7580680932432ed9ece9d3b8577e675512bdf11599253" # 7 153 421 octets
+"tokenizer_config.json" = "a5ec5daab12ba090a90f3dd169c8f9c275557013a87b9c1258dc7cb497a35c86" # 17 659 octets
+"vocab.json" = "8af71076de8b0b626eed0f4c984faf0a7c062479164b2a31308a948524d4f69c" # 1 612 704 octets
+
+[gguf] # 236 985 760 octets
+depot = "ibm-granite/granite-4.0-350m-GGUF"
+revision = "b8208a86a58427e1739265318028eb5895b74bf2"
+fichier = "granite-4.0-350m-Q4_K_M.gguf"
+sha256 = "771c588a49607f274a2bba3185733607ebe6f74b996ab90e2d6bee0d98bcec52"
+source = "officielle"
+
+# GGUF de base pour la variante `avant` du banc (relevé le 2026-10-18 via l'API Hugging Face).
+# Pas de F16 publié, seulement un BF16. Téléchargé par `slmsp fetch modeles granite-4.0-350m --f16`.
+[gguf_f16] # 708 439 456 octets, BF16 (pas de F16 publié)
+depot = "ibm-granite/granite-4.0-350m-GGUF"
+revision = "b8208a86a58427e1739265318028eb5895b74bf2"
+fichier = "granite-4.0-350m-bf16.gguf"
+sha256 = "431e956cac90a7e4d36a9b37bb086c413491c598bb51f90ada8e0c75d0219645"
+source = "officielle"
+precision = "bf16"

@@ -4,9 +4,10 @@ Pour chaque modèle de génération, après `slmsp fetch modeles` :
 
 - `dense` : toutes les couches de `config.json` (`layer_types` et les autres clés de
   `CLES_TYPES_COUCHE`, dans toutes les sous-configurations) sont des couches d'attention ;
-  une couche `mamba` ou de type inconnu, ou une clé de format non reconnu, écarte le modèle.
-  Les couches `linear_attention` (hybride Gated DeltaNet) sont admises pour
-  l'inférence et la Baseline (décision D8), si la fiche porte `entrainable = false` ;
+  un type de couche inconnu, ou une clé de format non reconnu, écarte le modèle.
+  Les couches `linear_attention` (hybride Gated DeltaNet) et `mamba` (Granite 4.0 H, révision
+  D8 du 2026-10-18) sont admises pour l'inférence et la Baseline, si la fiche porte
+  `entrainable = false` ;
 - `fp8` : aucune `quantization_config`, aucun `dtype`/`torch_dtype` en `float8` ;
 - `vision` : un `vision_config` exige `exclure_vision = true` ;
 - `chat_template` : le template du tokenizer HF et celui du GGUF
@@ -44,9 +45,12 @@ from slmsp.core.schemas.config_modele import ConfigModele
 # (eurollm-1.7b depuis le 2026-10-18, puis les Qwen).
 CANDIDATS: tuple[str, ...] = (
     "granite-4.0-1b",
+    "granite-4.0-350m",
     "minicpm5-1b",
     "minicpm5-2b",
     "eurollm-1.7b",
+    "granite-4.0-h-350m",
+    "granite-4.0-h-1b",
     "qwen3.5-0.8b",
     "qwen3.5-2b",
 )
@@ -61,9 +65,10 @@ NOM_TEMPLATE: Final = "chat_template.jinja"
 CLE_TEMPLATE_GGUF: Final = "tokenizer.chat_template"
 COUCHES_DENSES: Final = frozenset({"attention", "full_attention", "sliding_attention"})
 """Types de couche d'attention du contrôle `dense` (liste fermée)."""
-COUCHES_INFERENCE_SEULE: Final = frozenset({"linear_attention"})
-"""Couches hybrides admises pour l'inférence seulement (Gated DeltaNet, décision D8) : la
-fiche doit porter `entrainable = false`. `mamba` et tout autre type écartent le modèle."""
+COUCHES_INFERENCE_SEULE: Final = frozenset({"linear_attention", "mamba"})
+"""Couches hybrides admises pour l'inférence seulement (Gated DeltaNet, décision D8 ; Mamba,
+révision D8 du 2026-10-18, llama.cpp les servant sous Windows) : la fiche doit porter
+`entrainable = false`. Tout autre type écarte le modèle."""
 CLES_TYPES_COUCHE: Final = (
     "layer_types",
     "layers_block_type",
@@ -228,7 +233,7 @@ def _controle_dense(slug: str, donnees: dict[str, Any], config: ConfigModele) ->
     illisibles: list[str] = []
     comptes: Counter[str] = Counter()
     autres: list[str] = []
-    lineaires = 0
+    lineaires: Counter[str] = Counter()
     total = 0
     for prefixe, sous in _sous_configs(donnees):
         for cle in CLES_TYPES_COUCHE:
@@ -242,7 +247,7 @@ def _controle_dense(slug: str, donnees: dict[str, Any], config: ConfigModele) ->
             sources.append(f"{prefixe}{cle}")
             comptes.update(types)
             total += len(types)
-            lineaires += sum(t in COUCHES_INFERENCE_SEULE for t in types)
+            lineaires.update(t for t in types if t in COUCHES_INFERENCE_SEULE)
             marque = prefixe if cle == "layer_types" else f"{prefixe}{cle}."
             autres += [
                 f"{marque}{i} ({t})"
@@ -273,12 +278,15 @@ def _controle_dense(slug: str, donnees: dict[str, Any], config: ConfigModele) ->
             valeurs,
         )
     if lineaires:
+        nombre = sum(lineaires.values())
+        types_hybrides = "+".join(sorted(lineaires))
+        famille = "Gated DeltaNet" if set(lineaires) == {"linear_attention"} else "Mamba"
         if config.entrainable:
             return Controle(
                 slug,
                 "dense",
                 "echec",
-                f"{lineaires} couche(s) linear_attention sur {total} : hybride Gated DeltaNet "
+                f"{nombre} couche(s) {types_hybrides} sur {total} : hybride {famille} "
                 "admis pour l'inférence seulement, inscrire entrainable = false (décision D8)",
                 valeurs,
             )
@@ -286,8 +294,8 @@ def _controle_dense(slug: str, donnees: dict[str, Any], config: ConfigModele) ->
             slug,
             "dense",
             "ok",
-            f"hybride Gated DeltaNet admis pour l'inférence, non entraînable : {lineaires} "
-            f"couche(s) linear_attention sur {total} ({', '.join(sources)})",
+            f"hybride {famille} admis pour l'inférence, non entraînable : {nombre} "
+            f"couche(s) {types_hybrides} sur {total} ({', '.join(sources)})",
             valeurs,
         )
     return Controle(
