@@ -1,0 +1,30 @@
+# Run M4, ORPO après SFT (dérogation FR-34 : paires de préférence), Granite 4.0 1B (campagne granite-4.0-1b-v2, jeu v2).
+# Gabarit de campagne : les quatre TOML m1 à m4 ne diffèrent que par `methode` (et
+# `sft_run_id` pour ORPO).
+# precision_base = bf16 dans les quatre (invariant de campagne). longueur_max = 8192 À
+# CONFIRMER par une sonde, pas encore faite :
+#   sonde-env --modele granite-4.0-1b --precision-base bf16 --longueurs 8192
+# Lancement : uv run --extra train slmsp train run --config config/runs/m4-orpo-granite-4.0-1b-v2.toml
+
+campagne = "granite-4.0-1b-v2"
+modele = "granite-4.0-1b"
+methode = "orpo"
+jeu_version = "v2"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+# PROVISOIRE : remplacer par le run_id du run M1 terminé de cette campagne avant lancement.
+sft_run_id = "00000000-000000-m1-qlora-granite-4.0-1b-v2-0000"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
+orpo_beta = 0.1

@@ -1,0 +1,27 @@
+# Run M3, DoRA sur base nf4 4 bits, Granite 4.0 1B (campagne granite-4.0-1b-v2, jeu v2).
+# Gabarit de campagne : les quatre TOML m1 à m4 ne diffèrent que par `methode` (et
+# `sft_run_id` pour ORPO).
+# precision_base = bf16 dans les quatre (invariant de campagne). longueur_max = 8192 À
+# CONFIRMER par une sonde, pas encore faite :
+#   sonde-env --modele granite-4.0-1b --precision-base bf16 --longueurs 8192
+# Lancement : uv run --extra train slmsp train run --config config/runs/m3-dora-granite-4.0-1b-v2.toml
+
+campagne = "granite-4.0-1b-v2"
+modele = "granite-4.0-1b"
+methode = "dora"
+jeu_version = "v2"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100

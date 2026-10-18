@@ -1,0 +1,28 @@
+# Run M2, LoRA bf16 (plus petit candidat), MiniCPM5-2B (campagne minicpm5-2b-v2, jeu v2).
+# Gabarit de campagne : les quatre TOML m1 à m4 ne diffèrent que par `methode` (et
+# `sft_run_id` pour ORPO).
+# precision_base = bf16 dans les quatre (invariant de campagne, lora compris). Sonde du
+# 2026-10-18 (runs/train-sonde/20261018-230834-minicpm5-2b-d244) : en bf16, 8192 tokens
+# tiennent dans 4,6 Gio ; en fp32-kbit, débordement dès 4096. Troncature : 8192 garde 100 %
+# de la supervision du jeu v2.
+# Lancement : uv run --extra train slmsp train run --config config/runs/m2-lora-minicpm5-2b.toml
+
+campagne = "minicpm5-2b-v2"
+modele = "minicpm5-2b"
+methode = "lora"
+jeu_version = "v2"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
