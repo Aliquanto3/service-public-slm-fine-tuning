@@ -119,8 +119,9 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     version_extracteur: int = Field(ge=1)
     mode_outils: Literal["local", "connecte"] = "local"
     """Début de conversation des Tâches à outils : `local` (v1, « Passages… / Demande : … »
-    sans passage) ou `connecte` (demande seule, comme `messages_connecte`). Fait partie de
-    l'empreinte du jeu."""
+    sans passage) ou `connecte` (demande seule, comme `messages_connecte`). Informatif : hors
+    de l'empreinte d'entraînement, qui contrôle `sha256_train` au chargement et distingue le
+    jeu par sa version et son run de build (`train.run.CLES_INVARIANTS`)."""
 
 
 # --- Paires de préférence ORPO (story 9.7, FR-34, D-nuit-A1-21) ---------------------------------

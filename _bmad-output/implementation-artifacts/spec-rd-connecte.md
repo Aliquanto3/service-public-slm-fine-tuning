@@ -26,3 +26,17 @@ Les 91 lignes RD de `data/train/v1` commençaient par « Passages de l'Index loc
 
 ## Auto Run Result
 status: review. SHA du jeu : voir MANIFEST de `data/train/v2`.
+
+## Revue
+Revue Opus du 2026-10-18 (commit d'implémentation rebasé sur `62a109a`, sans conflit).
+
+| Sévérité | Source | Constat | Suite | Motif |
+|---|---|---|---|---|
+| medium | second avis 1 | `tools` restait `if brut.tache == "RD"` et prenait tout `ctx.outils`, sans filtre `outils_autorises` ni la condition de la composition. | corrigé | `build.outils_de_ligne` : outils de `outils_autorises`, ordre du fichier (règle de `recherche.traiter`), vide pour `generique` et les Tâches sans outils. v2 re-dérivée en mémoire (`verifier_octets`, journal en lecture seule) : 503 lignes identiques à l'octet, aucun changement de v2. Test `test_outils_de_ligne_filtre_outils_autorises` (outil intrus, ordre inversé). |
+| medium | second avis 2 | `outils/verifier_rd_connecte.py` ne vérifiait que le delta v1→v2. | corrigé | Ajouts : lignes modifiées = compte MANIFEST des Tâches à outils (et le reste identique), chaque ligne à outils réellement changée, `tools` = filtre `outils_autorises`, chaque ligne valide à `LigneEntrainement`, `sha256_train` de v1 et de v2 égal au SHA-256 de leur `train.jsonl`. Résultat sur v1 (dépôt principal, lecture seule) et v2 : « 503 lignes : 91 modifiées (message user), 412 identiques à l'octet ; sha256_train c6a7cb72… ; conforme », code 0. |
+| low | second avis 3 | Docstring de `mode_outils` : « fait partie de l'empreinte » faux. | corrigé | Texte rectifié : champ informatif ; l'entraînement contrôle `sha256_train` au chargement et distingue le jeu par `jeu_version`/`jeu_build`. `CLES_INVARIANTS` non touché (conflit avec feat/outils-rendu). |
+| low | second avis 4 | `MODE_OUTILS` constant étiquette tout build « connecte ». | rejeté | Exact par construction : la règle s'applique sans condition à tout build depuis ce commit ; un ancien MANIFEST sans le champ se relit `local` (défaut). |
+| low | second avis 5 | `VERSION_EXTRACTEUR` non incrémenté. | rejeté | Elle versionne `data/extraction.py` (extraction des réponses Mistral), inchangé ici ; l'incrémenter changerait `meta.version_extracteur` des 503 lignes (412 lignes ne seraient plus identiques) sans motif. Le changement de composition est tracé par `mode_outils`, la version `v2` et `sha256_train`. |
+| low | revue | Les tours d'outils (`_tours_outils`) restent conditionnés à `brut.tache == "RD"`. | reporté | Seule RD a des outils aujourd'hui ; à généraliser si une autre Tâche reçoit des `outils_autorises` (sinon `tools` non vide sans tour d'appel). |
+
+Complexité : 0 constat (build et vérificateur linéaires en nombre de lignes).

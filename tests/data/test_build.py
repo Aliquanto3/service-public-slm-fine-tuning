@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -26,6 +27,7 @@ from slmsp.data import build as module_build  # noqa: E402
 from slmsp.data.build import (  # noqa: E402
     ContexteBuild,
     lancer_build,
+    outils_de_ligne,
     rederiver_ligne,
     sources_de,
     verifier_octets,
@@ -136,6 +138,22 @@ def sessions(generation: Any) -> list[SessionBrute]:
 
 
 # --- Construction du jeu ------------------------------------------------------------------------
+
+
+def test_outils_de_ligne_filtre_outils_autorises() -> None:
+    """`tools` d'une ligne : filtre `outils_autorises` dans l'ordre du fichier, comme
+    l'inférence ; un outil non autorisé n'y entre pas ; vide pour les Tâches sans outils."""
+    taches = charger_taches()
+    outils = charger_outils(OUTILS_MCP)
+    intrus = {"type": "function", "function": {"name": "outil_non_autorise", "parameters": {}}}
+    ctx = SimpleNamespace(taches=taches, outils=[intrus, *outils[::-1]])
+    noms = [o["function"]["name"] for o in outils_de_ligne(ctx, "RD")]  # type: ignore[arg-type]
+    autorises = set(taches.tache("RD").outils_autorises)
+    assert noms == [
+        o["function"]["name"] for o in outils[::-1] if o["function"]["name"] in autorises
+    ]
+    assert "outil_non_autorise" not in noms and noms
+    assert outils_de_ligne(ctx, "Q") == [] and outils_de_ligne(ctx, "generique") == []  # type: ignore[arg-type]
 
 
 def test_build_toutes_les_taches(monde: Any, doublures: Any) -> None:

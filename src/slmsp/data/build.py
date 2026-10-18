@@ -324,6 +324,18 @@ def construire_conversation(
     return lignes, messages
 
 
+def outils_de_ligne(ctx: ContexteBuild, code: str) -> list[dict[str, Any]]:
+    """`tools` d'une ligne : ceux de `outils_autorises`, dans l'ordre du fichier d'outils.
+
+    Même condition que le début de conversation (`construire_conversation`) et même filtre
+    que l'inférence en Mode connecté (`harness.taches.recherche.traiter`).
+    """
+    if code == "generique":
+        return []
+    autorises = set(ctx.taches.tache(code).outils_autorises)
+    return [dict(o) for o in ctx.outils if (o.get("function") or {}).get("name") in autorises]
+
+
 def rederiver_ligne(ctx: ContexteBuild, brut: SessionBrute) -> LigneEntrainement:
     """Ligne d'entraînement de `brut`, refabriquée du journal et des amorces vérifiées.
 
@@ -343,7 +355,7 @@ def rederiver_ligne(ctx: ContexteBuild, brut: SessionBrute) -> LigneEntrainement
     try:
         return LigneEntrainement(
             messages=messages,
-            tools=[dict(o) for o in ctx.outils] if brut.tache == "RD" else [],
+            tools=outils_de_ligne(ctx, brut.tache),
             tache=brut.tache,
             meta=MetaLigne(
                 generateur="+".join(modeles),
