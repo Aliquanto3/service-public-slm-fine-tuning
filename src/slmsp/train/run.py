@@ -58,6 +58,7 @@ NOM_JEU: Final = "jeu.json"
 NOM_ENTRAINEMENT: Final = "entrainement.jsonl"
 NOM_LOG: Final = "log.jsonl"
 NOM_NOYAUX: Final = "noyaux.json"
+NOM_GEL_VISION: Final = "gel-vision.json"
 PREFIXE_BLOQUE: Final = "bloqué : "
 VERSION_RENDU_OUTILS: Final = 1
 """Rendu des outils (R7) : `tools` du fichier de config, arguments décodés. Absent = avant R7."""
@@ -259,10 +260,15 @@ def executer(
         raise ConfigurationInvalide("--reprendre n'est pas supporté par qlora-unsloth (story 10.5)")
     config_modele = charger_config_modele(config.modele)
     environnement.exiger_entrainable(config_modele, config.modele)
+    if plan.entraineur == "unsloth":  # envs/unsloth charge AutoModelForCausalLM
+        environnement.exiger_sans_unsloth_multimodal(config_modele, config.modele)
     dossier = environnement.dossier_poids(config.modele, racine=racine)
     config_poids = environnement.lire_config_modele(dossier, racine=racine)
     contraintes = chargement.controler_contraintes(
-        config_poids, config.modele, exclure_vision=config_modele.exclure_vision
+        config_poids,
+        config.modele,
+        exclure_vision=config_modele.exclure_vision,
+        multimodal=config_modele.multimodal,
     )
     # Hybride Gated DeltaNet sans fla : refus avant le chargement de la pile et avant le verrou.
     environnement.exiger_noyaux_gdn(config_poids, config.modele, repli_torch=config.repli_torch)
@@ -381,6 +387,7 @@ def executer(
                 adaptateur_sft=adaptateur_sft,
                 config_poids=config_poids,
                 controle_noyaux=controle_noyaux,
+                multimodal=config_modele.multimodal,
                 reprise=reprendre_run is not None,
                 racine=racine,
                 cpu=cpu,
@@ -396,17 +403,21 @@ def executer(
     return 0
 
 
-def _ecrire_noyaux(run: Run, controle: Mapping[str, Any] | None) -> None:
-    """`noyaux.json` du segment (`noyaux-2.json`, etc. aux reprises : un artefact n'est jamais
+def _ecrire_segment(run: Run, nom: str, contenu: Mapping[str, Any]) -> None:
+    """`<nom>.json` du segment (`<nom>-2.json`, etc. aux reprises : un artefact n'est jamais
     réécrit)."""
-    if controle is None:
-        return
+    base = nom.removesuffix(".json")
     rang = 1
-    nom = NOM_NOYAUX
     while (run.dossier / nom).exists():
         rang += 1
-        nom = f"noyaux-{rang}.json"
-    run.ecrire(nom, json_canonique(environnement.json_sur(controle)) + b"\n")
+        nom = f"{base}-{rang}.json"
+    run.ecrire(nom, json_canonique(environnement.json_sur(contenu)) + b"\n")
+
+
+def _ecrire_noyaux(run: Run, controle: Mapping[str, Any] | None) -> None:
+    """`noyaux.json` du segment."""
+    if controle is not None:
+        _ecrire_segment(run, NOM_NOYAUX, controle)
 
 
 def _entrainer_unsloth(
@@ -457,6 +468,7 @@ def _entrainer(
     adaptateur_sft: Path | None,
     config_poids: Mapping[str, Any],
     controle_noyaux: Mapping[str, Any] | None = None,
+    multimodal: str | None = None,
     reprise: bool,
     racine: Path,
     cpu: bool,
@@ -506,12 +518,21 @@ def _entrainer(
 
     pile.transformers.set_seed(config.graine)  # avant le chargement et l'adaptateur (W4.4)
     modele = methodes.charger_modele(
-        pile, dossier, plan, cpu=cpu, precision_base=config.precision_base
+        pile,
+        dossier,
+        plan,
+        cpu=cpu,
+        precision_base=config.precision_base,
+        multimodal=multimodal,
     )
     if adaptateur_sft is not None:
         modele = pile.peft.PeftModel.from_pretrained(modele, str(adaptateur_sft), is_trainable=True)
     else:
-        modele = methodes.poser_adaptateur(pile, modele, plan, config)
+        modele = methodes.poser_adaptateur(pile, modele, plan, config, multimodal)
+    if multimodal is not None:  # adaptateur neuf ou SFT rechargé (ORPO), avant train()
+        gel = environnement.verifier_gel_vision(modele)
+        _ecrire_segment(run, NOM_GEL_VISION, gel)
+        run.ajouter_jsonl(NOM_LOG, {"evenement": "gel-vision", **gel})
     jeu = pile.datasets.Dataset.from_list(exemples)
     collateur = (
         None

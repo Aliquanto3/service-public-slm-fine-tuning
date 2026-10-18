@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,7 @@ from slmsp.cli import train as train_cli
 from slmsp.core.config import ENV_IMPOSE
 from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, RessourceOccupee
 from slmsp.core.var import dossier_var, verrou_gpu
+from slmsp.fetch.config import charger_config_modele
 from slmsp.inference import processus
 from slmsp.train import environnement
 
@@ -102,6 +104,7 @@ class Scenario:
         self.configs: list[dict[str, Any]] = []
         self.jeux: list[dict[str, Any]] = []
         self.vidages = 0
+        self.modele_multimodal: Any = lambda: pytest.fail("classe multimodale chargée")
         for cle, valeur in reglages.items():
             setattr(self, cle, valeur)
 
@@ -136,6 +139,19 @@ def pile_simulee(scenario: Scenario) -> environnement.Pile:
                 raise scenario.echec_4bits
             return Modele()
 
+    class AutoModelForImageTextToText:
+        """Classe multimodale (story B2) : modèle de `scenario.modele_multimodal`."""
+
+        @staticmethod
+        def from_pretrained(chemin: str, **arguments: Any) -> Any:
+            scenario.chargements.append({"chemin": chemin, "classe": "multimodale", **arguments})
+            return scenario.modele_multimodal()
+
+    def get_peft_model(modele: Any, config: Any) -> Any:
+        if hasattr(modele, "poser_lora"):  # faux modèle multimodal : LoRA selon la cible
+            modele.poser_lora(config)
+        return modele
+
     class Tokenizer:
         pad_token = None
         eos_token = "<fin>"
@@ -153,6 +169,7 @@ def pile_simulee(scenario: Scenario) -> environnement.Pile:
 
     transformers = SimpleNamespace(
         AutoModelForCausalLM=AutoModelForCausalLM,
+        AutoModelForImageTextToText=AutoModelForImageTextToText,
         AutoTokenizer=AutoTokenizer,
         BitsAndBytesConfig=lambda **kw: {"bnb": kw},
         TrainerCallback=Rappel,
@@ -162,7 +179,7 @@ def pile_simulee(scenario: Scenario) -> environnement.Pile:
             scenario.appels_base.append("kbit") or modele
         ),
         LoraConfig=lambda **kw: kw,
-        get_peft_model=lambda modele, _config: modele,
+        get_peft_model=get_peft_model,
     )
 
     class SFTConfig:
@@ -848,7 +865,7 @@ def test_cli_modele_vision_refuse(
 
 
 @pytest.mark.parametrize("unsloth", [False, True])
-@pytest.mark.parametrize("slug", ["qwen3.5-2b", "qwen3.5-0.8b", "bonsai-2-4b"])
+@pytest.mark.parametrize("slug", ["bonsai-2-4b"])  # les Qwen3.5 sont entraînables (B2)
 def test_cli_modele_non_entrainable_refuse(
     tmp_path: Path,
     modeles: Path,
@@ -1301,3 +1318,139 @@ def test_sonde_modele_dense_sans_noyaux_gdn(tmp_path: Path) -> None:
     resultat = _sonder(Scenario(), tmp_path)
     assert "noyaux_gdn" not in resultat.sonde
     assert all("avertissements_noyaux" not in m for m in resultat.sonde["mesures"])
+
+
+# --- Multimodal : vision gelée (story B2) ----------------------------------------------------
+
+CONFIG_QWEN35_VLM = {**CONFIG_QWEN35, "vision_config": {"depth": 1}}
+"""Forme de `config.json` de Qwen3.5 : `layer_types` sous `text_config`, `vision_config`."""
+
+
+def test_controler_config_modele_multimodal_admis_si_geler_vision() -> None:
+    resume = environnement.controler_config_modele(
+        CONFIG_QWEN35_VLM, "qwen3.5-2b", multimodal="geler-vision"
+    )
+    assert resume["vision_config"] == "gelee"
+    assert resume["couches"] == ["full_attention", "linear_attention"]  # sous text_config
+    with pytest.raises(ConfigurationInvalide, match="la sonde ne charge pas"):
+        environnement.controler_config_modele(CONFIG_QWEN35_VLM, "qwen3.5-2b")
+
+
+def test_controler_config_modele_multimodal_sans_vision_config_refuse() -> None:
+    with pytest.raises(ConfigurationInvalide, match="aucun `vision_config`"):
+        environnement.controler_config_modele(CONFIG_GRANITE, "faux", multimodal="geler-vision")
+
+
+def test_controler_config_modele_ministral_toujours_refuse() -> None:
+    fiche = charger_config_modele("ministral-3-3b")
+    assert fiche.multimodal is None
+    config = {"vision_config": {"model_type": "pixtral"}, "text_config": {}}
+    with pytest.raises(ConfigurationInvalide, match="Ministral 3 hors sonde"):
+        environnement.controler_config_modele(config, "ministral-3-3b", multimodal=fiche.multimodal)
+
+
+def test_classe_modele_multimodal() -> None:
+    pile = pile_simulee(Scenario())
+    multimodale = environnement.classe_modele(pile, "geler-vision")
+    assert multimodale is pile.transformers.AutoModelForImageTextToText
+    assert environnement.classe_modele(pile, None) is pile.transformers.AutoModelForCausalLM
+    with pytest.raises(ConfigurationInvalide, match="multimodal inconnu"):
+        environnement.classe_modele(pile, "entrainer-vision")
+
+
+def test_cibles_lora_regex_language_model_sans_lm_head(factices: SimpleNamespace) -> None:
+    modele = factices.ModeleMultimodal()
+    assert environnement.cibles_lora(modele, None) == "all-linear"
+    cible = environnement.cibles_lora(modele, "geler-vision")
+    retenus = [nom for nom in modele.MODULES if re.fullmatch(cible, nom)]
+    assert retenus == [
+        "model.language_model.layers.0.linear_attn.in_proj_qkv",
+        "model.language_model.layers.0.linear_attn.out_proj",
+        "model.language_model.layers.1.self_attn.q_proj",
+        "model.language_model.layers.1.mlp.down_proj",
+    ]
+    assert "lm_head" not in cible and "embed_tokens" not in cible
+
+
+def test_verifier_gel_vision_refuse_parametre_vision_entrainable(
+    factices: SimpleNamespace,
+) -> None:
+    modele = factices.ModeleMultimodal()
+    modele.poser_lora({"target_modules": environnement.cibles_lora(modele, "geler-vision")})
+    assert environnement.verifier_gel_vision(modele) == {
+        "parametres_entrainables": 8,
+        "vision_parametres": 20,
+        "vision_entrainables": 0,
+    }
+    tout = factices.ModeleMultimodal()
+    tout.poser_lora({"target_modules": "all-linear"})  # toucherait la tour vision
+    with pytest.raises(ConfigurationInvalide, match="hors de `language_model`"):
+        environnement.verifier_gel_vision(tout)
+
+
+def test_sonde_consigne_gel_vision_et_cible_reelle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, factices: SimpleNamespace
+) -> None:
+    scenario = Scenario(modele_multimodal=factices.ModeleMultimodal)
+    pile = faux_modele_gdn(monkeypatch, chunk="fla", conv="torch", scenario=scenario)
+    resultat = environnement.sonder(
+        slug="qwen-factice",
+        dossier=tmp_path / "poids",
+        config_modele=CONFIG_QWEN35_VLM,
+        longueurs=(16, 32),
+        pas=2,
+        precision_base="les-deux",
+        multimodal="geler-vision",
+        dossier_travail=tmp_path / "travail",
+        pile=pile,
+    )
+    assert resultat.statut == "complet"
+    sonde = resultat.sonde
+    assert sonde["controles_modele"]["vision_config"] == "gelee"
+    assert sonde["lora"]["target_modules"].startswith(".*language_model.*")
+    assert [g["precision_base"] for g in sonde["gel_vision"]] == ["fp32-kbit", "bf16"]
+    assert all(g["vision_entrainables"] == 0 for g in sonde["gel_vision"])
+    assert [c["classe"] for c in scenario.chargements] == ["multimodale"] * 2
+
+
+def test_sonde_dense_cible_all_linear_sans_gel(tmp_path: Path) -> None:
+    resultat = _sonder(Scenario(), tmp_path)
+    assert resultat.sonde["lora"]["target_modules"] == "all-linear"
+    assert "gel_vision" not in resultat.sonde
+
+
+def _poids_qwen(modeles: Path, slug: str = "qwen3.5-2b") -> None:
+    (modeles / slug / "hf").mkdir(parents=True)
+    (modeles / slug / "hf" / "config.json").write_text(
+        json.dumps(CONFIG_QWEN35_VLM), encoding="utf-8"
+    )
+
+
+def test_cli_unsloth_multimodal_refuse(
+    tmp_path: Path,
+    modeles: Path,
+    scenario: Scenario,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _poids_qwen(modeles)
+    monkeypatch.setattr(environnement, "sonder", lambda **_a: pytest.fail("sonde lancée"))
+    racine = tmp_path / "racine"
+    assert _sonde_env(racine, "--modele", "qwen3.5-2b", "--unsloth") == CodeSortie.ERREUR
+    assert "qlora-unsloth non pris en charge pour un modèle multimodal" in capsys.readouterr().err
+    assert not (racine / "runs").exists()
+
+
+def test_cli_sonde_multimodale(
+    tmp_path: Path, modeles: Path, scenario: Scenario, factices: SimpleNamespace
+) -> None:
+    _poids_qwen(modeles)
+    scenario.modele_multimodal = factices.ModeleMultimodal
+    racine = tmp_path / "racine"
+    assert _sonde_env(racine, "--modele", "qwen3.5-2b", "--precision-base", "bf16") == 0
+    run = _run_unique(racine)
+    sonde = _json(run / "sonde.json")
+    assert sonde["gel_vision"][0]["vision_entrainables"] == 0
+    assert "noyaux_gdn" in sonde  # consigné, jamais bloquant pour la sonde
+    unsloth = _json(run / "methodes.json")["methodes"]["qlora-unsloth"]
+    assert unsloth["statut"] == "indisponible" and "multimodal" in unsloth["motif"]

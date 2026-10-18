@@ -2,7 +2,7 @@
 title: 'Qwen3.5 entraînables sous Windows natif, tour vision gelée et export multimodal'
 type: 'feature'
 created: '2026-10-18'
-status: 'ready-for-dev'
+status: 'review'
 baseline_commit: 'c578310'
 review_loop_iteration: 1
 followup_review_recommended: false
@@ -190,6 +190,25 @@ Reports : la mesure réelle `train sonde-env --modele qwen3.5-2b --precision-bas
   - un `train run` SFT court sur v1, TOML avec `precision_base = "bf16"`.
 
 **Fichiers** : `src/slmsp/core/schemas/config_modele.py`, `src/slmsp/train/environnement.py`, `src/slmsp/train/methodes.py`, `src/slmsp/train/chargement.py`, `src/slmsp/train/run.py`, `src/slmsp/cli/train.py`, `src/slmsp/fetch/verifications.py` (CANDIDATS), `config/modeles/qwen3.5-2b.toml`, `config/modeles/qwen3.5-0.8b.toml`, `_bmad-output/planning-artifacts/decisions.md`, et les tests cités.
+
+### Auto Run Result (B2, 2026-10-19)
+
+Statut : fait (critères 1 à 12), branche `feat/qwen35-b2`. Aucun appel payant, aucun GPU.
+
+Mesures (CPU, tokenizers réels, llama-server cpu b11429) :
+- **Masque (critère 8)** : `conversation` lève `ErreurMasque` dès deux tours (« le template réécrit l'historique ») pour les deux Qwen3.5 ; `par-tour` passe G1 à G4 sur les 5 conversations de `CONVERSATIONS_PAR_TOUR` (`test_qwen35_reel_par_tour_g1_g4`). Conversation à outils : 2 exemples, 51 tokens supervisés. **`bloc_amorce = "<think>\n\n</think>\n\n"`** retenu : sans lui, les 205 textes supervisés de v1 différaient de llama-server (l'amorce `enable_thinking = false` finit par un bloc de raisonnement vide que l'historique n'écrit pas, comme MiniCPM5).
+- **R7 (critère 9)** : 205/205 préfixes égaux sur v1 pour `qwen3.5-2b` et `qwen3.5-0.8b` ; textes supervisés 205/205 après l'ajustement du test ci-dessous. Les autres entraînables restent à 205/205 préfixes (pas de régression MiniCPM5, Granite).
+- **ORPO (critère 6) : admis.** TRL 1.13 (`trl.experimental.orpo`) lit `model.config.is_encoder_decoder` (faux) et tokenise par le tokenizer : `ORPOTrainer` se prépare et fait un pas sur un `Qwen3_5ForConditionalGeneration` minuscule (CPU, sans fla), LoRA de `cibles_lora`, 0 paramètre de vision entraînable (`test_orpo_reel_conditionnelle_minuscule`, lent). Aucun refus ajouté ; le report `deferred` « ORPO multimodal » devient sans objet (laissé dans l'en-tête, à retirer à la relecture).
+
+Décisions prises seul :
+- `cibles_lora`, `classe_modele` et `verifier_gel_vision` vivent dans `train/environnement.py` (la sonde en a besoin, et `methodes` importe déjà `environnement`) ; `methodes` les importe (`methodes.cibles_lora` existe donc).
+- Vision : paramètre dont un composant du nom est `visual`, `vision_tower` ou `vision_model`. `verifier_gel_vision` n'est appelé que pour `multimodal` (un modèle dense n'a pas de `language_model`). Sonde : un résultat par chargement (`sonde.json["gel_vision"]`, liste avec `precision_base`) ; `lora.target_modules` vaut `None` avant le premier chargement multimodal, `all-linear` pour un dense.
+- `gel-vision.json` et `noyaux.json` passent par un même `_ecrire_segment` (`-2.json` aux reprises). Le résumé `contraintes` de `run.json` porte `vision_config = "gelee"` pour les Qwen3.5 (aucun run Qwen antérieur à reprendre).
+- `controler_config_modele` lit `couches` sous `text_config` seulement si la racine n'a pas de `layer_types` : résumé inchangé pour les denses.
+- **Test R7 réaligné (à confirmer par Anaël)** : dans `_comparer_textes_supervises` (`tests/train/test_masque.py`), le repli `par-tour` retire tous les `bloc_amorce` de l'amorce, et non plus le seul bloc final. Qwen3.5 écrit le bloc vide dans les tours `assistant` qui suivent la dernière question (tours d'appel d'outil) et l'efface dès qu'une question suit, or la comparaison ajoute justement une question. MiniCPM5 n'a qu'un bloc, en fin d'amorce : comportement inchangé. Les préfixes (ce que le modèle voit à l'inférence) restent comparés à l'octet près.
+- Incident : une écriture `.NET` à chemin relatif a modifié `src/slmsp/train/environnement.py` du dépôt principal (3 lignes) ; restauré aussitôt par `git restore` (fichier propre au départ ; sans effet sur l'entraînement en cours, module déjà importé).
+
+Reports : mesures GPU par l'orchestrateur, après fusion : `uv run --no-sync slmsp train sonde-env --modele qwen3.5-2b --precision-base bf16 --longueurs 2048,4096,8192`, puis de même pour `qwen3.5-0.8b` (attendu : `chunk_gated_delta_rule = fla`, `vision_entrainables = 0`, environ 16,8 M paramètres entraînables pour 2B) ; un `train run` SFT court sur v1 avec `precision_base = "bf16"`. `config/publication.toml` inchangé (licence non relue).
 
 ## Story B3 : export multimodal
 

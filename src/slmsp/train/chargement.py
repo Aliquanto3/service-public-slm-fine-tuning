@@ -265,13 +265,19 @@ def recontroler_rejected(
 
 
 def controler_contraintes(
-    config: Mapping[str, Any], slug: str, *, exclure_vision: bool
+    config: Mapping[str, Any],
+    slug: str,
+    *,
+    exclure_vision: bool,
+    multimodal: str | None = None,
 ) -> dict[str, Any]:
     """Refuse Mamba, FP8 et un encodeur vision non exclu (`ConfigurationInvalide`).
 
     Complète `environnement.controler_config_modele` par `layers_block_type` (autre clé
-    des hybrides Mamba). Avec `exclure_vision` (`config/modeles/<slug>.toml`), la partie
-    vision est ignorée du contrôle et signalée comme exclue.
+    des hybrides Mamba). Avec `multimodal` (`geler-vision`), le `vision_config` est gardé et
+    contrôlé (tour chargée puis gelée, résumé `gelee`). Sinon, avec `exclure_vision`
+    (`config/modeles/<slug>.toml`), la partie vision est ignorée du contrôle et signalée
+    comme exclue.
     """
     for sous in (config, config.get("text_config")):
         if not isinstance(sous, Mapping):
@@ -281,6 +287,8 @@ def controler_contraintes(
             raise ConfigurationInvalide(
                 f"{slug} : couche Mamba dans `layers_block_type` (modèle hybride écarté)"
             )
+    if multimodal is not None:
+        return environnement.controler_config_modele(config, slug, multimodal=multimodal)
     if "vision_config" in config and not exclure_vision:
         raise ConfigurationInvalide(
             f"{slug} : encodeur vision présent et non exclu (`exclure_vision = true` "

@@ -84,6 +84,11 @@ class ConfigModele(SchemaBase):
     chat_template_kwargs: dict[str, Any] = Field(default_factory=dict)
     protocole_outils: Literal["natif", "json-generique", "balises-tool-call"]
     exclure_vision: bool = False
+    """Inférence du Harnais en texte seul (aucun `--mmproj`)."""
+    multimodal: Literal["geler-vision"] | None = None
+    """Entraînement d'un VLM (spec-qwen35-entrainable) : `geler-vision` charge la classe
+    multimodale (`AutoModelForImageTextToText`), garde la tour vision gelée et ne pose le
+    LoRA que sur `language_model`. Exige un `vision_config` dans `config.json`."""
     chat_template_force: bool = False
     embedding: bool = False
     entrainable: bool = True

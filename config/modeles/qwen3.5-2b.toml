@@ -2,10 +2,14 @@
 # d'Anaël du 2026-10-17 (spec-modeles-octobre-2026). Révisions,
 # SHA-256 et tailles relevés le 2026-10-17 via l'API Hugging Face. AD-6 : valeurs communes
 # à l'inférence et à l'entraînement.
-# VLM à attention hybride (Gated DeltaNet `linear_attention` + `full_attention`, 3 pour 1) :
-# admis pour l'inférence et la Baseline seulement (décision D8 du 2026-10-17,
-# decisions.md), d'où `entrainable = false` ; le contrôle `dense` passe à cette condition. Tour
-# vision exclue comme pour Ministral : aucun --mmproj, aucun poids vision entraîné.
+# VLM à attention hybride (Gated DeltaNet `linear_attention` + `full_attention`, 3 pour 1),
+# `layer_types` sous `text_config`. Entraînable depuis la révision de D8 du 2026-10-18
+# (decisions.md, spec-qwen35-entrainable) : noyaux Triton de flash-linear-attention, extra
+# `gdn` (`train run` refuse sans le chemin rapide, sauf `repli_torch = true`). Runs en
+# `precision_base = "bf16"` (avec le cast fp32, déborde dès 1024 tokens, mesure WSL).
+# `multimodal = "geler-vision"` : classe multimodale chargée, tour vision gelée et vérifiée
+# (`gel-vision.json`), LoRA sur `language_model` seul. `exclure_vision = true` ne règle que
+# l'inférence du Harnais : texte seul, aucun --mmproj.
 # GGUF communautaire réputé (unsloth) : Qwen ne publie pas de GGUF pour ce modèle.
 # Raisonnement : le template n'ouvre <think> que si enable_thinking vaut true ; il est
 # néanmoins forcé à false.
@@ -36,8 +40,16 @@ protocole_outils = "natif"
 # fetch/20261017-052846-modeles-a55f) : le template HF, exporté sous
 # models/<slug>/chat_template.jinja, est imposé à llama-server.
 chat_template_force = true
-# Baseline seulement (D8) : `train run` refuse ce modèle.
-entrainable = false
+# Candidat au fine-tuning (D8 révisé le 2026-10-18).
+entrainable = true
+multimodal = "geler-vision"
+# Le template réécrit l'historique (ErreurMasque en `conversation` dès deux tours) : un exemple
+# par tour (G1 à G4 sur le tokenizer réel). Avec enable_thinking = false, l'amorce de génération
+# finit par un bloc de raisonnement vide que le template n'écrit pas dans un tour d'historique
+# (comme MiniCPM5) : sans `bloc_amorce`, les 205 textes supervisés de v1 diffèrent de
+# llama-server (story B2).
+decoupage_masque = "par-tour"
+bloc_amorce = "<think>\n\n</think>\n\n"
 
 [sha256_fichiers]
 "chat_template.jinja" = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80" # 7 755 octets

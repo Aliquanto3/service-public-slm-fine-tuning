@@ -778,20 +778,21 @@ ANCIENS_CANDIDATS = ("granite-4.0-1b", "ministral-3-3b", "smollm3-3b", "qwen-4b"
 
 
 def test_candidats_alignes_sur_le_registre_d8() -> None:
+    # D8 révisé le 2026-10-18 (décision d'Anaël, spec-qwen35-entrainable, décision 8).
     assert CANDIDATS == (
-        "granite-4.0-1b",
-        "granite-4.0-350m",
-        "minicpm5-1b",
         "minicpm5-2b",
+        "qwen3.5-2b",
+        "granite-4.0-1b",
+        "minicpm5-1b",
+        "granite-4.0-350m",
+        "qwen3.5-0.8b",
         "eurollm-1.7b",
         "granite-4.0-h-350m",
         "granite-4.0-h-1b",
-        "qwen3.5-0.8b",
-        "qwen3.5-2b",
     )
     assert not set(CANDIDATS) & {"ministral-3-3b", "ministral-3-8b", "smollm3-3b", "qwen-4b"}
-    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:4])
-    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[4:])
+    assert all(charger_config_modele(slug).entrainable for slug in CANDIDATS[:6])
+    assert not any(charger_config_modele(slug).entrainable for slug in CANDIDATS[6:])
 
 
 @pytest.mark.parametrize("slug", CANDIDATS)
@@ -845,7 +846,7 @@ def test_toml_modeles_octobre(slug: str) -> None:
     assert (config.contexte, config.cache_kv, config.reasoning) == (8192, "f16", "off")
     assert config.chat_template_kwargs == {"enable_thinking": False}
     assert config.exclure_vision and not config.embedding
-    assert config.entrainable == (slug not in ("bonsai-2-4b", "qwen3.5-2b"))
+    assert config.entrainable == (slug != "bonsai-2-4b")
 
 
 def test_toml_modeles_octobre_particularites() -> None:
@@ -873,10 +874,7 @@ def test_toml_modeles_moins_2b(slug: str) -> None:
     assert config.gguf.fichier.lower().endswith("q4_k_m.gguf")
     assert config.gguf.source == "communautaire"
     assert config.exclure_vision == (slug == "qwen3.5-0.8b")
-    assert (
-        config.entrainable == (slug not in ("qwen3.5-0.8b", "eurollm-1.7b"))
-        and not config.embedding
-    )
+    assert config.entrainable == (slug != "eurollm-1.7b") and not config.embedding
     assert config.lm_eval_batch_size == 2
 
 
@@ -933,6 +931,19 @@ def test_schema_sha256_fichiers_inclus_dans_fichiers() -> None:
         config_modele(sha256_fichiers={"autre.json": "0" * 64})
     with pytest.raises(ValidationError):
         config_modele(sha256_fichiers={"config.json": "pas un sha"})
+
+
+def test_config_modele_multimodal_valeurs() -> None:
+    """Story B2 : `multimodal` vaut `geler-vision` ou est absent (défaut `None`)."""
+    assert config_modele().multimodal is None
+    assert config_modele(multimodal="geler-vision").multimodal == "geler-vision"
+    with pytest.raises(ValidationError, match="multimodal"):
+        config_modele(multimodal="entrainer-vision")
+    for slug in ("qwen3.5-2b", "qwen3.5-0.8b"):
+        fiche = charger_config_modele(slug)
+        assert fiche.multimodal == "geler-vision" and fiche.exclure_vision
+        assert fiche.entrainable and fiche.decoupage_masque == "par-tour"
+    assert charger_config_modele("ministral-3-3b").multimodal is None  # toujours refusé
 
 
 def test_schema_revision_gguf_du_meme_depot() -> None:

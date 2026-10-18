@@ -215,6 +215,88 @@ def projet(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Projet:
     return Projet(racine, modeles)
 
 
+# --- Modèle multimodal simulé (story B2) ---------------------------------------------------
+
+
+class Linear:
+    """Nom de classe des couches linéaires que relève `environnement.cibles_lora`."""
+
+
+class Embedding:
+    pass
+
+
+class Parametre:
+    def __init__(self, nombre: int, *, entrainable: bool = False) -> None:
+        self.nombre, self.requires_grad = nombre, entrainable
+
+    def numel(self) -> int:
+        return self.nombre
+
+
+class ModeleMultimodalFactice:
+    """Forme de `Qwen3_5ForConditionalGeneration` : `model.visual.*`, `model.language_model.*`
+    et `lm_head`. `poser_lora` ajoute un paramètre LoRA entraînable par module ciblé (regex
+    `target_modules` en `fullmatch`, comme PEFT ; `all-linear` : toutes les linéaires sauf
+    `lm_head`)."""
+
+    MODULES: dict[str, type] = {
+        "model.visual.blocks.0.attn.qkv": Linear,
+        "model.visual.merger.linear_fc1": Linear,
+        "model.language_model.embed_tokens": Embedding,
+        "model.language_model.layers.0.linear_attn.in_proj_qkv": Linear,
+        "model.language_model.layers.0.linear_attn.out_proj": Linear,
+        "model.language_model.layers.1.self_attn.q_proj": Linear,
+        "model.language_model.layers.1.mlp.down_proj": Linear,
+        "lm_head": Linear,
+    }
+
+    def __init__(self, **_kw: Any) -> None:
+        self.config = SimpleNamespace(use_cache=True)
+        self.parametres = {f"{nom}.weight": Parametre(10) for nom in self.MODULES}
+        self.cibles: str | None = None
+
+    def named_modules(self):
+        yield "", self
+        for nom, classe in self.MODULES.items():
+            yield nom, classe()
+
+    def named_parameters(self):
+        return iter(list(self.parametres.items()))
+
+    def enable_input_require_grads(self) -> None:
+        pass
+
+    def poser_lora(self, config: Any) -> None:
+        cible = config.get("target_modules") if isinstance(config, dict) else None
+        cible = cible or r".*language_model.*"
+        for nom, classe in self.MODULES.items():
+            if classe is not Linear:
+                continue
+            if cible == "all-linear" and nom == "lm_head":
+                continue
+            if cible == "all-linear" or re.fullmatch(cible, nom):
+                self.parametres[f"{nom}.lora_A.weight"] = Parametre(2, entrainable=True)
+        self.cibles = cible
+
+    def save_pretrained(self, dossier: str) -> None:
+        Path(dossier).mkdir(parents=True)
+        for nom in ("adapter_config.json", "adapter_model.safetensors"):
+            (Path(dossier) / nom).write_text("{}", encoding="utf-8")
+
+
+CONFIG_QWEN35_FACTICE = {
+    "model_type": "qwen3_5",
+    "architectures": ["Qwen3_5ForConditionalGeneration"],
+    "text_config": {
+        "layer_types": ["linear_attention", "linear_attention", "full_attention"],
+        "vocab_size": 100,
+    },
+    "vision_config": {"depth": 1},
+}
+"""Forme réelle de `config.json` de Qwen3.5 : `layer_types` sous `text_config`."""
+
+
 # --- Pile simulée --------------------------------------------------------------------------
 
 
@@ -264,6 +346,13 @@ class PileFactice:
                 pile.arguments_modele = arguments
                 return Modele()
 
+        class AutoMultimodal:
+            @staticmethod
+            def from_pretrained(dossier: str, **arguments: Any) -> Any:
+                pile.ordre.append("modele-multimodal")
+                pile.arguments_modele = arguments
+                return ModeleMultimodalFactice()
+
         class Tok:
             @staticmethod
             def from_pretrained(dossier: str, **arguments: Any) -> Any:
@@ -274,6 +363,7 @@ class PileFactice:
 
         self.transformers = SimpleNamespace(
             AutoModelForCausalLM=Auto,
+            AutoModelForImageTextToText=AutoMultimodal,
             AutoTokenizer=Tok,
             TrainerCallback=Callback,
             BitsAndBytesConfig=lambda **kw: ("bnb", kw),
@@ -282,6 +372,14 @@ class PileFactice:
 
         def get_peft_model(modele: Any, config: Any) -> Any:
             pile.ordre.append("adaptateur")
+            if isinstance(modele, ModeleMultimodalFactice):
+                modele.poser_lora(config)
+            return modele
+
+        def adaptateur_sft(modele: Any, chemin: str, **kw: Any) -> Any:
+            pile.ordre.append(f"sft:{Path(chemin).parent.name}")
+            if isinstance(modele, ModeleMultimodalFactice):
+                modele.poser_lora(None)  # adaptateur SFT : `language_model` seul
             return modele
 
         def lora_config(**kw: Any) -> dict[str, Any]:
@@ -294,11 +392,7 @@ class PileFactice:
             prepare_model_for_kbit_training=lambda modele, **kw: (
                 pile.appels_base.append("kbit") or modele
             ),
-            PeftModel=SimpleNamespace(
-                from_pretrained=lambda modele, chemin, **kw: (
-                    pile.ordre.append(f"sft:{Path(chemin).parent.name}") or modele
-                )
-            ),
+            PeftModel=SimpleNamespace(from_pretrained=adaptateur_sft),
         )
 
         class Trainer:
@@ -344,4 +438,10 @@ def pile() -> PileFactice:
 @pytest.fixture
 def factices() -> SimpleNamespace:
     """Accès aux fabriques factices (mode d'import `importlib` : pas d'import de conftest)."""
-    return SimpleNamespace(Tokenizer=TokenizerFactice, ligne=ligne_factice, paire=paire_factice)
+    return SimpleNamespace(
+        Tokenizer=TokenizerFactice,
+        ligne=ligne_factice,
+        paire=paire_factice,
+        ModeleMultimodal=ModeleMultimodalFactice,
+        config_qwen35=CONFIG_QWEN35_FACTICE,
+    )

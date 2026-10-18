@@ -480,6 +480,8 @@ CANDIDATS = [
     "granite-4.0-1b",
     "eurollm-1.7b",
     "minicpm5-1b",  # découpage par tour (spec-masque-minicpm5)
+    "qwen3.5-2b",  # story B2 (spec-qwen35-entrainable)
+    "qwen3.5-0.8b",
 ]
 """Candidats au fine-tuning du registre D8 (`entrainable = true`)."""
 OUTIL = {
@@ -551,6 +553,33 @@ def test_minicpm5_reel_par_tour_egal_a_l_amorce_officielle(nom: str) -> None:
     for rendu in rendus:
         assert rendu.texte.count("<think>") == 1
         assert rendu.texte.endswith("<|im_end|>\n")
+
+
+@pytest.mark.lent
+@pytest.mark.parametrize("slug", ["qwen3.5-2b", "qwen3.5-0.8b"])
+@pytest.mark.parametrize("nom", sorted(CONVERSATIONS_PAR_TOUR))
+def test_qwen35_reel_par_tour_g1_g4(slug: str, nom: str) -> None:
+    """Story B2 : G1 à G4 sur le tokenizer réel de Qwen3.5 (CPU), `enable_thinking = false`,
+    avec le bloc de raisonnement vide de l'amorce (`bloc_amorce`, comme MiniCPM5) ; le
+    découpage `conversation` lève `ErreurMasque` dès deux tours (le template réécrit
+    l'historique), d'où `par-tour` dans la fiche."""
+    pytest.importorskip("transformers")
+    from slmsp.train.rendu import charger_tokenizer
+
+    tok = charger_tokenizer(_dossier_hf(slug))
+    config = charger_config_modele(slug)
+    assert config.decoupage_masque == "par-tour" and config.bloc_amorce == "<think>\n\n</think>\n\n"
+    messages = CONVERSATIONS_PAR_TOUR[nom]
+    rendus = calculer_masques(tok, messages, tools=[OUTIL], config=config)
+    verifier_par_tour(tok, messages, rendus, config=config, bloc=config.bloc_amorce, tools=[OUTIL])
+    for rendu in rendus:
+        # Bloc en fin d'amorce, et dans les tours qui suivent la dernière question (template).
+        assert rendu.texte[: rendu.tours[-1][0]].endswith(config.bloc_amorce)
+        assert rendu.texte.endswith("<|im_end|>\n")
+    if nom == "2-tours":
+        conversation = config.model_copy(update={"decoupage_masque": "conversation"})
+        with pytest.raises(ErreurMasque, match="réécrit l'historique"):
+            calculer_masques(tok, messages, tools=[OUTIL], config=conversation)
 
 
 def candidats_entrainables() -> list[str]:
@@ -653,7 +682,9 @@ def _comparer_textes_supervises(
     `/apply-template` : le tour y est dans l'historique, sous la forme que l'inférence montre
     au modèle. Le texte d'entraînement doit en être un préfixe exact ; en `par-tour`, si le
     template n'écrit pas `bloc_amorce` dans un tour d'historique, l'amorce privée du bloc,
-    suivie du corps supervisé, doit l'être.
+    suivie du corps supervisé, doit l'être. Qwen3.5 (story B2) écrit le bloc dans les tours
+    `assistant` qui suivent la dernière question, et l'efface dès qu'une question suit : tous
+    les blocs de l'amorce sont alors retirés (MiniCPM5 n'en a qu'un, en fin d'amorce).
     """
     egaux, ecarts = 0, []
     bloc = config.bloc_amorce
@@ -684,7 +715,7 @@ def _comparer_textes_supervises(
                 debut = rendu.tours[-1][0]
                 amorce = texte[:debut]
                 egal = amorce.endswith(bloc) and distant.startswith(
-                    amorce[: -len(bloc)] + texte[debut:]
+                    amorce.replace(bloc, "") + texte[debut:]
                 )
             if egal:
                 egaux += 1

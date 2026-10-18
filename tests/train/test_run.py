@@ -223,11 +223,19 @@ def test_modele_non_entrainable_refuse(projet, pile, monkeypatch) -> None:
 
 
 @pytest.mark.parametrize("slug", ["qwen3.5-2b", "qwen3.5-0.8b"])
-def test_hybrides_gated_deltanet_refuses(projet, pile, slug: str) -> None:
-    """Décision D8 : les Qwen3.5 hybrides sont réservés à la Baseline (fiches réelles)."""
-    with pytest.raises(ConfigurationInvalide, match="non entraînable"):
-        module_run.executer(projet.ecrire_toml(modele=slug), racine=projet.racine, pile=pile)
-    assert pile.ordre == [] and not (projet.racine / "runs").exists()
+def test_hybrides_gated_deltanet_entrainables(projet, pile, monkeypatch, slug: str) -> None:
+    """D8 révisé le 2026-10-18 : les Qwen3.5 s'entraînent (fiches réelles, pile simulée,
+    contrôle des noyaux simulé en `fla`), classe multimodale et découpage par tour."""
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="fla", slug=slug, vision=True)
+    toml = projet.ecrire_toml(modele=slug, precision_base="bf16")
+    run = ouvrir_run(_executer(projet, pile, toml), racine=projet.racine)
+    assert run.statut_courant() == "complet"
+    assert pile.ordre == ["graine:7", "modele-multimodal", "adaptateur"]
+    config = run.manifeste.config
+    assert config["modele"]["contraintes"]["vision_config"] == "gelee"
+    assert config["modele"]["decoupage_masque"]["mode"] == "par-tour"
+    assert _json(run.dossier / "noyaux.json")["chunk_gated_delta_rule"] == "fla"
 
 
 def test_gpu_occupe(projet, pile) -> None:
@@ -414,11 +422,22 @@ CONFIG_HYBRIDE = {
 }
 
 
-def _hybride(projet, pile, monkeypatch, *, chunk: str, fla_installe: bool = True) -> None:
-    """Fiche factice à couches `linear_attention` (les fiches Qwen3.5 restent non entraînables)."""
-    (projet.modeles / "granite-4.0-1b" / "hf" / "config.json").write_text(
-        json.dumps(CONFIG_HYBRIDE), encoding="utf-8"
-    )
+def _hybride(
+    projet,
+    pile,
+    monkeypatch,
+    *,
+    chunk: str,
+    fla_installe: bool = True,
+    slug: str = "granite-4.0-1b",
+    vision: bool = False,
+) -> None:
+    """Poids factices à couches `linear_attention` sous `slug` (granite par défaut : fiche
+    dense, poids hybrides) ; `vision` ajoute un `vision_config` (forme de Qwen3.5)."""
+    config = {**CONFIG_HYBRIDE, **({"vision_config": {"depth": 1}} if vision else {})}
+    poids = projet.modeles / slug / "hf"
+    poids.mkdir(parents=True, exist_ok=True)
+    (poids / "config.json").write_text(json.dumps(config), encoding="utf-8")
     origine = "fla.ops.gated_delta_rule" if chunk == "fla" else "transformers.models.qwen3_5"
 
     def implementation(*_a, **_k) -> None:
@@ -512,3 +531,140 @@ def test_reprise_run_anterieur_sans_repli_torch(projet, pile, monkeypatch) -> No
         "repli_torch" not in ouvrir_run(dossier.name, racine=projet.racine).manifeste.config["toml"]
     )
     assert _executer(projet, pile, toml, reprendre_run=dossier.name) == dossier.name
+
+
+# --- Multimodal : vision gelée (story B2) ----------------------------------------------------
+
+
+def test_run_multimodal_charge_classe_conditionnelle_et_verifie_gel(
+    projet, pile, monkeypatch
+) -> None:
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="fla", slug="qwen3.5-2b", vision=True)
+    run_id = _executer(projet, pile, projet.ecrire_toml(modele="qwen3.5-2b"))
+    run = ouvrir_run(run_id, racine=projet.racine)
+    assert "modele-multimodal" in pile.ordre and "modele" not in pile.ordre
+    cible = pile.lora[-1]["target_modules"]
+    assert cible.startswith(".*language_model.*") and "lm_head" not in cible
+    gel = _json(run.dossier / "gel-vision.json")
+    assert gel["vision_entrainables"] == 0 and gel["parametres_entrainables"] > 0
+    evenements = run.lire_jsonl("log.jsonl")
+    assert [e for e in evenements if e["evenement"] == "gel-vision"][0]["vision_entrainables"] == 0
+    assert "vision_entrainables" not in json.dumps(run.manifeste.config)  # hors run.json
+
+
+def test_run_multimodal_vision_entrainable_refusee(projet, pile, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="fla", slug="qwen3.5-2b", vision=True)
+    monkeypatch.setattr(module_run.methodes, "cibles_lora", lambda _m, _mm: "all-linear")
+    with pytest.raises(ConfigurationInvalide, match="hors de `language_model`"):
+        module_run.executer(
+            projet.ecrire_toml(modele="qwen3.5-2b"),
+            racine=projet.racine,
+            pile=pile,
+            sortie=lambda _m: None,
+        )
+    (dossier,) = (projet.racine / "runs" / "train").iterdir()
+    assert ouvrir_run(dossier.name, racine=projet.racine).statut_courant() == "partiel-erreur"
+    assert pile.trainers == [] and not (dossier / "gel-vision.json").exists()
+
+
+def test_orpo_multimodal_admis_ou_refuse_explicitement(projet, pile, factices, monkeypatch):
+    """Critère B2.6 : TRL 1.13 accepte ORPO sur un ConditionalGeneration avec un tokenizer
+    (`test_orpo_reel_conditionnelle_minuscule`) : ORPO est admis, vision gelée vérifiée sur
+    l'adaptateur SFT rechargé."""
+    dossier = projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="fla", slug="qwen3.5-2b", vision=True)
+    m1 = _executer(projet, pile, projet.ecrire_toml("m1-qlora", modele="qwen3.5-2b"))
+    sha_train = hashlib.sha256((dossier / "train.jsonl").read_bytes()).hexdigest()
+    projet.ecrire_jeu(
+        lignes=[factices.paire(i) for i in range(1, 3)],
+        fichier="preferences.jsonl",
+        manifeste={"sha256_train": sha_train},
+    )
+    monkeypatch.setitem(sys.modules, "trl.experimental.orpo", pile.orpo)
+    toml = projet.ecrire_toml("m4-orpo", modele="qwen3.5-2b", methode="orpo", sft_run_id=m1)
+    m4 = ouvrir_run(_executer(projet, pile, toml), racine=projet.racine)
+    assert m4.statut_courant() == "complet" and f"sft:{m1}" in pile.ordre
+    assert pile.ordre.count("modele-multimodal") == 2
+    assert _json(m4.dossier / "gel-vision.json")["vision_entrainables"] == 0
+
+
+def test_unsloth_multimodal_refuse(projet, pile, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    _hybride(projet, pile, monkeypatch, chunk="fla", slug="qwen3.5-2b", vision=True)
+    toml = projet.ecrire_toml("m1-unsloth", modele="qwen3.5-2b", methode="qlora-unsloth")
+    with pytest.raises(ConfigurationInvalide, match="non pris en charge pour un modèle multimodal"):
+        module_run.executer(toml, racine=projet.racine, pile=pile)
+    assert pile.ordre == [] and not (projet.racine / "runs").exists()
+
+
+@pytest.mark.lent
+def test_orpo_reel_conditionnelle_minuscule(tmp_path: Path) -> None:
+    """Critère B2.6 sur la vraie pile (CPU, sans fla) : `ORPOTrainer` se prépare et fait un pas
+    sur un `Qwen3_5ForConditionalGeneration` minuscule à poids aléatoires, avec un tokenizer
+    (pas de processor) ; le LoRA de `cibles_lora` ne touche pas la tour vision."""
+    for nom in ("torch", "transformers", "peft", "trl", "datasets", "tokenizers"):
+        pytest.importorskip(nom)
+    import peft  # noqa: PLC0415
+    import transformers  # noqa: PLC0415
+    from datasets import Dataset  # noqa: PLC0415
+    from tokenizers import Tokenizer, models, pre_tokenizers  # noqa: PLC0415
+    from trl.experimental.orpo import ORPOConfig, ORPOTrainer  # noqa: PLC0415
+
+    from slmsp.train import environnement  # noqa: PLC0415
+
+    vocab = {f"t{i}": i for i in range(200)} | {"<unk>": 200, "<pad>": 201}
+    brut = Tokenizer(models.WordLevel(vocab, unk_token="<unk>"))
+    brut.pre_tokenizer = pre_tokenizers.Whitespace()
+    tokenizer = transformers.PreTrainedTokenizerFast(
+        tokenizer_object=brut, unk_token="<unk>", pad_token="<pad>", eos_token="<unk>"
+    )
+    texte = {
+        "vocab_size": 202,
+        "hidden_size": 32,
+        "intermediate_size": 64,
+        "num_hidden_layers": 2,
+        "layer_types": ["linear_attention", "full_attention"],
+        "num_attention_heads": 2,
+        "num_key_value_heads": 1,
+        "head_dim": 16,
+        "linear_num_key_heads": 2,
+        "linear_num_value_heads": 2,
+        "linear_key_head_dim": 8,
+        "linear_value_head_dim": 8,
+        "mtp_num_hidden_layers": 0,
+    }
+    vision = {
+        "depth": 1,
+        "hidden_size": 16,
+        "intermediate_size": 32,
+        "num_heads": 2,
+        "out_hidden_size": 32,
+        "num_position_embeddings": 16,
+    }
+    config = transformers.Qwen3_5Config(text_config=texte, vision_config=vision)
+    modele = transformers.Qwen3_5ForConditionalGeneration(config)
+    cible = environnement.cibles_lora(modele, "geler-vision")
+    lora = peft.LoraConfig(r=4, lora_alpha=8, target_modules=cible, task_type="CAUSAL_LM")
+    modele = peft.get_peft_model(modele, lora)
+    gel = environnement.verifier_gel_vision(modele)
+    assert gel["vision_entrainables"] == 0 and gel["vision_parametres"] > 0
+    jeu = Dataset.from_list(
+        [{"prompt": "t1 t2 ", "chosen": "t3 t4", "rejected": "t5 t6"} for _ in range(2)]
+    )
+    arguments = ORPOConfig(
+        output_dir=str(tmp_path),
+        report_to="none",
+        max_steps=1,
+        per_device_train_batch_size=1,
+        use_cpu=True,
+        max_length=32,
+        remove_unused_columns=False,
+        save_strategy="no",
+    )
+    entraineur = ORPOTrainer(
+        model=modele, args=arguments, train_dataset=jeu, processing_class=tokenizer
+    )
+    entraineur.train()
+    assert entraineur.state.global_step == 1
