@@ -91,6 +91,24 @@ class ConditionsMistral(SousSchema):
 Nom = Annotated[str, StringConstraints(min_length=1)]
 
 
+class Nettoyage(SousSchema):
+    """Provenance d'un jeu nettoyé (story 9.9) : `data build --nettoyage`.
+
+    Le jeu est la sous-suite des lignes du jeu `depuis_version` (run `depuis_build`, SHA
+    `sha256_train_source`) passées par `core.nettoyage.nettoyer_cible` de version `version`,
+    sans les cibles de plus de `plafond_tokens` tokens (tokenizer de SHA `tokenizer_sha256`).
+    """
+
+    version: int = Field(ge=1)
+    depuis_build: RunId
+    depuis_version: VersionJeu
+    sha256_train_source: Sha256
+    plafond_tokens: int = Field(ge=1)
+    tokenizer_sha256: Sha256
+    lc_signales: int = Field(ge=0)
+    """Exemples LC gardés dont un élément vérifiable de la source manque à la cible."""
+
+
 class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     """Contenu de `data/train/vN/MANIFEST.json` (`run_id` : le run `data-build`)."""
 
@@ -122,6 +140,8 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     sans passage) ou `connecte` (demande seule, comme `messages_connecte`). Informatif : hors
     de l'empreinte d'entraînement, qui contrôle `sha256_train` au chargement et distingue le
     jeu par sa version et son run de build (`train.run.CLES_INVARIANTS`)."""
+    nettoyage: Nettoyage | None = Field(default=None, exclude_if=lambda v: v is None)
+    """Présent sur un jeu nettoyé (story 9.9) : `train.chargement` revérifie la chaîne."""
 
 
 # --- Paires de préférence ORPO (story 9.7, FR-34, D-nuit-A1-21) ---------------------------------

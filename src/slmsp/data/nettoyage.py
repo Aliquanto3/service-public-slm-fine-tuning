@@ -1,0 +1,324 @@
+"""Nettoyage déterministe du jeu SFT : `data build --nettoyage` (story 9.9).
+
+`lancer_nettoyage` lit le jeu SFT d'un run `data-build` (SHA revérifié contre son MANIFEST,
+comme `preferences._jeu_sft`) et écrit une **nouvelle version** `data/train/vN/` :
+
+1. préambule « Voici … » retiré de la réponse cible (`core.nettoyage.nettoyer_cible`) ;
+2. cible de plus de `plafond_tokens` tokens (plafond de génération de l'évaluation, tokenizer
+   du Modèle de base) **écartée**, jamais tronquée (motif `longueur`, `ecartes.jsonl`) ;
+3. fidélité LC **signalée** : nombres, références juridiques et sigles de la source absents de
+   la cible (rapport ; l'exemple reste).
+
+Aucun texte n'est rédigé ni réécrit (D1), aucun appel réseau. `core.nettoyage.verifier_nettoyage`
+prouve la transformation avant l'écriture du MANIFEST (`nettoyage`, relu par `train.chargement`).
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import unicodedata
+from collections import Counter, defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import date
+from pathlib import Path
+from typing import Any, Final
+
+from pydantic import ValidationError
+
+from slmsp.core.artefacts import Run, lire, nouveau_run
+from slmsp.core.canonique import json_canonique, sha256_hex
+from slmsp.core.config import dossier_modeles
+from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide
+from slmsp.core.nettoyage import (
+    VERSION_NETTOYAGE,
+    analyser_preambule,
+    cible_nettoyable,
+    verifier_nettoyage,
+)
+from slmsp.core.schemas.entrainement import (
+    TYPE_RUN_BUILD,
+    LigneEntrainement,
+    ManifesteJeuEntrainement,
+    Nettoyage,
+)
+from slmsp.data.build import _creer_version
+from slmsp.data.preferences import _jeu_sft
+
+__all__ = [
+    "NOM_ECARTES",
+    "ResultatNettoyage",
+    "Tokeniseur",
+    "elements_verifiables",
+    "elements_manquants",
+    "lancer_nettoyage",
+    "tokeniseur_du_modele",
+]
+
+NOM_TRAIN: Final = "train.jsonl"
+NOM_MANIFEST: Final = "MANIFEST.json"
+NOM_ECARTES: Final = "ecartes.jsonl"
+NOM_RAPPORT: Final = "rapport.json"
+TACHE_HORS_PLANCHER: Final = "CR"
+"""Seule Tâche qui peut sortir entièrement du jeu (toutes ses cibles dépassent le plafond)."""
+PREFIXE_SOURCE_LC: Final = "Texte :\n"
+
+_RE_REFERENCE: Final = re.compile(r"\b[Aa]rticles?\s+\d+(?:-\d+)*|\b[LRD]\.\s?\d+(?:-\d+)*")
+_RE_NOMBRE: Final = re.compile(r"\d[\d\s.,]*\d|\d")
+_RE_SIGLE: Final = re.compile(r"\b[A-ZÀ-ÖØ-Þ]{2,}\b")
+_RE_ESPACES: Final = re.compile(r"\s+")
+
+
+@dataclass(frozen=True)
+class Tokeniseur:
+    """Compteur de tokens d'une cible (sans tokens spéciaux) et SHA de son `tokenizer.json`."""
+
+    compter: Callable[[str], int]
+    sha256: str
+
+
+@dataclass(frozen=True)
+class ResultatNettoyage:
+    """Run produit, version écrite et rapport."""
+
+    run: Run
+    version: str
+    dossier: Path
+    rapport: dict[str, Any]
+
+
+def tokeniseur_du_modele(slug: str, *, racine: str | Path | None = None) -> Tokeniseur:
+    """Tokenizer `models/<slug>/hf/tokenizer.json`, lu par le lecteur `train` (AD-24)."""
+    chemin = dossier_modeles() / slug / "hf" / "tokenizer.json"
+    try:
+        octets = lire(chemin, "train", racine=racine)
+    except FileNotFoundError:
+        raise ConfigurationInvalide(f"tokenizer absent : {chemin}") from None
+    from tokenizers import Tokenizer  # extra `train` (dépendance de transformers)
+
+    tokenizer = Tokenizer.from_str(octets.decode("utf-8"))
+    return Tokeniseur(
+        compter=lambda texte: len(tokenizer.encode(texte, add_special_tokens=False).ids),
+        sha256=sha256_hex(octets),
+    )
+
+
+def _normaliser(texte: str) -> str:
+    """NFKC, apostrophe droite, sans espaces (U+00A0, U+202F compris), sans `,00`."""
+    texte = unicodedata.normalize("NFKC", texte).replace("’", "'")
+    return _RE_ESPACES.sub("", texte).replace(",00", "")
+
+
+def elements_verifiables(texte: str) -> list[str]:
+    """Références juridiques, nombres (deux chiffres ou plus) et sigles de `texte`, en ordre.
+
+    Les nombres sont cherchés hors des références (« L. 123-4 » ne donne pas « 123 »).
+    """
+    elements = [m.group().strip() for m in _RE_REFERENCE.finditer(texte)]
+    reste = _RE_REFERENCE.sub(" ", texte)
+    for m in _RE_NOMBRE.finditer(reste):
+        nombre = m.group().strip(" \t\n\r  .,")
+        if sum(c.isdigit() for c in nombre) >= 2:
+            elements.append(nombre)
+    elements.extend(m.group() for m in _RE_SIGLE.finditer(texte))
+    return list(dict.fromkeys(elements))
+
+
+def elements_manquants(source: str, cible: str) -> list[str]:
+    """Éléments vérifiables de `source` absents de `cible` après normalisation des deux côtés.
+
+    Un signalement à relire, pas un filtre : un nombre écrit en lettres ou un sigle développé
+    dans la cible y figure à tort.
+    """
+    normalisee = _normaliser(cible)
+    pliee = normalisee.casefold()
+    manquants = []
+    for element in elements_verifiables(source):
+        forme = _normaliser(element)
+        article = element[:7].casefold() == "article"
+        if not (forme.casefold() in pliee if article else forme in normalisee):
+            manquants.append(element)
+    return manquants
+
+
+def _source_lc(ligne: dict[str, Any]) -> str | None:
+    messages = ligne.get("messages") or []
+    contenu = messages[1].get("content") if len(messages) > 1 else None
+    return contenu.removeprefix(PREFIXE_SOURCE_LC) if isinstance(contenu, str) else None
+
+
+def lancer_nettoyage(
+    *,
+    racine: str | Path,
+    build_run_id: str,
+    modele: str,
+    plafond_tokens: int,
+    tokeniseur: Tokeniseur | None = None,
+    consigner: Callable[[str], None] = print,
+) -> ResultatNettoyage:
+    """Construit `data/train/vN/train.jsonl` nettoyé depuis le jeu SFT du run `build_run_id`.
+
+    `modele` : `base:<slug>` (tokenizer). `plafond_tokens` : `[generation].max_tokens` de
+    `config/evaluation.toml`. Avant tout run : `ManifesteInvalide` (run absent, d'un autre
+    type, sans jeu SFT, jeu déjà nettoyé) ou `ProvenanceInvalide` (SHA altéré). Si une Tâche
+    autre que CR tombe à 0 exemple, `ManifesteInvalide` : le run est clos `partiel-erreur` et
+    rien n'est écrit sous `data/train/`.
+    """
+    slug = modele.removeprefix("base:") if modele.startswith("base:") else ""
+    if not slug:
+        raise ValueError(f"modèle {modele!r} : forme attendue base:<slug>")
+    if plafond_tokens < 1:
+        raise ValueError(f"plafond de tokens {plafond_tokens} : entier positif attendu")
+    base = Path(racine).resolve()
+    version_src, manifeste_src, octets = _jeu_sft(build_run_id, base)
+    try:
+        source = ManifesteJeuEntrainement.model_validate(manifeste_src)
+    except ValidationError as exc:
+        raise ManifesteInvalide(
+            f"jeu {version_src} : MANIFEST de build SFT attendu ({exc})"
+        ) from None
+    if source.nettoyage is not None:
+        raise ManifesteInvalide(f"jeu {version_src} : déjà nettoyé (repartir du jeu source)")
+    try:
+        lignes = [json.loads(texte) for texte in octets.split(b"\n") if texte.strip()]
+        for ligne in lignes:
+            LigneEntrainement.model_validate(ligne)
+    except (ValueError, ValidationError) as exc:
+        raise ManifesteInvalide(f"jeu {version_src} : ligne SFT non conforme ({exc})") from None
+    tokeniseur = tokeniseur or tokeniseur_du_modele(slug, racine=base)
+    run = nouveau_run(
+        TYPE_RUN_BUILD,
+        "nettoyage",
+        {
+            "nettoyage": True,
+            "version_nettoyage": VERSION_NETTOYAGE,
+            "build_run_id": build_run_id,
+            "jeu_source_version": version_src,
+            "modele": modele,
+            "plafond_tokens": plafond_tokens,
+            "tokenizer_sha256": tokeniseur.sha256,
+        },
+        parents=[build_run_id],
+        racine=base,
+    )
+    try:
+        gardees, rapport = _nettoyer(run, lignes, tokeniseur, plafond_tokens)
+        avant = Counter(str(ligne["tache"]) for ligne in lignes)
+        apres = Counter(str(ligne["tache"]) for ligne in gardees)
+        vides = sorted(t for t in avant if t != TACHE_HORS_PLANCHER and not apres[t])
+        if vides:
+            raise ManifesteInvalide(
+                f"Tâche(s) {', '.join(vides)} sans exemple après nettoyage "
+                f"(plafond {plafond_tokens} tokens)"
+            )
+        contenu = b"".join(json_canonique(ligne) + b"\n" for ligne in gardees)
+        verifier_nettoyage(contenu, octets)
+        version, dossier = _creer_version(base)
+        (dossier / NOM_TRAIN).write_bytes(contenu)
+        nettoyage = Nettoyage(
+            version=VERSION_NETTOYAGE,
+            depuis_build=build_run_id,
+            depuis_version=version_src,
+            sha256_train_source=sha256_hex(octets),
+            plafond_tokens=plafond_tokens,
+            tokenizer_sha256=tokeniseur.sha256,
+            lc_signales=len(rapport["lc_signales"]),
+        )
+        manifeste = source.model_copy(
+            update={
+                "version": version,
+                "run_id": run.run_id,
+                "cree_le": date.today(),
+                "sha256_train": sha256_hex(contenu),
+                "nb_lignes": len(gardees),
+                "comptes_par_tache": dict(sorted(apres.items())),
+                "nettoyage": nettoyage,
+            }
+        )
+        manifeste = ManifesteJeuEntrainement.model_validate(manifeste.model_dump(mode="json"))
+        temporaire = dossier / f"{NOM_MANIFEST}.tmp"
+        temporaire.write_bytes(json_canonique(manifeste.model_dump(mode="json")) + b"\n")
+        temporaire.replace(dossier / NOM_MANIFEST)
+        rapport = {
+            "schema_version": 1,
+            "version": version,
+            "depuis_build": build_run_id,
+            "depuis_version": version_src,
+            "version_nettoyage": VERSION_NETTOYAGE,
+            "modele": modele,
+            "plafond_tokens": plafond_tokens,
+            "tokenizer_sha256": tokeniseur.sha256,
+            "sha256_train": manifeste.sha256_train,
+            "nb_lignes_avant": len(lignes),
+            "nb_lignes": len(gardees),
+            **rapport,
+        }
+        run.ecrire(NOM_RAPPORT, json_canonique(rapport) + b"\n")
+    except KeyboardInterrupt:
+        run.terminer("interrompu", "interruption clavier")
+        raise
+    except BaseException as exc:
+        run.terminer("partiel-erreur", f"{type(exc).__name__} : {exc}")
+        raise
+    run.terminer("complet")
+    consigner(
+        f"nettoyage {version_src} → {version} : {len(lignes)} → {len(gardees)} lignes, "
+        f"sha256 {manifeste.sha256_train}"
+    )
+    return ResultatNettoyage(run=run, version=version, dossier=dossier, rapport=rapport)
+
+
+_COMPTES: Final = (
+    "avant",
+    "apres",
+    "preambules_retires",
+    "preambule_garde",
+    "preambule_seul",
+    "ecartes_longueur",
+    "lc_signales",
+)
+_STATUTS: Final = {
+    "retire": "preambules_retires",
+    "garde": "preambule_garde",
+    "seul": "preambule_seul",
+}
+
+
+def _nettoyer(
+    run: Run, lignes: list[dict[str, Any]], tokeniseur: Tokeniseur, plafond: int
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Lignes gardées (cibles nettoyées) et parties du rapport ; écrit `ecartes.jsonl`."""
+    comptes: dict[str, Counter[str]] = defaultdict(Counter)
+    signales: list[dict[str, Any]] = []
+    gardees: list[dict[str, Any]] = []
+    for rang, ligne in enumerate(lignes):
+        tache = str(ligne["tache"])
+        session_id = ligne["meta"]["session_id"]
+        comptes[tache]["avant"] += 1
+        cible = cible_nettoyable(ligne)
+        if cible is not None:
+            texte, statut = analyser_preambule(cible["content"])
+            if statut is not None:
+                comptes[tache][_STATUTS[statut]] += 1
+            cible["content"] = texte
+            tokens = tokeniseur.compter(texte)
+            if tokens > plafond:
+                comptes[tache]["ecartes_longueur"] += 1
+                run.ajouter_jsonl(
+                    NOM_ECARTES,
+                    {"rang": rang, "session_id": session_id, "tache": tache, "tokens": tokens},
+                )
+                continue
+            source = _source_lc(ligne) if tache == "LC" else None
+            if source is not None:
+                manquants = elements_manquants(source, texte)
+                if manquants:
+                    comptes[tache]["lc_signales"] += 1
+                    signales.append(
+                        {"rang": rang, "session_id": session_id, "manquants": manquants}
+                    )
+        comptes[tache]["apres"] += 1
+        gardees.append(ligne)
+    par_tache = {tache: {cle: comptes[tache][cle] for cle in _COMPTES} for tache in sorted(comptes)}
+    return gardees, {"par_tache": par_tache, "lc_signales": signales}

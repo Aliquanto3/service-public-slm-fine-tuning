@@ -34,6 +34,9 @@ ligne depuis les réponses Mistral journalisées, la compare octet par octet et 
 paires ORPO (chosen : exemple SFT ; rejected : génération du Modèle de base local, journalisée
 dans `generations-locales.sqlite`) dans une nouvelle version `data/train/vN/preferences.jsonl`
 (`slmsp.data.preferences`, dérogation FR-34 au MANIFEST).
+`build --nettoyage --depuis BUILD_RUN_ID --modele base:SLUG` retire le préambule « Voici » des
+cibles, écarte celles qui dépassent `max_tokens` de l'évaluation (tokenizer du modèle) et signale
+les LC infidèles, dans une nouvelle version `data/train/vN/` (`slmsp.data.nettoyage`, story 9.9).
 
 Codes de sortie : 0 run complet ; 1 erreur ou run partiel ; 3 budget Mistral épuisé ;
 4 gel absent, provenance invalide ou manifeste incohérent.
@@ -219,20 +222,29 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--depuis",
         required=True,
         metavar="RUN_ID",
-        help="run data-filter ; avec --preferences, run data-build du jeu SFT",
+        help="run data-filter ; avec --preferences ou --nettoyage, run data-build du jeu SFT",
     )
     b.add_argument(
         "--variante",
         choices=["diffusable", "recherche"],
         help="diffusable : sources diffusables seules ; recherche : jeu marqué recherche "
-        "(requis sans --preferences)",
+        "(requis sans --preferences ni --nettoyage)",
     )
     b.add_argument(
         "--preferences",
         action="store_true",
         help="construire les paires ORPO (chosen : exemple SFT ; rejected : Modèle de base local)",
     )
-    b.add_argument("--modele", metavar="base:SLUG", help="Modèle de base local (--preferences)")
+    b.add_argument(
+        "--nettoyage",
+        action="store_true",
+        help="nettoyer le jeu SFT : préambule « Voici » retiré, cibles trop longues écartées",
+    )
+    b.add_argument(
+        "--modele",
+        metavar="base:SLUG",
+        help="Modèle de base local (--preferences) ou tokenizer (--nettoyage)",
+    )
     b.add_argument("--llama", choices=["cpu", "cuda"], default="cpu", help="variante llama.cpp")
     b.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
     b.set_defaults(func=_build)
@@ -701,11 +713,51 @@ def _preferences(args: argparse.Namespace, racine: Path) -> int:
     return int(CodeSortie.SUCCES)
 
 
+def _nettoyage(args: argparse.Namespace, racine: Path) -> int:
+    from slmsp.cli._assemblage import ModeleInvalide, slug_modele
+    from slmsp.data.nettoyage import lancer_nettoyage
+    from slmsp.evaluation.config import charger_evaluation
+
+    if not args.modele or args.variante or args.preferences:
+        print(
+            "slmsp : --nettoyage exige --modele base:<slug> et exclut --variante et --preferences",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
+    try:
+        slug_modele(args.modele)
+    except ModeleInvalide as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    resultat = lancer_nettoyage(
+        racine=racine,
+        build_run_id=args.depuis,
+        modele=args.modele,
+        plafond_tokens=charger_evaluation().generation.max_tokens,
+        consigner=_consigner,
+    )
+    rapport = resultat.rapport
+    print(
+        "Tâche : avant → après (préambules retirés, gardés, seuls ; écartés longueur ; LC signalés)"
+    )
+    for tache, c in rapport["par_tache"].items():
+        print(
+            f"{tache} : {c['avant']} → {c['apres']} ({c['preambules_retires']}, "
+            f"{c['preambule_garde']}, {c['preambule_seul']} ; {c['ecartes_longueur']} ; "
+            f"{c['lc_signales']})"
+        )
+    print(f"jeu {resultat.version} ({rapport['nb_lignes']} lignes) : {resultat.dossier}")
+    print(f"run {resultat.run.run_id} (complet) : {resultat.run.dossier}")
+    return int(CodeSortie.SUCCES)
+
+
 def _build(args: argparse.Namespace) -> int:
     from slmsp.data.build import lancer_build
     from slmsp.harness.taches import charger_taches
 
     racine = _racine(args)
+    if args.nettoyage:
+        return _nettoyage(args, racine)
     if args.preferences:
         return _preferences(args, racine)
     if not args.variante or args.modele:

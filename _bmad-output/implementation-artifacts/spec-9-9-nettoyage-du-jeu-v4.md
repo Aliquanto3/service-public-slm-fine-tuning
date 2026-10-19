@@ -2,7 +2,7 @@
 title: "Story 9.9 — Nettoyage déterministe du jeu SFT (v4)"
 type: 'feature'
 created: '2026-10-19'
-status: ready-for-dev
+status: review
 baseline_revision: '7b7889b'
 review_loop_iteration: 0
 context:
@@ -58,3 +58,28 @@ Elle lit le jeu SFT du run `data-build` donné (v2 : `20261018-115927-build-424c
 2026-10-19, Opus, avant le code : provenance par chaîne SHA + `verifier_nettoyage` (au lieu d'assouplir des contrôles qui ne comparent pas de texte), schéma du MANIFEST, garde des lignes « Voici » à lien (RD), cas limites, normalisation LC. Intégrés ci-dessus.
 
 </intent-contract>
+
+## Implémentation
+
+2026-10-19, Opus (dev-story). Fichiers : `core/nettoyage.py` (`nettoyer_cible`, `analyser_preambule`, `verifier_nettoyage`, `VERSION_NETTOYAGE = 1` ; dans `core` pour être partagé par `data` et `train`, couches AD-1), `data/nettoyage.py` (`lancer_nettoyage`, `tokeniseur_du_modele`, `elements_manquants`), `core/schemas/entrainement.py` (`Nettoyage`, champ `nettoyage` omis du JSON quand il vaut `None` : les MANIFEST des builds existants ne changent pas), `train/chargement.py` (`controler_nettoyage` dans `charger_jeu`), `cli/data.py` (`--nettoyage`), `tests/data/test_nettoyage.py` (29 tests).
+
+Essai réel (copie de v2 et du run 424c dans le scratchpad, tokenizer minicpm5-2b, plafond 1 024) : 503 → 425 lignes, v4 relu par `charger_jeu`, plus aucune ligne « Voici » retirable.
+
+| Tâche | avant | après | préambules retirés | gardés | seuls | écartés longueur | LC signalés |
+|---|---|---|---|---|---|---|---|
+| CO | 34 | 34 | 0 | 0 | 0 | 0 | 0 |
+| CR | 76 | 0 | 0 | 0 | 0 | 76 | 0 |
+| CT | 34 | 34 | 0 | 0 | 0 | 0 | 0 |
+| LC | 69 | 69 | 65 | 0 | 0 | 0 | 2 (sigles CB, CPH) |
+| Q | 92 | 92 | 59 | 0 | 0 | 0 | 0 |
+| RD | 91 | 89 | 57 | 2 (lien) | 0 | 2 (1 248 et 1 277 tokens) | 0 |
+| RE | 34 | 34 | 0 | 0 | 0 | 0 | 0 |
+| generique | 73 | 73 | 4 | 0 | 0 | 0 | 0 |
+
+## Auto Run Result
+
+- `verifier_nettoyage` vérifie une sous-suite ordonnée (les lignes écartées manquent) : chaque ligne nettoyée doit être le nettoyage d'une ligne source de rang croissant ; pas de liste des rangs au MANIFEST (elle est dans `ecartes.jsonl` du run).
+- Plafond lu par la CLI (`evaluation.config.charger_evaluation`, couche `cli`) et passé à `lancer_nettoyage` : `data` ne peut pas importer `evaluation` (même couche).
+- Un jeu déjà nettoyé est refusé comme source (`ManifesteInvalide`) : la chaîne vérifiée au chargement n'a qu'un niveau.
+- Fidélité LC : un élément est cherché dans la cible normalisée entière (sous-chaîne), les références « article N » sans tenir compte de la casse ; les nombres sont cherchés hors des références. Seulement 2 LC signalés sur 69, tous deux pour un sigle : à relire par Anaël.
+- Statut de run : `complet` ; type `data-build`, slug `nettoyage`. Le fichier d'état n'est pas modifié (hors zone) : la sortie des CR du jeu est à y consigner par l'orchestrateur.
