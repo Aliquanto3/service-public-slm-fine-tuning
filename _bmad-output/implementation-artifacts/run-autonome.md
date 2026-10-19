@@ -71,3 +71,5 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 22:37 · v13 · génération CR, CT, LC par `mistral-large-4` lancée (`--completer-depuis 20261019-180544-generate-bd87`), campagne de budget actuelle (reste génération 3,11 €) · —
 - 2026-10-19 22:37 · run · suite complète de mi-parcours lancée (après S1, S2, S3, S5) · —
 - 2026-10-19 22:50 · run · suite complète : 5 570 passés, 2 échecs (tests S3 qui supposaient un `juges.toml` sans juge tiers, cassés par la config DeepSeek/GLM) ; tests réalignés · —
+- 2026-10-19 22:52 · v13 · **blocked** · `mistral-large-4` est un modèle de raisonnement : contenu en liste de blocs (`thinking`, `text`) non lu par le client (« réponse brute sans contenu ») et réponses coupées (`finish_reason=length`, 1 882 tokens de raisonnement sur 4 000). 12 sessions CR abandonnées (`runs/data-generate/20261019-223723-generate-1778`, arrêté), ~0,25 € perdus · —
+- 2026-10-19 22:52 · v13 · décision · v13 généré avec **Mistral Large 3** (`mistral-large-latest`, chaîne éprouvée) et les nouveaux gabarits ; correctif client (lecture des blocs de raisonnement, plafond de tokens) en story à part pour un v14 sous Large 4 · —
