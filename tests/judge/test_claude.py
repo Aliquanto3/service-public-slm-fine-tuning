@@ -914,3 +914,30 @@ def test_lot_partiel_puis_budget_epuise(banc: Any, doublures: SimpleNamespace, i
     assert rapport.budget_epuise
     (lot,) = corps_json(banc, "POST /v1/messages/batches")
     assert len(lot["requests"]) == 1
+
+
+def test_lot_heterogene_prefixe_puis_lot_suivant(
+    banc: Any, doublures: SimpleNamespace, items: Any
+) -> None:
+    """INC-2 : pire cas par item, dans l'ordre des requêtes ; le reste part au lot suivant."""
+    sorties = [doublures.sortie_factice(f"<sortie-courte-{i}>") for i in range(2)]
+    sorties.append(doublures.sortie_factice("<sortie-longue>" + " mot" * 1000))
+    couts = [pire_cas_batch(banc, doublures, items["Q-001"], s)[0] for s in sorties]
+    long = couts[2]
+    banc.plafond = couts[0] + couts[1] + 1e-6
+    tarifs = charger_tarifs(banc.chemin_tarifs)
+    reel = cout_reel(tarifs, doublures.MODELE, "batch", UsageTokens(*doublures.USAGE_FACTICE))
+    # Au maximum du lot, une seule requête aurait tenu ; le long item tient seul ensuite.
+    assert 2 * long > banc.plafond and long < banc.plafond - 2 * reel
+    rapport = banc.juge().juger([DemandeJugement(items["Q-001"], s) for s in sorties])
+    assert [r.statut for r in rapport.resultats] == ["juge", "juge", "juge"]
+    assert not rapport.budget_epuise
+    lots = corps_json(banc, "POST /v1/messages/batches")
+    assert [len(lot["requests"]) for lot in lots] == [2, 1]
+    textes = [[r["params"]["messages"][0]["content"] for r in lot["requests"]] for lot in lots]
+    assert "<sortie-courte-0>" in textes[0][0] and "<sortie-courte-1>" in textes[0][1]
+    assert "<sortie-longue>" in textes[1][0]
+    reservations = banc.lignes_registre()
+    assert [lg["nb_requetes"] for lg in reservations] == [2, 1]
+    assert reservations[0]["montant_reserve_eur"] == pytest.approx(couts[0] + couts[1])
+    assert reservations[1]["montant_reserve_eur"] == pytest.approx(long)

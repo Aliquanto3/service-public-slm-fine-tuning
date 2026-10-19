@@ -681,7 +681,7 @@ class RegistreBudget:
             tokens_entree_estimes, str | bytes
         ):
             return [
-                self._cout_requete_lot(modele, int(tokens), max_tokens, avec_cache)
+                self._cout_requete_lot(modele, tokens, max_tokens, avec_cache)
                 for tokens in tokens_entree_estimes
             ]
         return self._cout_requete_lot(modele, tokens_entree_estimes, max_tokens, avec_cache)
@@ -752,10 +752,13 @@ class RegistreBudget:
         if isinstance(nb_requetes, bool) or not isinstance(nb_requetes, int) or nb_requetes < 1:
             raise ValueError("nb_requetes doit être un entier supérieur ou égal à 1")
         self._plafonds(poste, sous_poste)
+        if (
+            isinstance(tokens_entree_estimes, Sequence)
+            and len(tokens_entree_estimes) != nb_requetes
+        ):
+            raise ValueError("une estimation d'entrée par requête est attendue")
         couts = self._couts_lot(modele, tokens_entree_estimes, max_tokens, avec_cache)
         if isinstance(couts, list):
-            if len(couts) != nb_requetes:
-                raise ValueError("une estimation d'entrée par requête est attendue")
             premier = couts[0]
         else:
             premier = couts

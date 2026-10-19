@@ -200,3 +200,11 @@ def test_lot_heterogene_premiere_requete_trop_chere(registre, lignes) -> None:
 def test_lot_heterogene_longueur_incoherente(registre) -> None:
     with pytest.raises(ValueError, match="par requête"):
         registre.reserver_lot("lot-y", "anthropic", None, "m-test", [0, 0], MILLION, 3)
+
+
+@pytest.mark.parametrize("element", [1.9, True, "12"])
+def test_lot_heterogene_estimation_non_entiere_refusee(registre, lignes, element) -> None:
+    # Chaque élément est validé comme la forme entière : un flottant n'est pas tronqué.
+    with pytest.raises(ValueError, match="tokens_entree_estimes"):
+        registre.reserver_lot("lot-z", "anthropic", None, "m-test", [0, element], MILLION, 2)
+    assert lignes(registre) == []
