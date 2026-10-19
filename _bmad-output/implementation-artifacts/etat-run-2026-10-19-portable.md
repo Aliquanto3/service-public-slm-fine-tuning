@@ -28,6 +28,26 @@ Voir la section « Journal de la nuit » ci-dessous, tenue à jour.
 - Points restés ouverts au fichier du 18 : story de cache lm_eval, 9.8, `verifie_le` des licences, micro_lot, bug json-generique, v0.2.0.
 - Arrêter le bloqueur de veille une fois le GPU et les mesures terminés.
 
+## Résultat principal : le fine-tuning dégrade MiniCPM5-2B (à arbitrer par Anaël)
+| Tâche | Baseline | M1 QLoRA | M3 DoRA |
+|---|---|---|---|
+| Q | 5,0 | 0,0 | 0,0 |
+| RD | 75,1 | 83,5 | 83,6 |
+| CR | 50,1 | 24,5 | 18,2 |
+| LC | 24,0 | 0,0 | 0,0 |
+| CO | 58,9 | 70,7 | 66,3 |
+| RE | 35,5 | 42,8 | 32,6 |
+| CT | 50,0 | 40,0 | 36,7 |
+| NR | 30,0 | 23,3 | 16,7 |
+| **Qualité** | **41,1** | **35,6** | **31,8** |
+
+Notations : `runs/eval-notation/20261019-040548-ft-minicpm5-2b-1d82` (M1, 2,98 €) et `…-050830-…-fa99` (M3, 2,91 €). **Cause probable : le style du générateur dans le jeu v2.**
+- 65 réponses LC sur 69 commencent par « Voici », comme 59 Q sur 92 et 59 RD sur 91. M1 en reprend le préambule en gras (16 sorties LC sur 25) et paraphrase les termes : sa fidélité tombe à 0.
+- Les réponses CR du jeu ont une médiane de 5 285 caractères : M1 s'allonge, il est tronqué dans 22 sorties CR sur 25 (12 pour la Baseline) et il invente davantage (`sans_invention` passe de 40 % à 8 %). Les sorties sont plus longues dans presque toutes les tâches (CT : 723 contre 2 574 caractères).
+- Q reste à 0 avant comme après : l'exactitude n'atteint jamais 2. Ce problème précède le fine-tuning.
+
+Pistes, à décider par Anaël : filtrer les préambles et borner les longueurs au `max_tokens` de l'évaluation dans `data filter` ou `data build` ; contrôler la fidélité des cibles LC ; peut-être régénérer en partie (appel Mistral payant). **La notation de M4 est suspendue** jusqu'à son avis, puisque M4 part de M1. Elle coûterait environ 3 € et il reste environ 9,2 € au plafond.
+
 ## Journal de la nuit
 - 01:10 : M3 (DoRA) lancé, puis export et notation de M1 (`scratchpad/nuit2.ps1`).
 - 02:05 : M3 terminé (`runs/train/20261019-011031-m3-dora-minicpm5-2b-b9bb`, 55 min). L'export de M1 échoue : `convert_hf_to_gguf.py` importe `sentencepiece` sans condition. Corrigé : `sentencepiece` est ajouté à l'extra `train` et installé par `uv sync --inexact --no-install-project`, ce qui ne retire rien du venv.
