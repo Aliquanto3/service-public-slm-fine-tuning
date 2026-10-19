@@ -21,6 +21,8 @@ from slmsp.data.sous_ensemble import lancer_sous_ensemble
 from slmsp.train.chargement import charger_jeu
 
 from .test_nettoyage import JEU, ecrire_source, ligne, nettoyer
+from .test_preferences import LlmScripte
+from .test_preferences import lancer as lancer_preferences
 
 JEU_PT = [
     ligne(1, "Q", "<reponse-factice-1>"),
@@ -105,6 +107,11 @@ def test_deterministe_deux_builds_meme_sha(tmp_path: Path) -> None:
         for r in (premier, second)
     ]
     assert sha[0] == sha[1]
+    # Revue S2 : MANIFEST identiques hors identité de la version et de son run.
+    manifestes = [json.loads((r.dossier / "MANIFEST.json").read_bytes()) for r in (premier, second)]
+    for m in manifestes:
+        del m["version"], m["run_id"], m["cree_le"]
+    assert manifestes[0] == manifestes[1]
     # Les artefacts de la source et du premier build ne sont jamais réécrits.
     assert (premier.dossier / "MANIFEST.json").is_file()
 
@@ -180,3 +187,55 @@ def test_cli_nominal_et_tache_inconnue(tmp_path: Path, capsys: pytest.CaptureFix
     assert main([*base, "--taches", "Q, RD"]) == CodeSortie.SUCCES
     sortie = capsys.readouterr().out
     assert "Q : 2 → 2" in sortie and "CR : 1 → 0" in sortie and "jeu v2 (3 lignes)" in sortie
+
+
+def test_ligne_modifiee_refusee_au_chargement(tmp_path: Path) -> None:
+    run_id, _ = ecrire_source(tmp_path, JEU_PT)
+    resultat = sous_ensemble(tmp_path, run_id, ["Q", "RD"])
+    train = resultat.dossier / "train.jsonl"
+    train.write_bytes(train.read_bytes().replace(b"<reponse-factice-3>", b"<reponse-factice-x>"))
+    manifeste = resultat.dossier / "MANIFEST.json"
+    brut = json.loads(manifeste.read_bytes())
+    brut["sha256_train"] = sha256_hex(train.read_bytes())
+    manifeste.write_text(json.dumps(brut), "utf-8")
+    with pytest.raises(ProvenanceInvalide, match="sous-ensemble"):
+        charger_jeu("v2", racine=tmp_path)
+
+
+@pytest.mark.parametrize(("cle", "valeur"), [("nb_lignes", 2), ("comptes_par_tache", {"Q": 3})])
+def test_comptes_du_manifest_recoupes_au_chargement(tmp_path: Path, cle: str, valeur: Any) -> None:
+    run_id, _ = ecrire_source(tmp_path, JEU_PT)
+    resultat = sous_ensemble(tmp_path, run_id, ["Q", "RD"])
+    manifeste = resultat.dossier / "MANIFEST.json"
+    brut = json.loads(manifeste.read_bytes())
+    brut[cle] = valeur
+    manifeste.write_text(json.dumps(brut), "utf-8")
+    with pytest.raises(ManifesteInvalide, match="recoupe"):
+        charger_jeu("v2", racine=tmp_path)
+
+
+def test_nettoyage_d_un_sous_ensemble_refuse(tmp_path: Path) -> None:
+    run_id, _ = ecrire_source(tmp_path, JEU)
+    resultat = sous_ensemble(tmp_path, run_id, ["Q", "LC"])
+    with pytest.raises(ManifesteInvalide, match="restreint"):
+        nettoyer(tmp_path, resultat.run.run_id)
+    assert not (tmp_path / "data" / "train" / "v3").exists()
+
+
+def test_preferences_depuis_un_sous_ensemble(tmp_path: Path) -> None:
+    run_id, _ = ecrire_source(tmp_path, JEU_PT)
+    restreint = sous_ensemble(tmp_path, run_id, ["Q", "RD"])  # v2, 3 lignes
+    llm = LlmScripte(*[f"<rejetee-factice-{i}>" for i in (1, 2, 3)])
+    resultat = lancer_preferences(tmp_path, restreint.run.run_id, llm)
+    assert resultat.version == "v3"
+    brut = json.loads((resultat.dossier / "MANIFEST.json").read_bytes())
+    assert (brut["jeu_sft_version"], brut["build_run_id"]) == ("v2", restreint.run.run_id)
+    assert brut["comptes_par_tache"] == {"Q": 2, "RD": 1}
+    assert "sous_ensemble" not in brut
+    assert len(charger_jeu("v3", racine=tmp_path, fichier="preferences.jsonl").lignes) == 3
+
+
+def test_cli_taches_sans_sous_ensemble_refuse(capsys: pytest.CaptureFixture[str]) -> None:
+    code = main(["data", "build", "--depuis", "x", "--taches", "Q"])
+    assert code == CodeSortie.USAGE
+    assert "--sous-ensemble" in capsys.readouterr().err

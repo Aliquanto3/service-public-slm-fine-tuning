@@ -6,6 +6,9 @@
 #   uv run --no-sync slmsp data build --sous-ensemble --depuis 20261019-194543-nettoyage-c782 --taches Q,RD,RE,CO,generique
 # (lignes copiées à l'identique, MANIFEST avec provenance). Vérifier que la version
 # imprimée par cette commande est bien v12, sinon corriger jeu_version avant le lancement.
+# « v12 » est la prochaine version libre au moment de la story S2 : le build ci-dessus est
+# lancé juste après la fusion, avant tout autre build. Le MANIFEST de data/train/v12 doit
+# porter un bloc « sous_ensemble » (taches = CO, Q, RD, RE, generique) ; sinon, ne pas lancer.
 # Mêmes hyperparamètres que la campagne minicpm5-2b-v11 ; seuls le jeu et la campagne changent.
 # Garde mémoire (décision d'Anaël du 2026-10-19) : PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # et surveillance de la RAM du PC (arrêt propre au-delà de 28 Go).

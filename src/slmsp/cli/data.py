@@ -799,6 +799,9 @@ def _build(args: argparse.Namespace) -> int:
     racine = _racine(args)
     if args.sous_ensemble:
         return _sous_ensemble(args, racine)
+    if args.taches is not None:
+        print("slmsp : --taches exige --sous-ensemble", file=sys.stderr)
+        return int(CodeSortie.USAGE)
     if args.nettoyage:
         return _nettoyage(args, racine)
     if args.preferences:

@@ -4,8 +4,9 @@
 comme `nettoyage` et `preferences`) et écrit une **nouvelle version** `data/train/vN/` qui ne
 garde que les lignes des Tâches demandées, copiées à l'identique, dans l'ordre. Aucun texte
 n'est rédigé ni réécrit (D1), aucun appel réseau. Le MANIFEST porte la provenance
-(`sous_ensemble`) ; `core.sous_ensemble.verifier_sous_ensemble` la prouve avant l'écriture et au
-chargement. Déterministe : même source et mêmes Tâches, même `sha256_train`.
+(`sous_ensemble`) ; `core.sous_ensemble.verifier_sous_ensemble` la revérifie au chargement
+(`train.chargement`) contre le jeu source relu.
+Déterministe : même source et mêmes Tâches, même `sha256_train`.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from slmsp.core.schemas.entrainement import (
     ManifesteJeuEntrainement,
     SousEnsemble,
 )
-from slmsp.core.sous_ensemble import lignes_de_taches, verifier_sous_ensemble
+from slmsp.core.sous_ensemble import lignes_de_taches
 from slmsp.data.build import _creer_version
 from slmsp.data.preferences import _jeu_sft
 
@@ -104,7 +105,6 @@ def lancer_sous_ensemble(
     )
     try:
         contenu = b"".join(ligne + b"\n" for ligne in lignes_de_taches(octets, demandees))
-        verifier_sous_ensemble(contenu, octets, demandees)
         apres = Counter({t: avant[t] for t in demandees})
         version, dossier = _creer_version(base)
         (dossier / NOM_TRAIN).write_bytes(contenu)

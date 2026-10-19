@@ -157,7 +157,9 @@ def charger_jeu(version: str, *, racine: str | Path | None = None, fichier: str 
     if fichier == NOM_TRAIN and brut_manifeste.get("nettoyage") is not None:
         controler_nettoyage(brut_manifeste["nettoyage"], brut, racine=racine)
     if fichier == NOM_TRAIN and brut_manifeste.get("sous_ensemble") is not None:
-        controler_sous_ensemble(brut_manifeste["sous_ensemble"], brut, racine=racine)
+        controler_sous_ensemble(
+            brut_manifeste["sous_ensemble"], brut, racine=racine, manifeste=brut_manifeste
+        )
     schema = _Paire if fichier == NOM_PREFERENCES else _Ligne
     lignes: list[Any] = []
     for numero, texte in enumerate(brut.decode("utf-8").splitlines(), start=1):
@@ -204,13 +206,19 @@ def controler_nettoyage(nettoyage: Any, octets: bytes, *, racine: str | Path | N
 
 
 def controler_sous_ensemble(
-    sous_ensemble: Any, octets: bytes, *, racine: str | Path | None = None
+    sous_ensemble: Any,
+    octets: bytes,
+    *,
+    racine: str | Path | None = None,
+    manifeste: Mapping[str, Any] | None = None,
 ) -> None:
     """Revérifie un jeu restreint à des Tâches contre son jeu source.
 
     Le `train.jsonl` du jeu `depuis_version` doit avoir le SHA `sha256_train_source`, et
     `octets` doit en être le sous-ensemble exact (`core.sous_ensemble.verifier_sous_ensemble`).
-    Si la source était nettoyée, sa chaîne de nettoyage est revérifiée à son tour. Lève
+    Si la source était nettoyée, sa chaîne de nettoyage est revérifiée à son tour. Les comptes
+    `comptes_source` (source) et, avec `manifeste`, `nb_lignes` et `comptes_par_tache` (jeu
+    restreint) sont recoupés avec les lignes. Lève
     `ManifesteInvalide` (bloc illisible, source absente ou altérée) ou `ProvenanceInvalide`.
     """
     try:
@@ -227,6 +235,29 @@ def controler_sous_ensemble(
     if bloc.nettoyage_source is not None:
         controler_nettoyage(bloc.nettoyage_source.model_dump(mode="json"), source, racine=racine)
     verifier_sous_ensemble(octets, source, bloc.taches)
+    if _comptes_taches(source) != bloc.comptes_source:
+        raise ManifesteInvalide(
+            "bloc « sous_ensemble » : « comptes_source » ne recoupe pas la source"
+        )
+    if manifeste is not None:
+        comptes = _comptes_taches(octets)
+        if (manifeste.get("comptes_par_tache"), manifeste.get("nb_lignes")) != (
+            comptes,
+            sum(comptes.values()),
+        ):
+            raise ManifesteInvalide(
+                "jeu restreint : « nb_lignes » ou « comptes_par_tache » ne recoupe pas train.jsonl"
+            )
+
+
+def _comptes_taches(octets: bytes) -> dict[str, int]:
+    """Nombre de lignes par Tâche d'un `train.jsonl`."""
+    comptes: dict[str, int] = {}
+    for texte in octets.split(b"\n"):
+        if texte.strip():
+            tache = str(json.loads(texte).get("tache"))
+            comptes[tache] = comptes.get(tache, 0) + 1
+    return comptes
 
 
 def recontroler_appel_ids(
