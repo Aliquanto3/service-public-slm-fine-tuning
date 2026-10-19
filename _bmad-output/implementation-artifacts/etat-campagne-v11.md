@@ -1,0 +1,30 @@
+# Campagne de fine-tuning v11 : point de reprise après `/clear`
+
+Suite de `etat-run-2026-10-19-portable.md` (journal du 19, décisions d'Anaël) et de `dossier-relecture-v9.md` (jeu et protocole).
+
+## Autorisation d'Anaël (19 octobre 2026, vers 18 h)
+« Quand le point autour de RD sera réglé, je t'autorise à lancer l'entraînement avec les modèles validés selon le protocole défini plus tôt. »
+- Le point RD est réglé par la story 9.12 (producteur et date seulement s'ils figurent au résultat d'outil), puis par la régénération de RD seul, le build v10 et le nettoyage v11.
+- Modèles validés : **MiniCPM5-2B, Qwen3.5-2B, Qwen3.5-0.8B**. Granite 4.0 1B est en réserve, hors campagne.
+- Budget : campagne `finetune-v9-2026-10-19` de `config/budgets.toml`, 30 € pour Anthropic. Le registre la garde après le passage à v11, inutile d'en ouvrir une autre. Chaque notation passe par `--plafond-estime 4.5`.
+
+## Protocole
+1. **M1 QLoRA sur les trois modèles, en série sur le GPU** : MiniCPM5-2B, puis Qwen3.5-2B, puis Qwen3.5-0.8B.
+   - Configs `config/runs/m1-qlora-<slug>-v9.toml`, à faire passer à `jeu_version = "v11"` et `campagne = "<slug>-v11"` avant le lancement.
+   - Hyperparamètres : bf16, 8 192 tokens, rang 16, lr 2e-4, 1 époque, lot 1 × 8, graine 1234.
+2. Pour chaque M1 : export cuda, génération q4_k_m sur le jeu v1.1 en cuda, puis notation avec `--plafond-estime 4.5`.
+   - Script : `C:\Users\Anael\dev\slmsp-wt\scripts-campagne\campagne-run.ps1 -Toml <toml>`. Il tourne sous garde RAM à 28 Go, avec `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
+   - La notation d'un run peut tourner pendant l'entraînement suivant.
+3. **Règle de suite** : M3 DoRA (`m3-dora-<slug>-v9.toml`, à passer en v11) et M4 ORPO seulement pour un modèle dont M1 dépasse **sa** Baseline.
+   - Baselines : MiniCPM5-2B 41,1 ; Qwen3.5-2B 36,0 ; Qwen3.5-0.8B 27,5.
+   - M4 : paires locales `data build --preferences --depuis <nettoyage v11> --modele base:<slug> --llama cuda`, puis TOML ORPO à 2 048 tokens, avec `sft_run_id` = M1 du modèle, dans une campagne à part.
+4. **Benchmarks de non-régression** (`bench run --variante-llamacpp cuda --parallele 4`) sur le meilleur run de chaque modèle qui passe le critère de gain : +10 points contre la meilleure Baseline sur au moins 2 tâches parmi Q, RD, CR et LC.
+5. **Mesures CPU** (`measure run`) des runs retenus, à la fin et machine au repos.
+
+## Règles
+- Bloqueur de veille : `C:\Users\Anael\dev\slmsp-wt\scripts-campagne\veille.ps1`, à lancer en tâche de fond pendant la campagne et à arrêter à la fin.
+- Toujours `uv run --no-sync`, ou `python -m slmsp` pour les tâches longues : `slmsp.exe` verrouillé empêche de réinstaller.
+- Journaliser chaque étape ci-dessous, avec l'heure prise par `date`, puis commiter. Ne rien pousser sans demande.
+- Arrêt : si une notation dépasse 4,5 €, ou si la RAM dépasse le seuil de la garde. Un blocage ne suspend que ses suites.
+
+## Journal de la campagne
