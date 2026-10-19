@@ -1,6 +1,6 @@
 [project]
 name = "slmsp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Assistant IA local du secteur public : évaluation, Données d'entraînement et fine-tuning de SLM"
 requires-python = "==3.12.*"
 # Socle runtime (AD-2) : aucune bibliothèque lourde ici.
