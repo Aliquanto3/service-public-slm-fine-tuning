@@ -68,6 +68,10 @@ Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M
 - 2026-10-19 12:29 · INC-2 · dev fini (ab2b8f6), second avis (1 medium : pas de test d'ordre côté juge ; 2 low), revue Opus (eef51b4, les 3 corrigés). **Fusion a89efa3**, tests budget + juge verts (251).
 - 2026-10-19 12:29 · INC-1 · dev fini (a5f2c76), second avis (1 medium : la trace peut faire échouer le traitement ; 6 low, dont texte libre dans `appels.issue`), revue Opus lancée.
 - 2026-10-19 12:29 · INC-3 · dev fini (5daf777) : estimation avant `nouveau_run`, refus sans run ni appel. Décision du dev : le second juge Mistral n'est pas estimé (poste budgétaire distinct). Second avis lancé.
+- 2026-10-19 12:39 · INC-1 · revue Opus (e16055a : trace protégée, `issue` fermée, détail dans `lots.motif`, masquage `sk-ant-`). **Fusion ec5f4e1** (conflit de tests résolu en gardant les deux), tests budget + juge + évaluation verts (529).
+- 2026-10-19 12:39 · INC-3 · second avis (4 medium, 2 low, aucun high) ; revue Opus lancée après rebase sur main.
+- 2026-10-19 12:39 · **décision d'Anaël** · régénération par Mistral des réponses cibles approuvée (CR d'abord, toutes tâches si la story le permet), consigne de longueur ≤ ~900 tokens, pas de titre ni de préambule en tête ; plafond indicatif 10 € (Anaël peut relever les plafonds). À **reconfirmer avec lui** avant la dépense, coût estimé affiché. Estimation : réponses seules ~4 à 7 € ; jeu complet depuis les seeds ~16 € (1 918 appels pour v2).
+- 2026-10-19 12:39 · M2 sur la tour (8 Go) · estimation non mesurée : ~7 Gio à 4 096, ~8,5 Gio à 8 192. Sonde à faire sur la tour.
 
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
