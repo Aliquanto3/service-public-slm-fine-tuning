@@ -39,3 +39,33 @@ def test_depuis_config() -> None:
     autre = config.model_copy(update={"k": 2, "seuil_pertinence": 0.1})
     recherche = depuis_config(FakeEmbedder(), FakeVectorStore(), autre)
     assert (recherche.k, recherche.seuil) == (2, 0.1)
+
+
+class _EmbedderTronquant(FakeEmbedder):
+    """Simule `EmbedderLlama` : tronque au-delà de `limite` caractères et le compte."""
+
+    def __init__(self, limite: int) -> None:
+        super().__init__()
+        self.limite = limite
+        self.textes_tronques = 0
+
+    def vectoriser(self, textes):
+        self.textes_tronques += sum(len(t) > self.limite for t in textes)
+        return super().vectoriser(textes)
+
+
+def test_requete_tronquee_signalee_sans_erreur(caplog) -> None:
+    embedder, store = _EmbedderTronquant(10), FakeVectorStore([passage(1, 0.9)])
+    recherche = RechercheIndex(embedder, store, 3, 0.5)
+    with caplog.at_level("WARNING", logger="slmsp.harness.recherche_index"):
+        assert [p.chunk_id for p in recherche.rechercher("x" * 50)] == ["c1"]
+    assert recherche.requetes_tronquees == 1
+    assert "tronquée" in caplog.text
+    recherche.rechercher("court")
+    assert recherche.requetes_tronquees == 1
+
+
+def test_embedder_sans_compteur_inchange() -> None:
+    recherche = RechercheIndex(FakeEmbedder(), FakeVectorStore(), 3, 0.5)
+    recherche.rechercher("x" * 50)
+    assert recherche.requetes_tronquees == 0

@@ -213,7 +213,8 @@ def test_micro_lot_bge_m3(slug: str) -> None:
     reste sous le texte long ; `data filter` garde le contexte entier."""
     config = serveur.charger_config_modele(slug)
     assert config.micro_lot_pour("texte_long") == config.contexte
-    assert 1163 + 16 <= config.micro_lot_pour("passage") < config.micro_lot_pour("texte_long")
+    assert config.micro_lot_pour("passage") == 1536  # plus long passage 1 165 tokens
+    assert 1165 + 16 <= config.micro_lot_pour("passage") < config.micro_lot_pour("texte_long")
 
 
 def test_parametres_invalides(vendor_factice) -> None:

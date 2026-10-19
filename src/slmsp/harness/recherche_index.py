@@ -9,6 +9,7 @@ Le pipeline `data` (story 9.4) réutilise cette classe.
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import TYPE_CHECKING
 
@@ -17,6 +18,9 @@ from slmsp.index.config import ConfigIndex, charger_config_index
 
 if TYPE_CHECKING:
     from slmsp.core.ports import EmbedderPort, Passage, VectorStore
+
+
+LOGGER = logging.getLogger("slmsp.harness.recherche_index")
 
 
 class RequeteVide(SlmspError):
@@ -37,12 +41,22 @@ class RechercheIndex:
         self.vector_store = vector_store
         self.k = k
         self.seuil = float(seuil)
+        self.requetes_tronquees = 0
+        """Requêtes tronquées par l'embedder (contexte) depuis la création."""
 
     def rechercher(self, requete: str) -> list[Passage]:
         """Passages de score `>= seuil` parmi les `k` plus proches, par score décroissant."""
         if not requete.strip():
             raise RequeteVide("requête de recherche vide")
+        # La troncature (à micro-lot - 16 tokens) est faite par l'embedder, qui la compte dans
+        # `textes_tronques` et la journalise ; on relève ici l'écart, sans dupliquer la logique.
+        avant = getattr(self.embedder, "textes_tronques", 0)
         matrice = self.embedder.vectoriser([requete])
+        if getattr(self.embedder, "textes_tronques", 0) > avant:
+            self.requetes_tronquees += 1
+            LOGGER.warning(
+                "recherche : requête de %d caractères tronquée par l'embedder", len(requete)
+            )
         passages = self.vector_store.rechercher(matrice[0], self.k)
         return [passage for passage in passages if passage.score >= self.seuil]
 
