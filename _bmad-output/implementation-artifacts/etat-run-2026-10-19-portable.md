@@ -68,6 +68,9 @@ Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campa
 - 2026-10-19 08:24 · config · test des configs Granite réaligné sur 3072 (6e81b5f).
 - 2026-10-19 · 9.9 · dev fini (3249d64). Essai réel sur copie de v2 : 503 → 425 lignes. CO 34→34, CR 76→0 (écartées `longueur`), CT 34→34, LC 69→69 (65 préambules retirés, 2 signalées), Q 92→92 (59 retirés), RD 91→89 (57 retirés, 2 gardés car lien, 2 écartés à 1 248 et 1 277 tokens), RE 34→34, generique 73→73 (4 retirés).
 - 2026-10-19 08:28 · 9.9 · second avis : 3 medium (vérification par sous-suite qui accepte un retrait silencieux de lignes ; fidélité LC par sous-chaîne, « 1 500 » trouvé dans « 11 500 » ; `tokenizers` hors extra `data`), 6 low. Revue Opus lancée avec ces constats.
+- 2026-10-19 · 9.9 · revue Opus : 3 medium corrigés (écarts déclarés rang par rang au MANIFEST, `nettoyage.ecartes`, et vérifiés par `charger_jeu` ; fidélité LC par éléments extraits ; `tokenizers` absent → erreur claire), 5 low corrigés, 2 rejetés. Fusion b13b018.
+- 2026-10-19 08:42 · v4 · `data build --nettoyage --depuis 20261018-115927-build-424c --modele base:minicpm5-2b` : **v4 = 425 lignes** (run `runs/data-build/20261019-084237-nettoyage-7b09`), comptes identiques à l'essai. LC signalés : 2, sur des sigles (CB, CPH) : à relire par Anaël dans `rapport.json`. MANIFEST et configs commités (7b9dce0).
+- 2026-10-19 08:45 · campagne v4 · M1 QLoRA bf16 8192 lancé sous garde RAM (`scratchpad/v4-run.ps1` + `garde_ram.py`, arrêt propre au-delà de 28 Go), puis export cuda et notation. Suite complète lancée en parallèle sur main.
 - 2026-10-19 08:15 · 9.9 nettoyage · spec révisée d'après Opus (93f6831) ; dev lancé (Opus, story à risque D1), worktree `slmsp-wt/nettoyage-v4`.
 
 ## Journal de la nuit
