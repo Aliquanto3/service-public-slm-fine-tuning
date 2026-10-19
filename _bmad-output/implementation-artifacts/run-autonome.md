@@ -70,3 +70,4 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 22:37 · S5 · fusion · tests ciblés verts (170) · 75eec75
 - 2026-10-19 22:37 · v13 · génération CR, CT, LC par `mistral-large-4` lancée (`--completer-depuis 20261019-180544-generate-bd87`), campagne de budget actuelle (reste génération 3,11 €) · —
 - 2026-10-19 22:37 · run · suite complète de mi-parcours lancée (après S1, S2, S3, S5) · —
+- 2026-10-19 22:50 · run · suite complète : 5 570 passés, 2 échecs (tests S3 qui supposaient un `juges.toml` sans juge tiers, cassés par la config DeepSeek/GLM) ; tests réalignés · —

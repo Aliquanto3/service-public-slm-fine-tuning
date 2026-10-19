@@ -163,19 +163,20 @@ def test_estimer_sans_appel(
 # --- Configuration --------------------------------------------------------------------------------
 
 
-def test_juges_toml_actuel_sans_juge_tiers() -> None:
+def test_juges_toml_actuel_charge_avec_ses_juges_tiers() -> None:
     config = charger_juges()
-    assert config.juges_tiers == {}
     assert config.second.modele and config.principal.modele
+    for tiers in config.juges_tiers.values():
+        assert tiers.fournisseur == "openrouter" and tiers.modele
 
 
 def test_juges_toml_avec_juge_tiers(tmp_path: Path) -> None:
     texte = (racine_projet() / "config" / "juges.toml").read_text(encoding="utf-8")
-    texte += '\n[juges_tiers.deepseek]\nmodele = "deepseek/x"\nmax_tokens = 8000\n'
+    texte += '\n[juges_tiers.essai_test]\nmodele = "deepseek/x"\nmax_tokens = 8000\n'
     chemin = tmp_path / "juges.toml"
     chemin.write_text(texte, encoding="utf-8")
     config = charger_juges(chemin)
-    tiers = config.juges_tiers["deepseek"]
+    tiers = config.juges_tiers["essai_test"]
     assert tiers.fournisseur == "openrouter" and tiers.usage_budget == "juge-tiers-openrouter"
     assert tiers.sortie_estimation == 3500
     assert config.principal == charger_juges().principal
