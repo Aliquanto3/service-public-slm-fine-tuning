@@ -14,8 +14,8 @@ jeu_version = "v2"
 graine = 1234
 longueur_max = 8192
 precision_base = "bf16"
-# PROVISOIRE : remplacer par le run_id du run M1 terminé de cette campagne avant lancement.
-sft_run_id = "00000000-000000-m1-qlora-minicpm5-2b-0000"
+# Run SFT de départ : M1 de la campagne, terminé le 2026-10-19 (QLoRA bf16, 8192 tokens).
+sft_run_id = "20261019-000939-m1-qlora-minicpm5-2b-4423"
 
 [hyperparametres]
 lora_rang = 16
