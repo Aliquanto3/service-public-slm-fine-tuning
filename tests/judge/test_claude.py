@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import sqlite3
 import subprocess
 import sys
+from contextlib import closing
 from types import SimpleNamespace
 from typing import Any
 
@@ -321,7 +323,7 @@ def test_creation_de_lot_en_erreur(banc: Any, doublures: SimpleNamespace, items:
     banc.faux.creation = lambda: httpx2.Response(500, json={"type": "error"})
     rapport = banc.juge().juger(demandes(doublures, items, "Q-001"))
     (resultat,) = rapport.resultats
-    assert resultat.statut == "non-juge" and resultat.motif == "erreur-api"
+    assert resultat.statut == "non-juge" and resultat.motif == "erreur-creation-lot"
     assert banc.lots()[0]["statut"] == "abandonne"
     (ligne,) = banc.lignes_registre()
     assert ligne["etat"] == "pire-cas"
@@ -331,7 +333,7 @@ def test_creation_de_lot_en_erreur(banc: Any, doublures: SimpleNamespace, items:
 
 
 @pytest.mark.parametrize(
-    ("statut", "motif"), [(400, "erreur-api"), (401, "erreur-api"), (429, "limite-debit")]
+    ("statut", "motif"), [(400, "erreur-creation-lot"), (401, "erreur-api"), (429, "limite-debit")]
 )
 def test_creation_de_lot_refusee_non_facturee(
     banc: Any, doublures: SimpleNamespace, items: Any, statut: int, motif: str
@@ -914,3 +916,41 @@ def test_lot_partiel_puis_budget_epuise(banc: Any, doublures: SimpleNamespace, i
     assert rapport.budget_epuise
     (lot,) = corps_json(banc, "POST /v1/messages/batches")
     assert len(lot["requests"]) == 1
+
+
+@pytest.mark.parametrize("reseau", [False, True])
+def test_creation_de_lot_en_erreur_est_tracee(
+    banc: Any,
+    doublures: SimpleNamespace,
+    items: Any,
+    caplog: pytest.LogCaptureFixture,
+    reseau: bool,
+) -> None:
+    """5xx ou erreur réseau : log WARNING et ligne `appels` portant type et message."""
+
+    def creation() -> httpx2.Response:
+        if reseau:
+            raise httpx2.ConnectError("<panne-reseau-factice>")
+        return httpx2.Response(
+            500, json={"type": "error", "error": {"type": "api_error", "message": "<msg-factice>"}}
+        )
+
+    banc.faux.creation = creation
+    with caplog.at_level("WARNING", logger="slmsp.judge.claude"):
+        rapport = banc.juge().juger(demandes(doublures, items, "Q-001"))
+    (resultat,) = rapport.resultats
+    assert resultat.motif == "erreur-creation-lot"
+    attendu = "<panne-reseau-factice>" if reseau else "<msg-factice>"
+    assert any(attendu in m for m in caplog.messages)
+    with closing(sqlite3.connect(banc.cache.chemin)) as connexion:
+        lignes = connexion.execute(
+            "SELECT mode, lot_id, issue, tokens_entree FROM appels"
+        ).fetchall()
+    (mode, lot_id, issue, tokens) = lignes[0]
+    assert mode == "batch" and lot_id == banc.lots()[0]["lot_id"] and tokens is None
+    assert issue.startswith("erreur-creation-lot:") and attendu in issue
+    assert (
+        ("APIConnectionError" in issue)
+        if reseau
+        else ("APIStatusError" in issue or "InternalServer" in issue)
+    )

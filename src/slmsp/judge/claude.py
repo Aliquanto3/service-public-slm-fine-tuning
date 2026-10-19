@@ -30,6 +30,7 @@ Requête au Juge : `model`, `max_tokens`, un seul message `user` et `output_conf
 
 from __future__ import annotations
 
+import logging
 import time
 import uuid
 from collections.abc import Callable, Mapping, Sequence
@@ -73,6 +74,9 @@ STATUT_LIMITE_DEBIT: Final = 429
 
 MOTIF_BUDGET: Final = "budget"
 MOTIF_ERREUR_API: Final = "erreur-api"
+MOTIF_ERREUR_CREATION_LOT: Final = "erreur-creation-lot"
+LONGUEUR_MESSAGE_ERREUR: Final = 500
+LOGGER: Final = logging.getLogger(__name__)
 MOTIF_LIMITE_DEBIT: Final = "limite-debit"
 MOTIF_LOT_NON_ANNULE: Final = "lot-non-annule"
 
@@ -80,6 +84,7 @@ ISSUE_JUGE: Final = "juge"
 ISSUE_NON_CONFORME: Final = "non-conforme"
 ISSUE_INVALIDE: Final = "invalide"
 ISSUE_ERREUR_API: Final = "erreur-api"
+ISSUE_ERREUR_CREATION_LOT: Final = "erreur-creation-lot"
 
 StatutJugement = Literal["juge", "invalide", "non-juge"]
 
@@ -428,9 +433,12 @@ class JugeClaude:
                 self.cache.changer_statut(lot_id, "abandonne")
                 arret = motif_arret(statut) if refus else None
                 etat.arret = etat.arret or arret
+                detail = self._tracer_erreur_creation(lot_id, exc, statut, soumises)
+                LOGGER.warning("création du lot %s en erreur : %s", lot_id, detail)
                 for r in soumises:
                     etat.resoudre(
-                        r.cle, _Issue("non-juge", mode="batch", motif=arret or MOTIF_ERREUR_API)
+                        r.cle,
+                        _Issue("non-juge", mode="batch", motif=arret or MOTIF_ERREUR_CREATION_LOT),
                     )
                 continue
             self.cache.marquer_soumis(lot_id, cree.id, self.maintenant())
@@ -439,6 +447,31 @@ class JugeClaude:
             self._achever_lot(lot, soumises, etat)
         for cle in restantes:
             etat.resoudre(cle, _Issue("non-juge", motif=etat.arret or MOTIF_BUDGET))
+
+    def _tracer_erreur_creation(
+        self, lot_id: str, exc: Exception, statut: int | None, soumises: list[RequeteLot]
+    ) -> str:
+        """Trace persistante d'un échec de création : une ligne `appels` par requête du lot.
+
+        Le détail (type, statut HTTP, message tronqué, sans en-têtes) va dans `issue`, sous le
+        préfixe `erreur-creation-lot`. Coût 0 : le coût du lot reste imputé au registre.
+        """
+        message = str(getattr(exc, "message", None) or exc)[:LONGUEUR_MESSAGE_ERREUR]
+        detail = f"{type(exc).__name__} statut={statut} {message}"
+        if exc.__cause__ is not None:  # le SDK enveloppe les erreurs réseau
+            cause = str(exc.__cause__)[:LONGUEUR_MESSAGE_ERREUR]
+            detail += f" cause={type(exc.__cause__).__name__} {cause}"
+        for r in soumises:
+            self.cache.journaliser_appel(
+                cle=r.cle,
+                item_id=r.item_id,
+                mode="batch",
+                lot_id=lot_id,
+                usage=None,
+                cout_eur=0.0,
+                issue=f"{ISSUE_ERREUR_CREATION_LOT}: {detail}",
+            )
+        return detail
 
     def _ecoule(self, lot: LotLocal, debut: float) -> float:
         """Secondes écoulées depuis `soumis_le` (horloge murale), sinon depuis `debut`."""
