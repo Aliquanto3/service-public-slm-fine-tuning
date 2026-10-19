@@ -79,6 +79,9 @@ class ConfigMistral(ModeleConfig):
     """Modèle demandé par le Générateur (`data generate`) ; `None` : celui de `modele`."""
     modeles_preversion_generateur: list[Nom] = Field(default_factory=list)
     """Préversions admises pour le Générateur seul (story S5), hors de la liste stable."""
+    marge_raisonnement_generateur: int = Field(default=0, ge=0, le=100_000)
+    """Tokens de raisonnement ajoutés au `max_tokens` de chaque gabarit pour un Générateur de
+    préversion (modèle de raisonnement) ; 0 pour les modèles stables."""
 
     @model_validator(mode="after")
     def _coherence(self) -> ConfigMistral:

@@ -13,7 +13,7 @@ import pytest
 
 pytest.importorskip("mistralai")
 
-from slmsp.core.erreurs import ProvenanceInvalide  # noqa: E402
+from slmsp.core.erreurs import ProvenanceInvalide, ReponseTronquee  # noqa: E402
 from slmsp.data.extraction import VERSION_EXTRACTEUR, extraire_contenu, extraire_message  # noqa: E402
 
 
@@ -69,3 +69,11 @@ def test_message_garde_les_appels_d_outils() -> None:
 def test_refus(mauvais: Any) -> None:
     with pytest.raises(ProvenanceInvalide):
         extraire_contenu(mauvais)
+
+
+def test_tronquee_sans_texte_est_une_reponse_tronquee() -> None:
+    mauvais = brut(
+        {"role": "assistant", "content": [{"type": "thinking", "thinking": []}]}, "length"
+    )
+    with pytest.raises(ReponseTronquee):
+        extraire_message(mauvais)

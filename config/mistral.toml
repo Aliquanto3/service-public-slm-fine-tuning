@@ -24,6 +24,11 @@ modele_generateur = "mistral-large-latest"
 # l'identifiant exact renvoyé par l'API (`modeles_generateurs`). Tarif : `tarifs.toml`.
 modeles_preversion_generateur = ["mistral-large-4"]
 
+# Mistral Large 4 raisonne : ses tokens de raisonnement comptent dans `max_tokens`. Marge
+# ajoutée au `max_tokens` de chaque gabarit pour un Générateur de préversion seulement (0 pour
+# un modèle stable), reprise dans l'estimation de coût affichée avant génération.
+marge_raisonnement_generateur = 4000
+
 # Motifs refusés dans un nom de modèle, demandé ou résolu (sous-chaîne, insensible à la
 # casse) : modèles Labs, préversions, bêtas, candidats et modèles expérimentaux.
 motifs_interdits = ["labs", "preview", "beta", "-rc", "experimental"]

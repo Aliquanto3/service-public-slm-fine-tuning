@@ -343,6 +343,9 @@ class ExecuteurSessions:
             compteur.nouveaux += 1
             compteur.cout_eur += generation.reponse.cout_eur
             appel_id, fin = generation.appel_id, generation.reponse.finish_reason
+            if fin == "length":  # avant l'extraction : un raisonnement tronqué n'a pas de texte
+                compteur.appel_ids.append(appel_id)
+                raise Abandon("reponse_tronquee", f"appel {appel_id} : réponse tronquée (length)")
             message = message_assistant(generation.reponse_brute)
         compteur.appel_ids.append(appel_id)
         if fin == "length":
