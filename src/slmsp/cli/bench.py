@@ -1,14 +1,16 @@
-"""`slmsp bench {liste, run}` : benchmarks standardisés déclarés par `config/benchmarks/*.toml`.
+"""`slmsp bench {liste, cache-hf, run}` : benchmarks standardisés (`config/benchmarks/*.toml`).
 
-`bench liste` affiche les benchmarks configurés. `bench run --modele base:<slug>` lance le
-socle (`--socle`) ou une liste (`--benchmarks a,b`), filtrés par `--cible` et
-`--quantification`. Code de sortie 1 si au moins un benchmark est en erreur.
+`bench liste` affiche les benchmarks configurés. `bench cache-hf` installe, en ligne, le cache
+HF des jeux `lm_eval` (`[options.jeux_hf]`) puis le contrôle hors ligne. `bench run
+--modele base:<slug>` lance le socle (`--socle`) ou une liste (`--benchmarks a,b`), filtrés par
+`--cible` et `--quantification`. Code de sortie 1 si au moins un benchmark est en erreur.
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+from typing import Any
 
 from slmsp.benchmarks import config as config_bench
 from slmsp.benchmarks import orchestrateur
@@ -27,6 +29,16 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
 
     p = actions.add_parser("liste", help="benchmarks configurés")
     p.set_defaults(func=_liste)
+
+    p = actions.add_parser(
+        "cache-hf",
+        help="remplir le cache HF des jeux lm_eval (réseau ; révisions épinglées)",
+    )
+    p.add_argument("depots", nargs="*", metavar="DEPOT", help="dépôts (défaut : tous)")
+    p.add_argument(
+        "--racine", default=None, help="racine du run runs/fetch/ (cache : SLMSP_MODELS_DIR)"
+    )
+    p.set_defaults(func=_cache_hf)
 
     p = actions.add_parser("run", help="lancer des benchmarks sur un modèle")
     p.add_argument("--modele", required=True, help="base:<slug> ou ft:<run_id>")
@@ -79,6 +91,41 @@ def _liste(_args: argparse.Namespace) -> int:
             f"{c.nom:<22}{c.moteur:<12}{c.cible:<7}{c.quantification:<16}"
             f"{c.fewshot:<10}{limite:<8}{'oui' if c.socle else 'non'}{inconnu}"
         )
+    return int(CodeSortie.SUCCES)
+
+
+def _cache_hf(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from slmsp.benchmarks import cache_hf
+    from slmsp.core.artefacts import nouveau_run
+    from slmsp.core.config import racine_projet
+
+    cache = cache_hf.preparer()
+    pins = cache_hf.lire_pins(config_bench.dossier_benchmarks(), args.depots)
+    racine = Path(args.racine if args.racine is not None else racine_projet()).resolve()
+    run = nouveau_run(
+        "fetch",
+        "cache-hf",
+        {"sous_commande": "cache-hf", "jeux": pins, "hf_home": str(cache), "racine": str(racine)},
+        racine=racine,
+    )
+
+    def consigner(ligne: dict[str, Any]) -> None:
+        run.ajouter_jsonl("fichiers.jsonl", ligne)
+        print(f"{ligne['statut']:<12} {ligne['depot']} @ {ligne['revision'][:8]}", flush=True)
+
+    try:
+        cache_hf.executer(pins, cache, consigner=consigner)
+    except KeyboardInterrupt:
+        run.terminer("interrompu", "arrêt demandé")
+        raise
+    except Exception as exc:
+        run.terminer("partiel-erreur", f"{type(exc).__name__} : {exc}")
+        print(f"run {run.run_id} : {run.dossier}", file=sys.stderr)
+        raise
+    run.terminer("complet")
+    print(f"bench cache-hf : {len(pins)} jeu(x) lisible(s) hors ligne ; run {run.run_id}")
     return int(CodeSortie.SUCCES)
 
 

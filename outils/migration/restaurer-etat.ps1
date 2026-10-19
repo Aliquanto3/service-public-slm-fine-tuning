@@ -4,6 +4,7 @@
 # Contenu : var (journaux Mistral, registre des budgets, verdicts), data/cache, data/train,
 # mémoire Claude Code du projet, CLAUDE.md globaux (posés seulement s'ils manquent),
 # puis data/raw/eval-sources depuis une seconde release (environ 900 Mo).
+# Le cache HF des jeux lm_eval (models/.cache-hf) n'est pas dans l'archive : il se reconstruit par `slmsp bench cache-hf` (phase 1).
 # N'écrase aucun fichier existant sans -Forcer. Le fichier .env n'est jamais dans l'archive.
 param(
     [string]$Repo = 'Aliquanto3/slmsp-etat',

@@ -43,6 +43,7 @@ uv run --no-sync slmsp fetch llamacpp
 uv run --no-sync slmsp fetch sources
 uv run --no-sync slmsp index build
 uv run --no-sync slmsp fetch benchmarks
+uv run --no-sync slmsp bench cache-hf
 uv run --no-sync slmsp fetch modeles bge-m3 bge-m3-f16 granite-4.0-1b minicpm5-1b
 uv run --no-sync slmsp fetch modeles granite-4.0-1b minicpm5-1b --f16
 # Phase 2 : environnement de travail, comme sur la tour (retire fetch, installe torch cu130)
@@ -50,6 +51,8 @@ uv sync --extra data --extra judge --extra bench --extra train --extra gdn --ext
 ```
 
 L'extra `gdn` (triton-windows 3.8.0.post29, flash-linear-attention 0.5.2) fournit les noyaux du chemin rapide Gated DeltaNet des Qwen3.5 : sans lui, `train run` refuse un modèle à couches `linear_attention` (sauf `repli_torch = true`, plus lent, `longueur_max <= 4096`). Il est en conflit avec `fetch` pour la même raison que `train` et ne figure donc jamais en phase 1.
+
+`bench cache-hf` remplit le cache HF des jeux de `lm_eval` (`<models>/.cache-hf`, environ 515 Mo) pour chaque dépôt de `[options.jeux_hf]` : `snapshot_download` à la révision épinglée, `refs/main` sur cette révision, `load_dataset` en ligne (cache `datasets`), puis relecture de chaque jeu hors ligne (`HF_DATASETS_OFFLINE=1`, `HF_HUB_OFFLINE=1`) ; la commande échoue sinon. Elle est idempotente : un jeu déjà lisible hors ligne n'est pas retéléchargé. C'est une sous-commande de `bench` (le paquet `fetch` s'interdit `snapshot_download` et les sous-processus). Elle se lance en **phase 1** (venv `fetch` + `bench`, `datasets` vient de lm-eval), car elle a besoin du réseau et d'`huggingface-hub` 2.2.0 ; le cache vit dans `models/`, donc la phase 2 le retrouve. Sans elle, `bench run` refuse les benchmarks HF (`verifier_cache_hf`). Ce cache n'est ni exporté ni publié avec l'état : il se reconstruit par cette commande (`restaurer-etat.ps1` ne le copie pas).
 
 Pour télécharger un modèle plus tard, repasser par la phase 1, puis revenir à la phase 2.
 
