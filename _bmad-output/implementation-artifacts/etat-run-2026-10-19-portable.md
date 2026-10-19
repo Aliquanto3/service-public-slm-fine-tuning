@@ -106,6 +106,7 @@ Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M
 - 2026-10-19 17:39 · **v9 prêt** (`data/train/v9`, 484 lignes, nettoyage `20261019-173901-nettoyage-3ed6`) : RE sans étiquette de tête (34 → 0). Médianes : Q 106, RD 47, CR 396, LC 113, CT 152, RE 112, generique 96.
 - 2026-10-19 17:40 · **dossier de relecture pour Anaël** : `dossier-relecture-v9.md` (+ échantillon). Configs proposées `config/runs/m1-qlora-minicpm5-2b-v9.toml` et `m3-dora-…-v9.toml` (non commitées, en attente de son accord). Points : RD court et maigre (64 ex.), CR au plafond, note « Passage non simplifié » dans 65 LC (voulue par le gabarit), 1 époque ≈ 60 pas. **Aucun entraînement lancé.**
 - 2026-10-19 17:40 · bloqueur de veille arrêté (PID 9136) : plus rien ne tourne (GPU libre, aucune notation ni génération).
+- 2026-10-19 17:49 · **décision d'Anaël** · Qwen3.5-2B et Qwen3.5-0.8B ajoutés à la campagne de fine-tuning, sous condition de RAM ≤ 5 Go : vérifiée (3,39 et 2,26 Go en CPU q4_k_m ; 23,2 et 43,3 tokens/s contre 15 à 16,7 pour MiniCPM5-2B). Configs M1 et M3 v9 préparées (`config/runs/m*-qwen3.5-*-v9.toml`, validées par `charger_run_config`), non commitées avant la relecture. Rappel : la meilleure Baseline globale reste MiniCPM5-2B (41,1) ; Qwen3.5-2B n'a que le meilleur RD (86,9).
 
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).

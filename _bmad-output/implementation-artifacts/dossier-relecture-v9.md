@@ -60,6 +60,15 @@ Un échantillon de deux cibles par tâche est dans `dossier-relecture-v9-echanti
 - M4 ORPO demanderait de nouvelles paires depuis v9 : génération locale sur GPU, sans appel payant.
 - **Budget Anthropic restant : 5,66 €**, soit environ 2 notations.
 
+### Ajout du 19 à 17 h 50 : Qwen3.5 dans la campagne (décision d'Anaël)
+- Configs `m1-qlora-` et `m3-dora-` pour `qwen3.5-2b` et `qwen3.5-0.8b`, sur v9. Une campagne par modèle (`<slug>-v9`), mêmes hyperparamètres, 8 192 tokens. Les sondes du 19 tiennent sur 6 Go : 4,15 Gio et 2,42 Gio.
+- Mesures CPU (q4_k_m) :
+  - qwen3.5-2b : 3,39 Go de RAM, 23,2 tokens/s, Baseline 36,0, RD 86,9 ;
+  - qwen3.5-0.8b : 2,26 Go, 43,3 tokens/s, Baseline ~27,5.
+  
+  Les deux restent sous 5 Go.
+- Budget : six runs M1 et M3 sur trois modèles demanderaient environ 18 € de notation, pour 5,66 € restants. Il faut prioriser, par exemple M1 sur chacun des trois modèles (environ 9 €), ou relever le budget.
+
 ## 5. Ce que j'attends de toi
 - Valider v9 ou demander un correctif. Le plus probable : RD, point 3.1.
 - Valider le protocole et l'ordre M1 puis M3 ; dire si l'on teste 2 époques.
