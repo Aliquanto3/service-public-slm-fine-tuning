@@ -48,6 +48,12 @@ Notations : `runs/eval-notation/20261019-040548-ft-minicpm5-2b-1d82` (M1, 2,98 �
 
 Pistes, à décider par Anaël : filtrer les préambles et borner les longueurs au `max_tokens` de l'évaluation dans `data filter` ou `data build` ; contrôler la fidélité des cibles LC ; peut-être régénérer en partie (appel Mistral payant). **La notation de M4 est suspendue** jusqu'à son avis, puisque M4 part de M1. Elle coûterait environ 3 € et il reste environ 9,2 € au plafond.
 
+## Décisions d'Anaël du 19 au matin
+- **Nettoyer le jeu avant tout nouvel entraînement** : retirer les préambles (« Voici… ») des réponses cibles, borner leur longueur au `max_tokens` de l'évaluation, contrôler la fidélité des cibles LC. On le fait par une règle déterministe dans `data build` ou `data filter`, qui produit une nouvelle version du jeu, comme R7 §0. Claude ne rédige aucune donnée (D1). Une régénération payante par Mistral n'est **pas** approuvée.
+- **Entraînements sous garde mémoire** : `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`, surveillance de la RAM du PC. Le 19 vers 5 h 30, la VRAM pleine a débordé en RAM partagée (17 Go alloués) : Claude Code a coupé ses tâches de fond, dont le bloqueur de veille et M4 à 2048.
+- **État de M4** : 8192 et 4096 tombent en OOM. Le run `runs/train/20261019-053250-m4-orpo-minicpm5-2b-b525` (campagne `minicpm5-2b-v3-orpo-2048`) est resté `en_cours` après la coupure, sans processus. `config/runs/m4-orpo-minicpm5-2b.toml` contient cette dernière tentative et n'est pas commité.
+- **Budget** : la campagne `finetune-minicpm5-2b-2026-10-19` garde environ 9,2 € pour Anthropic, soit trois notations environ.
+
 ## Journal de la nuit
 - 01:10 : M3 (DoRA) lancé, puis export et notation de M1 (`scratchpad/nuit2.ps1`).
 - 02:05 : M3 terminé (`runs/train/20261019-011031-m3-dora-minicpm5-2b-b9bb`, 55 min). L'export de M1 échoue : `convert_hf_to_gguf.py` importe `sentencepiece` sans condition. Corrigé : `sentencepiece` est ajouté à l'extra `train` et installé par `uv sync --inexact --no-install-project`, ce qui ne retire rien du venv.
