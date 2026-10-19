@@ -79,3 +79,4 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 23:41 · essai lr · export, génération, notation de la variante lr 1e-4 relancés · —
 - 2026-10-19 23:41 · S3 · juges tiers · premier essai coupé par mon `timeout` (25 min, 80 appels séquentiels) ; 12 runs relancés en parallèle (deepseek, glm × 3 Baselines + 3 M1 v11) · —
 - 2026-10-19 23:41 · fix raisonnement · dev fini (66174d9), second avis 3 low, review lancée (Sonnet) · —
+- 2026-10-19 23:48 · fix raisonnement · review (1 low corrigé, 1 rejeté) 0743932 ; fusion · bf239df
