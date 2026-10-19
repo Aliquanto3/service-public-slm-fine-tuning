@@ -172,9 +172,9 @@ def lancer_nettoyage(
 
     `modele` : `base:<slug>` (tokenizer). `plafond_tokens` : `[generation].max_tokens` de
     `config/evaluation.toml`. Avant tout run : `ManifesteInvalide` (run absent, d'un autre
-    type, sans jeu SFT, jeu déjà nettoyé) ou `ProvenanceInvalide` (SHA altéré). Si une Tâche
-    autre que CR tombe à 0 exemple, `ManifesteInvalide` : le run est clos `partiel-erreur` et
-    rien n'est écrit sous `data/train/`.
+    type, sans jeu SFT, jeu déjà nettoyé ou restreint) ou `ProvenanceInvalide` (SHA altéré).
+    Si une Tâche autre que CR tombe à 0 exemple, `ManifesteInvalide` : le run est clos
+    `partiel-erreur` et rien n'est écrit sous `data/train/`.
     """
     slug = modele.removeprefix("base:") if modele.startswith("base:") else ""
     if not slug:
@@ -191,6 +191,10 @@ def lancer_nettoyage(
         ) from None
     if source.nettoyage is not None:
         raise ManifesteInvalide(f"jeu {version_src} : déjà nettoyé (repartir du jeu source)")
+    if source.sous_ensemble is not None:
+        raise ManifesteInvalide(
+            f"jeu {version_src} : restreint à des Tâches (nettoyer le jeu source, puis restreindre)"
+        )
     try:
         lignes = [json.loads(texte) for texte in octets.split(b"\n") if texte.strip()]
         for ligne in lignes:

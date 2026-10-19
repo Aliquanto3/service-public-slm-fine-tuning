@@ -1,0 +1,35 @@
+# Run M1, QLoRA, MiniCPM5-2B, TEST PARTIEL (campagne minicpm5-2b-v11-partiel, jeu v12 attendu).
+# Contexte : sur le jeu v11 complet (campagne minicpm5-2b-v11), M1 baisse sur CR, CT et LC
+# (structure des cibles non conforme à la grille) et gagne sur CO, RE, RD. Test autorisé par
+# Anaël : M1 entraîné seulement sur les Tâches Q, RD, RE, CO et generique (CR, CT, LC exclues).
+# Le jeu v12 est le sous-ensemble de v11 produit par
+#   uv run --no-sync slmsp data build --sous-ensemble --depuis 20261019-194543-nettoyage-c782 --taches Q,RD,RE,CO,generique
+# (lignes copiées à l'identique, MANIFEST avec provenance). Vérifier que la version
+# imprimée par cette commande est bien v12, sinon corriger jeu_version avant le lancement.
+# « v12 » est la prochaine version libre au moment de la story S2 : le build ci-dessus est
+# lancé juste après la fusion, avant tout autre build. Le MANIFEST de data/train/v12 doit
+# porter un bloc « sous_ensemble » (taches = CO, Q, RD, RE, generique) ; sinon, ne pas lancer.
+# Mêmes hyperparamètres que la campagne minicpm5-2b-v11 ; seuls le jeu et la campagne changent.
+# Garde mémoire (décision d'Anaël du 2026-10-19) : PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# et surveillance de la RAM du PC (arrêt propre au-delà de 28 Go).
+# Lancement : uv run --no-sync slmsp train run --config config/runs/m1-qlora-minicpm5-2b-v11-partiel.toml
+
+campagne = "minicpm5-2b-v11-partiel"
+modele = "minicpm5-2b"
+methode = "qlora"
+jeu_version = "v12"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
