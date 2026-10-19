@@ -839,3 +839,103 @@ def test_mmproj_b11429_qwen35_reel(vendor_reel: Path, tmp_path: Path) -> None:
     bilan = sonder_vision(q4, mmproj, "qwen3.5-0.8b")
     assert bilan["modalite_vision"] is True, bilan
     assert bilan["valide"] is True, bilan
+
+
+# --- renommage final robuste au verrou transitoire (Windows) ---
+
+
+def _partiel_factice(tmp_path: Path) -> tuple[Path, Path]:
+    sortie = tmp_path / "modele-f16.gguf"
+    partiel = tmp_path / "modele-f16.gguf.part"
+    partiel.write_bytes(b"<contenu-factice>")
+    return partiel, sortie
+
+
+def test_renommage_reessaye_sur_permission_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    partiel, sortie = _partiel_factice(tmp_path)
+    vrai_rename = os.rename
+    appels: list[int] = []
+
+    def rename_verrouille(src: Any, dst: Any) -> None:
+        appels.append(1)
+        if len(appels) <= 2:
+            raise PermissionError(32, "fichier utilisé par un autre processus")
+        vrai_rename(src, dst)
+
+    pauses: list[float] = []
+    monkeypatch.setattr(serveur.os, "rename", rename_verrouille)
+    serveur._renommer_sans_remplacement(partiel, sortie, attendre=pauses.append)
+    assert sortie.is_file()
+    assert not partiel.exists()
+    assert len(appels) == 3
+    assert pauses == [0.5, 1.0]
+
+
+def test_renommage_verrou_persistant_remonte(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    partiel, sortie = _partiel_factice(tmp_path)
+
+    def rename_verrouille(src: Any, dst: Any) -> None:
+        raise PermissionError(32, "fichier utilisé par un autre processus")
+
+    pauses: list[float] = []
+    monkeypatch.setattr(serveur.os, "rename", rename_verrouille)
+    with pytest.raises(PermissionError):
+        serveur._renommer_sans_remplacement(partiel, sortie, borne=10.0, attendre=pauses.append)
+    assert partiel.is_file()
+    assert not sortie.exists()
+    assert sum(pauses) == 10.0
+
+
+def test_renommage_autre_oserror_non_reessayee(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    partiel, sortie = _partiel_factice(tmp_path)
+    appels: list[int] = []
+
+    def rename_existe(src: Any, dst: Any) -> None:
+        appels.append(1)
+        raise FileExistsError(17, "existe")
+
+    pauses: list[float] = []
+    monkeypatch.setattr(serveur.os, "rename", rename_existe)
+    with pytest.raises(FileExistsError):
+        serveur._renommer_sans_remplacement(partiel, sortie, attendre=pauses.append)
+    assert len(appels) == 1
+    assert pauses == []
+
+
+def test_executer_vers_reessaie_le_renommage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sortie = tmp_path / "modele-q4.gguf"
+    partiel = tmp_path / "modele-q4.gguf.part"
+
+    def executer(arguments: list[str], **options: Any) -> tuple[int, str]:
+        partiel.write_bytes(b"<contenu-factice>")
+        return 0, ""
+
+    vrai_rename = os.rename
+    appels: list[int] = []
+
+    def rename_verrouille(src: Any, dst: Any) -> None:
+        appels.append(1)
+        if len(appels) == 1:
+            raise PermissionError(32, "fichier utilisé par un autre processus")
+        vrai_rename(src, dst)
+
+    pauses: list[float] = []
+    monkeypatch.setattr(processus, "executer", executer)
+    monkeypatch.setattr(serveur.os, "rename", rename_verrouille)
+    monkeypatch.setattr(serveur.time, "sleep", pauses.append)
+    commande = serveur.Commande(["outil"], {})
+    assert (
+        serveur._executer_vers("outil", commande, sortie, partiel, delai=None, journal=None)
+        == sortie
+    )
+    assert sortie.is_file()
+    assert not partiel.exists()
+    assert pauses == [0.5]
