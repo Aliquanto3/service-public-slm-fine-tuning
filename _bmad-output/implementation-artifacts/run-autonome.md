@@ -66,3 +66,7 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 22:22 · S3 · décision · GLM-5.2 remplacé par **GLM-5.3** (phare, plus récent ; question d'Anaël) ; pas de recommandation de juge trouvée chez Artificial Analysis ; le choix final du juge tiers se fera sur l'accord avec l'audit humain d'Anaël · —
 - 2026-10-19 22:23 · S5 · second-avis · 3 medium (préversion trop large, faux rejets CR « Décisions prises » et CT « Objet du courrier »), 3 low ; D1 sans défaut ; review lancée (Opus) · —
 - 2026-10-19 22:28 · S2 · M1 test : génération complète `runs/eval-generation/20261019-221301-ft-minicpm5-2b-2758` (export `20261019-220936-ft-minicpm5-2b-3934`), notation en fond · —
+- 2026-10-19 22:37 · S5 · review · 3 medium (préversion stricte, sections CR et objet CT tolérants), 3 low corrigés · 3b473e7
+- 2026-10-19 22:37 · S5 · fusion · tests ciblés verts (170) · 75eec75
+- 2026-10-19 22:37 · v13 · génération CR, CT, LC par `mistral-large-4` lancée (`--completer-depuis 20261019-180544-generate-bd87`), campagne de budget actuelle (reste génération 3,11 €) · —
+- 2026-10-19 22:37 · run · suite complète de mi-parcours lancée (après S1, S2, S3, S5) · —
