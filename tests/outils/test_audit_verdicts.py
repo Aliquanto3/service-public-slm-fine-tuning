@@ -123,3 +123,55 @@ def test_run_inconnu(racine: Path, tmp_path: Path) -> None:
         _charger().main(
             ["--notation", "absent", "--racine", str(racine), "--sortie", str(tmp_path / "x.html")]
         )
+
+
+def _item_cr(module, criteres_p, criteres_s=None, source=None, gen=None):
+    def v(criteres):
+        return None if criteres is None else {"verdict": {"criteres": criteres}}
+
+    return module._item_audit(
+        "N1",
+        "CR-001",
+        {"id": "CR-001", "decisions_reference": ["<d1>", "<d2>"]} if source is None else source,
+        {"sortie_canonique": {"texte": "x"}} if gen is None else gen,
+        {"principal": v(criteres_p), "second": v(criteres_s)},
+    )
+
+
+def test_criteres_en_liste_refs_en_double_et_absentes() -> None:
+    module = _charger()
+    liste = {
+        "presence_elements": [
+            {"ref": "D1", "present": 1, "justification": "j"},
+            {"ref": "D1", "present": 0.5},
+            {"present": 0},
+        ]
+    }
+    item = _item_cr(module, liste, {"presence_elements": [{"ref": "D1", "present": 1}]})
+    cles = [c["cle"] for c in item["criteres"]]
+    assert cles == ["presence_elements:D1", "presence_elements:D1#2", "presence_elements:?#3"]
+    assert item["criteres"][0]["description"] == "<d1>"
+    assert item["criteres"][0]["diverge"] is False
+    assert len(item["alertes"]) == 2
+
+
+def test_criteres_scalaire_un_seul_juge_et_alertes_absence() -> None:
+    module = _charger()
+    item = _item_cr(module, {"exactitude": 1}, None, source={}, gen={})
+    (critere,) = item["criteres"]
+    assert critere["principal"]["note"] == 1 and critere["second"] is None
+    assert critere["diverge"] is False
+    assert any("Item introuvable" in a for a in item["alertes"])
+    assert any("Sortie introuvable" in a for a in item["alertes"])
+
+
+def test_recherche_de_donnees_et_exclus(racine: Path) -> None:
+    module = _charger()
+    notation = racine / "runs" / "eval-notation" / "N1"
+    lignes = [json.loads(x) for x in (notation / "verdicts.jsonl").read_text("utf-8").splitlines()]
+    lignes.append(_verdict("Q-001", "second", {"exactitude": 1}) | {"statut": "echec"})
+    _ecrire(notation / "verdicts.jsonl", lignes)
+    donnees = module.construire_donnees(racine, ["N1"], None)
+    assert donnees["runs"][0]["exclus"] == {"second (echec)": 1}
+    assert "RD" in donnees["taches"]
+    assert "libelle_correct" in donnees["taches"]["RD"]["criteres"]

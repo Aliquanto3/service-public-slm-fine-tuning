@@ -219,17 +219,31 @@ def _libelle_ref(item: dict[str, Any], ref: str) -> str:
 
 
 def _aplatir(
-    code: str, criteres: dict[str, Any], item: dict[str, Any]
+    code: str, criteres: dict[str, Any], item: dict[str, Any], alertes: list[str] | None = None
 ) -> dict[str, dict[str, Any]]:
-    """Critères d'un verdict en `{clé: {note, justification, titre, description}}`."""
+    """Critères d'un verdict en `{clé: {note, justification, titre, description}}`.
+
+    Les éléments d'un critère en liste (`ref`) gardent tous leur entrée : une réf en double ou
+    absente reçoit un suffixe d'indice et un avertissement est ajouté à `alertes`.
+    """
     noms = TACHES.get(code, ("", {}))[1]
     sortie: dict[str, dict[str, Any]] = {}
+    vues: set[str] = set()
     for cle, valeur in criteres.items():
         libelle = noms[cle][0] if cle in noms else cle
         if isinstance(valeur, list):
-            for element in valeur:
-                ref = str(element.get("ref", "?"))
-                sortie[f"{cle}:{ref}"] = {
+            for rang, element in enumerate(valeur, 1):
+                if not isinstance(element, dict):
+                    continue
+                ref = str(element.get("ref") or "?")
+                cle_ref = f"{cle}:{ref}"
+                if ref == "?" or cle_ref in vues:
+                    motif = "absente" if ref == "?" else "en double"
+                    if alertes is not None:
+                        alertes.append(f"Référence {motif} dans « {cle} » ({ref}, rang {rang}).")
+                    cle_ref = f"{cle_ref}#{rang}"
+                vues.add(cle_ref)
+                sortie[cle_ref] = {
                     "note": element.get("present"),
                     "justification": element.get("justification", ""),
                     "titre": f"{libelle} — {ref}",
@@ -242,6 +256,8 @@ def _aplatir(
                 "titre": libelle,
                 "description": "",
             }
+        elif isinstance(valeur, int | float | str) and valeur is not None:
+            sortie[cle] = {"note": valeur, "justification": "", "titre": libelle, "description": ""}
     return sortie
 
 
@@ -266,8 +282,13 @@ def _item_audit(
 ) -> dict[str, Any]:
     code = item_id.split("-")[0]
     sortie = generation.get("sortie_canonique") or {}
+    alertes: list[str] = []
+    if not source:
+        alertes.append("Item introuvable dans le Jeu d'évaluation : entrée et référence absentes.")
+    if not generation:
+        alertes.append("Sortie introuvable dans les générations du run : sortie vide affichée.")
     aplatis = {
-        nom: _aplatir(code, v["verdict"].get("criteres") or {}, source) if v else {}
+        nom: _aplatir(code, v["verdict"].get("criteres") or {}, source, alertes) if v else {}
         for nom, v in verdicts.items()
     }
     criteres = []
@@ -295,6 +316,7 @@ def _item_audit(
             for s in sortie.get("sources") or []
         ],
         "tronquee": bool(generation.get("tronquee")),
+        "alertes": list(dict.fromkeys(alertes)),
         "reference": _reference(source),
         "criteres": criteres,
         "inventions": {
@@ -322,15 +344,20 @@ def charger_run(
         for ligne in _lire_jsonl(racine / "eval" / "jeu" / jeu_version / "items.jsonl")
     }
     verdicts: dict[tuple[str, str], dict[str, Any]] = {}
+    exclus: dict[str, int] = {}
     for ligne in _lire_jsonl(dossier / "verdicts.jsonl"):
         if ligne.get("statut") == "juge" and ligne.get("verdict"):
             verdicts[(ligne["item_id"], ligne["juge"])] = ligne
+        else:
+            nom = f"{ligne.get('juge', '?')} ({ligne.get('statut', '?')})"
+            exclus[nom] = exclus.get(nom, 0) + 1
     run = {
         "id": run_id,
         "modele": meta.get("modele_ref", "?"),
         "jeu": jeu_version,
         "generation": run_gen,
         "kappa": _kappas(scores),
+        "exclus": exclus,
     }
     items = []
     for item_id in sorted({cle[0] for cle in verdicts}):

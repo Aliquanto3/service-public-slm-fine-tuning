@@ -6,10 +6,10 @@
 <title>Audit des verdicts des juges</title>
 <style>
 :root{--bg:#f6f7f9;--fg:#1c2230;--muted:#5d667a;--card:#fff;--line:#d9dde6;--acc:#2456c7;
---ok:#1f7a3d;--ko:#b3261e;--warn:#fff1c2;--warnfg:#6b4e00;--div:#fde4e1;--pri:#e5eeff;--sec:#f0e8ff}
+--ok:#1f7a3d;--ko:#b3261e;--warn:#fff1c2;--warnfg:#6b4e00;--div:#fde4e1;--pri:#e5eeff;--sec:#f0e8ff;--accfg:#fff}
 @media (prefers-color-scheme:dark){:root{--bg:#12151c;--fg:#e4e8f1;--muted:#98a1b5;
 --card:#1b202b;--line:#323a4b;--acc:#7da3ff;--ok:#5fd085;--ko:#ff8a80;--warn:#3d3410;--warnfg:#f3dc8a;
---div:#4a2320;--pri:#1d2a4a;--sec:#33264d}}
+--div:#4a2320;--pri:#1d2a4a;--sec:#33264d;--accfg:#0b1020}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
 main{max-width:1200px;margin:0 auto;padding:12px 16px 48px}
@@ -21,7 +21,7 @@ table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{border-bottom:1p
 .barre{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
 select,button,input,textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
 button{cursor:pointer}button:hover{border-color:var(--acc)}
-button.actif{background:var(--acc);color:#fff;border-color:var(--acc)}
+button.actif{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
 .grille{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:820px){.grille{grid-template-columns:1fr}}
 #liste{max-height:75vh;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
@@ -55,7 +55,7 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;paddi
 <summary>À quoi sert cette page, et comment l'utiliser</summary>
 <p><b>But.</b> Chaque réponse d'un modèle est notée par un juge principal (Claude) et, pour un échantillon, par un second juge (Mistral). Quand les deux juges se contredisent, un seul peut avoir raison. Vous relisez la sortie du modèle, la référence et les deux justifications, puis vous indiquez pour chaque critère <i>qui a raison</i>. Le tableau de synthèse mesure alors la fiabilité réelle de chaque juge.</p>
 <p><b>Le kappa (de Cohen)</b> mesure l'accord entre deux juges <i>au-delà du hasard</i> : 1 = accord parfait, 0 = pas mieux que deux juges qui répondraient au hasard avec leurs propres fréquences, négatif = désaccord systématique. Un kappa de 0,00 alerte, mais il peut avoir deux causes très différentes : (a) les juges notent vraiment différemment ; (b) l'un des deux met presque toujours la même note (par exemple 0), et le kappa s'effondre même quand l'accord brut est élevé. Seul votre audit tranche : si l'un des juges a raison sur la plupart des désaccords, c'est lui qu'il faut croire ; si aucun n'a raison, la grille ou le prompt est en cause. Avec peu d'items notés par les deux juges par Tâche, le kappa est de toute façon très bruité.</p>
-<p><b>Comment noter.</b> Pour chaque critère, comparez les notes aux ancrages de la grille (affichés sous le nom du critère) et à la référence. Choisissez <i>principal</i>, <i>second</i> ou <i>aucun des deux</i> ; si les juges concordent, vous pouvez valider avec <i>les deux</i>. Une note humaine et un commentaire sont facultatifs. Priorité : les critères bordés de rouge (désaccords). Tout est enregistré dans ce navigateur ; pensez à <b>exporter en JSON</b> pour ne rien perdre et le transmettre.</p>
+<p><b>Comment noter.</b> Pour chaque critère, comparez les notes aux ancrages de la grille (affichés sous le nom du critère) et à la référence. Choisissez <i>principal</i>, <i>second</i> ou <i>aucun des deux</i> ; si les juges concordent, vous pouvez valider avec <i>les deux</i> (critère noté par un seul juge : ce juge ou <i>a tort</i>). Une note humaine et un commentaire sont facultatifs. Priorité : les critères bordés de rouge (désaccords). Tout est enregistré dans ce navigateur ; pensez à <b>exporter en JSON</b> pour ne rien perdre et le transmettre.</p>
 <p><b>Raccourcis.</b> <kbd>j</kbd> ou <kbd>→</kbd> : item suivant ; <kbd>k</kbd> ou <kbd>←</kbd> : item précédent (hors zone de saisie).</p>
 <div id="criteres-taches" class="defil"></div>
 </details>
@@ -88,8 +88,12 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;paddi
 "use strict";
 const D = JSON.parse(document.getElementById("donnees").textContent);
 const CLE = "audit-verdicts-v1";
+const objet = v => v !== null && typeof v === "object" && !Array.isArray(v);
 let etat = {};
-try { etat = JSON.parse(localStorage.getItem(CLE) || "{}") || {}; } catch (e) { etat = {}; }
+try {
+  const lu = JSON.parse(localStorage.getItem(CLE) || "{}");
+  if (objet(lu)) for (const [k, v] of Object.entries(lu)) if (objet(v)) etat[k] = v;
+} catch (e) { etat = {}; }
 function sauver() { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {} }
 const el = (tag, props, ...enfants) => {
   const n = document.createElement(tag);
@@ -104,7 +108,7 @@ const kItem = it => it.run + "|" + it.id;
 const kCrit = (it, c) => kItem(it) + "|" + c.cle;
 const diverge = it => it.criteres.some(c => c.diverge);
 const rep = (it, c) => etat[kCrit(it, c)] || {};
-const fait = it => it.criteres.length > 0 && it.criteres.every(c => rep(it, c).choix);
+const fait = it => it.criteres.every(c => rep(it, c).choix); // sans critère (ex. CO) : rien à auditer, compté fait
 const fmt = v => (v === null || v === undefined ? "—" : String(v).replace(".", ","));
 
 let courant = null;
@@ -130,6 +134,10 @@ function kappas() {
     tab.append(el("tr", {}, el("td", {}, r.modele), el("td", {}, code), el("td", {}, fmt(k.valeur)), el("td", {}, fmt(k.effectif)), el("td", {}, pc)));
   }
   document.getElementById("kappas").append(tab);
+  for (const r of D.runs) {
+    const ex = Object.entries(r.exclus || {});
+    if (ex.length) document.getElementById("kappas").append(el("p", {class: "muted"}, "Verdicts exclus du run " + r.modele + " (statut autre que « juge », ou sans verdict) : " + ex.map(([n, v]) => n + " : " + v).join(" ; ")));
+  }
 }
 
 function visibles() {
@@ -146,7 +154,7 @@ function rendreListe() {
     liste.append(el("button", {class: courant === it ? "sel" : "", onclick: () => choisir(it)},
       el("b", {}, it.id), " ", el("span", {class: "muted"}, modeleDe(it.run)),
       nb ? el("span", {class: "pastille d"}, nb + " désaccord" + (nb > 1 ? "s" : "")) : el("span", {class: "pastille"}, "accord"),
-      fait(it) ? el("span", {class: "pastille f"}, "audité") : ""));
+      it.criteres.length && fait(it) ? el("span", {class: "pastille f"}, "audité") : ""));
   }
   if (!vis.length) liste.append(el("p", {class: "muted", style: "padding:8px"}, "Aucun item avec ces filtres."));
   const total = D.items.length, faits = D.items.filter(fait).length;
@@ -170,8 +178,11 @@ function bloc(nom, v, classe) {
 function critere(it, c) {
   const e = rep(it, c);
   const maj = (champ, val) => { etat[kCrit(it, c)] = Object.assign({}, etat[kCrit(it, c)], {[champ]: val, horodatage: new Date().toISOString()}); sauver(); };
-  const choix = [["principal", "Principal (Claude)"], ["second", "Second (Mistral)"], ["aucun", "Aucun des deux"]];
-  if (!c.diverge) choix.splice(2, 0, ["deux", "Les deux"]);
+  const choix = [];
+  if (c.principal) choix.push(["principal", "Principal (Claude)"]);
+  if (c.second) choix.push(["second", "Second (Mistral)"]);
+  if (c.principal && c.second && !c.diverge) choix.push(["deux", "Les deux"]);
+  choix.push(["aucun", c.principal && c.second ? "Aucun des deux" : "Ce juge a tort"]);
   const boutons = choix.map(([val, lib]) => el("button", {class: e.choix === val ? "actif" : "", onclick: () => { maj("choix", e.choix === val ? "" : val); rendreDetail(); rendreListe(); synthese(); }}, lib));
   const t = D.taches[it.tache], def = t && t.criteres[c.cle.split(":")[0]];
   const note = el("input", {class: "num", type: "text", inputMode: "decimal", value: e.note || "", placeholder: "note", onchange: ev => maj("note", ev.target.value)});
@@ -189,6 +200,7 @@ function rendreDetail() {
   if (!it) { d.append(el("p", {class: "muted"}, "Choisissez un item.")); return; }
   const t = D.taches[it.tache];
   d.append(el("h2", {}, it.id + " — " + (t ? t.nom : it.tache) + " — " + modeleDe(it.run)));
+  for (const a of it.alertes || []) d.append(el("div", {class: "alerte", role: "alert"}, a));
   d.append(el("div", {class: "carte"}, el("h3", {}, "Consigne et entrée"), it.entree.map(s => repliable(s.titre, s.texte))));
   const sortie = el("div", {class: "carte"}, el("h3", {}, "Sortie du modèle"));
   if (it.tronquee) sortie.append(el("div", {class: "alerte"}, "Sortie tronquée au plafond de tokens : les critères de complétude sont à lire avec prudence."));
@@ -254,18 +266,35 @@ function exporter() {
   document.body.append(a); a.click(); a.remove();
 }
 
+const CHOIX = ["", "principal", "second", "deux", "aucun"];
+const plusRecent = (a, b) => (Date.parse(a) || 0) > (Date.parse(b) || 0);
 function importer(texte) {
   let data; try { data = JSON.parse(texte); } catch (e) { alert("Fichier JSON illisible."); return; }
-  const lignes = Array.isArray(data) ? data : data.entrees;
+  const lignes = Array.isArray(data) ? data : (objet(data) ? data.entrees : null);
   if (!Array.isArray(lignes)) { alert("Format d'export inconnu."); return; }
-  let n = 0;
+  let ajoutees = 0, remplacees = 0, ignorees = 0;
   for (const l of lignes) {
-    if (!l || !l.run || !l.item) continue;
-    const cle = l.critere ? l.run + "|" + l.item + "|" + l.critere : l.run + "|" + l.item;
-    etat[cle] = l.critere ? {choix: l.choix || "", note: l.note || "", horodatage: l.horodatage || ""} : {commentaire: l.commentaire || "", horodatage: l.horodatage || ""};
-    n++;
+    const it = objet(l) && D.items.find(i => i.run === l.run && i.id === l.item);
+    if (!it) { ignorees++; continue; }
+    let nouv, cle;
+    if (l.critere) {
+      const c = it.criteres.find(x => x.cle === l.critere);
+      const choix = l.choix || "";
+      if (!c || !CHOIX.includes(choix) || (choix === "principal" && !c.principal) || (choix === "second" && !c.second)) { ignorees++; continue; }
+      cle = kCrit(it, c);
+      nouv = {choix, note: String(l.note == null ? "" : l.note).slice(0, 20), horodatage: String(l.horodatage || "")};
+    } else {
+      if (typeof l.commentaire !== "string") { ignorees++; continue; }
+      cle = kItem(it);
+      nouv = {commentaire: l.commentaire, horodatage: String(l.horodatage || "")};
+    }
+    const ancien = etat[cle];
+    if (!ancien) { etat[cle] = nouv; ajoutees++; }
+    else if (plusRecent(nouv.horodatage, ancien.horodatage)) { etat[cle] = nouv; remplacees++; }
+    else ignorees++;
   }
-  sauver(); rendreDetail(); rendreListe(); synthese(); alert(n + " entrées importées.");
+  sauver(); rendreDetail(); rendreListe(); synthese();
+  alert(ajoutees + " ajoutée(s), " + remplacees + " remplacée(s) (plus récentes), " + ignorees + " ignorée(s) (inconnues, invalides ou moins récentes).");
 }
 
 function init() {
