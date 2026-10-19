@@ -80,3 +80,5 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 23:41 · S3 · juges tiers · premier essai coupé par mon `timeout` (25 min, 80 appels séquentiels) ; 12 runs relancés en parallèle (deepseek, glm × 3 Baselines + 3 M1 v11) · —
 - 2026-10-19 23:41 · fix raisonnement · dev fini (66174d9), second avis 3 low, review lancée (Sonnet) · —
 - 2026-10-19 23:48 · fix raisonnement · review (1 low corrigé, 1 rejeté) 0743932 ; fusion · bf239df
+- 2026-10-19 23:56 · v13 · génération Large 3 `runs/data-generate/20261019-225253-generate-9ba4` arrêtée en partiel-budget (ancienne campagne, 2,36 €) : CR 77/80 (3 abandons), LC 80/80, CT 5/35 ; reprise (`--reprendre`) dans la campagne de nuit pour les 30 CT restants · —
+- 2026-10-19 23:56 · v14 · génération **Mistral Large 4** lancée en parallèle (`runs/data-generate/20261019-234849-generate-4192`), correctif de raisonnement actif : premières sessions ok · —
