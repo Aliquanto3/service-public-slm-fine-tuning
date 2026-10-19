@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit des verdicts des juges</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1c2230;--muted:#5d667a;--card:#fff;--line:#d9dde6;--acc:#2456c7;
+--ok:#1f7a3d;--ko:#b3261e;--warn:#fff1c2;--warnfg:#6b4e00;--div:#fde4e1;--pri:#e5eeff;--sec:#f0e8ff}
+@media (prefers-color-scheme:dark){:root{--bg:#12151c;--fg:#e4e8f1;--muted:#98a1b5;
+--card:#1b202b;--line:#323a4b;--acc:#7da3ff;--ok:#5fd085;--ko:#ff8a80;--warn:#3d3410;--warnfg:#f3dc8a;
+--div:#4a2320;--pri:#1d2a4a;--sec:#33264d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1200px;margin:0 auto;padding:12px 16px 48px}
+h1{font-size:1.35rem;margin:.4em 0}h2{font-size:1.1rem;margin:.2em 0}h3{font-size:1rem;margin:.8em 0 .3em}
+details.aide{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:8px 0}
+details.aide summary{cursor:pointer;font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+.defil{overflow-x:auto}
+.barre{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+select,button,input,textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+button{cursor:pointer}button:hover{border-color:var(--acc)}
+button.actif{background:var(--acc);color:#fff;border-color:var(--acc)}
+.grille{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grille{grid-template-columns:1fr}}
+#liste{max-height:75vh;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+@media (max-width:820px){#liste{max-height:30vh}}
+#liste button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent}
+#liste button.sel{background:var(--pri)}
+.pastille{display:inline-block;font-size:.75rem;border-radius:10px;padding:0 7px;margin-left:4px;border:1px solid var(--line);color:var(--muted)}
+.pastille.d{background:var(--div);color:var(--ko);border-color:var(--ko)}.pastille.f{color:var(--ok);border-color:var(--ok)}
+.carte{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:10px 0}
+pre{white-space:pre-wrap;word-wrap:break-word;margin:0;font:13px/1.5 ui-monospace,Consolas,monospace;max-height:22em;overflow:auto}
+.alerte{background:var(--warn);color:var(--warnfg);border-radius:6px;padding:4px 10px;margin:6px 0}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:700px){.duo{grid-template-columns:1fr}}
+.juge{border-radius:6px;padding:6px 10px;border:1px solid var(--line)}
+.juge.p{background:var(--pri)}.juge.s{background:var(--sec)}
+.crit{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:10px 0;background:var(--card)}
+.crit.div{border-color:var(--ko);box-shadow:inset 4px 0 0 var(--ko)}
+.note{font-weight:700;font-size:1.1rem}
+.choix{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.muted{color:var(--muted);font-size:.85rem}
+.pb{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.pb>div{height:100%;background:var(--acc)}
+textarea{width:100%;min-height:4.5em}
+input.num{width:5em}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:.85em}
+</style>
+</head>
+<body>
+<main>
+<h1>Audit des verdicts des juges</h1>
+<details class="aide" open>
+<summary>À quoi sert cette page, et comment l'utiliser</summary>
+<p><b>But.</b> Chaque réponse d'un modèle est notée par un juge principal (Claude) et, pour un échantillon, par un second juge (Mistral). Quand les deux juges se contredisent, un seul peut avoir raison. Vous relisez la sortie du modèle, la référence et les deux justifications, puis vous indiquez pour chaque critère <i>qui a raison</i>. Le tableau de synthèse mesure alors la fiabilité réelle de chaque juge.</p>
+<p><b>Le kappa (de Cohen)</b> mesure l'accord entre deux juges <i>au-delà du hasard</i> : 1 = accord parfait, 0 = pas mieux que deux juges qui répondraient au hasard avec leurs propres fréquences, négatif = désaccord systématique. Un kappa de 0,00 alerte, mais il peut avoir deux causes très différentes : (a) les juges notent vraiment différemment ; (b) l'un des deux met presque toujours la même note (par exemple 0), et le kappa s'effondre même quand l'accord brut est élevé. Seul votre audit tranche : si l'un des juges a raison sur la plupart des désaccords, c'est lui qu'il faut croire ; si aucun n'a raison, la grille ou le prompt est en cause. Avec peu d'items notés par les deux juges par Tâche, le kappa est de toute façon très bruité.</p>
+<p><b>Comment noter.</b> Pour chaque critère, comparez les notes aux ancrages de la grille (affichés sous le nom du critère) et à la référence. Choisissez <i>principal</i>, <i>second</i> ou <i>aucun des deux</i> ; si les juges concordent, vous pouvez valider avec <i>les deux</i>. Une note humaine et un commentaire sont facultatifs. Priorité : les critères bordés de rouge (désaccords). Tout est enregistré dans ce navigateur ; pensez à <b>exporter en JSON</b> pour ne rien perdre et le transmettre.</p>
+<p><b>Raccourcis.</b> <kbd>j</kbd> ou <kbd>→</kbd> : item suivant ; <kbd>k</kbd> ou <kbd>←</kbd> : item précédent (hors zone de saisie).</p>
+<div id="criteres-taches" class="defil"></div>
+</details>
+
+<div class="carte"><h2>Kappa des notations chargées</h2><div id="kappas" class="defil"></div></div>
+
+<div class="barre">
+<label>Tâche <select id="f-tache"></select></label>
+<label>Run <select id="f-run"></select></label>
+<label><input type="checkbox" id="f-div"> Désaccords seulement</label>
+<label><input type="checkbox" id="f-todo"> À auditer seulement</label>
+<span id="compteur" class="muted"></span>
+<button id="b-export">Exporter JSON</button>
+<button id="b-import">Importer JSON</button>
+<input type="file" id="fichier" accept=".json,application/json" hidden>
+</div>
+<div class="pb"><div id="barre"></div></div>
+
+<div class="grille">
+<div id="liste" role="listbox" aria-label="Items"></div>
+<div id="detail"></div>
+</div>
+
+<div class="carte"><h2>Synthèse de votre audit</h2>
+<p class="muted">Taux d'accord = part des critères audités pour lesquels vous donnez raison au juge (« les deux » compte pour chacun). « Sur désaccords » ne compte que les critères où les juges divergent : c'est la mesure décisive.</p>
+<div id="synthese" class="defil"></div></div>
+</main>
+<script id="donnees" type="application/json">__DONNEES__</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById("donnees").textContent);
+const CLE = "audit-verdicts-v1";
+let etat = {};
+try { etat = JSON.parse(localStorage.getItem(CLE) || "{}") || {}; } catch (e) { etat = {}; }
+function sauver() { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {} }
+const el = (tag, props, ...enfants) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") n.className = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n[k] = v;
+  }
+  for (const c of enfants.flat()) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+};
+const modeleDe = id => (D.runs.find(r => r.id === id) || {}).modele || id;
+const kItem = it => it.run + "|" + it.id;
+const kCrit = (it, c) => kItem(it) + "|" + c.cle;
+const diverge = it => it.criteres.some(c => c.diverge);
+const rep = (it, c) => etat[kCrit(it, c)] || {};
+const fait = it => it.criteres.length > 0 && it.criteres.every(c => rep(it, c).choix);
+const fmt = v => (v === null || v === undefined ? "—" : String(v).replace(".", ","));
+
+let courant = null;
+const filtres = {tache: "", run: "", div: false, todo: false};
+
+function aide() {
+  const conteneur = document.getElementById("criteres-taches");
+  const codes = [...new Set(D.items.map(i => i.tache))];
+  conteneur.append(el("h3", {}, "Critères par Tâche (d'après la grille du Juge)"));
+  const tab = el("table", {}, el("tr", {}, el("th", {}, "Tâche"), el("th", {}, "Critère"), el("th", {}, "Échelle"), el("th", {}, "Ancrage")));
+  for (const code of codes) {
+    const t = D.taches[code]; if (!t) continue;
+    for (const c of Object.values(t.criteres)) tab.append(el("tr", {}, el("td", {}, code + " — " + t.nom), el("td", {}, c.titre), el("td", {}, c.echelle), el("td", {}, c.ancrage)));
+  }
+  conteneur.append(tab);
+}
+
+function kappas() {
+  const tab = el("table", {}, el("tr", {}, el("th", {}, "Run"), el("th", {}, "Tâche"), el("th", {}, "κ"), el("th", {}, "Notés par les deux"), el("th", {}, "κ par critère")));
+  for (const r of D.runs) for (const [code, k] of Object.entries(r.kappa)) {
+    if (k.valeur === null && !k.effectif) continue;
+    const pc = Object.entries(k.par_critere).map(([c, v]) => c + " " + fmt(v)).join(" ; ");
+    tab.append(el("tr", {}, el("td", {}, r.modele), el("td", {}, code), el("td", {}, fmt(k.valeur)), el("td", {}, fmt(k.effectif)), el("td", {}, pc)));
+  }
+  document.getElementById("kappas").append(tab);
+}
+
+function visibles() {
+  return D.items.filter(it => (!filtres.tache || it.tache === filtres.tache) && (!filtres.run || it.run === filtres.run)
+    && (!filtres.div || diverge(it)) && (!filtres.todo || !fait(it)))
+    .sort((a, b) => (diverge(b) - diverge(a)) || a.tache.localeCompare(b.tache) || a.id.localeCompare(b.id, "fr", {numeric: true}) || a.run.localeCompare(b.run));
+}
+
+function rendreListe() {
+  const liste = document.getElementById("liste"); liste.replaceChildren();
+  const vis = visibles();
+  for (const it of vis) {
+    const nb = it.criteres.filter(c => c.diverge).length;
+    liste.append(el("button", {class: courant === it ? "sel" : "", onclick: () => choisir(it)},
+      el("b", {}, it.id), " ", el("span", {class: "muted"}, modeleDe(it.run)),
+      nb ? el("span", {class: "pastille d"}, nb + " désaccord" + (nb > 1 ? "s" : "")) : el("span", {class: "pastille"}, "accord"),
+      fait(it) ? el("span", {class: "pastille f"}, "audité") : ""));
+  }
+  if (!vis.length) liste.append(el("p", {class: "muted", style: "padding:8px"}, "Aucun item avec ces filtres."));
+  const total = D.items.length, faits = D.items.filter(fait).length;
+  document.getElementById("compteur").textContent = vis.length + " affichés ; " + faits + "/" + total + " audités";
+  document.getElementById("barre").style.width = (total ? 100 * faits / total : 0) + "%";
+  return vis;
+}
+
+function repliable(titre, texte) {
+  const pre = el("pre", {}, texte);
+  if (texte.length <= 700) return el("div", {}, el("b", {}, titre), pre);
+  return el("details", {}, el("summary", {}, el("b", {}, titre + " (" + texte.length + " caractères)")), pre);
+}
+
+function bloc(nom, v, classe) {
+  if (!v) return el("div", {class: "juge " + classe}, el("b", {}, nom), el("p", {class: "muted"}, "Pas de verdict de ce juge pour ce critère."));
+  return el("div", {class: "juge " + classe}, el("b", {}, nom), " ", el("span", {class: "note"}, fmt(v.note)),
+    el("div", {}, v.justification || "(pas de justification)"));
+}
+
+function critere(it, c) {
+  const e = rep(it, c);
+  const maj = (champ, val) => { etat[kCrit(it, c)] = Object.assign({}, etat[kCrit(it, c)], {[champ]: val, horodatage: new Date().toISOString()}); sauver(); };
+  const choix = [["principal", "Principal (Claude)"], ["second", "Second (Mistral)"], ["aucun", "Aucun des deux"]];
+  if (!c.diverge) choix.splice(2, 0, ["deux", "Les deux"]);
+  const boutons = choix.map(([val, lib]) => el("button", {class: e.choix === val ? "actif" : "", onclick: () => { maj("choix", e.choix === val ? "" : val); rendreDetail(); rendreListe(); synthese(); }}, lib));
+  const t = D.taches[it.tache], def = t && t.criteres[c.cle.split(":")[0]];
+  const note = el("input", {class: "num", type: "text", inputMode: "decimal", value: e.note || "", placeholder: "note", onchange: ev => maj("note", ev.target.value)});
+  return el("div", {class: "crit" + (c.diverge ? " div" : "")},
+    el("h3", {}, c.titre, c.diverge ? el("span", {class: "pastille d"}, "désaccord") : ""),
+    c.description ? el("div", {class: "muted"}, "Référence : " + c.description) : "",
+    def ? el("div", {class: "muted"}, "Échelle " + def.echelle + " — " + def.ancrage) : "",
+    el("div", {class: "duo"}, bloc("Juge principal (Claude)", c.principal, "p"), bloc("Second juge (Mistral)", c.second, "s")),
+    el("div", {class: "choix"}, el("span", {}, "Qui a raison ?"), boutons, el("label", {}, "Ma note ", note)));
+}
+
+function rendreDetail() {
+  const d = document.getElementById("detail"); d.replaceChildren();
+  const it = courant;
+  if (!it) { d.append(el("p", {class: "muted"}, "Choisissez un item.")); return; }
+  const t = D.taches[it.tache];
+  d.append(el("h2", {}, it.id + " — " + (t ? t.nom : it.tache) + " — " + modeleDe(it.run)));
+  d.append(el("div", {class: "carte"}, el("h3", {}, "Consigne et entrée"), it.entree.map(s => repliable(s.titre, s.texte))));
+  const sortie = el("div", {class: "carte"}, el("h3", {}, "Sortie du modèle"));
+  if (it.tronquee) sortie.append(el("div", {class: "alerte"}, "Sortie tronquée au plafond de tokens : les critères de complétude sont à lire avec prudence."));
+  sortie.append(el("pre", {}, it.sortie || "(sortie vide)"));
+  if (it.sources.length) sortie.append(el("div", {class: "muted"}, "Sources citées : " + it.sources.join(" ; ")));
+  d.append(sortie);
+  if (it.reference.length) d.append(el("div", {class: "carte"}, el("h3", {}, "Référence du jeu"), it.reference.map(s => repliable(s.titre, s.texte))));
+  const inv = it.inventions;
+  if ((inv.principal && inv.principal.length) || (inv.second && inv.second.length))
+    d.append(el("div", {class: "carte"}, el("h3", {}, "Inventions relevées"), el("div", {class: "duo"},
+      el("div", {class: "juge p"}, el("b", {}, "Principal"), el("ul", {}, (inv.principal || []).map(x => el("li", {}, x)))),
+      el("div", {class: "juge s"}, el("b", {}, "Second"), el("ul", {}, (inv.second || []).map(x => el("li", {}, x)))))));
+  d.append(it.criteres.map(c => critere(it, c)));
+  const ci = etat[kItem(it)] || {};
+  d.append(el("div", {class: "carte"}, el("h3", {}, "Commentaire libre"),
+    el("textarea", {value: ci.commentaire || "", oninput: ev => { etat[kItem(it)] = {commentaire: ev.target.value, horodatage: new Date().toISOString()}; sauver(); }})));
+}
+
+function choisir(it) { courant = it; rendreDetail(); rendreListe(); window.scrollTo({top: 0}); }
+function bouger(delta) {
+  const vis = visibles(); if (!vis.length) return;
+  const i = vis.indexOf(courant);
+  choisir(vis[Math.min(vis.length - 1, Math.max(0, i < 0 ? 0 : i + delta))]);
+  const b = document.querySelector("#liste button.sel"); if (b) b.scrollIntoView({block: "nearest"});
+}
+
+function synthese() {
+  const stats = {};
+  const ajout = (cle, c, e) => {
+    const s = stats[cle] = stats[cle] || {n: 0, p: 0, s: 0, nd: 0, pd: 0, sd: 0, accord: 0, nj: 0};
+    s.nj++; if (!c.diverge) s.accord++;
+    if (!e.choix) return;
+    s.n++; const p = e.choix === "principal" || e.choix === "deux", sc = e.choix === "second" || e.choix === "deux";
+    s.p += p; s.s += sc;
+    if (c.diverge) { s.nd++; s.pd += p; s.sd += sc; }
+  };
+  for (const it of D.items) for (const c of it.criteres) {
+    if (!c.principal || !c.second) continue;
+    const e = rep(it, c);
+    ajout(it.tache + " (toute la tâche)", c, e); ajout(it.tache + " · " + c.cle.split(":")[0], c, e);
+  }
+  const pct = (a, n) => n ? Math.round(100 * a / n) + " % (" + a + "/" + n + ")" : "—";
+  const tab = el("table", {}, el("tr", {}, ["Tâche · critère", "Accord brut entre juges", "Audités", "Accord avec principal", "Accord avec second", "Sur désaccords : principal", "Sur désaccords : second"].map(h => el("th", {}, h))));
+  for (const cle of Object.keys(stats).sort()) {
+    const s = stats[cle];
+    tab.append(el("tr", {}, el("td", {}, cle), el("td", {}, pct(s.accord, s.nj)), el("td", {}, s.n + "/" + s.nj), el("td", {}, pct(s.p, s.n)), el("td", {}, pct(s.s, s.n)), el("td", {}, pct(s.pd, s.nd)), el("td", {}, pct(s.sd, s.nd))));
+  }
+  document.getElementById("synthese").replaceChildren(tab);
+}
+
+function exporter() {
+  const lignes = [];
+  for (const it of D.items) {
+    for (const c of it.criteres) {
+      const e = rep(it, c);
+      if (e.choix || e.note) lignes.push({run: it.run, modele: modeleDe(it.run), item: it.id, tache: it.tache, critere: c.cle, choix: e.choix || "", note: e.note || "", commentaire: "", horodatage: e.horodatage || ""});
+    }
+    const ci = etat[kItem(it)];
+    if (ci && ci.commentaire) lignes.push({run: it.run, modele: modeleDe(it.run), item: it.id, tache: it.tache, critere: null, choix: "", note: "", commentaire: ci.commentaire, horodatage: ci.horodatage || ""});
+  }
+  const blob = new Blob([JSON.stringify({version: 1, exporte_le: new Date().toISOString(), entrees: lignes}, null, 2)], {type: "application/json"});
+  const a = el("a", {href: URL.createObjectURL(blob), download: "audit-verdicts-" + new Date().toISOString().slice(0, 10) + ".json"});
+  document.body.append(a); a.click(); a.remove();
+}
+
+function importer(texte) {
+  let data; try { data = JSON.parse(texte); } catch (e) { alert("Fichier JSON illisible."); return; }
+  const lignes = Array.isArray(data) ? data : data.entrees;
+  if (!Array.isArray(lignes)) { alert("Format d'export inconnu."); return; }
+  let n = 0;
+  for (const l of lignes) {
+    if (!l || !l.run || !l.item) continue;
+    const cle = l.critere ? l.run + "|" + l.item + "|" + l.critere : l.run + "|" + l.item;
+    etat[cle] = l.critere ? {choix: l.choix || "", note: l.note || "", horodatage: l.horodatage || ""} : {commentaire: l.commentaire || "", horodatage: l.horodatage || ""};
+    n++;
+  }
+  sauver(); rendreDetail(); rendreListe(); synthese(); alert(n + " entrées importées.");
+}
+
+function init() {
+  aide(); kappas();
+  const st = document.getElementById("f-tache"), sr = document.getElementById("f-run");
+  st.append(el("option", {value: ""}, "Toutes"));
+  for (const code of [...new Set(D.items.map(i => i.tache))]) st.append(el("option", {value: code}, code + " — " + ((D.taches[code] || {}).nom || "")));
+  sr.append(el("option", {value: ""}, "Tous"));
+  for (const r of D.runs) sr.append(el("option", {value: r.id}, r.modele + " (" + r.id.slice(0, 15) + ")"));
+  const maj = () => { filtres.tache = st.value; filtres.run = sr.value; filtres.div = document.getElementById("f-div").checked; filtres.todo = document.getElementById("f-todo").checked; rendreListe(); };
+  for (const id of ["f-tache", "f-run", "f-div", "f-todo"]) document.getElementById(id).addEventListener("change", maj);
+  document.getElementById("b-export").addEventListener("click", exporter);
+  const f = document.getElementById("fichier");
+  document.getElementById("b-import").addEventListener("click", () => f.click());
+  f.addEventListener("change", () => { if (f.files[0]) f.files[0].text().then(importer); f.value = ""; });
+  document.addEventListener("keydown", ev => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName || "") || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (ev.key === "j" || ev.key === "ArrowRight") { ev.preventDefault(); bouger(1); }
+    else if (ev.key === "k" || ev.key === "ArrowLeft") { ev.preventDefault(); bouger(-1); }
+  });
+  const vis = rendreListe(); synthese();
+  if (vis.length) choisir(vis[0]); else rendreDetail();
+}
+init();
+</script>
+</body>
+</html>
