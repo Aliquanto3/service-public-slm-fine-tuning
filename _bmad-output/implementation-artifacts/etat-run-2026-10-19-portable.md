@@ -59,6 +59,13 @@ Pistes, à décider par Anaël : filtrer les préambles et borner les longueurs 
 - **État de M4** : 8192 et 4096 tombent en OOM. Le run `runs/train/20261019-053250-m4-orpo-minicpm5-2b-b525` (campagne `minicpm5-2b-v3-orpo-2048`) est resté `en_cours` après la coupure, sans processus. `config/runs/m4-orpo-minicpm5-2b.toml` contient cette dernière tentative et n'est pas commité.
 - **Budget** : la campagne `finetune-minicpm5-2b-2026-10-19` garde environ 9,2 € pour Anthropic, soit trois notations environ.
 
+## Journal du 19 après-midi (Anaël absent)
+Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M1 v4 sous 9,20 € et 4,5 € par notation, M3/M4 selon le score, bloqueur de veille).
+- 2026-10-19 12:20 · reprise · bloqueur de veille actif (PID 9136), GPU libre.
+- 2026-10-19 12:22 · écart de 0,22 € · **pas d'écart** : chaque appel `direct` a sa réservation au registre (36 réservations pour 33 lignes de journal, les 3 de plus réglées à 0 €), montants égaux (0,2268 et 0,2228 €). La notation de 10 h n'a fait aucun appel direct (RD, CO, NR notés par contrôles automatiques). Aucune story pour ce point.
+- 2026-10-19 12:22 · reprise de notation · `eval run --reprendre` est refusé pour la notation ; la commande est `eval run --phase notation --depuis 20261019-091155-ft-minicpm5-2b-ee96` (cache des verdicts : rien n'est payé deux fois). Stats du cache Opus batch : 757 tokens de sortie en moyenne, 3 217 au plus (`max_tokens` 6 000), 0,0158 € par item.
+- 2026-10-19 12:23 · INC-1, INC-2, INC-3 · spec écrite (`spec-incident-cout-juge.md`), dev lancé en parallèle (3 worktrees `slmsp-wt/inc-*`).
+
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
 - 2026-10-19 08:04 · reprise · bloqueur de veille relancé (`scratchpad/veille.ps1`, SetThreadExecutionState) ; GPU libre (0 Mio) ; `config/runs/m4-orpo-minicpm5-2b.toml` remis à son état commité. Le run M4 `…-053250-…-b525` reste `en_cours` dans `run.json`, sans processus : **mort**, laissé tel quel (non supprimé).
