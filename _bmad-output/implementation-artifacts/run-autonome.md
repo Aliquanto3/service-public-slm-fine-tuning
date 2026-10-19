@@ -31,3 +31,9 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:47 · S2 · dev · fini (jeu v12 = v11 sans CR, CT, LC : 369 lignes attendues) · 30f861c
 - 2026-10-19 21:47 · S2 · second-avis · lancé · —
 - 2026-10-19 21:47 · S3, S5 · décision · specs écrites (`spec-s3-juges-tiers.md`, `spec-s5-cibles-v12.md`), relecture avant code lancée · —
+- 2026-10-19 21:50 · S1 · dev · fini (HTML 170 items, 110 désaccords) · 4260aba
+- 2026-10-19 21:50 · S1 · second-avis · 5 medium, 6 low ; review lancée (Sonnet) · —
+- 2026-10-19 21:50 · S2 · second-avis · 2 medium, 5 low ; review lancée (Opus) · —
+- 2026-10-19 21:50 · S3, S5 · décision · relecture des specs : 3 high (schéma juges extra=forbid, nouvelle campagne de budget obligatoire, modèle Mistral partagé avec le second juge), 12 medium/low ; specs révisées (224c51d). Constat : kappa « 0,00 » calculé sur 3 à 5 items par tâche, non interprétable → juges tiers sur tous les items CR, LC, CT, RE · 224c51d
+- 2026-10-19 21:50 · S3 · dev · lancé (Opus) · —
+- 2026-10-19 21:50 · S5 · dev · lancé (Opus) · —
