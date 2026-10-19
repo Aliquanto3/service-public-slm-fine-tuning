@@ -129,6 +129,33 @@ class Nettoyage(SousSchema):
         return self
 
 
+class SousEnsemble(SousSchema):
+    """Provenance d'un jeu restreint à certaines Tâches : `data build --sous-ensemble`.
+
+    Le jeu est la suite, à l'octet près et dans l'ordre, des lignes du jeu `depuis_version`
+    (run `depuis_build`, SHA `sha256_train_source`) dont la Tâche figure dans `taches`
+    (`core.sous_ensemble.verifier_sous_ensemble`). `comptes_source` : comptes par Tâche du jeu
+    source. Si le jeu source était nettoyé, son bloc `nettoyage` est repris tel quel dans
+    `nettoyage_source` : ses `ecartes` désignent des rangs du jeu amont du nettoyage, non
+    transposables au sous-ensemble ; le MANIFEST du sous-ensemble n'a donc pas de bloc
+    `nettoyage` propre, et `train.chargement` revérifie la chaîne de nettoyage du jeu source.
+    """
+
+    depuis_build: RunId
+    depuis_version: VersionJeu
+    sha256_train_source: Sha256
+    taches: list[Nom] = Field(min_length=1)
+    """Tâches gardées, triées, sans doublon."""
+    comptes_source: dict[str, int]
+    nettoyage_source: Nettoyage | None = Field(default=None, exclude_if=lambda v: v is None)
+
+    @model_validator(mode="after")
+    def _taches(self) -> Self:
+        if self.taches != sorted(set(self.taches)):
+            raise ValueError("taches : liste triée sans doublon attendue")
+        return self
+
+
 class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     """Contenu de `data/train/vN/MANIFEST.json` (`run_id` : le run `data-build`)."""
 
@@ -162,6 +189,8 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     jeu par sa version et son run de build (`train.run.CLES_INVARIANTS`)."""
     nettoyage: Nettoyage | None = Field(default=None, exclude_if=lambda v: v is None)
     """Présent sur un jeu nettoyé (story 9.9) : `train.chargement` revérifie la chaîne."""
+    sous_ensemble: SousEnsemble | None = Field(default=None, exclude_if=lambda v: v is None)
+    """Présent sur un jeu restreint à certaines Tâches : `train.chargement` revérifie la chaîne."""
 
 
 # --- Paires de préférence ORPO (story 9.7, FR-34, D-nuit-A1-21) ---------------------------------

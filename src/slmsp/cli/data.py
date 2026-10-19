@@ -34,6 +34,9 @@ ligne depuis les réponses Mistral journalisées, la compare octet par octet et 
 paires ORPO (chosen : exemple SFT ; rejected : génération du Modèle de base local, journalisée
 dans `generations-locales.sqlite`) dans une nouvelle version `data/train/vN/preferences.jsonl`
 (`slmsp.data.preferences`, dérogation FR-34 au MANIFEST).
+`build --sous-ensemble --depuis BUILD_RUN_ID --taches T1,T2,...` garde, dans une nouvelle version
+`data/train/vN/`, les seules lignes des Tâches demandées, copiées à l'identique
+(`slmsp.data.sous_ensemble`, test M1 partiel).
 `build --nettoyage --depuis BUILD_RUN_ID --modele base:SLUG` retire le préambule « Voici » des
 cibles, écarte celles qui dépassent `max_tokens` de l'évaluation (tokenizer du modèle) et signale
 les LC infidèles, dans une nouvelle version `data/train/vN/` (`slmsp.data.nettoyage`, story 9.9).
@@ -222,7 +225,8 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--depuis",
         required=True,
         metavar="RUN_ID",
-        help="run data-filter ; avec --preferences ou --nettoyage, run data-build du jeu SFT",
+        help="run data-filter ; avec --preferences, --nettoyage ou --sous-ensemble, "
+        "run data-build du jeu SFT",
     )
     b.add_argument(
         "--variante",
@@ -239,6 +243,16 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--nettoyage",
         action="store_true",
         help="nettoyer le jeu SFT : préambule « Voici » retiré, cibles trop longues écartées",
+    )
+    b.add_argument(
+        "--sous-ensemble",
+        action="store_true",
+        help="restreindre le jeu SFT aux Tâches de --taches (lignes copiées à l'identique)",
+    )
+    b.add_argument(
+        "--taches",
+        metavar="T1,T2,...",
+        help="Tâches gardées par --sous-ensemble (séparées par des virgules, ex. Q,RD,generique)",
     )
     b.add_argument(
         "--modele",
@@ -751,11 +765,40 @@ def _nettoyage(args: argparse.Namespace, racine: Path) -> int:
     return int(CodeSortie.SUCCES)
 
 
+def _sous_ensemble(args: argparse.Namespace, racine: Path) -> int:
+    from slmsp.core.erreurs import ManifesteInvalide
+    from slmsp.data.sous_ensemble import lancer_sous_ensemble
+
+    taches = [t.strip() for t in (args.taches or "").split(",") if t.strip()]
+    if not taches or args.modele or args.variante or args.preferences or args.nettoyage:
+        print(
+            "slmsp : --sous-ensemble exige --taches et exclut --modele, --variante, "
+            "--preferences et --nettoyage",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
+    try:
+        resultat = lancer_sous_ensemble(
+            racine=racine, build_run_id=args.depuis, taches=taches, consigner=_consigner
+        )
+    except ManifesteInvalide as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    print("Tâche : avant → après")
+    for tache, c in resultat.rapport["par_tache"].items():
+        print(f"{tache} : {c['avant']} → {c['apres']}")
+    print(f"jeu {resultat.version} ({resultat.rapport['nb_lignes']} lignes) : {resultat.dossier}")
+    print(f"run {resultat.run.run_id} (complet) : {resultat.run.dossier}")
+    return int(CodeSortie.SUCCES)
+
+
 def _build(args: argparse.Namespace) -> int:
     from slmsp.data.build import lancer_build
     from slmsp.harness.taches import charger_taches
 
     racine = _racine(args)
+    if args.sous_ensemble:
+        return _sous_ensemble(args, racine)
     if args.nettoyage:
         return _nettoyage(args, racine)
     if args.preferences:

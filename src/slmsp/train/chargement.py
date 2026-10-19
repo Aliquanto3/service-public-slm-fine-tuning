@@ -45,7 +45,13 @@ from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspError
 from slmsp.core.nettoyage import VERSIONS_NETTOYAGE, verifier_nettoyage
 from slmsp.core.schemas.config_modele import ConfigModele
-from slmsp.core.schemas.entrainement import EnteteManifesteJeu, EntetePaire, Nettoyage
+from slmsp.core.schemas.entrainement import (
+    EnteteManifesteJeu,
+    EntetePaire,
+    Nettoyage,
+    SousEnsemble,
+)
+from slmsp.core.sous_ensemble import verifier_sous_ensemble
 from slmsp.core.var import dossier_var
 from slmsp.mcp.outils import NOM_CONFIG as NOM_CONFIG_OUTILS
 from slmsp.mcp.outils import charger_outils
@@ -150,6 +156,8 @@ def charger_jeu(version: str, *, racine: str | Path | None = None, fichier: str 
         )
     if fichier == NOM_TRAIN and brut_manifeste.get("nettoyage") is not None:
         controler_nettoyage(brut_manifeste["nettoyage"], brut, racine=racine)
+    if fichier == NOM_TRAIN and brut_manifeste.get("sous_ensemble") is not None:
+        controler_sous_ensemble(brut_manifeste["sous_ensemble"], brut, racine=racine)
     schema = _Paire if fichier == NOM_PREFERENCES else _Ligne
     lignes: list[Any] = []
     for numero, texte in enumerate(brut.decode("utf-8").splitlines(), start=1):
@@ -193,6 +201,32 @@ def controler_nettoyage(nettoyage: Any, octets: bytes, *, racine: str | Path | N
     if hashlib.sha256(source).hexdigest() != bloc.sha256_train_source:
         raise ManifesteInvalide(f"{chemin} : SHA-256 différent de « sha256_train_source »")
     verifier_nettoyage(octets, source, [e.rang for e in bloc.ecartes], bloc.version)
+
+
+def controler_sous_ensemble(
+    sous_ensemble: Any, octets: bytes, *, racine: str | Path | None = None
+) -> None:
+    """Revérifie un jeu restreint à des Tâches contre son jeu source.
+
+    Le `train.jsonl` du jeu `depuis_version` doit avoir le SHA `sha256_train_source`, et
+    `octets` doit en être le sous-ensemble exact (`core.sous_ensemble.verifier_sous_ensemble`).
+    Si la source était nettoyée, sa chaîne de nettoyage est revérifiée à son tour. Lève
+    `ManifesteInvalide` (bloc illisible, source absente ou altérée) ou `ProvenanceInvalide`.
+    """
+    try:
+        bloc = SousEnsemble.model_validate(sous_ensemble)
+    except ValidationError as exc:
+        raise ManifesteInvalide(f"bloc « sous_ensemble » du MANIFEST invalide ({exc})") from None
+    chemin = dossier_jeu(bloc.depuis_version, racine=racine) / NOM_TRAIN
+    try:
+        source = lire(chemin, "train", racine=racine)
+    except FileNotFoundError:
+        raise ManifesteInvalide(f"jeu source du sous-ensemble absent : {chemin}") from None
+    if hashlib.sha256(source).hexdigest() != bloc.sha256_train_source:
+        raise ManifesteInvalide(f"{chemin} : SHA-256 différent de « sha256_train_source »")
+    if bloc.nettoyage_source is not None:
+        controler_nettoyage(bloc.nettoyage_source.model_dump(mode="json"), source, racine=racine)
+    verifier_sous_ensemble(octets, source, bloc.taches)
 
 
 def recontroler_appel_ids(
