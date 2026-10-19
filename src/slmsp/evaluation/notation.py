@@ -324,7 +324,10 @@ def noter(
 
     Avec `plafond_estime_eur`, le coût estimé par `juges.principal.estimer` est contrôlé
     avant `nouveau_run` et avant tout appel payant ; au-dessus du plafond, `SlmspError`
-    (aucun run créé). Le second juge (Mistral) n'entre pas dans l'estimation.
+    (aucun run créé). Le second juge (Mistral, poste budgétaire distinct) n'entre pas dans
+    l'estimation : le plafond vise le poste Anthropic. Avant ce contrôle, `ouvrir_juges` a
+    déjà tenu les comptes (tables du cache créées, campagne inscrite, orphelines
+    régularisées au registre) : ni dépense ni réservation.
     """
     dire = rapporter or (lambda _message: None)
     base = _racine(racine)

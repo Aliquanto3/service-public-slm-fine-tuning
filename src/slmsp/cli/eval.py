@@ -29,6 +29,9 @@ validée). Pas de `--reprendre` pour la notation : la relancer suffit, le cache 
 `--plafond-estime EUR` (réel > 0, notation ou toutes) : estime le coût du Juge principal
 avant de créer le run (verdicts en cache à 0, sortie moyenne du cache, tarif du mode) ;
 au-dessus du plafond, code 1 sans run ni appel ; sinon l'estimation est affichée.
+Le second juge (Mistral) n'est pas estimé. Avec `--phase toutes`, le contrôle a lieu après
+la génération locale (gratuite) : un refus laisse le run de génération, à noter ensuite
+par `--phase notation --depuis RUN_ID`.
 `--phase toutes` (défaut) enchaîne la génération (ou sa reprise) et la notation du run
 produit s'il est `complet` ou `partiel-erreur`.
 

@@ -330,6 +330,9 @@ class JugeClaude:
         Les verdicts en cache coûtent 0 ; les doublons ne comptent qu'une fois. La sortie
         estimée est la moyenne des `tokens_sortie` en cache pour le même modèle et le même
         effort (au moins `MIN_VERDICTS_SORTIE_MOYENNE` verdicts), sinon `max_tokens`.
+        Estimation hors reprises : en batch, une requête `errored` ou non conforme repasse en
+        direct (tarif direct, nouvel essai), ce qui peut dépasser l'estimation ; le budget
+        réel reste protégé par les réservations du registre.
         """
         uniques: dict[str, _Preparee] = {}
         for demande in demandes:

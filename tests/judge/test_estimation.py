@@ -154,3 +154,44 @@ def test_mode_direct_tarif_direct(banc: Any, doublures: SimpleNamespace, items: 
     )
     assert estimation.cout_estime_eur == pytest.approx(attendu_direct)
     assert math.isfinite(estimation.cout_pire_cas_eur)
+
+
+def test_cout_estime_valeurs_a_la_main(banc: Any, doublures: SimpleNamespace) -> None:
+    """Oracle indépendant : tarifs du banc (batch 0,5 $/Mtok, direct 1 $/Mtok, taux 1)."""
+    banc.juge()
+    tarifs = banc.registre.tarifs
+    assert cout_estime(tarifs, doublures.MODELE, "batch", 1_000_000, 2_000_000) == pytest.approx(
+        1.5
+    )
+    assert cout_estime(tarifs, doublures.MODELE, "direct", 1_000_000, 2_000_000) == pytest.approx(
+        3.0
+    )
+
+
+def test_pire_cas_egal_a_la_reservation_par_item(
+    banc: Any, doublures: SimpleNamespace, items: Any
+) -> None:
+    """`cout_pire_cas_eur` vaut le montant que `reserver_lot` (INC-2) réserve pour ces items."""
+    juge = banc.juge()
+    ids = ["Q-001", "LC-001", "CR-001"]
+    estimation = juge.estimer(demandes(doublures, items, *ids))
+    tokens = [
+        estimer_tokens_entree(construire_prompt(items[i], doublures.sortie_factice(), banc.grille))
+        for i in ids
+    ]
+    retenu = banc.registre.reserver_lot(
+        "lot-coherence",
+        juge.poste,
+        juge.sous_poste,
+        doublures.MODELE,
+        tokens,
+        doublures.config_juge().max_tokens,
+        len(tokens),
+    )
+    assert retenu == len(ids)
+    reserve = sum(
+        ligne.reserve_eur
+        for ligne in banc.registre.etat().lignes
+        if ligne.sous_poste is None and ligne.poste == juge.poste
+    )
+    assert estimation.cout_pire_cas_eur == pytest.approx(reserve)
