@@ -20,7 +20,7 @@ import re
 import socket
 import sys
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
@@ -282,8 +282,35 @@ def _executer_vers(
             "fin de la sortie :\n"
             f"{texte[-processus.TAILLE_FIN_JOURNAL :]}"
         )
-    os.rename(partiel, sortie)  # sans remplacement : `sortie` absente a été vérifiée
+    _renommer_sans_remplacement(partiel, sortie)
     return sortie
+
+
+def _renommer_sans_remplacement(
+    partiel: Path,
+    sortie: Path,
+    *,
+    borne: float = 60.0,
+    attendre: Callable[[float], None] = time.sleep,
+) -> None:
+    """Renomme sans remplacer (`sortie` absente a été vérifiée).
+
+    Sous Windows, un antivirus ou l'indexeur peut verrouiller un instant un fichier
+    fraîchement écrit (WinError 32) : `PermissionError` est réessayé avec une attente
+    croissante (0,5 s, doublée, plafonnée à 8 s) jusqu'à `borne` secondes cumulées,
+    puis l'erreur d'origine est relevée. Toute autre `OSError` remonte aussitôt.
+    """
+    pause, ecoule = 0.5, 0.0
+    while True:
+        try:
+            os.rename(partiel, sortie)
+            return
+        except PermissionError:
+            if ecoule >= borne:
+                raise
+        attendre(pause)
+        ecoule += pause
+        pause = min(pause * 2, 8.0)
 
 
 def convertir_hf_vers_gguf(
