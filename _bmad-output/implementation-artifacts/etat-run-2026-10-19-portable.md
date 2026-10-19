@@ -80,6 +80,9 @@ Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M
 - 2026-10-19 12:54 · M1 v4 · notation lancée : `eval run --phase notation --depuis 20261019-091155-ft-minicpm5-2b-ee96 --plafond-estime 4.5`. Budget avant : Anthropic 9,20 € ; Mistral juge 1,50 €, génération 8,75 € (campagne finetune-minicpm5-2b-2026-10-19).
 - 2026-10-19 13:31 · 9.10 · dev fini (bdb2a4a, Opus) ; second avis (2 medium : estimation RD sans schéma d'outils, retrait d'une première ligne `#` qui serait du contenu ; 3 low) ; revue Opus lancée.
 - 2026-10-19 13:31 · **décision d'Anaël** · il relit les jeux de données et protocoles d'entraînement **avant toute nouvelle phase d'entraînement**. Génération et build v6 avancent seuls ; M1 v6, M3 v4 et M4 v5 attendent sa relecture, même si M1 v4 dépasse la Baseline.
+- 2026-10-19 13:42 · 9.10 · revue Opus (4aa8d2a) : estimation RD avec schéma d'outils (libellé « coût estimé », exclusions affichées) ; titre de tête retiré seulement s'il fait ≤ 12 mots et ne finit pas par une ponctuation (`.!?:;…`) ; sur v4, 55 retraits au lieu de 108 (les « **Réponse à l'Agent :** » restent). **Fusion 0cdfe06**, tests data + mistral + core verts (1 413).
+- 2026-10-19 13:42 · D1.2 · page des conditions Mistral relue par `net.client('outillage')` : SHA identique au 17 (`08ee882d…`), date passée au 2026-10-19 (243be1d).
+- 2026-10-19 13:42 · v6 · génération prévue : `data generate --depuis 20261017-111645-seed-b335` (seed de v2, 595 sessions, surplus 0). Une nouvelle campagne de budget est nécessaire (plafond Mistral génération 10 €) ; le registre la refuse tant que le lot de notation de M1 v4 est ouvert.
 
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
