@@ -41,3 +41,5 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:53 · S3 · décision · fournisseur openrouter ajouté au périmètre (message à l'agent) · —
 - 2026-10-19 21:54 · S1 · review · 10 constats corrigés, tests JS rejetés · 6223c0b
 - 2026-10-19 21:54 · S1 · fusion · HTML `C:\Users\Anael\dev\slmsp-auditudit-verdicts.html` (170 items, 110 désaccords) · 0032eba
+- 2026-10-19 21:54 · S1 · review · 10 constats corrigés, tests JS rejetés · 6223c0b
+- 2026-10-19 21:54 · S1 · fusion · HTML `C:/Users/Anael/dev/slmsp-audit/audit-verdicts.html` (170 items, 110 désaccords, 5 notations) · 65763d2
