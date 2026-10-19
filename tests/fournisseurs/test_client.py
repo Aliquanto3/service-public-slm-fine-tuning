@@ -270,3 +270,35 @@ def test_journal_des_juges_tiers_illisible(
     monkeypatch.setenv("SLMSP_VAR_DIR", str(tmp_path))
     with pytest.raises(LectureInterdite):
         chemin_autorise(tmp_path / NOM_JOURNAL_JUGES_TIERS, lecteur)
+
+
+def test_liste_des_modeles_data_nulle(tmp_path: Path) -> None:
+    bilan = verifier(
+        OPENROUTER,
+        fichier_env=tmp_path / ".env",
+        transport_interne=httpx2.MockTransport(lambda r: httpx2.Response(200, json={"data": None})),
+        journal_requetes=JournalMemoire(),
+    )
+    assert bilan.erreur is not None and "illisible" in bilan.erreur
+
+
+def test_corps_illisible_reservation_reglee(banc: Any) -> None:
+    class Reponse:
+        status_code = 200
+        headers: dict[str, str] = {}
+
+        @property
+        def content(self) -> bytes:
+            raise OSError("<lecture-factice>")
+
+    class Http:
+        def post(self, *args: Any, **kwargs: Any) -> Reponse:
+            return Reponse()
+
+    client = banc.client()
+    client.http = Http()
+    with pytest.raises(ErreurApiFournisseur):
+        appeler(client)
+    (reservation,) = banc.reservations()
+    assert reservation["etat"] != "RESERVEE"
+    assert reservation["montant_reel_eur"] == pytest.approx(reservation["montant_reserve_eur"])

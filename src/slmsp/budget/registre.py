@@ -394,6 +394,15 @@ class RegistreBudget:
         poste, _, sous_poste = cible.partition(".")
         return poste, sous_poste or None
 
+    def verifier_usage(self, usage: str) -> tuple[str, str | None]:
+        """`imputer(usage)` puis contrôle du poste et du sous-poste, sans rien réserver.
+
+        Lève `ConfigurationInvalide` pour un usage, un poste ou un sous-poste inconnu.
+        """
+        poste, sous_poste = self.imputer(usage)
+        self._plafonds(poste, sous_poste)
+        return poste, sous_poste
+
     def _plafonds(self, poste: str, sous_poste: str | None) -> list[tuple[str | None, float]]:
         """Niveaux contrôlés, sous-poste d'abord : `[(sous_poste, plafond), (None, plafond)]`."""
         definition = self.config.postes.get(poste)

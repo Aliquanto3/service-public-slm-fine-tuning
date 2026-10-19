@@ -54,3 +54,12 @@ Changer le juge principal ou la grille ; renoter les items hors échantillon ; u
 ## Auto Run Result
 - Statut : review. Décisions prises seul (solution simple et réversible) : `--juge <nom>` plutôt que `--fournisseur` ; tarifs laissés en modèle commenté ; registre réglé au tarif local et non à `usage.cost` (**à confirmer par Anaël**) ; `provider.require_parameters` toujours envoyé.
 - Reports : comparaison simultanée de plusieurs juges tiers dans `accords.json` ; règlement du registre au coût annoncé par OpenRouter.
+
+## Revue
+Revue Opus, une passe, après rebase sur main (S1, S2 : sans conflit).
+- medium, corrigé : verdict lu par `json.loads` strict, un bloc ```json ou du texte autour donnait `invalide` mis en cache durablement. `judge/tiers.py` : `extraire_json` (sortie entière, sinon premier objet `{…}` lisible), propre au juge tiers ; une sortie sans JSON lisible après `ECHECS_MAX` reste `non-juge` (motif `sortie-illisible`), sans cache, rejouable. Un écart au schéma reste `invalide` en cache, comme pour le principal.
+- low, corrigé : `lister_modeles` levait `TypeError` sur `"data": null` ; refus de tout `data` non liste (`ErreurApiFournisseur`, affichée par `--verifier`).
+- low, corrigé : lecture de `content` et `status_code` hors du règlement, réservation laissée `RESERVEE` ; lecture dans un `try`, réglée au pire cas et convertie en `ErreurApiFournisseur`.
+- low, corrigé : usage, poste ou tarif inconnus levaient après `nouveau_run` (run `interrompu`). `RegistreBudget.verifier_usage` (imputation, poste, sous-poste) appelé par `JugeTiers.estimer`, désormais toujours fait avant le run (`TarifInconnu` aussi).
+- low, rejeté : `ouvrir_juge_tiers` lit `juges.toml` de la racine du projet même avec `--racine` ; même convention que la notation existante.
+- Vérifiés sans constat : clé jamais journalisée (corps seul) ni affichée ; réseau limité à deux chemins exacts du profil `outillage`, assistant inchangé (testé) ; réservation au pire cas par item ; clé de cache préfixée `tiers-`, distincte du principal ; journal hors liste d'accès data et train ; fixtures factices seulement (D1).

@@ -6,8 +6,9 @@
    parent et le jeu (manifeste revérifié hors calibrage) ;
 2. retient les items des Tâches `taches` (défaut CR, LC, CT, RE) au verdict principal valide,
    avec la sortie canonique notée (mêmes demandes, même prompt que le Juge principal) ;
-3. avec `plafond_estime_eur`, refuse avant tout run et tout appel si le coût estimé dépasse
-   le plafond ;
+3. estime le coût avant tout run (usage de budget, poste et tarif vérifiés : une erreur de
+   configuration ne laisse pas de run `interrompu`) ; avec `plafond_estime_eur`, refuse
+   avant tout run et tout appel si le coût estimé dépasse le plafond ;
 4. crée `runs/eval-juges-tiers/<id>/` (`run.json`, `etat.jsonl`), fait juger, écrit
    `verdicts.jsonl` (juge `tiers`) et `accords.json` : par Tâche et par critère de kappa
    (`evaluation.scores.CRITERES_KAPPA`), effectif commun, accord brut et kappa de Cohen
@@ -250,8 +251,9 @@ def noter_tiers(
     dire = rapporter or (lambda _message: None)
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
     prep = preparer(depuis, list(taches), base)
+    # Toujours avant le run : poste, imputation et tarif inconnus lèvent ici, sans run créé.
+    estimation = juge.estimer(prep.demandes)
     if plafond_estime_eur is not None:
-        estimation = juge.estimer(prep.demandes)
         resume = (
             f"coût estimé {estimation.cout_estime_eur:.2f} € (pire cas "
             f"{estimation.cout_pire_cas_eur:.2f} €), {estimation.nb_a_juger} item(s) à juger, "

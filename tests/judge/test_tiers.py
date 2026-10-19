@@ -23,7 +23,12 @@ from slmsp.judge.claude import DemandeJugement  # noqa: E402
 from slmsp.judge.config import ConfigJugeTiers, charger_juges  # noqa: E402
 from slmsp.judge.grille import Grille  # noqa: E402
 from slmsp.judge.prompt import construire_prompt  # noqa: E402
-from slmsp.judge.tiers import MOTIF_INTERROMPUE, JugeTiers  # noqa: E402
+from slmsp.judge.tiers import (  # noqa: E402
+    MOTIF_ILLISIBLE,
+    MOTIF_INTERROMPUE,
+    JugeTiers,
+    extraire_json,
+)
 
 
 def _factices() -> ModuleType:
@@ -174,3 +179,57 @@ def test_juges_toml_avec_juge_tiers(tmp_path: Path) -> None:
     assert tiers.fournisseur == "openrouter" and tiers.usage_budget == "juge-tiers-openrouter"
     assert tiers.sortie_estimation == 3500
     assert config.principal == charger_juges().principal
+
+
+# --- Correctifs de revue ------------------------------------------------------------------------
+
+
+def test_verdict_dans_un_bloc_de_code_accepte(
+    banc: Any, grille: Grille, items: dict[str, Item], doublures: SimpleNamespace
+) -> None:
+    def entoure(corps: dict[str, Any]) -> str:
+        schema = corps["response_format"]["json_schema"]["schema"]
+        brut = json.dumps(doublures.verdict_conforme(schema), ensure_ascii=False)
+        return f"<texte-factice>\n```json\n{brut}\n```\n<texte-factice>"
+
+    banc.faux.texte_defaut = entoure
+    (resultat,) = juge(banc, grille).juger(demandes(items, doublures, "CR-001")).resultats
+    assert resultat.statut == "juge" and len(banc.faux.corps()) == 1
+
+
+def test_extraire_json() -> None:
+    assert extraire_json('{"a": 1}') == '{"a": 1}'
+    assert extraire_json('<t> {"a": "}{"} <t>') == '{"a": "}{"}'
+    assert extraire_json("<non-json> {") is None
+
+
+def test_sorties_illisibles_non_mises_en_cache(
+    banc: Any, grille: Grille, items: dict[str, Item], doublures: SimpleNamespace
+) -> None:
+    lot = demandes(items, doublures, "CR-001")
+    banc.faux.reponses.extend([{"texte": "<non-json>"}, {"texte": "<non-json>"}])
+    (resultat,) = juge(banc, grille).juger(lot).resultats
+    assert resultat.statut == "non-juge" and resultat.motif == MOTIF_ILLISIBLE
+    assert banc.cache.lire(resultat.cle) is None
+    (rejoue,) = juge(banc, grille).juger(lot).resultats  # rejouable
+    assert rejoue.statut == "juge"
+
+
+def test_estimer_usage_de_budget_inconnu(
+    tmp_path: Path, grille: Grille, items: dict[str, Item], doublures: SimpleNamespace
+) -> None:
+    from slmsp.budget.config import charger_budgets, charger_tarifs
+    from slmsp.budget.registre import RegistreBudget
+    from slmsp.core.erreurs import ConfigurationInvalide
+
+    banc = F.banc(tmp_path / "b")
+    budgets = tmp_path / "budgets.toml"
+    budgets.write_text(
+        F.texte_budgets().replace('juge-tiers-openrouter = "openrouter"\n', ""), encoding="utf-8"
+    )
+    banc.registre = RegistreBudget(
+        charger_budgets(budgets), charger_tarifs(banc.dossier / "tarifs.toml"), tmp_path / "r.db"
+    )
+    banc.cache = CacheVerdicts(tmp_path / "v.sqlite")
+    with pytest.raises(ConfigurationInvalide):
+        juge(banc, grille).estimer(demandes(items, doublures, "CR-001"))

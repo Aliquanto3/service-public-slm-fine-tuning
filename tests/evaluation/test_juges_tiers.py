@@ -205,3 +205,19 @@ def test_cli_juge_inconnu(capsys: Any) -> None:
     code = main(["eval", "juges-tiers", "--depuis", "x", "--juge", "inconnu"])
     assert code == int(CodeSortie.USAGE)
     assert "juge tiers inconnu" in capsys.readouterr().err
+
+
+def test_erreur_de_configuration_avant_le_run(notation: SimpleNamespace) -> None:
+    from slmsp.core.erreurs import ConfigurationInvalide
+
+    class JugeMalConfigure(JugeTiersFactice):
+        def estimer(self, demandes: Sequence[Any]) -> EstimationCout:
+            raise ConfigurationInvalide("usage de budget inconnu : 'juge-tiers-openrouter'")
+
+    juge = JugeMalConfigure(notation.cache)
+    with pytest.raises(ConfigurationInvalide):
+        juges_tiers.noter_tiers(
+            notation.run.run_id, juge=juge, nom_juge="factice", racine=notation.depot
+        )
+    assert juge.recus == []
+    assert not (notation.depot / "runs" / juges_tiers.TYPE_RUN).exists()

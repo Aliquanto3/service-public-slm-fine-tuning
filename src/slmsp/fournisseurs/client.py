@@ -218,9 +218,9 @@ def lister_modeles(
     try:
         donnees = json.loads(reponse.content)["data"]
     except (ValueError, KeyError, TypeError):
-        raise ErreurApiFournisseur(
-            f"{config.nom} : liste des modèles illisible", 200, 0.0
-        ) from None
+        donnees = None
+    if not isinstance(donnees, list):
+        raise ErreurApiFournisseur(f"{config.nom} : liste des modèles illisible", 200, 0.0)
     return [m for m in donnees if isinstance(m, dict) and isinstance(m.get("id"), str)]
 
 
@@ -376,8 +376,22 @@ class ClientCompatibleOpenAI:
                 transitoire=erreur_transport(exc),
             ) from None
 
-        brut = bytes(reponse.content)
-        statut = int(reponse.status_code)
+        try:
+            brut = bytes(reponse.content)
+            statut = int(reponse.status_code)
+        except BaseException as exc:
+            # Réponse reçue mais illisible (lecture du corps) : facturée, comptée au pire cas.
+            try:
+                inscrire(modele_resolu=None, reponse_brute=None, statut="erreur", statut_http=None)
+            finally:
+                cout = self._regler_echec(reservation_id, True)
+            if not isinstance(exc, Exception):
+                raise
+            raise ErreurApiFournisseur(
+                f"API {self.config.nom} : réponse illisible ({type(exc).__name__}, {usage})",
+                None,
+                cout,
+            ) from None
         if statut != 200:
             try:
                 inscrire(

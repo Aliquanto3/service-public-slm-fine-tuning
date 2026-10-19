@@ -9,15 +9,19 @@
 3. un appel par item (`ClientCompatibleOpenAI.appeler`, usage `juge-tiers-<fournisseur>`),
    réservation au pire cas de cet item, régularisation après l'appel.
 
-Deux sorties non conformes (JSON illisible, écart au schéma) donnent un verdict `invalide`,
-mis en cache. Une sortie interrompue (`finish_reason` de longueur) n'est **pas** mise en
-cache ni comptée comme échec : l'item reste `non-juge` (motif `sortie-interrompue`),
-rejouable avec un `max_tokens` plus grand. Sur `BudgetEpuise`, les items restants sont
+La sortie est lue avec tolérance (`extraire_json` : bloc de code ou texte autour). Deux
+sorties non conformes donnent un verdict `invalide` mis en cache si l'écart est au schéma ;
+si la dernière ne contient aucun JSON lisible, l'item reste `non-juge` (motif
+`sortie-illisible`), sans cache, rejouable. Une sortie interrompue (`finish_reason` de
+longueur) n'est **pas** mise en cache ni comptée comme échec : l'item reste `non-juge`
+(motif `sortie-interrompue`), rejouable avec un `max_tokens` plus grand. Sur `BudgetEpuise`,
+les items restants sont
 `non-juge` (motif `budget`). 401, 403 et 429 arrêtent les appels restants.
 """
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final
@@ -62,6 +66,7 @@ PREFIXE_SESSION: Final = "juge-tiers-"
 NOM_SCHEMA: Final = "verdict"
 MOTIF_INTERROMPUE: Final = "sortie-interrompue"
 ISSUE_INTERROMPUE: Final = "interrompue"
+MOTIF_ILLISIBLE: Final = "sortie-illisible"
 FINS_INTERROMPUES: Final = frozenset({"length", "max_tokens", "model_length"})
 """`finish_reason` d'une sortie coupée par la longueur (comparés en minuscules)."""
 
@@ -95,6 +100,54 @@ class _Etat:
         if usage is not None:
             precedent = self.usages.get(cle)
             self.usages[cle] = usage if precedent is None else precedent + usage
+
+
+def _objet_equilibre(texte: str, debut: int) -> str | None:
+    """Objet JSON `{…}` commençant à `debut` (accolades équilibrées, chaînes comprises)."""
+    profondeur, dans_chaine, echappe = 0, False, False
+    for position in range(debut, len(texte)):
+        car = texte[position]
+        if dans_chaine:
+            if echappe:
+                echappe = False
+            elif car == "\\":
+                echappe = True
+            elif car == '"':
+                dans_chaine = False
+        elif car == '"':
+            dans_chaine = True
+        elif car == "{":
+            profondeur += 1
+        elif car == "}":
+            profondeur -= 1
+            if profondeur == 0:
+                return texte[debut : position + 1]
+    return None
+
+
+def extraire_json(texte: str) -> str | None:
+    """Texte JSON d'un verdict, toléré dans un bloc de code ou entouré de texte.
+
+    Sortie entière si elle se lit telle quelle ; sinon premier objet `{…}` lisible ; `None`
+    si aucun. Propre au juge tiers : le Juge principal garde sa lecture stricte.
+    """
+    brut = texte.strip()
+    try:
+        json.loads(brut)
+        return brut
+    except ValueError:
+        pass
+    debut = brut.find("{")
+    while debut != -1:
+        candidat = _objet_equilibre(brut, debut)
+        if candidat is not None:
+            try:
+                json.loads(candidat)
+                return candidat
+            except ValueError:
+                pass
+        debut = brut.find("{", debut + 1)
+    return None
 
 
 class JugeTiers:
@@ -141,10 +194,15 @@ class JugeTiers:
     # --- estimation ---------------------------------------------------------------------------
 
     def estimer(self, demandes: Sequence[DemandeJugement]) -> EstimationCout:
-        """Coût estimé sans appel ni écriture : cache à 0, doublons comptés une fois."""
+        """Coût estimé sans appel ni écriture : cache à 0, doublons comptés une fois.
+
+        Vérifie d'abord l'usage de budget (imputation, poste, sous-poste) : une configuration
+        absente lève `ConfigurationInvalide` avant tout run ; un tarif absent, `TarifInconnu`.
+        """
+        registre = self.client.registre
+        registre.verifier_usage(self.config.usage_budget)
         _, uniques = self._uniques(demandes)
         a_juger = [p for cle, p in uniques.items() if self.cache.lire(cle) is None]
-        registre = self.client.registre
         modele = self.config.modele
         estime = sum(
             cout_estime(
@@ -280,8 +338,11 @@ class JugeTiers:
                 self._journaliser(cle, item_id, reponse.usage, reponse.cout_eur, ISSUE_INTERROMPUE)
                 etat.issues[cle] = _Issue("non-juge", motif=MOTIF_INTERROMPUE)
                 return  # ni cache ni échec compté : rejouable
+            texte = extraire_json(reponse.texte)
             try:
-                verdict = valider_selon_schema(item_id, reponse.texte, preparee.prompt.schema)
+                if texte is None:
+                    raise SortieNonConforme(f"{item_id} : aucun objet JSON dans la sortie")
+                verdict = valider_selon_schema(item_id, texte, preparee.prompt.schema)
             except SortieNonConforme as exc:
                 invalide = self.cache.compter_echec(cle, item_id, str(exc)) >= ECHECS_MAX
                 self._journaliser(
@@ -293,6 +354,10 @@ class JugeTiers:
                 )
                 if not invalide:
                     continue
+                if texte is None:
+                    # Sortie sans JSON lisible : ni cache ni verdict durable, rejouable.
+                    etat.issues[cle] = _Issue("non-juge", motif=MOTIF_ILLISIBLE)
+                    return
                 verdict = Verdict.invalide_pour(item_id)
                 self._mettre_en_cache(cle, verdict)
                 etat.issues[cle] = _Issue("invalide", verdict)
