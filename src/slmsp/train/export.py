@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -41,9 +42,9 @@ from slmsp.core.artefacts import (
     ouvrir_run,
     verifier_espace,
 )
-from slmsp.core.canonique import json_canonique
+from slmsp.core.canonique import json_canonique, sha256_fichier
 from slmsp.core.config import appliquer_environnement_impose, racine_ecriture
-from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide
+from slmsp.core.erreurs import ConfigurationInvalide, LectureInterdite, ManifesteInvalide
 from slmsp.core.var import verrou_gpu
 from slmsp.inference import serveur
 from slmsp.train import chargement, environnement
@@ -56,14 +57,30 @@ DOSSIER_FUSION: Final = "hf-f16"
 """Modèle fusionné en F16 (safetensors), nom court (MAX_PATH)."""
 NOM_F16: Final = "modele-f16.gguf"
 NOM_Q4: Final = "modele-q4_k_m.gguf"
+NOM_MMPROJ: Final = "mmproj-f16.gguf"
+"""Projecteur de vision (`--mmproj`), exporté pour une fiche `multimodal` seulement."""
 NOM_EXPORT: Final = "export.json"
 NOM_LOG: Final = "log.jsonl"
 NOM_LOG_CONVERSION: Final = "conversion.log"
 NOM_LOG_QUANTIFICATION: Final = "quantification.log"
+NOM_LOG_MMPROJ: Final = "conversion-mmproj.log"
 TYPE_SORTIE_CONVERSION: Final = "f16"
 TYPE_QUANTIFICATION: Final = "Q4_K_M"
 PRECISIONS: Final = {"f16": "f16", "q4_k_m": "q4_k_m"}
 """Précision réelle de chaque GGUF exporté (même rôle que `ConfigModele.precision_gguf`)."""
+FICHIERS_PREPROCESSEUR: Final = (
+    "chat_template.jinja",
+    "preprocessor_config.json",
+    "video_preprocessor_config.json",
+)
+"""Copiés tels quels de la base dans `hf-f16/` pour `--mmproj` ; `preprocessor_config.json`
+est obligatoire."""
+PREFIXE_VISION: Final = "model.visual."
+PREFIXE_MTP: Final = "mtp."
+SOUS_MODELE_LANGAGE: Final = "language_model"
+MODULES_LORA_INTERDITS: Final = ("embed_tokens", "lm_head")
+OCTETS_MMPROJ: Final = int(0.34 * 1024**3)
+"""Écriture ajoutée par le mmproj F16 (168 M paramètres de vision pour Qwen3.5-2B)."""
 MAX_F16: Final = 65504.0
 SEUIL_VERIFICATION_ESPACE: Final = 1024**3
 FACTEUR_ESPACE: Final = 2.4
@@ -119,6 +136,12 @@ def adaptateur_du_run(run_id: str, *, racine: str | Path | None = None) -> Path:
     return dossier
 
 
+def _regex_cible_interdite(regex: str) -> bool:
+    """Vrai si la regex de `target_modules` nomme visual, lm_head ou embed_tokens (avant tout
+    chargement ; le contrôle exact reste celui du modèle chargé)."""
+    return any(mot in regex for mot in ("visual", *MODULES_LORA_INTERDITS))
+
+
 def controler_adaptateur(dossier: Path, *, racine: str | Path | None = None) -> dict[str, Any]:
     """`adapter_config.json` lu par le lecteur `train` ; refuse un PiSSA non converti."""
     brut = lire(dossier / "adapter_config.json", "train", racine=racine)
@@ -135,7 +158,16 @@ def controler_adaptateur(dossier: Path, *, racine: str | Path | None = None) -> 
             "l'enregistrer converti en LoRA relatif à la base d'origine "
             "(path_initial_model_for_weight_conversion de PEFT)"
         )
+    # `target_modules` en chaîne (regex, LoRA multimodal) : la regex est seulement pré-contrôlée
+    # ici (`_regex_cible_interdite`) ; le contrôle complet porte sur les modules LoRA du modèle
+    # PEFT chargé (`controler_modules_lora`, appelé par la fusion, multimodal seulement). Pour un
+    # modèle dense, une chaîne n'est contrôlée que par ce pré-contrôle.
     cibles = config.get("target_modules") or []
+    if isinstance(cibles, str) and _regex_cible_interdite(cibles):
+        raise ConfigurationInvalide(
+            f"{dossier} : l'export refuse un adaptateur dont la regex target_modules "
+            f"vise vision, embeddings ou tête ({cibles!r})"
+        )
     interdites = sorted(
         {"embed_tokens", "lm_head"} & set(cibles if isinstance(cibles, list) else [])
     )
@@ -145,6 +177,31 @@ def controler_adaptateur(dossier: Path, *, racine: str | Path | None = None) -> 
             f"(target_modules {interdites}, modules_to_save {config.get('modules_to_save')!r})"
         )
     return {"peft_type": config.get("peft_type"), "r": config.get("r"), "init": init}
+
+
+def controler_modules_lora(modele_peft: Any) -> int:
+    """Refuse un adaptateur dont un module LoRA, relevé sur le modèle PEFT chargé, est hors de
+    `language_model` ou sur `embed_tokens` / `lm_head`. Renvoie le nombre de modules LoRA."""
+    modules: set[str] = set()
+    for nom, _module in modele_peft.named_modules():
+        composants = nom.split(".")
+        for i, composant in enumerate(composants):
+            if composant.startswith("lora_") and i > 0:
+                modules.add(".".join(composants[:i]))
+                break
+    hors = sorted(
+        m
+        for m in modules
+        if SOUS_MODELE_LANGAGE not in m.split(".") or m.rsplit(".", 1)[-1] in MODULES_LORA_INTERDITS
+    )
+    if hors:
+        raise ConfigurationInvalide(
+            f"l'export refuse un adaptateur dont {len(hors)} module(s) LoRA sont hors de "
+            f"`{SOUS_MODELE_LANGAGE}` ou sur embeddings / tête : {', '.join(hors[:5])}"
+        )
+    if not modules:
+        raise ConfigurationInvalide("adaptateur sans module LoRA (target_modules ne ciblent rien)")
+    return len(modules)
 
 
 def source_depuis_run(run_id: str, *, racine: str | Path | None = None) -> Source:
@@ -185,9 +242,10 @@ def octets_poids(dossier_base: Path) -> int:
     return sum(f.stat().st_size for f in dossier_base.glob("*.safetensors") if f.is_file())
 
 
-def octets_prevus(dossier_base: Path) -> int:
-    """Écriture prévue de l'export, d'après la taille des poids de la base."""
-    return int(octets_poids(dossier_base) * FACTEUR_ESPACE)
+def octets_prevus(dossier_base: Path, *, multimodal: str | None = None) -> int:
+    """Écriture prévue de l'export, d'après la taille des poids de la base (+ mmproj)."""
+    prevus = int(octets_poids(dossier_base) * FACTEUR_ESPACE)
+    return prevus + (OCTETS_MMPROJ if multimodal is not None else 0)
 
 
 def delai_outils(octets: int) -> float:
@@ -217,19 +275,122 @@ def controler_plage(torch: Any, modele: Any) -> dict[str, Any]:
     return {"tenseurs": tenseurs, "max_abs": maximum}
 
 
+def a_tete_mtp(*dossiers: Path, racine: str | Path | None = None) -> bool:
+    """Vrai si le premier `config.json` lisible déclare `mtp_num_hidden_layers` > 0, à la racine
+    ou sous `text_config` (la conversion texte passe alors `--no-mtp`)."""
+    for dossier in dossiers:
+        try:
+            config = json.loads(lire(dossier / "config.json", "train", racine=racine))
+        except (OSError, ValueError, LectureInterdite):
+            continue  # absent, illisible ou hors liste d'accès : dossier suivant
+        if not isinstance(config, dict):
+            return False
+        texte = config.get("text_config")
+        for niveau in (config, texte if isinstance(texte, dict) else {}):
+            couches = niveau.get("mtp_num_hidden_layers")
+            if isinstance(couches, int) and not isinstance(couches, bool) and couches > 0:
+                return True
+        return False
+    return False
+
+
+def copier_preprocesseur(dossier_base: Path, sortie: Path) -> list[str]:
+    """Copie sans modification `FICHIERS_PREPROCESSEUR` de la base vers `sortie` (`--mmproj`)."""
+    if not (dossier_base / "preprocessor_config.json").is_file():
+        raise ConfigurationInvalide(
+            f"preprocessor_config.json absent de {dossier_base} : conversion --mmproj impossible"
+        )
+    copies = []
+    for nom in FICHIERS_PREPROCESSEUR:
+        # Un fichier déjà écrit par `tokenizer.save_pretrained` (chat_template.jinja) est gardé :
+        # c'est celui dont le SHA est contrôlé dans le GGUF.
+        if (sortie / nom).exists():
+            continue
+        if (dossier_base / nom).is_file():
+            shutil.copyfile(dossier_base / nom, sortie / nom)
+            copies.append(nom)
+    return copies
+
+
+def _index_tenseurs(dossier: Path) -> dict[str, Path]:
+    from safetensors import safe_open  # noqa: PLC0415
+
+    index: dict[str, Path] = {}
+    for fichier in sorted(dossier.glob("*.safetensors")):
+        with safe_open(str(fichier), framework="pt") as poignee:
+            index.update(dict.fromkeys(poignee.keys(), fichier))
+    return index
+
+
+def controler_vision_inchangee(base: Path, fusionne: Path) -> dict[str, Any]:
+    """Chaque tenseur `model.visual.*` de `base` égal à celui de `fusionne`, après passage
+    dans le dtype écrit (F16). Un écart ou un tenseur absent est bloquant (`bloquants`).
+
+    Les `mtp.*` de la base, absents du fusionné (B2.4), ne sont pas comparés.
+    """
+    import torch  # noqa: PLC0415
+    from safetensors import safe_open  # noqa: PLC0415
+
+    index_base, index_fusion = _index_tenseurs(base), _index_tenseurs(fusionne)
+    vision = sorted(n for n in index_base if n.startswith(PREFIXE_VISION))
+    ecarts: list[str] = []
+    absents: list[str] = []
+    for nom in vision:
+        if nom not in index_fusion:
+            absents.append(nom)
+            continue
+        with safe_open(str(index_base[nom]), framework="pt") as a:
+            attendu = a.get_tensor(nom).to(torch.float16)
+        with safe_open(str(index_fusion[nom]), framework="pt") as b:
+            obtenu = b.get_tensor(nom).to(torch.float16)
+        if not torch.equal(attendu, obtenu):
+            ecarts.append(nom)
+    bloquants: list[str] = []
+    if not vision:
+        bloquants.append(f"aucun tenseur {PREFIXE_VISION}* dans la base {base}")
+    if absents:
+        bloquants.append(
+            f"{len(absents)} tenseur(s) de vision absent(s) du fusionné : {absents[:3]}"
+        )
+    if ecarts:
+        bloquants.append(
+            f"{len(ecarts)} tenseur(s) de vision modifié(s) par la fusion : {ecarts[:3]}"
+        )
+    return {
+        "tenseurs": len(vision),
+        "ecarts": ecarts,
+        "absents": absents,
+        "mtp_ignores": sum(1 for n in index_base if n.startswith(PREFIXE_MTP)),
+        "bloquants": bloquants,
+    }
+
+
 def fusionner(
-    pile: environnement.Pile, dossier_base: Path, adaptateurs: Sequence[Path], sortie: Path
+    pile: environnement.Pile,
+    dossier_base: Path,
+    adaptateurs: Sequence[Path],
+    sortie: Path,
+    *,
+    multimodal: str | None = None,
 ) -> dict[str, Any]:
-    """Fusion fp32 sur CPU puis enregistrement F16 de `sortie` (modèle et tokenizer)."""
+    """Fusion fp32 sur CPU puis enregistrement F16 de `sortie` (modèle et tokenizer).
+
+    `multimodal` (fiche du slug) choisit la classe (`environnement.classe_modele`) ; avec lui,
+    les modules LoRA sont contrôlés sur le modèle PEFT chargé et le préprocesseur de la base
+    est copié dans `sortie` (conversion `--mmproj`).
+    """
     torch = pile.torch
-    modele = pile.transformers.AutoModelForCausalLM.from_pretrained(
+    modele = environnement.classe_modele(pile, multimodal).from_pretrained(
         str(dossier_base),
         torch_dtype=torch.float32,
         low_cpu_mem_usage=True,
         local_files_only=True,
     )
     for adaptateur in adaptateurs:
-        modele = pile.peft.PeftModel.from_pretrained(modele, str(adaptateur)).merge_and_unload()
+        charge = pile.peft.PeftModel.from_pretrained(modele, str(adaptateur))
+        if multimodal is not None:
+            controler_modules_lora(charge)
+        modele = charge.merge_and_unload()
     plage = controler_plage(torch, modele)
     modele = modele.to(torch.float16)
     modele.save_pretrained(str(sortie), safe_serialization=True)
@@ -237,6 +398,8 @@ def fusionner(
         str(dossier_base), use_fast=True, local_files_only=True
     )
     tokenizer.save_pretrained(str(sortie))
+    if multimodal is not None:
+        copier_preprocesseur(dossier_base, sortie)
     return {**plage, "chat_template_sha256": chargement.sha_chat_template(tokenizer)}
 
 
@@ -270,7 +433,8 @@ def exporter(
     dossier_base = environnement.dossier_poids(source.slug, racine=base)
     details_adaptateurs = [controler_adaptateur(a, racine=base) for a in source.adaptateurs]
     config_llamacpp = serveur.charger_config_llamacpp()
-    prevus = octets_prevus(dossier_base)
+    multimodal = serveur.charger_config_modele(source.slug).multimodal
+    prevus = octets_prevus(dossier_base, multimodal=multimodal)
     if delai is None:
         delai = delai_outils(octets_poids(dossier_base))
     if delai <= 0:
@@ -302,6 +466,13 @@ def exporter(
         "octets_prevus": prevus,
         "delai_outils_s": delai,
     }
+    if multimodal is not None:
+        config["multimodal"] = multimodal
+        config["conversion"] = {
+            "outtype": TYPE_SORTIE_CONVERSION,
+            "sans_mtp": a_tete_mtp(dossier_base, racine=base),
+            "mmproj": NOM_MMPROJ,
+        }
     commande = f"slmsp export {source.nom or source.slug}"
     with verrou_gpu(commande=commande):
         run = nouveau_run(
@@ -327,6 +498,7 @@ def exporter(
                 controles,
                 delai,
                 sortie,
+                multimodal,
             )
         except KeyboardInterrupt:
             run.terminer("interrompu", "arrêt demandé")
@@ -349,13 +521,39 @@ def _executer(
     controles: Controles,
     delai: float,
     sortie: Callable[[str], None],
+    multimodal: str | None = None,
 ) -> tuple[str, str | None]:
     def journal(evenement: str, **details: Any) -> None:
         run.ajouter_jsonl(NOM_LOG, {"evenement": evenement, **details})
         sortie(f"export : {evenement}")
 
-    fusion = fusionner(pile, dossier_base, source.adaptateurs, run.dossier / DOSSIER_FUSION)
+    fusion = fusionner(
+        pile,
+        dossier_base,
+        source.adaptateurs,
+        run.dossier / DOSSIER_FUSION,
+        multimodal=multimodal,
+    )
     journal("fusion", **fusion)
+    vision: dict[str, Any] | None = None
+    if multimodal is not None:
+        vision = controler_vision_inchangee(dossier_base, run.dossier / DOSSIER_FUSION)
+        journal("vision", tenseurs=vision["tenseurs"], bloquants=vision["bloquants"])
+        if vision["bloquants"]:
+            # Inutile de convertir (30 min) un modèle dont la vision a changé.
+            echec = {
+                "fichiers": {"hf": DOSSIER_FUSION},
+                "fusion": fusion,
+                "multimodal": multimodal,
+                "vision": vision,
+                "controles": {"bloquants": vision["bloquants"], "alertes": []},
+            }
+            run.ecrire(NOM_EXPORT, json_canonique(echec) + b"\n")
+            return "partiel-erreur", " ; ".join(vision["bloquants"])[:500]
+    sans_mtp = multimodal is not None and a_tete_mtp(
+        run.dossier / DOSSIER_FUSION, dossier_base, racine=run.dossier.parents[2]
+    )
+    options_texte: dict[str, Any] = {"sans_mtp": True} if sans_mtp else {}
     f16 = convertir(
         run.dossier / DOSSIER_FUSION,
         run.dossier / NOM_F16,
@@ -363,6 +561,7 @@ def _executer(
         python=python,
         delai=delai,
         journal=run.dossier / NOM_LOG_CONVERSION,
+        **options_texte,
     )
     journal("conversion", fichier=NOM_F16)
     quantifier(
@@ -374,6 +573,17 @@ def _executer(
         journal=run.dossier / NOM_LOG_QUANTIFICATION,
     )
     journal("quantification", fichier=NOM_Q4)
+    if multimodal is not None:
+        convertir(
+            run.dossier / DOSSIER_FUSION,
+            run.dossier / NOM_MMPROJ,
+            type_sortie=TYPE_SORTIE_CONVERSION,
+            python=python,
+            delai=delai,
+            journal=run.dossier / NOM_LOG_MMPROJ,
+            mmproj=True,
+        )
+        journal("conversion-mmproj", fichier=NOM_MMPROJ)
 
     attendu = source.chat_template_sha256 or fusion["chat_template_sha256"]
     bloquants: list[str] = []
@@ -388,6 +598,15 @@ def _executer(
         "chat_template_sha256_attendu": attendu,
         "fusion": fusion,
     }
+    if multimodal is not None:
+        export["fichiers"]["mmproj"] = NOM_MMPROJ
+        export["multimodal"] = multimodal
+        export["vision"] = vision
+        export["llamacpp_tag"] = run.manifeste.llamacpp_tag
+        export["sha256"] = {
+            cle: sha256_fichier(run.dossier / export["fichiers"][cle])
+            for cle in ("f16", "q4_k_m", "mmproj")
+        }
     resultat: dict[str, Any] = {"bloquants": [], "alertes": []}
     if not bloquants:
         resultat = dict(controles(run, export))
@@ -401,13 +620,17 @@ def _executer(
 
 __all__ = [
     "NOM_F16",
+    "NOM_MMPROJ",
     "NOM_Q4",
     "PRECISIONS",
     "Source",
     "TYPE_RUN",
     "adaptateur_du_run",
     "controler_adaptateur",
+    "controler_modules_lora",
     "controler_plage",
+    "controler_vision_inchangee",
+    "copier_preprocesseur",
     "delai_outils",
     "exporter",
     "fusionner",

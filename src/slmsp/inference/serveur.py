@@ -199,12 +199,20 @@ def commande_conversion(
     type_sortie: str = "bf16",
     python: str | os.PathLike[str] | None = None,
     config: ConfigLlamacpp | None = None,
+    mmproj: bool = False,
+    sans_mtp: bool = False,
 ) -> Commande:
     """`convert_hf_to_gguf.py` de `src/` du tag, `PYTHONPATH` préfixé par `src/gguf-py`.
 
     `python` vaut l'interpréteur courant par défaut (il doit disposer des dépendances du
-    script : torch, transformers…).
+    script : torch, transformers…). `mmproj` ajoute `--mmproj` (projecteur de vision),
+    `sans_mtp` ajoute `--no-mtp` (config avec tête MTP dont les poids sont absents) ; les
+    deux sont exclusifs : b11429 quitte en erreur sur `--mmproj --no-mtp`.
     """
+    if mmproj and sans_mtp:
+        raise ConfigurationInvalide(
+            "conversion : `--mmproj` et `--no-mtp` sont exclusifs (b11429 refuse l'association)"
+        )
     config = charger_config_llamacpp() if config is None else config
     script = verifier_fichier("src/convert_hf_to_gguf.py", config)
     gguf_py = dossier_llamacpp(config) / "src" / "gguf-py"
@@ -222,6 +230,10 @@ def commande_conversion(
         "--outtype",
         type_sortie,
     ]
+    if mmproj:
+        arguments.append("--mmproj")
+    if sans_mtp:
+        arguments.append("--no-mtp")
     return Commande(arguments, env)
 
 
@@ -283,6 +295,8 @@ def convertir_hf_vers_gguf(
     delai: float | None = None,
     journal: str | os.PathLike[str] | None = None,
     config: ConfigLlamacpp | None = None,
+    mmproj: bool = False,
+    sans_mtp: bool = False,
 ) -> Path:
     """Convertit un dossier Hugging Face en GGUF `sortie` (écrit d'abord en `.part`).
 
@@ -292,7 +306,13 @@ def convertir_hf_vers_gguf(
     sortie = Path(sortie)
     partiel = _verifier_sortie_libre(sortie)
     commande = commande_conversion(
-        dossier_hf, partiel, type_sortie=type_sortie, python=python, config=config
+        dossier_hf,
+        partiel,
+        type_sortie=type_sortie,
+        python=python,
+        config=config,
+        mmproj=mmproj,
+        sans_mtp=sans_mtp,
     )
     return _executer_vers(
         "convert_hf_to_gguf.py",
@@ -470,8 +490,11 @@ class ServeurLlama:
         usage: UsageEmbedding = "passage",
         parallele: int = 1,
         speculatif: Speculatif | Mapping[str, Any] | None = None,
+        mmproj: str | os.PathLike[str] | None = None,
     ) -> None:
         _verifier_variante(variante)
+        if mmproj is not None and config.embedding:
+            raise ConfigurationInvalide("mmproj : réservé à un serveur de génération")
         if parallele < 1:
             raise ValueError(f"parallele doit être >= 1 : {parallele}")
         if slug is None and gguf is None:
@@ -510,6 +533,9 @@ class ServeurLlama:
         self.parallele = 1 if config.embedding else parallele
         self.slug = slug
         self._gguf = None if gguf is None else Path(gguf)
+        # Projecteur de vision (`--mmproj`) : le Harnais ne le passe jamais, seule la sonde
+        # vision de l'export le fait.
+        self.mmproj = None if mmproj is None else Path(mmproj)
         self._config_llamacpp = config_llamacpp
         self.prendre_verrou_gpu = prendre_verrou_gpu
         self.delai_demarrage = delai_demarrage
@@ -622,6 +648,8 @@ class ServeurLlama:
             if config.chat_template_force:
                 arguments += ["--chat-template-file", str(self.chat_template)]
             arguments += self._arguments_speculatifs()
+            if self.mmproj is not None:
+                arguments += ["--mmproj", str(self.mmproj)]
         return arguments
 
     def _arguments_speculatifs(self) -> list[str]:
@@ -682,6 +710,8 @@ class ServeurLlama:
     def _verifier_fichiers(self) -> None:
         if not self.gguf.is_file():
             raise ConfigurationInvalide(f"GGUF absent : {self.gguf}")
+        if self.mmproj is not None and not self.mmproj.is_file():
+            raise ConfigurationInvalide(f"mmproj absent : {self.mmproj}")
         brouillon = self.gguf_brouillon
         if brouillon is not None and not brouillon.is_file():
             raise ConfigurationInvalide(f"GGUF du brouillon absent : {brouillon}")
@@ -784,6 +814,8 @@ class ServeurLlama:
             brouillon = self.gguf_brouillon
             if brouillon is not None:
                 description["gguf_brouillon"] = brouillon.name
+        if self.mmproj is not None:
+            description["mmproj"] = self.mmproj.name
         if self._port is not None:
             programme = len(self.programme())
             description["arguments"] = self.arguments(self._port)[programme:]

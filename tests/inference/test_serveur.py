@@ -547,6 +547,73 @@ def test_convertir(vendor_factice, tmp_path: Path, monkeypatch: pytest.MonkeyPat
     assert len(appels) == 1
 
 
+# --- Options B3 : mmproj et --no-mtp ----------------------------------------------------------
+
+
+def test_convertir_options_mmproj_et_no_mtp(vendor_factice, tmp_path: Path) -> None:
+    sortie = tmp_path / "s.gguf"
+    defaut = serveur.commande_conversion(tmp_path / "hf", sortie, config=vendor_factice.config)
+    assert "--mmproj" not in defaut.arguments and "--no-mtp" not in defaut.arguments
+    mmproj = serveur.commande_conversion(
+        tmp_path / "hf", sortie, type_sortie="f16", mmproj=True, config=vendor_factice.config
+    )
+    assert mmproj.arguments == [*defaut.arguments[:-1], "f16", "--mmproj"]
+    texte = serveur.commande_conversion(
+        tmp_path / "hf", sortie, type_sortie="f16", sans_mtp=True, config=vendor_factice.config
+    )
+    assert texte.arguments[-1] == "--no-mtp" and "--mmproj" not in texte.arguments
+
+
+def test_convertir_mmproj_et_no_mtp_exclusifs(vendor_factice, tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationInvalide, match="exclusifs"):
+        serveur.commande_conversion(
+            tmp_path / "hf",
+            tmp_path / "s.gguf",
+            mmproj=True,
+            sans_mtp=True,
+            config=vendor_factice.config,
+        )
+    with pytest.raises(ConfigurationInvalide, match="exclusifs"):
+        serveur.convertir_hf_vers_gguf(
+            tmp_path / "hf",
+            tmp_path / "s.gguf",
+            mmproj=True,
+            sans_mtp=True,
+            config=vendor_factice.config,
+        )
+    assert not (tmp_path / "s.gguf.part").exists()
+
+
+def test_arguments_serveur_mmproj(vendor_factice, modeles: Path, tmp_path: Path) -> None:
+    projecteur = tmp_path / "mmproj-f16.gguf"
+    instance = ServeurLlama(
+        config_modele(), "cpu", slug=SLUG, config_llamacpp=vendor_factice.config, mmproj=projecteur
+    )
+    arguments = instance.arguments(5555)
+    assert arguments[arguments.index("--mmproj") + 1] == str(projecteur)
+    assert instance.description()["mmproj"] == projecteur.name
+    with pytest.raises(ConfigurationInvalide, match="mmproj absent"):
+        instance._verifier_fichiers()
+    with pytest.raises(ConfigurationInvalide, match="génération"):
+        ServeurLlama(
+            config_modele(**EMBEDDING),
+            "cpu",
+            slug=SLUG,
+            config_llamacpp=vendor_factice.config,
+            mmproj=projecteur,
+        )
+
+
+def test_arguments_serveur_sans_mmproj_par_defaut(vendor_factice, modeles: Path) -> None:
+    """Non-régression du Harnais : jamais de `--mmproj` sans demande explicite."""
+    instance = ServeurLlama(
+        config_modele(), "cpu", slug=SLUG, config_llamacpp=vendor_factice.config
+    )
+    assert instance.mmproj is None
+    assert "--mmproj" not in instance.arguments(5555)
+    assert "mmproj" not in instance.description()
+
+
 # --- Tests réels -------------------------------------------------------------------------------
 
 GRANITE = "granite-4.0-1b"
@@ -751,3 +818,23 @@ def test_parallele_invalide_et_embedding_reste_a_un(vendor_factice, tmp_path) ->
     arguments = instance.arguments(7000)
     assert arguments[arguments.index("--parallel") + 1] == "1"
     assert arguments[arguments.index("-c") + 1] == "4096"
+
+
+@pytest.mark.lent
+@pytest.mark.integration
+def test_mmproj_b11429_qwen35_reel(vendor_reel: Path, tmp_path: Path) -> None:
+    """Base qwen3.5-0.8b réelle : `convert --mmproj` puis llama-server `--mmproj` et `/props`."""
+    from slmsp.cli.export import sonder_vision
+    from slmsp.core.config import dossier_modeles
+
+    base = dossier_modeles() / "qwen3.5-0.8b"
+    q4 = base / "gguf" / "Qwen3.5-0.8B-Q4_K_M.gguf"
+    if not (base / "hf" / "preprocessor_config.json").is_file() or not q4.is_file():
+        pytest.skip(f"base qwen3.5-0.8b absente de {base} (définir SLMSP_MODELS_DIR)")
+    mmproj = serveur.convertir_hf_vers_gguf(
+        base / "hf", tmp_path / "mmproj-f16.gguf", type_sortie="f16", mmproj=True
+    )
+    assert mmproj.stat().st_size > 10 * 1024**2
+    bilan = sonder_vision(q4, mmproj, "qwen3.5-0.8b")
+    assert bilan["modalite_vision"] is True, bilan
+    assert bilan["valide"] is True, bilan

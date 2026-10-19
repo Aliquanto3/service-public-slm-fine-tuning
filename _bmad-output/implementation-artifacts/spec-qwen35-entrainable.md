@@ -2,7 +2,7 @@
 title: 'Qwen3.5 entraînables sous Windows natif, tour vision gelée et export multimodal'
 type: 'feature'
 created: '2026-10-18'
-status: 'review'
+status: 'done'
 baseline_commit: 'c578310'
 review_loop_iteration: 1
 followup_review_recommended: false
@@ -253,6 +253,37 @@ Reports : mesures GPU par l'orchestrateur, après fusion : `uv run --no-sync slm
 - Commande réelle consignée : `uv run --no-sync slmsp export --depuis <run SFT de B2>`.
 
 **Fichiers** : `src/slmsp/train/export.py`, `src/slmsp/inference/serveur.py`, `src/slmsp/cli/export.py`, et les tests cités.
+
+### Auto Run Result (B3, 2026-10-19)
+
+Statut : fait (critères 1 à 6), branche `feat/qwen35-b3`. Aucun appel payant, aucun GPU, aucun `export` réel.
+
+Réalisé :
+- **Serveur** : `commande_conversion` et `convertir_hf_vers_gguf` acceptent `mmproj` et `sans_mtp` (exclusifs, `ConfigurationInvalide`) ; `ServeurLlama(mmproj=...)` ajoute `--mmproj` (génération seulement, vérifié à l'existence du fichier, consigné dans `description()`). Sans l'option, la ligne de commande est inchangée.
+- **Export** : `fusionner(..., multimodal=)` passe par `environnement.classe_modele`, contrôle les modules LoRA du modèle PEFT chargé (`controler_modules_lora`) et copie le préprocesseur de la base ; `controler_vision_inchangee` (safetensors réels, comparaison en F16, `mtp.*` ignorés) ; `exporter` lit `multimodal` dans la fiche du slug (run comme témoin). Un écart de vision arrête l'export avant les conversions (`partiel-erreur`, `export.json` écrit avec `vision`). Chaîne : `modele-f16.gguf` (`--no-mtp`), `modele-q4_k_m.gguf`, `mmproj-f16.gguf` (`--mmproj`). `export.json` ajoute `fichiers.mmproj`, `multimodal`, `vision`, `llamacpp_tag`, `sha256` (trois GGUF) ; `FACTEUR_ESPACE` : `+ OCTETS_MMPROJ` (0,34 Gio).
+- **CLI** : `controler_format` ignore le mmproj (pas de chat template) ; sonde vision `sonder_vision` (llama-server cpu, `/props`, PNG synthétique, réponse non vide) après la sonde d'outils, bilan `sonde-vision.json`, échec : `degrade`. `--sans-sonde` saute les deux.
+- **Non-régression dense** : `test_export_dense_inchange` fige l'ordre des appels de la pile, les options des conversions (`type_sortie`, `python`, `delai`, `journal` seulement), les clés de `export.json` et du `config` du run, l'absence de mmproj et de `sonde-vision.json`. `test_arguments_serveur_sans_mmproj_par_defaut` fige le Harnais.
+
+Décisions prises seul :
+- **Adaptateur** : le contrôle sur le modèle PEFT chargé ne vaut que pour `multimodal` (un dense garde le contrôle statique de la liste). `controler_adaptateur` accepte la regex telle quelle. Le refus du modèle chargé arrive après la création du run (`partiel-erreur`, exception relancée) ; une regex visant visual, lm_head ou embed_tokens est refusée avant (revue B3).
+- **Préprocesseur** : seul `preprocessor_config.json` est obligatoire ; `chat_template.jinja` et `video_preprocessor_config.json` sont copiés s'ils existent.
+- **Sonde vision** : la réponse non vide compte aussi `reasoning_content` ; elle ne tourne pas si la sonde d'outils a déjà fait passer le run en `degrade`. Le test lent `test_mmproj_b11429_qwen35_reel` est dans `tests/inference/test_serveur.py` (marqueur `integration` enregistré là), et utilise le Q4_K_M officiel de la base.
+- Un `uv run --no-sync` sans `UV_PROJECT_ENVIRONMENT` a créé un `.venv` vide dans le worktree (supprimé) : pointer `UV_PROJECT_ENVIRONMENT` vers le venv du dépôt principal.
+
+À confirmer par Anaël : le seuil `OCTETS_MMPROJ` (0,34 Gio, mesuré sur 2B) sert aussi au 0.8B (surestimation sans conséquence).
+
+Reports : publication du mmproj et mmproj de base épinglé (`deferred`, inchangés). Le bout en bout réel n'a pas tourné : après fusion de B3 et un run SFT de B2, lancer `uv run --no-sync slmsp export --depuis <run SFT de B2>` (RAM d'environ 9 Gio pour 2B ; l'export prend `gpu.lock`), puis `uv run --no-sync pytest -q -m integration tests/inference/test_serveur.py -k mmproj -s`.
+
+### Revue B3
+
+- low, corrigé : commentaire de `controler_adaptateur` trompeur pour un dense (une chaîne n'y est contrôlée que par le pré-contrôle de regex) ; réécrit.
+- low, corrigé : le refus LoRA arrivait après `nouveau_run` et le chargement fp32. `_regex_cible_interdite` refuse avant tout run une regex `target_modules` nommant `visual`, `lm_head` ou `embed_tokens` ; le contrôle sur le modèle chargé reste (test `test_regex_adaptateur_visee_vision_refusee_avant_tout_run`). Les regex de `cibles_lora` n'énumèrent jamais ces noms : pas de faux refus.
+- low, corrigé : `--no-mtp` était lié à `multimodal`. `a_tete_mtp` lit `mtp_num_hidden_layers` > 0 (racine ou `text_config`, `config.json` du fusionné puis de la base) ; l'option reste exclusive de `--mmproj` ; `config.conversion.sans_mtp` reflète la config de la base (tests `test_a_tete_mtp`, `test_export_multimodal_sans_tete_mtp_pas_de_no_mtp`).
+- low, corrigé : `copier_preprocesseur` écrasait `chat_template.jinja` déjà écrit par `tokenizer.save_pretrained`, dont le SHA est celui contrôlé. Un fichier déjà présent est conservé (test `test_copie_preprocesseur_garde_le_template_du_tokenizer`).
+- low, consigné : la sonde vision (réponse non vide) ne prouve pas que l'image est utilisée ; conforme à la spec.
+- low, consigné : le seul test réel (`test_mmproj_b11429_qwen35_reel`) est lent (marqueur `integration`).
+- low, consigné : `OCTETS_MMPROJ` est fixe (0,34 Gio, mesuré sur 2B).
+- vérifié : export dense inchangé (MiniCPM5, Granite) : `test_export_dense_inchange` et la suite passent ; les chemins ajoutés sont gardés par `multimodal is not None`, et le pré-contrôle de regex ne touche qu'une chaîne visant visual / lm_head / embed_tokens (`all-linear` passe).
 
 ## Hors périmètre
 - Ministral 3, Gemma, et tout autre VLM sans `multimodal = "geler-vision"`.
