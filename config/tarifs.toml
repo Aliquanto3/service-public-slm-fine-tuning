@@ -76,12 +76,12 @@ note = "majoré de ~30 % par prudence (hébergeur variable chez OpenRouter)"
 entree = 0.5
 sortie = 1.0
 
-[modeles."z-ai/glm-5.2"]
+[modeles."z-ai/glm-5.3"]
 devise = "USD"
 date = 2026-10-19
-source = "openrouter.ai/z-ai/glm-5.2, relevé par --verifier (0,62 / 2,42)"
-note = "majoré de ~30 % par prudence (hébergeur variable chez OpenRouter)"
+source = "openrouter.ai/z-ai/glm-5.3, relevé par --verifier (0,079 / 1,40)"
+note = "entrée affichée probablement promotionnelle : tarif prudent (entrée ×7, sortie +30 %)"
 
-[modeles."z-ai/glm-5.2".modes.direct]
-entree = 0.8
-sortie = 3.2
+[modeles."z-ai/glm-5.3".modes.direct]
+entree = 0.6
+sortie = 1.8

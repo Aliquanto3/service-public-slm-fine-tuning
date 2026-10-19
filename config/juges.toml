@@ -80,7 +80,7 @@ marge_raisonnement = 2000
 
 [juges_tiers.glm]
 fournisseur = "openrouter"
-modele = "z-ai/glm-5.2"
+modele = "z-ai/glm-5.3"
 temperature = 0.0
 max_tokens = 8000
 effort_raisonnement = "low"

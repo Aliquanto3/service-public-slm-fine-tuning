@@ -63,3 +63,4 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 22:18 · S3 · décision · juges tiers **DeepSeek V4 Pro** (`deepseek/deepseek-v4-pro`, 0,38 / 0,77 $/Mtok) et **GLM-5.2** (`z-ai/glm-5.2`, 0,62 / 2,42 $/Mtok), tarifs majorés de 30 %. Estimation : ~0,3 € et ~0,8 € par run de 80 items. Nouvelle campagne de budget ouverte quand les notations en cours (Qwen3.5-0.8B, M1 test) seront finies · —
 - 2026-10-19 22:20 · S5 · dev · fini (gabarits CR/CT/LC, validateur de structure, nettoyage v3, `--modele-generateur`, `--taches --completer-depuis` ; estimation ~1,8 € pour 275 appels Mistral Large 4) · 494da31
 - 2026-10-19 22:20 · S5 · second-avis · lancé · —
+- 2026-10-19 22:22 · S3 · décision · GLM-5.2 remplacé par **GLM-5.3** (phare, plus récent ; question d'Anaël) ; pas de recommandation de juge trouvée chez Artificial Analysis ; le choix final du juge tiers se fera sur l'accord avec l'audit humain d'Anaël · —
