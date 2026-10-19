@@ -25,7 +25,13 @@ schema_version = 1
 # v9 (M1, M3, M4 sur MiniCPM5-2B, Qwen3.5-2B et Qwen3.5-0.8B ; Granite 1B en réserve) : 30 € pour
 # anthropic (9 notations ≈ 27 €, avec --plafond-estime 4.5 par notation) ; mistral reporte son reste
 # (régénération des cibles autorisée jusqu'à 10 € au total le 2026-10-19).
-campagne_id = "finetune-v9-2026-10-19"
+# Campagne finetune-v9-2026-10-19 close le 2026-10-19 vers 23 h avec : anthropic 11,23 € et mistral 2,75 €
+# (génération 2,13 €, juge 0,62 €) dépensés, hors génération v13 en cours (reste génération 2,05 €).
+# Anaël a approuvé le 2026-10-19 au soir (run autonome de nuit) : ~10 € par tâche et par API, 30 € par API
+# à l'échelle du projet ; nouveau fournisseur OpenRouter (juges tiers, générateurs alternatifs).
+# Campagne de nuit : anthropic reporte son reste (18,77 € → 18,5) ; mistral 10 € (génération 8, juge 2) ;
+# openrouter 10 €.
+campagne_id = "nuit-2026-10-19"
 
 # Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
 # réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
@@ -38,15 +44,18 @@ majoration_entree = 1.25
 [postes.anthropic]
 # PRD : 10 €. Relevé par Anaël le 2026-10-16 et le 2026-10-17 (10 $ ≈ 8,6 € + 5 € + 5 €), Baseline
 # complète et trois nouveaux Modèles de base candidats.
-plafond_eur = 30.0  # campagne complète v9, approuvée par Anaël le 2026-10-19 au soir
+plafond_eur = 18.5  # reste de la campagne v9 reporté (2026-10-19, nuit)
 
 [postes.mistral]
-plafond_eur = 5.36  # reste reporté : 10,80 € − 5,33 € dépensés le 2026-10-19 (arrondi)
+plafond_eur = 10.0  # run de nuit, approuvé par Anaël le 2026-10-19
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
-generation = 4.21  # reste reporté : 8,75 € − 4,54 € (2026-10-19)
-juge = 1.15  # reste reporté : 1,95 € − 0,80 € (2026-10-19)
+generation = 8.0
+juge = 2.0
+
+[postes.openrouter]
+plafond_eur = 10.0  # juges tiers et générateurs alternatifs, approuvé par Anaël le 2026-10-19
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]
@@ -54,3 +63,5 @@ generation = "mistral.generation"
 validation = "mistral.generation"
 juge-second = "mistral.juge"
 juge-principal = "anthropic"
+juge-tiers-openrouter = "openrouter"
+generateur-openrouter = "openrouter"
