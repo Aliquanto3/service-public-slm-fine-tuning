@@ -65,3 +65,4 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 22:20 · S5 · second-avis · lancé · —
 - 2026-10-19 22:22 · S3 · décision · GLM-5.2 remplacé par **GLM-5.3** (phare, plus récent ; question d'Anaël) ; pas de recommandation de juge trouvée chez Artificial Analysis ; le choix final du juge tiers se fera sur l'accord avec l'audit humain d'Anaël · —
 - 2026-10-19 22:23 · S5 · second-avis · 3 medium (préversion trop large, faux rejets CR « Décisions prises » et CT « Objet du courrier »), 3 low ; D1 sans défaut ; review lancée (Opus) · —
+- 2026-10-19 22:28 · S2 · M1 test : génération complète `runs/eval-generation/20261019-221301-ft-minicpm5-2b-2758` (export `20261019-220936-ft-minicpm5-2b-3934`), notation en fond · —
