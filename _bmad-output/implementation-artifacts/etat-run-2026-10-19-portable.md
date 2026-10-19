@@ -71,6 +71,8 @@ Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campa
 - 2026-10-19 · 9.9 · revue Opus : 3 medium corrigés (écarts déclarés rang par rang au MANIFEST, `nettoyage.ecartes`, et vérifiés par `charger_jeu` ; fidélité LC par éléments extraits ; `tokenizers` absent → erreur claire), 5 low corrigés, 2 rejetés. Fusion b13b018.
 - 2026-10-19 08:42 · v4 · `data build --nettoyage --depuis 20261018-115927-build-424c --modele base:minicpm5-2b` : **v4 = 425 lignes** (run `runs/data-build/20261019-084237-nettoyage-7b09`), comptes identiques à l'essai. LC signalés : 2, sur des sigles (CB, CPH) : à relire par Anaël dans `rapport.json`. MANIFEST et configs commités (7b9dce0).
 - 2026-10-19 08:43 · campagne v4 · M1 QLoRA bf16 8192 lancé sous garde RAM (`scratchpad/v4-run.ps1` + `garde_ram.py`, arrêt propre au-delà de 28 Go), puis export cuda et notation. Suite complète lancée en parallèle sur main.
+- 2026-10-19 08:51 · main · suite complète verte après 10.9 et 9.9 : 5 317 passés, 13 ignorés (8 min 19).
+- 2026-10-19 · micro_lot · story `fix-micro-lot-1536` : dev (5388e03), second avis (1 medium : compteur de troncature perdu dans `passages_catalogue`), revue Opus (84a7823, corrigé). Passage de bge-m3 à 1536, troncature de la requête signalée (`requetes_tronquees`). **Non fusionnée** : elle attend la fin des mesures CPU du spéculatif (elle change la RAM mesurée). Reste à vérifier à la prochaine `index verifier-embedding` : aucun avertissement « texte tronqué ».
 - 2026-10-19 08:15 · 9.9 nettoyage · spec révisée d'après Opus (93f6831) ; dev lancé (Opus, story à risque D1), worktree `slmsp-wt/nettoyage-v4`.
 
 ## Journal de la nuit
