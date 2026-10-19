@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import sqlite3
 import subprocess
 import sys
 from types import SimpleNamespace
@@ -20,8 +21,12 @@ from slmsp.budget.config import charger_tarifs  # noqa: E402
 from slmsp.budget.tarifs import UsageTokens, cout_pire_cas, cout_reel  # noqa: E402
 from slmsp.core.config import racine_projet  # noqa: E402
 from slmsp.core.erreurs import ConfigurationInvalide, SecretManquant  # noqa: E402
-from slmsp.judge.cache import RequeteLot, cle_verdict  # noqa: E402
-from slmsp.judge.claude import DemandeJugement, fabriquer_client  # noqa: E402
+from slmsp.judge.cache import CacheVerdicts, RequeteLot, cle_verdict  # noqa: E402
+from slmsp.judge.claude import (  # noqa: E402
+    DemandeJugement,
+    detail_erreur_creation,
+    fabriquer_client,
+)
 from slmsp.judge.config import charger_juges  # noqa: E402
 from slmsp.judge.prompt import (  # noqa: E402
     ItemNonJugeable,
@@ -321,7 +326,7 @@ def test_creation_de_lot_en_erreur(banc: Any, doublures: SimpleNamespace, items:
     banc.faux.creation = lambda: httpx2.Response(500, json={"type": "error"})
     rapport = banc.juge().juger(demandes(doublures, items, "Q-001"))
     (resultat,) = rapport.resultats
-    assert resultat.statut == "non-juge" and resultat.motif == "erreur-api"
+    assert resultat.statut == "non-juge" and resultat.motif == "erreur-creation-lot"
     assert banc.lots()[0]["statut"] == "abandonne"
     (ligne,) = banc.lignes_registre()
     assert ligne["etat"] == "pire-cas"
@@ -331,7 +336,7 @@ def test_creation_de_lot_en_erreur(banc: Any, doublures: SimpleNamespace, items:
 
 
 @pytest.mark.parametrize(
-    ("statut", "motif"), [(400, "erreur-api"), (401, "erreur-api"), (429, "limite-debit")]
+    ("statut", "motif"), [(400, "erreur-creation-lot"), (401, "erreur-api"), (429, "limite-debit")]
 )
 def test_creation_de_lot_refusee_non_facturee(
     banc: Any, doublures: SimpleNamespace, items: Any, statut: int, motif: str
@@ -941,3 +946,85 @@ def test_lot_heterogene_prefixe_puis_lot_suivant(
     assert [lg["nb_requetes"] for lg in reservations] == [2, 1]
     assert reservations[0]["montant_reserve_eur"] == pytest.approx(couts[0] + couts[1])
     assert reservations[1]["montant_reserve_eur"] == pytest.approx(long)
+
+
+@pytest.mark.parametrize("reseau", [False, True])
+def test_creation_de_lot_en_erreur_est_tracee(
+    banc: Any,
+    doublures: SimpleNamespace,
+    items: Any,
+    caplog: pytest.LogCaptureFixture,
+    reseau: bool,
+) -> None:
+    """5xx ou erreur réseau : log WARNING, motif du lot et ligne `appels` à l'issue fermée."""
+
+    def creation() -> httpx2.Response:
+        if reseau:
+            raise httpx2.ConnectError("<panne-reseau-factice>")
+        return httpx2.Response(
+            500, json={"type": "error", "error": {"type": "api_error", "message": "<msg-factice>"}}
+        )
+
+    banc.faux.creation = creation
+    with caplog.at_level("WARNING", logger="slmsp.judge.claude"):
+        rapport = banc.juge().juger(demandes(doublures, items, "Q-001"))
+    (resultat,) = rapport.resultats
+    assert resultat.motif == "erreur-creation-lot"
+    attendu = "<panne-reseau-factice>" if reseau else "<msg-factice>"
+    type_attendu = "APIConnectionError" if reseau else "InternalServerError"
+    assert any(attendu in m and type_attendu in m for m in caplog.messages)
+    (lot,) = banc.lots()
+    assert attendu in lot["motif"] and type_attendu in lot["motif"]
+    assert ("statut=None" if reseau else "statut=500") in lot["motif"]
+    (appel,) = banc.cache.appels()
+    assert appel["mode"] == "batch" and appel["lot_id"] == lot["lot_id"]
+    assert appel["issue"] == "erreur-creation-lot" and appel["cout_eur"] == 0
+    assert appel["tokens_entree"] is None
+
+
+def test_creation_de_lot_refusee_est_tracee(
+    banc: Any, doublures: SimpleNamespace, items: Any
+) -> None:
+    """Un refus 400 est tracé comme une erreur de création, statut compris."""
+    banc.faux.creation = lambda: httpx2.Response(
+        400, json={"type": "error", "error": {"type": "invalid_request_error", "message": "<x>"}}
+    )
+    banc.juge().juger(demandes(doublures, items, "Q-001", "NR-001"))
+    (lot,) = banc.lots()
+    assert "BadRequestError statut=400" in lot["motif"] and "<x>" in lot["motif"]
+    assert [a["issue"] for a in banc.cache.appels()] == ["erreur-creation-lot"] * 2
+
+
+def test_trace_de_creation_en_echec_ne_bloque_pas(
+    banc: Any,
+    doublures: SimpleNamespace,
+    items: Any,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Si l'écriture de la trace lève (SQLite verrouillé), le warning est émis, les items sont
+    résolus et l'échec de la trace est consigné au journal."""
+    banc.faux.creation = lambda: httpx2.Response(500, json={"type": "error"})
+
+    def verrouille(*_: Any, **__: Any) -> None:
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(CacheVerdicts, "journaliser_appel", verrouille)
+    with caplog.at_level("WARNING", logger="slmsp.judge.claude"):
+        rapport = banc.juge().juger(demandes(doublures, items, "Q-001", "NR-001"))
+    assert [r.motif for r in rapport.resultats] == ["erreur-creation-lot"] * 2
+    assert any("en erreur" in m for m in caplog.messages)
+    assert any("trace" in m and "impossible" in m for m in caplog.messages)
+
+
+def test_detail_erreur_creation_masque_et_tronque() -> None:
+    """Clé `sk-ant-…` masquée, détail final (cause comprise) tronqué à 500 caractères."""
+    try:
+        try:
+            raise OSError("x" * 600)
+        except OSError as cause:
+            raise RuntimeError("cle sk-ant-api03-AbC_d-9 fuitee") from cause
+    except RuntimeError as exc:
+        detail = detail_erreur_creation(exc, None)
+    assert "sk-ant-api03" not in detail and "sk-ant-***" in detail
+    assert len(detail) == 500 and "cause=OSError" in detail
