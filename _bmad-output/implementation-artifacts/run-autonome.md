@@ -44,3 +44,6 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:54 · S1 · review · 10 constats corrigés, tests JS rejetés · 6223c0b
 - 2026-10-19 21:54 · S1 · fusion · HTML `C:/Users/Anael/dev/slmsp-audit/audit-verdicts.html` (170 items, 110 désaccords, 5 notations) · 65763d2
 - 2026-10-19 21:55 · run · décision · Anaël : **GPT et Gemini retirés** (générateurs et juges), risque de licence non instruit. Fournisseur unique pour S3 et S4 : OpenRouter (DeepSeek, GLM, Kimi…), plus Mistral (Large 4 et Large 3). Plafonds : openrouter 10 €, mistral.generation 10 € · —
+- 2026-10-19 21:56 · S2 · review · 2 medium (nettoyage depuis un sous-ensemble refusé ; préférences testées), 5 low corrigés · e7613e7
+- 2026-10-19 21:56 · S2 · fusion · tests ciblés verts (93) · 2aff428
+- 2026-10-19 21:56 · S2 · décision · jeu **v12** = v11 sans CR, CT, LC (369 lignes : CO 34, Q 95, RD 132, RE 34, generique 74), `runs/data-build/20261019-215607-sous-ensemble-bfcf` ; M1 test MiniCPM5-2B lancé (`config/runs/m1-qlora-minicpm5-2b-v11-partiel.toml`, autorisé par Anaël) · —
