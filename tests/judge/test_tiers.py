@@ -172,11 +172,11 @@ def test_juges_toml_actuel_charge_avec_ses_juges_tiers() -> None:
 
 def test_juges_toml_avec_juge_tiers(tmp_path: Path) -> None:
     texte = (racine_projet() / "config" / "juges.toml").read_text(encoding="utf-8")
-    texte += '\n[juges_tiers.essai_test]\nmodele = "deepseek/x"\nmax_tokens = 8000\n'
+    texte += '\n[juges_tiers.essai-test]\nmodele = "deepseek/x"\nmax_tokens = 8000\n'
     chemin = tmp_path / "juges.toml"
     chemin.write_text(texte, encoding="utf-8")
     config = charger_juges(chemin)
-    tiers = config.juges_tiers["essai_test"]
+    tiers = config.juges_tiers["essai-test"]
     assert tiers.fournisseur == "openrouter" and tiers.usage_budget == "juge-tiers-openrouter"
     assert tiers.sortie_estimation == 3500
     assert config.principal == charger_juges().principal
