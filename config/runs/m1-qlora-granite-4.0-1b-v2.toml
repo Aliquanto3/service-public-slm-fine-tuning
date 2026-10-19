@@ -1,9 +1,9 @@
 # Run M1, QLoRA (base 4 bits nf4 + LoRA), Granite 4.0 1B (campagne granite-4.0-1b-v2, jeu v2).
 # Gabarit de campagne : les quatre TOML m1 à m4 ne diffèrent que par `methode` (et
 # `sft_run_id` pour ORPO).
-# precision_base = bf16 dans les quatre (invariant de campagne). longueur_max = 8192 À
-# CONFIRMER par une sonde, pas encore faite :
-#   sonde-env --modele granite-4.0-1b --precision-base bf16 --longueurs 8192
+# precision_base = bf16 dans les quatre (invariant de campagne). longueur_max = 3072 :
+# sonde du 2026-10-19, QLoRA bf16 tient à 3072 (5,67 Gio, runs/train-sonde/20261019-080533-granite-4.0-1b-9da4),
+# déborde à 4096 ; LoRA (M2) échoue dès 3072 (…-081835-granite-4.0-1b-6c4d) : M2 hors campagne.
 # Lancement : uv run --no-sync slmsp train run --config config/runs/m1-qlora-granite-4.0-1b-v2.toml
 
 campagne = "granite-4.0-1b-v2"
@@ -11,7 +11,7 @@ modele = "granite-4.0-1b"
 methode = "qlora"
 jeu_version = "v2"
 graine = 1234
-longueur_max = 8192
+longueur_max = 3072
 precision_base = "bf16"
 
 [hyperparametres]
