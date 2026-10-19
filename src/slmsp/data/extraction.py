@@ -27,10 +27,9 @@ def extraire_message(brut: bytes | str | None) -> dict[str, Any]:
     Une réponse tronquée (`finish_reason = length`) est refusée (`ReponseTronquee`, sous-classe
     de `ProvenanceInvalide`). Lève `ProvenanceInvalide`.
     """
-    message = message_assistant(brut)
     if raison_de_fin(brut) == "length":
         raise ReponseTronquee("réponse tronquée (finish_reason = length)")
-    return message
+    return message_assistant(brut)
 
 
 def extraire_contenu(brut: bytes | str | None) -> str:
