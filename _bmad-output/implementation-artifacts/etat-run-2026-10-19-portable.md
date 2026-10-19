@@ -73,6 +73,7 @@ Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campa
 - 2026-10-19 08:43 · campagne v4 · M1 QLoRA bf16 8192 lancé sous garde RAM (`scratchpad/v4-run.ps1` + `garde_ram.py`, arrêt propre au-delà de 28 Go), puis export cuda et notation. Suite complète lancée en parallèle sur main.
 - 2026-10-19 08:51 · main · suite complète verte après 10.9 et 9.9 : 5 317 passés, 13 ignorés (8 min 19).
 - 2026-10-19 · micro_lot · story `fix-micro-lot-1536` : dev (5388e03), second avis (1 medium : compteur de troncature perdu dans `passages_catalogue`), revue Opus (84a7823, corrigé). Passage de bge-m3 à 1536, troncature de la requête signalée (`requetes_tronquees`). **Non fusionnée** : elle attend la fin des mesures CPU du spéculatif (elle change la RAM mesurée). Reste à vérifier à la prochaine `index verifier-embedding` : aucun avertissement « texte tronqué ».
+- 2026-10-19 09:08 · M1 v4 · entraînement **complet** en 25 min (`runs/train/20261019-084321-m1-qlora-minicpm5-2b-v4-53fc`), pic RAM du PC 13,9 Go, garde non déclenchée. Note : le statut courant d'un run est la dernière ligne de `etat.jsonl` ; `run.json` garde `en_cours` (le script lisait le mauvais fichier, corrigé). Export et notation relancés.
 - 2026-10-19 08:15 · 9.9 nettoyage · spec révisée d'après Opus (93f6831) ; dev lancé (Opus, story à risque D1), worktree `slmsp-wt/nettoyage-v4`.
 
 ## Journal de la nuit
