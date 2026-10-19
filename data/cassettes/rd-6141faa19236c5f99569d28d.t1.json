@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:22:29Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Contours Iris 2014 géographie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'Contours Iris 2014 géographie'\nPage 1 of results:\n\n1. Iris...GE\n   ID: 61489e33b77d1697d00d2fec\n   Organization: Institut national de l'information géographique et forestière\n   Tags: distribution-demographique, donnees-ouvertes, inspire, repartition-de-la-population-demographie, statistiques\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/iris-ge\n\n2. Historique des codes IRIS\n   ID: 64a935e7f5ddd207829205e8\n   Organization: Santé publique France\n   Tags: decoupage-administratif, gd4h, insee, iris\n   Resources: 18\n   URL: https://www.data.gouv.fr/datasets/historique-des-codes-iris\n\n3. Démographie infracommunal en IRIS des communes 2014 dans la Somme\n   ID: 673818bcc1f7a9921ac40a9a\n   Organization: Direction Départementale des Territoires et de la Mer de la Somme\n   Tags: donnee-generique-demographie, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/demographie-infracommunal-en-iris-des-communes-2014-dans-la-somme-1\n\n4. Contours IRIS - géographie 2024\n   ID: 67f5bb0603325228295b7e8e\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, iris, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2024\n\n5. Contours IRIS - géographie 2016\n   ID: 67f5baf603325228295b7e62\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2016-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'Contours Iris 2014 géographie'\nPage 1 of results:\n\n1. Iris...GE\n   ID: 61489e33b77d1697d00d2fec\n   Organization: Institut national de l'information géographique et forestière\n   Tags: distribution-demographique, donnees-ouvertes, inspire, repartition-de-la-population-demographie, statistiques\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/iris-ge\n\n2. Historique des codes IRIS\n   ID: 64a935e7f5ddd207829205e8\n   Organization: Santé publique France\n   Tags: decoupage-administratif, gd4h, insee, iris\n   Resources: 18\n   URL: https://www.data.gouv.fr/datasets/historique-des-codes-iris\n\n3. Démographie infracommunal en IRIS des communes 2014 dans la Somme\n   ID: 673818bcc1f7a9921ac40a9a\n   Organization: Direction Départementale des Territoires et de la Mer de la Somme\n   Tags: donnee-generique-demographie, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/demographie-infracommunal-en-iris-des-communes-2014-dans-la-somme-1\n\n4. Contours IRIS - géographie 2024\n   ID: 67f5bb0603325228295b7e8e\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, iris, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2024\n\n5. Contours IRIS - géographie 2016\n   ID: 67f5baf603325228295b7e62\n   Organization: Bordeaux Métropole\n   Tags: data-gouv, limites, noms, observation-connaissance-du-territoire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/contours-iris-geographie-2016-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

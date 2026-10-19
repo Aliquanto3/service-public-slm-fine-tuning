@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:26:06Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "658f61c839d2400829c71b49"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Limite terre-mer\nDataset ID: 658f61c839d2400829c71b49\nTotal resources: 6\n\n1. Portail d'information géographique du Shom\n   Resource ID: fc281066-95dc-4715-8360-dec648330f74\n   Format: www:link-1.0-http--link\n   Type: main\n   URL: https://data.shom.fr/\n\n2. Service de téléchargement de la Limite terre-mer - France métropolitaine\n   Resource ID: c949baa2-e919-4882-876a-90be9a7e2686\n   Format: shp\n   Type: main\n   URL: https://services.data.shom.fr/INSPIRE/telechargement/prepackageGroup/LIMTM_PACK_DL/prepackage/Limite_terre_mer_France_metropolitaine/file/Limite_terre_mer_France_metropolitaine.7z\n\n3. LIMTM_3857_WMSV\n   Resource ID: 346f7ca5-6810-41de-bf9b-bf4232b07e32\n   Format: wms\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wms/v?service=WMS&request=GetCapabilities&version=1.3.0\n\n4. LIMTM_2154_WFS:limite_terre_mer_france_metropolitaine_polygones\n   Resource ID: d0212068-bcf7-49ba-9142-81c613d5438a\n   Format: wfs\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wfs?service=WFS&request=GetCapabilities&version=2.0.0\n\n5. LIMTM_2154_WFS:limite_terre_mer_france_metropolitaine_ligne\n   Resource ID: ed5c67ad-31a6-4dcf-89c4-e4e108343838\n   Format: wfs\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wfs?service=WFS&request=GetCapabilities&version=2.0.0\n\n6. LIMTM_2154_WFS:limite_terre_mer_france_metropolitaine_fermetureslimar\n   Resource ID: dec9d3e1-babe-4cc8-b79c-cb4eb7708915\n   Format: wfs\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wfs?service=WFS&request=GetCapabilities&version=2.0.0\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Limite terre-mer\nDataset ID: 658f61c839d2400829c71b49\nTotal resources: 6\n\n1. Portail d'information géographique du Shom\n   Resource ID: fc281066-95dc-4715-8360-dec648330f74\n   Format: www:link-1.0-http--link\n   Type: main\n   URL: https://data.shom.fr/\n\n2. Service de téléchargement de la Limite terre-mer - France métropolitaine\n   Resource ID: c949baa2-e919-4882-876a-90be9a7e2686\n   Format: shp\n   Type: main\n   URL: https://services.data.shom.fr/INSPIRE/telechargement/prepackageGroup/LIMTM_PACK_DL/prepackage/Limite_terre_mer_France_metropolitaine/file/Limite_terre_mer_France_metropolitaine.7z\n\n3. LIMTM_3857_WMSV\n   Resource ID: 346f7ca5-6810-41de-bf9b-bf4232b07e32\n   Format: wms\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wms/v?service=WMS&request=GetCapabilities&version=1.3.0\n\n4. LIMTM_2154_WFS:limite_terre_mer_france_metropolitaine_polygones\n   Resource ID: d0212068-bcf7-49ba-9142-81c613d5438a\n   Format: wfs\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wfs?service=WFS&request=GetCapabilities&version=2.0.0\n\n5. LIMTM_2154_WFS:limite_terre_mer_france_metropolitaine_ligne\n   Resource ID: ed5c67ad-31a6-4dcf-89c4-e4e108343838\n   Format: wfs\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wfs?service=WFS&request=GetCapabilities&version=2.0.0\n\n6. LIMTM_2154_WFS:limite_terre_mer_france_metropolitaine_fermetureslimar\n   Resource ID: dec9d3e1-babe-4cc8-b79c-cb4eb7708915\n   Format: wfs\n   Type: api\n   URL: https://services.data.shom.fr/INSPIRE/wfs?service=WFS&request=GetCapabilities&version=2.0.0\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

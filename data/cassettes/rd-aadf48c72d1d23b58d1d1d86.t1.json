@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:30:37Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "élections sénatoriales 2023 candidatures",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'élections sénatoriales 2023 candidatures'\nPage 1 of results:\n\n1. Élections sénatoriales 2026 - Candidatures aux scrutins majoritaire (tour 1) et proportionnel \n   ID: 6aa4644c63519c97bb2e366a\n   Organization: Ministère de l'intérieur\n   Tags: candidats, candidats-elections, candidatures, democratie, elections\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-senatoriales-2026-candidatures-aux-scrutins-majoritaire-tour-1-et-proportionnel\n\n2. Élections sénatoriales 2023 – candidatures T1\n   ID: 650888c1bab15c58d0c983c8\n   Organization: Ministère de l'intérieur\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-senatoriales-2023-candidatures-t1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'élections sénatoriales 2023 candidatures'\nPage 1 of results:\n\n1. Élections sénatoriales 2026 - Candidatures aux scrutins majoritaire (tour 1) et proportionnel \n   ID: 6aa4644c63519c97bb2e366a\n   Organization: Ministère de l'intérieur\n   Tags: candidats, candidats-elections, candidatures, democratie, elections\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-senatoriales-2026-candidatures-aux-scrutins-majoritaire-tour-1-et-proportionnel\n\n2. Élections sénatoriales 2023 – candidatures T1\n   ID: 650888c1bab15c58d0c983c8\n   Organization: Ministère de l'intérieur\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-senatoriales-2023-candidatures-t1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

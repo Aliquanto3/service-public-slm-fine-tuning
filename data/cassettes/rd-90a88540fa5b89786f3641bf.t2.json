@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:22:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6509b9a02554b0b3c5b75d77"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2022 - Metz\nDataset ID: 6509b9a02554b0b3c5b75d77\nTotal resources: 1\n\n1. Moyenne annuelle de PM2.5 en 2022 - Metz\n   Resource ID: e311dddd-b3a5-472b-a802-42ea01736b2c\n   Format: wmts\n   Type: main\n   URL: https://portailsig.atmo-grandest.eu/server/rest/services/Hosted/mod_metz_2022_pm25_moyan/MapServer/WMTS/1.0.0/WMTSCapabilities.xml\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2022 - Metz\nDataset ID: 6509b9a02554b0b3c5b75d77\nTotal resources: 1\n\n1. Moyenne annuelle de PM2.5 en 2022 - Metz\n   Resource ID: e311dddd-b3a5-472b-a802-42ea01736b2c\n   Format: wmts\n   Type: main\n   URL: https://portailsig.atmo-grandest.eu/server/rest/services/Hosted/mod_metz_2022_pm25_moyan/MapServer/WMTS/1.0.0/WMTSCapabilities.xml\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

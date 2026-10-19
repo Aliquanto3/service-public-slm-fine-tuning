@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:29:04Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6a4b7ed61d7ecb5a4eb55a18"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: [DREAL OCCITANIE - Etat des lieux 2025] Données d'états et de pressions des masses d'eau souterraines captives (Turonien-Coniacien) sur le bassin Adour-garonne\nDataset ID: 6a4b7ed61d7ecb5a4eb55a18\nTotal resources: 2\n\n1. Accès au téléchargement des données\n   Resource ID: 54cb9efb-017e-448e-901c-4b90efd41b94\n   Format: zip\n   Type: main\n   URL: https://telechargement.picto-occitanie.fr/download/18123c30-8d38-4074-b2e1-5c1382a3e5c0\n\n2. API Geojson\n   Resource ID: e0d9c5a7-a25e-450e-9368-9ada917022f4\n   Format: zip\n   Type: main\n   URL: https://catalogue.picto-occitanie.fr/api/data/18123c30-8d38-4074-b2e1-5c1382a3e5c0?srs=EPSG:4326\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: [DREAL OCCITANIE - Etat des lieux 2025] Données d'états et de pressions des masses d'eau souterraines captives (Turonien-Coniacien) sur le bassin Adour-garonne\nDataset ID: 6a4b7ed61d7ecb5a4eb55a18\nTotal resources: 2\n\n1. Accès au téléchargement des données\n   Resource ID: 54cb9efb-017e-448e-901c-4b90efd41b94\n   Format: zip\n   Type: main\n   URL: https://telechargement.picto-occitanie.fr/download/18123c30-8d38-4074-b2e1-5c1382a3e5c0\n\n2. API Geojson\n   Resource ID: e0d9c5a7-a25e-450e-9368-9ada917022f4\n   Format: zip\n   Type: main\n   URL: https://catalogue.picto-occitanie.fr/api/data/18123c30-8d38-4074-b2e1-5c1382a3e5c0?srs=EPSG:4326\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

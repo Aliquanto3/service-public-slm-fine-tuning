@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:25:09Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "déclarations préalables embauche région secteur NA38",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'déclarations préalables embauche région secteur NA38'\nPage 1 of results:\n\n1. Déclarations préalables à l'embauche, par région x secteur NA38\n   ID: 5eaa8ff4037baa9ac6eb753b\n   Organization: Unions de Recouvrement des cotisations de Sécurité Sociale et d'Allocations Familiales\n   Tags: dpae, embauches, observatoire-eco-embauches, observatoire-economique, regions\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/declarations-prealables-a-lembauche-par-region-x-secteur-na38\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'déclarations préalables embauche région secteur NA38'\nPage 1 of results:\n\n1. Déclarations préalables à l'embauche, par région x secteur NA38\n   ID: 5eaa8ff4037baa9ac6eb753b\n   Organization: Unions de Recouvrement des cotisations de Sécurité Sociale et d'Allocations Familiales\n   Tags: dpae, embauches, observatoire-eco-embauches, observatoire-economique, regions\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/declarations-prealables-a-lembauche-par-region-x-secteur-na38\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

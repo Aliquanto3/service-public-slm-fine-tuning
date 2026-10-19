@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:22:29Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "61489e33b77d1697d00d2fec"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Iris...GE\nDataset ID: 61489e33b77d1697d00d2fec\nTotal resources: 5\n\n1. Fiche produit IRIS... GE\n   Resource ID: 569383c0-3dbc-4543-9732-19b412b41389\n   Format: html\n   Type: other\n   URL: https://geoservices.ign.fr/irisge\n\n2. Documentation IRIS... GE\n   Resource ID: 85b8aae9-f03b-4508-a20a-4b0947f7a817\n   Format: pdf\n   Type: main\n   URL: https://geoservices.ign.fr/documentation/donnees/vecteur/irisge\n\n3. Télécharger IRIS... GE\n   Resource ID: 933edd5f-f6da-4888-8e17-3e6c603263b8\n   Format: shapefile\n   Type: main\n   URL: https://geoservices.ign.fr/irisge#telechargement\n\n4. STATISTICALUNITS.IRISGE\n   Resource ID: 778b1cd6-3d52-49c4-b24a-1e5003fae196\n   Format: wms\n   Type: api\n   URL: https://data.geopf.fr/wms-v/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities\n\n5. STATISTICALUNITS.IRISGE:iris_ge\n   Resource ID: 7b6aca35-4f21-4507-a71a-b6d2479fb627\n   Format: wfs\n   Type: api\n   URL: https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Iris...GE\nDataset ID: 61489e33b77d1697d00d2fec\nTotal resources: 5\n\n1. Fiche produit IRIS... GE\n   Resource ID: 569383c0-3dbc-4543-9732-19b412b41389\n   Format: html\n   Type: other\n   URL: https://geoservices.ign.fr/irisge\n\n2. Documentation IRIS... GE\n   Resource ID: 85b8aae9-f03b-4508-a20a-4b0947f7a817\n   Format: pdf\n   Type: main\n   URL: https://geoservices.ign.fr/documentation/donnees/vecteur/irisge\n\n3. Télécharger IRIS... GE\n   Resource ID: 933edd5f-f6da-4888-8e17-3e6c603263b8\n   Format: shapefile\n   Type: main\n   URL: https://geoservices.ign.fr/irisge#telechargement\n\n4. STATISTICALUNITS.IRISGE\n   Resource ID: 778b1cd6-3d52-49c4-b24a-1e5003fae196\n   Format: wms\n   Type: api\n   URL: https://data.geopf.fr/wms-v/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities\n\n5. STATISTICALUNITS.IRISGE:iris_ge\n   Resource ID: 7b6aca35-4f21-4507-a71a-b6d2479fb627\n   Format: wfs\n   Type: api\n   URL: https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

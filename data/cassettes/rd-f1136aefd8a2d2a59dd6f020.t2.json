@@ -1,0 +1,92 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:26:06Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "littoral Haute-Corse",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'littoral Haute-Corse'\nPage 1 of results:\n\n1. MNT Bathymétrique de façade de la Corse (Projet Homonim)\n   ID: 658f61cca7440c6c76c71b4a\n   Organization: Shom\n   Tags: bathymetrie, bathymetry, corse, digital-elevation-model, donnees-ouvertes\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/mnt-bathymetrique-de-facade-de-la-corse-projet-homonim-1\n\n2. Limite terre-mer\n   ID: 658f61c839d2400829c71b49\n   Organization: Shom\n   Tags: administrative-maritime-limits, coastal-area, donnees-ouvertes, hvd, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/limite-terre-mer-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'littoral Haute-Corse'\nPage 1 of results:\n\n1. MNT Bathymétrique de façade de la Corse (Projet Homonim)\n   ID: 658f61cca7440c6c76c71b4a\n   Organization: Shom\n   Tags: bathymetrie, bathymetry, corse, digital-elevation-model, donnees-ouvertes\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/mnt-bathymetrique-de-facade-de-la-corse-projet-homonim-1\n\n2. Limite terre-mer\n   ID: 658f61c839d2400829c71b49\n   Organization: Shom\n   Tags: administrative-maritime-limits, coastal-area, donnees-ouvertes, hvd, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/limite-terre-mer-1\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "délimitation rivage bande côtière",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'délimitation rivage bande côtière'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'délimitation rivage bande côtière'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

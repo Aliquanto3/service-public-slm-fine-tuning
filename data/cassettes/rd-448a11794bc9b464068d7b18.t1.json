@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:27:37Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Agglobus TAD transport à la demande"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'Agglobus TAD transport à la demande'\nPage 1 of results:\n\n1. SLAM - Transport à la demande (TAD) - Réseau de bus urbain - Saint-Lô Agglo - 2026 / 2027\n   ID: 6a9223096184df1d19b34962\n   Organization: Communauté d'Agglomération Saint-Lô Agglo\n   Tags: 2026-2027, saint-lo-agglo, slam, tad, transport-a-la-demande\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/slam-transport-a-la-demande-tad-reseau-de-bus-urbain-saint-lo-agglo-2026-2027\n\n2. SLAM - Transport à la demande (TAD) - Réseau de bus urbain - Saint-Lô Agglo - 2024 / 2025\n   ID: 6737e0a472d7bf0162c2536c\n   Organization: Communauté d'Agglomération Saint-Lô Agglo\n   Tags: 2024-2025, saint-lo-agglo, slam, tad, transport-a-la-demande\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/slam-transport-a-la-demande-tad-reseau-de-bus-urbain-saint-lo-agglo-2024-2025\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'Agglobus TAD transport à la demande'\nPage 1 of results:\n\n1. SLAM - Transport à la demande (TAD) - Réseau de bus urbain - Saint-Lô Agglo - 2026 / 2027\n   ID: 6a9223096184df1d19b34962\n   Organization: Communauté d'Agglomération Saint-Lô Agglo\n   Tags: 2026-2027, saint-lo-agglo, slam, tad, transport-a-la-demande\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/slam-transport-a-la-demande-tad-reseau-de-bus-urbain-saint-lo-agglo-2026-2027\n\n2. SLAM - Transport à la demande (TAD) - Réseau de bus urbain - Saint-Lô Agglo - 2024 / 2025\n   ID: 6737e0a472d7bf0162c2536c\n   Organization: Communauté d'Agglomération Saint-Lô Agglo\n   Tags: 2024-2025, saint-lo-agglo, slam, tad, transport-a-la-demande\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/slam-transport-a-la-demande-tad-reseau-de-bus-urbain-saint-lo-agglo-2024-2025\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

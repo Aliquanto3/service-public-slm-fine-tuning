@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:29:20Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "580a5746a3a7292dcea9d1e0"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Effectifs des disciplines sportives pratiquées\nDataset ID: 580a5746a3a7292dcea9d1e0\nTotal resources: 2\n\n1. effectifs-pour-rennes-metropole-2014-2015.csv\n   Resource ID: 91df8a52-7990-4382-8787-38aefeb304c2\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/effectifs-pour-rennes-metropole-2014-2015/exports/csv?use_labels=true\n\n2. effectifs-pour-rennes-metropole-2014-2015.json\n   Resource ID: f1f12ceb-b914-495c-87a8-32085c8cb431\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/effectifs-pour-rennes-metropole-2014-2015/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Effectifs des disciplines sportives pratiquées\nDataset ID: 580a5746a3a7292dcea9d1e0\nTotal resources: 2\n\n1. effectifs-pour-rennes-metropole-2014-2015.csv\n   Resource ID: 91df8a52-7990-4382-8787-38aefeb304c2\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/effectifs-pour-rennes-metropole-2014-2015/exports/csv?use_labels=true\n\n2. effectifs-pour-rennes-metropole-2014-2015.json\n   Resource ID: f1f12ceb-b914-495c-87a8-32085c8cb431\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/effectifs-pour-rennes-metropole-2014-2015/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

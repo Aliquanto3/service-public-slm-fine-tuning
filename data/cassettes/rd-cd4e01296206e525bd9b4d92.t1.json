@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:22:41Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "correspondance code postal code INSEE commune France"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 7 dataset(s) for query: 'correspondance code postal code INSEE commune France'\nPage 1 of results:\n\n1. Base officielle des codes postaux\n   ID: 545b55e1c751df52de9b6045\n   Description: Liste des codes postaux avec la correspondance entre les codes postaux et les codes INSEE des communes, de France (métropole et DOM), des COM, ainsi que de MONACO....\n   Organization: La Poste\n   Tags: code-insee, code-postal, commune, la-poste\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/base-officielle-des-codes-postaux\n\n2. Correspondances Code INSEE - Code Postal\n   ID: 536991c5a3a729239d203d51\n   Organization: Région Île-de-France\n   Tags: communes, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/correspondances-code-insee-code-postal-idf\n\n3. Communes de france - Base  des codes postaux\n   ID: 5ced14688b4c4114480ce688\n   Tags: code-postal, code-postaux, commune, communes, communes-france\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/communes-de-france-base-des-codes-postaux\n\n4. Base officielle des codes postaux de Nantes Métropole\n   ID: 67f70b29c7f49c50e69ac793\n   Organization: Nantes Métropole\n   Tags: insee, territoires\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/base-officielle-des-codes-postaux-de-nantes-metropole\n\n5. Identifiants des collectivités territoriales et leurs établissements\n   ID: 60f960c36634406bff4aa249\n   Organization: Datactivist\n   Tags: cog, collectivites, epci, siren\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/identifiants-des-collectivites-territoriales-et-leurs-etablissements\n\n6. Liste des communes de France : code INSEE, codes postaux, EPCI, population, superficie - 62 indicateurs\n   ID: 6745d9ae4524d845d2138193\n   Organization: Ville de rêve\n   Tags: academie, agglomeration, altitude, centre-dequipement, centre-dequipements-et-de-services\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-de-france-code-insee-codes-postaux-epci-population-superficie-62-indicateurs\n\n7. Base officielle des codes postaux - La Poste - Département du Loiret\n   ID: 69c71cf6531c23436db42a00\n   Organization: Département du Loiret\n   Tags: code-insee, code-postal, la-poste, limites-administratives, referentiel-administratif\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/base-officielle-des-codes-postaux-la-poste-departement-du-loiret\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 7 dataset(s) for query: 'correspondance code postal code INSEE commune France'\nPage 1 of results:\n\n1. Base officielle des codes postaux\n   ID: 545b55e1c751df52de9b6045\n   Description: Liste des codes postaux avec la correspondance entre les codes postaux et les codes INSEE des communes, de France (métropole et DOM), des COM, ainsi que de MONACO....\n   Organization: La Poste\n   Tags: code-insee, code-postal, commune, la-poste\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/base-officielle-des-codes-postaux\n\n2. Correspondances Code INSEE - Code Postal\n   ID: 536991c5a3a729239d203d51\n   Organization: Région Île-de-France\n   Tags: communes, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/correspondances-code-insee-code-postal-idf\n\n3. Communes de france - Base  des codes postaux\n   ID: 5ced14688b4c4114480ce688\n   Tags: code-postal, code-postaux, commune, communes, communes-france\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/communes-de-france-base-des-codes-postaux\n\n4. Base officielle des codes postaux de Nantes Métropole\n   ID: 67f70b29c7f49c50e69ac793\n   Organization: Nantes Métropole\n   Tags: insee, territoires\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/base-officielle-des-codes-postaux-de-nantes-metropole\n\n5. Identifiants des collectivités territoriales et leurs établissements\n   ID: 60f960c36634406bff4aa249\n   Organization: Datactivist\n   Tags: cog, collectivites, epci, siren\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/identifiants-des-collectivites-territoriales-et-leurs-etablissements\n\n6. Liste des communes de France : code INSEE, codes postaux, EPCI, population, superficie - 62 indicateurs\n   ID: 6745d9ae4524d845d2138193\n   Organization: Ville de rêve\n   Tags: academie, agglomeration, altitude, centre-dequipement, centre-dequipements-et-de-services\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-de-france-code-insee-codes-postaux-epci-population-superficie-62-indicateurs\n\n7. Base officielle des codes postaux - La Poste - Département du Loiret\n   ID: 69c71cf6531c23436db42a00\n   Organization: Département du Loiret\n   Tags: code-insee, code-postal, la-poste, limites-administratives, referentiel-administratif\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/base-officielle-des-codes-postaux-la-poste-departement-du-loiret\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

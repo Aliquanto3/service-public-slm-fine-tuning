@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:20:46Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "classement sonore réseau ferroviaire SNCF RATP Paris",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'classement sonore réseau ferroviaire SNCF RATP Paris'\nPage 1 of results:\n\n1. Classement sonore linéaire du réseau ferroviaire (SNCF et RATP) à Paris\n   ID: 6835e0aab63a9d35e785888f\n   Organization: Direction régionale et interdépartementale de l’environnement, de l’aménagement et des transports d'Île-de-France\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/classement-sonore-lineaire-du-reseau-ferroviaire-sncf-et-ratp-a-paris\n\n2. Classement sonore surfacique du réseau ferroviaire (RATP et SNCF) à Paris\n   ID: 6835e0eeb63a9d35e78588c4\n   Organization: Direction régionale et interdépartementale de l’environnement, de l’aménagement et des transports d'Île-de-France\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/classement-sonore-surfacique-du-reseau-ferroviaire-ratp-et-sncf-a-paris\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'classement sonore réseau ferroviaire SNCF RATP Paris'\nPage 1 of results:\n\n1. Classement sonore linéaire du réseau ferroviaire (SNCF et RATP) à Paris\n   ID: 6835e0aab63a9d35e785888f\n   Organization: Direction régionale et interdépartementale de l’environnement, de l’aménagement et des transports d'Île-de-France\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/classement-sonore-lineaire-du-reseau-ferroviaire-sncf-et-ratp-a-paris\n\n2. Classement sonore surfacique du réseau ferroviaire (RATP et SNCF) à Paris\n   ID: 6835e0eeb63a9d35e78588c4\n   Organization: Direction régionale et interdépartementale de l’environnement, de l’aménagement et des transports d'Île-de-France\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/classement-sonore-surfacique-du-reseau-ferroviaire-ratp-et-sncf-a-paris\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

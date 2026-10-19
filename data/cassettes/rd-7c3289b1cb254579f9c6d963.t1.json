@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:30:41Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "électricité consommation industrielle site"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'électricité consommation industrielle site'\nPage 1 of results:\n\n1. Consommation annuelle définitive d'électricité et de gaz par IRIS des sites industriels raccordés aux réseaux de transport\n   ID: 5a142ae9a3a7297774073454\n   Organization: Open Data Réseaux Énergies\n   Tags: article-179, consommation, ltecv, territoires-et-regions\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-definitive-delectricite-et-de-gaz-par-iris-des-sites-industriels-raccordes-aux-reseaux-de-transport\n\n2. Consommation annuelle par IRIS au périmètre du Réseau de Transport d’Electricité (2012 à 2017)\n   ID: 59591a84a3a7291dcf9c810e\n   Organization: Région Île-de-France\n   Tags: amenagement-du-territoire, electricite, energie, industrie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-par-iris-au-perimetre-du-reseau-de-transport-delectricite-2012-a-2017\n\n3. Consommation mensuelle de gaz des clients industriels de NaTran répartis par secteur industriel\n   ID: 61f0c780d852836f8786ff5f\n   Organization: Open Data Réseaux Énergies\n   Tags: bilan-gaz, consommation\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/consommation-mensuelle-de-gaz-des-clients-industriels-de-natran-repartis-par-secteur-industriel\n\n4. Bilan d'émissions de gaz à effet de serre par scope et opérateur\n   ID: 60c431acf0bf638bcd2fcb3b\n   Organization: Open Data Réseaux Énergies\n   Tags: environnement, ges, rse\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/bilan-demissions-de-gaz-a-effet-de-serre-par-scope-et-operateur\n\n5. Consommation d'électricité et de gaz par Code NAF sur la période 2011-2021\n   ID: 637f558401b038a30f0c3a1d\n   Organization: Communauté d'Agglomération du Pays de Saint-Omer\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/consommation-delectricite-et-de-gaz-par-code-naf-sur-la-periode-2011-2021\n\n6. Sites d'exploitation d'énergie marine renouvelable (en projet ou en exploitation) dans les eaux françaises\n   ID: 684be5a87dd2fdcc07adff39\n   Organization: Office Français de la Biodiversité\n   Tags: economie, emr, energie, energie-marine-renouvelable, eolien\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/sites-dexploitation-denergie-marine-renouvelable-en-projet-ou-en-exploitation-dans-les-eaux-francaises\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'électricité consommation industrielle site'\nPage 1 of results:\n\n1. Consommation annuelle définitive d'électricité et de gaz par IRIS des sites industriels raccordés aux réseaux de transport\n   ID: 5a142ae9a3a7297774073454\n   Organization: Open Data Réseaux Énergies\n   Tags: article-179, consommation, ltecv, territoires-et-regions\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-definitive-delectricite-et-de-gaz-par-iris-des-sites-industriels-raccordes-aux-reseaux-de-transport\n\n2. Consommation annuelle par IRIS au périmètre du Réseau de Transport d’Electricité (2012 à 2017)\n   ID: 59591a84a3a7291dcf9c810e\n   Organization: Région Île-de-France\n   Tags: amenagement-du-territoire, electricite, energie, industrie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/consommation-annuelle-par-iris-au-perimetre-du-reseau-de-transport-delectricite-2012-a-2017\n\n3. Consommation mensuelle de gaz des clients industriels de NaTran répartis par secteur industriel\n   ID: 61f0c780d852836f8786ff5f\n   Organization: Open Data Réseaux Énergies\n   Tags: bilan-gaz, consommation\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/consommation-mensuelle-de-gaz-des-clients-industriels-de-natran-repartis-par-secteur-industriel\n\n4. Bilan d'émissions de gaz à effet de serre par scope et opérateur\n   ID: 60c431acf0bf638bcd2fcb3b\n   Organization: Open Data Réseaux Énergies\n   Tags: environnement, ges, rse\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/bilan-demissions-de-gaz-a-effet-de-serre-par-scope-et-operateur\n\n5. Consommation d'électricité et de gaz par Code NAF sur la période 2011-2021\n   ID: 637f558401b038a30f0c3a1d\n   Organization: Communauté d'Agglomération du Pays de Saint-Omer\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/consommation-delectricite-et-de-gaz-par-code-naf-sur-la-periode-2011-2021\n\n6. Sites d'exploitation d'énergie marine renouvelable (en projet ou en exploitation) dans les eaux françaises\n   ID: 684be5a87dd2fdcc07adff39\n   Organization: Office Français de la Biodiversité\n   Tags: economie, emr, energie, energie-marine-renouvelable, eolien\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/sites-dexploitation-denergie-marine-renouvelable-en-projet-ou-en-exploitation-dans-les-eaux-francaises\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

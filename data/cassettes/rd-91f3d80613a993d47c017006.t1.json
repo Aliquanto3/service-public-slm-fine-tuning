@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:11:30Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PLU CC zonage Alpes de Haute-Provence",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'PLU CC zonage Alpes de Haute-Provence'\nPage 1 of results:\n\n1. Zonage des PLU/CC des Alpes de Haute-Provence\n   ID: 673771ad4f5de128fcc253a8\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zonage-des-plu-cc-des-alpes-de-haute-provence\n\n2. Informations ponctuelles des PLU/CC des Alpes de Haute-Provence\n   ID: 68268297ba315cd3fb777ea3\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/informations-ponctuelles-des-plu-cc-des-alpes-de-haute-provence-1\n\n3. PLU/CC des Alpes de Haute-Provence\n   ID: 6737716a4f5de128fcc2536d\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/plu-cc-des-alpes-de-haute-provence\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'PLU CC zonage Alpes de Haute-Provence'\nPage 1 of results:\n\n1. Zonage des PLU/CC des Alpes de Haute-Provence\n   ID: 673771ad4f5de128fcc253a8\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zonage-des-plu-cc-des-alpes-de-haute-provence\n\n2. Informations ponctuelles des PLU/CC des Alpes de Haute-Provence\n   ID: 68268297ba315cd3fb777ea3\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/informations-ponctuelles-des-plu-cc-des-alpes-de-haute-provence-1\n\n3. PLU/CC des Alpes de Haute-Provence\n   ID: 6737716a4f5de128fcc2536d\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/plu-cc-des-alpes-de-haute-provence\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

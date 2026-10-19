@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:11:08Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "68ac68cbeb65e615a27b885b"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Webstat ECOFI\nDataset ID: 68ac68cbeb65e615a27b885b\nTotal resources: 1\n\n1. Ressource ECOFI\n   Resource ID: 62567969-493d-496d-bf5a-db4944283b22\n   Format: csv\n   Type: main\n   URL: https://webstat.banque-france.fr/export/csv/fr/catalogue/ecofi\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Webstat ECOFI\nDataset ID: 68ac68cbeb65e615a27b885b\nTotal resources: 1\n\n1. Ressource ECOFI\n   Resource ID: 62567969-493d-496d-bf5a-db4944283b22\n   Format: csv\n   Type: main\n   URL: https://webstat.banque-france.fr/export/csv/fr/catalogue/ecofi\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

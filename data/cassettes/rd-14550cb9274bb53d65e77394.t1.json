@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:16:25Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "cadastre napoléonien feuilles sections"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'cadastre napoléonien feuilles sections'\nPage 1 of results:\n\n1. Cadastre napoléonien (feuilles de sections)\n   ID: 611c86195fb66f339fef6a59\n   Organization: Département des Hauts-de-Seine\n   Tags: cadastre, culture-tourisme, feuilles-de-sections, napoleonien, parcelles\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/cadastre-napoleonien-feuilles-de-sections\n\n2. Cadastre napoléonien (assemblage départemental)\n   ID: 60274f0db3d17ed49f7ce5a7\n   Organization: Département des Hauts-de-Seine\n   Tags: cadastre, culture-tourisme, napoleonien, parcelles, referentiel-geographique\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/cadastre-napoleonien-assemblage-departemental\n\n3. Assemblage des feuilles de sections du cadastre ancien, dit « napoléonien » en Bretagne (donnée partielle contributive)\n   ID: 6aa9dc964ecd3e115fba1295\n   Organization: Région Bretagne\n   Tags: 233500016, cadastre-ancien, cadastre-napoleonien, donnees-ouvertes, etat-de-section\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/assemblage-des-feuilles-de-sections-du-cadastre-ancien-dit-napoleonien-en-bretagne-donnee-partielle-contributive\n\n4. Cadastre : Sections\n   ID: 676b759448fd95b8f0133b7c\n   Organization: Rennes Métropole en accès libre\n   Tags: cadastre, limite-administrative, urbanisme\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/cadastre-sections\n\n5. Toponymes du cadastre napoléonien - Département du Loiret\n   ID: 6892c9e84f3d1b733fbc20bf\n   Organization: Département du Loiret\n   Tags: cadastre, cadastre-napoleonien, toponyme\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/toponymes-du-cadastre-napoleonien-departement-du-loiret\n\n6. Annotations des toponymes du cadastre napoléonien - Département du Loiret\n   ID: 6892c9e84f3d1b733fbc20be\n   Organization: Département du Loiret\n   Tags: cadastre, cadastre-napoleonien, toponyme\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/annotations-des-toponymes-du-cadastre-napoleonien-departement-du-loiret\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'cadastre napoléonien feuilles sections'\nPage 1 of results:\n\n1. Cadastre napoléonien (feuilles de sections)\n   ID: 611c86195fb66f339fef6a59\n   Organization: Département des Hauts-de-Seine\n   Tags: cadastre, culture-tourisme, feuilles-de-sections, napoleonien, parcelles\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/cadastre-napoleonien-feuilles-de-sections\n\n2. Cadastre napoléonien (assemblage départemental)\n   ID: 60274f0db3d17ed49f7ce5a7\n   Organization: Département des Hauts-de-Seine\n   Tags: cadastre, culture-tourisme, napoleonien, parcelles, referentiel-geographique\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/cadastre-napoleonien-assemblage-departemental\n\n3. Assemblage des feuilles de sections du cadastre ancien, dit « napoléonien » en Bretagne (donnée partielle contributive)\n   ID: 6aa9dc964ecd3e115fba1295\n   Organization: Région Bretagne\n   Tags: 233500016, cadastre-ancien, cadastre-napoleonien, donnees-ouvertes, etat-de-section\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/assemblage-des-feuilles-de-sections-du-cadastre-ancien-dit-napoleonien-en-bretagne-donnee-partielle-contributive\n\n4. Cadastre : Sections\n   ID: 676b759448fd95b8f0133b7c\n   Organization: Rennes Métropole en accès libre\n   Tags: cadastre, limite-administrative, urbanisme\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/cadastre-sections\n\n5. Toponymes du cadastre napoléonien - Département du Loiret\n   ID: 6892c9e84f3d1b733fbc20bf\n   Organization: Département du Loiret\n   Tags: cadastre, cadastre-napoleonien, toponyme\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/toponymes-du-cadastre-napoleonien-departement-du-loiret\n\n6. Annotations des toponymes du cadastre napoléonien - Département du Loiret\n   ID: 6892c9e84f3d1b733fbc20be\n   Organization: Département du Loiret\n   Tags: cadastre, cadastre-napoleonien, toponyme\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/annotations-des-toponymes-du-cadastre-napoleonien-departement-du-loiret\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

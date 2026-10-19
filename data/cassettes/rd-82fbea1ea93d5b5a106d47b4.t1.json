@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:14:23Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zones bruit infrastructure routière Lden 2022",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'zones bruit infrastructure routière Lden 2022'\nPage 1 of results:\n\n1. cartes du bruit\n   ID: 67161405f4e6c5dd90a77952\n   Organization: Saint-Etienne Métropole\n   Tags: bruit, carte, developpement-durable, polution\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/cartes-du-bruit\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'zones bruit infrastructure routière Lden 2022'\nPage 1 of results:\n\n1. cartes du bruit\n   ID: 67161405f4e6c5dd90a77952\n   Organization: Saint-Etienne Métropole\n   Tags: bruit, carte, developpement-durable, polution\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/cartes-du-bruit\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

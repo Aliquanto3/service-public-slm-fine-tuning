@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:10:58Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "67f70b36c7f49c50e69ac79a"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Budget prévisionnel 2022-2026 de la Ville de Saint-Herblain\nDataset ID: 67f70b36c7f49c50e69ac79a\nTotal resources: 2\n\n1. 214401622_budgets-saint-herblain.csv\n   Resource ID: 2b641590-d50b-4113-8ebd-8cbd22f315df\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401622_budgets-saint-herblain/exports/csv?use_labels=true\n\n2. 214401622_budgets-saint-herblain.json\n   Resource ID: 6a880440-7d6a-496c-a364-129ad267c925\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401622_budgets-saint-herblain/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Budget prévisionnel 2022-2026 de la Ville de Saint-Herblain\nDataset ID: 67f70b36c7f49c50e69ac79a\nTotal resources: 2\n\n1. 214401622_budgets-saint-herblain.csv\n   Resource ID: 2b641590-d50b-4113-8ebd-8cbd22f315df\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401622_budgets-saint-herblain/exports/csv?use_labels=true\n\n2. 214401622_budgets-saint-herblain.json\n   Resource ID: 6a880440-7d6a-496c-a364-129ad267c925\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401622_budgets-saint-herblain/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

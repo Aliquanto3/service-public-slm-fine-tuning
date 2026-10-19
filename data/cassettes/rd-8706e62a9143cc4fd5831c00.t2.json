@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:20:57Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6737756d3c31c2c72ac40b6e"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Zones réglementaires du PPRI 2013 Dordogne et affluents à Beaulieu sur Dordogne - Corrèze\nDataset ID: 6737756d3c31c2c72ac40b6e\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 9e9dbc41-c486-4570-be72-62ea5057b452\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=7e485683-9a60-4f67-8770-ee57a2bef78f&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 9d674ba3-deae-46b7-b8ab-1e0549c67a28\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=7e485683-9a60-4f67-8770-ee57a2bef78f&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 862bcb30-5f6f-41c6-be0d-c772aa7d2d4d\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: d8fbb7fc-d0f8-46a0-898f-3c18122e9283\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: c2811255-3ae9-4861-8c2c-f7ddaf0f942f\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: ada3376f-d71c-401a-8d1f-ebb6a074499b\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Zones réglementaires du PPRI 2013 Dordogne et affluents à Beaulieu sur Dordogne - Corrèze\nDataset ID: 6737756d3c31c2c72ac40b6e\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 9e9dbc41-c486-4570-be72-62ea5057b452\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=7e485683-9a60-4f67-8770-ee57a2bef78f&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 9d674ba3-deae-46b7-b8ab-1e0549c67a28\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=7e485683-9a60-4f67-8770-ee57a2bef78f&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 862bcb30-5f6f-41c6-be0d-c772aa7d2d4d\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: d8fbb7fc-d0f8-46a0-898f-3c18122e9283\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: c2811255-3ae9-4861-8c2c-f7ddaf0f942f\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: ada3376f-d71c-401a-8d1f-ebb6a074499b\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/7e485683-9a60-4f67-8770-ee57a2bef78f.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "673775493c31c2c72ac40b51"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Classes de l'aléa du PPRI 2013 Dordogne et affluents à Monceaux sur Dordogne - Corrèze\nDataset ID: 673775493c31c2c72ac40b51\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 60aed536-289d-4790-93ae-d89e81ad04fd\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=ab0d38dd-db59-422a-ac1a-0b5a5423422d&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 3037bbbb-2013-4859-ac86-bb41dff25001\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=ab0d38dd-db59-422a-ac1a-0b5a5423422d&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 13b4ef82-6ddb-4360-8509-e15f4f5050a7\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: f589d66f-070c-412b-a743-6cd4fb0cb7d0\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 3ec70057-7dc5-4ad8-b9e1-bb15e8e48c05\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: bce5169f-c697-4c93-b41b-60e3a9888152\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Classes de l'aléa du PPRI 2013 Dordogne et affluents à Monceaux sur Dordogne - Corrèze\nDataset ID: 673775493c31c2c72ac40b51\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 60aed536-289d-4790-93ae-d89e81ad04fd\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=ab0d38dd-db59-422a-ac1a-0b5a5423422d&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 3037bbbb-2013-4859-ac86-bb41dff25001\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=ab0d38dd-db59-422a-ac1a-0b5a5423422d&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 13b4ef82-6ddb-4360-8509-e15f4f5050a7\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: f589d66f-070c-412b-a743-6cd4fb0cb7d0\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 3ec70057-7dc5-4ad8-b9e1-bb15e8e48c05\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: bce5169f-c697-4c93-b41b-60e3a9888152\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/ab0d38dd-db59-422a-ac1a-0b5a5423422d.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "673775bd3c31c2c72ac40baa"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Classes de l'aléa (obtenu par croisement des hauteurs et des vitesses) du PPRI 2013 Dordogne et affluents à Argentat - Corrèze\nDataset ID: 673775bd3c31c2c72ac40baa\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 0f66406c-fe40-4b8d-b7fd-8df230506e53\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=5e3bdd53-72c1-43ab-82e2-3dffb4725d66&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 3425566a-c6d3-4990-86c9-e9fdac15aa57\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=5e3bdd53-72c1-43ab-82e2-3dffb4725d66&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 6fe29e3e-1cf6-42ca-844a-f264c55f0ea9\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 5815cb97-d009-47c0-81cc-cbf51697d89b\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: a7279389-cde3-4076-96e7-b56f449c0d27\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 8642a28f-aa20-45a0-9107-156dc95b2ada\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Classes de l'aléa (obtenu par croisement des hauteurs et des vitesses) du PPRI 2013 Dordogne et affluents à Argentat - Corrèze\nDataset ID: 673775bd3c31c2c72ac40baa\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 0f66406c-fe40-4b8d-b7fd-8df230506e53\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=5e3bdd53-72c1-43ab-82e2-3dffb4725d66&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 3425566a-c6d3-4990-86c9-e9fdac15aa57\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=5e3bdd53-72c1-43ab-82e2-3dffb4725d66&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 6fe29e3e-1cf6-42ca-844a-f264c55f0ea9\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 5815cb97-d009-47c0-81cc-cbf51697d89b\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: a7279389-cde3-4076-96e7-b56f449c0d27\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 8642a28f-aa20-45a0-9107-156dc95b2ada\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_37978/5e3bdd53-72c1-43ab-82e2-3dffb4725d66.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

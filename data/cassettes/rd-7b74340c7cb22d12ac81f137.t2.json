@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:19:27Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "53699062a3a729239d2039bc"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Chambres d'hôtes agréées Gîtes de France par commune\nDataset ID: 53699062a3a729239d2039bc\nTotal resources: 1\n\n1. Untitled\n   Resource ID: 8e16a5d6-4940-406e-8a31-86dfac64d4e6\n   Format: xls\n   Type: main\n   URL: http://www.basodet.pilote41.fr/excel_extranet.php?regroupement=&sens_tri=&colonne=&decoup=&codedecoup=Dep41&territoire=Depart&sous_type=&libel_ter=&elements_coches=248&sens_tri=&colonne=&filtclass=999\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Chambres d'hôtes agréées Gîtes de France par commune\nDataset ID: 53699062a3a729239d2039bc\nTotal resources: 1\n\n1. Untitled\n   Resource ID: 8e16a5d6-4940-406e-8a31-86dfac64d4e6\n   Format: xls\n   Type: main\n   URL: http://www.basodet.pilote41.fr/excel_extranet.php?regroupement=&sens_tri=&colonne=&decoup=&codedecoup=Dep41&territoire=Depart&sous_type=&libel_ter=&elements_coches=248&sens_tri=&colonne=&filtclass=999\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

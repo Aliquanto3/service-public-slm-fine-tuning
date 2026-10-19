@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:13:16Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget supplémentaire 2026 Région Occitanie crédits paiement"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'budget supplémentaire 2026 Région Occitanie crédits paiement'\nPage 1 of results:\n\n1. Budget supplémentaire 2026 de la Région Occitanie (crédits de paiement)\n   ID: 6a4c4608e90f46aad17fa59c\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-supplementaire, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-supplementaire-2026-de-la-region-occitanie-credits-de-paiement\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'budget supplémentaire 2026 Région Occitanie crédits paiement'\nPage 1 of results:\n\n1. Budget supplémentaire 2026 de la Région Occitanie (crédits de paiement)\n   ID: 6a4c4608e90f46aad17fa59c\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-supplementaire, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-supplementaire-2026-de-la-region-occitanie-credits-de-paiement\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget primitif 2026 Région Occitanie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'budget primitif 2026 Région Occitanie'\nPage 1 of results:\n\n1. Budget Primitif 2026 de la Région Occitanie (crédits de paiement)\n   ID: 6a4c4609e90f46aad17fa59e\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-primitif, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2026-de-la-region-occitanie-credits-de-paiement\n\n2. Budget Primitif 2026 de la Région Occitanie (autorisations de programme/ autorisations d'engagement)\n   ID: 6a4c4609e90f46aad17fa59d\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: autorisation-de-programme, autorisation-dengagement, budget-supplementaire, democratie-et-citoyennete, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2026-de-la-region-occitanie-autorisations-de-programme-autorisations-dengagement\n\n3. Budget Primitif 2024 de la Région Occitanie\n   ID: 6685e6d0e437f6059536b518\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-primitif, democratie-et-citoyennete, finance\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2024-de-la-region-occitanie\n\n4. Budget Primitif 2025 de la Région Occitanie (Crédits de paiement)\n   ID: 68155d2f44625fa8769e6b6e\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-primitif, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2025-de-la-region-occitanie-credits-de-paiement\n\n5. Budget Primitif 2025 de la Région Occitanie (autorisations de programme/ autorisations d'engagement)\n   ID: 68155d2144625fa8769e6b6c\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: autorisation-de-programme, autorisation-dengagement, budget-primitif, democratie-et-citoyennete, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2025-de-la-region-occitanie-autorisations-de-programme-autorisations-dengagement\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'budget primitif 2026 Région Occitanie'\nPage 1 of results:\n\n1. Budget Primitif 2026 de la Région Occitanie (crédits de paiement)\n   ID: 6a4c4609e90f46aad17fa59e\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-primitif, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2026-de-la-region-occitanie-credits-de-paiement\n\n2. Budget Primitif 2026 de la Région Occitanie (autorisations de programme/ autorisations d'engagement)\n   ID: 6a4c4609e90f46aad17fa59d\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: autorisation-de-programme, autorisation-dengagement, budget-supplementaire, democratie-et-citoyennete, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2026-de-la-region-occitanie-autorisations-de-programme-autorisations-dengagement\n\n3. Budget Primitif 2024 de la Région Occitanie\n   ID: 6685e6d0e437f6059536b518\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-primitif, democratie-et-citoyennete, finance\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2024-de-la-region-occitanie\n\n4. Budget Primitif 2025 de la Région Occitanie (Crédits de paiement)\n   ID: 68155d2f44625fa8769e6b6e\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-primitif, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2025-de-la-region-occitanie-credits-de-paiement\n\n5. Budget Primitif 2025 de la Région Occitanie (autorisations de programme/ autorisations d'engagement)\n   ID: 68155d2144625fa8769e6b6c\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: autorisation-de-programme, autorisation-dengagement, budget-primitif, democratie-et-citoyennete, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2025-de-la-region-occitanie-autorisations-de-programme-autorisations-dengagement\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "dépenses prévisionnelles 2026 Région Occitanie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'dépenses prévisionnelles 2026 Région Occitanie'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'dépenses prévisionnelles 2026 Région Occitanie'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

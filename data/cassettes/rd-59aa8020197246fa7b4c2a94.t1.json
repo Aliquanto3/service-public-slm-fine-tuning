@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:28:07Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "permanence artistique culturelle 2007 2013"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'permanence artistique culturelle 2007 2013'\nPage 1 of results:\n\n1. Aide au développement de la permanence artistique et culturelle 2007-2014\n   ID: 59591ccca3a7291dd09c812f\n   Organization: Région Île-de-France\n   Tags: aide, art, culture, geolocalisation, subvention\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/aide-au-developpement-de-la-permanence-artistique-et-culturelle-2007-2014\n\n2. Aide au développement de la permanence artistique et culturelle 2007-2013\n   ID: 53698eb4a3a729239d20352f\n   Organization: Région Île-de-France\n   Tags: aide, art, culture, geolocalisation, subvention\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/aide-au-developpement-de-la-permanence-artistique-et-culturelle-2007-2013-idf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'permanence artistique culturelle 2007 2013'\nPage 1 of results:\n\n1. Aide au développement de la permanence artistique et culturelle 2007-2014\n   ID: 59591ccca3a7291dd09c812f\n   Organization: Région Île-de-France\n   Tags: aide, art, culture, geolocalisation, subvention\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/aide-au-developpement-de-la-permanence-artistique-et-culturelle-2007-2014\n\n2. Aide au développement de la permanence artistique et culturelle 2007-2013\n   ID: 53698eb4a3a729239d20352f\n   Organization: Région Île-de-France\n   Tags: aide, art, culture, geolocalisation, subvention\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/aide-au-developpement-de-la-permanence-artistique-et-culturelle-2007-2013-idf\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

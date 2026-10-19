@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:30:23Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "élections municipales 2014 résultats 1er tour"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 18 dataset(s) for query: 'élections municipales 2014 résultats 1er tour'\nPage 1 of results:\n\n1. Elections Municipales 2014 - Résultats 1er tour\n   ID: 5369939aa3a729239d20423c\n   Organization: Ministère de l'intérieur\n   Tags: communes, elections, municipales, resultats, tour-1\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-1er-tour\n\n2. Elections municipales 2014 - Résultats 1er tour\n   ID: 53699399a3a729239d204239\n   Organization: Ministère de l'intérieur\n   Tags: communes, elections, municipales, resultats, tour-1\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-1er-to-0\n\n3. Élections municipales 2014 - résultats 1er tour\n   ID: 5369939ca3a729239d20423f\n   Organization: Région Île-de-France\n   Tags: commune, communes, election, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-1er-tour-idf\n\n4. Résultats de l'élection municipale 2014 1er tour\n   ID: 53699f35a3a729239d206099\n   Organization: Ville de Paris\n   Tags: bureau, candidat, elections, municipales, resultats\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/resultats-de-l-election-municipale-2014-1er-tour-prs\n\n5. Elections municipales 2014 - 1er tour - Ville de Toulouse (Résultats)\n   ID: 56b0c2baa3a7294d39b88a55\n   Organization: Toulouse métropole\n   Tags: 1er, 2014, citoyennete, elections, municipales\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-ville-de-toulouse-resultats\n\n6. Thématique: élections municipales\n   ID: 5369a228a3a729239d20678e\n   Organization: Idées Libres\n   Tags: candidats, elections, municipales, nuances, referentiel\n   Resources: 9\n   URL: https://www.data.gouv.fr/datasets/thematique-elections-municipal-0\n\n7. Elections - Municipales 2014 - 1erTour\n   ID: 5dcf7546dee7e72b8493694d\n   Organization: Ville de Paris\n   Tags: citoyennete, election, municipales, resulats, scrutin\n   Resources: 22\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1ertour\n\n8. Elections municipales 2014 1er tour à Angers\n   ID: 656021313bfe3e6f4ca6435b\n   Organization: Angers Loire Métropole\n   Tags: administration-finances-publiques-citoyennete, election, elections-municipales\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-a-angers-2\n\n9. Elections municipales 2014 à Nantes - Premier tour\n   ID: 5b4eeb97b595087c4ad496e1\n   Organization: Ville de Nantes\n   Tags: citoyennete-institution, election\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-a-nantes-premier-tour\n\n10. Elections municipales 2014 1er tour à Angers\n   ID: 5e3222cedee7e71341f5c8fa\n   Organization: Région des Pays de la Loire\n   Tags: citoyennete-institution, election, election-locale, municipale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-a-angers-1\n\n11. Résultats élections\n   ID: 53699f41a3a729239d2060b5\n   Organization: Ville d'Issy-les-Moulineaux\n   Tags: election, election-presidentielle, elections, elections-cantonales, elections-europeennes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/resultats-elections\n\n12. Elections – Municipales 2014 – 1er tour – ensemble de la ville\n   ID: 6088a69d31d514e2fa9bacdf\n   Organization: La Rochelle\n   Tags: conseil, election, mairie, municipal, resultat\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-ensemble-de-la-ville-1\n\n13. Elections Municipales 2014 - Résultats sur la commune de Nogent-sur-Marne \n   ID: 53dfce63a3a729110ca8d367\n   Organization: ACTION Nogent-sur-Marne\n   Tags: bureau-de-vote, elections, elections-municipales, nogent-sur-marne, resultats\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-sur-la-commune-de-nogent-sur-marne\n\n14. Résultats électoraux\n   ID: 553e52bbc751df2029e96a3b\n   Organization: Ville de Saint-Malo\n   Tags: elections, resultats, scrutin, vote\n   Resources: 23\n   URL: https://www.data.gouv.fr/datasets/resultats-electoraux\n\n15. Résultats des élections municipales 2014 de Lille, Hellemmes et Lomme\n   ID: 618b0c09a9ec22a1f74a1318\n   Organization: Mairie de Lille\n   Tags: administration-gouvernement-finances-publiques-citoyennete, elections, vote\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-municipales-2014-de-lille-hellemmes-et-lomme\n\n16. Résultats des élections municipales 2014 - Soissons\n   ID: 685e94fdd1beae30867d416b\n   Organization: Ville de Soissons\n   Tags: elections-municipales, elections-municipales-2014\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-municipales-2014-soissons\n\n17. Élections municipales 2014 - comptes de campagne - Fresnes (94260)\n   ID: 5509722dc751df1865882844\n   Tags: comptes-de-campagne, municipales\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-comptes-de-campagne-fresnes-94260\n\n18. Elections municipales 2014 à Saint Martin d'Hères\n   ID: 6580dde7fd644f35bc554dd1\n   Organization: Ville de Saint Martin d'Hères\n   Tags: elections, municipales, smh\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-a-saint-martin-d-heres-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 18 dataset(s) for query: 'élections municipales 2014 résultats 1er tour'\nPage 1 of results:\n\n1. Elections Municipales 2014 - Résultats 1er tour\n   ID: 5369939aa3a729239d20423c\n   Organization: Ministère de l'intérieur\n   Tags: communes, elections, municipales, resultats, tour-1\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-1er-tour\n\n2. Elections municipales 2014 - Résultats 1er tour\n   ID: 53699399a3a729239d204239\n   Organization: Ministère de l'intérieur\n   Tags: communes, elections, municipales, resultats, tour-1\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-1er-to-0\n\n3. Élections municipales 2014 - résultats 1er tour\n   ID: 5369939ca3a729239d20423f\n   Organization: Région Île-de-France\n   Tags: commune, communes, election, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-1er-tour-idf\n\n4. Résultats de l'élection municipale 2014 1er tour\n   ID: 53699f35a3a729239d206099\n   Organization: Ville de Paris\n   Tags: bureau, candidat, elections, municipales, resultats\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/resultats-de-l-election-municipale-2014-1er-tour-prs\n\n5. Elections municipales 2014 - 1er tour - Ville de Toulouse (Résultats)\n   ID: 56b0c2baa3a7294d39b88a55\n   Organization: Toulouse métropole\n   Tags: 1er, 2014, citoyennete, elections, municipales\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-ville-de-toulouse-resultats\n\n6. Thématique: élections municipales\n   ID: 5369a228a3a729239d20678e\n   Organization: Idées Libres\n   Tags: candidats, elections, municipales, nuances, referentiel\n   Resources: 9\n   URL: https://www.data.gouv.fr/datasets/thematique-elections-municipal-0\n\n7. Elections - Municipales 2014 - 1erTour\n   ID: 5dcf7546dee7e72b8493694d\n   Organization: Ville de Paris\n   Tags: citoyennete, election, municipales, resulats, scrutin\n   Resources: 22\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1ertour\n\n8. Elections municipales 2014 1er tour à Angers\n   ID: 656021313bfe3e6f4ca6435b\n   Organization: Angers Loire Métropole\n   Tags: administration-finances-publiques-citoyennete, election, elections-municipales\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-a-angers-2\n\n9. Elections municipales 2014 à Nantes - Premier tour\n   ID: 5b4eeb97b595087c4ad496e1\n   Organization: Ville de Nantes\n   Tags: citoyennete-institution, election\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-a-nantes-premier-tour\n\n10. Elections municipales 2014 1er tour à Angers\n   ID: 5e3222cedee7e71341f5c8fa\n   Organization: Région des Pays de la Loire\n   Tags: citoyennete-institution, election, election-locale, municipale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-a-angers-1\n\n11. Résultats élections\n   ID: 53699f41a3a729239d2060b5\n   Organization: Ville d'Issy-les-Moulineaux\n   Tags: election, election-presidentielle, elections, elections-cantonales, elections-europeennes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/resultats-elections\n\n12. Elections – Municipales 2014 – 1er tour – ensemble de la ville\n   ID: 6088a69d31d514e2fa9bacdf\n   Organization: La Rochelle\n   Tags: conseil, election, mairie, municipal, resultat\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-1er-tour-ensemble-de-la-ville-1\n\n13. Elections Municipales 2014 - Résultats sur la commune de Nogent-sur-Marne \n   ID: 53dfce63a3a729110ca8d367\n   Organization: ACTION Nogent-sur-Marne\n   Tags: bureau-de-vote, elections, elections-municipales, nogent-sur-marne, resultats\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-resultats-sur-la-commune-de-nogent-sur-marne\n\n14. Résultats électoraux\n   ID: 553e52bbc751df2029e96a3b\n   Organization: Ville de Saint-Malo\n   Tags: elections, resultats, scrutin, vote\n   Resources: 23\n   URL: https://www.data.gouv.fr/datasets/resultats-electoraux\n\n15. Résultats des élections municipales 2014 de Lille, Hellemmes et Lomme\n   ID: 618b0c09a9ec22a1f74a1318\n   Organization: Mairie de Lille\n   Tags: administration-gouvernement-finances-publiques-citoyennete, elections, vote\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-municipales-2014-de-lille-hellemmes-et-lomme\n\n16. Résultats des élections municipales 2014 - Soissons\n   ID: 685e94fdd1beae30867d416b\n   Organization: Ville de Soissons\n   Tags: elections-municipales, elections-municipales-2014\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-municipales-2014-soissons\n\n17. Élections municipales 2014 - comptes de campagne - Fresnes (94260)\n   ID: 5509722dc751df1865882844\n   Tags: comptes-de-campagne, municipales\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-comptes-de-campagne-fresnes-94260\n\n18. Elections municipales 2014 à Saint Martin d'Hères\n   ID: 6580dde7fd644f35bc554dd1\n   Organization: Ville de Saint Martin d'Hères\n   Tags: elections, municipales, smh\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/elections-municipales-2014-a-saint-martin-d-heres-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:26:25Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "536992cca3a729239d204003"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Déplacements de Henri de Raincourt, ancien ministre auprès du ministre d’Etat, ministre des Affaires étrangères et européennes, chargé de la Coopération\nDataset ID: 536992cca3a729239d204003\nTotal resources: 1\n\n1.  Déplacements de Henri de Raincourt, ministre auprès du ministre d’Etat, ministre des Affaires étrangères et européennes, chargé de la Coopération\n   Resource ID: b910fb5c-5f92-44fa-b470-dc93d7aefcf2\n   Format: csv\n   Type: main\n   URL: https://static.data.gouv.fr/b2/a329109f9cac665cacba04862ce3cd2d22c4e5b68feca8f4953f2eed8bd575.csv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Déplacements de Henri de Raincourt, ancien ministre auprès du ministre d’Etat, ministre des Affaires étrangères et européennes, chargé de la Coopération\nDataset ID: 536992cca3a729239d204003\nTotal resources: 1\n\n1.  Déplacements de Henri de Raincourt, ministre auprès du ministre d’Etat, ministre des Affaires étrangères et européennes, chargé de la Coopération\n   Resource ID: b910fb5c-5f92-44fa-b470-dc93d7aefcf2\n   Format: csv\n   Type: main\n   URL: https://static.data.gouv.fr/b2/a329109f9cac665cacba04862ce3cd2d22c4e5b68feca8f4953f2eed8bd575.csv\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

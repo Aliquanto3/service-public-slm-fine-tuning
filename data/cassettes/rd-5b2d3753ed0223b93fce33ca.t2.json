@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:23:15Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6734d32df99e38eb1fc25495"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Couche des zones grises à l'origine des risques technologiques en Meurthe-et-Moselle\nDataset ID: 6734d32df99e38eb1fc25495\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: daca9a18-3bcd-4d80-b7f5-54c4347199e7\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=23432cc7-1302-435b-8b49-ed7ce2dbf7e0&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 685c624f-a523-4279-a572-c711c33c00c0\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=23432cc7-1302-435b-8b49-ed7ce2dbf7e0&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 56d2c1d6-a5c1-4a68-babd-26b3bc5c962a\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: b44d4cdf-72a4-4d08-9baf-45b925a2957a\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 494f9d07-8a2f-4f8a-af80-38bfa79064c4\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: d981b88d-94e5-4b48-a456-c6230a7dfff8\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Couche des zones grises à l'origine des risques technologiques en Meurthe-et-Moselle\nDataset ID: 6734d32df99e38eb1fc25495\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: daca9a18-3bcd-4d80-b7f5-54c4347199e7\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=23432cc7-1302-435b-8b49-ed7ce2dbf7e0&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 685c624f-a523-4279-a572-c711c33c00c0\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=23432cc7-1302-435b-8b49-ed7ce2dbf7e0&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 56d2c1d6-a5c1-4a68-babd-26b3bc5c962a\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: b44d4cdf-72a4-4d08-9baf-45b925a2957a\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 494f9d07-8a2f-4f8a-af80-38bfa79064c4\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: d981b88d-94e5-4b48-a456-c6230a7dfff8\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38050/23432cc7-1302-435b-8b49-ed7ce2dbf7e0.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:28:24Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "urgences hospitalières SOS Médecins COVID-19 Île-de-France",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'urgences hospitalières SOS Médecins COVID-19 Île-de-France'\nPage 1 of results:\n\n1. Données urgences hospitalières - SOS Médécins relatives à l'épidémie de COVID-19 en Île-de-France\n   ID: 5e9fc197f8333e389b18094a\n   Organization: Région Île-de-France\n   Tags: epidemie, hopital, logement-sante-social, sante, virus\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-urgences-hospitalieres-sos-medecins-relatives-a-lepidemie-de-covid-19-en-ile-de-france\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'urgences hospitalières SOS Médecins COVID-19 Île-de-France'\nPage 1 of results:\n\n1. Données urgences hospitalières - SOS Médécins relatives à l'épidémie de COVID-19 en Île-de-France\n   ID: 5e9fc197f8333e389b18094a\n   Organization: Région Île-de-France\n   Tags: epidemie, hopital, logement-sante-social, sante, virus\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-urgences-hospitalieres-sos-medecins-relatives-a-lepidemie-de-covid-19-en-ile-de-france\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

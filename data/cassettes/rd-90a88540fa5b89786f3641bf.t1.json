@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:22:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "concentration moyenne annuelle PM2.5 2022 Metz",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'concentration moyenne annuelle PM2.5 2022 Metz'\nPage 1 of results:\n\n1. Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2021 - Metz\n   ID: 643e92bcc83709be99ee15a7\n   Organization: ATMO Grand Est\n   Tags: air, concentration-de-polluant, donnees-environnementales, metz, modelisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/concentrations-cartographiees-de-la-moyenne-annuelle-de-pm2-5-en-2021-metz\n\n2. Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2022 - Metz\n   ID: 6509b9a02554b0b3c5b75d77\n   Organization: ATMO Grand Est\n   Tags: air, concentration-de-polluant, donnees-environnementales, metz, modelisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/concentrations-cartographiees-de-la-moyenne-annuelle-de-pm2-5-en-2022-metz\n\n3. Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2020 - Metz\n   ID: 610d08674b2665eb3c00b703\n   Organization: ATMO Grand Est\n   Tags: air, concentration-de-polluant, donnees-environnementales, metz, modelisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/concentrations-cartographiees-de-la-moyenne-annuelle-de-pm2-5-en-2020-metz\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'concentration moyenne annuelle PM2.5 2022 Metz'\nPage 1 of results:\n\n1. Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2021 - Metz\n   ID: 643e92bcc83709be99ee15a7\n   Organization: ATMO Grand Est\n   Tags: air, concentration-de-polluant, donnees-environnementales, metz, modelisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/concentrations-cartographiees-de-la-moyenne-annuelle-de-pm2-5-en-2021-metz\n\n2. Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2022 - Metz\n   ID: 6509b9a02554b0b3c5b75d77\n   Organization: ATMO Grand Est\n   Tags: air, concentration-de-polluant, donnees-environnementales, metz, modelisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/concentrations-cartographiees-de-la-moyenne-annuelle-de-pm2-5-en-2022-metz\n\n3. Concentrations cartographiées de la moyenne annuelle de PM2.5 en 2020 - Metz\n   ID: 610d08674b2665eb3c00b703\n   Organization: ATMO Grand Est\n   Tags: air, concentration-de-polluant, donnees-environnementales, metz, modelisation\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/concentrations-cartographiees-de-la-moyenne-annuelle-de-pm2-5-en-2020-metz\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

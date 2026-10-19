@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:21:32Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "68108b02b49b7c6c559e6b71"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Comptages permanents sur le réseau routier départemental des Alpes-Maritimes\nDataset ID: 68108b02b49b7c6c559e6b71\nTotal resources: 2\n\n1. CD06 Comptages permanents\n   Resource ID: 19b85d98-89d7-486f-8362-c119f8132a83\n   Format: gpkg\n   Type: main\n   URL: https://www.datasud.fr/fr/dataset/datasets/3893/resource/6728/download/\n\n2. CD06 Comptages permanents\n   Resource ID: b2053d8b-8417-4f14-8ad2-6be07b7f866f\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://www.datasud.fr/fr/dataset/datasets/3893/resource/6766/download/\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Comptages permanents sur le réseau routier départemental des Alpes-Maritimes\nDataset ID: 68108b02b49b7c6c559e6b71\nTotal resources: 2\n\n1. CD06 Comptages permanents\n   Resource ID: 19b85d98-89d7-486f-8362-c119f8132a83\n   Format: gpkg\n   Type: main\n   URL: https://www.datasud.fr/fr/dataset/datasets/3893/resource/6728/download/\n\n2. CD06 Comptages permanents\n   Resource ID: b2053d8b-8417-4f14-8ad2-6be07b7f866f\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://www.datasud.fr/fr/dataset/datasets/3893/resource/6766/download/\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

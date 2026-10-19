@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:13:21Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6835e10bb63a9d35e78588d5"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Zone règlementée du Plan de Prévention des Risques Technologiques (PPRT) autour du site du dépôt pétrolier EFR France à Vitry-sur-Seine (94081)\nDataset ID: 6835e10bb63a9d35e78588d5\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 96bd06e0-c124-4e11-8177-d8a7576456aa\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=44ba5f17-a51e-459a-bd9d-832206423ab7&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: fc4f7db1-2825-49c7-af4e-ff5722ce787c\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=44ba5f17-a51e-459a-bd9d-832206423ab7&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: ea0d76b9-5245-4cc6-9b3e-8c8d716c7a0c\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 50e080c8-2ae8-44ed-ba27-9b00ba93ddf1\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 1b61ac6a-5e45-4a73-80e2-f21b07e9e73c\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 0c38517d-d643-4cdd-b63f-3387cc04e554\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Zone règlementée du Plan de Prévention des Risques Technologiques (PPRT) autour du site du dépôt pétrolier EFR France à Vitry-sur-Seine (94081)\nDataset ID: 6835e10bb63a9d35e78588d5\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 96bd06e0-c124-4e11-8177-d8a7576456aa\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=44ba5f17-a51e-459a-bd9d-832206423ab7&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: fc4f7db1-2825-49c7-af4e-ff5722ce787c\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=44ba5f17-a51e-459a-bd9d-832206423ab7&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: ea0d76b9-5245-4cc6-9b3e-8c8d716c7a0c\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 50e080c8-2ae8-44ed-ba27-9b00ba93ddf1\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 1b61ac6a-5e45-4a73-80e2-f21b07e9e73c\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 0c38517d-d643-4cdd-b63f-3387cc04e554\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_3954051/44ba5f17-a51e-459a-bd9d-832206423ab7.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

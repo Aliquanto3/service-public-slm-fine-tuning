@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:14:36Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Zones de protection spéciale Natura 2000 Vosges"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'Zones de protection spéciale Natura 2000 Vosges'\nPage 1 of results:\n\n1. Zones de protection spéciale (ZPS) Natura 2000 dans le département des Vosges\n   ID: 6737844cc711827bfac40ab6\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges, zps\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zones-de-protection-speciale-zps-natura-2000-dans-le-departement-des-vosges\n\n2. Zone de protection spéciale (ZPS) Natura 2000 dans le département des Vosges\n   ID: 6abc8f319eb85609a13eaf08\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/zone-de-protection-speciale-zps-natura-2000-dans-le-departement-des-vosges\n\n3. Zones Spéciales de Conservation (ZSC) Natura 2000 dans le département des Vosges\n   ID: 67378467c711827bfac40acb\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges, zsc\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zones-speciales-de-conservation-zsc-natura-2000-dans-le-departement-des-vosges\n\n4. Détail des habitats des Zones Spéciales de Conservation (ZSC) Natura 2000 dans le département des Vosges\n   ID: 6abc8f309eb85609a13eaf07\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/detail-des-habitats-des-zones-speciales-de-conservation-zsc-natura-2000-dans-le-departement-des-vosges\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'Zones de protection spéciale Natura 2000 Vosges'\nPage 1 of results:\n\n1. Zones de protection spéciale (ZPS) Natura 2000 dans le département des Vosges\n   ID: 6737844cc711827bfac40ab6\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges, zps\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zones-de-protection-speciale-zps-natura-2000-dans-le-departement-des-vosges\n\n2. Zone de protection spéciale (ZPS) Natura 2000 dans le département des Vosges\n   ID: 6abc8f319eb85609a13eaf08\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/zone-de-protection-speciale-zps-natura-2000-dans-le-departement-des-vosges\n\n3. Zones Spéciales de Conservation (ZSC) Natura 2000 dans le département des Vosges\n   ID: 67378467c711827bfac40acb\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges, zsc\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zones-speciales-de-conservation-zsc-natura-2000-dans-le-departement-des-vosges\n\n4. Détail des habitats des Zones Spéciales de Conservation (ZSC) Natura 2000 dans le département des Vosges\n   ID: 6abc8f309eb85609a13eaf07\n   Organization: Direction Départementale des Territoires des Vosges\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/detail-des-habitats-des-zones-speciales-de-conservation-zsc-natura-2000-dans-le-departement-des-vosges\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

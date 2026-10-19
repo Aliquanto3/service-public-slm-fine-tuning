@@ -1,0 +1,6 @@
+{"horodatage":"2026-10-19T14:04:15.130574+02:00","motif":null,"pid":10828,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-19T14:53:01.690905+02:00","motif":"ErreurApiMistral : API Mistral : échec sans réponse HTTP (ConnectTimeout, generation) après 5 réessai(s)","pid":10828,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-19T14:55:29.837741+02:00","motif":"reprise","pid":7728,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-19T15:49:16.013347+02:00","motif":"ErreurApiMistral : API Mistral : échec sans réponse HTTP (ConnectTimeout, generation) après 5 réessai(s)","pid":7728,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-19T15:54:29.724488+02:00","motif":"reprise","pid":8476,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-19T16:04:09.710130+02:00","motif":null,"pid":8476,"schema_version":1,"statut":"complet"}

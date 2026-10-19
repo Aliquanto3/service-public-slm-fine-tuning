@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:12:25Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "plan prévention risques inondation Val Vrille Nièvre zonage réglementaire"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'plan prévention risques inondation Val Vrille Nièvre zonage réglementaire'\nPage 1 of results:\n\n1. Zonage réglementaire du plan de prévention des risques naturels d'inondation - PPRi - du Val de la Vrille - Nièvre (58)\n   ID: 67377d88cc1af51cc2c25399\n   Organization: DDT Nièvre\n   Tags: donnees-ouvertes, inspire, risque-inondation, zones-a-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zonage-reglementaire-du-plan-de-prevention-des-risques-naturels-dinondation-ppri-du-val-de-la-vrille-nievre-58\n\n2. Plan de prévention des risques naturels d'inondation - PPRi - du Val de la Vrille - Nièvre (58)\n   ID: 67377d4acc1af51cc2c25375\n   Organization: DDT Nièvre\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-dinondation-ppri-du-val-de-la-vrille-nievre-58\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'plan prévention risques inondation Val Vrille Nièvre zonage réglementaire'\nPage 1 of results:\n\n1. Zonage réglementaire du plan de prévention des risques naturels d'inondation - PPRi - du Val de la Vrille - Nièvre (58)\n   ID: 67377d88cc1af51cc2c25399\n   Organization: DDT Nièvre\n   Tags: donnees-ouvertes, inspire, risque-inondation, zones-a-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zonage-reglementaire-du-plan-de-prevention-des-risques-naturels-dinondation-ppri-du-val-de-la-vrille-nievre-58\n\n2. Plan de prévention des risques naturels d'inondation - PPRi - du Val de la Vrille - Nièvre (58)\n   ID: 67377d4acc1af51cc2c25375\n   Organization: DDT Nièvre\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-dinondation-ppri-du-val-de-la-vrille-nievre-58\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

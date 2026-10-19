@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:28:37Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Directive Inondation Territoire à risque important inondation MENDE stations traitement eaux usées"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'Directive Inondation Territoire à risque important inondation MENDE stations traitement eaux usées'\nPage 1 of results:\n\n1. [DREAL OCCITANIE] Directive Inondation - Territoire à risque important d'inondation MENDE (Lozère) - Enjeux liés aux stations de traitement des eaux usées\n   ID: 6a4b7f1a1d7ecb5a4eb55a7e\n   Organization: DREAL Occitanie\n   Tags: dreal, inspire, n-inondation, occitanie, public\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-directive-inondation-territoire-a-risque-important-dinondation-mende-lozere-enjeux-lies-aux-stations-de-traitement-des-eaux-usees\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'Directive Inondation Territoire à risque important inondation MENDE stations traitement eaux usées'\nPage 1 of results:\n\n1. [DREAL OCCITANIE] Directive Inondation - Territoire à risque important d'inondation MENDE (Lozère) - Enjeux liés aux stations de traitement des eaux usées\n   ID: 6a4b7f1a1d7ecb5a4eb55a7e\n   Organization: DREAL Occitanie\n   Tags: dreal, inspire, n-inondation, occitanie, public\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-directive-inondation-territoire-a-risque-important-dinondation-mende-lozere-enjeux-lies-aux-stations-de-traitement-des-eaux-usees\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

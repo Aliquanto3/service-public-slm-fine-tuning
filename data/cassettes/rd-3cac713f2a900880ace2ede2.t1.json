@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:31:02Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "émissions GES EPCI 2017",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 8 dataset(s) for query: 'émissions GES EPCI 2017'\nPage 1 of results:\n\n1. Part d'actifs selon le mode de transport principalement utilisé pour aller travailler\n   ID: 69b987f0c23eb0dd77b7ef87\n   Description: L’indicateur représente la part d'actifs occupés de 15 ans ou plus qui résident dans le territoire selon le mode de transport principal utilisé pour aller travailler  : Marche, Vélo (depuis 2017), Deu...\n   Organization: Tableau de bord des mobilités durables\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/part-dactifs-selon-le-mode-de-transport-principalement-utilise-pour-aller-travailler-1\n\n2. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2019\n   ID: 614c525d2547202fbd1d36f1\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emissions-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2019\n\n3. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2021\n   ID: 6537cb93b639b0ae35a39d3d\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emissions-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2021\n\n4. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2017\n   ID: 5e6f7c42634f4135a46b956b\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emission-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2017\n\n5. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 1990\n   ID: 602f7f0619c8356b4f60b02f\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emission-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-1990\n\n6. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2018\n   ID: 602e8a277b8126d2d75f0a45\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emission-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2018\n\n7. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2020\n   ID: 6357b64c5bbf67f43b2d141d\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emissions-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2020\n\n8. emi occitanie epci 2017\n   ID: 66e97cce2e904e483f45d206\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2017\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 8 dataset(s) for query: 'émissions GES EPCI 2017'\nPage 1 of results:\n\n1. Part d'actifs selon le mode de transport principalement utilisé pour aller travailler\n   ID: 69b987f0c23eb0dd77b7ef87\n   Description: L’indicateur représente la part d'actifs occupés de 15 ans ou plus qui résident dans le territoire selon le mode de transport principal utilisé pour aller travailler  : Marche, Vélo (depuis 2017), Deu...\n   Organization: Tableau de bord des mobilités durables\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/part-dactifs-selon-le-mode-de-transport-principalement-utilise-pour-aller-travailler-1\n\n2. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2019\n   ID: 614c525d2547202fbd1d36f1\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emissions-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2019\n\n3. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2021\n   ID: 6537cb93b639b0ae35a39d3d\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emissions-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2021\n\n4. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2017\n   ID: 5e6f7c42634f4135a46b956b\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emission-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2017\n\n5. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 1990\n   ID: 602f7f0619c8356b4f60b02f\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emission-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-1990\n\n6. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2018\n   ID: 602e8a277b8126d2d75f0a45\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emission-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2018\n\n7. Emissions des gaz à effet de serre (GES) tous secteurs d'activité confondus des EPCI de la région Grand Est - 2020\n   ID: 6357b64c5bbf67f43b2d141d\n   Organization: ATMO Grand Est\n   Tags: emission-atmospherique, emissions-de-gaz-a-effet-de-serre, epci, grand-est, inventaire-des-emissions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/emissions-des-gaz-a-effet-de-serre-ges-tous-secteurs-dactivite-confondus-des-epci-de-la-region-grand-est-2020\n\n8. emi occitanie epci 2017\n   ID: 66e97cce2e904e483f45d206\n   Organization: Atmo Occitanie\n   Tags: geospatial, inventaire\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/emi-occitanie-epci-2017\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:27:33Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "diversité commerciale PLU ligne"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'diversité commerciale PLU ligne'\nPage 1 of results:\n\n1. Diversité commerciale à protéger / développer (Ligne) (PLU)\n   ID: 654d732487097453c512b367\n   Organization: Communauté d'Agglomération du Puy-en-Velay\n   Tags: commercial, inspire, opendata, urbanisme, usage-des-sols\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/diversite-commerciale-a-proteger-developper-ligne-plu\n\n2. Base Permanente des Equipements BPE 2023 Sport Loisir Culture CD76\n   ID: 66e8c764bb27c663df17beac\n   Organization: Département de la Seine-Maritime\n   Tags: amenagement, bpe, communes, culture, epci\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/base-permanente-des-equipements-bpe-2023-sport-loisir-culture-cd76\n\n3. Tableau de bord interactif BPE 2023 Sport Loisirs Culture CD76\n   ID: 66e8c738bb27c663df17beaa\n   Organization: Département de la Seine-Maritime\n   Tags: amenagement, bpe, communes, culture, epci\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/tableau-de-bord-interactif-bpe-2023-sport-loisirs-culture-cd76\n\n4. Indicateurs business par commune (France métropolitaine)\n   ID: 6a34f17e153f3c387b4cdbae\n   Organization: NextToYourBusiness\n   Tags: bodacc, cfe, commerce, commune, dvf\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indicateurs-business-par-commune-france-metropolitaine\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'diversité commerciale PLU ligne'\nPage 1 of results:\n\n1. Diversité commerciale à protéger / développer (Ligne) (PLU)\n   ID: 654d732487097453c512b367\n   Organization: Communauté d'Agglomération du Puy-en-Velay\n   Tags: commercial, inspire, opendata, urbanisme, usage-des-sols\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/diversite-commerciale-a-proteger-developper-ligne-plu\n\n2. Base Permanente des Equipements BPE 2023 Sport Loisir Culture CD76\n   ID: 66e8c764bb27c663df17beac\n   Organization: Département de la Seine-Maritime\n   Tags: amenagement, bpe, communes, culture, epci\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/base-permanente-des-equipements-bpe-2023-sport-loisir-culture-cd76\n\n3. Tableau de bord interactif BPE 2023 Sport Loisirs Culture CD76\n   ID: 66e8c738bb27c663df17beaa\n   Organization: Département de la Seine-Maritime\n   Tags: amenagement, bpe, communes, culture, epci\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/tableau-de-bord-interactif-bpe-2023-sport-loisirs-culture-cd76\n\n4. Indicateurs business par commune (France métropolitaine)\n   ID: 6a34f17e153f3c387b4cdbae\n   Organization: NextToYourBusiness\n   Tags: bodacc, cfe, commerce, commune, dvf\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indicateurs-business-par-commune-france-metropolitaine\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

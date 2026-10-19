@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:25:37Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "67f70b11c7f49c50e69ac782"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Délibérations du conseil municipal de la ville d'Orvault en 2020 (délibérations incluses en PDF)\nDataset ID: 67f70b11c7f49c50e69ac782\nTotal resources: 2\n\n1. 214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe.csv\n   Resource ID: 30c83dbd-14bd-4785-9450-55d36cab19f1\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe/exports/csv?use_labels=true\n\n2. 214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe.json\n   Resource ID: 90f6615c-aaf4-4bb9-b1ed-0f57f91e17ca\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Délibérations du conseil municipal de la ville d'Orvault en 2020 (délibérations incluses en PDF)\nDataset ID: 67f70b11c7f49c50e69ac782\nTotal resources: 2\n\n1. 214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe.csv\n   Resource ID: 30c83dbd-14bd-4785-9450-55d36cab19f1\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe/exports/csv?use_labels=true\n\n2. 214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe.json\n   Resource ID: 90f6615c-aaf4-4bb9-b1ed-0f57f91e17ca\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/214401143_deliberations-du-conseil-municipal-de-la-ville-dorvault-en-2019-delibe/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

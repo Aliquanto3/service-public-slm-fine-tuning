@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:19:22Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "certification comptes État 2015",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'certification comptes État 2015'\nPage 1 of results:\n\n1. Fichier des personnes décédées\n   ID: 5de8f397634f4164071119c5\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: deces, etat-civil\n   Resources: 89\n   URL: https://www.data.gouv.fr/datasets/fichier-des-personnes-decedees\n\n2. Certification des comptes 2019 de l’État \n   ID: 5ea952377f6d609f43319268\n   Organization: Cour des comptes\n   Tags: certification, comptes-publics, finances-publiques, lolf\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-2019-de-letat\n\n3. Certification des comptes 2017 de l’État\n   ID: 5b053d50c751df6a1ab662d1\n   Organization: Cour des comptes\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-2017-de-letat\n\n4. Certification des comptes de l’État pour l’exercice 2016\n   ID: 595254a688ee384d7843fbbf\n   Organization: Cour des comptes\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-de-letat-pour-lexercice-2016\n\n5. Certification des comptes de l’État pour l’exercice 2015\n   ID: 5747f43d88ee380e9cd1b934\n   Organization: Cour des comptes\n   Tags: certification, comptes, comptes-de-letat, cour-des-comptes, etat\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-de-letat-pour-lexercice-2015\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'certification comptes État 2015'\nPage 1 of results:\n\n1. Fichier des personnes décédées\n   ID: 5de8f397634f4164071119c5\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: deces, etat-civil\n   Resources: 89\n   URL: https://www.data.gouv.fr/datasets/fichier-des-personnes-decedees\n\n2. Certification des comptes 2019 de l’État \n   ID: 5ea952377f6d609f43319268\n   Organization: Cour des comptes\n   Tags: certification, comptes-publics, finances-publiques, lolf\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-2019-de-letat\n\n3. Certification des comptes 2017 de l’État\n   ID: 5b053d50c751df6a1ab662d1\n   Organization: Cour des comptes\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-2017-de-letat\n\n4. Certification des comptes de l’État pour l’exercice 2016\n   ID: 595254a688ee384d7843fbbf\n   Organization: Cour des comptes\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-de-letat-pour-lexercice-2016\n\n5. Certification des comptes de l’État pour l’exercice 2015\n   ID: 5747f43d88ee380e9cd1b934\n   Organization: Cour des comptes\n   Tags: certification, comptes, comptes-de-letat, cour-des-comptes, etat\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/certification-des-comptes-de-letat-pour-lexercice-2015\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

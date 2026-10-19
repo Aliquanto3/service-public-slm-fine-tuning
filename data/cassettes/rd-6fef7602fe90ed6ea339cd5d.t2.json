@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:15:36Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "67377fe2b561510ce3c2550d"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Commissions locales d'écobuage dans les hautes pyrénées\nDataset ID: 67377fe2b561510ce3c2550d\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 45c6ad86-aaf2-43aa-ab7c-832e4c45cb25\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=db15a603-0f2c-4e69-92a8-652b811d2f95&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 350626aa-f489-4712-acb4-a361e8ea4f91\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=db15a603-0f2c-4e69-92a8-652b811d2f95&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 55ebbb4d-c677-473a-a3b5-2080f1e5a589\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 58efd7fa-d02d-44ee-9c10-a3147fc9e0ba\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 2467b180-25db-4266-a282-3b9c2d6abcac\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 439a1aab-5603-415c-aa75-962068012982\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Commissions locales d'écobuage dans les hautes pyrénées\nDataset ID: 67377fe2b561510ce3c2550d\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 45c6ad86-aaf2-43aa-ab7c-832e4c45cb25\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=db15a603-0f2c-4e69-92a8-652b811d2f95&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 350626aa-f489-4712-acb4-a361e8ea4f91\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=db15a603-0f2c-4e69-92a8-652b811d2f95&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 55ebbb4d-c677-473a-a3b5-2080f1e5a589\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 58efd7fa-d02d-44ee-9c10-a3147fc9e0ba\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 2467b180-25db-4266-a282-3b9c2d6abcac\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 439a1aab-5603-415c-aa75-962068012982\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/db15a603-0f2c-4e69-92a8-652b811d2f95.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:30:31Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Puffin Baléares survol aérien Cotentin îles anglo-normandes Biotope"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'Puffin Baléares survol aérien Cotentin îles anglo-normandes Biotope'\nPage 1 of results:\n\n1. 1- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : observations (point)\n   ID: 6abfc38b30053ff3563eaf29\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/1-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-observations-point-1\n\n2. Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) (point, ligne)\n   ID: 6acd75cc8432111c7b4ef0ec\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-point-ligne-2\n\n3. 3- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : transect réels (ligne)\n   ID: 6abfc03e30053ff3563eaf1a\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/3-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-transect-reels-ligne-1\n\n4. 2- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : données de prise de vue (point)\n   ID: 6abfca5230053ff3563eaf4e\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-donnees-de-prise-de-vue-point-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'Puffin Baléares survol aérien Cotentin îles anglo-normandes Biotope'\nPage 1 of results:\n\n1. 1- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : observations (point)\n   ID: 6abfc38b30053ff3563eaf29\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/1-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-observations-point-1\n\n2. Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) (point, ligne)\n   ID: 6acd75cc8432111c7b4ef0ec\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-point-ligne-2\n\n3. 3- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : transect réels (ligne)\n   ID: 6abfc03e30053ff3563eaf1a\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/3-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-transect-reels-ligne-1\n\n4. 2- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : données de prise de vue (point)\n   ID: 6abfca5230053ff3563eaf4e\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-donnees-de-prise-de-vue-point-1\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "survol aérien oiseaux marin Normandie 2024 2025"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'survol aérien oiseaux marin Normandie 2024 2025'\nPage 1 of results:\n\n1. Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) (point, ligne)\n   ID: 6acd75cc8432111c7b4ef0ec\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-point-ligne-2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'survol aérien oiseaux marin Normandie 2024 2025'\nPage 1 of results:\n\n1. Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) (point, ligne)\n   ID: 6acd75cc8432111c7b4ef0ec\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-point-ligne-2\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PNA Puffin Baléares prise vue aérienne Biotope"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'PNA Puffin Baléares prise vue aérienne Biotope'\nPage 1 of results:\n\n1. 2- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : données de prise de vue (point)\n   ID: 6abfca5230053ff3563eaf4e\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-donnees-de-prise-de-vue-point-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'PNA Puffin Baléares prise vue aérienne Biotope'\nPage 1 of results:\n\n1. 2- Survols aériens sur le secteur des îles anglo-normandes et du Cotentin pour le PNA en faveur du Puffin des Baléares (Biotope, 2024 à 2025) : données de prise de vue (point)\n   ID: 6abfca5230053ff3563eaf4e\n   Organization: Office Français de la Biodiversité\n   Tags: inspire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/2-survols-aeriens-sur-le-secteur-des-iles-anglo-normandes-et-du-cotentin-pour-le-pna-en-faveur-du-puffin-des-baleares-biotope-2024-a-2025-donnees-de-prise-de-vue-point-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

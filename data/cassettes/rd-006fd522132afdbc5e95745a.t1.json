@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:19:17Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "centres formation apprentis adresse site formation"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'centres formation apprentis adresse site formation'\nPage 1 of results:\n\n1. Centres de formation d'apprentis\n   ID: 682ea2975c6ddc960c7082e3\n   Organization: Région Île-de-France\n   Tags: apprentissage, cfa, enseignement-formation-recherche, formation, formation-professionnelle\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/centres-de-formation-dapprentis\n\n2. Idéo-Structures d'enseignement secondaire\n   ID: 5fa5e3897fce339d438b652e\n   Organization: Office national d'information sur les enseignements et les professions\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/ideo-structures-denseignement-secondaire\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'centres formation apprentis adresse site formation'\nPage 1 of results:\n\n1. Centres de formation d'apprentis\n   ID: 682ea2975c6ddc960c7082e3\n   Organization: Région Île-de-France\n   Tags: apprentissage, cfa, enseignement-formation-recherche, formation, formation-professionnelle\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/centres-de-formation-dapprentis\n\n2. Idéo-Structures d'enseignement secondaire\n   ID: 5fa5e3897fce339d438b652e\n   Organization: Office national d'information sur les enseignements et les professions\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/ideo-structures-denseignement-secondaire\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

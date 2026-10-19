@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:29:04Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "masses d'eau souterraines captives Turonien Coniacien Adour Garonne état pression",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'masses d'eau souterraines captives Turonien Coniacien Adour Garonne état pression'\nPage 1 of results:\n\n1. [DREAL OCCITANIE - Etat des lieux 2025] Données d'états et de pressions des masses d'eau souterraines captives (Turonien-Coniacien) sur le bassin Adour-garonne\n   ID: 6a4b7ed61d7ecb5a4eb55a18\n   Organization: DREAL Occitanie\n   Tags: bassin-adour-garonne, donnees-ouvertes, dreal, hydrographie, inspire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-etat-des-lieux-2025-donnees-detats-et-de-pressions-des-masses-deau-souterraines-captives-turonien-coniacien-sur-le-bassin-adour-garonne\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'masses d'eau souterraines captives Turonien Coniacien Adour Garonne état pression'\nPage 1 of results:\n\n1. [DREAL OCCITANIE - Etat des lieux 2025] Données d'états et de pressions des masses d'eau souterraines captives (Turonien-Coniacien) sur le bassin Adour-garonne\n   ID: 6a4b7ed61d7ecb5a4eb55a18\n   Organization: DREAL Occitanie\n   Tags: bassin-adour-garonne, donnees-ouvertes, dreal, hydrographie, inspire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dreal-occitanie-etat-des-lieux-2025-donnees-detats-et-de-pressions-des-masses-deau-souterraines-captives-turonien-coniacien-sur-le-bassin-adour-garonne\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

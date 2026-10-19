@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:25:04Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "dépenses réemploi réutilisation matières recyclées Conseil Départemental Haute-Marne 2024"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'dépenses réemploi réutilisation matières recyclées Conseil Départemental Haute-Marne 2024'\nPage 1 of results:\n\n1. Déclaration des dépenses pour les biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées du Conseil Départemental de la Haute-Marne - 2024\n   ID: 685915d31cfcdfbadadbc6c5\n   Organization: Conseil départemental - Haute-Marne\n   Tags: declaration-agec-2024\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-des-depenses-pour-les-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-du-conseil-departemental-de-la-haute-marne-2024\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'dépenses réemploi réutilisation matières recyclées Conseil Départemental Haute-Marne 2024'\nPage 1 of results:\n\n1. Déclaration des dépenses pour les biens issus du réemploi, de la réutilisation ou intégrant des matières recyclées du Conseil Départemental de la Haute-Marne - 2024\n   ID: 685915d31cfcdfbadadbc6c5\n   Organization: Conseil départemental - Haute-Marne\n   Tags: declaration-agec-2024\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/declaration-des-depenses-pour-les-biens-issus-du-reemploi-de-la-reutilisation-ou-integrant-des-matieres-recyclees-du-conseil-departemental-de-la-haute-marne-2024\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "achats durables réemploi recyclage collectivités 2024",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'achats durables réemploi recyclage collectivités 2024'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'achats durables réemploi recyclage collectivités 2024'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:19:08Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "compte administratif val de oise budget primitif"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'compte administratif val de oise budget primitif'\nPage 1 of results:\n\n1. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2025\n   ID: 686e24feb69afdc9cd2977bd\n   Organization: GrandSoissons Agglomération\n   Tags: 2025, conseil-communautaire, decisions, deliberations\n   Resources: 499\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2025\n\n2. Délibérations 2025 du Conseil Municipal de la Ville de Soissons\n   ID: 6880fb48b62c746b0671eb33\n   Organization: Ville de Soissons\n   Tags: 2025, conseil-municipal, deliberations\n   Resources: 465\n   URL: https://www.data.gouv.fr/datasets/deliberations-2025-du-conseil-municipal-de-la-ville-de-soissons\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'compte administratif val de oise budget primitif'\nPage 1 of results:\n\n1. Délibérations du Conseil communautaire – GrandSoissons Agglomération – 2025\n   ID: 686e24feb69afdc9cd2977bd\n   Organization: GrandSoissons Agglomération\n   Tags: 2025, conseil-communautaire, decisions, deliberations\n   Resources: 499\n   URL: https://www.data.gouv.fr/datasets/deliberations-du-conseil-communautaire-grandsoissons-agglomeration-2025\n\n2. Délibérations 2025 du Conseil Municipal de la Ville de Soissons\n   ID: 6880fb48b62c746b0671eb33\n   Organization: Ville de Soissons\n   Tags: 2025, conseil-municipal, deliberations\n   Resources: 465\n   URL: https://www.data.gouv.fr/datasets/deliberations-2025-du-conseil-municipal-de-la-ville-de-soissons\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

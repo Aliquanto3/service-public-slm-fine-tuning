@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:27:42Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "60f6829ed668d5901a47aa40"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: DONNEE - Budget primitif 2018 Région Grand Est\nDataset ID: 60f6829ed668d5901a47aa40\nTotal resources: 2\n\n1. Budget au format XML Totem\n   Resource ID: 3cabc848-0672-4ce9-bacd-7b16232b6fe0\n   Format: xml\n   Size: 337.6 KB\n   MIME type: application/xml\n   Type: main\n   URL: https://static.data.gouv.fr/resources/donnee-budget-primitif-2018-region-grand-est/20210720-100057/flux-bp-2018.xml\n\n2. Maquette au format PDF\n   Resource ID: c782917f-0c61-4075-bd53-68eed9724c97\n   Format: pdf\n   Size: 2.0 MB\n   MIME type: application/pdf\n   Type: main\n   URL: https://static.data.gouv.fr/resources/donnee-budget-primitif-2018-region-grand-est/20210720-100044/maquette-bp-2018.pdf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: DONNEE - Budget primitif 2018 Région Grand Est\nDataset ID: 60f6829ed668d5901a47aa40\nTotal resources: 2\n\n1. Budget au format XML Totem\n   Resource ID: 3cabc848-0672-4ce9-bacd-7b16232b6fe0\n   Format: xml\n   Size: 337.6 KB\n   MIME type: application/xml\n   Type: main\n   URL: https://static.data.gouv.fr/resources/donnee-budget-primitif-2018-region-grand-est/20210720-100057/flux-bp-2018.xml\n\n2. Maquette au format PDF\n   Resource ID: c782917f-0c61-4075-bd53-68eed9724c97\n   Format: pdf\n   Size: 2.0 MB\n   MIME type: application/pdf\n   Type: main\n   URL: https://static.data.gouv.fr/resources/donnee-budget-primitif-2018-region-grand-est/20210720-100044/maquette-bp-2018.pdf\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

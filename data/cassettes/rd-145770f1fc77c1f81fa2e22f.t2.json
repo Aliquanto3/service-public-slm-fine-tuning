@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:27:19Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6a09b73c5bc5f04710b2fdf5"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\nDataset ID: 6a09b73c5bc5f04710b2fdf5\nTotal resources: 1\n\n1. diagnostics-obligatoires-vente.csv\n   Resource ID: 27ecf73b-ae07-4c70-a571-e9d1886f9d08\n   Format: csv\n   Size: 1.8 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap/20260517-124029/diagnostics-obligatoires-vente.csv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\nDataset ID: 6a09b73c5bc5f04710b2fdf5\nTotal resources: 1\n\n1. diagnostics-obligatoires-vente.csv\n   Resource ID: 27ecf73b-ae07-4c70-a571-e9d1886f9d08\n   Format: csv\n   Size: 1.8 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap/20260517-124029/diagnostics-obligatoires-vente.csv\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:21:14Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "comité régional open data",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 7 dataset(s) for query: 'comité régional open data'\nPage 1 of results:\n\n1. DATAtourisme : la plateforme nationale des données touristiques\n   ID: 5b598be088ee387c0c353714\n   Organization: ADN Tourisme\n   Tags: activite-touristique, data-tourisme, datatourisme, donnees-information-touristique, evenement\n   Resources: 56\n   URL: https://www.data.gouv.fr/datasets/datatourisme-la-plateforme-nationale-des-donnees-touristiques\n\n2. Données touristiques de la base DATAtourisme\n   ID: 5a9d1ef988ee385c2b453e3a\n   Tags: evenements, festival, tourisme, touristique\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-touristiques-de-la-base-datatourisme\n\n3. Itineraires randonnees pedestres PDESI CD76 janvier 2025\n   ID: 68253073def03def9d4fd5cc\n   Organization: Département de la Seine-Maritime\n   Tags: 76, geospatial, itineraires, itinerance, pdesi\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/itineraires-randonnees-pedestres-pdesi-cd76-janvier-2025\n\n4. Points d'intérêt touristique\n   ID: 674662127b431165ae7733dc\n   Organization: Communauté de Communes Coeur de France\n   Tags: activite, attractivite, evenement, tourisme, visite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/points-dinteret-touristique\n\n5. Itineraires Rando pedestre PDESI CD76 decembre 2023\n   ID: 65c2c8c9200bdc4ef258ddc9\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial, itineraires, itinerance, pdesi, pedestre\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/itineraires-rando-pedestre-pdesi-cd76-decembre-2023\n\n6. Tourisme POI76 20200821\n   ID: 63cf2220094b9de78e40440e\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, tourisme\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/tourisme-poi76-20200821\n\n7. Points d interet touristiques 76 20210817\n   ID: 65273ac21dc9b5273674a480\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, tourisme\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/points-d-interet-touristiques-76-20210817\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 7 dataset(s) for query: 'comité régional open data'\nPage 1 of results:\n\n1. DATAtourisme : la plateforme nationale des données touristiques\n   ID: 5b598be088ee387c0c353714\n   Organization: ADN Tourisme\n   Tags: activite-touristique, data-tourisme, datatourisme, donnees-information-touristique, evenement\n   Resources: 56\n   URL: https://www.data.gouv.fr/datasets/datatourisme-la-plateforme-nationale-des-donnees-touristiques\n\n2. Données touristiques de la base DATAtourisme\n   ID: 5a9d1ef988ee385c2b453e3a\n   Tags: evenements, festival, tourisme, touristique\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/donnees-touristiques-de-la-base-datatourisme\n\n3. Itineraires randonnees pedestres PDESI CD76 janvier 2025\n   ID: 68253073def03def9d4fd5cc\n   Organization: Département de la Seine-Maritime\n   Tags: 76, geospatial, itineraires, itinerance, pdesi\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/itineraires-randonnees-pedestres-pdesi-cd76-janvier-2025\n\n4. Points d'intérêt touristique\n   ID: 674662127b431165ae7733dc\n   Organization: Communauté de Communes Coeur de France\n   Tags: activite, attractivite, evenement, tourisme, visite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/points-dinteret-touristique\n\n5. Itineraires Rando pedestre PDESI CD76 decembre 2023\n   ID: 65c2c8c9200bdc4ef258ddc9\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial, itineraires, itinerance, pdesi, pedestre\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/itineraires-rando-pedestre-pdesi-cd76-decembre-2023\n\n6. Tourisme POI76 20200821\n   ID: 63cf2220094b9de78e40440e\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, tourisme\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/tourisme-poi76-20200821\n\n7. Points d interet touristiques 76 20210817\n   ID: 65273ac21dc9b5273674a480\n   Organization: Département de la Seine-Maritime\n   Tags: communes, geospatial, tourisme\n   Resources: 11\n   URL: https://www.data.gouv.fr/datasets/points-d-interet-touristiques-76-20210817\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

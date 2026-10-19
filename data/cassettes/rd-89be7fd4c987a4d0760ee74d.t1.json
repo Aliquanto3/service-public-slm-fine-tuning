@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T12:15:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zones pays Ain",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'zones pays Ain'\nPage 1 of results:\n\n1. Zones pays ain\n   ID: 689e806e1f90bdfb132523c8\n   Organization: Département de l'Ain\n   Tags: ain, bresse, bugey, cotiere, departement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/zones-pays-ain\n\n2. Envir ONF Genève - Surface terrière des gros bois (Bellegarde, pays de Gex)\n   ID: 630024c9bcee2e6afa49e2da\n   Organization: Département de l'Ain\n   Tags: ain, arbre, bois, dendrometrique, economie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/envir-onf-geneve-surface-terriere-des-gros-bois-bellegarde-pays-de-gex\n\n3. Envir ONF Bugey - Surface terrière des gros bois (Bugey)\n   ID: 6699af04f0ce754d878e70da\n   Organization: Département de l'Ain\n   Tags: ain, arbre, bois, dendrometrique, economie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/envir-onf-bugey-surface-terriere-des-gros-bois-bugey\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'zones pays Ain'\nPage 1 of results:\n\n1. Zones pays ain\n   ID: 689e806e1f90bdfb132523c8\n   Organization: Département de l'Ain\n   Tags: ain, bresse, bugey, cotiere, departement\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/zones-pays-ain\n\n2. Envir ONF Genève - Surface terrière des gros bois (Bellegarde, pays de Gex)\n   ID: 630024c9bcee2e6afa49e2da\n   Organization: Département de l'Ain\n   Tags: ain, arbre, bois, dendrometrique, economie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/envir-onf-geneve-surface-terriere-des-gros-bois-bellegarde-pays-de-gex\n\n3. Envir ONF Bugey - Surface terrière des gros bois (Bugey)\n   ID: 6699af04f0ce754d878e70da\n   Organization: Département de l'Ain\n   Tags: ain, arbre, bois, dendrometrique, economie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/envir-onf-bugey-surface-terriere-des-gros-bois-bugey\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}
