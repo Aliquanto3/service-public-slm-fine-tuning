@@ -72,6 +72,9 @@ Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M
 - 2026-10-19 12:39 · INC-3 · second avis (4 medium, 2 low, aucun high) ; revue Opus lancée après rebase sur main.
 - 2026-10-19 12:39 · **décision d'Anaël** · régénération par Mistral des réponses cibles approuvée (CR d'abord, toutes tâches si la story le permet), consigne de longueur ≤ ~900 tokens, pas de titre ni de préambule en tête ; plafond indicatif 10 € (Anaël peut relever les plafonds). À **reconfirmer avec lui** avant la dépense, coût estimé affiché. Estimation : réponses seules ~4 à 7 € ; jeu complet depuis les seeds ~16 € (1 918 appels pour v2).
 - 2026-10-19 12:39 · M2 sur la tour (8 Go) · estimation non mesurée : ~7 Gio à 4 096, ~8,5 Gio à 8 192. Sonde à faire sur la tour.
+- 2026-10-19 12:44 · INC-3 · revue Opus (bc6a5cb : rebase sur main, oracles de test indépendants, `cout_pire_cas_eur` = montant réservé par INC-2 ; second avis 1, 2, 4 documentés, 3 rejeté : Mistral hors estimation, poste distinct). **Fusion 08532e7**. Suite complète lancée.
+- 2026-10-19 12:44 · **décision d'Anaël** · 10 € Mistral autorisés par défaut s'il n'est pas là pour confirmer.
+- 2026-10-19 12:44 · 9.10 · relevé (lookup) : pas de régénération « réponse seule » possible, un changement de gabarit invalide la réutilisation ; 1 appel par item sauf CR (2) et RD (1 à N). Spec écrite (`spec-9-10-cibles-courtes.md` : plafond de mots par tâche, pas de titre de tête, réutilisation des transcriptions CR, retrait du titre en gras au nettoyage, estimation avant dépense). Décision prise seul : plafonds Q 160, RD 120 (p90 des références d'évaluation), CR 450, LC 150, CT 150, generique 200 (estimations). Relecture de la spec lancée (story à risque D1).
 
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
