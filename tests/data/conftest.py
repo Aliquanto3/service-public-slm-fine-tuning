@@ -50,6 +50,14 @@ DONNEES = """
 [mistral]
 conditions_verifiees_le = 2026-10-12
 modeles_stables = ["mistral-large-latest", "mistral-large-2512"]
+
+[generateur.plafonds_mots]
+Q = 160
+RD = 120
+CR = 400
+LC = 150
+CT = 150
+generique = 200
 """
 TARIFS = """
 schema_version = 1
@@ -405,7 +413,7 @@ class Monde:
             reprendre_run_id=reprendre,
             recherche=self.recherche,
             chemin_outils=OUTILS_MCP,
-            consigner=lambda _ligne: None,
+            consigner=options.pop("consigner", lambda _ligne: None),
             **options,
         )
 

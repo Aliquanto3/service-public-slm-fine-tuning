@@ -166,6 +166,26 @@ def test_build_toutes_les_taches(monde: Any, doublures: Any) -> None:
     lignes = {ligne.tache: ligne for ligne in lignes_train(resultat)}
     assert set(lignes) == set(TACHES)
     taches = charger_taches()
+    # D1.1 (story 9.10) : les consignes de longueur et de forme du gabarit, envoyées à Mistral,
+    # n'entrent dans aucun message SFT (ni le plafond de mots résolu).
+    # Fragments lus dans les gabarits eux-mêmes (revue 9.10) : un libellé changé reste couvert.
+    fragments = set()
+    for chemin in (racine_projet() / "config" / "prompts" / "generateur").glob("*.md"):
+        for brute in chemin.read_text(encoding="utf-8").splitlines():
+            if brute.startswith("- ") and "{plafond_mots_tache}" in brute:
+                fragments |= {
+                    morceau.strip()
+                    for morceau in brute[2:].split("{plafond_mots_tache}")
+                    if len(morceau.strip()) >= 5
+                }
+            elif brute.startswith("- Commence directement"):
+                fragments.add(brute[2:].strip())
+    assert len(fragments) >= 3
+    for ligne in lignes.values():
+        for message in ligne.messages:
+            contenu = str(message.get("content") or "")
+            assert "ne dépasse pas" not in contenu and "mots." not in contenu
+            assert not [f for f in fragments if f in contenu]
     for code, ligne in lignes.items():
         if code == "generique":
             assert ligne.messages[0]["role"] == "user"

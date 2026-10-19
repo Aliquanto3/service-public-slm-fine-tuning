@@ -12,7 +12,7 @@ import pytest
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
-from slmsp.data.config import ConfigDonnees, charger_config_donnees
+from slmsp.data.config import TACHES_PLAFONNABLES, ConfigDonnees, charger_config_donnees
 from slmsp.mistral.config import charger_mistral
 
 FICHIER_REEL = racine_projet() / "config" / "donnees.toml"
@@ -303,3 +303,42 @@ def test_longueur_re_inconnue_citee_sans_sa_valeur(tmp_path: Path) -> None:
         _charger(tmp_path, (r"^re_longueurs = .*$", f're_longueurs = ["{secret}"]'))
     assert "re_longueurs" in str(exc.value)
     assert secret not in str(exc.value)
+
+
+# --- [generateur.plafonds_mots] (story 9.10) ------------------------------------------------
+
+
+def test_plafonds_mots_reels() -> None:
+    plafonds = charger_config_donnees().generateur.plafonds_mots
+    assert plafonds == {"Q": 160, "RD": 120, "CR": 400, "LC": 150, "CT": 150, "generique": 200}
+
+
+def test_plafonds_mots_relus_par_le_generateur() -> None:
+    generateur = _generateur()
+    attendu = charger_config_donnees().generateur.plafonds_mots
+    assert generateur.charger_plafonds_mots(FICHIER_REEL) == attendu
+    # Même liste de Tâches admises des deux côtés (revue 9.10).
+    assert generateur.TACHES_PLAFONNABLES == TACHES_PLAFONNABLES
+
+
+@pytest.mark.parametrize(
+    ("ligne", "motif"),
+    [
+        ("Q = 0", "generateur.plafonds_mots.Q"),
+        ("Q = -1", "generateur.plafonds_mots.Q"),
+        ('Q = "160"', "generateur.plafonds_mots.Q"),
+        ("CO = 100", "generateur.plafonds_mots"),
+        ("RE = 100", "generateur.plafonds_mots"),
+        ("TR = 100", "generateur.plafonds_mots"),
+    ],
+)
+def test_plafonds_mots_invalides(tmp_path: Path, ligne: str, motif: str) -> None:
+    with pytest.raises(ConfigurationInvalide, match=re.escape(motif)):
+        _charger(tmp_path, (r"^Q = 160$", ligne))
+
+
+def test_plafonds_mots_optionnels(tmp_path: Path) -> None:
+    texte = _texte_reel().split("[generateur.plafonds_mots]")[0]
+    chemin = tmp_path / "donnees.toml"
+    chemin.write_text(texte, encoding="utf-8")
+    assert charger_config_donnees(chemin).generateur.plafonds_mots == {}

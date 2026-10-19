@@ -1,8 +1,8 @@
 ---
 id: traces-rd
-version: 1
+version: 2
 tache: RD
-max_tokens: 2048
+max_tokens: 800
 ---
 
 ## Consigne
@@ -16,6 +16,8 @@ Tu aides un Agent du service public à trouver des jeux de données publics sur 
 - Ne donne aucune valeur chiffrée de mémoire : appuie-toi sur les résultats d'outils.
 - Si rien ne convient, dis-le et propose une autre piste de recherche.
 - Réponds en français, de façon claire et concise.
+- Ta réponse finale à l'Agent ne dépasse pas {plafond_mots_tache} mots.
+- Commence directement par le contenu : pas de titre ni d'intertitre en première ligne, pas de phrase d'annonce ou d'introduction.
 
 Demande de l'Agent.
 
@@ -24,3 +26,4 @@ Demande de l'Agent.
 ## Emplacements
 
 - demande : demande de l'Agent, issue d'un jeu public ou d'une réponse Mistral journalisée.
+- plafond_mots_tache : plafond de mots de la réponse pour la tâche du gabarit, lu dans la table generateur.plafonds_mots de config/donnees.toml (consigne de longueur, jamais une amorce).

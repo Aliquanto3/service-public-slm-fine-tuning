@@ -11,7 +11,10 @@
 - `[seed]` : paramètres de l'étape `seed` (longueurs de résumé RE du Jeu, tirées par
   graine ; optionnelle, valeurs par défaut ci-dessous) ;
 - `[preferences]` : génération locale de la réponse rejetée des paires ORPO (graine,
-  température, longueur maximale ; optionnelle, valeurs par défaut ci-dessous).
+  température, longueur maximale ; optionnelle, valeurs par défaut ci-dessous) ;
+- `[generateur.plafonds_mots]` : plafond de mots de la réponse cible par Tâche, consigne de
+  longueur des gabarits (story 9.10 ; optionnelle, vide par défaut). Le Générateur relit
+  la même table (`slmsp.mistral.generateur.charger_plafonds_mots`).
 
 Le fichier est lu par `slmsp.core.config.charger_toml` (clés inconnues refusées) : toute
 non-conformité lève `ConfigurationInvalide`, sans citer la valeur saisie.
@@ -31,6 +34,7 @@ from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
 
 __all__ = [
+    "TACHES_PLAFONNABLES",
     "PART_GENERIQUE_MAX",
     "PART_GENERIQUE_MIN",
     "ConfigDonnees",
@@ -40,6 +44,9 @@ __all__ = [
 NOM_DONNEES: Final = "donnees.toml"
 PART_GENERIQUE_MIN: Final = 0.10
 PART_GENERIQUE_MAX: Final = 0.20
+TACHES_PLAFONNABLES: Final = ("Q", "RD", "CR", "LC", "CT", "generique")
+"""Tâches admises dans `[generateur.plafonds_mots]` : CO suit la longueur de son texte, RE a
+son propre plafond (`longueur_demandee`)."""
 
 _RE_SHA256 = re.compile(r"[0-9a-f]{64}")
 
@@ -176,6 +183,20 @@ class SeedDonnees(ModeleConfig):
     """Graine du tirage ; une même amorce de texte reçoit toujours la même longueur."""
 
 
+class GenerateurDonnees(ModeleConfig):
+    """Table `[generateur]` : plafonds de mots des réponses cibles (story 9.10)."""
+
+    plafonds_mots: dict[str, Annotated[StrictInt, Field(gt=0)]] = Field(default_factory=dict)
+    """Plafond de mots par Tâche (`TACHES_PLAFONNABLES`), consigne de longueur seulement."""
+
+    @field_validator("plafonds_mots")
+    @classmethod
+    def _taches_connues(cls, valeurs: dict[str, int]) -> dict[str, int]:
+        if any(tache not in TACHES_PLAFONNABLES for tache in valeurs):
+            raise ValueError(f"tâche inconnue (attendu parmi : {', '.join(TACHES_PLAFONNABLES)})")
+        return valeurs
+
+
 class ConfigDonnees(ModeleConfig):
     """Contenu de `config/donnees.toml`."""
 
@@ -187,6 +208,7 @@ class ConfigDonnees(ModeleConfig):
     relecture: RelectureDonnees
     preferences: PreferencesDonnees = Field(default_factory=PreferencesDonnees)
     seed: SeedDonnees = Field(default_factory=SeedDonnees)
+    generateur: GenerateurDonnees = Field(default_factory=GenerateurDonnees)
 
     @property
     def total(self) -> int:

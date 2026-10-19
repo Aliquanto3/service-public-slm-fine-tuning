@@ -43,7 +43,7 @@ from slmsp.core.balises import PROTOCOLE_BALISES, messages_balises
 from slmsp.core.canonique import sha256_fichier
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspError
-from slmsp.core.nettoyage import VERSION_NETTOYAGE, verifier_nettoyage
+from slmsp.core.nettoyage import VERSIONS_NETTOYAGE, verifier_nettoyage
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.schemas.entrainement import EnteteManifesteJeu, EntetePaire, Nettoyage
 from slmsp.core.var import dossier_var
@@ -171,18 +171,19 @@ def controler_nettoyage(nettoyage: Any, octets: bytes, *, racine: str | Path | N
     """Revérifie la chaîne d'un jeu nettoyé (story 9.9) contre son jeu source.
 
     Le `train.jsonl` du jeu `depuis_version` doit avoir le SHA `sha256_train_source`, et
-    `octets` doit en être le nettoyage (`core.nettoyage.verifier_nettoyage`, version
-    `VERSION_NETTOYAGE`). Lève `ManifesteInvalide` (bloc illisible, version inconnue, source
+    `octets` doit en être le nettoyage (`core.nettoyage.verifier_nettoyage`) par la règle de
+    sa version (`VERSIONS_NETTOYAGE` : un jeu de version 1, comme v4, reste vérifiable).
+    Lève `ManifesteInvalide` (bloc illisible, version inconnue, source
     absente ou altérée) ou `ProvenanceInvalide` (ligne qui n'est pas un nettoyage).
     """
     try:
         bloc = Nettoyage.model_validate(nettoyage)
     except ValidationError as exc:
         raise ManifesteInvalide(f"bloc « nettoyage » du MANIFEST invalide ({exc})") from None
-    if bloc.version != VERSION_NETTOYAGE:
+    if bloc.version not in VERSIONS_NETTOYAGE:
         raise ManifesteInvalide(
-            f"nettoyage version {bloc.version} : seule la version {VERSION_NETTOYAGE} est "
-            "vérifiable"
+            f"nettoyage version {bloc.version} : versions vérifiables "
+            f"{', '.join(map(str, sorted(VERSIONS_NETTOYAGE)))}"
         )
     chemin = dossier_jeu(bloc.depuis_version, racine=racine) / NOM_TRAIN
     try:
@@ -191,7 +192,7 @@ def controler_nettoyage(nettoyage: Any, octets: bytes, *, racine: str | Path | N
         raise ManifesteInvalide(f"jeu source du nettoyage absent : {chemin}") from None
     if hashlib.sha256(source).hexdigest() != bloc.sha256_train_source:
         raise ManifesteInvalide(f"{chemin} : SHA-256 différent de « sha256_train_source »")
-    verifier_nettoyage(octets, source, [e.rang for e in bloc.ecartes])
+    verifier_nettoyage(octets, source, [e.rang for e in bloc.ecartes], bloc.version)
 
 
 def recontroler_appel_ids(

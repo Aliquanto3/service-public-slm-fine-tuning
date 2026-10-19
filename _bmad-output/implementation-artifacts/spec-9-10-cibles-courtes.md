@@ -1,3 +1,11 @@
+---
+title: "Story 9.10 — Réponses cibles courtes, sans titre de tête"
+type: 'feature'
+created: '2026-10-19'
+status: review
+baseline_revision: '1fa6bca'
+---
+
 # Story 9.10 — Réponses cibles courtes, sans titre de tête (régénération Mistral)
 
 Décision d'Anaël du 19 octobre 2026 (après-midi) : régénérer par Mistral les réponses cibles du jeu d'entraînement, avec une consigne de longueur, plutôt que tronquer. La qualité prime sur le coût. Budget Mistral : 10 € autorisés, que la session principale inscrit dans `budgets.toml`, pas cette story.
@@ -55,3 +63,44 @@ Les points suivants reviennent à la session principale :
 - lancer la génération réelle.
 
 Le gel du jeu d'évaluation ne change pas.
+
+## Implémentation
+
+2026-10-19, Opus (dev-story). Aucun appel payant, aucun réseau, aucune génération réelle.
+
+- **Config** : `[generateur.plafonds_mots]` dans `config/donnees.toml` (valeurs de la spec, une source commentée par clé) ; modèle `GenerateurDonnees` dans `data/config.py` (clés limitées à `TACHES_PLAFONNABLES` = Q, RD, CR, LC, CT, generique ; entier strict > 0 ; table optionnelle, vide par défaut).
+- **Générateur** (`mistral/generateur.py`) : `charger_plafonds_mots` relit la table (le module `mistral` ne peut pas importer `data`, couches AD-1 : lecture tolérante, clés limitées aux Tâches générables, la validation stricte reste celle de `data.config`, appelée par la CLI). Emplacement réservé `plafond_mots_tache`, jamais rempli par une amorce. `GabaritInvalide` levé dans `_gabarit`, donc au pré-vol (`_gabarits` de `lancer_generation`, avant tout run ni appel). Nouvelle méthode `max_tokens(gabarit_id, tache)`. `plafond_mots` (RE) inchangé.
+- **Gabarits** `traces-q`, `traces-rd`, `cr`, `lc`, `ct`, `generique` : version 2, `max_tokens` 1 600 (cr) ou 800, emplacement déclaré, deux consignes ajoutées en fin de liste (libellé exact) :
+  - `- Ta réponse ne dépasse pas {plafond_mots_tache} mots.` (RD : `- Ta réponse finale à l'Agent ne dépasse pas {plafond_mots_tache} mots.`) ;
+  - `- Commence directement par le contenu : pas de titre ni d'intertitre en première ligne, pas de phrase d'annonce ou d'introduction.`
+- **Plan** (`data/generate.py`) : les emplacements réservés (`EMPLACEMENTS_RESERVES`) ne demandent pas d'amorce.
+- **Nettoyage** (`core/nettoyage.py`) : `VERSION_NETTOYAGE = 2`, `VERSIONS_NETTOYAGE = {1, 2}`. `analyser_titre` (première ligne non vide seulement : `**…**` seul ou `#…`, ôtée avec les lignes vides qui l'entourent, si du texte suit) ; `analyser_cible(texte, version)` = préambule (v1) puis titre (v2). `nettoyer_cible`, `ligne_nettoyee` et `verifier_nettoyage` prennent la version ; `train/chargement.controler_nettoyage` rejoue la règle de la version du MANIFEST. Rapport : `titres_retires` par tâche.
+- **Estimation** (`data/generate.py`, `estimer_plan`) : affichée par `consigner` après le plan et avant le premier appel : appels au plus, `max_tokens` et coût pire cas par gabarit, puis total.
+- **Tests** : `tests/mistral/test_generateur.py` (résolution par tâche, pré-vol, table invalide, amorce refusée), `test_gabarits_generateur.py` (consignes, version, `max_tokens`), `tests/data/test_config_donnees.py`, `test_nettoyage.py` (titre, v1/v2, jeu v1 vérifiable), `test_generate.py` (estimation, reprise), `test_build.py` (consignes absentes des messages SFT). Fixtures `DONNEES` des tests complétées par la table ; `test_budget_epuise_arret_propre` recalé (plafond 0,0015 € pour `max_tokens` 800).
+- Tests ciblés (data, mistral, core, train, cli/test_data, architecture) : 1 935 passés. Ruff, format et contrôle rapide verts. Suite complète non lancée (consigne).
+
+## Auto Run Result
+
+Décisions prises seul (solution la plus simple et la plus réversible) :
+1. **Jeu v4 nettoyé en version 1** : reste chargeable et vérifiable. La version est un paramètre de la règle, et `charger_jeu` rejoue celle du MANIFEST (`nettoyage.version`). Un jeu v1 vérifié avec la règle v2 est refusé (test). Aucun MANIFEST existant n'est modifié.
+2. **Ordre en version 2** : préambule « Voici » d'abord, puis titre sur le texte restant. Une cible « Voici … :\n\n**Titre**\n\nCorps » perd donc deux lignes. Le titre seul n'examine jamais que la première ligne non vide. Comme pour le préambule, toutes les lignes vides qui suivent sont ôtées, pas seulement une. Un titre seul, sans texte après, est gardé.
+3. **RD au pire cas** : l'estimation compte `TOURS_OUTILS_MAX + 1` appels par session (4 tours plus l'appel de réponse finale ou de dépassement, `sessions._trace_outils`), et non `TOURS_OUTILS_MAX` comme écrit dans la spec : c'est le vrai maximum. À confirmer par Anaël.
+4. **Coût pire cas** : sortie au `max_tokens`, entrée estimée (caractères de la consigne, des amorces et des passages divisés par 3, plus les sorties pire cas des appels précédents de la session), au tarif et avec la majoration du registre. Les résultats d'outils RD ne sont pas comptés, ce qui est signalé à l'affichage. En reprise, les sessions closes sont exclues, et les N premiers appels `ok` journalisés d'une session ouverte sont déduits. Tarif inconnu : « tarif inconnu », sans erreur.
+5. **CO dans la table** : refusé par `data.config`, toléré par le Générateur (Tâche générable, simple lecture). La CLI `data generate` charge `data.config` avant de construire le Générateur, la règle stricte s'applique donc en réel.
+
+Points ouverts :
+- Le libellé des deux consignes est une **décision de fond** (formulation envoyée à Mistral). Elle est à confirmer par Anaël avant la génération réelle.
+- Les `session_id` changent avec les gabarits : la génération repart de zéro sur ces Tâches, comme prévu par la révision 2.
+
+## Revue
+
+2026-10-19, Opus (reviewer), après rebase sur `e654be7`. Jeu v4 réel (MANIFEST `nettoyage.version = 1`) revérifié avec le code de la branche : `controler_nettoyage` passe.
+
+- medium · second avis 1 · corrigé : `estimer_plan` ignorait le schéma `tools` envoyé à chaque appel RD et se disait « pire cas ». Le schéma (`generateur.outils()`, JSON canonique) est ajouté à l'entrée de chaque appel RD ; l'affichage dit « coût estimé » (sorties au `max_tokens`, entrée estimée, hors résultats d'outils RD et enveloppe). Pas de forfait pour les résultats d'outils : leur taille n'est bornée nulle part dans la génération, un forfait serait inventé. Le registre reste le garde-fou. Test `test_estimation_rd_compte_le_schema_outils`.
+- medium · second avis 2 · corrigé : la règle v2 retirait toute première ligne `#…` ou `**…**`, phrases comprises. Nouvelle règle (`_est_titre`) : `**…**` seul ou `#{1,6}` suivi d'un espace, au plus 12 mots (`TITRE_MOTS_MAX`), texte qui ne finit pas par `. ! ? : ; …`. Tests ajoutés (phrase, « Oui. », question, annonce `:`, 13 mots, `#mot`, gras vide).
+- low · second avis 3 · corrigé par la règle ci-dessus (`**Oui.**` gardé).
+- low · second avis 4 · corrigé : le test de non-fuite lit les fragments des consignes dans les gabarits eux-mêmes (`test_build.py`).
+- low · second avis 5 · corrigé : `charger_plafonds_mots` refuse CO comme `data.config` (`TACHES_PLAFONNABLES` dupliquée côté `mistral`, couches AD-1, égalité testée).
+- low · revue (complexité) · corrigé : `estimer_plan` relisait et revalidait le gabarit deux fois par appel prévu et interrogeait le journal à chaque rang ; gabarits mis en cache par (id, tâche), journal lu une fois par session.
+- info · revue · noté : sur les cibles v4, l'ancienne règle v2 retirait 108 premières lignes ; la nouvelle en retire 55. Les 53 gardées finissent presque toutes par `:` (« **Réponse à l'Agent :** », « **1. Vous êtes locataire :** », « **Oui, … sous certaines conditions :** »). Choix prudent (D1 : ne rien perdre du fond) ; les nouveaux gabarits demandent déjà de ne pas ouvrir par un titre. À revoir sur le jeu régénéré si ces étiquettes reviennent.
+- reporté · génération réelle (hors périmètre) : comparer l'estimation affichée au coût réel du registre sur les premières sessions RD, pour juger l'écart dû aux résultats d'outils.

@@ -39,6 +39,7 @@ from typing import Any, Final, Protocol
 
 from pydantic import ValidationError
 
+from slmsp.budget.tarifs import cout_pire_cas
 from slmsp.core.artefacts import Run, lire, nouveau_run, ouvrir_run, reprendre
 from slmsp.core.canonique import json_canonique, sha256_fichier, sha256_hex
 from slmsp.core.config import racine_projet
@@ -47,6 +48,7 @@ from slmsp.core.erreurs import (
     ConfigurationInvalide,
     ManifesteInvalide,
     ProvenanceInvalide,
+    TarifInconnu,
 )
 from slmsp.core.gabarits import GabaritValide
 from slmsp.core.items import IdentifiantsProteges
@@ -75,15 +77,16 @@ from slmsp.data.sessions import (
 from slmsp.harness.prompts import formater_passages
 from slmsp.harness.recherche_index import RequeteVide
 from slmsp.mcp.outils import charger_config
-from slmsp.mistral.client import ErreurApiMistral, ModeleMistralRefuse
+from slmsp.mistral.client import MODE, ErreurApiMistral, ModeleMistralRefuse
 from slmsp.mistral.generateur import (
+    CARACTERES_PAR_TOKEN,
     EMPLACEMENT_PASSAGES,
-    EMPLACEMENT_PLAFOND,
+    EMPLACEMENTS_RESERVES,
     TACHES_OUTILLEES,
     Generateur,
     PrealableNonSatisfait,
 )
-from slmsp.mistral.journal import USAGE_GENERATION, journal_pour
+from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, journal_pour
 
 __all__ = [
     "CHAINES",
@@ -91,6 +94,7 @@ __all__ = [
     "TYPE_RUN",
     "ResultatGeneration",
     "SourcePassages",
+    "estimer_plan",
     "lancer_generation",
     "planifier",
     "seed_du_run",
@@ -208,11 +212,7 @@ def planifier(
     for tache in ORDRE_TACHES:
         chaine = list(gabarits[tache])
         premier = chaine[0]
-        attendus = [
-            nom
-            for nom in premier.emplacements
-            if nom not in (EMPLACEMENT_PASSAGES, EMPLACEMENT_PLAFOND)
-        ]
+        attendus = [nom for nom in premier.emplacements if nom not in EMPLACEMENTS_RESERVES]
         avec_passages = EMPLACEMENT_PASSAGES in premier.emplacements
         de_la_tache = [a for a in amorces if a.tache == tache]
         sures = [a for a in de_la_tache if sha256_hex(normaliser(a.texte)) not in amorces_protegees]
@@ -379,6 +379,109 @@ def _clore(
     return bilan
 
 
+def appels_journalises(journal: JournalMistral, session_id: str) -> int:
+    """Appels `ok` avec réponse déjà journalisés pour `session_id` (réutilisés à la reprise)."""
+    if not journal.chemin.is_file():
+        return 0
+    return sum(
+        1
+        for ligne in journal.appels_session(session_id)
+        if ligne.statut == "ok" and ligne.reponse_brute is not None
+    )
+
+
+def estimer_plan(
+    plan: Sequence[SessionPlanifiee],
+    generateur: Generateur,
+    *,
+    deja: set[str],
+    textes_amorces: Mapping[str, str],
+    tours_outils_max: int,
+    journalises: Callable[[str], int],
+) -> dict[str, dict[str, Any]]:
+    """Appels prévus et coût pire cas par gabarit, pour les sessions du plan hors `deja`.
+
+    Une session fait un appel par gabarit de sa chaîne ; une Tâche outillée (RD) en fait au
+    plus `tours_outils_max + 1` (un par tour d'outils, plus la réponse finale ou l'appel qui
+    dépasse). Les `journalises(session_id)` premiers appels d'une session, déjà journalisés,
+    ne sont pas repayés. Coût d'un appel au tarif du modèle demandé (`budget.tarifs`) : sortie
+    au `max_tokens` du gabarit (pire cas), entrée **estimée** par les caractères de la
+    consigne, des amorces, des passages et, pour une Tâche outillée, du schéma `tools` envoyé
+    à chaque appel, plus les sorties pire cas des appels précédents de la session. Les
+    résultats d'outils RD et l'enveloppe des messages ne sont pas comptés (taille non bornée
+    a priori) : l'entrée n'est pas un pire cas, l'affichage le dit, et le registre de budget
+    reste le garde-fou. `cout_pire_cas_eur` vaut `None` si le modèle n'a pas de tarif.
+    """
+    registre = generateur.client.registre
+    modele = generateur.client.config.modele
+    estimation: dict[str, dict[str, Any]] = {}
+    gabarits_lus: dict[tuple[str, str], tuple[int, int]] = {}  # (id, tâche) : (consigne, max)
+    schema_outils: int | None = None
+    for session in plan:
+        if session.session_id in deja:
+            continue
+        gabarits = list(session.gabarits)
+        base = sum(len(textes_amorces.get(a, "")) for a in session.amorce_ids)
+        base += sum(len(p.texte) for p in session.passages or [])
+        if session.tache in TACHES_OUTILLEES:
+            gabarits = gabarits[:1] * (tours_outils_max + 1)
+            if schema_outils is None:
+                schema_outils = len(json_canonique(generateur.outils()).decode("utf-8"))
+            base += schema_outils
+        faits = journalises(session.session_id)
+        sorties = 0
+        for rang, ref in enumerate(gabarits):
+            cle = (ref.id, session.tache)
+            if cle not in gabarits_lus:
+                gabarits_lus[cle] = (
+                    len(generateur.gabarit(ref.id, session.tache).consigne),
+                    generateur.max_tokens(ref.id, session.tache),
+                )
+            consigne, max_tokens = gabarits_lus[cle]
+            entree = math.ceil((consigne + base) / CARACTERES_PAR_TOKEN) + sorties
+            sorties += max_tokens
+            if rang < faits:
+                continue
+            ligne = estimation.setdefault(
+                ref.id, {"appels": 0, "max_tokens": max_tokens, "cout_pire_cas_eur": 0.0}
+            )
+            ligne["appels"] += 1
+            try:
+                cout = cout_pire_cas(
+                    registre.tarifs,
+                    modele,
+                    MODE,
+                    entree,
+                    max_tokens,
+                    registre.config.majoration_entree,
+                )
+            except TarifInconnu:
+                ligne["cout_pire_cas_eur"] = None
+            else:
+                if ligne["cout_pire_cas_eur"] is not None:
+                    ligne["cout_pire_cas_eur"] += cout
+    return estimation
+
+
+def _afficher_estimation(
+    estimation: Mapping[str, Mapping[str, Any]], consigner: Callable[[str], None]
+) -> None:
+    for gabarit_id, ligne in estimation.items():
+        cout = ligne["cout_pire_cas_eur"]
+        consigner(
+            f"estimation {gabarit_id} : {ligne['appels']} appels au plus "
+            f"(max_tokens {ligne['max_tokens']}), coût estimé "
+            + ("tarif inconnu" if cout is None else f"{cout:.4f} €")
+        )
+    couts = [ligne["cout_pire_cas_eur"] for ligne in estimation.values()]
+    total = "tarif inconnu" if None in couts else f"{sum(couts):.4f} €"
+    consigner(
+        f"estimation totale : {sum(ligne['appels'] for ligne in estimation.values())} appels, "
+        f"coût estimé {total} (sorties au max_tokens ; entrée estimée, hors résultats "
+        "d'outils RD et enveloppe ; le registre de budget reste le garde-fou)"
+    )
+
+
 def lancer_generation(
     *,
     racine: str | Path,
@@ -490,15 +593,25 @@ def lancer_generation(
     for session in plan:
         if session.passages is not None:
             passages.definir(session.session_id, [passage_depuis_plan(p) for p in session.passages])
+    journal = journal_pour(
+        USAGE_GENERATION,
+        generateur.client.config,
+        generateur.client.dossier_journaux,
+        lecteur="data",
+    )
+    estimation = estimer_plan(
+        plan,
+        generateur,
+        deja=deja,
+        textes_amorces={a.amorce_id: a.texte for a in _amorces(seed, racine)},
+        tours_outils_max=tours_outils_max,
+        journalises=lambda session_id: appels_journalises(journal, session_id),
+    )
+    _afficher_estimation(estimation, consigner)  # avant le premier appel
     executeur = ExecuteurSessions(
         ContexteSessions(
             generateur=generateur,
-            journal=journal_pour(
-                USAGE_GENERATION,
-                generateur.client.config,
-                generateur.client.dossier_journaux,
-                lecteur="data",
-            ),
+            journal=journal,
             racine=racine,
             run=run,
             ouvrir_outils=ouvrir_outils,

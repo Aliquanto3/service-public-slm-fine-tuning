@@ -1,8 +1,8 @@
 ---
 id: cr
-version: 1
+version: 2
 tache: CR
-max_tokens: 2048
+max_tokens: 1600
 ---
 
 ## Consigne
@@ -14,6 +14,8 @@ Tu rédiges le compte rendu de la réunion dont un Agent du service public te tr
 - Écris des phrases complètes, dans un style neutre et administratif.
 - Signale les points ambigus ou incomplets au lieu de les compléter.
 - Donne seulement le compte rendu.
+- Ta réponse ne dépasse pas {plafond_mots_tache} mots.
+- Commence directement par le contenu : pas de titre ni d'intertitre en première ligne, pas de phrase d'annonce ou d'introduction.
 
 Transcription de la réunion.
 
@@ -22,3 +24,4 @@ Transcription de la réunion.
 ## Emplacements
 
 - transcription : transcription de la réunion, réponse Mistral journalisée du gabarit transcription-cr.
+- plafond_mots_tache : plafond de mots de la réponse pour la tâche du gabarit, lu dans la table generateur.plafonds_mots de config/donnees.toml (consigne de longueur, jamais une amorce).

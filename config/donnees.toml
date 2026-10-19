@@ -86,3 +86,22 @@ graine = 42
 temperature = 0.8
 # Longueur maximale de la réponse rejetée, en tokens.
 max_tokens = 1024
+
+# Générateur (story 9.10) : plafond de mots de la réponse cible, par Tâche, envoyé à Mistral
+# comme consigne de longueur (emplacement plafond_mots_tache des gabarits). Une consigne de
+# forme seulement : elle n'entre jamais dans les exemples d'entraînement (D1.1).
+# CO n'a pas de plafond (sa longueur suit le texte à corriger) ; RE garde plafond_mots,
+# dérivé de longueur_demandee.
+[generateur.plafonds_mots]
+# p90 des références Q du Jeu d'évaluation : 165 mots.
+Q = 160
+# p90 des références RD du Jeu d'évaluation : 108 mots.
+RD = 120
+# Reste sous les 1 024 tokens du plafond de nettoyage (data build --nettoyage).
+CR = 400
+# Sans référence mesurable : estimation de l'orchestrateur, à ajuster.
+LC = 150
+# Idem (CT, sans référence mesurable).
+CT = 150
+# Idem (generique, sans référence mesurable).
+generique = 200
