@@ -48,3 +48,10 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:56 · S2 · fusion · tests ciblés verts (93) · 2aff428
 - 2026-10-19 21:56 · S2 · décision · jeu **v12** = v11 sans CR, CT, LC (369 lignes : CO 34, Q 95, RD 132, RE 34, generique 74), `runs/data-build/20261019-215607-sous-ensemble-bfcf` ; M1 test MiniCPM5-2B lancé (`config/runs/m1-qlora-minicpm5-2b-v11-partiel.toml`, autorisé par Anaël) · —
 - 2026-10-19 21:57 · S5 · décision · nommage : le jeu régénéré par S5 sera **v13** (v12 = sous-ensemble de S2, sans régénération) ; la spec garde son nom `spec-s5-cibles-v12.md` · —
+- 2026-10-19 22:00 · run · décision · **Anaël part dormir** : autorise à générer les jeux nécessaires, lancer entraînements et évaluations (exception à la relecture avant entraînement, pour cette nuit). Plafond ~10 € par tâche et par API, 30 € par API à l'échelle du projet. Objectif : améliorer les modèles avec les pratiques SOTA ; sans amélioration marquante, Anaël reprendra le fond (données d'abord).
+## Plan de nuit
+1. M1 test MiniCPM5-2B sur v12 (sans CR, CT, LC) : borne de ce que le fine-tuning apporte sans les tâches mal ciblées.
+2. S3 fusionnée → nouvelle campagne de budget (après les notations en cours) → juges tiers (OpenRouter) sur CR, LC, CT, RE des 3 Baselines et 3 M1 v11.
+3. S5 fusionnée → v13 : CR, CT, LC régénérés par Mistral Large 4 (gabarits alignés sur la grille), validés ; **sélection** par un juge tiers (pas le juge principal, pour ne pas sur-apprendre le juge de l'évaluation) si le coût le permet → M1 v13 MiniCPM5-2B, puis les deux Qwen si gain.
+4. Variante d'hyperparamètres SOTA pour petit jeu (2 époques, lr 1e-4) si M1 v13 approche la Baseline.
+5. Règle de suite inchangée : M3, M4, benchmarks et mesures CPU pour un modèle qui dépasse sa Baseline.
