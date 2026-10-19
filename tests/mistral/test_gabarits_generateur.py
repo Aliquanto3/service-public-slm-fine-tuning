@@ -94,6 +94,16 @@ def test_consignes_de_longueur_et_de_forme(nom: str) -> None:
     assert int(gabarit.front_matter["max_tokens"]) == (1600 if nom == "cr" else 800)
 
 
+@pytest.mark.parametrize("nom", ("re",))
+def test_consigne_de_forme_re(nom: str) -> None:
+    """Story 9.11 : consigne de forme dans le gabarit RE, version 2, longueur inchangée."""
+    gabarit = valider_gabarit(DOSSIER / f"{nom}.md", cles_optionnelles=("max_tokens",))
+    assert gabarit.consigne.count("- Commence directement par le contenu : pas de titre") == 1
+    assert "{plafond_mots}" in gabarit.consigne
+    assert gabarit.version == 2
+    assert int(gabarit.front_matter["max_tokens"]) == 1500
+
+
 @pytest.mark.parametrize("nom", sorted(set(GABARITS) - set(PLAFONNES)))
 def test_autres_gabarits_sans_plafond_de_tache(nom: str) -> None:
     gabarit = valider_gabarit(DOSSIER / f"{nom}.md", cles_optionnelles=("max_tokens",))
