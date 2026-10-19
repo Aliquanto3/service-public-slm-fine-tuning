@@ -30,3 +30,7 @@ Voir la section « Journal de la nuit » ci-dessous, tenue à jour.
 
 ## Journal de la nuit
 - 01:10 : M3 (DoRA) lancé, puis export et notation de M1 (`scratchpad/nuit2.ps1`).
+- 02:05 : M3 terminé (`runs/train/20261019-011031-m3-dora-minicpm5-2b-b9bb`, 55 min). L'export de M1 échoue : `convert_hf_to_gguf.py` importe `sentencepiece` sans condition. Corrigé : `sentencepiece` est ajouté à l'extra `train` et installé par `uv sync --inexact --no-install-project`, ce qui ne retire rien du venv.
+- 02:07 à 03:00 : 410 paires ORPO dans `data/train/v3` (93 écartées : 77 `non_texte`, 14 `tronquee`, 2 `contexte`). `jeu_version` est un invariant de campagne : M4 part donc dans la campagne `minicpm5-2b-v2-orpo`, en v3. **Story à créer** pour aligner l'invariant sur les paires ORPO.
+- B3 (export multimodal) et la story `bench cache-hf` sont fusionnées. La spec B est `done`. Les points `micro_lot` et json-generique sont reportés : le premier changerait la RAM mesurée avant les mesures spéculatives, le second ne touche plus qu'EuroLLM.
+- 03:02 : M4 à 8192 tombe en OOM (deux séquences par pas). Les exports de M1 (`runs/export/20261019-030446-ft-minicpm5-2b-1752`) et de M3 (`…-030722-…-d543`) sont complets. Les notations ont échoué sur `--quantification` et `--jeu` manquants. Elles sont relancées en `q4_k_m`, jeu v1.1 (comme la Baseline), suivies de M4 à 4096 puis 2048 (`scratchpad/nuit5.ps1` et `nuit4.ps1`).
