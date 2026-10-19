@@ -388,7 +388,7 @@ class JugeClaude:
                 for rang, cle in enumerate(restantes)
             ]
             self.cache.creer_lot(lot_id, self.config.modele, self.config.effort, requetes)
-            estimes = max(etat.uniques[cle].tokens_estimes for cle in restantes)
+            estimes = [etat.uniques[cle].tokens_estimes for cle in restantes]
             try:
                 retenu = self.registre.reserver_lot(
                     lot_id,
