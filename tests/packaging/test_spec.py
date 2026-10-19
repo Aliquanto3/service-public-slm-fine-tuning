@@ -41,7 +41,7 @@ CA = _charger_script()
 @pytest.fixture
 def ressources_factices(tmp_path: Path) -> dict[str, Path]:
     """Dépôt, vendor, models et index factices (octets quelconques, pas de vrai modèle)."""
-    slug = "granite-4.0-1b"
+    slugs = ("minicpm5-2b", "granite-4.0-350m")
     tag = charger_config_llamacpp().tag
     vendor = tmp_path / "vendor"
     bin_cpu = vendor / "llama.cpp" / tag / "bin-cpu"
@@ -55,7 +55,7 @@ def ressources_factices(tmp_path: Path) -> dict[str, Path]:
     ):
         (bin_cpu / nom).write_bytes(b"<factice>")
     modeles = tmp_path / "models"
-    for s in (slug, "bge-m3"):
+    for s in (*slugs, "bge-m3"):
         gguf = charger_config_modele(s).gguf
         cible = modeles / s / "gguf" / Path(gguf.fichier).name
         cible.parent.mkdir(parents=True)
@@ -118,7 +118,12 @@ def test_plan_complet_et_donnees_pyinstaller(ressources_factices) -> None:
     tag = plan.tag
     destinations = {f.destination for f in plan.fichiers}
     assert f"vendor/llama.cpp/{tag}/bin-cpu/llama-server.exe" in destinations
-    assert any(d.startswith("models/granite-4.0-1b/gguf/") for d in destinations)
+    for slug in ("minicpm5-2b", "granite-4.0-350m"):
+        assert any(d.startswith(f"models/{slug}/gguf/") for d in destinations)
+    assert plan.slugs == ["minicpm5-2b", "granite-4.0-350m"]
+    assert {"modele:minicpm5-2b", "modele:granite-4.0-350m", "embedding:bge-m3"} <= set(
+        plan.tailles()
+    )
     assert any(d.startswith("models/bge-m3/gguf/") for d in destinations)
     assert "index/20260926/MANIFEST.json" in destinations
     assert plan.index_version == "20260926"
@@ -126,6 +131,13 @@ def test_plan_complet_et_donnees_pyinstaller(ressources_factices) -> None:
     for source, dossier in plan.donnees():
         assert Path(source).is_file()
         assert not dossier.endswith((".json", ".gguf", ".exe"))
+
+
+def test_plan_gguf_d_un_modele_embarque_manquant(ressources_factices) -> None:
+    gguf = next((ressources_factices["modeles"] / "granite-4.0-350m" / "gguf").iterdir())
+    gguf.unlink()
+    with pytest.raises(CA.ErreurBuild, match="granite-4.0-350m"):
+        _plan(ressources_factices)
 
 
 def test_plan_sans_modele(ressources_factices) -> None:

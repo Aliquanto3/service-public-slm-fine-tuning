@@ -36,3 +36,10 @@ Demande d'Anaël du 19 octobre 2026 : pouvoir changer de modèle à la main. Les
 
 ## Hors périmètre
 La recette sur le PC cible (12.14, 13.8), la signature de l'installateur, le redémarrage à chaud.
+
+## Auto Run Result
+status: review
+
+- Fait : schéma (`modeles_embarques`, défaut `[modele]`, doublons refusés), `app/modele_actif.py` (résolution), construction multi-modèles (`Plan.slugs`, manifeste `modeles`), pont (`reglages.modeles`, `ecrire("modele")`), vue Paramètres (liste « Modèle »), doc DSI.
+- Décisions seul : nom affiché = slug (aucun champ de nom dans `config/modeles/*.toml`) ; le journal de démarrage est une ligne `LOGGER.info` ; « À propos » affiche le modèle réellement lancé (passé au pont), pas le réglage en attente ; `modele` ajouté à `REGLAGES_DEFAUT` ; la liste du schéma refuse les doublons.
+- Tests réalignés : `test_pont_reglages` (slug À propos), `tests/packaging/test_spec.py` (fixture à deux modèles). Construction réelle non lancée.

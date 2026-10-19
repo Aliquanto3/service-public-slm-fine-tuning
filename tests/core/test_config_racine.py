@@ -63,6 +63,51 @@ def test_application_toml_charge() -> None:
     assert "en" in c.langues_traduction
 
 
+def test_modeles_embarques_livres() -> None:
+    c = app.charger_config_application()
+    assert c.modele in c.modeles_embarques and len(c.modeles_embarques) >= 2
+
+
+def _config_modeles(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, extra: str) -> None:
+    (tmp_path / "config" / "modeles").mkdir(parents=True)
+    for slug in ("a", "b"):
+        (tmp_path / "config" / "modeles" / f"{slug}.toml").write_text("", encoding="utf-8")
+    (tmp_path / "config" / "application.toml").write_text(
+        f'modele = "a"\n{extra}dossier_donnees = "d"\nlangues_traduction = ["en"]\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("SLMSP_RACINE", str(tmp_path))
+
+
+def test_modeles_embarques_valide(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _config_modeles(tmp_path, monkeypatch, 'modeles_embarques = ["a", "b"]\n')
+    assert app.charger_config_application().modeles_embarques == ["a", "b"]
+
+
+def test_modeles_embarques_absent_vaut_le_defaut(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _config_modeles(tmp_path, monkeypatch, "")
+    assert app.charger_config_application().modeles_embarques == ["a"]
+
+
+@pytest.mark.parametrize(
+    ("extra", "motif"),
+    [
+        ('modeles_embarques = ["b"]\n', "doit figurer"),
+        ('modeles_embarques = ["a", "zzz"]\n', "inconnu"),
+        ('modeles_embarques = ["a", "a"]\n', "doublons"),
+        ("modeles_embarques = []\n", "modeles_embarques"),
+    ],
+)
+def test_modeles_embarques_refuses(
+    extra: str, motif: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _config_modeles(tmp_path, monkeypatch, extra)
+    with pytest.raises(ConfigurationInvalide, match=motif):
+        app.charger_config_application()
+
+
 def test_slug_inconnu_refuse(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "config" / "modeles").mkdir(parents=True)
     (tmp_path / "config" / "application.toml").write_text(

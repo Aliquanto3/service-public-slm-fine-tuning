@@ -9,6 +9,10 @@ Chaque méthode rend `{"ok": true, ...}` ou lève ; le pont convertit l'exceptio
   crans) ; le Mode se règle par `mode.forcer_hors_ligne`. Autre clé ou valeur : `reglage-invalide`.
 - `langues_traduction()` -> `{"ok": true, "langues": ["en", "es", ...]}` : codes de
   `config/application.toml` (`langues_traduction`, Q9), proposés par la vue Traduction.
+- `modeles()` -> `{"ok": true, "modeles": [{"slug", "nom"}], "actif": slug, "choisi": slug}` (story
+  12.15) : modèles embarqués, modèle en cours d'exécution, modèle qui sera actif au prochain
+  démarrage. `ecrire("modele", slug)` l'enregistre (slug non embarqué : `reglage-invalide`) ; il
+  n'y a pas de redémarrage à chaud.
 - `effacer_historique()` -> `{"ok": true}` : vide conversations et Retours (réglages et journal
   conservés). La confirmation de 5 s (UX-DR18) est tenue par l'interface.
 - `a_propos()` -> `{"ok": true, "application": {"version": str|None, "empreinte": str|None},
@@ -43,7 +47,7 @@ RESSOURCES: Final = Path(__file__).resolve().parents[1] / "ressources"
 FICHIER_LICENCES: Final = "licences-tierces.json"
 FICHIER_EMPREINTE: Final = "empreinte-application.txt"  # produit au build (12.12), optionnel
 METHODES: Final = frozenset(
-    {"lire", "ecrire", "effacer_historique", "a_propos", "langues_traduction"}
+    {"lire", "ecrire", "effacer_historique", "a_propos", "langues_traduction", "modeles"}
 )
 CODE_INVALIDE: Final = "reglage-invalide"
 
@@ -103,7 +107,9 @@ class PontReglages:
         ressources: Path | None = None,
         version: Callable[[], str | None] | None = None,
         apres_effacement: Callable[[], None] | None = None,
+        modele_actif: str | None = None,
     ) -> None:
+        self._modele_actif = modele_actif
         self._apres_effacement = apres_effacement
         self._stockage = stockage
         self._racine = racine
@@ -127,6 +133,8 @@ class PontReglages:
 
     def ecrire(self, cle: str, valeur: Any) -> dict[str, Any]:
         stock = self._stock()
+        if cle == "modele":
+            return self._choisir_modele(valeur)
         if cle != "taille_texte" or not _est_cran(valeur):
             return {
                 "ok": False,
@@ -134,6 +142,33 @@ class PontReglages:
             }
         stock.ecrire_reglage(cle, valeur)
         return {"ok": True}
+
+    def _choisir_modele(self, valeur: Any) -> dict[str, Any]:
+        from slmsp.core.schemas.config_application import charger_config_application
+
+        if (
+            not isinstance(valeur, str)
+            or valeur not in charger_config_application().modeles_embarques
+        ):
+            return {
+                "ok": False,
+                "erreur": {"code": CODE_INVALIDE, "message": "Ce modèle n'est pas embarqué."},
+            }
+        self._stock().ecrire_reglage("modele", valeur)
+        return {"ok": True}
+
+    def modeles(self) -> dict[str, Any]:
+        from slmsp.app.modele_actif import resoudre_modele_actif
+        from slmsp.core.schemas.config_application import charger_config_application
+
+        config = charger_config_application()
+        choisi = resoudre_modele_actif(config, self._stock().lire_reglage("modele"))
+        return {
+            "ok": True,
+            "modeles": [{"slug": s, "nom": s} for s in config.modeles_embarques],
+            "actif": self._modele_actif or choisi,
+            "choisi": choisi,
+        }
 
     def langues_traduction(self) -> dict[str, Any]:
         from slmsp.core.schemas.config_application import charger_config_application
@@ -176,7 +211,8 @@ class PontReglages:
             from slmsp.core.schemas.config_application import charger_config_application
             from slmsp.inference.serveur import charger_config_modele
 
-            slug = charger_config_application().modele
+            config = charger_config_application()
+            slug = self._modele_actif or config.modele
             gguf = charger_config_modele(slug).gguf
         except SlmspError as exc:
             LOGGER.error("à propos, modèle : %s", type(exc).__name__)

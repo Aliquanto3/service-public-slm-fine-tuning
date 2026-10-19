@@ -104,6 +104,7 @@ class Fichier:
 class Plan:
     fichiers: list[Fichier] = field(default_factory=list)
     slug: str = ""
+    slugs: list[str] = field(default_factory=list)  # modèles embarqués (story 12.15)
     variante: str = "cpu"
     tag: str = ""
     sans_modele: bool = False
@@ -169,7 +170,13 @@ def construire_plan(
     """Liste des fichiers à embarquer. Lève `ErreurBuild` si une ressource manque."""
     app = charger_config_application()
     llama = charger_config_llamacpp()
-    plan = Plan(slug=app.modele, variante=app.variante, tag=llama.tag, sans_modele=sans_modele)
+    plan = Plan(
+        slug=app.modele,
+        slugs=list(app.modeles_embarques),
+        variante=app.variante,
+        tag=llama.tag,
+        sans_modele=sans_modele,
+    )
     if app.variante != "cpu":
         raise ErreurBuild("seule la variante llama.cpp `cpu` est embarquée (poste sans GPU)")
 
@@ -210,7 +217,8 @@ def construire_plan(
     if sans_modele:
         return plan
 
-    for slug, composant in ((app.modele, f"modele:{app.modele}"), ("bge-m3", "embedding:bge-m3")):
+    cibles = [(slug, f"modele:{slug}") for slug in app.modeles_embarques]
+    for slug, composant in [*cibles, ("bge-m3", "embedding:bge-m3")]:
         gguf = charger_config_modele(slug).gguf
         if gguf is None:
             raise ErreurBuild(f"config/modeles/{slug}.toml : section [gguf] absente")
@@ -404,6 +412,7 @@ def ecrire_manifeste(
         "schema_version": 1,
         "application": NOM_APPLICATION,
         "modele": None if plan.sans_modele else plan.slug,
+        "modeles": [] if plan.sans_modele else plan.slugs,
         "variante_llamacpp": plan.variante,
         "tag_llamacpp": plan.tag,
         "index_version": plan.index_version,

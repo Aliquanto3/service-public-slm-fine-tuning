@@ -1,8 +1,11 @@
 # Application Windows de l'Agent (J4, story 12.1, Q13). Lue par `slmsp.app` et par la CLI.
 # L'application est indépendante du Modèle : changer de Modèle = changer `modele`.
+# Story 12.15 : `modeles_embarques` liste les Modèles livrés (choix dans les Paramètres, effectif
+# au démarrage suivant) ; `modele` est le Modèle par défaut et doit figurer dans la liste.
 
 schema_version = 1
-modele = "granite-4.0-1b"  # slug de config/modeles/ (jamais « base:<slug> »)
+modele = "minicpm5-2b"  # défaut ; slug de config/modeles/ (jamais « base:<slug> »)
+modeles_embarques = ["minicpm5-2b", "granite-4.0-350m"]
 variante = "cpu"           # variante llama.cpp du Modèle embarqué
 threads = 4                # plafond de threads des serveurs (poste cible sans GPU)
 dossier_donnees = '%LOCALAPPDATA%\AssistantSP'  # historique, Retours, journal J4

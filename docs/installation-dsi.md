@@ -5,6 +5,7 @@
 - Prérequis : **Microsoft Edge WebView2 Runtime** (présent sur Windows 11 et sur la plupart des Windows 10 à jour). S'il manque, l'installateur s'arrête avec un message demandant l'intervention de la DSI. Une variante « pack complet » embarquant l'installateur autonome WebView2 n'est produite que sur demande (`--pack-complet`).
 - Trois écrans : accueil, progression, fin (case « Lancer l'assistant » cochée).
 - Fonctionne hors ligne : le Modèle et l'Index sont dans l'installateur, aucun téléchargement au premier lancement.
+- Plusieurs Modèles embarqués (MiniCPM5-2B par défaut, Granite 4.0 350M en plus, liste `modeles_embarques` de `config/application.toml`) : l'utilisateur choisit le Modèle dans Paramètres, Général, et le choix s'applique au démarrage suivant. L'installateur pèse environ 1,8 Go avec les deux Modèles, contre environ 1,6 Go avec un seul.
 
 ## Hôtes contactés
 Seulement en Mode connecté et pour répondre à une question (HTTPS, port 443), ceux de `config/liste-blanche.toml` : `mcp.data.gouv.fr`, `www.data.gouv.fr`, `www.service-public.gouv.fr`, `www.service-public.fr`, `www.legifrance.gouv.fr`, `entreprendre.service-public.gouv.fr`, `entreprendre.service-public.fr`, `lannuaire.service-public.fr`. En Mode hors ligne, aucune connexion.

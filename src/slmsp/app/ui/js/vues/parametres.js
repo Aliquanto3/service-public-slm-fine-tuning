@@ -213,8 +213,47 @@ export function monter(conteneur, pont, contexte = {}) {
     annoncer("Effacement annulé.");
   });
 
+  // Modèle (story 12.15) : liste des modèles embarqués ; le choix vaut au prochain démarrage.
+  const choixModele = el("select", { id: "parametres-modele", "aria-describedby": "parametres-modele-aide" });
+  const etiquetteModele = el("label", { for: "parametres-modele" }, "Modèle");
+  const aideModele = el("p", { class: "parametres-aide", id: "parametres-modele-aide", role: "status" });
+  const rangModele = el("div", { class: "parametres-rang" });
+  rangModele.append(etiquetteModele, choixModele);
+  const MESSAGE_MODELE = "Le changement sera appliqué au prochain démarrage de l'assistant.";
+  let modeleActif = null;
+  function afficherAideModele(choisi) {
+    aideModele.textContent = choisi && choisi !== modeleActif ? MESSAGE_MODELE : "";
+  }
+  async function chargerModeles() {
+    try {
+      const r = await pont.appeler("reglages.modeles");
+      if (!r || r.ok === false || !Array.isArray(r.modeles)) throw new Error("refus");
+      choixModele.replaceChildren(...r.modeles.map((m) => el("option", { value: m.slug }, m.nom ?? m.slug)));
+      choixModele.value = r.choisi;
+      modeleActif = r.actif;
+      afficherAideModele(r.choisi);
+    } catch {
+      rangModele.hidden = true;
+    }
+  }
+  choixModele.addEventListener("change", async () => {
+    const cible = choixModele.value;
+    try {
+      const r = await pont.appeler("reglages.ecrire", "modele", cible);
+      if (!r || r.ok === false) throw new Error("refus");
+      afficherAideModele(cible);
+      if (cible !== modeleActif) annoncer(MESSAGE_MODELE);
+    } catch {
+      aideModele.textContent = "Le changement de modèle a échoué.";
+      annoncer("Le changement de modèle a échoué.");
+      chargerModeles();
+    }
+  });
+  chargerModeles();
+
   general.append(
     section("Taille du texte", rangTaille, aideTaille),
+    section("Modèle", rangModele, aideModele),
     section("Connexion", rangHL, aideHL),
     section("Historique", effacer, confirmation, aideEff),
   );

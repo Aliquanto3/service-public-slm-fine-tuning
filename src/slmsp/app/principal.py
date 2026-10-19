@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Final, Literal, Protocol
 from urllib.parse import urlsplit
 
+from slmsp.app.modele_actif import resoudre_modele_actif
 from slmsp.app.pont import Pont
 from slmsp.app.pont.conversation import reponse_erreur
 from slmsp.app.stockage import JournalApplication, Stockage, dossier_donnees
@@ -370,8 +371,10 @@ class Demarrage:
         try:
             config = charger_config_application()
             hors_ligne = bool(self._stockage.lire_reglage("hors_ligne_force"))
+            modele = resoudre_modele_actif(config, self._stockage.lire_reglage("modele"))
+            LOGGER.info("démarrage : modèle actif %s", modele)
             with self._assembler(
-                f"base:{config.modele}",
+                f"base:{modele}",
                 hors_ligne=hors_ligne,
                 variante=config.variante,
                 journal=JournalApplication(self._stockage),
@@ -383,6 +386,7 @@ class Demarrage:
                     stockage=self._stockage,
                     choisir_fichier=dialogue_enregistrer(self._fenetre),
                     verificateur=construire_verificateur(assemblage),
+                    modele_actif=modele,
                 )
                 self._differe.brancher(pont)
                 if self._page_prete():
