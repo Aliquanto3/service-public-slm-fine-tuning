@@ -134,6 +134,9 @@ class Projet:
         }
         if any(ligne.get("tools") for ligne in lignes):  # écrit par `data build` (R7)
             contenu["sha_outils_mcp"] = sha_outils_mcp()
+        if fichier == "preferences.jsonl":  # jeu SFT d'origine des paires (story 10.9)
+            contenu["jeu_sft_version"] = "v1"
+            contenu["build_run_id"] = "20261016-120000-v1-abcd"
         contenu.update(manifeste or {})
         (dossier / "MANIFEST.json").write_text(json.dumps(contenu), encoding="utf-8")
         ids = {a for ligne in lignes for a in ligne["meta"]["appel_ids"]}

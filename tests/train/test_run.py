@@ -325,18 +325,32 @@ def test_reprise_apres_adaptateur_sauvegarde(projet, pile, monkeypatch) -> None:
     assert ouvrir_run(dossier.name, racine=projet.racine).statut_courant() == "complet"
 
 
-def test_orpo_meme_campagne_que_sft(projet, pile, factices, monkeypatch) -> None:
-    """M4 lit `preferences.jsonl` du même build que M1 : la campagne l'accepte."""
+def _jeu_sft_et_paires(projet, factices, *, version_paires="v2", build_source=None) -> str:
+    """Jeu SFT v1 puis paires `version_paires` dérivées de son build ; renvoie le build SFT."""
     dossier = projet.ecrire_jeu()
-    m1 = _executer(projet, pile, projet.ecrire_toml("m1-qlora"))
-    sha_train = hashlib.sha256((dossier / "train.jsonl").read_bytes()).hexdigest()
+    build_sft = json.loads((dossier / "MANIFEST.json").read_text(encoding="utf-8"))["run_id"]
     projet.ecrire_jeu(
+        version_paires,
         lignes=[factices.paire(i) for i in range(1, 3)],
         fichier="preferences.jsonl",
-        manifeste={"sha256_train": sha_train},
+        manifeste={
+            "sha256_train": hashlib.sha256((dossier / "train.jsonl").read_bytes()).hexdigest(),
+            "build_run_id": build_source or build_sft,
+            "jeu_sft_version": "v1",
+            "run_id": "20261017-120000-preferences-4b67",
+        },
     )
+    return build_sft
+
+
+def test_orpo_meme_campagne_que_sft(projet, pile, factices, monkeypatch) -> None:
+    """M4 lit des paires `v2` dérivées du build SFT `v1` de M1 : la campagne l'accepte
+    (story 10.9) ; la version et le build des paires restent tracés dans `jeu`."""
+    projet.ecrire_jeu()
+    m1 = _executer(projet, pile, projet.ecrire_toml("m1-qlora"))
+    build_sft = _jeu_sft_et_paires(projet, factices)
     monkeypatch.setitem(sys.modules, "trl.experimental.orpo", pile.orpo)
-    toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id=m1)
+    toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id=m1, jeu_version="v2")
     m4 = _executer(projet, pile, toml)
     entraineur = pile.trainers[-1]
     assert entraineur.collateur is None and entraineur.args.beta == 0.1
@@ -350,6 +364,55 @@ def test_orpo_meme_campagne_que_sft(projet, pile, factices, monkeypatch) -> None
     assert (
         config["invariants"] == ouvrir_run(m1, racine=projet.racine).manifeste.config["invariants"]
     )
+    assert config["invariants"]["jeu_version"] == "v1"
+    assert config["invariants"]["jeu_build"] == build_sft
+    assert config["jeu"]["version"] == "v2"
+    assert config["jeu"]["run_build"] == "20261017-120000-preferences-4b67"
+
+
+def test_orpo_refuse_un_build_source_different_du_run_sft(projet, pile, factices, monkeypatch):
+    """Les paires dérivent d'un autre build SFT que celui de `sft_run_id` : refus avant le
+    verrou GPU, sans créer de run, en citant les deux builds."""
+    projet.ecrire_jeu()
+    m1 = _executer(projet, pile, projet.ecrire_toml("m1-qlora"))
+    _jeu_sft_et_paires(projet, factices, build_source="20261017-000000-build-autre")
+    monkeypatch.setitem(sys.modules, "trl.experimental.orpo", pile.orpo)
+    toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id=m1, jeu_version="v2")
+    with pytest.raises(ConfigurationInvalide, match="build-autre.*20261016-120000-v1-abcd"):
+        module_run.executer(toml, racine=projet.racine, pile=pile)
+    assert [d.name for d in (projet.racine / "runs" / "train").iterdir()] == [m1]
+
+
+def test_orpo_manifeste_sans_origine_sft(projet, pile, factices, monkeypatch) -> None:
+    projet.ecrire_jeu()
+    projet.ecrire_jeu(
+        "v2",
+        lignes=[factices.paire(1)],
+        fichier="preferences.jsonl",
+        manifeste={"jeu_sft_version": None, "build_run_id": None},
+    )
+    m1 = _executer(projet, pile, projet.ecrire_toml("m1-qlora"))
+    toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id=m1, jeu_version="v2")
+    with pytest.raises(ConfigurationInvalide, match="jeu_sft_version"):
+        module_run.executer(toml, racine=projet.racine, pile=pile)
+
+
+def test_reprise_orpo_anterieur_a_l_invariant_sft(projet, pile, factices, monkeypatch) -> None:
+    """Un run ORPO créé avant la story 10.9 (invariants = version et build des paires) se
+    reprend : la reprise compare aux invariants consignés tels quels."""
+    projet.ecrire_jeu()
+    m1 = _executer(projet, pile, projet.ecrire_toml("m1-qlora"))
+    _jeu_sft_et_paires(projet, factices)
+    monkeypatch.setitem(sys.modules, "trl.experimental.orpo", pile.orpo)
+    toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id=m1, jeu_version="v2")
+    m4 = _executer(projet, pile, toml)
+    manifeste = projet.racine / "runs" / "train" / m4 / "run.json"
+    brut = json.loads(manifeste.read_text(encoding="utf-8"))
+    brut["config"]["invariants"]["jeu_version"] = "v2"
+    brut["config"]["invariants"]["jeu_build"] = "20261017-120000-preferences-4b67"
+    manifeste.write_text(json.dumps(brut), encoding="utf-8")
+    with pytest.raises(Exception, match="déjà complet"):  # la config résolue est acceptée
+        module_run.executer(toml, racine=projet.racine, pile=pile, reprendre_run=m4)
 
 
 # --- Test réel : modèle minuscule à poids aléatoires, deux pas sur CPU ------------------------

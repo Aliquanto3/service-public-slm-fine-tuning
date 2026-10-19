@@ -144,7 +144,12 @@ def test_sha_outils_mcp_herite_du_jeu_sft_pour_les_paires(projet, factices) -> N
     projet.ecrire_jeu("v1")  # SHA du projet
     jeu = chargement.charger_jeu("v2", racine=projet.racine, fichier="preferences.jsonl")
     assert len(jeu.lignes) == 1
-    projet.ecrire_jeu("v3", paires, fichier="preferences.jsonl", manifeste={"sha_outils_mcp": None})
+    projet.ecrire_jeu(
+        "v3",
+        paires,
+        fichier="preferences.jsonl",
+        manifeste={"sha_outils_mcp": None, "jeu_sft_version": None},
+    )
     with pytest.raises(ManifesteInvalide, match="sans « sha_outils_mcp »"):
         chargement.charger_jeu("v3", racine=projet.racine, fichier="preferences.jsonl")
 

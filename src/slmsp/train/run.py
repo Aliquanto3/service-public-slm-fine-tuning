@@ -6,10 +6,11 @@
 2. jeu construit (`chargement.charger_jeu`, recontrôle des `appel_ids`) ; sans jeu, un run
    est créé puis terminé `partiel-erreur` avec un motif « bloqué : … » ;
 3. pré-tokenisation par `train.masque` (paires rendues par le chat template pour ORPO), puis
-   invariants de campagne (version du jeu et run `data-build` de son MANIFEST, graine,
-   longueur maximale, SHA du chat template, version du masque), comparés à ceux des runs
-   `train` déjà enregistrés pour la campagne (avant le verrou, puis de nouveau sous le
-   verrou) ;
+   invariants de campagne (version du jeu SFT et son run `data-build`, graine, longueur
+   maximale, SHA du chat template, version du masque), comparés à ceux des runs `train` déjà
+   enregistrés pour la campagne (avant le verrou, puis de nouveau sous le verrou) ; pour ORPO,
+   le jeu des invariants est le jeu SFT d'origine des paires, lu dans le MANIFEST des
+   préférences (story 10.9), et son build doit égaler celui du run SFT (`sft_run_id`) ;
 4. sous `gpu.lock` : run `runs/train/<run_id>/` (`run_id` = date, nom du TOML, 4 hex),
    graine posée avant le chargement et l'adaptateur (neuf à chaque Run), entraînement avec
    checkpoints sous `checkpoints/` (jamais de `save_total_limit`), coûts (`couts.json`,
@@ -91,6 +92,7 @@ def invariants(
     jeu_build: str,
     chat_template_sha256: str,
     decoupage_masque: Mapping[str, Any] | None = None,
+    jeu_version: str | None = None,
 ) -> dict[str, Any]:
     """Éléments qu'une campagne partage (FR-34, AD-18).
 
@@ -99,10 +101,14 @@ def invariants(
     antérieurs (`--reprendre` compare la configuration résolue entière).
 
     Le jeu est identifié par sa version et par le run `data-build` de son MANIFEST, pas par
-    le SHA du fichier lu : M4 lit `preferences.jsonl`, M1 à M3 `train.jsonl`, du même build.
+    le SHA du fichier lu. `jeu_version` et `jeu_build` sont ceux du jeu SFT : pour ORPO,
+    l'appelant passe le jeu SFT d'origine des paires (`jeu_sft_origine`), car
+    `preferences.jsonl` vit dans une version propre (`vN`, build `-preferences-`) dérivée du
+    build SFT ; la version et le build des paires restent tracés dans le bloc `jeu` de la
+    configuration résolue.
     """
     resultat: dict[str, Any] = {
-        "jeu_version": config.jeu_version,
+        "jeu_version": jeu_version if jeu_version is not None else config.jeu_version,
         "jeu_build": jeu_build,
         "graine": config.graine,
         "longueur_max": config.longueur_max,
@@ -115,6 +121,45 @@ def invariants(
     if decoupage_masque is not None:  # absente au défaut : run.json des runs antérieurs intact
         resultat["decoupage_masque"] = dict(decoupage_masque)
     return resultat
+
+
+def jeu_sft_origine(manifeste: Mapping[str, Any]) -> tuple[str, str]:
+    """(version, build) du jeu SFT d'origine des paires, lus dans le MANIFEST des préférences."""
+    version, build = manifeste.get("jeu_sft_version"), manifeste.get("build_run_id")
+    if not isinstance(version, str) or not isinstance(build, str):
+        raise ConfigurationInvalide(
+            "MANIFEST des préférences : `jeu_sft_version` et `build_run_id` (jeu SFT d'origine "
+            "des paires) absents ; reconstruire avec `slmsp data build --preferences`"
+        )
+    return version, build
+
+
+def _exiger_build_sft_coherent(run_id: str, build_origine: str, racine: Path) -> None:
+    """Le build SFT d'origine des paires égale le `jeu_build` des invariants du run SFT."""
+    try:
+        invariants_sft = ouvrir_run(run_id, racine=racine).manifeste.config.get("invariants")
+    except ManifesteInvalide:
+        return  # signalé par `_exiger_sft_complet`
+    attendu = invariants_sft.get("jeu_build") if isinstance(invariants_sft, Mapping) else None
+    if attendu is not None and attendu != build_origine:
+        raise ConfigurationInvalide(
+            f"sft_run_id {run_id} : les paires dérivent du build SFT {build_origine!r}, "
+            f"le run SFT a été entraîné sur le build {attendu!r}"
+        )
+
+
+def _invariants_jeu_reprise(
+    run_id: str, attendus: dict[str, Any], jeu: chargement.Jeu, racine: Path
+) -> None:
+    """Reprise d'un run ORPO créé avant la story 10.9 : ses invariants portaient la version et
+    le build des paires. Si le run les a consignés ainsi, on les reprend tels quels."""
+    try:
+        enregistres = ouvrir_run(run_id, racine=racine).manifeste.config.get("invariants")
+    except ManifesteInvalide:
+        return  # `_rouvrir` le signale
+    ancien = {"jeu_version": jeu.version, "jeu_build": str(jeu.manifeste.get("run_id"))}
+    if isinstance(enregistres, Mapping) and all(enregistres.get(k) == v for k, v in ancien.items()):
+        attendus.update(ancien)
 
 
 def verifier_campagne(
@@ -327,12 +372,20 @@ def executer(
         )
     if not exemples:
         raise ManifesteInvalide("aucun exemple supervisé après masque et troncature")
+    jeu_version, jeu_build = config.jeu_version, str(jeu.manifeste.get("run_id"))
+    if plan.entraineur == "orpo":  # le jeu de campagne est le jeu SFT d'origine des paires
+        jeu_version, jeu_build = jeu_sft_origine(jeu.manifeste)
+        if config.sft_run_id is not None:
+            _exiger_build_sft_coherent(config.sft_run_id, jeu_build, racine)
     attendus = invariants(
         config,
-        jeu_build=str(jeu.manifeste.get("run_id")),
+        jeu_build=jeu_build,
+        jeu_version=jeu_version,
         chat_template_sha256=template_sha,
         decoupage_masque=empreinte_decoupage(config_modele),
     )
+    if plan.entraineur == "orpo" and reprendre_run is not None:
+        _invariants_jeu_reprise(reprendre_run, attendus, jeu, racine)
     toml_resolu = _toml_resolu(config)
     resolue: dict[str, Any] = {
         "campagne": config.campagne,
