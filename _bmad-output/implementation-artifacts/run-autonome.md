@@ -55,3 +55,6 @@ Au plus 3 stories en développement à la fois.
 3. S5 fusionnée → v13 : CR, CT, LC régénérés par Mistral Large 4 (gabarits alignés sur la grille), validés ; **sélection** par un juge tiers (pas le juge principal, pour ne pas sur-apprendre le juge de l'évaluation) si le coût le permet → M1 v13 MiniCPM5-2B, puis les deux Qwen si gain.
 4. Variante d'hyperparamètres SOTA pour petit jeu (2 époques, lr 1e-4) si M1 v13 approche la Baseline.
 5. Règle de suite inchangée : M3, M4, benchmarks et mesures CPU pour un modèle qui dépasse sa Baseline.
+- 2026-10-19 22:12 · S3 · dev · fini (client OpenRouter générique `src/slmsp/fournisseurs/`, `eval juges-tiers --verifier | --depuis --juge`, 38 tests) · 5193f21
+- 2026-10-19 22:12 · S3 · second-avis · 1 medium (verdict JSON enveloppé mis en cache invalide), 3 low ; review lancée (Opus) · —
+- 2026-10-19 22:12 · S2 · M1 test MiniCPM5-2B v12 entraîné en 13 min (`runs/train/20261019-215640-m1-qlora-minicpm5-2b-v11-partiel-7a6e`) ; export et génération en cours · —
