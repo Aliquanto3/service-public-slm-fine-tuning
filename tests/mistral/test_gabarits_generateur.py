@@ -90,7 +90,7 @@ def test_consignes_de_longueur_et_de_forme(nom: str) -> None:
     )
     assert gabarit.consigne.count(longueur) == 1
     assert "- Commence directement par le contenu : pas de titre" in gabarit.consigne
-    assert gabarit.version == 2
+    assert gabarit.version == (3 if nom == "traces-rd" else 2)
     assert int(gabarit.front_matter["max_tokens"]) == (1600 if nom == "cr" else 800)
 
 
@@ -102,6 +102,21 @@ def test_consigne_de_forme_re(nom: str) -> None:
     assert "{plafond_mots}" in gabarit.consigne
     assert gabarit.version == 2
     assert int(gabarit.front_matter["max_tokens"]) == 1500
+
+
+def test_date_de_mise_a_jour_rd_conditionnelle() -> None:
+    """Story 9.12 : la date n'est demandée que si elle figure au résultat d'outil, version 3."""
+    gabarit = valider_gabarit(DOSSIER / "traces-rd.md", cles_optionnelles=("max_tokens",))
+    assert (
+        "- Pour chaque jeu de données cité, donne son titre et son lien tels qu'ils figurent "
+        "dans le résultat d'outil, et son producteur et sa date de dernière mise à jour "
+        "seulement s'ils y figurent."
+    ) in gabarit.consigne
+    assert "son titre, son producteur, sa date de dernière mise à jour et son lien" not in (
+        gabarit.consigne
+    )
+    assert "son titre, son producteur et son lien" not in gabarit.consigne
+    assert gabarit.version == 3
 
 
 @pytest.mark.parametrize("nom", sorted(set(GABARITS) - set(PLAFONNES)))
