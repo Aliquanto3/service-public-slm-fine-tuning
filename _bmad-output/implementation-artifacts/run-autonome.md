@@ -39,3 +39,5 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:50 · S5 · dev · lancé (Opus) · —
 - 2026-10-19 21:53 · run · décision · Anaël : clé OpenRouter disponible, recommandations validées (générateurs v12 : Mistral Large 4 en référence, DeepSeek V4 Pro et GLM-5.x via OpenRouter ; GPT et Gemini en comparaison seulement, licence à trancher par Anaël), budgets Mistral et OpenRouter rechargés. Plafonds retenus : openai 10 €, google 10 €, openrouter 10 €, mistral.generation 10 € · —
 - 2026-10-19 21:53 · S3 · décision · fournisseur openrouter ajouté au périmètre (message à l'agent) · —
+- 2026-10-19 21:54 · S1 · review · 10 constats corrigés, tests JS rejetés · 6223c0b
+- 2026-10-19 21:54 · S1 · fusion · HTML `C:\Users\Anael\dev\slmsp-auditudit-verdicts.html` (170 items, 110 désaccords) · 0032eba
