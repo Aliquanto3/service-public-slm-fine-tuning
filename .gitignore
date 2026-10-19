@@ -21,6 +21,8 @@ __pycache__/
 /data/train/*/train.jsonl
 /runs/**/checkpoints/
 /runs/**/adaptateur/
+# Export : modèle fusionné en F16 et tokenizer (plusieurs Mo), reconstructibles par `slmsp export`.
+/runs/export/*/hf-f16/
 outputs/
 *.gguf
 *.safetensors
