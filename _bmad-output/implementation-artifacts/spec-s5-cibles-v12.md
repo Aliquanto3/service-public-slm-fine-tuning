@@ -73,10 +73,10 @@ uv run slmsp data generate --depuis 20261017-111645-seed-b335 --modele-generateu
 uv run slmsp data validate --depuis <GENERATE_RUN_ID>
 uv run slmsp data filter --depuis <VALIDATE_RUN_ID>
 uv run slmsp data build --depuis <FILTER_RUN_ID> --variante diffusable
-uv run slmsp data build --nettoyage --depuis <BUILD_RUN_ID> --modele base:<slug du nettoyage v11>
+uv run slmsp data build --nettoyage --depuis <BUILD_RUN_ID> --modele base:minicpm5-2b
 ```
 
-`data generate` affiche l'estimation par gabarit avant le premier appel ; l'arrêter si elle dépasse le budget. Les sessions Q, RD, generique, RE et CO sont reprises de v11 (aucun appel, ni Index ni MCP sollicités). Les transcriptions CR sont régénérées aussi : le `session_id` de CR hache toute la chaîne de gabarits (même constat que 9.10). Le jeu nettoyé est en `nettoyage.version = 3`.
+`data generate` affiche l'estimation par gabarit avant le premier appel ; l'arrêter si elle dépasse le budget. Les sessions Q, RD, generique, RE et CO sont reprises de v11 (aucun appel, ni Index ni MCP sollicités). Les transcriptions CR sont régénérées aussi : le `session_id` de CR hache toute la chaîne de gabarits (même constat que 9.10). Le jeu nettoyé est en `nettoyage.version = 3` ; il prend le numéro **v13** (v12 est le sous-ensemble de S2). Le run source `20261019-180544-generate-bd87` (seed `b335`, statut `complet`) et le slug `base:minicpm5-2b` sont ceux du nettoyage v11 (`20261019-194543-nettoyage-c782`). La sortie de `generate` signale les sessions non closes du run source, et `validate` affiche `observations` (CT sans emplacement).
 
 ### Estimation du coût (avant dépense)
 
@@ -105,3 +105,17 @@ Décisions prises seul (solution la plus simple et la plus réversible) :
 Reports :
 - `data seed` (scénarios, courriers) reste sur le modèle stable `modele` ; l'option `--modele-generateur` ne vaut que pour `data generate`.
 - Mesurer sur le run réel le taux de rejet des trois nouveaux motifs et l'écart entre l'estimation affichée et le registre.
+
+## Revue
+
+2026-10-19, Opus (reviewer), une passe, après rebase sur main (conflit `config/tarifs.toml` : entrées juges tiers S3 et `mistral-large-4` gardées). Aucun appel payant, `.env` non lu.
+
+- [medium] Préversion admise par préfixe libre (`mistral-large-4-preview-beta` admis) : **corrigé**. `preversion_admise` n'admet que le nom exact ou un suffixe de version numérique (`-0`, `-2610`, `-4-0`), et les `motifs_interdits` s'appliquent hors nom exact (`refus_modele` du client et `PrealablesGeneration.admet`). L'identifiant exact résolu reste consigné au MANIFEST (`modeles_generateurs`).
+- [medium] Sections CR au libellé exact (faux rejets « Décisions prises », « Actions à mener ») : **corrigé**. Titre en tête de ligne qui commence par le libellé de section (casse, `#`, `*`, `_`, numérotation ignorés), suite libre.
+- [medium] « Objet du courrier : » non reconnu : **corrigé** (`objet` suivi d'au plus 40 caractères puis `:`).
+- [low] LC : valeur reprise en lettres tenue pour perdue : **corrigé**. Nombres en lettres courants (0 à 99, centaines simples, mille) acceptés à la sortie pour `lc_valeur_perdue` ; `valeur_absente` (aucun nombre nouveau) inchangé.
+- [low] Sessions non closes du run source abandonnées sans signal : **corrigé**. Comptées par Tâche (`comptes_plan.<T>.non_closes_source`, bilan) et signalées à la sortie.
+- [low] CT rejeté sans emplacement entre crochets sans condition : **corrigé**. La demande CT ne dit pas quels champs sont inconnus (`amorces-ct` : « certaines informations peuvent manquer ») : plus de rejet pour ce seul motif, observation `ct_sans_emplacement` comptée dans `rapport.json` (`observations`) et affichée. Remplace la décision 4 de l'Auto Run Result.
+- Gabarits `cr`, `ct`, `lc` contre `eval/grille-juge-v1.md` : conformes (CR : quatre sections, toutes décisions et actions, responsable et échéance ; CT : neuf blocs, emplacements ; LC : fidélité stricte, termes juridiques, phrases courtes). D1 : aucune amorce, aucun exemple, aucun crochet ni guillemet : **rien à signaler**.
+- `config/prompts/taches/` intact ; nettoyage v3 : la Tâche ne compte qu'en version 3, v4 à v12 (versions 1 et 2) inchangés : **rien à signaler**.
+- Tests ciblés (`tests/data tests/mistral tests/core tests/train tests/cli/test_data.py tests/test_architecture.py`) : 2 033 verts ; ruff et format verts. `outils/controle_rapide.py` non exécutable dans le worktree (`uv run` sans venv local), ses étapes lancées à la main.

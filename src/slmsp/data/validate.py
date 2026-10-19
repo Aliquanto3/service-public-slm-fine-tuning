@@ -5,7 +5,8 @@ terminé (`complet` ou `partiel-*` : seules les sessions de `brut.jsonl` sont ju
 
 - `valides.jsonl` : les lignes `SessionBrute` conservées, inchangées ;
 - `rejets.jsonl` : `RejetExemple`, une ligne par session écartée, avec son motif ;
-- `rapport.json` : par Tâche, nombre d'exemples, de rejets par motif et taux de rejet.
+- `rapport.json` : par Tâche, nombre d'exemples, de rejets par motif et taux de rejet ;
+  `observations` : par Tâche, comptes des écarts non bloquants (`ct_sans_emplacement`).
 
 Contrôles, dans cet ordre ; le premier qui échoue donne le motif :
 
@@ -30,9 +31,11 @@ Contrôles, dans cet ordre ; le premier qui échoue donne le motif :
    tout nombre notable du texte de départ doit aussi rester dans la sortie : `infidele`.
    La Tâche `generique` n'a aucune source de référence : ni valeurs ni fidélité.
 3 bis. **Structure (CR, CT, LC, story S5)** : CR sans l'une des sections Participants, Points
-   abordés, Décisions, Actions : `cr_sections_manquantes` ; CT sans ligne d'objet, sans formule
-   de politesse ou sans emplacement entre crochets : `ct_format_incomplet` ; LC dont un nombre
-   notable ou une date de l'entrée manque à la sortie : `lc_valeur_perdue`.
+   abordés, Décisions, Actions (titre en tête de ligne, suite libre) : `cr_sections_manquantes` ;
+   CT sans ligne d'objet ou sans formule de politesse : `ct_format_incomplet` (un CT sans
+   emplacement entre crochets n'est pas rejeté, il est compté dans `observations` du rapport) ;
+   LC dont un nombre notable ou une date de l'entrée manque à la sortie, en chiffres comme en
+   lettres courantes : `lc_valeur_perdue`.
 4. **Longueur (RE)** : la sortie ne dépasse pas, en mots (`core.texte.compter_mots`), le plafond
    de la `longueur_demandee` de l'amorce (`[re.longueurs]` de `config/evaluation.toml`) :
    `longueur_depassee`.
@@ -542,7 +545,8 @@ def _controler_sources(
 
 SECTIONS_CR: Final = ("Participants", "Points abordés", "Décisions", "Actions")
 """Titres des quatre sections d'un compte rendu (grille CR, story S5)."""
-_RE_OBJET: Final = re.compile(r"^[#*_\s]*objet[*_\s]*:", re.IGNORECASE | re.MULTILINE)
+_RE_OBJET: Final = re.compile(r"^[#*_\s]*objet\b[^\n:]{0,40}:", re.IGNORECASE | re.MULTILINE)
+"""Ligne d'objet : « Objet : », « **Objet** : », « Objet du courrier : »…"""
 _RE_POLITESSE: Final = re.compile(
     r"\b(?:agr[ée]er|salutations|consid[ée]ration|sentiments|cordialement|respectueusement)\b",
     re.IGNORECASE,
@@ -550,24 +554,77 @@ _RE_POLITESSE: Final = re.compile(
 _RE_EMPLACEMENT: Final = re.compile(r"\[[^\[\]\n]*[^\W\d_][^\[\]\n]*\](?!\()")
 """Emplacement entre crochets qui nomme un champ (au moins une lettre), hors lien Markdown
 `[texte](url)`."""
+OBSERVATION_CT_SANS_EMPLACEMENT: Final = "ct_sans_emplacement"
+"""Observation (non bloquante) : CT sans emplacement entre crochets. La demande ne dit pas
+quels champs sont inconnus : un courrier sans crochet n'est pas rejeté, il est compté dans
+`observations` du rapport (revue S5)."""
+
+_UNITES: Final = (
+    "zéro un deux trois quatre cinq six sept huit neuf dix onze douze treize quatorze quinze "
+    "seize dix-sept dix-huit dix-neuf"
+).split()
+_DIZAINES: Final = {"vingt": 20, "trente": 30, "quarante": 40, "cinquante": 50, "soixante": 60}
+
+
+def _table_nombres_en_lettres() -> dict[str, int]:
+    """Nombres en lettres courants : 0 à 69, 70 à 99 (soixante-dix, quatre-vingts…), centaines
+    et milliers simples (cent, deux cents… neuf cents, mille)."""
+    table = {mot: n for n, mot in enumerate(_UNITES)}
+    for mot, d in _DIZAINES.items():
+        table[mot] = d
+        table[f"{mot} et un"] = table[f"{mot}-et-un"] = d + 1
+        for u in range(2, 10):
+            table[f"{mot}-{_UNITES[u]}"] = d + u
+    for u in range(10, 20):
+        table[f"soixante-{_UNITES[u]}"] = 60 + u
+    table["soixante et onze"] = table["soixante-et-onze"] = 71
+    table["quatre-vingts"] = table["quatre-vingt"] = 80
+    for u in range(1, 20):
+        table[f"quatre-vingt-{_UNITES[u]}"] = 80 + u
+    table["cent"] = 100
+    for u in range(2, 10):
+        table[f"{_UNITES[u]} cents"] = table[f"{_UNITES[u]}-cents"] = 100 * u
+    table["mille"] = 1000
+    return table
+
+
+_NOMBRES_EN_LETTRES: Final = _table_nombres_en_lettres()
+_RE_NOMBRE_EN_LETTRES: Final = re.compile(
+    r"(?<![^\W_])(?:"
+    + "|".join(re.escape(m) for m in sorted(_NOMBRES_EN_LETTRES, key=len, reverse=True))
+    + r")(?![^\W_]|-)",
+    re.IGNORECASE,
+)
+
+
+def _nombres_en_lettres(texte: str) -> set[Decimal]:
+    """Nombres écrits en lettres courants (`_NOMBRES_EN_LETTRES`), pour ne pas tenir pour
+    perdue une valeur de l'entrée LC reprise en lettres (« 15 jours » → « quinze jours »)."""
+    return {
+        Decimal(_NOMBRES_EN_LETTRES[m.group(0).casefold()])
+        for m in _RE_NOMBRE_EN_LETTRES.finditer(texte)
+    }
 
 
 def _a_section(texte: str, titre: str) -> bool:
-    """Vrai si une ligne de `texte` commence par `titre` (marques `#`, `*`, `_` ignorées,
-    casse ignorée), seul sur la ligne ou suivi de `:`."""
-    motif = rf"^[#*_\s]*{re.escape(titre)}[*_\s]*(?::|$)"
+    """Vrai si une ligne de `texte` commence par `titre` (marques `#`, `*`, `_`, numérotation
+    et casse ignorées), quelle que soit la suite du titre (« Décisions prises », « Actions à
+    mener : »)."""
+    motif = rf"^[#*_\s\d.)]*{re.escape(titre)}(?![^\W_])"
     return re.search(motif, texte, re.IGNORECASE | re.MULTILINE) is not None
 
 
-def _controler_structure(texte: str, tache: str, fournis: Sequence[str]) -> None:
-    """Contrôles de structure de la story S5 ; lève `_Rejet`.
+def _controler_structure(texte: str, tache: str, fournis: Sequence[str]) -> list[str]:
+    """Contrôles de structure de la story S5 ; lève `_Rejet`, rend les observations non
+    bloquantes.
 
-    CR : les quatre titres de `SECTIONS_CR`, chacun en tête de ligne, seul ou suivi de `:`
-    (`cr_sections_manquantes`). CT : une ligne d'objet, une formule de politesse et au moins
-    un emplacement entre crochets, les demandes CT laissant toujours des champs inconnus
-    (`ct_format_incomplet`). LC : chaque nombre notable et chaque date de l'entrée figure à
-    la sortie (`lc_valeur_perdue`) ; un nombre de la sortie absent de l'entrée est déjà
-    refusé par `_controler_sources` (`valeur_absente`).
+    CR : les quatre titres de `SECTIONS_CR`, chacun en tête de ligne
+    (`cr_sections_manquantes`). CT : une ligne d'objet et une formule de politesse
+    (`ct_format_incomplet`) ; sans emplacement entre crochets, observation
+    `OBSERVATION_CT_SANS_EMPLACEMENT`. LC : chaque nombre notable et chaque date de l'entrée
+    figure à la sortie, en chiffres ou en lettres courantes (`lc_valeur_perdue`) ; un nombre
+    de la sortie absent de l'entrée est déjà refusé par `_controler_sources`
+    (`valeur_absente`).
     """
     if tache == "CR":
         manquantes = [s for s in SECTIONS_CR if not _a_section(texte, s)]
@@ -579,20 +636,23 @@ def _controler_structure(texte: str, tache: str, fournis: Sequence[str]) -> None
             manques.append("objet")
         if _RE_POLITESSE.search(texte) is None:
             manques.append("formule de politesse")
-        if _RE_EMPLACEMENT.search(texte) is None:
-            manques.append("emplacement")
         if manques:
             raise _Rejet("ct_format_incomplet", f"absents : {', '.join(manques)}")
+        if _RE_EMPLACEMENT.search(texte) is None:
+            return [OBSERVATION_CT_SANS_EMPLACEMENT]
     elif tache == "LC":
         sortie = _sans_urls(texte)
         source = _sans_urls("\n".join(fournis))
-        nombres = _nombres_notables(source) - _nombres_notables(sortie)
+        nombres = (
+            _nombres_notables(source) - _nombres_notables(sortie) - _nombres_en_lettres(sortie)
+        )
         dates = {f for _, f in _dates(source)} - {f for _, f in _dates(sortie)}
         if nombres or dates:
             raise _Rejet(
                 "lc_valeur_perdue",
                 f"{len(nombres)} nombre(s) et {len(dates)} date(s) de l'entrée perdus",
             )
+    return []
 
 
 def _controler_longueur(texte: str, longueur: str | None) -> None:
@@ -649,8 +709,9 @@ def valider_session(
     chemin_outils: Path,
     controle: ControleurFidelite | None = None,
     taches: TableTaches | None = None,
-) -> None:
-    """Valide une session ; lève `_Rejet` (motif de `MOTIFS_VALIDATION`) si elle est écartée."""
+) -> list[str]:
+    """Valide une session ; lève `_Rejet` (motif de `MOTIFS_VALIDATION`) si elle est écartée,
+    sinon rend ses observations non bloquantes (`OBSERVATION_CT_SANS_EMPLACEMENT`)."""
     lecteur.controler_provenance(brut)
     outils: list[str] = []
     if brut.tache == "RD":
@@ -661,13 +722,14 @@ def valider_session(
     if brut.tache == "CR":
         fournis = [*fournis, _source_fidelite(lecteur, brut)]
     _controler_sources(texte, brut.tache, lecteur.passages(brut), outils, fournis)
-    _controler_structure(texte, brut.tache, fournis)
+    observations = _controler_structure(texte, brut.tache, fournis)
     if brut.tache == "RE":
         _controler_longueur(texte, lecteur.longueur_demandee(brut))
     if controle is not None and brut.tache in TACHES_CONTROLE_FIDELITE:
         fidele, detail = controle(brut.session_id, _source_fidelite(lecteur, brut), texte)
         if not fidele:
             raise _Rejet("infidele", detail)
+    return observations
 
 
 def taux_par_tache(
@@ -766,11 +828,12 @@ def lancer_validation(
     )
     entrees: Counter[str] = Counter()
     rejets: dict[str, Counter[str]] = {}
+    observations: dict[str, Counter[str]] = {}
     statut, motif = "complet", None
     try:
         for brut in sessions:
             try:
-                valider_session(
+                vues = valider_session(
                     lecteur, brut, chemin_outils=outils, controle=controle, taches=taches
                 )
             except _Rejet as rejet:
@@ -787,6 +850,7 @@ def lancer_validation(
                 rejets.setdefault(brut.tache, Counter())[rejet.motif] += 1
             else:
                 run.ajouter_jsonl(NOM_VALIDES, brut.model_dump(mode="json"))
+                observations.setdefault(brut.tache, Counter()).update(vues)
             entrees[brut.tache] += 1
     except BudgetEpuise as exc:
         statut, motif = "partiel-budget", str(exc)
@@ -805,6 +869,11 @@ def lancer_validation(
         "motif": motif,
         "non_jugees": len(sessions) - sum(entrees.values()),
         "taches": taux_par_tache(entrees, rejets),
+        "observations": {
+            tache: dict(sorted(compte.items()))
+            for tache, compte in sorted(observations.items())
+            if compte
+        },
     }
     run.ecrire(NOM_RAPPORT, json_canonique(rapport) + b"\n")
     run.terminer(statut, motif)

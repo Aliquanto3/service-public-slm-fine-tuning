@@ -364,6 +364,9 @@ class _Reprises:
     abandons: list[dict[str, Any]]
     derivees: list[dict[str, Any]]
     index_version: str | None
+    non_closes: Counter[str]
+    """Par Tâche reprise, sessions planifiées du run source sans brut ni abandon (incident,
+    arrêt) : ni reprises ni régénérées, comptées au plan et signalées (revue S5)."""
 
 
 def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine: Path) -> _Reprises:
@@ -371,7 +374,7 @@ def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine:
 
     Le run source doit être un run `data-generate` terminé du même seed ; sinon
     `ManifesteInvalide`. Une session planifiée mais non close (ni brut ni abandon) n'est pas
-    reprise.
+    reprise : elle est comptée dans `non_closes`.
     """
     source = ouvrir_run(source_id, racine=racine)
     if source.type != TYPE_RUN:
@@ -407,6 +410,9 @@ def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine:
     if {ligne["amorce_id"] for ligne in derivees} != citees:
         raise ManifesteInvalide(f"run {source_id} : amorce dérivée citée introuvable")
     sessions = [session for session in plan if session.session_id in closes]
+    non_closes = Counter(
+        s.tache for s in plan if s.tache not in taches and s.session_id not in closes
+    )
     return _Reprises(
         run_id=source_id,
         sessions=sessions,
@@ -414,6 +420,7 @@ def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine:
         abandons=abandons,
         derivees=derivees,
         index_version=source.manifeste.config.get("index_version"),
+        non_closes=non_closes,
     )
 
 
@@ -658,7 +665,11 @@ def lancer_generation(
             for tache in ORDRE_TACHES:
                 if tache not in (taches or ()):
                     n = sum(1 for s in reprises.sessions if s.tache == tache)
-                    comptes_plan[tache] = {"planifiees": n, "reprises": n}
+                    comptes_plan[tache] = {
+                        "planifiees": n,
+                        "reprises": n,
+                        "non_closes_source": reprises.non_closes[tache],
+                    }
         run = nouveau_run(
             TYPE_RUN,
             "generate",
@@ -695,6 +706,12 @@ def lancer_generation(
                     run.ajouter_jsonl(nom, ligne)
             deja = {s.session_id for s in reprises.sessions}
             consigner(f"{len(deja)} session(s) reprise(s) du run {reprises.run_id}, sans appel")
+            if reprises.non_closes:
+                detail = ", ".join(f"{t} {n}" for t, n in sorted(reprises.non_closes.items()))
+                consigner(
+                    f"attention : {sum(reprises.non_closes.values())} session(s) non close(s) "
+                    f"du run {reprises.run_id} ni reprise(s) ni régénérée(s) ({detail})"
+                )
     else:
         existant = ouvrir_run(reprendre_run_id, racine=racine)
         ecarts = sorted(

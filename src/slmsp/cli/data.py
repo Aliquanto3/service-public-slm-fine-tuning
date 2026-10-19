@@ -667,6 +667,8 @@ def _afficher_rapport(rapport: Mapping[str, Any], run_id: str, statut: str, doss
             f"{tache} : {ligne['retenus']}/{ligne['exemples']} retenus, "
             f"taux de rejet {ligne['taux_rejet']:.1%} ({motifs})"
         )
+    for tache, comptes in rapport.get("observations", {}).items():
+        print(f"{tache} : observations {', '.join(f'{o} {n}' for o, n in comptes.items())}")
     print(f"run {run_id} ({statut}) : {dossier}")
     if statut == "partiel-budget":
         return int(CodeSortie.BUDGET_EPUISE)

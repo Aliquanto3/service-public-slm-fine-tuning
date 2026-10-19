@@ -9,7 +9,12 @@ from __future__ import annotations
 import pytest
 
 from slmsp.core.schemas.rejet_donnees import MOTIFS_VALIDATION
-from slmsp.data.validate import SECTIONS_CR, _controler_structure, _Rejet
+from slmsp.data.validate import (
+    OBSERVATION_CT_SANS_EMPLACEMENT,
+    SECTIONS_CR,
+    _controler_structure,
+    _Rejet,
+)
 
 CR = "Participants\n<p>\n\n## Points abordés\n<p>\n\n**Décisions :**\n<p>\n\nActions : <p>"
 CT = "<expediteur>\n\nObjet : <objet>\n\n<corps> [<champ>]\n\nVeuillez agréer <formule>.\n"
@@ -55,13 +60,37 @@ def test_ct_conforme() -> None:
     [
         CT.replace("Objet : <objet>", "<objet>"),
         CT.replace("Veuillez agréer <formule>.", "<fin>."),
+    ],
+)
+def test_ct_format_incomplet(texte: str) -> None:
+    assert motif(texte, "CT") == "ct_format_incomplet"
+
+
+def test_ct_objet_libelle_long() -> None:
+    assert motif(CT.replace("Objet :", "Objet du courrier :"), "CT") is None
+    assert motif(CT.replace("Objet :", "**Objet** :"), "CT") is None
+
+
+@pytest.mark.parametrize(
+    "texte",
+    [
         CT.replace("[<champ>]", "<champ>"),
         CT.replace("[<champ>]", "[<lien>](https://exemple.invalid)"),
         CT.replace("[<champ>]", "[123]"),
     ],
 )
-def test_ct_format_incomplet(texte: str) -> None:
-    assert motif(texte, "CT") == "ct_format_incomplet"
+def test_ct_sans_emplacement_compte_sans_rejet(texte: str) -> None:
+    assert motif(texte, "CT") is None
+    assert _controler_structure(texte, "CT", []) == [OBSERVATION_CT_SANS_EMPLACEMENT]
+    assert _controler_structure(CT, "CT", []) == []
+
+
+def test_cr_titres_prolonges() -> None:
+    texte = CR.replace("**Décisions :**", "### Décisions prises").replace(
+        "Actions : <p>", "**Actions à mener :** <p>"
+    )
+    assert motif(texte, "CR") is None
+    assert motif(CR.replace("Actions : <p>", "Actionsxyz <p>"), "CR") == "cr_sections_manquantes"
 
 
 def test_lc_conforme() -> None:
@@ -76,6 +105,12 @@ def test_lc_conforme() -> None:
 def test_lc_valeur_perdue(sortie: str) -> None:
     source = "<texte> 1 500 euros avant le 15 mars 2026"
     assert motif(sortie, "LC", (source,)) == "lc_valeur_perdue"
+
+
+def test_lc_nombre_en_lettres() -> None:
+    source = "<texte> 15 jours, 30 jours, 200 euros"
+    assert motif("<sortie> quinze jours, trente jours, deux cents euros", "LC", (source,)) is None
+    assert motif("<sortie> quinze jours, deux cents euros", "LC", (source,)) == "lc_valeur_perdue"
 
 
 def test_autres_taches_non_controlees() -> None:

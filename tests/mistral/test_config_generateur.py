@@ -71,6 +71,18 @@ def test_preversion_admise() -> None:
     assert preversion_admise("mistral-large-4-2610", ("mistral-large-4",))
     assert not preversion_admise("mistral-large-4b", ("mistral-large-4",))
     assert not preversion_admise("mistral-large-4", ())
+    # Revue S5 : seul un suffixe de version numérique ; motifs interdits hors nom exact.
+    assert preversion_admise("mistral-large-4-0", ("mistral-large-4",))
+    assert preversion_admise("mistral-large-4-4-0", ("mistral-large-4",))
+    for refuse in ("mistral-large-4-preview-beta", "mistral-large-4-beta", "mistral-large-4-"):
+        assert not preversion_admise(refuse, ("mistral-large-4",), ("preview", "beta"))
+    assert preversion_admise("m-preview", ("m-preview",), ("preview",))  # nom exact listé
+    assert not preversion_admise("m-preview-2610", ("m-preview",), ("preview",))
+
+
+def test_refus_preversion_beta() -> None:
+    config = charger_mistral().pour_generateur("mistral-large-4")
+    assert config.refus_modele("mistral-large-4-preview-beta") is not None
 
 
 def test_prealables_preversion(tmp_path: Path) -> None:

@@ -158,17 +158,24 @@ class PrealablesGeneration:
     conditions_verifiees_le: date
     modeles_stables: tuple[str, ...]
     modeles_preversion: tuple[str, ...] = ()
+    motifs_interdits: tuple[str, ...] = ()
 
     def admet(self, modele: str | None) -> bool:
         """Vrai si `modele` (résolu) est stable, ou est la préversion admise ou l'un de ses
-        identifiants `<préversion>-<suffixe>`."""
+        identifiants `<préversion>-<version numérique>` sans motif interdit."""
         return modele is not None and (
-            modele in self.modeles_stables or preversion_admise(modele, self.modeles_preversion)
+            modele in self.modeles_stables
+            or preversion_admise(modele, self.modeles_preversion, self.motifs_interdits)
         )
 
 
 def charger_prealables(
-    fichier: str | Path, *, modele: str, aujourd_hui: date, preversions: Sequence[str] = ()
+    fichier: str | Path,
+    *,
+    modele: str,
+    aujourd_hui: date,
+    preversions: Sequence[str] = (),
+    motifs_interdits: Sequence[str] = (),
 ) -> PrealablesGeneration:
     """Lit la table `[mistral]` de `fichier` et vérifie les préalables D1.2.
 
@@ -207,6 +214,7 @@ def charger_prealables(
         conditions_verifiees_le=table.conditions_verifiees_le,
         modeles_stables=tuple(table.modeles_stables),
         modeles_preversion=tuple(preversions),
+        motifs_interdits=tuple(motifs_interdits),
     )
 
 
@@ -402,6 +410,7 @@ class Generateur:
             modele=client.config.modele,
             aujourd_hui=aujourd_hui(),
             preversions=() if preversion is None else (preversion,),
+            motifs_interdits=tuple(client.config.motifs_interdits),
         )
         self.seed_run_id = seed_run_id
         self._amorces = self._charger_amorces(seed_run_id)

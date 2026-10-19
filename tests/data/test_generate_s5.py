@@ -62,7 +62,11 @@ def test_completer_depuis_reprend_les_autres_taches_sans_appel(monde: Any) -> No
     bruts = compose.run.lire_jsonl("brut.jsonl")
     assert [b for b in bruts if b["tache"] == "CO"] == [co]
     config = compose.run.manifeste.config
-    assert config["comptes_plan"]["CO"] == {"planifiees": 1, "reprises": 1}
+    assert config["comptes_plan"]["CO"] == {
+        "planifiees": 1,
+        "reprises": 1,
+        "non_closes_source": 0,
+    }
     assert config["modele_generateur"] == "mistral-large-4"
     assert config["generateur_preversion"] is True
     assert compose.run.manifeste.parents == [seed, source.run.run_id]
@@ -77,6 +81,19 @@ def test_completer_depuis_reprend_les_autres_taches_sans_appel(monde: Any) -> No
     assert manifeste.comptes_par_tache == {"CO": 1, "LC": 1}
     assert manifeste.modeles_generateurs == ["mistral-large-2512", "mistral-large-4-2610"]
     assert manifeste.generateur_preversion is True
+
+
+def test_completer_depuis_compte_les_sessions_non_closes(monde: Any) -> None:
+    seed = deux_taches(monde)
+    monde.faux.reponses = [reponse("lc"), 500]
+    source = monde.lancer({"LC": 1, "CO": 1}, seed=seed)
+    assert source.statut == "partiel-erreur"
+    monde.faux.reponses = [reponse("lc")]
+    compose = monde.lancer(
+        {"LC": 1, "CO": 1}, seed=seed, taches=["LC"], completer_depuis=source.run.run_id
+    )
+    comptes = compose.run.manifeste.config["comptes_plan"]["CO"]
+    assert comptes == {"planifiees": 0, "reprises": 0, "non_closes_source": 1}
 
 
 def test_manifeste_sans_preversion_inchange(monde: Any) -> None:

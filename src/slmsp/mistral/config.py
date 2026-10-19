@@ -7,6 +7,7 @@ la casse). Les deux journaux d'appels sont des fichiers distincts de `SLMSP_VAR_
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Annotated, Final, Literal
 
@@ -29,10 +30,25 @@ def motif_interdit(modele: str, motifs: list[str] | tuple[str, ...]) -> str | No
     return None
 
 
-def preversion_admise(modele: str, preversions: tuple[str, ...] | list[str]) -> bool:
-    """Vrai si `modele` (demandé ou résolu) est une des `preversions`, ou l'une d'elles suivie
-    de `-<suffixe>` (identifiant daté renvoyé par l'API)."""
-    return any(modele == p or modele.startswith(f"{p}-") for p in preversions)
+_RE_SUFFIXE_VERSION: Final = re.compile(r"(?:-\d+)+")
+"""Suffixe de version admis après le nom d'une préversion : `-0`, `-2610`, `-4-0`…"""
+
+
+def preversion_admise(
+    modele: str,
+    preversions: tuple[str, ...] | list[str],
+    motifs: tuple[str, ...] | list[str] = (),
+) -> bool:
+    """Vrai si `modele` (demandé ou résolu) est exactement une des `preversions`, ou l'une
+    d'elles suivie d'un suffixe de version numérique (`-2610`, `-4-0` : identifiant daté
+    renvoyé par l'API) sans aucun des `motifs` interdits. `mistral-large-4-preview-beta` n'est
+    donc pas admis : seul le nom exact listé échappe aux motifs."""
+    if modele in preversions:
+        return True
+    return motif_interdit(modele, motifs) is None and any(
+        modele.startswith(p) and _RE_SUFFIXE_VERSION.fullmatch(modele[len(p) :]) is not None
+        for p in preversions
+    )
 
 
 def _nom_de_fichier(nom: str, cle: str) -> None:
@@ -124,8 +140,11 @@ class ConfigMistral(ModeleConfig):
         """Motif de refus de `modele` (absent de la liste stable, ou motif interdit).
 
         Pour une configuration de préversion (`preversion`), la préversion et ses identifiants
-        résolus `<préversion>-<suffixe>` sont admis en plus de la liste stable."""
-        if self.preversion is not None and preversion_admise(modele, (self.preversion,)):
+        résolus `<préversion>-<version numérique>` sans motif interdit sont admis en plus de la
+        liste stable."""
+        if self.preversion is not None and preversion_admise(
+            modele, (self.preversion,), self.motifs_interdits
+        ):
             return None
         if modele not in self.modeles_autorises:
             return "absent de modeles_autorises"
