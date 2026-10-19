@@ -64,6 +64,8 @@ Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campa
 - 2026-10-19 08:18 · essai B2 · `train run` SFT QLoRA bf16 de Qwen3.5-2B, 20 pas à 4096 (TOML d'essai hors dépôt, campagne `essai-qwen3.5-2b-b2`) : complet, 1 160 tokens/s, perte 0,71 → 0,58 (`runs/train/20261019-081352-essai-qwen35-2b-e2c9`). B2 validé de bout en bout sur GPU.
 - 2026-10-19 08:19 · sonde Granite 1B · LoRA bf16 à 3072 : **échoue** (`…-081835-granite-4.0-1b-6c4d`). Configs Granite passées à 3072, M2 hors campagne (commit 93f32d6).
 - 2026-10-19 08:20 · invariant ORPO (story 10.9) · dev fini (d46a876, branche `story/invariant-jeu-orpo`) ; second avis lancé.
+- 2026-10-19 08:22 · 10.9 · second avis (2 medium, 4 low) puis revue Opus : run SFT sans `jeu_build` désormais refusé, tests de reprise ajoutés ; limite connue : une campagne qui contient déjà un ancien ORPO (invariants = version des paires, ex. `minicpm5-2b-v3-orpo-*`) refuse un nouveau M4. Fusion 7d9a9f4.
+- 2026-10-19 08:24 · config · test des configs Granite réaligné sur 3072 (6e81b5f).
 - 2026-10-19 08:15 · 9.9 nettoyage · spec révisée d'après Opus (93f6831) ; dev lancé (Opus, story à risque D1), worktree `slmsp-wt/nettoyage-v4`.
 
 ## Journal de la nuit
