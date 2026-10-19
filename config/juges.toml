@@ -65,3 +65,25 @@ format_reponse = "json_schema"
 # format_reponse = "json_schema"
 # sortie_estimee = 1500        # tokens de verdict comptés dans l'estimation
 # marge_raisonnement = 2000    # tokens de raisonnement ajoutés à l'estimation
+
+# Juges tiers retenus le 2026-10-19 (run autonome S3) : deux familles distinctes du principal
+# (Claude) et du second juge (Mistral), sans enjeu de licence (aucune donnée d'entraînement produite).
+[juges_tiers.deepseek]
+fournisseur = "openrouter"
+modele = "deepseek/deepseek-v4-pro"
+temperature = 0.0
+max_tokens = 8000
+effort_raisonnement = "low"
+format_reponse = "json_schema"
+sortie_estimee = 1500
+marge_raisonnement = 2000
+
+[juges_tiers.glm]
+fournisseur = "openrouter"
+modele = "z-ai/glm-5.2"
+temperature = 0.0
+max_tokens = 8000
+effort_raisonnement = "low"
+format_reponse = "json_schema"
+sortie_estimee = 1500
+marge_raisonnement = 2000

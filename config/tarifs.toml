@@ -65,3 +65,23 @@ sortie = 3.0
 # [modeles."<famille>/<modèle>".modes.direct]
 # entree = 0.0
 # sortie = 0.0
+
+[modeles."deepseek/deepseek-v4-pro"]
+devise = "USD"
+date = 2026-10-19
+source = "openrouter.ai/deepseek/deepseek-v4-pro, relevé par --verifier (0,384 / 0,767)"
+note = "majoré de ~30 % par prudence (hébergeur variable chez OpenRouter)"
+
+[modeles."deepseek/deepseek-v4-pro".modes.direct]
+entree = 0.5
+sortie = 1.0
+
+[modeles."z-ai/glm-5.2"]
+devise = "USD"
+date = 2026-10-19
+source = "openrouter.ai/z-ai/glm-5.2, relevé par --verifier (0,62 / 2,42)"
+note = "majoré de ~30 % par prudence (hébergeur variable chez OpenRouter)"
+
+[modeles."z-ai/glm-5.2".modes.direct]
+entree = 0.8
+sortie = 3.2

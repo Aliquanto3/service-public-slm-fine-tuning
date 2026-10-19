@@ -58,3 +58,6 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 22:12 · S3 · dev · fini (client OpenRouter générique `src/slmsp/fournisseurs/`, `eval juges-tiers --verifier | --depuis --juge`, 38 tests) · 5193f21
 - 2026-10-19 22:12 · S3 · second-avis · 1 medium (verdict JSON enveloppé mis en cache invalide), 3 low ; review lancée (Opus) · —
 - 2026-10-19 22:12 · S2 · M1 test MiniCPM5-2B v12 entraîné en 13 min (`runs/train/20261019-215640-m1-qlora-minicpm5-2b-v11-partiel-7a6e`) ; export et génération en cours · —
+- 2026-10-19 22:18 · S3 · review · 1 medium (extraction JSON tolérante, sortie illisible rejouable), 3 low corrigés, 1 rejeté · c47cd49
+- 2026-10-19 22:18 · S3 · fusion · tests ciblés verts (163) ; `--verifier` : clé OpenRouter présente · dae7bfc
+- 2026-10-19 22:18 · S3 · décision · juges tiers **DeepSeek V4 Pro** (`deepseek/deepseek-v4-pro`, 0,38 / 0,77 $/Mtok) et **GLM-5.2** (`z-ai/glm-5.2`, 0,62 / 2,42 $/Mtok), tarifs majorés de 30 %. Estimation : ~0,3 € et ~0,8 € par run de 80 items. Nouvelle campagne de budget ouverte quand les notations en cours (Qwen3.5-0.8B, M1 test) seront finies · —
