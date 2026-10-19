@@ -191,7 +191,7 @@ def controler_nettoyage(nettoyage: Any, octets: bytes, *, racine: str | Path | N
         raise ManifesteInvalide(f"jeu source du nettoyage absent : {chemin}") from None
     if hashlib.sha256(source).hexdigest() != bloc.sha256_train_source:
         raise ManifesteInvalide(f"{chemin} : SHA-256 différent de « sha256_train_source »")
-    verifier_nettoyage(octets, source)
+    verifier_nettoyage(octets, source, [e.rang for e in bloc.ecartes])
 
 
 def recontroler_appel_ids(

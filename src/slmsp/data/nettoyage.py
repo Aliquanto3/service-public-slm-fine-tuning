@@ -39,6 +39,7 @@ from slmsp.core.nettoyage import (
 )
 from slmsp.core.schemas.entrainement import (
     TYPE_RUN_BUILD,
+    Ecart,
     LigneEntrainement,
     ManifesteJeuEntrainement,
     Nettoyage,
@@ -65,9 +66,14 @@ TACHE_HORS_PLANCHER: Final = "CR"
 PREFIXE_SOURCE_LC: Final = "Texte :\n"
 
 _RE_REFERENCE: Final = re.compile(r"\b[Aa]rticles?\s+\d+(?:-\d+)*|\b[LRD]\.\s?\d+(?:-\d+)*")
-_RE_NOMBRE: Final = re.compile(r"\d[\d\s.,]*\d|\d")
+_RE_NOMBRE: Final = re.compile(
+    r"(?<![\d.,])(?:\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:,\d+)?(?!\d)"
+)
+"""Nombre entier ou décimal, milliers groupés par espace (U+00A0, U+202F) ou point : jamais
+deux nombres distincts reliés (« 2023. 15 » donne « 2023 » et « 15 »)."""
 _RE_SIGLE: Final = re.compile(r"\b[A-ZÀ-ÖØ-Þ]{2,}\b")
 _RE_ESPACES: Final = re.compile(r"\s+")
+_RE_POINT_MILLIERS: Final = re.compile(r"\.(?=\d{3}(?!\d))")
 
 
 @dataclass(frozen=True)
@@ -95,7 +101,12 @@ def tokeniseur_du_modele(slug: str, *, racine: str | Path | None = None) -> Toke
         octets = lire(chemin, "train", racine=racine)
     except FileNotFoundError:
         raise ConfigurationInvalide(f"tokenizer absent : {chemin}") from None
-    from tokenizers import Tokenizer  # extra `train` (dépendance de transformers)
+    try:
+        from tokenizers import Tokenizer  # extra `train` (dépendance de transformers)
+    except ImportError:
+        raise ConfigurationInvalide(
+            "paquet tokenizers absent : installer l'extra train (uv sync --extra train)"
+        ) from None
 
     tokenizer = Tokenizer.from_str(octets.decode("utf-8"))
     return Tokeniseur(
@@ -104,10 +115,15 @@ def tokeniseur_du_modele(slug: str, *, racine: str | Path | None = None) -> Toke
     )
 
 
-def _normaliser(texte: str) -> str:
-    """NFKC, apostrophe droite, sans espaces (U+00A0, U+202F compris), sans `,00`."""
-    texte = unicodedata.normalize("NFKC", texte).replace("’", "'")
-    return _RE_ESPACES.sub("", texte).replace(",00", "")
+def _normaliser(element: str) -> str:
+    """Forme comparable d'un élément : NFKC, apostrophe droite, sans espaces (U+00A0, U+202F
+    compris), sans `,00` final ni point de milliers ; « Articles » ramené à « article »."""
+    forme = unicodedata.normalize("NFKC", element).replace("\u2019", "'")
+    forme = _RE_ESPACES.sub("", forme).removesuffix(",00")
+    forme = _RE_POINT_MILLIERS.sub("", forme)
+    if forme[:7].casefold() == "article":
+        forme = "article" + forme[7:].casefold().removeprefix("s")
+    return forme
 
 
 def elements_verifiables(texte: str) -> list[str]:
@@ -118,28 +134,22 @@ def elements_verifiables(texte: str) -> list[str]:
     elements = [m.group().strip() for m in _RE_REFERENCE.finditer(texte)]
     reste = _RE_REFERENCE.sub(" ", texte)
     for m in _RE_NOMBRE.finditer(reste):
-        nombre = m.group().strip(" \t\n\r  .,")
-        if sum(c.isdigit() for c in nombre) >= 2:
-            elements.append(nombre)
+        if sum(c.isdigit() for c in m.group()) >= 2:
+            elements.append(m.group())
     elements.extend(m.group() for m in _RE_SIGLE.finditer(texte))
     return list(dict.fromkeys(elements))
 
 
 def elements_manquants(source: str, cible: str) -> list[str]:
-    """Éléments vérifiables de `source` absents de `cible` après normalisation des deux côtés.
+    """Éléments vérifiables de `source` absents des éléments vérifiables de `cible`.
 
-    Un signalement à relire, pas un filtre : un nombre écrit en lettres ou un sigle développé
-    dans la cible y figure à tort.
+    Les deux côtés sont extraits, normalisés (`_normaliser`) et comparés élément à élément,
+    jamais par sous-chaîne : « 1 500 » n'est pas trouvé dans « 11 500 », ni « article 1 »
+    dans « article 12 ». Un signalement à relire, pas un filtre : un nombre écrit en lettres
+    ou un sigle développé dans la cible y figure à tort.
     """
-    normalisee = _normaliser(cible)
-    pliee = normalisee.casefold()
-    manquants = []
-    for element in elements_verifiables(source):
-        forme = _normaliser(element)
-        article = element[:7].casefold() == "article"
-        if not (forme.casefold() in pliee if article else forme in normalisee):
-            manquants.append(element)
-    return manquants
+    presents = {_normaliser(e) for e in elements_verifiables(cible)}
+    return [e for e in elements_verifiables(source) if _normaliser(e) not in presents]
 
 
 def _source_lc(ligne: dict[str, Any]) -> str | None:
@@ -203,7 +213,7 @@ def lancer_nettoyage(
         racine=base,
     )
     try:
-        gardees, rapport = _nettoyer(run, lignes, tokeniseur, plafond_tokens)
+        gardees, ecartes, rapport = _nettoyer(run, lignes, tokeniseur, plafond_tokens)
         avant = Counter(str(ligne["tache"]) for ligne in lignes)
         apres = Counter(str(ligne["tache"]) for ligne in gardees)
         vides = sorted(t for t in avant if t != TACHE_HORS_PLANCHER and not apres[t])
@@ -213,7 +223,7 @@ def lancer_nettoyage(
                 f"(plafond {plafond_tokens} tokens)"
             )
         contenu = b"".join(json_canonique(ligne) + b"\n" for ligne in gardees)
-        verifier_nettoyage(contenu, octets)
+        verifier_nettoyage(contenu, octets, [e.rang for e in ecartes])
         version, dossier = _creer_version(base)
         (dossier / NOM_TRAIN).write_bytes(contenu)
         nettoyage = Nettoyage(
@@ -224,6 +234,7 @@ def lancer_nettoyage(
             plafond_tokens=plafond_tokens,
             tokenizer_sha256=tokeniseur.sha256,
             lc_signales=len(rapport["lc_signales"]),
+            ecartes=ecartes,
         )
         manifeste = source.model_copy(
             update={
@@ -237,9 +248,6 @@ def lancer_nettoyage(
             }
         )
         manifeste = ManifesteJeuEntrainement.model_validate(manifeste.model_dump(mode="json"))
-        temporaire = dossier / f"{NOM_MANIFEST}.tmp"
-        temporaire.write_bytes(json_canonique(manifeste.model_dump(mode="json")) + b"\n")
-        temporaire.replace(dossier / NOM_MANIFEST)
         rapport = {
             "schema_version": 1,
             "version": version,
@@ -255,6 +263,10 @@ def lancer_nettoyage(
             **rapport,
         }
         run.ecrire(NOM_RAPPORT, json_canonique(rapport) + b"\n")
+        # MANIFEST en dernier : sa présence signale une version complète.
+        temporaire = dossier / f"{NOM_MANIFEST}.tmp"
+        temporaire.write_bytes(json_canonique(manifeste.model_dump(mode="json")) + b"\n")
+        temporaire.replace(dossier / NOM_MANIFEST)
     except KeyboardInterrupt:
         run.terminer("interrompu", "interruption clavier")
         raise
@@ -287,11 +299,12 @@ _STATUTS: Final = {
 
 def _nettoyer(
     run: Run, lignes: list[dict[str, Any]], tokeniseur: Tokeniseur, plafond: int
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Lignes gardées (cibles nettoyées) et parties du rapport ; écrit `ecartes.jsonl`."""
+) -> tuple[list[dict[str, Any]], list[Ecart], dict[str, Any]]:
+    """Lignes gardées (cibles nettoyées), écarts et parties du rapport ; écrit `ecartes.jsonl`."""
     comptes: dict[str, Counter[str]] = defaultdict(Counter)
     signales: list[dict[str, Any]] = []
     gardees: list[dict[str, Any]] = []
+    ecartes: list[Ecart] = []
     for rang, ligne in enumerate(lignes):
         tache = str(ligne["tache"])
         session_id = ligne["meta"]["session_id"]
@@ -305,6 +318,7 @@ def _nettoyer(
             tokens = tokeniseur.compter(texte)
             if tokens > plafond:
                 comptes[tache]["ecartes_longueur"] += 1
+                ecartes.append(Ecart(rang=rang, motif="longueur", tokens=tokens))
                 run.ajouter_jsonl(
                     NOM_ECARTES,
                     {"rang": rang, "session_id": session_id, "tache": tache, "tokens": tokens},
@@ -321,4 +335,4 @@ def _nettoyer(
         comptes[tache]["apres"] += 1
         gardees.append(ligne)
     par_tache = {tache: {cle: comptes[tache][cle] for cle in _COMPTES} for tache in sorted(comptes)}
-    return gardees, {"par_tache": par_tache, "lc_signales": signales}
+    return gardees, ecartes, {"par_tache": par_tache, "lc_signales": signales}

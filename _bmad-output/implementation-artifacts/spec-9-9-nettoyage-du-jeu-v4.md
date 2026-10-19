@@ -78,8 +78,25 @@ Essai réel (copie de v2 et du run 424c dans le scratchpad, tokenizer minicpm5-2
 
 ## Auto Run Result
 
-- `verifier_nettoyage` vérifie une sous-suite ordonnée (les lignes écartées manquent) : chaque ligne nettoyée doit être le nettoyage d'une ligne source de rang croissant ; pas de liste des rangs au MANIFEST (elle est dans `ecartes.jsonl` du run).
+- ~~`verifier_nettoyage` vérifie une sous-suite ordonnée~~ (remplacé en revue : rangs écartés déclarés au MANIFEST, appariement rang par rang).
 - Plafond lu par la CLI (`evaluation.config.charger_evaluation`, couche `cli`) et passé à `lancer_nettoyage` : `data` ne peut pas importer `evaluation` (même couche).
 - Un jeu déjà nettoyé est refusé comme source (`ManifesteInvalide`) : la chaîne vérifiée au chargement n'a qu'un niveau.
-- Fidélité LC : un élément est cherché dans la cible normalisée entière (sous-chaîne), les références « article N » sans tenir compte de la casse ; les nombres sont cherchés hors des références. Seulement 2 LC signalés sur 69, tous deux pour un sigle : à relire par Anaël.
+- Fidélité LC (remplacé en revue : comparaison d'éléments extraits des deux côtés) : un élément est cherché dans la cible normalisée entière (sous-chaîne), les références « article N » sans tenir compte de la casse ; les nombres sont cherchés hors des références. Seulement 2 LC signalés sur 69, tous deux pour un sigle : à relire par Anaël.
 - Statut de run : `complet` ; type `data-build`, slug `nettoyage`. Le fichier d'état n'est pas modifié (hors zone) : la sortie des CR du jeu est à y consigner par l'orchestrateur.
+
+## Revue
+
+2026-10-19, Opus (reviewer), une passe, rebasée sur main 9e330f4 (story 10.9). Constats du second avis (Haiku) repris un par un.
+
+- medium · second avis · corrigé : `verifier_nettoyage` acceptait une sous-suite, donc une ligne retirée en silence. Le MANIFEST porte désormais `nettoyage.ecartes: [{rang, motif: "longueur", tokens}]` (schéma `Ecart` : rangs strictement croissants, `tokens > plafond_tokens`) ; `verifier_nettoyage(nettoyé, source, rangs_ecartes)` apparie rang par rang (compte exact, rangs uniques et dans la source) ; `charger_jeu` passe les rangs du MANIFEST. Le recomptage des tokens reste au build (pas au chargement).
+- medium · second avis · corrigé : fidélité LC par sous-chaîne (« 1 500 » trouvé dans « 11 500 », « article 1 » dans « article 12 », « CB » dans « CBX »). Éléments extraits des deux côtés puis comparés en ensemble ; nombres à milliers groupés par espace ou point, jamais deux nombres reliés (« 2023. 15 ») ; « Articles » → « article », point de milliers retiré à la normalisation.
+- medium · second avis · corrigé : `tokenizers` vient de l'extra `train` (via transformers), absent de `data`. Pas de CI dans le dépôt (Windows seul) ; `ConfigurationInvalide` « installer l'extra train » si le paquet manque, test `importorskip` pour le test qui l'utilise, test de l'erreur.
+- low · second avis · corrigé : BOM U+FEFF en tête de cible ignoré comme marqueur de tête (aucun dans v2, vérifié).
+- low · second avis · corrigé : regex de nombres qui reliait « 2023. 15 » (voir medium LC).
+- low · second avis · corrigé : ordre d'écriture, `rapport.json` avant `MANIFEST.json` (le MANIFEST signale une version complète).
+- low · second avis · corrigé : tests ajoutés (CLI nominale avec plafond lu dans `config/evaluation.toml`, ligne retirée en silence, écart déclaré sous le plafond, rangs invalides, faux négatifs de sous-chaîne, version de nettoyage 2 refusée, tokenizers absent).
+- low · second avis · rejeté : paires v5 non rattachées à la v4 au chargement. Les préférences ont leur propre chaîne (`jeu_sft_version`, SHA du jeu SFT, story 9.7) ; hors périmètre de 9.9.
+- low · second avis · rejeté : tokenizer lu sous `racine_projet()/models` et non `--racine`. Même règle que les autres lecteurs de poids (`dossier_modeles`, `SLMSP_MODELS_DIR`) ; `--racine` désigne data/eval/runs.
+- Complexité : 0 constat. `verifier_nettoyage` est linéaire (ensemble des rangs, un zip) ; `ecartes` au MANIFEST croît avec le jeu (78 entrées sur v2), sans parcours répété.
+
+Essai réel refait (copie de v2 et du run 424c dans le scratchpad, tokenizer minicpm5-2b, plafond 1 024) : comptes par tâche identiques au tableau ci-dessus, 503 → 425 lignes, 78 écarts déclarés au MANIFEST, `lc_signales` = 2 (CB, CPH), v4 relu par `charger_jeu`. Tests : `tests/data tests/core tests/train tests/cli` 1521 passés ; ruff, format, contrôle rapide verts.

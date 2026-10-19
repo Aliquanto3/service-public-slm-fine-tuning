@@ -55,6 +55,7 @@ MOTS = Tokeniseur(compter=lambda texte: len(texte.split()), sha256="b" * 64)
         ("Voici <x>, <y>.\n<corps>", None, "garde"),
         ("<x>. Voici <y>", None, None),
         ("voici <x> :\n<corps>", None, None),
+        ("\ufeffVoici <x> :\n<corps>", "<corps>", "retire"),
         ("", None, None),
     ],
 )
@@ -202,6 +203,7 @@ def test_nominal_preambule_longueur_lc_et_manifeste(tmp_path: Path) -> None:
         "plafond_tokens": 5,
         "tokenizer_sha256": "b" * 64,
         "lc_signales": 1,
+        "ecartes": [{"rang": 2, "motif": "longueur", "tokens": 6}],
     }
     assert brut["comptes_par_tache"] == {"LC": 2, "Q": 2, "RD": 1}
     assert brut["filter_run_id"] == "20261017-151827-filter-e914"
@@ -209,7 +211,7 @@ def test_nominal_preambule_longueur_lc_et_manifeste(tmp_path: Path) -> None:
 
     jeu = charger_jeu("v2", racine=tmp_path)
     assert len(jeu.lignes) == 5
-    verifier_nettoyage((resultat.dossier / "train.jsonl").read_bytes(), octets)
+    verifier_nettoyage((resultat.dossier / "train.jsonl").read_bytes(), octets, [2])
 
 
 def test_plafond_exact_garde_plafond_plus_un_ecarte(tmp_path: Path) -> None:
@@ -241,6 +243,22 @@ def test_fidelite_lc_normalisee() -> None:
     source = "<x> 1 500,00 € <y> l’article 12 <z> UE 3"
     assert elements_manquants(source, "<x> 1 500 € Article 12 UE") == []
     assert elements_manquants(source, "<x>") == ["article 12", "1 500,00", "UE"]
+    assert elements_manquants("<x> 1.500 € <y> Articles 12", "<x> 1 500 € <y> article 12") == []
+
+
+@pytest.mark.parametrize(
+    ("source", "cible", "manquant"),
+    [
+        ("<x> 1 500 €", "<x> 11 500 €", "1 500"),
+        ("<x> article 1 <y>", "<x> article 12 <y>", "article 1"),
+        ("<x> L. 12 <y>", "<x> L. 123 <y>", "L. 12"),
+        ("<x> 2023. 15 <y>", "<x> 2023 <y>", "15"),
+        ("<x> CB <y>", "<x> CBX <y>", "CB"),
+        ("<x> 45 <y>", "<x> 145 <y>", "45"),
+    ],
+)
+def test_fidelite_lc_sans_sous_chaine(source: str, cible: str, manquant: str) -> None:
+    assert elements_manquants(source, cible) == [manquant]
 
 
 # --- Provenance ---------------------------------------------------------------------------------
@@ -270,7 +288,7 @@ def test_ligne_alteree_refusee(tmp_path: Path, ancien: bytes, nouveau: bytes) ->
     chemin = resultat.dossier / "train.jsonl"
     _alterer(chemin, ancien, nouveau)
     with pytest.raises(ProvenanceInvalide):
-        verifier_nettoyage(chemin.read_bytes(), octets)
+        verifier_nettoyage(chemin.read_bytes(), octets, [2])
     with pytest.raises(ProvenanceInvalide):
         charger_jeu("v2", racine=tmp_path)
 
@@ -287,9 +305,46 @@ def test_ordre_change_refuse() -> None:
             ],
         }
     )
-    verifier_nettoyage(b"\n".join(nettoyees), source)
+    verifier_nettoyage(b"\n".join(nettoyees), source, [])
     with pytest.raises(ProvenanceInvalide):
-        verifier_nettoyage(b"\n".join(reversed(nettoyees)), source)
+        verifier_nettoyage(b"\n".join(reversed(nettoyees)), source, [])
+
+
+def test_ligne_retiree_sans_ecart_declare_refusee(tmp_path: Path) -> None:
+    run_id, octets = ecrire_source(tmp_path, JEU)
+    resultat = nettoyer(tmp_path, run_id)
+    chemin = resultat.dossier / "train.jsonl"
+    lignes = chemin.read_bytes().splitlines(keepends=True)
+    _alterer(chemin, lignes[1], b"")  # RD retirée en silence
+    with pytest.raises(ProvenanceInvalide, match="gardées"):
+        verifier_nettoyage(chemin.read_bytes(), octets, [2])
+    with pytest.raises(ProvenanceInvalide):
+        charger_jeu("v2", racine=tmp_path)
+    # déclarer l'écart ne suffit pas : il doit dépasser le plafond (schéma `Nettoyage`)
+    manifeste_chemin = resultat.dossier / "MANIFEST.json"
+    brut = json.loads(manifeste_chemin.read_bytes())
+    brut["nettoyage"]["ecartes"].insert(0, {"rang": 1, "motif": "longueur", "tokens": 3})
+    manifeste_chemin.write_bytes(json_canonique(brut))
+    with pytest.raises(ManifesteInvalide, match="plafond_tokens"):
+        charger_jeu("v2", racine=tmp_path)
+
+
+@pytest.mark.parametrize("rangs", [[2, 2], [99], [-1]])
+def test_rangs_ecartes_invalides_refuses(rangs: list[int]) -> None:
+    source = b"".join(json_canonique(x) + b"\n" for x in JEU)
+    with pytest.raises(ProvenanceInvalide, match="rangs"):
+        verifier_nettoyage(b"", source, rangs)
+
+
+def test_version_de_nettoyage_inconnue_refusee(tmp_path: Path) -> None:
+    run_id, _ = ecrire_source(tmp_path, JEU)
+    resultat = nettoyer(tmp_path, run_id)
+    manifeste_chemin = resultat.dossier / "MANIFEST.json"
+    brut = json.loads(manifeste_chemin.read_bytes())
+    brut["nettoyage"]["version"] = 2
+    manifeste_chemin.write_bytes(json_canonique(brut))
+    with pytest.raises(ManifesteInvalide, match="version 2"):
+        charger_jeu("v2", racine=tmp_path)
 
 
 def test_source_alteree_refusee_au_chargement(tmp_path: Path) -> None:
@@ -349,6 +404,7 @@ def test_campagne_du_jeu_source_ne_se_reprend_pas_sur_le_jeu_nettoye(tmp_path: P
 def test_tokeniseur_du_modele_lu_sous_models(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    pytest.importorskip("tokenizers")
     from tokenizers import Tokenizer
     from tokenizers.models import WordLevel
     from tokenizers.pre_tokenizers import WhitespaceSplit
@@ -377,3 +433,51 @@ def test_tokeniseur_du_modele_lu_sous_models(
 )
 def test_cli_nettoyage_usage(options: list[str]) -> None:
     assert main(["data", "build", "--nettoyage", "--depuis", "x", *options]) == CodeSortie.USAGE
+
+
+def test_cli_nettoyage_nominal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import slmsp.data.nettoyage as module
+    from slmsp.evaluation.config import charger_evaluation
+
+    run_id, _ = ecrire_source(tmp_path, JEU)
+    monkeypatch.setattr(module, "tokeniseur_du_modele", lambda slug, *, racine=None: MOTS)
+    code = main(
+        [
+            "data",
+            "build",
+            "--nettoyage",
+            "--depuis",
+            run_id,
+            "--modele",
+            "base:slug-factice",
+            "--racine",
+            str(tmp_path),
+        ]
+    )
+    assert code == CodeSortie.SUCCES
+    sortie = capsys.readouterr().out
+    assert "Q : 2 → 2 (1, 0, 1 ; 0 ; 0)" in sortie and "jeu v2" in sortie
+    jeu = charger_jeu("v2", racine=tmp_path)
+    plafond = charger_evaluation().generation.max_tokens  # lu, pas recopié
+    assert jeu.manifeste["nettoyage"]["plafond_tokens"] == plafond
+
+
+def test_tokenizers_absent_erreur_claire(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import builtins
+
+    dossier = tmp_path / "models" / "slug-factice" / "hf"
+    dossier.mkdir(parents=True)
+    (dossier / "tokenizer.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("SLMSP_MODELS_DIR", str(tmp_path / "models"))
+    importer = builtins.__import__
+
+    def sans_tokenizers(nom: str, *args: Any, **kwargs: Any) -> Any:
+        if nom == "tokenizers":
+            raise ImportError(nom)
+        return importer(nom, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", sans_tokenizers)
+    with pytest.raises(ConfigurationInvalide, match="extra train"):
+        tokeniseur_du_modele("slug-factice", racine=tmp_path)

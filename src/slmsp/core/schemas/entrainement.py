@@ -91,12 +91,21 @@ class ConditionsMistral(SousSchema):
 Nom = Annotated[str, StringConstraints(min_length=1)]
 
 
+class Ecart(SousSchema):
+    """Ligne source écartée par le nettoyage : rang d'origine (0 = première ligne), motif."""
+
+    rang: int = Field(ge=0)
+    motif: Literal["longueur"]
+    tokens: int = Field(ge=1)
+
+
 class Nettoyage(SousSchema):
     """Provenance d'un jeu nettoyé (story 9.9) : `data build --nettoyage`.
 
-    Le jeu est la sous-suite des lignes du jeu `depuis_version` (run `depuis_build`, SHA
+    Le jeu est la suite des lignes du jeu `depuis_version` (run `depuis_build`, SHA
     `sha256_train_source`) passées par `core.nettoyage.nettoyer_cible` de version `version`,
-    sans les cibles de plus de `plafond_tokens` tokens (tokenizer de SHA `tokenizer_sha256`).
+    sauf les rangs de `ecartes` : cibles de plus de `plafond_tokens` tokens (tokenizer de SHA
+    `tokenizer_sha256`). Aucune autre ligne ne peut manquer (`verifier_nettoyage`).
     """
 
     version: int = Field(ge=1)
@@ -107,6 +116,17 @@ class Nettoyage(SousSchema):
     tokenizer_sha256: Sha256
     lc_signales: int = Field(ge=0)
     """Exemples LC gardés dont un élément vérifiable de la source manque à la cible."""
+    ecartes: list[Ecart]
+    """Lignes source absentes du jeu, rangs strictement croissants."""
+
+    @model_validator(mode="after")
+    def _ecartes(self) -> Self:
+        rangs = [e.rang for e in self.ecartes]
+        if any(a >= b for a, b in zip(rangs, rangs[1:], strict=False)):
+            raise ValueError("ecartes : rangs strictement croissants attendus")
+        if any(e.tokens <= self.plafond_tokens for e in self.ecartes):
+            raise ValueError("ecartes : un écart « longueur » ne dépasse pas plafond_tokens")
+        return self
 
 
 class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):

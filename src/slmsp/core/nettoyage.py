@@ -4,7 +4,8 @@
 (D1 : aucun texte n'est rédigé ni réécrit). `verifier_nettoyage` prouve qu'un jeu nettoyé ne
 diffère de son jeu source que par cette transformation : chaque ligne nettoyée est, à l'octet
 près en JSON canonique, la ligne source de même rang d'origine dont le `content` du dernier
-message vaut `nettoyer_cible(content)` ; les lignes écartées manquent, l'ordre est conservé.
+message vaut `nettoyer_cible(content)` ; seules manquent les lignes dont le rang est déclaré
+écarté (MANIFEST `nettoyage.ecartes`), l'ordre est conservé.
 
 Placé dans `core` : partagé par `data` (écriture du jeu) et `train` (relecture au chargement).
 """
@@ -13,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from typing import Any, Final, Literal
 
 from slmsp.core.canonique import json_canonique
@@ -32,7 +34,7 @@ VERSION_NETTOYAGE: Final = 1
 
 Preambule = Literal["retire", "garde", "seul"]
 
-_RE_TETE: Final = re.compile(r"^[#*_\s]*")
+_RE_TETE: Final = re.compile(r"^[#*_\s\uFEFF]*")
 _RE_FIN: Final = re.compile(r"[*_\s]*$")
 _RE_GRAS: Final = re.compile(r"\*\*[^*]+\*\*|__[^_]+__")
 
@@ -93,24 +95,39 @@ def _lignes(octets: bytes) -> list[bytes]:
     return [ligne for ligne in octets.split(b"\n") if ligne.strip()]
 
 
-def verifier_nettoyage(octets_nettoyes: bytes, octets_source: bytes) -> None:
+def verifier_nettoyage(
+    octets_nettoyes: bytes, octets_source: bytes, rangs_ecartes: Sequence[int]
+) -> None:
     """Lève `ProvenanceInvalide` si le jeu nettoyé n'est pas issu du jeu source.
 
-    Chaque ligne nettoyée doit valoir `ligne_nettoyee` d'une ligne source, dans l'ordre des
-    rangs d'origine (sous-suite : les lignes écartées manquent). Un octet différent ailleurs
-    que dans la transformation (cible ou autre message) ou un ordre changé est refusé.
+    Les lignes source gardées sont toutes celles dont le rang (0 = première ligne non vide)
+    n'est pas dans `rangs_ecartes` (MANIFEST `nettoyage.ecartes`). La n-ième ligne nettoyée
+    doit valoir `ligne_nettoyee` de la n-ième ligne gardée, à l'octet près : une ligne en
+    trop, en moins, déplacée ou dont un octet diffère hors de la transformation est refusée.
     """
     try:
-        attendues = [ligne_nettoyee(ligne) for ligne in _lignes(octets_source)]
+        source = _lignes(octets_source)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise ProvenanceInvalide(f"jeu source illisible : {exc}") from None
-    rang = 0
-    for numero, ligne in enumerate(_lignes(octets_nettoyes), start=1):
-        while rang < len(attendues) and attendues[rang] != ligne:
-            rang += 1
-        if rang == len(attendues):
+    ecartes = set(rangs_ecartes)
+    if len(ecartes) != len(rangs_ecartes) or any(not 0 <= r < len(source) for r in ecartes):
+        raise ProvenanceInvalide(
+            f"rangs écartés invalides (doublon ou hors des {len(source)} lignes source)"
+        )
+    gardees = [ligne for rang, ligne in enumerate(source) if rang not in ecartes]
+    nettoyees = _lignes(octets_nettoyes)
+    if len(nettoyees) != len(gardees):
+        raise ProvenanceInvalide(
+            f"{len(nettoyees)} lignes nettoyées pour {len(gardees)} lignes source gardées "
+            f"({len(source)} moins {len(ecartes)} écartées)"
+        )
+    for numero, (ligne, origine) in enumerate(zip(nettoyees, gardees, strict=True), start=1):
+        try:
+            attendue = ligne_nettoyee(origine)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise ProvenanceInvalide(f"jeu source illisible : {exc}") from None
+        if ligne != attendue:
             raise ProvenanceInvalide(
-                f"ligne {numero} du jeu nettoyé : aucune ligne source dont elle soit le "
-                f"nettoyage (version {VERSION_NETTOYAGE}), dans l'ordre d'origine"
+                f"ligne {numero} du jeu nettoyé : n'est pas le nettoyage (version "
+                f"{VERSION_NETTOYAGE}) de la ligne source de même rang d'origine"
             )
-        rang += 1
