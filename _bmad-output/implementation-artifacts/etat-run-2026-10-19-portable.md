@@ -20,6 +20,11 @@ Point de reprise après `/clear`. Il fait suite à `etat-run-2026-10-18-portable
 ## En cours
 Voir la section « Journal de la nuit » ci-dessous, tenue à jour.
 
+## Décisions d'Anaël du 19 en fin de matinée
+- Budget de notation débloqué. Vérification faite par la liste des lots du compte Anthropic (`scratchpad/lister_lots.py`, appel gratuit) : dernier lot à 05 h 16, **aucun lot créé vers 10 h 03**. Réservations 2593 et 2594 passées de `pire-cas` à `regularisee` à 0 € (motif `lot-jamais-cree`), sauvegarde du registre avant modification dans le scratchpad. Reste Anthropic : **9,20 €**.
+- Les trois stories issues de l'incident se font **avant** la notation de M1 v4 : (1) journaliser l'erreur de création d'un lot du juge (`judge/claude.py:420-424`) ; (2) pire cas estimé par item et non par le max du lot (`budget/tarifs.py:94-95`, `claude.py` `estimes = max(...)`) ; (3) garde-fou de coût estimé **avant** notation (refus au-delà d'un seuil, 4,5 € pour M1 v4). Écart à examiner dans la story 2 ou 3 : ~0,22 € d'appels `direct` par notation figurent au journal sans réservation au registre.
+- Ensuite : `eval run --reprendre` sur `20261019-091155-ft-minicpm5-2b-ee96` (vérifier qu'il rejoue les items `non-juge` / `erreur-api`), puis règle M3/M4 du point 2 du prompt du 19.
+
 ## Reste à faire (mis à jour le 19 à 11 h 13)
 Fait le 19 : extra gdn, sondes Qwen3.5 et essai B2, sonde Granite 3072, stories 9.9 (nettoyage v4), 10.9 (invariant ORPO) et micro_lot fusionnées, v4 et paires v5, M1 v4 entraîné et exporté, mesures CPU du spéculatif. Suite complète verte en fin de journée : 5 321 passés.
 - **Attend Anaël — incident de coût** : vérifier dans la console Anthropic qu'aucun lot n'a été créé vers 10 h 03 ; si oui, libérer les réservations 2593 et 2594 de `budget.sqlite` (8,67 € en pire cas) ; puis noter les 5 tâches manquantes de M1 v4 (`runs/eval-generation/20261019-091155-ft-minicpm5-2b-ee96`). Vérifier que `eval run --reprendre` rejoue les items `non-juge` (`erreur-api`).
