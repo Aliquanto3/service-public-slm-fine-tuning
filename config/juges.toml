@@ -49,3 +49,19 @@ effort_cache = "temperature-0"
 # Format de réponse demandé : `json_schema` (schéma strict du Juge principal) ou
 # `json_object` (JSON libre, validé ensuite contre le même schéma).
 format_reponse = "json_schema"
+
+# Juges tiers (story S3) : avis comparatif, hors score officiel, servis par OpenRouter
+# (`slmsp eval juges-tiers --depuis <run eval-notation> --juge <nom>`). Une section par juge,
+# `[juges_tiers.<nom>]` ; le modèle (identifiant OpenRouter) est choisi après
+# `slmsp eval juges-tiers --verifier` et doit être tarifé dans `tarifs.toml`. Usage de budget
+# `juge-tiers-openrouter` (poste `openrouter` de `budgets.toml`). Modèle de section :
+#
+# [juges_tiers.<nom>]
+# fournisseur = "openrouter"
+# modele = "<famille>/<modèle>"
+# temperature = 0.0            # omettre si le modèle la refuse
+# max_tokens = 8000            # pire cas réservé par item, raisonnement compris
+# effort_raisonnement = "low"  # facultatif : minimal, low, medium, high
+# format_reponse = "json_schema"
+# sortie_estimee = 1500        # tokens de verdict comptés dans l'estimation
+# marge_raisonnement = 2000    # tokens de raisonnement ajoutés à l'estimation

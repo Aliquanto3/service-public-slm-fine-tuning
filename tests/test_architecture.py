@@ -32,6 +32,7 @@ COUCHES: dict[str, int] = {
     "index": 2,
     "mcp": 2,
     "mistral": 2,
+    "fournisseurs": 2,
     "harness": 3,
     "judge": 3,
     "fetch": 4,
