@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from slmsp.budget.config import charger_budgets, charger_tarifs
-from slmsp.budget.tarifs import UsageTokens, cout_pire_cas, cout_reel, tarif
+from slmsp.budget.tarifs import UsageTokens, cout_estime, cout_pire_cas, cout_reel, tarif
 from slmsp.core.erreurs import ConfigurationInvalide, TarifInconnu
 
 MILLION = 1_000_000
@@ -267,3 +267,12 @@ def test_tarifs_cle_inconnue_refusee(tmp_path: Path) -> None:
 def test_tarifs_absents(tmp_path: Path) -> None:
     with pytest.raises(ConfigurationInvalide):
         charger_tarifs(tmp_path / "absent.toml")
+
+
+def test_cout_estime_sans_majoration() -> None:
+    tarifs = charger_tarifs()
+    modele = next(iter(tarifs.modeles))
+    estime = cout_estime(tarifs, modele, "batch", 1000, 500)
+    assert estime == pytest.approx(cout_pire_cas(tarifs, modele, "batch", 1000, 500, 1.0))
+    with pytest.raises(ValueError):
+        cout_estime(tarifs, modele, "batch", -1, 0)

@@ -80,6 +80,8 @@ class JugePrincipal(Protocol):
 
     def juger(self, demandes: Sequence[Any]) -> Any: ...
 
+    # `estimer(demandes)` est facultative : exigée seulement avec `plafond_estime_eur`.
+
 
 class SecondJuge(Protocol):
     """Second juge : demandes de l'échantillon seulement (`judge.second.JugeMistral`)."""
@@ -313,11 +315,16 @@ def noter(
     racine: str | Path | None = None,
     rapporter: Rapporteur | None = None,
     config: cfg.ConfigEvaluation | None = None,
+    plafond_estime_eur: float | None = None,
 ) -> RapportNotation:
     """Note le run de génération `depuis` (voir le module) et rend le bilan de la session.
 
     Lève `ManifesteInvalide` (code 4 : jeu altéré, run introuvable ou d'un autre type) et
     `SlmspError` (génération ni `complet` ni `partiel-erreur`) avant de créer le run.
+
+    Avec `plafond_estime_eur`, le coût estimé par `juges.principal.estimer` est contrôlé
+    avant `nouveau_run` et avant tout appel payant ; au-dessus du plafond, `SlmspError`
+    (aucun run créé). Le second juge (Mistral) n'entre pas dans l'estimation.
     """
     dire = rapporter or (lambda _message: None)
     base = _racine(racine)
@@ -340,6 +347,8 @@ def noter(
         manifeste_sha = sha256_lf(cfg.chemin_manifeste(base, jeu_version))
     generations = _generations(parent)
     selection = _selection(parent, jeu.items, generations)
+    if plafond_estime_eur is not None:
+        _controler_plafond(juges, selection, generations, evaluation, plafond_estime_eur, dire)
 
     run = nouveau_run(
         TYPE_RUN,
@@ -381,36 +390,25 @@ def noter(
     return rapport
 
 
-def _noter_dans(
-    run: Run,
-    *,
-    depuis: str,
-    juges: Juges,
+def _demandes(
     selection: Sequence[ItemBase],
     generations: Mapping[str, Generation],
-    echantillons: Echantillons,
     evaluation: cfg.ConfigEvaluation,
-    jeu_version: str,
-    jeu_statut: str,
-    manifeste_sha: str | None,
-    dire: Rapporteur,
-) -> RapportNotation:
+) -> tuple[list[ItemBase], dict[str, dict[str, Any]], list[Demande], dict[str, Jugement]]:
+    """Items ok, contrôles automatiques, demandes au juge principal et items non jugeables.
+
+    Pur : n'écrit rien (appelé avant la création du run pour l'estimation du coût).
+    """
     ok = [i for i in selection if i.id in generations and generations[i.id].statut == "ok"]
     longueurs = evaluation.re.longueurs.model_dump()
     controles: dict[str, dict[str, Any]] = {}
     for item in ok:
-        controle = controler(
+        controles[item.id] = controler(
             item,
             generations[item.id],
             equivalences=evaluation.co.equivalences,
             longueurs=longueurs,
         )
-        controles[item.id] = controle
-        run.ajouter_jsonl(
-            FICHIER_CONTROLES, {"item_id": item.id, "tache": item.code, "controle": controle}
-        )
-    dire(f"Contrôles automatiques : {len(ok)} item(s) ok sur {len(selection)}.")
-
     soumis: list[ItemBase] = []
     non_jugeables: dict[str, Jugement] = {}
     for item in ok:
@@ -425,6 +423,60 @@ def _noter_dans(
         Demande(item, generations[item.id].sortie_canonique.model_dump(mode="json"))
         for item in soumis
     ]
+    return ok, controles, demandes, non_jugeables
+
+
+def _controler_plafond(
+    juges: Juges,
+    selection: Sequence[ItemBase],
+    generations: Mapping[str, Generation],
+    evaluation: cfg.ConfigEvaluation,
+    plafond: float,
+    dire: Rapporteur,
+) -> None:
+    """Refuse la notation si le coût estimé dépasse `plafond` (aucun run, aucun appel)."""
+    estimer = getattr(juges.principal, "estimer", None)
+    if estimer is None:
+        raise SlmspError(
+            "--plafond-estime exige un juge principal qui sait estimer son coût "
+            f"({type(juges.principal).__name__} n'a pas de méthode `estimer`)"
+        )
+    demandes = _demandes(selection, generations, evaluation)[2]
+    estimation = estimer(demandes)
+    resume = (
+        f"coût estimé {estimation.cout_estime_eur:.2f} € (pire cas "
+        f"{estimation.cout_pire_cas_eur:.2f} €), {estimation.nb_a_juger} item(s) à juger, "
+        f"{estimation.nb_en_cache} en cache"
+    )
+    if estimation.cout_estime_eur > plafond:
+        raise SlmspError(
+            f"notation refusée : {resume}, au-dessus du plafond de {plafond:.2f} € ; "
+            "aucun run créé, aucun appel fait"
+        )
+    dire(f"Estimation avant notation : {resume} (plafond {plafond:.2f} €).")
+
+
+def _noter_dans(
+    run: Run,
+    *,
+    depuis: str,
+    juges: Juges,
+    selection: Sequence[ItemBase],
+    generations: Mapping[str, Generation],
+    echantillons: Echantillons,
+    evaluation: cfg.ConfigEvaluation,
+    jeu_version: str,
+    jeu_statut: str,
+    manifeste_sha: str | None,
+    dire: Rapporteur,
+) -> RapportNotation:
+    ok, controles, demandes, non_jugeables = _demandes(selection, generations, evaluation)
+    for item in ok:
+        run.ajouter_jsonl(
+            FICHIER_CONTROLES,
+            {"item_id": item.id, "tache": item.code, "controle": controles[item.id]},
+        )
+    dire(f"Contrôles automatiques : {len(ok)} item(s) ok sur {len(selection)}.")
     dire(f"Juge principal : {len(demandes)} demande(s).")
     principal = _juger(lambda: juges.principal.juger(demandes), demandes)
     principal.jugements.update(non_jugeables)

@@ -224,6 +224,15 @@ class CacheVerdicts:
 
     # --- verdicts -------------------------------------------------------------------------
 
+    def sortie_moyenne(self, modele: str, effort: str) -> tuple[int, float]:
+        """Nombre de verdicts en cache pour ce modèle et cet effort, moyenne de `tokens_sortie`."""
+        ligne = self._lire(
+            "SELECT COUNT(*) AS n, COALESCE(AVG(tokens_sortie), 0) AS moyenne FROM verdicts "
+            "WHERE modele = ? AND effort = ?",
+            (modele, effort),
+        )[0]
+        return int(ligne["n"]), float(ligne["moyenne"])
+
     def lire(self, cle: str) -> VerdictEnCache | None:
         """Verdict de la clé `cle`, ou `None` s'il n'est pas en cache."""
         lignes = self._lire("SELECT * FROM verdicts WHERE cle = ?", (cle,))

@@ -31,6 +31,7 @@ Requête au Juge : `model`, `max_tokens`, un seul message `user` et `output_conf
 from __future__ import annotations
 
 import logging
+import math
 import re
 import time
 import uuid
@@ -43,7 +44,7 @@ from typing import Any, Final, Literal
 import anthropic
 
 from slmsp.budget.registre import RegistreBudget
-from slmsp.budget.tarifs import UsageTokens, cout_pire_cas, cout_reel
+from slmsp.budget.tarifs import UsageTokens, cout_estime, cout_pire_cas, cout_reel
 from slmsp.core.erreurs import BudgetEpuise, SlmspError
 from slmsp.core.items import ItemBase
 from slmsp.core.ports import JournalRequetes
@@ -64,6 +65,8 @@ from slmsp.net import client as client_reseau
 URL_API: Final = "https://api.anthropic.com"
 NOM_SECRET: Final = "ANTHROPIC_API_KEY"
 PREFIXE_LOT: Final = "slmsp-juge-"
+MIN_VERDICTS_SORTIE_MOYENNE: Final = 20
+"""Verdicts en cache requis pour estimer la sortie par leur moyenne."""
 ECHECS_MAX: Final = 2
 """Sorties non conformes au-delà desquelles le verdict est `invalide`."""
 ERREURS_SONDAGE_TOLEREES: Final = 3
@@ -170,6 +173,17 @@ class RapportJugement:
     resultats: tuple[ResultatJugement, ...]
     budget_epuise: bool
     cout_total_eur: float
+
+
+@dataclass(frozen=True)
+class EstimationCout:
+    """Coût estimé d'une notation, avant tout appel (voir `JugeClaude.estimer`)."""
+
+    nb_demandes: int
+    nb_en_cache: int
+    nb_a_juger: int
+    cout_estime_eur: float
+    cout_pire_cas_eur: float
 
 
 @dataclass(frozen=True)
@@ -309,6 +323,43 @@ class JugeClaude:
                 etat.vers_direct(cle)
         self._juger_en_direct(etat)
         return self._rapport(preparees, etat)
+
+    def estimer(self, demandes: Sequence[DemandeJugement]) -> EstimationCout:
+        """Estime le coût de `demandes` sans appel réseau ni écriture (registre, cache).
+
+        Les verdicts en cache coûtent 0 ; les doublons ne comptent qu'une fois. La sortie
+        estimée est la moyenne des `tokens_sortie` en cache pour le même modèle et le même
+        effort (au moins `MIN_VERDICTS_SORTIE_MOYENNE` verdicts), sinon `max_tokens`.
+        """
+        uniques: dict[str, _Preparee] = {}
+        for demande in demandes:
+            preparee = self._preparer(demande)
+            uniques.setdefault(preparee.cle, preparee)
+        a_juger = [p for cle, p in uniques.items() if self.cache.lire(cle) is None]
+        nb, moyenne = self.cache.sortie_moyenne(self.config.modele, self.config.effort)
+        max_tokens = self.config.max_tokens
+        sortie = (
+            min(max_tokens, math.ceil(moyenne)) if nb >= MIN_VERDICTS_SORTIE_MOYENNE else max_tokens
+        )
+        mode = self.config.mode_appel
+        majoration = self.registre.config.majoration_entree
+        tarifs = self.registre.tarifs
+        estime = sum(
+            cout_estime(tarifs, self.config.modele, mode, p.tokens_estimes, sortie) for p in a_juger
+        )
+        pire = sum(
+            cout_pire_cas(
+                tarifs, self.config.modele, mode, p.tokens_estimes, max_tokens, majoration
+            )
+            for p in a_juger
+        )
+        return EstimationCout(
+            nb_demandes=len(uniques),
+            nb_en_cache=len(uniques) - len(a_juger),
+            nb_a_juger=len(a_juger),
+            cout_estime_eur=estime,
+            cout_pire_cas_eur=pire,
+        )
 
     def _preparer(self, demande: DemandeJugement) -> _Preparee:
         prompt = construire_prompt(demande.item, demande.sortie, self.grille)

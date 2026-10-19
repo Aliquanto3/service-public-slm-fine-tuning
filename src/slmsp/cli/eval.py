@@ -5,9 +5,10 @@
         [--racine DIR]
     slmsp eval run --modele base:granite-4.0-1b --quantification q4_k_m --jeu v1.0
         [--phase generation|toutes] [--variante cpu|cuda] [--items ID,ID…] [--racine DIR]
-        [--mode-juge batch|direct]
+        [--mode-juge batch|direct] [--plafond-estime EUR]
     slmsp eval run --phase generation --reprendre RUN_ID [--racine DIR]
-    slmsp eval run --phase notation --depuis RUN_ID [--mode-juge batch|direct] [--racine DIR]
+    slmsp eval run --phase notation --depuis RUN_ID [--mode-juge batch|direct]
+        [--plafond-estime EUR] [--racine DIR]
     slmsp eval sonde-outils --modele base:<slug> [--jeu calibrage] [--items RD-001,RD-002]
         [--variante cpu|cuda] [--racine DIR]
 
@@ -25,6 +26,9 @@ second juge sur l'échantillon, formules de la grille) dans un run `eval-notatio
 affiche le tableau des Scores de Tâche (« non relu » tant que la relecture n'est pas
 validée). Pas de `--reprendre` pour la notation : la relancer suffit, le cache des verdicts
 évite tout double paiement. `--mode-juge` surcharge le `mode_appel` de `juges.toml`.
+`--plafond-estime EUR` (réel > 0, notation ou toutes) : estime le coût du Juge principal
+avant de créer le run (verdicts en cache à 0, sortie moyenne du cache, tarif du mode) ;
+au-dessus du plafond, code 1 sans run ni appel ; sinon l'estimation est affichée.
 `--phase toutes` (défaut) enchaîne la génération (ou sa reprise) et la notation du run
 produit s'il est `complet` ou `partiel-erreur`.
 
@@ -40,6 +44,7 @@ pour une erreur d'usage, 4 si le jeu est altéré ou si le run repris diffère d
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import sys
 from collections.abc import Callable
@@ -141,6 +146,16 @@ def executer_gel(args: argparse.Namespace) -> int:
 
 
 PHASES: Final = ("generation", "notation", "toutes")
+
+
+def _reel_positif(valeur: str) -> float:
+    try:
+        nombre = float(valeur)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{valeur!r} n'est pas un nombre") from None
+    if not math.isfinite(nombre) or nombre <= 0:
+        raise argparse.ArgumentTypeError("doit être un réel strictement positif")
+    return nombre
 
 
 def _usage_run(message: str) -> int:
@@ -322,7 +337,13 @@ def _phase_notation(args: argparse.Namespace, racine: Path | None) -> int:
         juges = notation.ouvrir_juges(racine, args.mode_juge)
     except ValueError as exc:
         return _usage_run(str(exc))
-    rapport = notation.noter(args.depuis, juges=juges, racine=racine, rapporter=_rapporter_notation)
+    rapport = notation.noter(
+        args.depuis,
+        juges=juges,
+        racine=racine,
+        rapporter=_rapporter_notation,
+        plafond_estime_eur=args.plafond_estime,
+    )
     _afficher_notation(rapport)
     return _code(rapport.statut)
 
@@ -347,6 +368,8 @@ def executer_run(args: argparse.Namespace) -> int:
             return _usage_run(str(exc))
     elif args.mode_juge is not None:
         return _usage_run("--mode-juge sans objet pour --phase generation")
+    elif args.plafond_estime is not None:
+        return _usage_run("--plafond-estime sans objet pour --phase generation")
     rapport = _generation(args, racine)
     if isinstance(rapport, int):
         return rapport
@@ -357,7 +380,11 @@ def executer_run(args: argparse.Namespace) -> int:
         print(f"Notation non lancée : génération au statut {rapport.statut}.", file=sys.stderr)
         return int(CodeSortie.ERREUR)
     resultat = notation.noter(
-        rapport.run.run_id, juges=juges, racine=racine, rapporter=_rapporter_notation
+        rapport.run.run_id,
+        juges=juges,
+        racine=racine,
+        rapporter=_rapporter_notation,
+        plafond_estime_eur=args.plafond_estime,
     )
     _afficher_notation(resultat)
     return _code(resultat.statut)
@@ -498,6 +525,12 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--mode-juge",
         choices=("batch", "direct"),
         help="mode d'appel du Juge principal (défaut : celui de juges.toml)",
+    )
+    run.add_argument(
+        "--plafond-estime",
+        type=_reel_positif,
+        metavar="EUR",
+        help="refuser la notation si le coût estimé du Juge principal dépasse ce plafond (EUR)",
     )
     run.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     run.set_defaults(func=executer_run)
