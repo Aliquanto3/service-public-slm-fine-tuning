@@ -291,7 +291,7 @@ def _renommer_sans_remplacement(
     sortie: Path,
     *,
     borne: float = 60.0,
-    attendre: Callable[[float], None] = time.sleep,
+    attendre: Callable[[float], None] | None = None,
 ) -> None:
     """Renomme sans remplacer (`sortie` absente a été vérifiée).
 
@@ -308,7 +308,8 @@ def _renommer_sans_remplacement(
         except PermissionError:
             if ecoule >= borne:
                 raise
-        attendre(pause)
+        pause = min(pause, borne - ecoule)  # le cumul d'attente ne dépasse jamais `borne`
+        (attendre or time.sleep)(pause)
         ecoule += pause
         pause = min(pause * 2, 8.0)
 
