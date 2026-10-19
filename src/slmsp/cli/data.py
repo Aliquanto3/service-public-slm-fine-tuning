@@ -19,6 +19,10 @@ d'abord le gel commité du Jeu d'évaluation v1.0 (D1.3, code 4), puis les préa
 du jour (D1.2, code 1), avant toute écriture. Les passages des sessions Q viennent de l'Index
 local (BGE-M3 démarré à la première recherche) ; les traces RD passent par `McpEnDirect`
 (profil `outillage`). Appels Mistral payants : commande réservée à la campagne (9.8).
+`--modele-generateur MODELE` remplace `modele_generateur` de `config/mistral.toml` (liste stable
+ou préversion du Générateur ; à la reprise, défaut : le modèle du run). `--taches CR,CT,LC`
+ne génère que ces Tâches ; `--completer-depuis GENERATE_RUN_ID` y ajoute, sans appel, les
+sessions closes des autres Tâches d'un run du même seed (story S5).
 
 `validate --depuis GENERATE_RUN_ID [--racine DIR] [--controle-mistral]` rejoue les traces RD
 sur le Bac à sable et vérifie URL et valeurs de chaque exemple contre ses sources
@@ -116,6 +120,18 @@ def _courriers(valeur: str) -> int | str:
     return _entier_positif_ou_nul(valeur)
 
 
+def _liste_taches(valeur: str) -> list[str]:
+    from slmsp.data.generate import ORDRE_TACHES
+
+    taches = [t.strip() for t in valeur.split(",") if t.strip()]
+    inconnues = [t for t in taches if t not in ORDRE_TACHES]
+    if not taches or inconnues:
+        raise argparse.ArgumentTypeError(
+            f"Tâches attendues parmi {', '.join(ORDRE_TACHES)} : {valeur!r}"
+        )
+    return taches
+
+
 def _fraction(valeur: str) -> float:
     try:
         nombre = float(valeur)
@@ -190,6 +206,25 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         default=0.0,
         metavar="X",
         help="part de sessions planifiées en plus des volumes, dans [0, 1] (défaut : 0)",
+    )
+    g.add_argument(
+        "--modele-generateur",
+        default=None,
+        metavar="MODELE",
+        help="modèle Mistral du Générateur (défaut : modele_generateur de config/mistral.toml)",
+    )
+    g.add_argument(
+        "--taches",
+        type=_liste_taches,
+        default=None,
+        metavar="T1,T2",
+        help="Tâches à générer, séparées par des virgules (nouveau run ; défaut : toutes)",
+    )
+    g.add_argument(
+        "--completer-depuis",
+        default=None,
+        metavar="GENERATE_RUN_ID",
+        help="avec --taches : reprendre sans appel les autres Tâches de ce run du même seed",
     )
     g.set_defaults(func=_generate)
 
@@ -528,7 +563,7 @@ class _RechercheParesseuse:
 def _generate(args: argparse.Namespace) -> int:
     from slmsp.budget.registre import RegistreBudget
     from slmsp.core.items import identifiants_proteges
-    from slmsp.data.generate import lancer_generation, seed_du_run
+    from slmsp.data.generate import lancer_generation, modele_generateur_du_run, seed_du_run
     from slmsp.data.sessions import ResolveurPassages
     from slmsp.evaluation.gel import jeu_gele_et_commite
     from slmsp.mcp.direct import McpEnDirect
@@ -539,11 +574,29 @@ def _generate(args: argparse.Namespace) -> int:
     racine = _racine(args)
     gel = jeu_gele_et_commite("v1.0", racine)  # ManifesteInvalide (code 4) avant tout
     seed_run_id = args.depuis or seed_du_run(args.reprendre, racine=racine)
-    config_mistral = charger_mistral()
+    if args.reprendre and (args.taches or args.completer_depuis):
+        raise ConfigurationInvalide("--taches et --completer-depuis : nouveau run seulement")
+    if args.completer_depuis and not args.taches:
+        raise ConfigurationInvalide("--completer-depuis exige --taches")
+    modele = args.modele_generateur
+    if modele is None and args.reprendre:
+        modele = modele_generateur_du_run(args.reprendre, racine=racine)
+    try:
+        config_mistral = charger_mistral().pour_generateur(modele)
+    except ValueError as exc:
+        raise ConfigurationInvalide(f"config/mistral.toml : {exc}") from None
+    preversion = config_mistral.preversion
     dossier = racine_projet() / "config"
     fichier_donnees = dossier / "donnees.toml"
     # Préalables D1.2 (code 1) avant d'ouvrir le registre de budget ou le journal.
-    charger_prealables(fichier_donnees, modele=config_mistral.modele, aujourd_hui=date.today())
+    charger_prealables(
+        fichier_donnees,
+        modele=config_mistral.modele,
+        aujourd_hui=date.today(),
+        preversions=() if preversion is None else (preversion,),
+    )
+    if preversion is not None:
+        _consigner(f"Générateur sur la préversion {preversion} (MANIFEST : generateur_preversion)")
     config = charger_config_donnees()
     proteges = identifiants_proteges(versions_protegees(racine), racine=racine)
     passages = ResolveurPassages()
@@ -573,6 +626,8 @@ def _generate(args: argparse.Namespace) -> int:
             surplus=args.surplus,
             chemin_outils=dossier / "outils-mcp.toml",
             consigner=_consigner,
+            taches=args.taches,
+            completer_depuis=args.completer_depuis,
         )
     finally:
         recherche.fermer()
@@ -612,6 +667,8 @@ def _afficher_rapport(rapport: Mapping[str, Any], run_id: str, statut: str, doss
             f"{tache} : {ligne['retenus']}/{ligne['exemples']} retenus, "
             f"taux de rejet {ligne['taux_rejet']:.1%} ({motifs})"
         )
+    for tache, comptes in rapport.get("observations", {}).items():
+        print(f"{tache} : observations {', '.join(f'{o} {n}' for o, n in comptes.items())}")
     print(f"run {run_id} ({statut}) : {dossier}")
     if statut == "partiel-budget":
         return int(CodeSortie.BUDGET_EPUISE)

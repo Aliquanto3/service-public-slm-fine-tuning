@@ -60,6 +60,7 @@ from slmsp.core.schemas.amorce import Amorce, texte_mistral_conforme
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.run import MOTIF_RUN_ID
 from slmsp.mistral.client import ClientMistral, ModeleMistralRefuse, ReponseMistral
+from slmsp.mistral.config import preversion_admise
 from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, LigneAppel, journal_pour
 
 __all__ = [
@@ -150,21 +151,38 @@ class _FichierGenerateur(BaseModel):
 
 @dataclass(frozen=True)
 class PrealablesGeneration:
-    """Préalables lus et vérifiés : date de vérification des conditions, liste stable."""
+    """Préalables lus et vérifiés : date de vérification des conditions, liste stable, et
+    préversion admise pour ce Générateur (story S5)."""
 
     fichier: Path
     conditions_verifiees_le: date
     modeles_stables: tuple[str, ...]
+    modeles_preversion: tuple[str, ...] = ()
+    motifs_interdits: tuple[str, ...] = ()
+
+    def admet(self, modele: str | None) -> bool:
+        """Vrai si `modele` (résolu) est stable, ou est la préversion admise ou l'un de ses
+        identifiants `<préversion>-<version numérique>` sans motif interdit."""
+        return modele is not None and (
+            modele in self.modeles_stables
+            or preversion_admise(modele, self.modeles_preversion, self.motifs_interdits)
+        )
 
 
 def charger_prealables(
-    fichier: str | Path, *, modele: str, aujourd_hui: date
+    fichier: str | Path,
+    *,
+    modele: str,
+    aujourd_hui: date,
+    preversions: Sequence[str] = (),
+    motifs_interdits: Sequence[str] = (),
 ) -> PrealablesGeneration:
     """Lit la table `[mistral]` de `fichier` et vérifie les préalables D1.2.
 
     Lève `PrealableNonSatisfait` si le fichier ou la table manque ou est invalide, si
-    `conditions_verifiees_le` n'est pas `aujourd_hui`, ou si `modele` n'est pas dans
-    `modeles_stables`.
+    `conditions_verifiees_le` n'est pas `aujourd_hui`, ou si `modele` n'est ni dans
+    `modeles_stables` ni dans `preversions` (préversion admise pour le Générateur seul, liste
+    `modeles_preversion_generateur` de `config/mistral.toml`).
     """
     chemin = Path(fichier)
     try:
@@ -187,7 +205,7 @@ def charger_prealables(
             f"{chemin} : conditions Mistral vérifiées le {table.conditions_verifiees_le}, "
             f"pas aujourd'hui ({aujourd_hui}) : génération refusée"
         )
-    if modele not in table.modeles_stables:
+    if modele not in table.modeles_stables and modele not in preversions:
         raise PrealableNonSatisfait(
             f"{chemin} : modèle {modele!r} absent de modeles_stables : génération refusée"
         )
@@ -195,6 +213,8 @@ def charger_prealables(
         fichier=chemin,
         conditions_verifiees_le=table.conditions_verifiees_le,
         modeles_stables=tuple(table.modeles_stables),
+        modeles_preversion=tuple(preversions),
+        motifs_interdits=tuple(motifs_interdits),
     )
 
 
@@ -384,8 +404,13 @@ class Generateur:
         self._rendre_passages = rendre_passages
         self._outils: list[dict[str, Any]] | None = None
         self._aujourd_hui = aujourd_hui
+        preversion = client.config.preversion
         self.prealables = charger_prealables(
-            self.fichier_donnees, modele=client.config.modele, aujourd_hui=aujourd_hui()
+            self.fichier_donnees,
+            modele=client.config.modele,
+            aujourd_hui=aujourd_hui(),
+            preversions=() if preversion is None else (preversion,),
+            motifs_interdits=tuple(client.config.motifs_interdits),
         )
         self.seed_run_id = seed_run_id
         self._amorces = self._charger_amorces(seed_run_id)
@@ -542,7 +567,7 @@ class Generateur:
             ligne is not None
             and ligne.usage == USAGE_GENERATION
             and ligne.statut == "ok"
-            and ligne.modele_resolu in self.prealables.modeles_stables
+            and self.prealables.admet(ligne.modele_resolu)
         )
 
     def _verifier_amorce_mistral(self, amorce: Amorce, journal: JournalMistral) -> None:
@@ -562,8 +587,9 @@ class Generateur:
         self, gabarit_id: str, amorce_ids: Sequence[str], session_id: str, tache: str
     ) -> LigneAppel | None:
         """Première ligne admise du journal de `session_id` pour ce gabarit (identifiant,
-        version, SHA) et ces amorces, sans message précédent : la reprise la réutilise au
-        lieu d'appeler Mistral. `None` s'il n'y en a pas."""
+        version, SHA) et ces amorces, sans message précédent, demandée au modèle du client
+        (story S5 : un autre modèle du Générateur ne réutilise pas les réponses d'un autre) :
+        la reprise la réutilise au lieu d'appeler Mistral. `None` s'il n'y en a pas."""
         gabarit = self._gabarit(gabarit_id, tache)[0]
         journal = self._journal()
         if not journal.chemin.is_file():
@@ -576,6 +602,7 @@ class Generateur:
                 == (gabarit.id, gabarit.version, gabarit.sha256)
                 and ligne.amorce_ids == ids
                 and ligne.reponse_brute is not None
+                and ligne.modele_demande == self.client.config.modele
             ):
                 return ligne
         return None
@@ -832,7 +859,7 @@ class Generateur:
             tools=outils,
             tool_choice=TOOL_CHOICE if outils is not None else None,
         )
-        if reponse.modele_resolu not in self.prealables.modeles_stables:
+        if not self.prealables.admet(reponse.modele_resolu):
             raise ModeleMistralRefuse(
                 f"modèle résolu {reponse.modele_resolu!r} absent de modeles_stables "
                 f"({self.prealables.fichier.name}) ; appel {reponse.appel_id} journalisé"

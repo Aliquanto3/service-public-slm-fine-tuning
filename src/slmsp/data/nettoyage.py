@@ -3,7 +3,8 @@
 `lancer_nettoyage` lit le jeu SFT d'un run `data-build` (SHA revérifié contre son MANIFEST,
 comme `preferences._jeu_sft`) et écrit une **nouvelle version** `data/train/vN/` :
 
-1. préambule « Voici … » puis titre de tête (story 9.10) retirés de la réponse cible
+1. préambule « Voici … » puis titre de tête (story 9.10 ; sauf CR et CT en version 3) retirés
+   de la réponse cible
    (`core.nettoyage.nettoyer_cible`, version `VERSION_NETTOYAGE`) ;
 2. cible de plus de `plafond_tokens` tokens (plafond de génération de l'évaluation, tokenizer
    du Modèle de base) **écartée**, jamais tronquée (motif `longueur`, `ecartes.jsonl`) ;
@@ -317,7 +318,7 @@ def _nettoyer(
         comptes[tache]["avant"] += 1
         cible = cible_nettoyable(ligne)
         if cible is not None:
-            texte, statut, titre = analyser_cible(cible["content"], VERSION_NETTOYAGE)
+            texte, statut, titre = analyser_cible(cible["content"], VERSION_NETTOYAGE, tache)
             if statut is not None:
                 comptes[tache][_STATUTS[statut]] += 1
             comptes[tache]["titres_retires"] += titre

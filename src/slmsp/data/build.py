@@ -540,6 +540,7 @@ def lancer_build(
         if tache != "generique"
     }
     mistral = config.mistral
+    modeles_generateurs = sorted({m for ligne in lignes for m in ligne.meta.generateur.split("+")})
     manifeste = ManifesteJeuEntrainement(
         version=version,
         variante=variante,  # type: ignore[arg-type]
@@ -562,9 +563,8 @@ def lancer_build(
             url=mistral.conditions_url,
             sha256=mistral.conditions_sha256,
         ),
-        modeles_generateurs=sorted(
-            {m for ligne in lignes for m in ligne.meta.generateur.split("+")}
-        ),
+        modeles_generateurs=modeles_generateurs,
+        generateur_preversion=any(m not in mistral.modeles_stables for m in modeles_generateurs),
         version_extracteur=VERSION_EXTRACTEUR,
         mode_outils=MODE_OUTILS,
     )

@@ -7,6 +7,7 @@ la casse). Les deux journaux d'appels sont des fichiers distincts de `SLMSP_VAR_
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Annotated, Final, Literal
 
@@ -27,6 +28,27 @@ def motif_interdit(modele: str, motifs: list[str] | tuple[str, ...]) -> str | No
         if motif.casefold() in nom:
             return motif
     return None
+
+
+_RE_SUFFIXE_VERSION: Final = re.compile(r"(?:-\d+)+")
+"""Suffixe de version admis après le nom d'une préversion : `-0`, `-2610`, `-4-0`…"""
+
+
+def preversion_admise(
+    modele: str,
+    preversions: tuple[str, ...] | list[str],
+    motifs: tuple[str, ...] | list[str] = (),
+) -> bool:
+    """Vrai si `modele` (demandé ou résolu) est exactement une des `preversions`, ou l'une
+    d'elles suivie d'un suffixe de version numérique (`-2610`, `-4-0` : identifiant daté
+    renvoyé par l'API) sans aucun des `motifs` interdits. `mistral-large-4-preview-beta` n'est
+    donc pas admis : seul le nom exact listé échappe aux motifs."""
+    if modele in preversions:
+        return True
+    return motif_interdit(modele, motifs) is None and any(
+        modele.startswith(p) and _RE_SUFFIXE_VERSION.fullmatch(modele[len(p) :]) is not None
+        for p in preversions
+    )
 
 
 def _nom_de_fichier(nom: str, cle: str) -> None:
@@ -53,6 +75,10 @@ class ConfigMistral(ModeleConfig):
     attente_plafond: float = Field(default=60.0, gt=0, allow_inf_nan=False)
     fichier_journal_donnees: Nom
     fichier_journal_juge: Nom
+    modele_generateur: Nom | None = None
+    """Modèle demandé par le Générateur (`data generate`) ; `None` : celui de `modele`."""
+    modeles_preversion_generateur: list[Nom] = Field(default_factory=list)
+    """Préversions admises pour le Générateur seul (story S5), hors de la liste stable."""
 
     @model_validator(mode="after")
     def _coherence(self) -> ConfigMistral:
@@ -61,6 +87,16 @@ class ConfigMistral(ModeleConfig):
         motif = motif_interdit(self.modele, self.motifs_interdits)
         if motif is not None:
             raise ValueError(f"le modèle {self.modele!r} contient le motif interdit {motif!r}")
+        communs = set(self.modeles_preversion_generateur) & set(self.modeles_autorises)
+        if communs:
+            raise ValueError(
+                "modeles_preversion_generateur et modeles_autorises se recoupent : "
+                f"{sorted(communs)}"
+            )
+        if self.modele_generateur is not None:
+            refus = self.refus_generateur(self.modele_generateur)
+            if refus is not None:
+                raise ValueError(f"modele_generateur {self.modele_generateur!r} : {refus}")
         _nom_de_fichier(self.fichier_journal_donnees, "fichier_journal_donnees")
         _nom_de_fichier(self.fichier_journal_juge, "fichier_journal_juge")
         if self.fichier_journal_donnees.casefold() == self.fichier_journal_juge.casefold():
@@ -74,8 +110,42 @@ class ConfigMistral(ModeleConfig):
             )
         return self
 
+    @property
+    def preversion(self) -> str | None:
+        """Préversion demandée par cette configuration (celle du Générateur, après
+        `pour_generateur`), sinon `None`."""
+        return self.modele if self.modele in self.modeles_preversion_generateur else None
+
+    def refus_generateur(self, modele: str) -> str | None:
+        """Motif de refus de `modele` comme modèle demandé du Générateur : liste stable, ou
+        liste des préversions du Générateur."""
+        if modele in self.modeles_preversion_generateur:
+            return None
+        return self.refus_modele(modele)
+
+    def pour_generateur(self, modele: str | None = None) -> ConfigMistral:
+        """Copie de la configuration dont `modele` est celui du Générateur : `modele` s'il est
+        donné (option `--modele-generateur`), sinon `modele_generateur`, sinon `modele`.
+
+        Lève `ValueError` si ce modèle n'est ni stable ni une préversion du Générateur. La
+        copie sert au seul client du Générateur, jamais au second juge.
+        """
+        choisi = modele or self.modele_generateur or self.modele
+        refus = self.refus_generateur(choisi)
+        if refus is not None:
+            raise ValueError(f"modèle du Générateur {choisi!r} refusé ({refus})")
+        return self.model_copy(update={"modele": choisi})
+
     def refus_modele(self, modele: str) -> str | None:
-        """Motif de refus de `modele` (absent de la liste stable, ou motif interdit)."""
+        """Motif de refus de `modele` (absent de la liste stable, ou motif interdit).
+
+        Pour une configuration de préversion (`preversion`), la préversion et ses identifiants
+        résolus `<préversion>-<version numérique>` sans motif interdit sont admis en plus de la
+        liste stable."""
+        if self.preversion is not None and preversion_admise(
+            modele, (self.preversion,), self.motifs_interdits
+        ):
+            return None
         if modele not in self.modeles_autorises:
             return "absent de modeles_autorises"
         motif = motif_interdit(modele, self.motifs_interdits)

@@ -1,8 +1,9 @@
 """Nettoyage déterministe des cibles d'un jeu SFT (story 9.9) : transformation pure et preuve.
 
 `nettoyer_cible` retire la ligne de préambule « Voici … » d'une réponse cible (version 1), puis
-une première ligne qui n'est qu'un titre (version 2, story 9.10), rien d'autre (D1 : aucun
-texte n'est rédigé ni réécrit). Chaque jeu nettoyé se revérifie avec la règle de sa version
+une première ligne qui n'est qu'un titre (version 2, story 9.10), sauf pour les Tâches CR et CT
+dont la tête est une section ou un bloc obligatoire (version 3, story S5), rien d'autre (D1 :
+aucun texte n'est rédigé ni réécrit). Chaque jeu nettoyé se revérifie avec la règle de sa version
 (MANIFEST `nettoyage.version`) : un jeu de version 1 (v4) reste vérifiable.
 
 `verifier_nettoyage` prouve qu'un jeu nettoyé ne
@@ -27,20 +28,27 @@ from slmsp.core.erreurs import ProvenanceInvalide
 __all__ = [
     "VERSION_NETTOYAGE",
     "VERSIONS_NETTOYAGE",
+    "TACHES_TETE_GARDEE",
     "analyser_preambule",
     "analyser_cible",
     "analyser_titre",
     "cible_nettoyable",
+    "tache_de",
     "ligne_nettoyee",
     "nettoyer_cible",
     "verifier_nettoyage",
 ]
 
-VERSION_NETTOYAGE: Final = 2
+VERSION_NETTOYAGE: Final = 3
 """Version courante de `nettoyer_cible` : une autre règle change ce numéro (MANIFEST
-`nettoyage`). 1 : préambule « Voici » ; 2 : préambule puis titre de tête."""
-VERSIONS_NETTOYAGE: Final = frozenset({1, 2})
+`nettoyage`). 1 : préambule « Voici » ; 2 : préambule puis titre de tête ; 3 : comme 2, sans
+retrait du titre de tête pour les Tâches de `TACHES_TETE_GARDEE`."""
+VERSIONS_NETTOYAGE: Final = frozenset({1, 2, 3})
 """Versions que `nettoyer_cible` sait rejouer (revérification des jeux déjà nettoyés)."""
+
+TACHES_TETE_GARDEE: Final = frozenset({"CR", "CT"})
+"""Tâches dont la première ligne n'est jamais retirée comme titre en version 3 : le titre de
+la section Participants d'un CR, le bloc expéditeur d'un CT (story S5)."""
 
 Preambule = Literal["retire", "garde", "seul"]
 
@@ -114,25 +122,32 @@ def analyser_titre(texte: str) -> tuple[str, bool]:
 
 
 def analyser_cible(
-    texte: str, version: int = VERSION_NETTOYAGE
+    texte: str, version: int = VERSION_NETTOYAGE, tache: str | None = None
 ) -> tuple[str, Preambule | None, bool]:
     """`(texte nettoyé, statut du préambule, titre retiré)` selon la règle de `version`.
 
     Version 1 : préambule seul (`analyser_preambule`). Version 2 : préambule, puis titre de
-    tête (`analyser_titre`) sur le texte restant. Lève `ValueError` pour une autre version.
+    tête (`analyser_titre`) sur le texte restant. Version 3 : comme 2, sauf pour une `tache`
+    de `TACHES_TETE_GARDEE` (préambule seul). Lève `ValueError` pour une autre version.
     """
     if version not in VERSIONS_NETTOYAGE:
         raise ValueError(f"version de nettoyage {version} inconnue")
     texte, statut = analyser_preambule(texte)
-    if version == 1:
+    if version == 1 or (version >= 3 and tache in TACHES_TETE_GARDEE):
         return texte, statut, False
     texte, titre = analyser_titre(texte)
     return texte, statut, titre
 
 
-def nettoyer_cible(texte: str, version: int = VERSION_NETTOYAGE) -> str:
-    """`texte` nettoyé selon la règle de `version` (`analyser_cible`)."""
-    return analyser_cible(texte, version)[0]
+def nettoyer_cible(texte: str, version: int = VERSION_NETTOYAGE, tache: str | None = None) -> str:
+    """`texte` de la Tâche `tache` nettoyé selon la règle de `version` (`analyser_cible`)."""
+    return analyser_cible(texte, version, tache)[0]
+
+
+def tache_de(ligne: dict[str, Any]) -> str | None:
+    """Tâche de la ligne SFT `ligne` (champ `tache`), `None` si absente."""
+    tache = ligne.get("tache")
+    return tache if isinstance(tache, str) else None
 
 
 def cible_nettoyable(ligne: dict[str, Any]) -> dict[str, Any] | None:
@@ -147,11 +162,12 @@ def cible_nettoyable(ligne: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def ligne_nettoyee(octets: bytes, version: int = VERSION_NETTOYAGE) -> bytes:
-    """JSON canonique de la ligne source `octets`, cible passée par `nettoyer_cible`."""
+    """JSON canonique de la ligne source `octets`, cible passée par `nettoyer_cible` avec la
+    Tâche de la ligne (champ `tache`)."""
     ligne = json.loads(octets)
     cible = cible_nettoyable(ligne) if isinstance(ligne, dict) else None
     if cible is not None:
-        cible["content"] = nettoyer_cible(cible["content"], version)
+        cible["content"] = nettoyer_cible(cible["content"], version, tache_de(ligne))
     return json_canonique(ligne)
 
 

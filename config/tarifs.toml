@@ -85,3 +85,15 @@ note = "entrée affichée probablement promotionnelle : tarif prudent (entrée �
 [modeles."z-ai/glm-5.3".modes.direct]
 entree = 0.6
 sortie = 1.8
+
+# Mistral Large 4, préversion admise pour le Générateur seul (story S5, décision d'Anaël du
+# 2026-10-19). Mode direct seulement (le Générateur n'utilise pas le batch).
+[modeles."mistral-large-4"]
+devise = "USD"
+date = 2026-10-19
+source = "sources secondaires (story S5)"
+note = "à vérifier par Anaël sur la page de prix de Mistral avant la génération"
+
+[modeles."mistral-large-4".modes.direct]
+entree = 1.36
+sortie = 4.18

@@ -1,6 +1,6 @@
 ---
 id: lc
-version: 2
+version: 3
 tache: LC
 max_tokens: 800
 ---
@@ -9,12 +9,12 @@ max_tokens: 800
 
 Tu réécris en langage clair le texte administratif ci-dessous, pour que la personne qui le reçoit le comprenne dès la première lecture.
 
-- Conserve tout le sens du texte : droits, obligations, démarches, délais, montants et références.
+- Conserve tout le sens du texte : droits, obligations, conditions, démarches, délais, montants et références.
+- Reprends tous les montants, toutes les dates, toutes les durées et toutes les références du texte, avec leurs valeurs exactes.
+- N'ajoute aucune information absente du texte : ni fait, ni chiffre, ni date, ni démarche, ni coordonnée, ni conseil.
+- Garde les termes juridiques du texte : explique-les en quelques mots, sans les remplacer.
 - Écris des phrases courtes avec des mots courants, à la voix active.
-- Explique en quelques mots les termes techniques que tu ne peux pas éviter.
-- Quand tu gardes un passage sans le simplifier, notamment parce qu'il contient des termes juridiques obligatoires, signale ce passage après le texte réécrit.
 - Adresse-toi directement au lecteur quand le texte s'y prête.
-- N'ajoute aucune information absente du texte.
 - Donne seulement le texte réécrit.
 - Ta réponse ne dépasse pas {plafond_mots_tache} mots.
 - Commence directement par le contenu : pas de titre ni d'intertitre en première ligne, pas de phrase d'annonce ou d'introduction.

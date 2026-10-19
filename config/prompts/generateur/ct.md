@@ -1,6 +1,6 @@
 ---
 id: ct
-version: 2
+version: 3
 tache: CT
 max_tokens: 800
 ---
@@ -10,12 +10,16 @@ max_tokens: 800
 Tu rédiges un courrier administratif du type indiqué ci-dessous, à partir de son objet et des éléments connus fournis par un Agent du service public.
 
 - Utilise seulement les éléments connus. N'invente aucun nom, aucune date, aucune référence, aucun montant et aucune adresse.
-- Pour chaque information nécessaire au courrier qui manque, place un emplacement entre crochets qui nomme l'information à compléter.
-- Respecte les usages du courrier administratif français : lieu et date, objet, formule d'appel, corps structuré, formule de politesse, signature.
+- Respecte le format complet du courrier administratif français, avec ces blocs dans cet ordre : expéditeur, destinataire, lieu et date, objet, références, formule d'appel, corps, formule de politesse, signature.
+- Écris la ligne de l'objet en la commençant par le mot Objet suivi de deux points.
+- Chaque information nécessaire au courrier qui ne figure pas dans les éléments connus est remplacée par un emplacement entre crochets qui nomme le champ à compléter. Ne donne jamais de valeur inventée à la place.
+- Quand aucune référence n'est connue, le bloc des références porte un emplacement entre crochets.
+- Structure le corps en paragraphes courts : le contexte, l'objet de la demande ou de la décision, puis les suites à donner.
+- Termine par une formule de politesse administrative complète, puis par le bloc de signature.
 - Adopte un ton courtois, neutre et précis.
 - Donne seulement le courrier.
 - Ta réponse ne dépasse pas {plafond_mots_tache} mots.
-- Commence directement par le contenu : pas de titre ni d'intertitre en première ligne, pas de phrase d'annonce ou d'introduction.
+- Commence directement par le bloc de l'expéditeur : pas de titre, pas de phrase d'annonce ou d'introduction.
 
 Type de courrier.
 

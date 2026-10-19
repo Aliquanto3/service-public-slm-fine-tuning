@@ -181,6 +181,9 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     sha_outils_mcp: Sha256
     conditions_mistral: ConditionsMistral
     modeles_generateurs: list[str]
+    generateur_preversion: bool = Field(default=False, exclude_if=lambda v: not v)
+    """Story S5 : vrai si un modèle de `modeles_generateurs` (identifiants exacts renvoyés par
+    l'API) est hors de la liste stable (`modeles_stables`) : préversion du Générateur."""
     version_extracteur: int = Field(ge=1)
     mode_outils: Literal["local", "connecte"] = "local"
     """Début de conversation des Tâches à outils : `local` (v1, « Passages… / Demande : … »

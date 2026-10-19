@@ -26,6 +26,9 @@ MotifValidation = Literal[
     "valeur_absente",
     "infidele",
     "longueur_depassee",
+    "cr_sections_manquantes",
+    "ct_format_incomplet",
+    "lc_valeur_perdue",
 ]
 MotifFiltre = Literal["fuite_ngram", "fuite_cosinus", "doublon"]
 MOTIFS_VALIDATION: Final[tuple[str, ...]] = get_args(MotifValidation)

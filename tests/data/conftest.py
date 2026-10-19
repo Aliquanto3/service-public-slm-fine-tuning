@@ -75,6 +75,15 @@ source = "test"
 [modeles."mistral-large-latest".modes.direct]
 entree = 1.0
 sortie = 1.0
+
+[modeles."mistral-large-4"]
+devise = "USD"
+date = 2026-10-19
+source = "test"
+
+[modeles."mistral-large-4".modes.direct]
+entree = 1.0
+sortie = 1.0
 """
 
 
@@ -259,6 +268,8 @@ class Monde:
     proteges: IdentifiantsProteges
     plafond: float = 25.0
     jours: list[date] = field(default_factory=lambda: [JOUR])
+    modele_generateur: str | None = None
+    """Modèle du Générateur (`ConfigMistral.pour_generateur`) ; `None` : celui de la config."""
 
     # --- Seed --------------------------------------------------------------------------
 
@@ -360,7 +371,11 @@ class Monde:
         env = dossier / ".env"
         env.write_text("MISTRAL_API_KEY=cle-mistral-factice\n", encoding="utf-8")
         # Sans réessai : une erreur simulée arrête le pipeline (relances : tests/mistral).
-        config = charger_mistral().model_copy(update={"reessais_max": 0})
+        config = (
+            charger_mistral()
+            .pour_generateur(self.modele_generateur)
+            .model_copy(update={"reessais_max": 0})
+        )
         sdk = fabriquer_sdk(
             config,
             transport_interne=httpx2.MockTransport(self.faux),

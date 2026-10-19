@@ -89,9 +89,51 @@ def test_consignes_de_longueur_et_de_forme(nom: str) -> None:
         else "- Ta réponse ne dépasse pas {plafond_mots_tache} mots."
     )
     assert gabarit.consigne.count(longueur) == 1
-    assert "- Commence directement par le contenu : pas de titre" in gabarit.consigne
-    assert gabarit.version == (3 if nom == "traces-rd" else 2)
+    forme = {
+        "cr": "- Commence directement par le titre de la section Participants : pas de titre",
+        "ct": "- Commence directement par le bloc de l'expéditeur : pas de titre",
+    }.get(nom, "- Commence directement par le contenu : pas de titre")
+    assert gabarit.consigne.count(forme) == 1
+    assert gabarit.version == (3 if nom in ("traces-rd", *REFONDUS_S5) else 2)
     assert int(gabarit.front_matter["max_tokens"]) == (1600 if nom == "cr" else 800)
+
+
+REFONDUS_S5 = ("cr", "ct", "lc")
+CONSIGNES_S5 = {
+    "cr": (
+        "- Organise le compte rendu en quatre sections, dans cet ordre, chacune ouverte par son "
+        "titre seul sur sa ligne : Participants, Points abordés, Décisions, Actions.",
+        "Un point discuté sans décision n'y figure pas et n'est jamais présenté comme décidé.",
+        "chacune avec son responsable et son échéance quand la transcription les donne",
+    ),
+    "ct": (
+        "avec ces blocs dans cet ordre : expéditeur, destinataire, lieu et date, objet, "
+        "références, formule d'appel, corps, formule de politesse, signature.",
+        "est remplacée par un emplacement entre crochets qui nomme le champ à compléter. Ne "
+        "donne jamais de valeur inventée à la place.",
+    ),
+    "lc": (
+        "- Reprends tous les montants, toutes les dates, toutes les durées et toutes les "
+        "références du texte, avec leurs valeurs exactes.",
+        "- N'ajoute aucune information absente du texte",
+        "- Garde les termes juridiques du texte : explique-les en quelques mots, sans les "
+        "remplacer.",
+        "- Écris des phrases courtes avec des mots courants",
+    ),
+}
+
+
+@pytest.mark.parametrize("nom", REFONDUS_S5)
+def test_consignes_s5(nom: str) -> None:
+    """Story S5 : consignes de structure (CR, CT) et de fidélité (LC), sans amorce ni exemple
+    (aucun crochet ni emplacement d'exemple dans le gabarit, D1)."""
+    gabarit = valider_gabarit(DOSSIER / f"{nom}.md", cles_optionnelles=("max_tokens",))
+    for consigne in CONSIGNES_S5[nom]:
+        assert gabarit.consigne.count(consigne) == 1, consigne
+    texte = (DOSSIER / f"{nom}.md").read_text(encoding="utf-8")
+    assert "[" not in texte and "]" not in texte
+    if nom == "cr":
+        assert "pas de titre ni d'intertitre en première ligne" not in gabarit.consigne
 
 
 @pytest.mark.parametrize("nom", ("re",))
