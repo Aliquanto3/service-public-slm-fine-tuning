@@ -27,7 +27,9 @@ modeles_preversion_generateur = ["mistral-large-4"]
 # Mistral Large 4 raisonne : ses tokens de raisonnement comptent dans `max_tokens`. Marge
 # ajoutée au `max_tokens` de chaque gabarit pour un Générateur de préversion seulement (0 pour
 # un modèle stable), reprise dans l'estimation de coût affichée avant génération.
-marge_raisonnement_generateur = 4000
+# Relevée à 9000 le 2026-10-20 : le gabarit `cr` consomme 4 000 à 5 600 tokens de raisonnement
+# (journal des appels), d'où une réponse sur deux tronquée avec 4000.
+marge_raisonnement_generateur = 9000
 
 # Motifs refusés dans un nom de modèle, demandé ou résolu (sous-chaîne, insensible à la
 # casse) : modèles Labs, préversions, bêtas, candidats et modèles expérimentaux.
