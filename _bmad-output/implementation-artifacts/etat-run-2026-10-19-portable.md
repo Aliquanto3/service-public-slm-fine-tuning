@@ -20,13 +20,13 @@ Point de reprise après `/clear`. Il fait suite à `etat-run-2026-10-18-portable
 ## En cours
 Voir la section « Journal de la nuit » ci-dessous, tenue à jour.
 
-## Reste à faire
-- L'extra `gdn` n'est **pas encore installé** dans le venv. Il le sera après la campagne MiniCPM5-2B : triton pourrait changer le chemin de bitsandbytes ou d'accelerate, et fausser la comparaison entre M1, M3 et M4. Commande : `uv sync --extra data --extra judge --extra bench --extra train --extra gdn --extra app`. Viendront ensuite les mesures GPU de B1 et B2 : `train sonde-env --modele qwen3.5-2b --precision-base bf16 --longueurs 2048,4096,8192`, la même pour 0.8b, puis un court `train run` SFT.
-- Story B3 (export multimodal) : voir le journal.
-- Mesures CPU du décodage spéculatif. Elles attendent que le GPU et le CPU soient libres.
-- Granite 1B : retenir la plus grande longueur qui tient, entre 2048 et 4096 (sonder 3072), puis ajuster `m*-granite-4.0-1b-v2.toml`.
-- Points restés ouverts au fichier du 18 : story de cache lm_eval, 9.8, `verifie_le` des licences, micro_lot, bug json-generique, v0.2.0.
-- Arrêter le bloqueur de veille une fois le GPU et les mesures terminés.
+## Reste à faire (mis à jour le 19 à 11 h 13)
+Fait le 19 : extra gdn, sondes Qwen3.5 et essai B2, sonde Granite 3072, stories 9.9 (nettoyage v4), 10.9 (invariant ORPO) et micro_lot fusionnées, v4 et paires v5, M1 v4 entraîné et exporté, mesures CPU du spéculatif. Suite complète verte en fin de journée : 5 321 passés.
+- **Attend Anaël — incident de coût** : vérifier dans la console Anthropic qu'aucun lot n'a été créé vers 10 h 03 ; si oui, libérer les réservations 2593 et 2594 de `budget.sqlite` (8,67 € en pire cas) ; puis noter les 5 tâches manquantes de M1 v4 (`runs/eval-generation/20261019-091155-ft-minicpm5-2b-ee96`). Vérifier que `eval run --reprendre` rejoue les items `non-juge` (`erreur-api`).
+- **Ensuite, selon le score de M1 v4** : M3 DoRA v4 (`config/runs/m3-dora-minicpm5-2b-v4.toml`, prêt), M4 ORPO à 2048 sur v5 (campagne à part, TOML à écrire ; RD n'a que 11 paires). Sinon, pistes du journal (titres en gras, longueur des cibles).
+- Stories proposées (incident) : journaliser l'erreur de création d'un lot du juge ; pire cas estimé par item ; garde-fou de coût avant notation.
+- Points restés ouverts au fichier du 18 : story de cache lm_eval, 9.8, `verifie_le` des licences, bug json-generique, v0.2.0. À vérifier à la prochaine `index verifier-embedding` : aucun avertissement « texte tronqué » (micro_lot 1536).
+- Bloqueur de veille : **laissé actif** tant que la notation de M1 v4 attend la décision d'Anaël (elle se ferait sur ce PC). L'arrêter ensuite (tâche de fond PowerShell `veille.ps1`).
 
 ## Résultat principal : le fine-tuning dégrade MiniCPM5-2B (à arbitrer par Anaël)
 | Tâche | Baseline | M1 QLoRA | M3 DoRA |
@@ -84,6 +84,7 @@ Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campa
 - 2026-10-19 11:01 · mesures CPU spéculatif · minicpm5-2b q4_k_m. **aucun** : 15,0 tokens/s (médiane), premier token 0,55 s, RAM max 4,13 Go (`runs/measure/20261019-104021-h-ram-cc2c`). **brouillon minicpm5-1b** : 8,0 tokens/s, acceptation 56 %, RAM 5,59 Go (`…-104607-h-ram-3d8d`). **ngram** : 12,7 tokens/s, acceptation 18 %, RAM 4,15 Go (`…-105555-h-ram-cc1e`). Conclusion : sur CPU, le spéculatif **ralentit** et le brouillon dépasse le plafond de RAM (5 Go) : à écarter pour le déploiement.
 - 2026-10-19 11:02 · micro_lot · rebasée, tests ciblés verts (686), **fusionnée** (516b9e5). Suite complète de fin de journée lancée. Analyse des sorties M1 v4 / M1 v2 / Baseline lancée (lookup, sans appel).
 - 2026-10-19 11:02 · analyse des sorties (lookup, sans appel) · médiane de longueur, toutes tâches : M1 v4 1 510 car., M1 v2 1 476, Baseline 708. Troncatures (plafond 1 024) : 40, 40 et 14 (CR 23 / 22 / 12 ; CT 7 / 10 / 0). « Voici » en tête : 1, 93 et 31 ; titre en gras en tête : **144**, 116 et 27 (Q : 44 / 18 / 0). Constats : (1) le nettoyage supprime bien le préambule, mais le modèle ouvre maintenant par un titre en gras, car les cibles v4 commencent souvent par un intertitre `**…**` après le retrait ; (2) l'allongement persiste, CR compris alors que v4 n'a plus de CR : c'est le style des cibles (Q, LC, RD de 1 000 à 1 600 car.) qui se généralise ; (3) CT reste deux fois plus long que la Baseline (1 869 contre 694). Runs : `…-091155-…-ee96` (v4), `20261019-031034-ft-minicpm5-2b-ba05` (v2), `20261018-105808-minicpm5-2b-2c91` (Baseline).
+- 2026-10-19 11:13 · main · suite complète de fin de journée verte : 5 321 passés, 13 ignorés (10 min 40). Bloqueur de veille laissé actif (notation en attente d'Anaël).
 - 2026-10-19 08:15 · 9.9 nettoyage · spec révisée d'après Opus (93f6831) ; dev lancé (Opus, story à risque D1), worktree `slmsp-wt/nettoyage-v4`.
 
 ## Journal de la nuit
