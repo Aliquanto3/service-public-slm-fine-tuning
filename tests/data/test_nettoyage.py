@@ -116,7 +116,7 @@ def test_version_2_preambule_puis_titre() -> None:
     assert nettoyer_cible(texte, 1) == "**<titre>**\n\n<corps>"
     assert nettoyer_cible(texte, 2) == nettoyer_cible(texte) == "<corps>"
     with pytest.raises(ValueError, match="version"):
-        nettoyer_cible(texte, 3)
+        nettoyer_cible(texte, 4)
 
 
 # --- Jeu source de fixture ----------------------------------------------------------------------
@@ -252,7 +252,7 @@ def test_nominal_preambule_longueur_lc_et_manifeste(tmp_path: Path) -> None:
 
     brut = json.loads((resultat.dossier / "MANIFEST.json").read_bytes())
     assert brut["nettoyage"] == {
-        "version": 2,
+        "version": 3,
         "depuis_build": run_id,
         "depuis_version": "v1",
         "sha256_train_source": sha256_hex(octets),
@@ -397,9 +397,9 @@ def test_version_de_nettoyage_inconnue_refusee(tmp_path: Path) -> None:
     resultat = nettoyer(tmp_path, run_id)
     manifeste_chemin = resultat.dossier / "MANIFEST.json"
     brut = json.loads(manifeste_chemin.read_bytes())
-    brut["nettoyage"]["version"] = 3
+    brut["nettoyage"]["version"] = 4
     manifeste_chemin.write_bytes(json_canonique(brut))
-    with pytest.raises(ManifesteInvalide, match="version 3"):
+    with pytest.raises(ManifesteInvalide, match="version 4"):
         charger_jeu("v2", racine=tmp_path)
 
 
@@ -560,7 +560,7 @@ def test_titres_retires_comptes_par_tache(tmp_path: Path) -> None:
     ]
     assert resultat.rapport["par_tache"]["Q"]["titres_retires"] == 2
     assert resultat.rapport["par_tache"]["RD"]["titres_retires"] == 0
-    assert resultat.rapport["version_nettoyage"] == 2
+    assert resultat.rapport["version_nettoyage"] == 3
     assert len(charger_jeu("v2", racine=tmp_path).lignes) == 3
 
 

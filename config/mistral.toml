@@ -14,6 +14,16 @@ modele = "mistral-large-latest"
 # absente est refusée (`ModeleMistralRefuse`) : ne l'ajouter qu'après vérification.
 modeles_autorises = ["mistral-large-latest", "mistral-large-2411", "mistral-large-2512"]
 
+# Générateur des données (`data generate`) : modèle demandé, distinct de `modele` qui reste
+# celui du second juge. Absent : `modele`. L'option `--modele-generateur` le remplace.
+modele_generateur = "mistral-large-latest"
+
+# Préversions admises pour le Générateur seul (story S5, décision d'Anaël du 2026-10-19), hors
+# de la liste stable et jamais pour le second juge. Le modèle résolu doit être la préversion
+# ou `<préversion>-<suffixe>` ; le MANIFEST du jeu porte `generateur_preversion = true` et
+# l'identifiant exact renvoyé par l'API (`modeles_generateurs`). Tarif : `tarifs.toml`.
+modeles_preversion_generateur = ["mistral-large-4"]
+
 # Motifs refusés dans un nom de modèle, demandé ou résolu (sous-chaîne, insensible à la
 # casse) : modèles Labs, préversions, bêtas, candidats et modèles expérimentaux.
 motifs_interdits = ["labs", "preview", "beta", "-rc", "experimental"]

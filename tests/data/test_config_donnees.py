@@ -310,7 +310,7 @@ def test_longueur_re_inconnue_citee_sans_sa_valeur(tmp_path: Path) -> None:
 
 def test_plafonds_mots_reels() -> None:
     plafonds = charger_config_donnees().generateur.plafonds_mots
-    assert plafonds == {"Q": 160, "RD": 120, "CR": 400, "LC": 150, "CT": 150, "generique": 200}
+    assert plafonds == {"Q": 160, "RD": 120, "CR": 400, "LC": 150, "CT": 250, "generique": 200}
 
 
 def test_plafonds_mots_relus_par_le_generateur() -> None:

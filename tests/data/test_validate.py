@@ -31,6 +31,8 @@ from slmsp.mistral.journal import journal_pour  # noqa: E402
 from .conftest import CONFIG, OUTILS_MCP, factice  # noqa: E402
 
 TEXTE = "<reponse-factice>"
+CR_CONFORME = "Participants\n<p>\nPoints abordés\n<p>\nDécisions\n<p>\nActions\n<p>"
+"""Réponse CR factice qui porte les quatre titres de section (contrôle de structure, S5)."""
 
 
 def journal_lecture() -> Any:
@@ -436,7 +438,7 @@ def test_amorce_tronquee_rejetee(monde: Any) -> None:
 
 def test_amorce_mistral_saine_inchangee(monde: Any) -> None:
     seed = monde.ecrire_seed([monde.scenario()])
-    monde.faux.reponses = [{"texte": TEXTE}]
+    monde.faux.reponses = [{"texte": TEXTE}, {"texte": CR_CONFORME}]
     generation = monde.lancer({"CR": 1}, seed=seed)
     resultat = valider(monde, generation)
     assert motifs(resultat) == []

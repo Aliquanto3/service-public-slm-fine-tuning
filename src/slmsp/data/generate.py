@@ -22,6 +22,13 @@ complet, avec le seul Générateur Mistral (D1.1) :
    jour changé), `partiel-budget` (`BudgetEpuise` : aucune session suivante n'est tentée),
    `interrompu` (Ctrl+C).
 
+`taches` (story S5) limite le plan de génération à ces Tâches ; avec `completer_depuis`, les
+sessions closes des autres Tâches (lignes de `plan.jsonl`, `brut.jsonl`, `abandons.jsonl` et
+amorces dérivées qu'elles citent) sont reprises telles quelles d'un run `data-generate` du même
+seed, sans aucun appel : le run produit est un jeu complet pour `validate`, `filter` et `build`.
+Le run consigne le modèle demandé du Générateur (`modele_generateur`) et s'il est une
+préversion (`generateur_preversion`).
+
 `reprendre_run_id` reprend un run en ajout seul : le plan est relu, les SHA du seed, des
 gabarits et de `config/outils-mcp.toml` sont revérifiés (`ManifesteInvalide` si l'un a
 changé, avant toute écriture), et les sessions présentes dans `brut.jsonl` ou
@@ -32,7 +39,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Final, Protocol
@@ -65,6 +72,7 @@ from slmsp.core.schemas.session_donnees import (
 from slmsp.core.texte import normaliser
 from slmsp.data.seed import _url_canonique
 from slmsp.data.sessions import (
+    NOM_AMORCES_DERIVEES,
     TOURS_OUTILS_MAX,
     Compteur,
     ContexteSessions,
@@ -96,6 +104,7 @@ __all__ = [
     "SourcePassages",
     "estimer_plan",
     "lancer_generation",
+    "modele_generateur_du_run",
     "planifier",
     "seed_du_run",
 ]
@@ -306,6 +315,14 @@ def seed_du_run(run_id: str, *, racine: str | Path | None = None) -> str:
     return seed
 
 
+def modele_generateur_du_run(run_id: str, *, racine: str | Path | None = None) -> str | None:
+    """Modèle du Générateur consigné par le run `data-generate` `run_id` (story S5), `None`
+    pour un run antérieur (lève `ManifesteInvalide`)."""
+    seed_du_run(run_id, racine=racine)  # type de run contrôlé
+    modele = ouvrir_run(run_id, racine=racine).manifeste.config.get("modele_generateur")
+    return modele if isinstance(modele, str) else None
+
+
 def _entrees(seed: Run, chemin_outils: Path, generateur: Generateur) -> dict[str, Path]:
     """Fichiers dont le SHA-256 est inscrit au run et revérifié à la reprise."""
     entrees = {"amorces": seed.dossier / NOM_AMORCES, "outils-mcp": chemin_outils}
@@ -335,6 +352,69 @@ def _plan_du_run(run: Run, comptes_plan: Any) -> list[SessionPlanifiee]:
             f"{attendues} attendues), reprise refusée"
         )
     return plan
+
+
+@dataclass(frozen=True)
+class _Reprises:
+    """Sessions closes reprises d'un run `data-generate` source (story S5), sans appel."""
+
+    run_id: str
+    sessions: list[SessionPlanifiee]
+    bruts: list[dict[str, Any]]
+    abandons: list[dict[str, Any]]
+    derivees: list[dict[str, Any]]
+    index_version: str | None
+
+
+def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine: Path) -> _Reprises:
+    """Sessions closes du run `source_id` dont la Tâche n'est pas dans `taches`.
+
+    Le run source doit être un run `data-generate` terminé du même seed ; sinon
+    `ManifesteInvalide`. Une session planifiée mais non close (ni brut ni abandon) n'est pas
+    reprise.
+    """
+    source = ouvrir_run(source_id, racine=racine)
+    if source.type != TYPE_RUN:
+        raise ManifesteInvalide(f"run {source_id} : type {source.type!r}, {TYPE_RUN} attendu")
+    if source.statut_courant() == "en_cours":
+        raise ManifesteInvalide(f"run {source_id} encore en cours : reprise refusée")
+    seed_source = source.manifeste.config.get("seed_run_id")
+    if seed_source != seed_run_id:
+        raise ManifesteInvalide(f"run {source_id} : seed {seed_source!r}, {seed_run_id} attendu")
+    plan = _plan_du_run(source, source.manifeste.config.get("comptes_plan"))
+    try:
+        bruts = [
+            SessionBrute.model_validate(ligne).model_dump(mode="json")
+            for ligne in source.lire_jsonl(NOM_BRUT)
+        ]
+        abandons = [
+            AbandonSession.model_validate(ligne).model_dump(mode="json")
+            for ligne in source.lire_jsonl(NOM_ABANDONS)
+        ]
+    except (ValidationError, ValueError):
+        raise ManifesteInvalide(
+            f"run {source_id} : {NOM_BRUT} ou {NOM_ABANDONS} illisible"
+        ) from None
+    bruts = [ligne for ligne in bruts if ligne["tache"] not in taches]
+    abandons = [ligne for ligne in abandons if ligne["tache"] not in taches]
+    closes = {ligne["session_id"] for ligne in (*bruts, *abandons)}
+    citees = {amorce_id for ligne in bruts for amorce_id in ligne["amorces_derivees"]}
+    derivees = [
+        ligne
+        for ligne in source.lire_jsonl(NOM_AMORCES_DERIVEES)
+        if isinstance(ligne, dict) and ligne.get("amorce_id") in citees
+    ]
+    if {ligne["amorce_id"] for ligne in derivees} != citees:
+        raise ManifesteInvalide(f"run {source_id} : amorce dérivée citée introuvable")
+    sessions = [session for session in plan if session.session_id in closes]
+    return _Reprises(
+        run_id=source_id,
+        sessions=sessions,
+        bruts=bruts,
+        abandons=abandons,
+        derivees=derivees,
+        index_version=source.manifeste.config.get("index_version"),
+    )
 
 
 def _gabarits(generateur: Generateur) -> dict[str, list[GabaritValide]]:
@@ -379,14 +459,17 @@ def _clore(
     return bilan
 
 
-def appels_journalises(journal: JournalMistral, session_id: str) -> int:
-    """Appels `ok` avec réponse déjà journalisés pour `session_id` (réutilisés à la reprise)."""
+def appels_journalises(journal: JournalMistral, session_id: str, modele: str | None = None) -> int:
+    """Appels `ok` avec réponse déjà journalisés pour `session_id` (réutilisés à la reprise) ;
+    avec `modele`, ceux qui l'ont demandé seulement (story S5)."""
     if not journal.chemin.is_file():
         return 0
     return sum(
         1
         for ligne in journal.appels_session(session_id)
-        if ligne.statut == "ok" and ligne.reponse_brute is not None
+        if ligne.statut == "ok"
+        and ligne.reponse_brute is not None
+        and (modele is None or ligne.modele_demande == modele)
     )
 
 
@@ -498,6 +581,8 @@ def lancer_generation(
     tours_outils_max: int = TOURS_OUTILS_MAX,
     chemin_outils: str | Path | None = None,
     consigner: Callable[[str], None] = print,
+    taches: Collection[str] | None = None,
+    completer_depuis: str | None = None,
 ) -> ResultatGeneration:
     """Crée (`seed_run_id`) ou reprend (`reprendre_run_id`) un run `data-generate`.
 
@@ -505,9 +590,23 @@ def lancer_generation(
     Lève, sans rien écrire : `ManifesteInvalide` (seed absent, d'un autre type, non
     complet, ou entrées modifiées à la reprise), `ProvenanceInvalide` (amorces illisibles),
     `GabaritInvalide`, `ConfigurationInvalide` ; `SlmspError` pour un run déjà complet.
+
+    `taches` (nouveau run seulement) : Tâches à générer ; `completer_depuis` (exige `taches`) :
+    run `data-generate` du même seed dont les sessions closes des autres Tâches sont reprises.
     """
     if (seed_run_id is None) == (reprendre_run_id is None):
         raise ValueError("seed_run_id ou reprendre_run_id attendu (exactement un)")
+    if taches is not None:
+        taches = frozenset(taches)
+        inconnues = sorted(taches - set(ORDRE_TACHES))
+        if not taches or inconnues:
+            raise ValueError(f"taches : Tâches inconnues ou liste vide ({', '.join(inconnues)})")
+    if (taches is not None or completer_depuis is not None) and reprendre_run_id is not None:
+        raise ValueError("taches et completer_depuis valent pour un nouveau run seulement")
+    if completer_depuis is not None and taches is None:
+        raise ValueError("completer_depuis exige taches")
+    modele = generateur.client.config.modele
+    preversion = generateur.client.config.preversion is not None
     if not 0 <= surplus <= 1 or tours_outils_max < 1:
         raise ValueError("surplus dans [0, 1] et tours_outils_max >= 1 attendus")
     racine = Path(racine).resolve()
@@ -528,11 +627,18 @@ def lancer_generation(
     entrees = _entrees(seed, outils, generateur)
 
     if reprendre_run_id is None:
+        reprises = (
+            None
+            if completer_depuis is None
+            else _reprises(completer_depuis, seed_run_id, taches or (), racine)
+        )
         amorces = _amorces(seed, racine)
         plan, comptes_plan = planifier(
             amorces,
             gabarits=gabarits,
-            volumes=volumes,
+            volumes=volumes
+            if taches is None
+            else {t: v for t, v in volumes.items() if t in taches},
             surplus=surplus,
             outils_sha256=outils_sha256,
             urls_protegees=proteges.urls,
@@ -544,6 +650,15 @@ def lancer_generation(
             if recherche is not None and any(s.passages is not None for s in plan)
             else None
         )
+        if reprises is not None:
+            if index_version is None and any(s.passages is not None for s in reprises.sessions):
+                index_version = reprises.index_version
+            for session in reprises.sessions:
+                plan.append(session.model_copy(update={"rang": len(plan)}))
+            for tache in ORDRE_TACHES:
+                if tache not in (taches or ()):
+                    n = sum(1 for s in reprises.sessions if s.tache == tache)
+                    comptes_plan[tache] = {"planifiees": n, "reprises": n}
         run = nouveau_run(
             TYPE_RUN,
             "generate",
@@ -555,8 +670,12 @@ def lancer_generation(
                 "tours_outils_max": tours_outils_max,
                 "index_version": index_version,
                 "comptes_plan": comptes_plan,
+                "modele_generateur": modele,
+                "generateur_preversion": preversion,
+                "taches": None if taches is None else sorted(taches),
+                "completer_depuis": completer_depuis,
             },
-            parents=[seed_run_id],
+            parents=[seed_run_id] if reprises is None else [seed_run_id, reprises.run_id],
             entrees=entrees,
             racine=racine,
             index_version=index_version,
@@ -566,6 +685,16 @@ def lancer_generation(
             b"".join(json_canonique(s.model_dump(mode="json")) + b"\n" for s in plan),
         )
         deja: set[str] = set()
+        if reprises is not None:
+            for nom, lignes in (
+                (NOM_BRUT, reprises.bruts),
+                (NOM_ABANDONS, reprises.abandons),
+                (NOM_AMORCES_DERIVEES, reprises.derivees),
+            ):
+                for ligne in lignes:
+                    run.ajouter_jsonl(nom, ligne)
+            deja = {s.session_id for s in reprises.sessions}
+            consigner(f"{len(deja)} session(s) reprise(s) du run {reprises.run_id}, sans appel")
     else:
         existant = ouvrir_run(reprendre_run_id, racine=racine)
         ecarts = sorted(
@@ -577,6 +706,12 @@ def lancer_generation(
             raise ManifesteInvalide(
                 f"run {reprendre_run_id} : entrées modifiées depuis sa création "
                 f"({', '.join(ecarts) or 'liste des entrées'}) : reprise refusée"
+            )
+        enregistre = existant.manifeste.config.get("modele_generateur")
+        if enregistre is not None and enregistre != modele:
+            raise ManifesteInvalide(
+                f"run {reprendre_run_id} : généré par {enregistre!r}, Générateur sur "
+                f"{modele!r} : reprise refusée"
             )
         # Le plan et ses réglages sont ceux de la création (`surplus` est sans effet ici).
         comptes_plan = existant.manifeste.config.get("comptes_plan")
@@ -605,7 +740,7 @@ def lancer_generation(
         deja=deja,
         textes_amorces={a.amorce_id: a.texte for a in _amorces(seed, racine)},
         tours_outils_max=tours_outils_max,
-        journalises=lambda session_id: appels_journalises(journal, session_id),
+        journalises=lambda session_id: appels_journalises(journal, session_id, modele),
     )
     _afficher_estimation(estimation, consigner)  # avant le premier appel
     executeur = ExecuteurSessions(

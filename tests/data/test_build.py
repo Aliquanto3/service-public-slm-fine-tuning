@@ -59,6 +59,22 @@ def reponse(prefixe: str) -> dict[str, str]:
     return {"texte": phrase(prefixe, 12)}
 
 
+def reponse_cr() -> str:
+    """Réponse CR factice qui porte les quatre titres de section (contrôle de structure, S5)."""
+    return "\n".join(
+        f"{titre}\n{phrase(f'cr{i}', 3)}"
+        for i, titre in enumerate(("Participants", "Points abordés", "Décisions", "Actions"))
+    )
+
+
+def reponse_ct() -> str:
+    """Réponse CT factice : objet, emplacement entre crochets, formule de politesse (S5)."""
+    return (
+        f"Objet : {phrase('cto', 3)}\n{phrase('ct', 8)} [{phrase('ctc', 2)}]\n"
+        f"Agréer {phrase('ctp', 2)}"
+    )
+
+
 def chaine(
     monde: Any, amorces: list[dict[str, Any]], reponses: list[Any], volumes: dict[str, int]
 ) -> tuple[Any, Any]:
@@ -106,10 +122,10 @@ def toutes_taches(monde: Any, doublures: Any) -> tuple[Any, Any]:
         {"appels": [appel]},
         reponse("rd"),
         reponse("tr"),
-        reponse("cr"),
+        {"texte": reponse_cr()},
         reponse("lc"),
         reponse("g"),
-        reponse("ct"),
+        {"texte": reponse_ct()},
         reponse("re"),
         reponse("co"),
     ]
@@ -219,7 +235,7 @@ def test_build_toutes_les_taches(monde: Any, doublures: Any) -> None:
     assert "data.gouv/reponses-outils-mcp" in lignes["RD"].meta.source
     # CR : transcription = 1er appel, compte rendu = 2e ; CO : entrée = texte fautif de Mistral.
     assert phrase("tr", 12) in lignes["CR"].messages[1]["content"]
-    assert lignes["CR"].messages[-1]["content"] == phrase("cr", 12)
+    assert lignes["CR"].messages[-1]["content"] == reponse_cr()
     assert phrase("co", 12) in lignes["CO"].messages[1]["content"]
     assert lignes["CO"].messages[-1]["content"] == f"{phrase('co', 12)} fin"  # amorce publique
 

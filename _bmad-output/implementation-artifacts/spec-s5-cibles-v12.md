@@ -1,3 +1,11 @@
+---
+title: 'Story S5 — Cibles v12 conformes à la grille (CR, CT, LC), Mistral Large 4'
+type: 'feature'
+created: '2026-10-19'
+status: review
+baseline_revision: '224c51d'
+---
+
 # Story S5 — Cibles v12 conformes à la grille (CR, CT, LC), Mistral Large 4
 
 Décision d'Anaël (19/10/2026, 21 h 40) : réécrire les données d'entraînement ; Mistral Large 4 possible. L'entraînement sur v12 attend sa relecture.
@@ -37,3 +45,63 @@ Lancer la génération (session principale, après fusion, avec estimation) ; Q,
 7. **Nettoyage** : passer la tâche à `analyser_cible`, `cible_nettoyable`, `ligne_nettoyee` (`core/nettoyage.py:116-149`) et à tous les appelants (`train/chargement.py`, `data/nettoyage.py`) ; `VERSION_NETTOYAGE` passe à 3 et s'ajoute à `VERSIONS_NETTOYAGE`, les jeux v4 à v12 restant vérifiés avec leur version d'origine (spec 9.10 l. 85).
 8. **Régénération par tâche** : `data generate` n'a pas d'option par tâche. Ajouter `--taches CR,CT,LC` à `data generate` (seules ces sessions sont générées, le reste du jeu est repris du build source au build), ou le mécanisme le plus simple qui le permet ; le décrire.
 9. **Budget** : ne touche pas `config/budgets.toml` (nouvelle campagne ouverte par la session principale, poste `mistral.generation` à 10 €). `config/tarifs.toml` : entrée `mistral-large-4` près des entrées Mistral existantes.
+
+## Implémentation
+
+2026-10-19, Opus (dev-story). Aucun appel payant, aucun réseau ; `.env` non lu.
+
+- **Gabarits du générateur** (seuls `cr.md`, `ct.md`, `lc.md` passent en version 3 ; `config/prompts/taches/` intact) : consignes seules, sans exemple, sans crochet ni emplacement d'exemple, sans guillemets.
+  - CR : quatre sections dans l'ordre, titre seul sur sa ligne (Participants, Points abordés, Décisions, Actions) ; toutes les décisions et actions, une par ligne, responsable et échéance quand la transcription les donne, sinon « non précisé » dit en mots ; un point sans décision n'est jamais présenté comme décidé ; section gardée même vide. L'interdiction de titre en première ligne est remplacée par « commence par le titre de la section Participants ».
+  - CT : neuf blocs dans l'ordre de la grille ; ligne d'objet commençant par le mot Objet ; chaque information absente des éléments connus remplacée par un emplacement entre crochets qui nomme le champ ; références en emplacement si inconnues ; formule de politesse complète puis signature ; commence par le bloc expéditeur.
+  - LC : tous les montants, dates, durées et références repris avec leurs valeurs exactes ; aucune information ajoutée (ni fait, chiffre, date, démarche, coordonnée, conseil) ; termes juridiques gardés et expliqués sans remplacement. La consigne « signale le passage gardé après le texte réécrit » est retirée (elle ajoutait du texte hors source et doublait la règle des termes juridiques).
+- **Plafonds** (`config/donnees.toml`) : CT 150 → 250 (neuf blocs : ~60 mots d'en-tête et de formules plus un corps de 150 à 190 mots ; v11 au format incomplet : médiane 152). CR inchangé à 400 (≈ 650 tokens, sous la borne de 1 024).
+- **Nettoyage** (`core/nettoyage.py`) : `VERSION_NETTOYAGE = 3`, `VERSIONS_NETTOYAGE = {1, 2, 3}`, `TACHES_TETE_GARDEE = {CR, CT}`. `analyser_cible` et `nettoyer_cible` prennent `tache` ; `ligne_nettoyee` lit le champ `tache` de la ligne SFT (nouvelle aide `tache_de`), donc `verifier_nettoyage` et `train/chargement.controler_nettoyage` n'ont pas changé de signature ; `data/nettoyage._nettoyer` passe la tâche. Les jeux v4 à v11 restent vérifiés avec leur version (1 ou 2).
+- **Validateur** (`data/validate.py`, `_controler_structure`, après les contrôles de valeurs) : motifs `cr_sections_manquantes` (titre en tête de ligne, seul ou suivi de `:`, marques Markdown et casse ignorées), `ct_format_incomplet` (ligne `Objet :`, formule de politesse par mots-clés agréer, salutations, considération, sentiments, cordialement, respectueusement, et au moins un `[…]` contenant une lettre, hors lien Markdown), `lc_valeur_perdue` (nombre notable ou date de l'entrée absent de la sortie, extraction `_nombres_notables` et `_dates` existante ; le nombre ajouté reste `valeur_absente`). Motifs ajoutés à `MotifValidation`.
+- **Modèle du Générateur** : `config/mistral.toml` gagne `modele_generateur` (défaut `mistral-large-latest`) et `modeles_preversion_generateur = ["mistral-large-4"]` (schéma `ConfigMistral` : disjointe de la liste stable, `modele` ne peut pas être une préversion). `ConfigMistral.pour_generateur(modele)` rend la copie du client du Générateur ; `refus_modele` d'une copie en préversion admet la préversion et ses identifiants résolus `<préversion>-<suffixe>`. Le second juge garde `charger_mistral()` non modifié. `PrealablesGeneration.admet` remplace les quatre tests `in modeles_stables` (générateur, sessions). `config/tarifs.toml` : `mistral-large-4`, direct 1,36 $ / 4,18 $ par Mtok, « à vérifier par Anaël ».
+- **MANIFEST** : le run `data-generate` consigne `modele_generateur`, `generateur_preversion`, `taches`, `completer_depuis` ; le MANIFEST du jeu porte `generateur_preversion = true` (omis quand faux : MANIFEST existants inchangés) quand un identifiant de `modeles_generateurs` (exact, renvoyé par l'API) est hors de `modeles_stables`. Le nettoyage le recopie (`model_copy`).
+- **Régénération par Tâche** (`data generate`) : `--taches CR,CT,LC` ne planifie que ces Tâches ; `--completer-depuis GENERATE_RUN_ID` (même seed, run terminé) recopie sans appel les lignes `plan`, `brut`, `abandons` et amorces dérivées des sessions closes des autres Tâches. Le run produit est un run `data-generate` ordinaire : `validate`, `filter`, `build` et le nettoyage n'ont pas changé. `--modele-generateur MODELE` remplace la config ; à la reprise, le modèle du run est repris, un autre est refusé.
+- **Réutilisation du journal** : une réponse journalisée n'est réutilisée que si elle a été demandée au modèle du client (`reponse_journalisee`, `sessions._reutilisable`, `appels_journalises` de l'estimation). Sans ce filtre, un Générateur sur `mistral-large-4` avec des gabarits inchangés aurait repris les réponses de `mistral-large-latest`. Les amorces Mistral du seed restent admises (`_ligne_admise` inchangé hors préversion).
+- **Tests** : `tests/data/test_validate_structure.py`, `test_nettoyage_v3.py`, `test_generate_s5.py` (plan limité, composition sans appel puis validate → filter → build, préversion au MANIFEST, autre seed refusé, reprise sur un autre modèle refusée, modèle résolu hors préversion refusé), `tests/mistral/test_config_generateur.py` (config, préalables, tarif), gabarits (`test_consignes_s5`, versions). Réalignés : `test_build.py` (réponses CR et CT factices structurées), `test_validate.py` (CR conforme), `test_nettoyage.py` (version 3), `test_config_donnees.py` (CT 250), `conftest.py` (tarif et option `modele_generateur` du faux client).
+- Tests ciblés `tests/data tests/train tests/mistral tests/core tests/cli/test_data.py tests/test_architecture.py` : verts (857 + 1 150). Ruff et format verts. `outils/controle_rapide.py` non exécutable dans le worktree (`uv run` sans venv local) ; ses deux étapes lancées à la main (ruff, test d'architecture). Suite complète non lancée (consigne).
+
+### Commandes de la régénération v12 (session principale, après fusion)
+
+Prérequis : conditions Mistral du jour (`conditions_verifiees_le`, D1.2), campagne et poste `mistral.generation` ouverts dans `config/budgets.toml`, tarif `mistral-large-4` vérifié. Seed et génération source : ceux de v11 (`etat-campagne-v11.md`).
+
+```
+uv run slmsp data generate --depuis 20261017-111645-seed-b335 --modele-generateur mistral-large-4 --taches CR,CT,LC --completer-depuis 20261019-180544-generate-bd87
+uv run slmsp data validate --depuis <GENERATE_RUN_ID>
+uv run slmsp data filter --depuis <VALIDATE_RUN_ID>
+uv run slmsp data build --depuis <FILTER_RUN_ID> --variante diffusable
+uv run slmsp data build --nettoyage --depuis <BUILD_RUN_ID> --modele base:<slug du nettoyage v11>
+```
+
+`data generate` affiche l'estimation par gabarit avant le premier appel ; l'arrêter si elle dépasse le budget. Les sessions Q, RD, generique, RE et CO sont reprises de v11 (aucun appel, ni Index ni MCP sollicités). Les transcriptions CR sont régénérées aussi : le `session_id` de CR hache toute la chaîne de gabarits (même constat que 9.10). Le jeu nettoyé est en `nettoyage.version = 3`.
+
+### Estimation du coût (avant dépense)
+
+Volumes v11 : CR 80 sessions (2 appels : transcription puis compte rendu), LC 80, CT 35 ; 275 appels. Tarif `mistral-large-4` 1,36 $ / 4,18 $ par Mtok, dollar au pair.
+
+| Appel | Entrée (tokens) | Sortie (tokens) | Sessions |
+|---|---|---|---|
+| Transcription CR | 800 | 1 500 | 80 |
+| Compte rendu CR | 2 000 | 800 | 80 |
+| LC | 800 | 300 | 80 |
+| CT | 700 | 450 | 35 |
+
+Total ≈ 310 k tokens d'entrée (0,42 $) et 225 k de sortie (0,94 $) : **≈ 1,4 €** ; avec 30 % de marge (relances, abandons) **≈ 1,8 €**. Pire cas au `max_tokens` des gabarits (4 000, 1 600, 800, 800) : ≈ 0,4 $ d'entrée + 80 × 5 600 + 115 × 800 = 540 k tokens de sortie (2,3 $), **≈ 2,7 €**. Le contrôle de fidélité optionnel (`validate --controle-mistral`) s'ajoute, au tarif de `mistral-large-latest`.
+
+## Auto Run Result
+
+Décisions prises seul (solution la plus simple et la plus réversible) :
+1. **Préversion admise par préfixe** : le modèle résolu est admis s'il vaut `mistral-large-4` ou `mistral-large-4-<suffixe>`, motifs interdits non appliqués à la préversion déclarée (l'identifiant réel renvoyé par l'API n'est pas connu). Un autre identifiant est refusé après l'appel (journalisé). **À confirmer par Anaël.**
+2. **Mécanisme par Tâche** : composition au niveau de `generate` (`--completer-depuis`) plutôt qu'au `build` : un seul run aval, aucune modification de `validate`, `filter`, `build` ni du MANIFEST du jeu au-delà de `generateur_preversion`.
+3. **Réutilisation filtrée par modèle demandé** (voir Implémentation) : changement de comportement limité à un Générateur dont le modèle diffère des lignes journalisées ; les runs existants (toujours `mistral-large-latest`) ne changent pas.
+4. **CT sans emplacement rejeté sans condition** : le gabarit `amorces-ct` demande des éléments connus incomplets, la demande laisse donc toujours au moins un champ inconnu. **À confirmer par Anaël** (rejets possibles si Mistral juge une demande complète).
+5. **Formule de politesse** reconnue par mots-clés ; **sections CR** reconnues en tête de ligne, seules ou suivies de `:` (plus tolérant qu'un titre seul sur sa ligne, pour éviter des rejets payés sur une mise en forme).
+6. **LC** : consigne de signalement des passages gardés retirée (décision de fond sur la formulation envoyée à Mistral). **À confirmer par Anaël**, comme le libellé de toutes les consignes CR, CT, LC avant la génération réelle.
+7. **CT 250 mots** : valeur proposée, à ajuster sur le jeu régénéré.
+
+Reports :
+- `data seed` (scénarios, courriers) reste sur le modèle stable `modele` ; l'option `--modele-generateur` ne vaut que pour `data generate`.
+- Mesurer sur le run réel le taux de rejet des trois nouveaux motifs et l'écart entre l'estimation affichée et le registre.

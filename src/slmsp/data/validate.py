@@ -29,6 +29,10 @@ Contrôles, dans cet ordre ; le premier qui échoue donne le motif :
    (numérotation, petits comptes) sont ignorés : `valeur_absente`. Pour CO (texte à corriger),
    tout nombre notable du texte de départ doit aussi rester dans la sortie : `infidele`.
    La Tâche `generique` n'a aucune source de référence : ni valeurs ni fidélité.
+3 bis. **Structure (CR, CT, LC, story S5)** : CR sans l'une des sections Participants, Points
+   abordés, Décisions, Actions : `cr_sections_manquantes` ; CT sans ligne d'objet, sans formule
+   de politesse ou sans emplacement entre crochets : `ct_format_incomplet` ; LC dont un nombre
+   notable ou une date de l'entrée manque à la sortie : `lc_valeur_perdue`.
 4. **Longueur (RE)** : la sortie ne dépasse pas, en mots (`core.texte.compter_mots`), le plafond
    de la `longueur_demandee` de l'amorce (`[re.longueurs]` de `config/evaluation.toml`) :
    `longueur_depassee`.
@@ -536,6 +540,61 @@ def _controler_sources(
             raise _Rejet("infidele", f"{len(perdues)} valeur(s) de la source perdue(s)")
 
 
+SECTIONS_CR: Final = ("Participants", "Points abordés", "Décisions", "Actions")
+"""Titres des quatre sections d'un compte rendu (grille CR, story S5)."""
+_RE_OBJET: Final = re.compile(r"^[#*_\s]*objet[*_\s]*:", re.IGNORECASE | re.MULTILINE)
+_RE_POLITESSE: Final = re.compile(
+    r"\b(?:agr[ée]er|salutations|consid[ée]ration|sentiments|cordialement|respectueusement)\b",
+    re.IGNORECASE,
+)
+_RE_EMPLACEMENT: Final = re.compile(r"\[[^\[\]\n]*[^\W\d_][^\[\]\n]*\](?!\()")
+"""Emplacement entre crochets qui nomme un champ (au moins une lettre), hors lien Markdown
+`[texte](url)`."""
+
+
+def _a_section(texte: str, titre: str) -> bool:
+    """Vrai si une ligne de `texte` commence par `titre` (marques `#`, `*`, `_` ignorées,
+    casse ignorée), seul sur la ligne ou suivi de `:`."""
+    motif = rf"^[#*_\s]*{re.escape(titre)}[*_\s]*(?::|$)"
+    return re.search(motif, texte, re.IGNORECASE | re.MULTILINE) is not None
+
+
+def _controler_structure(texte: str, tache: str, fournis: Sequence[str]) -> None:
+    """Contrôles de structure de la story S5 ; lève `_Rejet`.
+
+    CR : les quatre titres de `SECTIONS_CR`, chacun en tête de ligne, seul ou suivi de `:`
+    (`cr_sections_manquantes`). CT : une ligne d'objet, une formule de politesse et au moins
+    un emplacement entre crochets, les demandes CT laissant toujours des champs inconnus
+    (`ct_format_incomplet`). LC : chaque nombre notable et chaque date de l'entrée figure à
+    la sortie (`lc_valeur_perdue`) ; un nombre de la sortie absent de l'entrée est déjà
+    refusé par `_controler_sources` (`valeur_absente`).
+    """
+    if tache == "CR":
+        manquantes = [s for s in SECTIONS_CR if not _a_section(texte, s)]
+        if manquantes:
+            raise _Rejet("cr_sections_manquantes", f"sections absentes : {', '.join(manquantes)}")
+    elif tache == "CT":
+        manques = []
+        if _RE_OBJET.search(texte) is None:
+            manques.append("objet")
+        if _RE_POLITESSE.search(texte) is None:
+            manques.append("formule de politesse")
+        if _RE_EMPLACEMENT.search(texte) is None:
+            manques.append("emplacement")
+        if manques:
+            raise _Rejet("ct_format_incomplet", f"absents : {', '.join(manques)}")
+    elif tache == "LC":
+        sortie = _sans_urls(texte)
+        source = _sans_urls("\n".join(fournis))
+        nombres = _nombres_notables(source) - _nombres_notables(sortie)
+        dates = {f for _, f in _dates(source)} - {f for _, f in _dates(sortie)}
+        if nombres or dates:
+            raise _Rejet(
+                "lc_valeur_perdue",
+                f"{len(nombres)} nombre(s) et {len(dates)} date(s) de l'entrée perdus",
+            )
+
+
 def _controler_longueur(texte: str, longueur: str | None) -> None:
     """Rejette un résumé RE plus long que le plafond de sa `longueur_demandee`."""
     plafond = plafonds_re_evaluation().get(longueur or "")
@@ -602,6 +661,7 @@ def valider_session(
     if brut.tache == "CR":
         fournis = [*fournis, _source_fidelite(lecteur, brut)]
     _controler_sources(texte, brut.tache, lecteur.passages(brut), outils, fournis)
+    _controler_structure(texte, brut.tache, fournis)
     if brut.tache == "RE":
         _controler_longueur(texte, lecteur.longueur_demandee(brut))
     if controle is not None and brut.tache in TACHES_CONTROLE_FIDELITE:

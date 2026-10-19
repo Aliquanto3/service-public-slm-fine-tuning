@@ -293,7 +293,7 @@ class ExecuteurSessions:
         precedents: Sequence[Mapping[str, Any]],
     ) -> tuple[LigneAppel, dict[str, Any]] | None:
         """Première ligne du journal de la session qui répond déjà à cet appel."""
-        stables = self.ctx.generateur.prealables.modeles_stables
+        prealables = self.ctx.generateur.prealables
         ids = json_canonique(list(amorce_ids)).decode("utf-8")
         cible = _projection(precedents)
         if not self.ctx.journal.chemin.is_file():  # aucun appel encore journalisé
@@ -302,7 +302,8 @@ class ExecuteurSessions:
             if (
                 ligne.usage != USAGE_GENERATION
                 or ligne.statut != "ok"
-                or ligne.modele_resolu not in stables
+                or not prealables.admet(ligne.modele_resolu)
+                or ligne.modele_demande != self.ctx.generateur.client.config.modele
                 or (ligne.gabarit_id, ligne.version_gabarit, ligne.sha256_gabarit)
                 != (gabarit.id, gabarit.version, gabarit.sha256)
                 or ligne.amorce_ids != ids

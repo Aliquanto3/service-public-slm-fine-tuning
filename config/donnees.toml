@@ -20,7 +20,8 @@ conditions_url = "https://legal.mistral.ai/terms/commercial-terms-of-service/"
 # Renseigné si et seulement si `conditions_verifiees_le` l'est aussi.
 conditions_sha256 = "08ee882d26552c28006ebb288772fad817a6e6dea7cd8aed771480123cd0d94e"
 # Modèles Mistral stables admis comme générateur (même liste que `modeles_autorises` de
-# `config/mistral.toml`) : ni modèle Labs, ni préversion.
+# `config/mistral.toml`) : ni modèle Labs, ni préversion. Une préversion admise pour le
+# Générateur seul figure dans `modeles_preversion_generateur` de `config/mistral.toml` (S5).
 modeles_stables = ["mistral-large-latest", "mistral-large-2411", "mistral-large-2512"]
 
 # Volumes cibles de la nuit par Tâche (nombre d'exemples SFT). Traduction exclue : aucune
@@ -101,7 +102,9 @@ RD = 120
 CR = 400
 # Sans référence mesurable : estimation de l'orchestrateur, à ajuster.
 LC = 150
-# Idem (CT, sans référence mesurable).
-CT = 150
+# Format administratif complet (story S5) : neuf blocs (expéditeur, destinataire, lieu et
+# date, objet, références, appel, corps, politesse, signature), dont environ 60 mots d'en-tête
+# et de formules, plus un corps de 150 à 190 mots ; v11 (format incomplet) : médiane 152 mots.
+CT = 250
 # Idem (generique, sans référence mesurable).
 generique = 200
