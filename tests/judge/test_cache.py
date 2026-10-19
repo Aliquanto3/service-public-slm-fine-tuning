@@ -163,3 +163,28 @@ def test_version_de_schema_inattendue(tmp_path: Path) -> None:
         connexion.execute("PRAGMA user_version = 99")
     with pytest.raises(Exception, match="version de schéma"):
         CacheVerdicts(chemin)
+
+
+def test_migration_additive_du_motif_de_lot(tmp_path: Path) -> None:
+    """Une base sans colonne `lots.motif` (avant INC-1) la reçoit, ses lots sont conservés."""
+    chemin = tmp_path / "ancienne.sqlite"
+    with closing(sqlite3.connect(chemin)) as connexion:
+        connexion.execute(
+            "CREATE TABLE lots (lot_id TEXT PRIMARY KEY, batch_id TEXT UNIQUE,"
+            " modele TEXT NOT NULL, effort TEXT NOT NULL, statut TEXT NOT NULL, nb_retenu INTEGER,"
+            " cree_le TEXT NOT NULL,"
+            " soumis_le TEXT, maj_le TEXT NOT NULL)"
+        )
+        connexion.execute(
+            "INSERT INTO lots VALUES ('L1', NULL, 'm', 'e', 'abandonne', 1, 't', NULL, 't')"
+        )
+        connexion.execute("PRAGMA user_version = 1")
+        connexion.commit()
+    cache = CacheVerdicts(chemin)
+    CacheVerdicts(chemin)  # idempotente
+    cache.consigner_motif_lot("L1", "y" * 600)
+    lot = cache.lot("L1")
+    assert lot is not None and lot.statut == "abandonne"
+    with closing(sqlite3.connect(chemin)) as connexion:
+        (motif,) = connexion.execute("SELECT motif FROM lots WHERE lot_id = 'L1'").fetchone()
+    assert motif == "y" * 500

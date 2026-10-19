@@ -95,7 +95,8 @@ _CREATION: Final = (
         nb_retenu INTEGER,
         cree_le TEXT NOT NULL,
         soumis_le TEXT,
-        maj_le TEXT NOT NULL
+        maj_le TEXT NOT NULL,
+        motif TEXT
     )
     """,
     """
@@ -193,6 +194,9 @@ class CacheVerdicts:
                 )
             for requete in _CREATION:
                 connexion.execute(requete)
+            colonnes = {ligne[1] for ligne in connexion.execute("PRAGMA table_info(lots)")}
+            if "motif" not in colonnes:  # migration additive des bases antérieures à INC-1
+                connexion.execute("ALTER TABLE lots ADD COLUMN motif TEXT")
             if version == 0:
                 connexion.execute(f"PRAGMA user_version = {VERSION_SCHEMA}")
 
@@ -396,6 +400,10 @@ class CacheVerdicts:
     def changer_statut(self, lot_id: str, statut: StatutLot) -> None:
         """Change le statut du lot (`collecte`, `annule`, `abandonne`…)."""
         self._maj_lot(lot_id, "statut = ?", (statut,))
+
+    def consigner_motif_lot(self, lot_id: str, motif: str) -> None:
+        """Motif d'abandon du lot (détail de l'erreur de création), tronqué à 500 caractères."""
+        self._maj_lot(lot_id, "motif = ?", (motif[:500],))
 
     def lot(self, lot_id: str) -> LotLocal | None:
         """Lot local `lot_id`, ou `None`."""

@@ -31,6 +31,7 @@ Requête au Juge : `model`, `max_tokens`, un seul message `user` et `output_conf
 from __future__ import annotations
 
 import logging
+import re
 import time
 import uuid
 from collections.abc import Callable, Mapping, Sequence
@@ -96,6 +97,21 @@ def motif_arret(statut: int | None) -> str | None:
     if statut == STATUT_LIMITE_DEBIT:
         return MOTIF_LIMITE_DEBIT
     return None
+
+
+_MOTIF_CLE_API: Final = re.compile(r"sk-ant-[A-Za-z0-9_-]+")
+
+
+def detail_erreur_creation(exc: BaseException, statut: int | None) -> str:
+    """Type, statut HTTP et message (cause comprise) d'une erreur, sans en-têtes ni clé.
+
+    Toute clé `sk-ant-…` est masquée ; le détail final est tronqué à 500 caractères.
+    """
+    message = str(getattr(exc, "message", None) or exc)
+    detail = f"{type(exc).__name__} statut={statut} {message}"
+    if exc.__cause__ is not None:  # le SDK enveloppe les erreurs réseau
+        detail += f" cause={type(exc.__cause__).__name__} {exc.__cause__}"
+    return _MOTIF_CLE_API.sub("sk-ant-***", detail)[:LONGUEUR_MESSAGE_ERREUR]
 
 
 def fabriquer_client(
@@ -433,8 +449,9 @@ class JugeClaude:
                 self.cache.changer_statut(lot_id, "abandonne")
                 arret = motif_arret(statut) if refus else None
                 etat.arret = etat.arret or arret
-                detail = self._tracer_erreur_creation(lot_id, exc, statut, soumises)
+                detail = detail_erreur_creation(exc, statut)
                 LOGGER.warning("création du lot %s en erreur : %s", lot_id, detail)
+                self._tracer_erreur_creation(lot_id, detail, soumises)
                 for r in soumises:
                     etat.resoudre(
                         r.cle,
@@ -448,30 +465,28 @@ class JugeClaude:
         for cle in restantes:
             etat.resoudre(cle, _Issue("non-juge", motif=etat.arret or MOTIF_BUDGET))
 
-    def _tracer_erreur_creation(
-        self, lot_id: str, exc: Exception, statut: int | None, soumises: list[RequeteLot]
-    ) -> str:
-        """Trace persistante d'un échec de création : une ligne `appels` par requête du lot.
+    def _tracer_erreur_creation(self, lot_id: str, detail: str, soumises: list[RequeteLot]) -> None:
+        """Trace persistante d'un échec de création, qui ne fait jamais échouer la notation.
 
-        Le détail (type, statut HTTP, message tronqué, sans en-têtes) va dans `issue`, sous le
-        préfixe `erreur-creation-lot`. Coût 0 : le coût du lot reste imputé au registre.
+        Le détail va une fois dans `lots.motif` ; chaque requête du lot reçoit une ligne `appels`
+        d'issue `erreur-creation-lot` (valeur fermée). Coût 0 sur ces lignes : le coût du lot
+        (pire cas ou 0) reste imputé au registre de budget, et `cumul_appels` ne le compte pas
+        deux fois.
         """
-        message = str(getattr(exc, "message", None) or exc)[:LONGUEUR_MESSAGE_ERREUR]
-        detail = f"{type(exc).__name__} statut={statut} {message}"
-        if exc.__cause__ is not None:  # le SDK enveloppe les erreurs réseau
-            cause = str(exc.__cause__)[:LONGUEUR_MESSAGE_ERREUR]
-            detail += f" cause={type(exc.__cause__).__name__} {cause}"
-        for r in soumises:
-            self.cache.journaliser_appel(
-                cle=r.cle,
-                item_id=r.item_id,
-                mode="batch",
-                lot_id=lot_id,
-                usage=None,
-                cout_eur=0.0,
-                issue=f"{ISSUE_ERREUR_CREATION_LOT}: {detail}",
-            )
-        return detail
+        try:
+            self.cache.consigner_motif_lot(lot_id, detail)
+            for r in soumises:
+                self.cache.journaliser_appel(
+                    cle=r.cle,
+                    item_id=r.item_id,
+                    mode="batch",
+                    lot_id=lot_id,
+                    usage=None,
+                    cout_eur=0.0,
+                    issue=ISSUE_ERREUR_CREATION_LOT,
+                )
+        except Exception:
+            LOGGER.exception("trace de l'erreur de création du lot %s impossible", lot_id)
 
     def _ecoule(self, lot: LotLocal, debut: float) -> float:
         """Secondes écoulées depuis `soumis_le` (horloge murale), sinon depuis `debut`."""
