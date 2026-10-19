@@ -26,3 +26,14 @@ Gabarits : instructions présentes, aucune amorce de réponse. Nettoyage : CR et
 
 ## Hors périmètre
 Lancer la génération (session principale, après fusion, avec estimation) ; Q, RD, RE, CO, generique ; l'entraînement sur v12.
+
+## Révision 1 (relecture de la spec, 19/10 22 h) — prime sur ce qui précède
+1. **Ne pas toucher `config/prompts/taches/{CR,CT,LC}.md`** : ils servent aussi au prompt de la tâche évaluée (`evaluation/generation.py:113`) et au SFT (`data/build.py`). Seuls les gabarits du **générateur** (`config/prompts/generateur/`) changent. Retirer de `generateur/cr.md:18` l'interdiction de titre en première ligne pour CR (contradiction avec les sections).
+2. **D1 et gabarits** : pas de « ex. », pas d'emplacement d'exemple (`core/gabarits.py:64`, `tests/mistral/test_gabarits_generateur.py:34`). Décrire la forme attendue en mots (« chaque information inconnue remplacée par un emplacement entre crochets qui nomme le champ »).
+3. **Plafonds de mots** (`config/donnees.toml:101-105`) : CT relevé pour tenir le format complet (proposer une valeur et la justifier, ~250) ; CR inchangé à 400 tant qu'il tient sous la borne de 1 024 tokens du nettoyage.
+4. **Modèle du générateur distinct** : `config/mistral.toml` `modele` sert aussi au second juge (`judge/second.py:112`). Ajouter un champ distinct (`modele_generateur`, défaut = valeur actuelle) avec son schéma, utilisé par `data generate` seul ; option CLI `--modele-generateur` si simple.
+5. **Préversion** : `mistral-large-4` est une préversion, exclue par la règle des modèles stables (`config/mistral.toml:14-15`, `config/donnees.toml:23-24`, motif « preview »). Décision d'Anaël (19/10) : autorisé **pour le générateur seulement**, par une liste distincte `modeles_preversion_generateur = ["mistral-large-4"]` ; le MANIFEST du jeu porte `generateur_preversion = true` et l'identifiant exact renvoyé par l'API. Le second juge reste sur la liste stable.
+6. **Validateur** : nouveaux motifs ajoutés à `MotifValidation` (`core/schemas/rejet_donnees.py:15-28`).
+7. **Nettoyage** : passer la tâche à `analyser_cible`, `cible_nettoyable`, `ligne_nettoyee` (`core/nettoyage.py:116-149`) et à tous les appelants (`train/chargement.py`, `data/nettoyage.py`) ; `VERSION_NETTOYAGE` passe à 3 et s'ajoute à `VERSIONS_NETTOYAGE`, les jeux v4 à v12 restant vérifiés avec leur version d'origine (spec 9.10 l. 85).
+8. **Régénération par tâche** : `data generate` n'a pas d'option par tâche. Ajouter `--taches CR,CT,LC` à `data generate` (seules ces sessions sont générées, le reste du jeu est repris du build source au build), ou le mécanisme le plus simple qui le permet ; le décrire.
+9. **Budget** : ne touche pas `config/budgets.toml` (nouvelle campagne ouverte par la session principale, poste `mistral.generation` à 10 €). `config/tarifs.toml` : entrée `mistral-large-4` près des entrées Mistral existantes.

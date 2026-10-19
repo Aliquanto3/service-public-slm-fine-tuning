@@ -25,3 +25,13 @@ Changer le juge principal ou la grille ; renoter les items hors échantillon ; u
 
 ## Après fusion (session principale)
 `--verifier`, choix des modèles (le plus récent modèle « Pro » ou équivalent de chaque fournisseur), tarifs, puis juges tiers sur les notations des 3 Baselines et des 3 M1 v11.
+
+## Révision 1 (relecture de la spec, 19/10 22 h) — prime sur ce qui précède
+1. **Effectif** : l'échantillon du second juge ne compte que 3 à 5 items par tâche (`eval/jeu/v1.1/MANIFEST.json`, `echantillons.second_juge`) ; un kappa dessus n'est pas interprétable. Les juges tiers notent donc **tous les items jugés des tâches CR, LC, CT, RE** (option `--taches`, défaut `CR,LC,CT,RE`), et non l'échantillon du second juge. `accords.json` donne pour chaque paire de juges l'effectif commun ; en dessous de 10 paires, statut « non concluant » au lieu d'un kappa.
+2. **Schéma** : `ConfigJuges` (`judge/config.py:65`) est `extra="forbid"` ; ajouter un champ `juges_tiers` optionnel (modèle pydantic par fournisseur), sans changer le chargement du principal ni du second juge. Test : `juges.toml` actuel et `juges.toml` avec `[juges_tiers.openai]` se chargent.
+3. **Budget** : une campagne ancrée refuse un nouveau poste (`budget/registre.py:350-366`). **Ne touche pas `config/budgets.toml`** : la session principale ouvre une nouvelle campagne avec les postes `openai` et `google` (10 € chacun) après la fin des notations en cours. Le code s'appuie sur les noms de poste `openai` et `google` et leurs imputations (`juge-tiers-openai`, `juge-tiers-google`) ; les tests fabriquent leur propre `budgets.toml`.
+4. **Journal** : fichier distinct `appels-juges-tiers.sqlite`, hors de la liste d'accès de data et train (`core/artefacts.py:517`, AD-24), comme `appels-mistral-juge.sqlite`.
+5. **Modèles de raisonnement** : paramètres par fournisseur dans la config (`max_completion_tokens` pour OpenAI, effort de raisonnement bas si disponible, pas de `temperature` si le modèle la refuse). Une sortie interrompue (longueur) **n'est pas mise en cache** : elle reste rejouable. L'estimation de coût compte une marge de tokens de raisonnement (paramètre de config).
+6. **Secrets** : `core/secrets.py` lit un seul nom ; ajouter une lecture « premier présent parmi » pour `GEMINI_API_KEY` puis `GOOGLE_API_KEY`. `--verifier` affiche présent / absent sans lever.
+7. **Tarifs** : entrées `config/tarifs.toml` regroupées dans un bloc commenté « juges tiers » **en fin de fichier** (S5 ajoute `mistral-large-4` près des entrées Mistral : pas de chevauchement).
+8. **Gabarit** : même gabarit de prompt et même schéma de verdict que le **juge principal** pour la tâche (c'est lui qu'on audite), afin que l'accord mesure le juge et non le prompt.
