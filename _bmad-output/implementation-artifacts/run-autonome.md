@@ -64,3 +64,4 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 22:20 · S5 · dev · fini (gabarits CR/CT/LC, validateur de structure, nettoyage v3, `--modele-generateur`, `--taches --completer-depuis` ; estimation ~1,8 € pour 275 appels Mistral Large 4) · 494da31
 - 2026-10-19 22:20 · S5 · second-avis · lancé · —
 - 2026-10-19 22:22 · S3 · décision · GLM-5.2 remplacé par **GLM-5.3** (phare, plus récent ; question d'Anaël) ; pas de recommandation de juge trouvée chez Artificial Analysis ; le choix final du juge tiers se fera sur l'accord avec l'audit humain d'Anaël · —
+- 2026-10-19 22:23 · S5 · second-avis · 3 medium (préversion trop large, faux rejets CR « Décisions prises » et CT « Objet du courrier »), 3 low ; D1 sans défaut ; review lancée (Opus) · —
