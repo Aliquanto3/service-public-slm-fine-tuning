@@ -144,7 +144,11 @@ def passages_catalogue(recherche: RechercheIndex | None, demande: str) -> list[P
         recherche.k * FACTEUR_RECHERCHE,
         recherche.seuil,
     )
-    passages = [p for p in elargie.rechercher(demande) if p.source == SOURCE_CATALOGUE]
+    try:
+        passages = [p for p in elargie.rechercher(demande) if p.source == SOURCE_CATALOGUE]
+    finally:
+        # Recherche élargie jetable : son compteur est reporté sur la recherche du Harnais.
+        recherche.requetes_tronquees += elargie.requetes_tronquees
     return passages[: recherche.k]
 
 

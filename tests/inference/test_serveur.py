@@ -209,7 +209,7 @@ def test_micro_lot_invalide(maj: dict[str, Any], message: str) -> None:
 
 @pytest.mark.parametrize("slug", ["bge-m3", "bge-m3-f16"])
 def test_micro_lot_bge_m3(slug: str) -> None:
-    """Le passage tient le plus long chunk service-public (1 163 tokens, 2026-10-17) et
+    """Le passage tient le plus long passage de l'Index (1 165 tokens, 2026-10-19) et
     reste sous le texte long ; `data filter` garde le contexte entier."""
     config = serveur.charger_config_modele(slug)
     assert config.micro_lot_pour("texte_long") == config.contexte
@@ -711,7 +711,7 @@ def test_reel_embedding_bge(vendor_reel: Path, modeles_reels: Path) -> None:
     with ServeurLlama(config, "cpu", slug="bge-m3") as instance:
         embedder = instance.embedder()
         matrice = embedder.vectoriser(["Bonjour", "Impôt sur le revenu", "Bonjour"])
-        # Bien au-delà du micro-lot par défaut de 512 tokens (environ 2 000 tokens).
+        # Au-delà du micro-lot passage (1536) : texte tronqué par l'embedder, pas d'erreur 500.
         long = embedder.vectoriser([" ".join(f"mot{i} administration" for i in range(600))])
     assert long.shape == (1, 1024)
     np.testing.assert_allclose(np.linalg.norm(long, axis=1), 1.0, rtol=1e-5)

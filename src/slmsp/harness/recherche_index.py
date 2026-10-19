@@ -23,6 +23,12 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("slmsp.harness.recherche_index")
 
 
+def _textes_tronques(embedder: object) -> int:
+    """Compteur `textes_tronques` de l'embedder s'il en a un (entier), sinon 0."""
+    valeur = getattr(embedder, "textes_tronques", 0)
+    return valeur if isinstance(valeur, int) and not isinstance(valeur, bool) else 0
+
+
 class RequeteVide(SlmspError):
     """Requête de recherche vide."""
 
@@ -50,9 +56,9 @@ class RechercheIndex:
             raise RequeteVide("requête de recherche vide")
         # La troncature (à micro-lot - 16 tokens) est faite par l'embedder, qui la compte dans
         # `textes_tronques` et la journalise ; on relève ici l'écart, sans dupliquer la logique.
-        avant = getattr(self.embedder, "textes_tronques", 0)
+        avant = _textes_tronques(self.embedder)
         matrice = self.embedder.vectoriser([requete])
-        if getattr(self.embedder, "textes_tronques", 0) > avant:
+        if _textes_tronques(self.embedder) > avant:
             self.requetes_tronquees += 1
             LOGGER.warning(
                 "recherche : requête de %d caractères tronquée par l'embedder", len(requete)

@@ -69,3 +69,20 @@ def test_embedder_sans_compteur_inchange() -> None:
     recherche = RechercheIndex(FakeEmbedder(), FakeVectorStore(), 3, 0.5)
     recherche.rechercher("x" * 50)
     assert recherche.requetes_tronquees == 0
+
+
+def test_compteur_non_entier_ignore() -> None:
+    embedder = FakeEmbedder()
+    embedder.textes_tronques = object()  # doublure de type MagicMock
+    recherche = RechercheIndex(embedder, FakeVectorStore(), 3, 0.5)
+    recherche.rechercher("x" * 50)
+    assert recherche.requetes_tronquees == 0
+
+
+def test_passages_catalogue_reporte_le_compteur() -> None:
+    from slmsp.harness.taches.recherche import passages_catalogue
+
+    recherche = RechercheIndex(_EmbedderTronquant(10), FakeVectorStore(), 3, 0.5)
+    passages_catalogue(recherche, "x" * 50)
+    passages_catalogue(recherche, "court")
+    assert recherche.requetes_tronquees == 1
