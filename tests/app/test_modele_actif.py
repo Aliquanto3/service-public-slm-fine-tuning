@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from slmsp.app.modele_actif import resoudre_modele_actif
+from slmsp.app.modele_actif import gguf_present, resoudre_modele_actif
 from slmsp.app.pont.reglages import CODE_INVALIDE, PontReglages
 from slmsp.app.stockage import Stockage
 from slmsp.core.schemas.config_application import charger_config_application
@@ -70,3 +70,13 @@ def test_pont_liste_les_modeles(tmp_path: Path, config) -> None:
     r = PontReglages(stock, modele_actif=config.modele).modeles()
     assert [m["slug"] for m in r["modeles"]] == config.modeles_embarques
     assert r["actif"] == config.modele and r["choisi"] == config.modele
+
+
+def test_template_force_absent(config, tmp_path: Path) -> None:
+    """Un modèle à `chat_template_force` sans son template n'est pas retenu (12.15, revue)."""
+    slug = "minicpm5-2b"
+    assert charger_config_modele(slug).chat_template_force
+    _poser_gguf(tmp_path, slug)
+    assert not gguf_present(slug, tmp_path)
+    (tmp_path / slug / "chat_template.jinja").write_text("<t>", encoding="utf-8")
+    assert gguf_present(slug, tmp_path)

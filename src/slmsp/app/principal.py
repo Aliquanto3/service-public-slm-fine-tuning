@@ -350,6 +350,7 @@ class Demarrage:
         self._arret = threading.Event()
         self._fil: threading.Thread | None = None
         self.erreur: str | None = None
+        self._assemble = False  # assemblage entré (le repli ne vaut qu'avant)
 
     def page_chargee(self) -> None:
         self._page.set()
@@ -373,30 +374,50 @@ class Demarrage:
             hors_ligne = bool(self._stockage.lire_reglage("hors_ligne_force"))
             modele = resoudre_modele_actif(config, self._stockage.lire_reglage("modele"))
             LOGGER.info("démarrage : modèle actif %s", modele)
-            with self._assembler(
-                f"base:{modele}",
-                hors_ligne=hors_ligne,
-                variante=config.variante,
-                journal=JournalApplication(self._stockage),
-                threads=config.threads,
-            ) as assemblage:
-                pont = Pont(
-                    assemblage.service,
-                    self._fenetre,
-                    stockage=self._stockage,
-                    choisir_fichier=dialogue_enregistrer(self._fenetre),
-                    verificateur=construire_verificateur(assemblage),
-                    modele_actif=modele,
+            try:
+                self._executer(config, modele, hors_ligne)
+            except Exception as exc:
+                # Repli (story 12.15) : un modèle choisi qui ne démarre pas ne doit pas bloquer
+                # l'application ; seul l'échec avant l'assemblage prêt est rattrapé.
+                if modele == config.modele or self._assemble or self._arret.is_set():
+                    raise
+                LOGGER.error(
+                    "démarrage : modèle choisi %s en échec (%s), retour au défaut %s",
+                    modele,
+                    type(exc).__name__,
+                    config.modele,
                 )
-                self._differe.brancher(pont)
-                if self._page_prete():
-                    pont.signaler_pret()
-                    self.chrono.pret()
-                self._arret.wait()
+                self._stockage.ecrire_reglage("modele", None)
+                self._executer(config, config.modele, hors_ligne)
         except Exception as exc:
             self.erreur = type(exc).__name__
             LOGGER.error("démarrage : %s", self.erreur)
             self._signaler_echec()
+
+    def _executer(self, config: Any, modele: str, hors_ligne: bool) -> None:
+        """Assemble `base:<modele>`, branche le pont, attend l'arrêt."""
+        self._assemble = False
+        with self._assembler(
+            f"base:{modele}",
+            hors_ligne=hors_ligne,
+            variante=config.variante,
+            journal=JournalApplication(self._stockage),
+            threads=config.threads,
+        ) as assemblage:
+            self._assemble = True
+            pont = Pont(
+                assemblage.service,
+                self._fenetre,
+                stockage=self._stockage,
+                choisir_fichier=dialogue_enregistrer(self._fenetre),
+                verificateur=construire_verificateur(assemblage),
+                modele_actif=modele,
+            )
+            self._differe.brancher(pont)
+            if self._page_prete():
+                pont.signaler_pret()
+                self.chrono.pret()
+            self._arret.wait()
 
     def _page_prete(self) -> bool:
         """Attend l'évènement `loaded` puis `pywebviewready` (API et `slmspRecevoir` définis)."""

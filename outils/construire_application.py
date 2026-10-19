@@ -32,6 +32,7 @@ from pathlib import Path, PurePosixPath
 DEPOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(DEPOT / "src"))
 
+from slmsp.app.modele_actif import fichiers_requis  # noqa: E402
 from slmsp.core.canonique import sha256_fichier  # noqa: E402
 from slmsp.core.config import racine_projet  # noqa: E402
 from slmsp.core.schemas.config_application import charger_config_application  # noqa: E402
@@ -219,12 +220,14 @@ def construire_plan(
 
     cibles = [(slug, f"modele:{slug}") for slug in app.modeles_embarques]
     for slug, composant in [*cibles, ("bge-m3", "embedding:bge-m3")]:
-        gguf = charger_config_modele(slug).gguf
-        if gguf is None:
+        requis = fichiers_requis(charger_config_modele(slug))
+        if not requis:
             raise ErreurBuild(f"config/modeles/{slug}.toml : section [gguf] absente")
-        nom = PurePosixPath(gguf.fichier).name
-        chemin = _exiger(modeles / slug / "gguf" / nom, f"GGUF {slug}")
-        plan.fichiers.append(Fichier(chemin, f"models/{slug}/gguf/{nom}", composant, gguf.sha256))
+        # GGUF et, si `chat_template_force`, `chat_template.jinja` (exigé par ServeurLlama).
+        for rel, sha in requis:
+            nom = "GGUF" if rel.startswith("gguf/") else PurePosixPath(rel).name
+            chemin = _exiger(modeles / slug / rel, f"{nom} {slug}")
+            plan.fichiers.append(Fichier(chemin, f"models/{slug}/{rel}", composant, sha))
 
     versions = (
         sorted(d.name for d in index.iterdir() if d.is_dir() and version_valide(d.name))
