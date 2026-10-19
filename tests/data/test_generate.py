@@ -332,3 +332,36 @@ def test_estimation_en_reprise_deduit_le_journal(monde: Any, doublures: Any) -> 
         "traces-rd": TOURS_OUTILS_MAX,
         "generique": 1,
     }
+
+
+def _cout_rd(lignes: list[str]) -> float:
+    (rd,) = [m for m in lignes if m.startswith("estimation traces-rd")]
+    return float(rd.split("coût estimé ")[1].split()[0])
+
+
+def test_estimation_rd_compte_le_schema_outils(
+    monde: Any, doublures: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Revue 9.10 : le schéma `tools`, envoyé à chaque appel RD, entre dans l'estimation."""
+    from slmsp.mistral.generateur import Generateur
+
+    couts = []
+    for rang, taille in enumerate((0, 300_000), start=1):
+        seed = monde.ecrire_seed([monde.amorce("RD", "demande", ligne=rang)])
+        original = Generateur.outils
+
+        def outils(self: Any, _taille: int = taille, _original: Any = original) -> Any:
+            return [*_original(self), {"bourrage": "x" * _taille}] if _taille else _original(self)
+
+        monkeypatch.setattr(Generateur, "outils", outils)
+        monde.faux.reponses = [KeyboardInterrupt()]
+        lignes: list[str] = []
+        try:  # l'estimation est affichée avant le premier appel, seul point vérifié ici
+            monde.lancer({"RD": 1}, seed=seed, consigner=lignes.append)
+        except KeyboardInterrupt:
+            pass
+        monkeypatch.setattr(Generateur, "outils", original)
+        couts.append(_cout_rd(lignes))
+        assert any("coût estimé" in m and "hors résultats" in m for m in lignes)
+    # 300 000 caractères = 100 000 tokens de plus, à chacun des TOURS_OUTILS_MAX + 1 appels.
+    assert couts[1] > couts[0] > 0

@@ -1148,10 +1148,7 @@ def test_plafonds_mots_invalides(monde: Monde, table: str) -> None:
         encoding="utf-8",
     )
     monde.ecrire_seed([amorce("d", "generique", "demande")])
-    if table.startswith("CO"):
-        # CO est une Tâche générable : accepté par le Générateur, refusé par data.config.
-        assert monde.generateur().plafonds_mots == {"CO": 100}
-        return
+    # CO refusé, comme par data.config (revue 9.10).
     with pytest.raises(ConfigurationInvalide, match="plafonds_mots"):
         monde.generateur()
 

@@ -102,6 +102,9 @@ seulement, D1.1). Jamais rempli par une amorce, jamais recopié dans un exemple 
 EMPLACEMENTS_RESERVES: Final = frozenset(
     {EMPLACEMENT_PASSAGES, EMPLACEMENT_PLAFOND, EMPLACEMENT_PLAFOND_TACHE}
 )
+TACHES_PLAFONNABLES: Final = ("Q", "RD", "CR", "LC", "CT", "generique")
+"""Tâches admises dans `[generateur.plafonds_mots]`, copie de `slmsp.data.config` (couche
+supérieure, non importable ici ; l'égalité des deux est testée)."""
 
 _RE_GABARIT_ID = re.compile(r"[a-z0-9-]+")
 _RE_SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
@@ -198,7 +201,8 @@ def charger_prealables(
 def charger_plafonds_mots(fichier: str | Path) -> dict[str, int]:
     """Plafonds de mots par Tâche de `[generateur.plafonds_mots]` de `fichier` (vide si la
     table manque). Lève `ConfigurationInvalide` si le fichier est illisible, si une valeur
-    n'est pas un entier strictement positif ou si une clé n'est pas une Tâche générable."""
+    n'est pas un entier strictement positif ou si une clé n'est pas dans
+    `TACHES_PLAFONNABLES` (même règle que `slmsp.data.config`)."""
     chemin = Path(fichier)
     try:
         donnees = tomllib.loads(chemin.read_bytes().decode("utf-8"))
@@ -208,7 +212,7 @@ def charger_plafonds_mots(fichier: str | Path) -> dict[str, int]:
             f"{chemin} : table [generateur.plafonds_mots] illisible ou invalide "
             f"({type(exc).__name__})"
         ) from None
-    inconnues = sorted(set(table) - set(TACHES))
+    inconnues = sorted(set(table) - set(TACHES_PLAFONNABLES))
     if inconnues:
         raise ConfigurationInvalide(
             f"{chemin} : [generateur.plafonds_mots] : tâche(s) inconnue(s) {', '.join(inconnues)}"

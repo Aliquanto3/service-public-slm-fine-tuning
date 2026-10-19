@@ -91,3 +91,16 @@ Décisions prises seul (solution la plus simple et la plus réversible) :
 Points ouverts :
 - Le libellé des deux consignes est une **décision de fond** (formulation envoyée à Mistral). Elle est à confirmer par Anaël avant la génération réelle.
 - Les `session_id` changent avec les gabarits : la génération repart de zéro sur ces Tâches, comme prévu par la révision 2.
+
+## Revue
+
+2026-10-19, Opus (reviewer), après rebase sur `e654be7`. Jeu v4 réel (MANIFEST `nettoyage.version = 1`) revérifié avec le code de la branche : `controler_nettoyage` passe.
+
+- medium · second avis 1 · corrigé : `estimer_plan` ignorait le schéma `tools` envoyé à chaque appel RD et se disait « pire cas ». Le schéma (`generateur.outils()`, JSON canonique) est ajouté à l'entrée de chaque appel RD ; l'affichage dit « coût estimé » (sorties au `max_tokens`, entrée estimée, hors résultats d'outils RD et enveloppe). Pas de forfait pour les résultats d'outils : leur taille n'est bornée nulle part dans la génération, un forfait serait inventé. Le registre reste le garde-fou. Test `test_estimation_rd_compte_le_schema_outils`.
+- medium · second avis 2 · corrigé : la règle v2 retirait toute première ligne `#…` ou `**…**`, phrases comprises. Nouvelle règle (`_est_titre`) : `**…**` seul ou `#{1,6}` suivi d'un espace, au plus 12 mots (`TITRE_MOTS_MAX`), texte qui ne finit pas par `. ! ? : ; …`. Tests ajoutés (phrase, « Oui. », question, annonce `:`, 13 mots, `#mot`, gras vide).
+- low · second avis 3 · corrigé par la règle ci-dessus (`**Oui.**` gardé).
+- low · second avis 4 · corrigé : le test de non-fuite lit les fragments des consignes dans les gabarits eux-mêmes (`test_build.py`).
+- low · second avis 5 · corrigé : `charger_plafonds_mots` refuse CO comme `data.config` (`TACHES_PLAFONNABLES` dupliquée côté `mistral`, couches AD-1, égalité testée).
+- low · revue (complexité) · corrigé : `estimer_plan` relisait et revalidait le gabarit deux fois par appel prévu et interrogeait le journal à chaque rang ; gabarits mis en cache par (id, tâche), journal lu une fois par session.
+- info · revue · noté : sur les cibles v4, l'ancienne règle v2 retirait 108 premières lignes ; la nouvelle en retire 55. Les 53 gardées finissent presque toutes par `:` (« **Réponse à l'Agent :** », « **1. Vous êtes locataire :** », « **Oui, … sous certaines conditions :** »). Choix prudent (D1 : ne rien perdre du fond) ; les nouveaux gabarits demandent déjà de ne pas ouvrir par un titre. À revoir sur le jeu régénéré si ces étiquettes reviennent.
+- reporté · génération réelle (hors périmètre) : comparer l'estimation affichée au coût réel du registre sur les premières sessions RD, pour juger l'écart dû aux résultats d'outils.

@@ -405,29 +405,42 @@ def estimer_plan(
     plus `tours_outils_max + 1` (un par tour d'outils, plus la réponse finale ou l'appel qui
     dépasse). Les `journalises(session_id)` premiers appels d'une session, déjà journalisés,
     ne sont pas repayés. Coût d'un appel au tarif du modèle demandé (`budget.tarifs`) : sortie
-    au `max_tokens` du gabarit, entrée estimée par les caractères de la consigne, des amorces
-    et des passages, plus les sorties pire cas des appels précédents de la session (les
-    résultats d'outils RD ne sont pas comptés). Une estimation : le registre de budget reste
-    le garde-fou. `cout_pire_cas_eur` vaut `None` si le modèle n'a pas de tarif.
+    au `max_tokens` du gabarit (pire cas), entrée **estimée** par les caractères de la
+    consigne, des amorces, des passages et, pour une Tâche outillée, du schéma `tools` envoyé
+    à chaque appel, plus les sorties pire cas des appels précédents de la session. Les
+    résultats d'outils RD et l'enveloppe des messages ne sont pas comptés (taille non bornée
+    a priori) : l'entrée n'est pas un pire cas, l'affichage le dit, et le registre de budget
+    reste le garde-fou. `cout_pire_cas_eur` vaut `None` si le modèle n'a pas de tarif.
     """
     registre = generateur.client.registre
     modele = generateur.client.config.modele
     estimation: dict[str, dict[str, Any]] = {}
+    gabarits_lus: dict[tuple[str, str], tuple[int, int]] = {}  # (id, tâche) : (consigne, max)
+    schema_outils: int | None = None
     for session in plan:
         if session.session_id in deja:
             continue
         gabarits = list(session.gabarits)
-        if session.tache in TACHES_OUTILLEES:
-            gabarits = gabarits[:1] * (tours_outils_max + 1)
         base = sum(len(textes_amorces.get(a, "")) for a in session.amorce_ids)
         base += sum(len(p.texte) for p in session.passages or [])
+        if session.tache in TACHES_OUTILLEES:
+            gabarits = gabarits[:1] * (tours_outils_max + 1)
+            if schema_outils is None:
+                schema_outils = len(json_canonique(generateur.outils()).decode("utf-8"))
+            base += schema_outils
+        faits = journalises(session.session_id)
         sorties = 0
         for rang, ref in enumerate(gabarits):
-            gabarit = generateur.gabarit(ref.id, session.tache)
-            max_tokens = generateur.max_tokens(ref.id, session.tache)
-            entree = math.ceil((len(gabarit.consigne) + base) / CARACTERES_PAR_TOKEN) + sorties
+            cle = (ref.id, session.tache)
+            if cle not in gabarits_lus:
+                gabarits_lus[cle] = (
+                    len(generateur.gabarit(ref.id, session.tache).consigne),
+                    generateur.max_tokens(ref.id, session.tache),
+                )
+            consigne, max_tokens = gabarits_lus[cle]
+            entree = math.ceil((consigne + base) / CARACTERES_PAR_TOKEN) + sorties
             sorties += max_tokens
-            if rang < journalises(session.session_id):
+            if rang < faits:
                 continue
             ligne = estimation.setdefault(
                 ref.id, {"appels": 0, "max_tokens": max_tokens, "cout_pire_cas_eur": 0.0}
@@ -457,14 +470,15 @@ def _afficher_estimation(
         cout = ligne["cout_pire_cas_eur"]
         consigner(
             f"estimation {gabarit_id} : {ligne['appels']} appels au plus "
-            f"(max_tokens {ligne['max_tokens']}), pire cas "
+            f"(max_tokens {ligne['max_tokens']}), coût estimé "
             + ("tarif inconnu" if cout is None else f"{cout:.4f} €")
         )
     couts = [ligne["cout_pire_cas_eur"] for ligne in estimation.values()]
     total = "tarif inconnu" if None in couts else f"{sum(couts):.4f} €"
     consigner(
         f"estimation totale : {sum(ligne['appels'] for ligne in estimation.values())} appels, "
-        f"pire cas {total} (hors résultats d'outils ; le registre de budget reste le garde-fou)"
+        f"coût estimé {total} (sorties au max_tokens ; entrée estimée, hors résultats "
+        "d'outils RD et enveloppe ; le registre de budget reste le garde-fou)"
     )
 
 

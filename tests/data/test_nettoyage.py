@@ -90,6 +90,19 @@ def test_preambule(texte: str, attendu: str | None, statut: str | None) -> None:
         ("**<titre>**", None),
         ("# <titre>\n\n  \n", None),
         ("", None),
+        ("#### <titre> ##\n<corps>", "<corps>"),
+        ("**" + " ".join(["<m>"] * 12) + "**\n<corps>", "<corps>"),
+        # Revue 9.10 : phrase de fond, réponse courte ou annonce en première ligne = contenu.
+        ("# <phrase> <de> <fond>.\n<suite>", None),
+        ("**<oui>.**\n<suite>", None),
+        ("**<vraiment> ?**\n<suite>", None),
+        ("**<cas> :**\n<suite>", None),
+        ("# <a> !\n<suite>", None),
+        ("**<a>…**\n<suite>", None),
+        ("**" + " ".join(["<m>"] * 13) + "**\n<corps>", None),
+        ("#<mot-diese>\n<suite>", None),
+        ("#######  <titre>\n<suite>", None),
+        ("** **\n<suite>", None),
     ],
 )
 def test_titre_de_tete(texte: str, attendu: str | None) -> None:

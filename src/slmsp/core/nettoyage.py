@@ -47,8 +47,25 @@ Preambule = Literal["retire", "garde", "seul"]
 _RE_TETE: Final = re.compile(r"^[#*_\s\uFEFF]*")
 _RE_FIN: Final = re.compile(r"[*_\s]*$")
 _RE_GRAS: Final = re.compile(r"\*\*[^*]+\*\*|__[^_]+__")
-_RE_TITRE: Final = re.compile(r"\*\*[^*]+\*\*|#.*")
-"""Ligne qui n'est qu'un titre (une fois ôtés les espaces) : `**…**` seul, ou `#…`."""
+_RE_TITRE: Final = re.compile(r"\*\*([^*]+)\*\*|#{1,6}[ \t]+(.+?)[ \t#]*")
+"""Ligne qui a la forme d'un titre (une fois ôtés les espaces) : `**…**` seul, ou `# …` à
+`###### …` (dièse suivi d'un espace). Le groupe capturé est le texte du titre."""
+TITRE_MOTS_MAX: Final = 12
+"""Un titre retirable a au plus ce nombre de mots."""
+_FIN_DE_PHRASE: Final = (".", "!", "?", ":", ";", "…")
+"""Un texte qui finit ainsi est une phrase ou annonce une suite : c'est du contenu, gardé."""
+
+
+def _est_titre(ligne: str) -> bool:
+    """Vrai si `ligne` n'est qu'un titre : forme `_RE_TITRE`, au plus `TITRE_MOTS_MAX` mots, et
+    pas de ponctuation finale de phrase (`_FIN_DE_PHRASE`)."""
+    trouve = _RE_TITRE.fullmatch(ligne.strip().lstrip("﻿").strip())
+    if trouve is None:
+        return False
+    titre = (trouve.group(1) or trouve.group(2) or "").strip()
+    return (
+        bool(titre) and len(titre.split()) <= TITRE_MOTS_MAX and not titre.endswith(_FIN_DE_PHRASE)
+    )
 
 
 def analyser_preambule(texte: str) -> tuple[str, Preambule | None]:
@@ -82,12 +99,13 @@ def analyser_titre(texte: str) -> tuple[str, bool]:
     """`(texte nettoyé, titre retiré)` : titre de tête de `texte` (version 2).
 
     Seule la première ligne non vide est examinée, jamais au-delà. Si elle n'est qu'un titre
-    (`**…**` seul sur la ligne, ou ligne `#…`) et qu'un texte non vide la suit, elle est ôtée
-    avec les lignes vides qui l'entourent ; sinon `texte` est rendu tel quel.
+    (`_est_titre` : `**…**` seul ou `# …`, au plus `TITRE_MOTS_MAX` mots, sans ponctuation
+    finale de phrase) et qu'un texte non vide la suit, elle est ôtée avec les lignes vides qui
+    l'entourent ; sinon `texte` est rendu tel quel.
     """
     lignes = texte.split("\n")
     debut = next((i for i, ligne in enumerate(lignes) if ligne.strip()), None)
-    if debut is None or _RE_TITRE.fullmatch(lignes[debut].strip().lstrip("﻿")) is None:
+    if debut is None or not _est_titre(lignes[debut]):
         return texte, False
     suite = next((i for i in range(debut + 1, len(lignes)) if lignes[i].strip()), None)
     if suite is None:

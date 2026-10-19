@@ -12,7 +12,7 @@ import pytest
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
-from slmsp.data.config import ConfigDonnees, charger_config_donnees
+from slmsp.data.config import TACHES_PLAFONNABLES, ConfigDonnees, charger_config_donnees
 from slmsp.mistral.config import charger_mistral
 
 FICHIER_REEL = racine_projet() / "config" / "donnees.toml"
@@ -317,6 +317,8 @@ def test_plafonds_mots_relus_par_le_generateur() -> None:
     generateur = _generateur()
     attendu = charger_config_donnees().generateur.plafonds_mots
     assert generateur.charger_plafonds_mots(FICHIER_REEL) == attendu
+    # Même liste de Tâches admises des deux côtés (revue 9.10).
+    assert generateur.TACHES_PLAFONNABLES == TACHES_PLAFONNABLES
 
 
 @pytest.mark.parametrize(
