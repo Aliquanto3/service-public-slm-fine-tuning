@@ -1,0 +1,8 @@
+{"message":"chargement de qwen3.5-2b (qlora, base bf16)"}
+{"message":"gel de la vision (bf16) : 16819200 paramètres entraînables, 0 en vision"}
+{"message":"longueur 2048 (bf16) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 2048 (bf16) : ok, perte 12.992755889892578, VRAM réservée 3615490048"}
+{"message":"longueur 4096 (bf16) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 4096 (bf16) : ok, perte 12.677021980285645, VRAM réservée 3741319168"}
+{"message":"longueur 8192 (bf16) : 3 pas après 1 pas de chauffe"}
+{"message":"longueur 8192 (bf16) : ok, perte 12.51450252532959, VRAM réservée 4454350848"}

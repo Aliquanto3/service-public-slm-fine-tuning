@@ -1,0 +1,4 @@
+{"checkpoint":null,"evenement":"demarrage"}
+{"evenement":"gel-vision","parametres_entrainables":16819200,"vision_entrainables":0,"vision_parametres":167838720}
+{"avertissements":[],"causal_conv1d":"torch","chunk_gated_delta_rule":"fla","evenement":"noyaux","replis":["causal_conv1d"]}
+{"dossier":"adaptateur","evenement":"adaptateur"}
