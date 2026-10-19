@@ -54,6 +54,14 @@ Pistes, à décider par Anaël : filtrer les préambles et borner les longueurs 
 - **État de M4** : 8192 et 4096 tombent en OOM. Le run `runs/train/20261019-053250-m4-orpo-minicpm5-2b-b525` (campagne `minicpm5-2b-v3-orpo-2048`) est resté `en_cours` après la coupure, sans processus. `config/runs/m4-orpo-minicpm5-2b.toml` contient cette dernière tentative et n'est pas commité.
 - **Budget** : la campagne `finetune-minicpm5-2b-2026-10-19` garde environ 9,2 € pour Anthropic, soit trois notations environ.
 
+## Journal du 19 (jour, Anaël absent)
+Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
+- 2026-10-19 08:04 · reprise · bloqueur de veille relancé (`scratchpad/veille.ps1`, SetThreadExecutionState) ; GPU libre (0 Mio) ; `config/runs/m4-orpo-minicpm5-2b.toml` remis à son état commité. Le run M4 `…-053250-…-b525` reste `en_cours` dans `run.json`, sans processus : **mort**, laissé tel quel (non supprimé).
+- 2026-10-19 08:06 · sonde Granite 1B · QLoRA bf16 à 3072 : **tient**, perte 12,03, 5,67 Gio réservés (sur 6), 1 030 tokens/s (`runs/train-sonde/20261019-080533-granite-4.0-1b-9da4`).
+- 2026-10-19 08:09 · 9.9 nettoyage · spec écrite (`spec-9-9-nettoyage-du-jeu-v4.md`), relue par Opus avant le code. Mesure sur v2 (tokenizer minicpm5-2b) : **76 CR sur 76** dépassent 1 024 tokens, 2 RD sur 91, aucune autre tâche. Décision prise seul : **écarter** plutôt que tronquer (simple, réversible, aucun texte créé) ; conséquence : v4 n'a plus de CR.
+- 2026-10-19 08:10 · gdn · extra installé (ajouts seuls : einops 0.8.2, fla-core et flash-linear-attention 0.5.2, triton-windows 3.8.0.post29 ; rien de retiré ni changé). La campagne v4 tourne donc avec triton présent, contrairement à M1 v2 (noté pour la comparaison).
+- 2026-10-19 08:12 · sondes Qwen3.5 · 2b puis 0.8b, bf16, 2048/4096/8192 : lancées.
+
 ## Journal de la nuit
 - 01:10 : M3 (DoRA) lancé, puis export et notation de M1 (`scratchpad/nuit2.ps1`).
 - 02:05 : M3 terminé (`runs/train/20261019-011031-m3-dora-minicpm5-2b-b9bb`, 55 min). L'export de M1 échoue : `convert_hf_to_gguf.py` importe `sentencepiece` sans condition. Corrigé : `sentencepiece` est ajouté à l'extra `train` et installé par `uv sync --inexact --no-install-project`, ce qui ne retire rien du venv.
