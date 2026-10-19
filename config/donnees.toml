@@ -11,7 +11,7 @@ schema_version = 1
 # Générateur refuse de démarrer si elle n'est pas égale au jour même. Chaîne vide tant que
 # la vérification n'a pas été faite : la génération est alors refusée. Renseignée si et
 # seulement si `conditions_sha256` l'est aussi.
-conditions_verifiees_le = 2026-10-19
+conditions_verifiees_le = 2026-10-20
 # Méthode de vérification des conditions (texte libre consigné au MANIFEST).
 methode_verification = "GET de la page des conditions par slmsp.net.client('outillage'), SHA-256 des octets reçus"
 # Page des conditions commerciales relue (seule URL admise par le profil `outillage`).
