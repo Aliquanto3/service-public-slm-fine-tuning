@@ -65,6 +65,9 @@ Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M
 - 2026-10-19 12:22 · écart de 0,22 € · **pas d'écart** : chaque appel `direct` a sa réservation au registre (36 réservations pour 33 lignes de journal, les 3 de plus réglées à 0 €), montants égaux (0,2268 et 0,2228 €). La notation de 10 h n'a fait aucun appel direct (RD, CO, NR notés par contrôles automatiques). Aucune story pour ce point.
 - 2026-10-19 12:22 · reprise de notation · `eval run --reprendre` est refusé pour la notation ; la commande est `eval run --phase notation --depuis 20261019-091155-ft-minicpm5-2b-ee96` (cache des verdicts : rien n'est payé deux fois). Stats du cache Opus batch : 757 tokens de sortie en moyenne, 3 217 au plus (`max_tokens` 6 000), 0,0158 € par item.
 - 2026-10-19 12:23 · INC-1, INC-2, INC-3 · spec écrite (`spec-incident-cout-juge.md`), dev lancé en parallèle (3 worktrees `slmsp-wt/inc-*`).
+- 2026-10-19 12:29 · INC-2 · dev fini (ab2b8f6), second avis (1 medium : pas de test d'ordre côté juge ; 2 low), revue Opus (eef51b4, les 3 corrigés). **Fusion a89efa3**, tests budget + juge verts (251).
+- 2026-10-19 12:29 · INC-1 · dev fini (a5f2c76), second avis (1 medium : la trace peut faire échouer le traitement ; 6 low, dont texte libre dans `appels.issue`), revue Opus lancée.
+- 2026-10-19 12:29 · INC-3 · dev fini (5daf777) : estimation avant `nouveau_run`, refus sans run ni appel. Décision du dev : le second juge Mistral n'est pas estimé (poste budgétaire distinct). Second avis lancé.
 
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
