@@ -47,3 +47,4 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:56 · S2 · review · 2 medium (nettoyage depuis un sous-ensemble refusé ; préférences testées), 5 low corrigés · e7613e7
 - 2026-10-19 21:56 · S2 · fusion · tests ciblés verts (93) · 2aff428
 - 2026-10-19 21:56 · S2 · décision · jeu **v12** = v11 sans CR, CT, LC (369 lignes : CO 34, Q 95, RD 132, RE 34, generique 74), `runs/data-build/20261019-215607-sous-ensemble-bfcf` ; M1 test MiniCPM5-2B lancé (`config/runs/m1-qlora-minicpm5-2b-v11-partiel.toml`, autorisé par Anaël) · —
+- 2026-10-19 21:57 · S5 · décision · nommage : le jeu régénéré par S5 sera **v13** (v12 = sous-ensemble de S2, sans régénération) ; la spec garde son nom `spec-s5-cibles-v12.md` · —
