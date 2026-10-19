@@ -78,6 +78,8 @@ Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M
 - 2026-10-19 12:54 · 9.10 · relecture de la spec (Haiku) : 7 high (modèle pydantic manquant, guillemets refusés par le test D1, `plafond_mots` réservé à RE, `session_id` qui interdit la réutilisation des transcriptions, nettoyage à placer dans `core.nettoyer_cible` en version 2…). Spec révisée (1fa6bca) : **réutilisation des transcriptions CR retirée** (régénérées, ~1 € de plus), emplacement `plafond_mots_tache`, CR à 400 mots, `max_tokens` 1 600 (CR) et 800. Dev lancé (Opus, worktree `slmsp-wt/9-10-cibles-courtes`).
 - 2026-10-19 12:54 · main · suite complète verte après INC-1/2/3 : 5 354 passés, 13 ignorés (10 min 12).
 - 2026-10-19 12:54 · M1 v4 · notation lancée : `eval run --phase notation --depuis 20261019-091155-ft-minicpm5-2b-ee96 --plafond-estime 4.5`. Budget avant : Anthropic 9,20 € ; Mistral juge 1,50 €, génération 8,75 € (campagne finetune-minicpm5-2b-2026-10-19).
+- 2026-10-19 13:31 · 9.10 · dev fini (bdb2a4a, Opus) ; second avis (2 medium : estimation RD sans schéma d'outils, retrait d'une première ligne `#` qui serait du contenu ; 3 low) ; revue Opus lancée.
+- 2026-10-19 13:31 · **décision d'Anaël** · il relit les jeux de données et protocoles d'entraînement **avant toute nouvelle phase d'entraînement**. Génération et build v6 avancent seuls ; M1 v6, M3 v4 et M4 v5 attendent sa relecture, même si M1 v4 dépasse la Baseline.
 
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
