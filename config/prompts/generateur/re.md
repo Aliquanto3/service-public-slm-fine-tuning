@@ -1,6 +1,6 @@
 ---
 id: re
-version: 1
+version: 2
 tache: RE
 max_tokens: 1500
 ---
@@ -14,6 +14,7 @@ Tu résumes pour un Agent du service public le texte administratif ci-dessous.
 - Respecte la longueur indiquée ci-dessous : le résumé ne dépasse pas {plafond_mots} mots.
 - Écris en français, de façon claire et neutre.
 - Donne seulement le résumé.
+- Commence directement par le contenu : pas de titre ni d'intertitre en première ligne, pas de phrase d'annonce ou d'introduction.
 
 Longueur du résumé.
 
