@@ -9,6 +9,9 @@
     slmsp eval run --phase generation --reprendre RUN_ID [--racine DIR]
     slmsp eval run --phase notation --depuis RUN_ID [--mode-juge batch|direct]
         [--plafond-estime EUR] [--racine DIR]
+    slmsp eval juges-tiers --verifier
+    slmsp eval juges-tiers --depuis RUN_NOTATION --juge NOM [--taches CR,LC,CT,RE]
+        [--plafond-estime EUR] [--racine DIR]
     slmsp eval sonde-outils --modele base:<slug> [--jeu calibrage] [--items RD-001,RD-002]
         [--variante cpu|cuda] [--racine DIR]
 
@@ -39,6 +42,12 @@ produit s'il est `complet` ou `partiel-erreur`.
 en `json-generique`, puis en `balises-tool-call`, jusqu'au premier valide ; une ligne par
 item, le tableau par protocole, le protocole recommandé et le run `eval-sonde`. Code 0 si
 un protocole est valide et le run `complet`, 1 sinon (aucun protocole valide, ou item en erreur).
+
+`juges-tiers` (story S3) : avis comparatif d'un juge tiers OpenRouter (`[juges_tiers.<nom>]`
+de `juges.toml`) sur un run `eval-notation`, sans toucher au score officiel ni au run source ;
+nouveau run `eval-juges-tiers` (`verdicts.jsonl`, `accords.json`), puis tableau des accords.
+`--verifier` affiche la présence de la clé et les modèles des familles retenues avec leur
+prix (`GET /models`, gratuit), sans génération ; code 0, 1 si la liste est inaccessible.
 
 Code 0 si le dernier run est `complet`, 1 s'il est `partiel-erreur` ou `partiel-budget`, 2
 pour une erreur d'usage, 4 si le jeu est altéré ou si le run repris diffère de la demande.
@@ -470,6 +479,66 @@ def executer_sonde(args: argparse.Namespace) -> int:
     return int(CodeSortie.ERREUR)
 
 
+def _usage_tiers(message: str) -> int:
+    print(f"slmsp : eval juges-tiers : {message}", file=sys.stderr)
+    return int(CodeSortie.USAGE)
+
+
+def _afficher_verification(bilan: Any) -> None:
+    cle = "présente" if bilan.cle_presente else "absente"
+    print(f"{bilan.fournisseur} : clé {bilan.nom_secret} {cle}")
+    if bilan.erreur is not None:
+        print(f"  liste des modèles inaccessible : {bilan.erreur}")
+        return
+    print(f"  {len(bilan.modeles)} modèle(s) des familles retenues (USD par million de tokens) :")
+    for modele in bilan.modeles:
+        print(
+            f"  {modele['id']:<55} entrée {_nombre(modele['entree_usd_mtok'], 3):>8}  "
+            f"sortie {_nombre(modele['sortie_usd_mtok'], 3):>8}  contexte {modele['contexte']}"
+        )
+
+
+def executer_juges_tiers(args: argparse.Namespace) -> int:
+    """`slmsp eval juges-tiers` : vérification sans dépense, ou avis d'un juge tiers."""
+    if args.verifier:
+        if args.depuis is not None or args.juge is not None:
+            return _usage_tiers("--verifier ne prend ni --depuis ni --juge")
+        from slmsp.fournisseurs.client import FOURNISSEURS, verifier
+
+        bilans = [verifier(config) for config in FOURNISSEURS.values()]
+        for bilan in bilans:
+            _afficher_verification(bilan)
+        return int(CodeSortie.ERREUR if any(b.erreur for b in bilans) else CodeSortie.SUCCES)
+    if args.depuis is None or args.juge is None:
+        return _usage_tiers("--depuis RUN_ID et --juge NOM requis (ou --verifier)")
+    from slmsp.evaluation import juges_tiers
+
+    taches = _items(args.taches) or list(juges_tiers.TACHES_DEFAUT)
+    racine = Path(args.racine) if args.racine is not None else None
+    try:
+        juge = juges_tiers.ouvrir_juge_tiers(args.juge, racine)
+    except ValueError as exc:
+        return _usage_tiers(str(exc))
+    try:
+        rapport = juges_tiers.noter_tiers(
+            args.depuis,
+            juge=juge,
+            nom_juge=args.juge,
+            taches=taches,
+            racine=racine,
+            plafond_estime_eur=args.plafond_estime,
+            rapporter=_rapporter_notation,
+        )
+    except ValueError as exc:
+        return _usage_tiers(str(exc))
+    print(juges_tiers.tableau_accords(rapport.accords))
+    print(
+        f"Run : {rapport.run.dossier} ({rapport.statut}) ; {rapport.demandes} demande(s), "
+        f"{rapport.depuis_cache} en cache ; coût de la session {rapport.cout_session_eur:.4f} €"
+    )
+    return _code(rapport.statut)
+
+
 def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     """Ajoute `eval` et ses sous-commandes au parseur de `slmsp`."""
     parseur = sous_parseurs.add_parser(
@@ -537,6 +606,31 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     run.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     run.set_defaults(func=executer_run)
+
+    tiers = actions.add_parser(
+        "juges-tiers",
+        help="avis comparatif d'un juge tiers OpenRouter sur un run de notation (hors score)",
+        description=(
+            "Fait noter par un juge tiers OpenRouter les items jugés d'un run eval-notation et "
+            "mesure son accord avec le Juge principal et le second juge (hors score officiel)."
+        ),
+    )
+    tiers.add_argument(
+        "--verifier",
+        action="store_true",
+        help="clé présente ou absente et modèles disponibles (gratuit, aucune génération)",
+    )
+    tiers.add_argument("--depuis", metavar="RUN_ID", help="run eval-notation à comparer")
+    tiers.add_argument("--juge", metavar="NOM", help="section [juges_tiers.<NOM>] de juges.toml")
+    tiers.add_argument("--taches", help="Tâches séparées par des virgules (défaut : CR,LC,CT,RE)")
+    tiers.add_argument(
+        "--plafond-estime",
+        type=_reel_positif,
+        metavar="EUR",
+        help="refuser si le coût estimé du juge tiers dépasse ce plafond (EUR)",
+    )
+    tiers.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
+    tiers.set_defaults(func=executer_juges_tiers)
 
     sonde = actions.add_parser(
         "sonde-outils",

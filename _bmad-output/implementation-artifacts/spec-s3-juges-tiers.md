@@ -1,3 +1,7 @@
+---
+status: review
+---
+
 # Story S3 — Juges tiers OpenAI et Google (fiabilisation des verdicts)
 
 Décision d'Anaël (19/10/2026, 21 h 40) : ajouter un juge d'une autre famille, OpenAI ou Google, **tout de suite** ; plafond **10 € par fournisseur** pour l'ensemble du run. Constat : kappa principal (Claude) / second juge (Mistral) à 0,00 sur CR, LC, RE, CT (`config/evaluation.toml` : fragile si < 0,6).
@@ -35,3 +39,18 @@ Changer le juge principal ou la grille ; renoter les items hors échantillon ; u
 6. **Secrets** : `core/secrets.py` lit un seul nom ; ajouter une lecture « premier présent parmi » pour `GEMINI_API_KEY` puis `GOOGLE_API_KEY`. `--verifier` affiche présent / absent sans lever.
 7. **Tarifs** : entrées `config/tarifs.toml` regroupées dans un bloc commenté « juges tiers » **en fin de fichier** (S5 ajoute `mistral-large-4` près des entrées Mistral : pas de chevauchement).
 8. **Gabarit** : même gabarit de prompt et même schéma de verdict que le **juge principal** pour la tâche (c'est lui qu'on audite), afin que l'accord mesure le juge et non le prompt.
+
+## Révision 2 (décision d'Anaël, 19/10 ~22 h 10) — prime sur ce qui précède
+1. GPT et Gemini sont retirés (risque de licence) : ni config, ni hôtes, ni secrets, ni postes, ni tarifs OpenAI ou Google ; le repli « premier secret présent parmi » est abandonné.
+2. Seul fournisseur : **OpenRouter** (`https://openrouter.ai/api/v1`, `OPENROUTER_API_KEY`, hôte `openrouter.ai` au profil `outillage`, poste `openrouter`, imputations `juge-tiers-openrouter` et `generateur-openrouter` pour S4) ; client générique « messages → texte + usage » réutilisable hors juge ; `usage.cost` journalisé.
+3. Juges tiers d'autres familles servis par OpenRouter ; `--verifier` filtre `deepseek/`, `z-ai/` ou `zhipu`, `mistralai/`, `moonshotai/`, `xiaomi/`.
+
+## Implémentation
+- **Fichiers** : `src/slmsp/fournisseurs/` (nouveau paquet, couche 2 : `client.py` client compatible OpenAI + `verifier`, `journal.py` journal sqlite en ajout seul), `src/slmsp/judge/tiers.py` (`JugeTiers`), `src/slmsp/judge/config.py` (`ConfigJugeTiers`, champ `juges_tiers`), `src/slmsp/evaluation/juges_tiers.py` (phase, accords, assemblage réel), `src/slmsp/cli/eval.py` (`eval juges-tiers`), `config/reseau.toml` (2 règles OpenRouter, chemins exacts), `config/juges.toml` et `config/tarifs.toml` (modèles commentés seulement), `tests/test_architecture.py` (couche `fournisseurs`). Tests : `tests/fournisseurs/`, `tests/judge/test_tiers.py`, `tests/evaluation/test_juges_tiers.py`.
+- **Commandes** : `slmsp eval juges-tiers --verifier` ; `slmsp eval juges-tiers --depuis <run eval-notation> --juge <nom> [--taches CR,LC,CT,RE] [--plafond-estime EUR]`.
+- **Choix** : section `[juges_tiers.<nom>]` (plusieurs modèles OpenRouter possibles) et option `--juge <nom>` au lieu de `--fournisseur` ; clé de cache = `cle_verdict` (modèle, gabarit, schéma, item, sortie) + `effort_cle` (`tiers-temperature-…+effort-…+format`) ; paramètres envoyés : `max_tokens`, `temperature` seulement si configurée, `reasoning.effort` si configuré, `response_format` json_schema strict (ou json_object), `provider.require_parameters = true` ; jetons de sortie = max(`completion_tokens`, `total − prompt`) ; registre réglé au tarif de `tarifs.toml` (pire cas réservé par item), `usage.cost` seulement journalisé ; journal `appels-juges-tiers.sqlite` dans `SLMSP_VAR_DIR`, refusé à `data` et `train` par la liste d'accès existante (testé) ; `--verifier` affiche les prix `/models` d'OpenRouter pour écrire `tarifs.toml`.
+- **Limites** : aucune entrée de tarif réelle (modèles à choisir après `--verifier`) : sans elle, `TarifInconnu` avant toute dépense ; la comparaison à quatre (deux juges tiers ensemble) n'est pas faite, chaque run compare un tiers au principal et au second ; le coût réglé au registre suit notre tarif prudent, pas `usage.cost`.
+
+## Auto Run Result
+- Statut : review. Décisions prises seul (solution simple et réversible) : `--juge <nom>` plutôt que `--fournisseur` ; tarifs laissés en modèle commenté ; registre réglé au tarif local et non à `usage.cost` (**à confirmer par Anaël**) ; `provider.require_parameters` toujours envoyé.
+- Reports : comparaison simultanée de plusieurs juges tiers dans `accords.json` ; règlement du registre au coût annoncé par OpenRouter.

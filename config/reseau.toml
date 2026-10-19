@@ -77,5 +77,19 @@ nom = "anthropic-lots"
 methodes = ["GET"]
 hotes = ["api.anthropic.com"]
 
+# Juges tiers OpenRouter (story S3, décision d'Anaël du 2026-10-19) : appel Chat Completions
+# (POST) et liste des modèles (GET, `--verifier`), chemins exacts. Profil `outillage` seul.
+[[profils.outillage.regles]]
+nom = "openrouter-post"
+methodes = ["POST"]
+hotes = ["openrouter.ai"]
+chemins = ["/api/v1/chat/completions"]
+
+[[profils.outillage.regles]]
+nom = "openrouter-modeles"
+methodes = ["GET"]
+hotes = ["openrouter.ai"]
+chemins = ["/api/v1/models"]
+
 [profils.aucun]
 # Tout est refusé : ni règle, ni lecture de la Liste blanche.

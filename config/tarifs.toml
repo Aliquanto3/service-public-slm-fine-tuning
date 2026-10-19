@@ -48,3 +48,20 @@ sortie = 6.0
 [modeles."mistral-large-latest".modes.batch]
 entree = 1.0
 sortie = 3.0
+
+# --- Juges tiers (story S3) ---------------------------------------------------------------------
+# Modèles servis par OpenRouter (identifiant OpenRouter tel quel), mode `direct` seul. Les
+# entrées sont ajoutées après `slmsp eval juges-tiers --verifier`, qui affiche le prix de
+# chaque modèle (USD par million de tokens) : à vérifier sur la page officielle du modèle
+# chez OpenRouter, puis majorer par prudence. Sans entrée, un appel lève `TarifInconnu`
+# avant toute dépense. Modèle d'entrée :
+#
+# [modeles."<famille>/<modèle>"]
+# devise = "USD"
+# date = AAAA-MM-JJ
+# source = "openrouter.ai/<famille>/<modèle>, relevé par --verifier"
+# note = "à vérifier sur la page officielle"
+#
+# [modeles."<famille>/<modèle>".modes.direct]
+# entree = 0.0
+# sortie = 0.0

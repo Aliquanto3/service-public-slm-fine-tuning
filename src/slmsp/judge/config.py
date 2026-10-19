@@ -1,7 +1,8 @@
 """Configuration des juges : `config/juges.toml` (AD-22).
 
 Section `principal` : Juge principal Claude (story 5.4). Section `second` : second juge
-Mistral (story 5.5), dont le délai d'appel est dans `config/mistral.toml`. Toutes les durées
+Mistral (story 5.5), dont le délai d'appel est dans `config/mistral.toml`. Sections
+facultatives `juges_tiers.<nom>` : juges tiers OpenRouter (story S3). Toutes les durées
 sont en secondes.
 """
 
@@ -62,12 +63,55 @@ class ConfigSecondJuge(ModeleConfig):
         return f"{self.effort_cache}+{self.format_reponse}"
 
 
+NomJugeTiers = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9.-]*$")]
+"""Nom d'un juge tiers (section `[juges_tiers.<nom>]`), repris dans le slug du run."""
+
+
+class ConfigJugeTiers(ModeleConfig):
+    """Juge tiers servi par OpenRouter (section `[juges_tiers.<nom>]`, story S3).
+
+    Avis comparatif hors score officiel. `temperature` absente : le paramètre n'est pas
+    envoyé (modèles de raisonnement qui le refusent). `effort_raisonnement` est envoyé en
+    `reasoning.effort` s'il est fourni. L'estimation de coût compte
+    `sortie_estimee + marge_raisonnement` tokens de sortie par item (bornés par
+    `max_tokens`) ; la réservation au registre compte toujours `max_tokens` (pire cas).
+    """
+
+    fournisseur: Literal["openrouter"] = "openrouter"
+    modele: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+    temperature: float | None = Field(default=None, ge=0, le=0, allow_inf_nan=False)
+    max_tokens: int = Field(ge=1)
+    effort_raisonnement: Literal["minimal", "low", "medium", "high"] | None = None
+    format_reponse: Literal["json_schema", "json_object"] = "json_schema"
+    sortie_estimee: int = Field(default=1500, ge=1)
+    marge_raisonnement: int = Field(default=2000, ge=0)
+
+    @property
+    def usage_budget(self) -> str:
+        """Usage de budget de ce juge : `juge-tiers-<fournisseur>` (`budgets.toml`)."""
+        return f"juge-tiers-{self.fournisseur}"
+
+    @property
+    def effort_cle(self) -> str:
+        """Part « effort » de la clé du cache : température, effort et format de réponse."""
+        temperature = "sans" if self.temperature is None else f"{self.temperature:g}"
+        effort = self.effort_raisonnement or "aucun"
+        return f"tiers-temperature-{temperature}+effort-{effort}+{self.format_reponse}"
+
+    @property
+    def sortie_estimation(self) -> int:
+        """Tokens de sortie comptés par item dans l'estimation (raisonnement compris)."""
+        return min(self.max_tokens, self.sortie_estimee + self.marge_raisonnement)
+
+
 class ConfigJuges(ModeleConfig):
     """Contenu de `config/juges.toml`."""
 
     schema_version: Literal[1]
     principal: ConfigJugePrincipal
     second: ConfigSecondJuge
+    juges_tiers: dict[NomJugeTiers, ConfigJugeTiers] = Field(default_factory=dict)
+    """Juges tiers facultatifs (story S3), sans effet sur le principal ni le second."""
 
 
 def charger_juges(chemin: str | Path | None = None) -> ConfigJuges:
