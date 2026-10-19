@@ -31,7 +31,7 @@ import json
 import math
 import os
 import sqlite3
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import datetime
@@ -669,29 +669,63 @@ class RegistreBudget:
             avec_cache=avec_cache,
         )
 
+    def _couts_lot(
+        self,
+        modele: str,
+        tokens_entree_estimes: int | Sequence[int],
+        max_tokens: int,
+        avec_cache: bool,
+    ) -> float | list[float]:
+        """Pire cas d'une requête (entier) ou liste des pires cas, un par requête (séquence)."""
+        if isinstance(tokens_entree_estimes, Sequence) and not isinstance(
+            tokens_entree_estimes, str | bytes
+        ):
+            return [
+                self._cout_requete_lot(modele, int(tokens), max_tokens, avec_cache)
+                for tokens in tokens_entree_estimes
+            ]
+        return self._cout_requete_lot(modele, tokens_entree_estimes, max_tokens, avec_cache)
+
     def _taille_max(
-        self, connexion: sqlite3.Connection, poste: str, sous_poste: str | None, unitaire: float
+        self,
+        connexion: sqlite3.Connection,
+        poste: str,
+        sous_poste: str | None,
+        couts: float | list[float],
     ) -> int:
         disponible, _ = self._disponible(connexion, poste, sous_poste)
-        if disponible + TOLERANCE_EUR < unitaire:
+        if isinstance(couts, list):
+            # Plus long préfixe dont la somme des pires cas tient sous le disponible.
+            somme, retenu = 0.0, 0
+            for cout in couts:
+                if somme + cout > disponible + TOLERANCE_EUR:
+                    break
+                somme += cout
+                retenu += 1
+            return retenu
+        if disponible + TOLERANCE_EUR < couts:
             return 0
-        return max(math.floor((disponible + TOLERANCE_EUR) / unitaire), 0)
+        return max(math.floor((disponible + TOLERANCE_EUR) / couts), 0)
 
     def taille_max_lot(
         self,
         poste: str,
         sous_poste: str | None,
         modele: str,
-        tokens_entree_estimes: int,
+        tokens_entree_estimes: int | Sequence[int],
         max_tokens: int,
         *,
         avec_cache: bool = False,
     ) -> int:
-        """Nombre maximal de requêtes d'un lot qui tient sous le reste disponible (tarif batch)."""
+        """Nombre maximal de requêtes d'un lot qui tient sous le reste disponible (tarif batch).
+
+        `tokens_entree_estimes` : un entier (même estimation pour chaque requête) ou une
+        séquence (une estimation par requête, dans l'ordre du lot ; plus long préfixe qui tient).
+        """
         self._plafonds(poste, sous_poste)
-        unitaire = self._cout_requete_lot(modele, tokens_entree_estimes, max_tokens, avec_cache)
+        couts = self._couts_lot(modele, tokens_entree_estimes, max_tokens, avec_cache)
         with closing(ouvrir_sqlite(self.chemin)) as connexion:
-            return self._taille_max(connexion, poste, sous_poste, unitaire)
+            return self._taille_max(connexion, poste, sous_poste, couts)
 
     def reserver_lot(
         self,
@@ -699,7 +733,7 @@ class RegistreBudget:
         poste: str,
         sous_poste: str | None,
         modele: str,
-        tokens_entree_estimes: int,
+        tokens_entree_estimes: int | Sequence[int],
         max_tokens: int,
         nb_requetes: int,
         *,
@@ -707,37 +741,46 @@ class RegistreBudget:
     ) -> int:
         """Réserve un lot au pire cas, au tarif batch, et renvoie le nombre de requêtes retenu.
 
-        Le nombre retenu vaut `min(nb_requetes, taille maximale)` ; `batch_id` (choisi par
-        l'appelant) est persisté avant toute soumission. Lève `BudgetEpuise` si aucune
-        requête ne tient, `SlmspError` si `batch_id` est déjà connu du registre.
+        Avec un entier, le nombre retenu vaut `min(nb_requetes, taille maximale)` ; avec une
+        séquence (une estimation par requête, `len == nb_requetes`), c'est le plus long préfixe
+        dont la somme des pires cas individuels tient, et le montant réservé est cette somme.
+        `batch_id` (choisi par l'appelant) est persisté avant toute soumission. Lève
+        `BudgetEpuise` si aucune requête ne tient, `SlmspError` si `batch_id` est déjà connu.
         """
         if not isinstance(batch_id, str) or not batch_id.strip():
             raise ValueError("batch_id doit être une chaîne non vide")
         if isinstance(nb_requetes, bool) or not isinstance(nb_requetes, int) or nb_requetes < 1:
             raise ValueError("nb_requetes doit être un entier supérieur ou égal à 1")
         self._plafonds(poste, sous_poste)
-        unitaire = self._cout_requete_lot(modele, tokens_entree_estimes, max_tokens, avec_cache)
+        couts = self._couts_lot(modele, tokens_entree_estimes, max_tokens, avec_cache)
+        if isinstance(couts, list):
+            if len(couts) != nb_requetes:
+                raise ValueError("une estimation d'entrée par requête est attendue")
+            premier = couts[0]
+        else:
+            premier = couts
         with _transaction(self.chemin) as connexion:
             deja = connexion.execute(
                 "SELECT etat FROM reservations WHERE batch_id = ?", (batch_id,)
             ).fetchone()
             if deja is not None:
                 raise SlmspError(f"lot {batch_id} déjà inscrit au registre (état {deja[0]})")
-            retenu = min(nb_requetes, self._taille_max(connexion, poste, sous_poste, unitaire))
+            retenu = min(nb_requetes, self._taille_max(connexion, poste, sous_poste, couts))
             if retenu < 1:
                 _, detail = self._disponible(connexion, poste, sous_poste)
                 raise BudgetEpuise(
                     f"budget épuisé pour le lot {batch_id} (campagne {self.campagne_id}) : "
-                    f"{detail} ; coût pire cas d'une requête {unitaire:.4f} €"
+                    f"{detail} ; coût pire cas d'une requête {premier:.4f} €"
                 )
-            self._controler(connexion, poste, sous_poste, retenu * unitaire)
+            montant = sum(couts[:retenu]) if isinstance(couts, list) else retenu * couts
+            self._controler(connexion, poste, sous_poste, montant)
             self._inserer(
                 connexion,
                 poste=poste,
                 sous_poste=sous_poste,
                 modele=modele,
                 mode="batch",
-                montant=retenu * unitaire,
+                montant=montant,
                 nb_requetes=retenu,
                 batch_id=batch_id,
             )

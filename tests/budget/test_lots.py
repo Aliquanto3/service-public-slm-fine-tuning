@@ -164,3 +164,39 @@ def test_lot_d_un_pid_mort_reste_ouvert(registre, lignes, modifier) -> None:
     assert lignes(rouvert)[0]["etat"] == "reservee"
     assert [ouvert.batch_id for ouvert in rouvert.lots_ouverts()] == ["lot-1"]
     assert rouvert.collecter_lot("lot-1", UsageTokens(10, 10)) > 0
+
+
+def test_lot_heterogene_reserve_la_somme_des_pires_cas(registre, lignes) -> None:
+    # Une requête longue (2 M tokens d'entrée : 1,5 €) et trois courtes (0,5 €) : 3 €, et non
+    # 4 x 1,5 € comme avec le maximum du lot.
+    tokens = [2 * MILLION, 0, 0, 0]
+    assert registre.taille_max_lot("anthropic", None, "m-test", tokens, MILLION) == 4
+    assert registre.reserver_lot("lot-h", "anthropic", None, "m-test", tokens, MILLION, 4) == 4
+    (ligne,) = lignes(registre)
+    assert ligne["montant_reserve_eur"] == pytest.approx(3.0)
+    assert ligne["nb_requetes"] == 4
+
+
+def test_lot_heterogene_prefixe_au_bon_rang(registre, lignes) -> None:
+    # Disponible 10 € : 0,5 + 0,5 + 1,5 + 0,5 x 15 = 10,0 € pour 18 requêtes sur 20 ; la
+    # 19e (0,5 €) ne tient plus.
+    tokens = [0, 0, 2 * MILLION] + [0] * 17
+    assert registre.taille_max_lot("anthropic", None, "m-test", tokens, MILLION) == 18
+    assert registre.reserver_lot("lot-p", "anthropic", None, "m-test", tokens, MILLION, 20) == 18
+    (ligne,) = lignes(registre)
+    assert ligne["montant_reserve_eur"] == pytest.approx(10.0)
+
+
+def test_lot_heterogene_premiere_requete_trop_chere(registre, lignes) -> None:
+    # La première requête vaut 10,5 € > 10 € disponibles : le lot est refusé, même si les
+    # suivantes tiendraient.
+    tokens = [20 * MILLION, 0, 0]
+    assert registre.taille_max_lot("anthropic", None, "m-test", tokens, MILLION) == 0
+    with pytest.raises(BudgetEpuise, match="10.5000"):
+        registre.reserver_lot("lot-x", "anthropic", None, "m-test", tokens, MILLION, 3)
+    assert lignes(registre) == []
+
+
+def test_lot_heterogene_longueur_incoherente(registre) -> None:
+    with pytest.raises(ValueError, match="par requête"):
+        registre.reserver_lot("lot-y", "anthropic", None, "m-test", [0, 0], MILLION, 3)
