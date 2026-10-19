@@ -28,3 +28,6 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:40 · run · décision · périmètre et plafonds d'Anaël (ci-dessus) · —
 - 2026-10-19 21:40 · S1 · dev · lancé · —
 - 2026-10-19 21:40 · S2 · dev · lancé · —
+- 2026-10-19 21:47 · S2 · dev · fini (jeu v12 = v11 sans CR, CT, LC : 369 lignes attendues) · 30f861c
+- 2026-10-19 21:47 · S2 · second-avis · lancé · —
+- 2026-10-19 21:47 · S3, S5 · décision · specs écrites (`spec-s3-juges-tiers.md`, `spec-s5-cibles-v12.md`), relecture avant code lancée · —
