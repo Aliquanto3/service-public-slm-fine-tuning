@@ -13,3 +13,7 @@ socle = true
 
 [options.jeux_hf]
 "jannalu/crows_pairs_multilingual" = "3550adcf6ac84fc021c0cd99114acd35e1f8b88d"
+
+# Configurations chargées par `slmsp bench cache-hf` (celles de la tâche lm_eval ; absent : `default`).
+[options.configs_hf]
+"jannalu/crows_pairs_multilingual" = ["french"]

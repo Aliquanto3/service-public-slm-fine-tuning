@@ -17,3 +17,7 @@ langue = "fr"
 
 [options.jeux_hf]
 "CohereLabs/Global-MMLU-Lite" = "36c2fd756f19ccf13a9a96c8e53ccecc02192b8b"
+
+# Configurations chargées par `slmsp bench cache-hf` (celles de la tâche lm_eval ; absent : `default`).
+[options.configs_hf]
+"CohereLabs/Global-MMLU-Lite" = ["fr"]

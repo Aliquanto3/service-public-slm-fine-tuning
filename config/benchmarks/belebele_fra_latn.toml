@@ -13,3 +13,7 @@ socle = true
 
 [options.jeux_hf]
 "facebook/belebele" = "7899cdfa4e1e0d733fd77c848e2c273cb1d32be2"
+
+# Configurations chargées par `slmsp bench cache-hf` (celles de la tâche lm_eval ; absent : `default`).
+[options.configs_hf]
+"facebook/belebele" = ["fra_Latn"]

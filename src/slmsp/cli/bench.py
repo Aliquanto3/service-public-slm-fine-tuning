@@ -103,11 +103,18 @@ def _cache_hf(args: argparse.Namespace) -> int:
 
     cache = cache_hf.preparer()
     pins = cache_hf.lire_pins(config_bench.dossier_benchmarks(), args.depots)
+    configs = cache_hf.lire_configs(config_bench.dossier_benchmarks(), list(pins))
     racine = Path(args.racine if args.racine is not None else racine_projet()).resolve()
     run = nouveau_run(
         "fetch",
         "cache-hf",
-        {"sous_commande": "cache-hf", "jeux": pins, "hf_home": str(cache), "racine": str(racine)},
+        {
+            "sous_commande": "cache-hf",
+            "jeux": pins,
+            "configs": configs,
+            "hf_home": str(cache),
+            "racine": str(racine),
+        },
         racine=racine,
     )
 
@@ -116,7 +123,7 @@ def _cache_hf(args: argparse.Namespace) -> int:
         print(f"{ligne['statut']:<12} {ligne['depot']} @ {ligne['revision'][:8]}", flush=True)
 
     try:
-        cache_hf.executer(pins, cache, consigner=consigner)
+        cache_hf.executer(pins, cache, configs, consigner=consigner)
     except KeyboardInterrupt:
         run.terminer("interrompu", "arrêt demandé")
         raise

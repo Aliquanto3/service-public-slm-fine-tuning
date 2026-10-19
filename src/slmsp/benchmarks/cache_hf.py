@@ -7,12 +7,16 @@ révision épinglée) y est installé en trois étapes, idempotentes :
 1. `snapshot_download(depot, repo_type="dataset", revision=<épinglée>)` ;
 2. `refs/main` du dépôt écrit sur la révision épinglée (le mode hors ligne résout `main`) ;
 3. `load_dataset(depot, <configuration>, revision=<épinglée>)` en ligne, pour chaque
-   configuration du dépôt : cela crée le cache `datasets` (hors ligne, datasets 5 ne lit pas
-   les seuls snapshots).
+   configuration utile (`[options.configs_hf]`, dépôt -> liste ; absente : `default`, c'est-à-dire
+   `load_dataset(depot)` sans nom, comme `lm_eval`) : cela crée le cache `datasets` (hors ligne,
+   datasets 5 ne lit pas les seuls snapshots). `refs/main` n'est écrit qu'après ce chargement.
 
-Un contrôle relit chaque jeu dans un sous-processus hors ligne (`verifier_hors_ligne`). Avant
-tout téléchargement, il sert à sauter un jeu déjà complet ; à la fin, il échoue clairement
-(`CacheHorsLigneInvalide`) si un jeu n'est pas lisible hors ligne. Les dépendances lourdes
+Un contrôle relit chaque jeu dans un sous-processus hors ligne (`verifier_hors_ligne`), comme
+`lm_eval` : sans `revision` (résolution de `main` par `refs/main`), mêmes configurations,
+`HF_HOME`, `HF_HUB_CACHE` et `HF_DATASETS_CACHE` imposés. Il tourne à chaque relance (garantie
+voulue, court car limité aux configurations utiles) : avant tout téléchargement, il sert à
+sauter un jeu déjà complet ; à la fin, il échoue clairement (`CacheHorsLigneInvalide`) si un
+jeu n'est pas lisible hors ligne. Les dépendances lourdes
 (`huggingface_hub`, `datasets`) sont importées à l'appel, et injectables pour les tests.
 
 Cette commande vit sous `bench` et non sous `fetch` : `snapshot_download` et le sous-processus
@@ -38,7 +42,9 @@ from slmsp.core.erreurs import ConfigurationInvalide, SlmspError
 ENV_HORS_LIGNE = {"HF_HUB_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"}
 
 Consigner = Callable[[dict[str, Any]], None]
-Verifier = Callable[[Mapping[str, str]], dict[str, str | None]]
+Configs = Mapping[str, Sequence[str]]
+Verifier = Callable[[Mapping[str, str], Configs], dict[str, str | None]]
+CONFIG_DEFAUT = "default"
 
 
 class CacheHorsLigneInvalide(SlmspError):
@@ -55,7 +61,7 @@ def preparer() -> Path:
     import os
 
     cache = dossier_cache()
-    os.environ["HF_HOME"] = str(cache)
+    os.environ.update(_env_caches(cache))
     appliquer_environnement_impose()
     try:
         import huggingface_hub
@@ -91,6 +97,30 @@ def lire_pins(dossier: str | Path, depots: Sequence[str] = ()) -> dict[str, str]
     return {depot: pins[depot] for depot in depots} if depots else pins
 
 
+def lire_configs(dossier: str | Path, depots: Sequence[str]) -> dict[str, list[str]]:
+    """Dépôt -> configurations à charger, d'après `[options.configs_hf]` (défaut : `default`).
+
+    `ConfigurationInvalide` pour une liste vide ou mal formée, ou deux listes différentes."""
+    declarees: dict[str, list[str]] = {}
+    for chemin in sorted(Path(dossier).glob("*.toml")):
+        try:
+            donnees = tomllib.loads(chemin.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            raise ConfigurationInvalide(f"{chemin} : {type(exc).__name__}") from None
+        for depot, noms in donnees.get("options", {}).get("configs_hf", {}).items():
+            if (
+                not isinstance(noms, list)
+                or not noms
+                or not all(isinstance(n, str) and n for n in noms)
+            ):
+                raise ConfigurationInvalide(
+                    f"{chemin} : configs_hf de {depot} doit être une liste non vide de noms"
+                )
+            if declarees.setdefault(depot, noms) != noms:
+                raise ConfigurationInvalide(f"{chemin} : {depot} a deux listes de configurations")
+    return {depot: declarees.get(depot, [CONFIG_DEFAUT]) for depot in depots}
+
+
 def dossier_depot(hf_home: str | Path, depot: str) -> Path:
     """`<HF_HOME>/hub/datasets--<org>--<nom>`."""
     return Path(hf_home) / "hub" / f"datasets--{depot.replace('/', '--')}"
@@ -113,12 +143,14 @@ def _snapshot_present(hf_home: str | Path, depot: str, revision: str) -> bool:
 
 _SCRIPT_CONTROLE = """
 import json, sys
-from datasets import get_dataset_config_names, load_dataset
+from datasets import load_dataset
 resultat = {}
-for depot, revision in json.loads(sys.argv[1]).items():
+for depot, noms in json.loads(sys.argv[1]).items():
     try:
-        for nom in get_dataset_config_names(depot, revision=revision):
-            load_dataset(depot, nom, revision=revision)
+        if not noms:
+            raise ValueError("aucune configuration à contrôler")
+        for nom in noms:
+            load_dataset(depot, None if nom == "default" else nom)
         resultat[depot] = None
     except Exception as exc:
         lignes = str(exc).splitlines()
@@ -127,13 +159,25 @@ print("RESULTAT=" + json.dumps(resultat))
 """
 
 
-def verifier_hors_ligne(pins: Mapping[str, str]) -> dict[str, str | None]:
-    """Relit chaque jeu dans un sous-processus hors ligne : dépôt -> erreur, ou `None`."""
+def _env_caches(hf_home: str | Path) -> dict[str, str]:
+    return {
+        "HF_HOME": str(hf_home),
+        "HF_HUB_CACHE": str(Path(hf_home) / "hub"),
+        "HF_DATASETS_CACHE": str(Path(hf_home) / "datasets"),
+    }
+
+
+def verifier_hors_ligne(pins: Mapping[str, str], configs: Configs) -> dict[str, str | None]:
+    """Relit chaque jeu comme `lm_eval`, dans un sous-processus hors ligne : dépôt -> erreur
+    ou `None`. Aucune `revision` : `main` est résolu par `refs/main`. `pins` ne sert qu'à la
+    liste des dépôts."""
     if not pins:
         return {}
     env = {**env_sous_processus(), **ENV_HORS_LIGNE, "PYTHONUTF8": "1"}
+    env.update(_env_caches(env["HF_HOME"]))
+    demande = {depot: list(configs.get(depot, [])) for depot in pins}
     fin = subprocess.run(
-        [sys.executable, "-c", _SCRIPT_CONTROLE, json.dumps(dict(pins))],
+        [sys.executable, "-c", _SCRIPT_CONTROLE, json.dumps(demande)],
         env=env,
         capture_output=True,
         text=True,
@@ -153,35 +197,42 @@ def _telecharger(depot: str, revision: str) -> None:
     snapshot_download(depot, repo_type="dataset", revision=revision)
 
 
-def _charger(depot: str, revision: str) -> int:
-    """Charge chaque configuration en ligne ; rend leur nombre."""
-    from datasets import get_dataset_config_names, load_dataset
+def _charger(depot: str, revision: str, noms: Sequence[str]) -> int:
+    """Charge chaque configuration utile en ligne ; rend leur nombre."""
+    from datasets import load_dataset
 
-    noms = get_dataset_config_names(depot, revision=revision)
     for nom in noms:
-        load_dataset(depot, nom, revision=revision)
+        load_dataset(depot, None if nom == CONFIG_DEFAUT else nom, revision=revision)
     return len(noms)
 
 
 def executer(
     pins: Mapping[str, str],
     hf_home: str | Path,
+    configs: Configs | None = None,
     *,
     consigner: Consigner = lambda _ligne: None,
     telecharger: Callable[[str, str], Any] | None = None,
-    charger: Callable[[str, str], int] | None = None,
+    charger: Callable[[str, str, Sequence[str]], int] | None = None,
     verifier: Verifier | None = None,
 ) -> None:
     """Installe les jeux de `pins` dans le cache de `hf_home`, puis les contrôle hors ligne.
 
-    Une ligne `consigner` par jeu : `deja-present` (lisible hors ligne, `refs/main` à la
-    bonne révision, rien retéléchargé) ou `telecharge`. `CacheHorsLigneInvalide` si un jeu
-    n'est pas relisible hors ligne à la fin.
+    `configs` : dépôt -> configurations à charger (défaut : `default`) ; une liste vide est
+    une erreur. Une ligne `consigner` par jeu : `deja-present` (lisible hors ligne,
+    `refs/main` à la bonne révision, rien retéléchargé) ou `installe`. `snapshot_download`
+    est rappelé pour tout jeu à refaire : idempotent, il reprend un téléchargement
+    interrompu sans retélécharger l'existant. `CacheHorsLigneInvalide` si un jeu n'est pas
+    relisible hors ligne à la fin.
     """
     telecharger = telecharger or _telecharger
     charger = charger or _charger
     verifier = verifier or verifier_hors_ligne
-    avant = verifier(pins)
+    configs = {depot: list((configs or {}).get(depot, [CONFIG_DEFAUT])) for depot in pins}
+    vides = [depot for depot, noms in configs.items() if not noms]
+    if vides:
+        raise ConfigurationInvalide(f"aucune configuration à charger : {', '.join(vides)}")
+    avant = verifier(pins, configs)
     a_faire: dict[str, str] = {}
     for depot, revision in pins.items():
         refs = dossier_depot(hf_home, depot) / "refs" / "main"
@@ -196,16 +247,18 @@ def executer(
         else:
             a_faire[depot] = revision
     for depot, revision in a_faire.items():
-        if not _snapshot_present(hf_home, depot, revision):
-            telecharger(depot, revision)
+        telecharger(depot, revision)
+        charger(depot, revision, configs[depot])
         ecrire_refs_main(hf_home, depot, revision)
-        charger(depot, revision)
-        consigner(_ligne(depot, revision, "telecharge", hf_home))
-    apres = verifier(a_faire)
+        consigner(_ligne(depot, revision, "installe", hf_home))
+    apres = verifier(a_faire, configs)
     echecs = {depot: erreur for depot, erreur in apres.items() if erreur is not None}
     if echecs:
         detail = "; ".join(f"{d} ({pins[d][:8]}) : {e}" for d, e in echecs.items())
-        raise CacheHorsLigneInvalide(f"cache HF illisible hors ligne : {detail}")
+        raise CacheHorsLigneInvalide(
+            f"cache HF illisible hors ligne : {detail}. Relancer `slmsp bench cache-hf` : "
+            "snapshot_download reprend sans retélécharger ce qui est complet."
+        )
 
 
 def _ligne(depot: str, revision: str, statut: str, hf_home: str | Path) -> dict[str, Any]:
@@ -218,4 +271,10 @@ def _ligne(depot: str, revision: str, statut: str, hf_home: str | Path) -> dict[
     }
 
 
-__all__ = ["CacheHorsLigneInvalide", "executer", "lire_pins", "verifier_hors_ligne"]
+__all__ = [
+    "CacheHorsLigneInvalide",
+    "executer",
+    "lire_configs",
+    "lire_pins",
+    "verifier_hors_ligne",
+]

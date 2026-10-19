@@ -10,7 +10,7 @@ context:
   - '{project-root}/_bmad-output/implementation-artifacts/etat-run-2026-10-17-portable.md (incident du cache HF)'
 warnings: []
 deferred:
-  - 'Non exécuté en réel (consigne : aucun téléchargement) : `get_dataset_config_names` hors ligne et le chargement de toutes les configurations (cais/mmlu, Global-MMLU-Lite) sont à valider par un premier `slmsp bench cache-hf` en phase 1. Si une configuration inutile alourdit le cache, ajouter une liste de configurations par dépôt dans `[options]`.'
+  - 'Non exécuté en réel (consigne : aucun téléchargement) : le premier `slmsp bench cache-hf` en phase 1 valide le chargement en ligne des configurations de `[options.configs_hf]`.'
 ---
 
 ## Intent
@@ -30,3 +30,11 @@ Aucune commande ne remplissait le cache HF des jeux `lm_eval` : 7 benchmarks HF 
 ## Auto Run Result
 - Statut : review. Pas de fusion, aucun accès réseau, `models/.cache-hf` du dépôt principal intact.
 - Décisions seul : toutes les configurations de chaque dépôt sont chargées (la config ne nomme pas les sous-ensembles) ; pas de jeton HF (jeux publics) ; `--racine` ne déplace que le run, le cache suit `SLMSP_MODELS_DIR`. À confirmer par Anaël : le premier passage réel (voir `deferred`).
+
+## Revue
+- high, corrigé : toutes les configurations de chaque dépôt étaient chargées. Liste explicite `[options.configs_hf]` (mmlu.toml : 57 sujets, sans `all` ni `auxiliary_train` ; belebele `fra_Latn` ; Global-MMLU-Lite `fr` ; crows_pairs `french`) ; les autres dépôts : `default`, soit `load_dataset(depot)` sans nom comme lm_eval. Vérifié contre le cache manuel (sous-dossiers de `datasets/`). Test sur les vraies configs.
+- high, corrigé : le contrôle hors ligne passait `revision=<sha>`. Il charge maintenant comme lm_eval, sans révision (via `refs/main`), mêmes configurations.
+- medium, corrigé : un snapshot partiel bloquait la reprise. `snapshot_download` est rappelé pour tout jeu à refaire (idempotent) ; le message d'échec rappelle de relancer.
+- medium, corrigé : contrôle complet à chaque relance, conservé et limité aux configurations utiles (documenté dans l'en-tête du module).
+- medium, corrigé : tests du script de contrôle réel (`datasets` simulé : pas de `revision`, configs, `default` -> sans nom), de la transmission des configurations, de la liste vide et du snapshot partiel.
+- low, corrigés : `HF_HUB_CACHE` et `HF_DATASETS_CACHE` imposés avec `HF_HOME` (processus et sous-processus) ; statut `telecharge` renommé `installe` ; `refs/main` écrit après le chargement ; liste de configurations vide = erreur.
