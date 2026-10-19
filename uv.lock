@@ -1473,6 +1473,16 @@ wheels = [
 ]
 
 [[package]]
+name = "sentencepiece"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/33/ea3cb3839607eb175da835244a798f797f478c5ddf0e8ecdf57ea85a4c70/sentencepiece-0.2.2.tar.gz", hash = "sha256:3d2b5e824b5622038dc7b490897efe05ebbbb9e7350fc142f3ecc8789ef9bdf6", size = 8218435, upload-time = "2026-07-12T08:39:34.701Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/11/753fca2e6b109be3ab7867abf357dfe48677fe726ae5a5363d0b54ca9450/sentencepiece-0.2.2-cp312-cp312-win_amd64.whl", hash = "sha256:7c6e7bf684dc12145bfa685d3060beaea55139134ba848289bee514ed42e7383", size = 1248030, upload-time = "2026-07-12T08:38:37.604Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/0a/70efbe861ca182d7d4b6e1a20f58e043400848fa9f2915229f082e221648/sentencepiece-0.2.2-cp312-cp312-win_arm64.whl", hash = "sha256:76ff5814db72e7462dece042d7593cdf102b8ec82c2b1cc201a2add34ee3050d", size = 1187325, upload-time = "2026-07-12T08:38:39.348Z" },
+]
+
+[[package]]
 name = "setuptools"
 version = "84.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1544,6 +1554,7 @@ train = [
     { name = "accelerate" },
     { name = "bitsandbytes" },
     { name = "peft" },
+    { name = "sentencepiece" },
     { name = "torch" },
     { name = "transformers" },
     { name = "trl" },
@@ -1581,6 +1592,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = "==1.2.4" },
     { name = "pywebview", marker = "extra == 'app'", specifier = "==6.2.1" },
     { name = "sacrebleu", marker = "extra == 'bench'", specifier = "==2.6.0" },
+    { name = "sentencepiece", marker = "extra == 'train'", specifier = ">=0.1.98,<0.3.0" },
     { name = "torch", marker = "extra == 'train'", specifier = "==2.14.1", index = "https://download.pytorch.org/whl/cu130" },
     { name = "transformers", marker = "extra == 'train'", specifier = "==5.17.0" },
     { name = "triton-windows", marker = "sys_platform == 'win32' and extra == 'gdn'", specifier = "==3.8.0.post29" },
