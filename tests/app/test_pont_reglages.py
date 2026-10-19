@@ -110,7 +110,7 @@ def test_a_propos_complet(tmp_path: Path) -> None:
     assert r["index"] == {"version": "20260101", "date_snapshot": "2026-01-01", "nb_chunks": 7}
     assert r["liste_blanche"] == ["a.example", "b.example"]
     assert r["licences"]["composants"] == [{"nom": "<c>", "licence": "<l>"}]
-    assert r["modele"]["slug"] == "granite-4.0-1b"
+    assert r["modele"]["slug"] == "minicpm5-2b"
     assert len(r["modele"]["sha256_attendu"]) == 64
     assert r["mentions"]["avertissement_juridique"] == "Ne vaut pas avis juridique."
     assert any("WebView2" in e["composant"] for e in r["hors_passerelle"])

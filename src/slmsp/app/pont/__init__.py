@@ -66,6 +66,7 @@ class Pont:
         stockage: Stockage | None = None,
         choisir_fichier: Callable[[str], str | None] | None = None,
         verificateur: Callable[..., Any] | None = None,
+        modele_actif: str | None = None,
     ) -> None:
         # Attributs privés : pywebview n'expose pas les noms en `_`.
         self._fenetre = fenetre
@@ -77,7 +78,11 @@ class Pont:
         self._conversation = Conversation(service, self._pousser)
         self._domaines: dict[str, Any] = {
             "mode": PontMode(service.mode, stockage, self._pousser),
-            "reglages": PontReglages(stockage, apres_effacement=self._conversation.oublier_dernier),
+            "reglages": PontReglages(
+                stockage,
+                apres_effacement=self._conversation.oublier_dernier,
+                modele_actif=modele_actif,
+            ),
             "historique": PontHistorique(stockage),
             "retours": PontRetours(stockage, choisir_fichier),
             "verification": PontVerification(

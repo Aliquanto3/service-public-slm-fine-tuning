@@ -41,7 +41,7 @@ CA = _charger_script()
 @pytest.fixture
 def ressources_factices(tmp_path: Path) -> dict[str, Path]:
     """Dépôt, vendor, models et index factices (octets quelconques, pas de vrai modèle)."""
-    slug = "granite-4.0-1b"
+    slugs = ("minicpm5-2b", "granite-4.0-350m")
     tag = charger_config_llamacpp().tag
     vendor = tmp_path / "vendor"
     bin_cpu = vendor / "llama.cpp" / tag / "bin-cpu"
@@ -55,11 +55,13 @@ def ressources_factices(tmp_path: Path) -> dict[str, Path]:
     ):
         (bin_cpu / nom).write_bytes(b"<factice>")
     modeles = tmp_path / "models"
-    for s in (slug, "bge-m3"):
+    for s in (*slugs, "bge-m3"):
         gguf = charger_config_modele(s).gguf
         cible = modeles / s / "gguf" / Path(gguf.fichier).name
         cible.parent.mkdir(parents=True)
         cible.write_bytes(b"<gguf-factice-" + s.encode() + b">")
+        if charger_config_modele(s).chat_template_force:  # exigé par ServeurLlama (12.15)
+            (modeles / s / "chat_template.jinja").write_text("<template>", encoding="utf-8")
     index = tmp_path / "index" / "20260926"
     index.mkdir(parents=True)
     (index / "a.bin").write_bytes(b"<a>")
@@ -118,7 +120,12 @@ def test_plan_complet_et_donnees_pyinstaller(ressources_factices) -> None:
     tag = plan.tag
     destinations = {f.destination for f in plan.fichiers}
     assert f"vendor/llama.cpp/{tag}/bin-cpu/llama-server.exe" in destinations
-    assert any(d.startswith("models/granite-4.0-1b/gguf/") for d in destinations)
+    for slug in ("minicpm5-2b", "granite-4.0-350m"):
+        assert any(d.startswith(f"models/{slug}/gguf/") for d in destinations)
+    assert plan.slugs == ["minicpm5-2b", "granite-4.0-350m"]
+    assert {"modele:minicpm5-2b", "modele:granite-4.0-350m", "embedding:bge-m3"} <= set(
+        plan.tailles()
+    )
     assert any(d.startswith("models/bge-m3/gguf/") for d in destinations)
     assert "index/20260926/MANIFEST.json" in destinations
     assert plan.index_version == "20260926"
@@ -126,6 +133,27 @@ def test_plan_complet_et_donnees_pyinstaller(ressources_factices) -> None:
     for source, dossier in plan.donnees():
         assert Path(source).is_file()
         assert not dossier.endswith((".json", ".gguf", ".exe"))
+
+
+@pytest.mark.parametrize("slug", ["minicpm5-2b", "granite-4.0-350m"])
+def test_plan_gguf_d_un_modele_embarque_manquant(ressources_factices, slug: str) -> None:
+    gguf = next((ressources_factices["modeles"] / slug / "gguf").iterdir())
+    gguf.unlink()
+    with pytest.raises(CA.ErreurBuild, match=slug):
+        _plan(ressources_factices)
+
+
+def test_plan_embarque_le_chat_template_force(ressources_factices) -> None:
+    """MiniCPM5 force son template (`--chat-template-file`) : il doit être dans l'installation."""
+    assert charger_config_modele("minicpm5-2b").chat_template_force
+    plan = _plan(ressources_factices)
+    attendu = charger_config_modele("minicpm5-2b").sha256_fichiers["chat_template.jinja"]
+    templates = {f.destination: f.sha256_attendu for f in plan.fichiers}
+    assert templates.get("models/minicpm5-2b/chat_template.jinja") == attendu
+    assert "models/granite-4.0-350m/chat_template.jinja" not in templates
+    (ressources_factices["modeles"] / "minicpm5-2b" / "chat_template.jinja").unlink()
+    with pytest.raises(CA.ErreurBuild, match="chat_template.jinja minicpm5-2b"):
+        _plan(ressources_factices)
 
 
 def test_plan_sans_modele(ressources_factices) -> None:

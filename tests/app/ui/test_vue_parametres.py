@@ -41,6 +41,7 @@ PONT_SIMULE = """
       }
       if (nom === 'reglages.lire') return { ok: true, reglages: { taille_texte: 100 } };
       if (nom === 'reglages.a_propos') return window.__apropos;
+      if (nom === 'reglages.modeles') return { ok: true, actif: 'm-1', choisi: 'm-1', modeles: [{ slug: 'm-1', nom: 'm-1' }, { slug: 'm-2', nom: 'm-2' }] };
       return { ok: true };
     },
     async envoyer() { return { ok: true }; },
@@ -115,6 +116,25 @@ def test_trois_onglets_au_clavier_et_retours_dans_son_onglet(page) -> None:
     assert page.get_attribute("#parametres-onglet-retours", "aria-selected") == "true"
     assert page.locator("#parametres-panneau-retours #ancre-retours").count() == 1
     assert page.locator("#parametres-panneau-general").is_hidden()
+
+
+def test_choix_du_modele_enregistre_et_previent_du_redemarrage(page) -> None:
+    """Story 12.15 : liste « Modèle » des modèles embarqués, effective au démarrage suivant."""
+    _ouvrir(page)
+    liste = page.locator("#parametres-modele")
+    liste.wait_for()
+    assert liste.locator("option").all_inner_texts() == ["m-1", "m-2"]
+    assert liste.input_value() == "m-1"
+    assert page.locator("#parametres-modele-aide").inner_text() == ""
+    liste.select_option("m-2")
+    page.wait_for_function(
+        "() => window.__appels.some(a => a[0] === 'reglages.ecrire' && a[1] === 'modele')"
+    )
+    assert ["reglages.ecrire", "modele", "m-2"] in _appels(page, "reglages.ecrire")
+    assert (
+        page.locator("#parametres-modele-aide").inner_text()
+        == "Le changement sera appliqué au prochain démarrage de l'assistant."
+    )
 
 
 def test_a_propos_affiche_versions_liste_licences_et_mentions(page) -> None:

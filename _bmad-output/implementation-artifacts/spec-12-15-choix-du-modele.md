@@ -36,3 +36,18 @@ Demande d'Anaël du 19 octobre 2026 : pouvoir changer de modèle à la main. Les
 
 ## Hors périmètre
 La recette sur le PC cible (12.14, 13.8), la signature de l'installateur, le redémarrage à chaud.
+
+## Auto Run Result
+status: review
+
+- Fait : schéma (`modeles_embarques`, défaut `[modele]`, doublons refusés), `app/modele_actif.py` (résolution), construction multi-modèles (`Plan.slugs`, manifeste `modeles`), pont (`reglages.modeles`, `ecrire("modele")`), vue Paramètres (liste « Modèle »), doc DSI.
+- Décisions seul : nom affiché = slug (aucun champ de nom dans `config/modeles/*.toml`) ; le journal de démarrage est une ligne `LOGGER.info` ; « À propos » affiche le modèle réellement lancé (passé au pont), pas le réglage en attente ; `modele` ajouté à `REGLAGES_DEFAUT` ; la liste du schéma refuse les doublons.
+- Tests réalignés : `test_pont_reglages` (slug À propos), `tests/packaging/test_spec.py` (fixture à deux modèles). Construction réelle non lancée.
+
+## Revue
+- high · second avis · corrigé : `construire_plan` n'embarquait pas `models/minicpm5-2b/chat_template.jinja` (`chat_template_force = true`) ; `ServeurLlama._verifier_fichiers` aurait refusé de démarrer le modèle par défaut. `fichiers_requis` (app/modele_actif.py) liste GGUF et template forcé avec leur SHA-256, utilisé par le build (`ErreurBuild` si absent) ; test `test_plan_embarque_le_chat_template_force`.
+- high · second avis · corrigé : un modèle choisi qui échoue au démarrage bloquait l'application. `Demarrage._travail` efface le réglage, journalise et relance l'assemblage sur `config.modele` (seulement avant l'assemblage prêt) ; échec du défaut inchangé. Tests sur doublure dans `test_principal.py`.
+- low · second avis · corrigé : `resoudre_modele_actif` exige les mêmes fichiers que le build (template forcé compris) ; test `test_template_force_absent`.
+- low · second avis · corrigé : fixtures de `test_spec.py` avec template ; test « GGUF manquant » paramétré sur les deux modèles.
+- low · revue · reporté : taille annoncée (1,8 Go) à confirmer par la construction réelle (orchestrateur) ; plan vérifié sur les vrais `models/` (GGUF et template trouvés, SHA du template conforme à la fiche).
+- Complexité : 0 constat (aucune structure qui grossit à l'exécution).

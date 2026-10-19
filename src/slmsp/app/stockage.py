@@ -39,6 +39,7 @@ REGLAGES_DEFAUT: Final[dict[str, Any]] = {
     "taille_texte": "normale",
     "fenetre": None,
     "plus_deplie": False,
+    "modele": None,  # slug choisi dans les Paramètres (story 12.15), appliqué au démarrage suivant
 }
 """Clés de réglage admises et leur valeur par défaut (valeurs stockées en JSON)."""
 

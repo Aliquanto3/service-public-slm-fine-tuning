@@ -281,6 +281,64 @@ def test_demarrage_echec_signale_une_erreur_generique(stockage: Stockage) -> Non
     assert not any("<erreur-factice>" in s for s in fenetre.scripts)
 
 
+def _assemblage_qui_echoue_pour(slug: str, appels: list[dict[str, Any]]) -> Any:
+    @contextlib.contextmanager
+    def fabrique(modele: str, **options: Any) -> Any:
+        appels.append({"modele": modele, **options})
+        if modele == f"base:{slug}":
+            raise RuntimeError("<template-absent>")
+        yield SimpleNamespace(service=SimpleNamespace(mode=None))
+
+    return fabrique
+
+
+def test_demarrage_repli_sur_le_defaut_si_le_modele_choisi_echoue(
+    stockage: Stockage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Story 12.15 : le modèle choisi ne démarre pas -> réglage effacé, défaut démarré."""
+    import slmsp.app.principal as principal
+
+    config = principal.charger_config_application()
+    autre = next(s for s in config.modeles_embarques if s != config.modele)
+    monkeypatch.setattr(principal, "resoudre_modele_actif", lambda c, choix: choix or c.modele)
+    stockage.ecrire_reglage("modele", autre)
+    appels: list[dict[str, Any]] = []
+    differe = PontDiffere()
+    d = Demarrage(
+        stockage,
+        FenetreFausse(),
+        differe,
+        fabrique_assemblage=_assemblage_qui_echoue_pour(autre, appels),
+        pas_s=0.01,
+    )
+    d.demarrer()
+    attendre(lambda: differe._pont is not None)
+    d.arreter()
+    assert [a["modele"] for a in appels] == [f"base:{autre}", f"base:{config.modele}"]
+    assert stockage.lire_reglage("modele") is None
+    assert d.erreur is None
+
+
+def test_demarrage_echec_du_defaut_sans_repli(
+    stockage: Stockage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import slmsp.app.principal as principal
+
+    config = principal.charger_config_application()
+    appels: list[dict[str, Any]] = []
+    d = Demarrage(
+        stockage,
+        FenetreFausse(),
+        PontDiffere(),
+        fabrique_assemblage=_assemblage_qui_echoue_pour(config.modele, appels),
+        pas_s=0.01,
+    )
+    d.demarrer()
+    attendre(lambda: d.erreur is not None)
+    d.arreter()
+    assert len(appels) == 1 and d.erreur == "RuntimeError"
+
+
 def test_page_jamais_prete_ne_signale_pas_pret(stockage: Stockage) -> None:
     fenetre = FenetreFausse(pret_js=False)
     d = Demarrage(
