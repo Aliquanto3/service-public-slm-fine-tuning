@@ -15,7 +15,7 @@ import pytest
 
 from slmsp.cli import main
 from slmsp.core.artefacts import nouveau_run, ouvrir_run
-from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, RessourceOccupee
+from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide, RessourceOccupee, SlmspError
 from slmsp.core.var import verrou_gpu
 from slmsp.train import run as module_run
 
@@ -411,8 +411,54 @@ def test_reprise_orpo_anterieur_a_l_invariant_sft(projet, pile, factices, monkey
     brut["config"]["invariants"]["jeu_version"] = "v2"
     brut["config"]["invariants"]["jeu_build"] = "20261017-120000-preferences-4b67"
     manifeste.write_text(json.dumps(brut), encoding="utf-8")
-    with pytest.raises(Exception, match="déjà complet"):  # la config résolue est acceptée
+    _reprise_acceptee(projet, pile, toml, m4)
+
+
+def _reprise_acceptee(projet, pile, toml, run_id) -> None:
+    """La configuration résolue est acceptée : `reprendre` refuse seulement le run complet."""
+    with pytest.raises(SlmspError, match="déjà complet") as exc:
+        module_run.executer(toml, racine=projet.racine, pile=pile, reprendre_run=run_id)
+    assert exc.type is SlmspError
+
+
+def _m1_et_m4(projet, pile, factices, monkeypatch):
+    projet.ecrire_jeu()
+    m1 = _executer(projet, pile, projet.ecrire_toml("m1-qlora"))
+    _jeu_sft_et_paires(projet, factices)
+    monkeypatch.setitem(sys.modules, "trl.experimental.orpo", pile.orpo)
+    toml = projet.ecrire_toml("m4-orpo", methode="orpo", sft_run_id=m1, jeu_version="v2")
+    return m1, toml
+
+
+def _modifier_invariants(projet, run_id, modifier) -> None:
+    manifeste = projet.racine / "runs" / "train" / run_id / "run.json"
+    brut = json.loads(manifeste.read_text(encoding="utf-8"))
+    modifier(brut["config"]["invariants"])
+    manifeste.write_text(json.dumps(brut), encoding="utf-8")
+
+
+def test_reprise_orpo_posterieur_a_l_invariant_sft(projet, pile, factices, monkeypatch) -> None:
+    """Un run ORPO créé après la story 10.9 (invariants = origine SFT) se reprend."""
+    _, toml = _m1_et_m4(projet, pile, factices, monkeypatch)
+    _reprise_acceptee(projet, pile, toml, _executer(projet, pile, toml))
+
+
+def test_reprise_orpo_invariants_jeu_inconnus(projet, pile, factices, monkeypatch) -> None:
+    """Invariants consignés ni « paires » ni « origine SFT » : la reprise est refusée."""
+    _, toml = _m1_et_m4(projet, pile, factices, monkeypatch)
+    m4 = _executer(projet, pile, toml)
+    _modifier_invariants(projet, m4, lambda inv: inv.update(jeu_build="20261001-000000-v9-ffff"))
+    with pytest.raises(ConfigurationInvalide, match="configuration résolue diffère"):
         module_run.executer(toml, racine=projet.racine, pile=pile, reprendre_run=m4)
+
+
+def test_orpo_refuse_un_run_sft_sans_jeu_build(projet, pile, factices, monkeypatch) -> None:
+    """Run SFT sans `invariants.jeu_build` : refus explicite, sans créer de run ORPO."""
+    m1, toml = _m1_et_m4(projet, pile, factices, monkeypatch)
+    _modifier_invariants(projet, m1, lambda inv: inv.pop("jeu_build"))
+    with pytest.raises(ConfigurationInvalide, match="sans `jeu_build`"):
+        module_run.executer(toml, racine=projet.racine, pile=pile)
+    assert [d.name for d in (projet.racine / "runs" / "train").iterdir()] == [m1]
 
 
 # --- Test réel : modèle minuscule à poids aléatoires, deux pas sur CPU ------------------------

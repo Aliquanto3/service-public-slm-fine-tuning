@@ -141,7 +141,12 @@ def _exiger_build_sft_coherent(run_id: str, build_origine: str, racine: Path) ->
     except ManifesteInvalide:
         return  # signalé par `_exiger_sft_complet`
     attendu = invariants_sft.get("jeu_build") if isinstance(invariants_sft, Mapping) else None
-    if attendu is not None and attendu != build_origine:
+    if not isinstance(attendu, str):
+        raise ConfigurationInvalide(
+            f"sft_run_id {run_id} : invariants du run SFT sans `jeu_build`, cohérence avec le "
+            f"build SFT des paires ({build_origine!r}) invérifiable"
+        )
+    if attendu != build_origine:
         raise ConfigurationInvalide(
             f"sft_run_id {run_id} : les paires dérivent du build SFT {build_origine!r}, "
             f"le run SFT a été entraîné sur le build {attendu!r}"
