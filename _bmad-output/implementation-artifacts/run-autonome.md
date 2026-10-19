@@ -37,3 +37,5 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:50 · S3, S5 · décision · relecture des specs : 3 high (schéma juges extra=forbid, nouvelle campagne de budget obligatoire, modèle Mistral partagé avec le second juge), 12 medium/low ; specs révisées (224c51d). Constat : kappa « 0,00 » calculé sur 3 à 5 items par tâche, non interprétable → juges tiers sur tous les items CR, LC, CT, RE · 224c51d
 - 2026-10-19 21:50 · S3 · dev · lancé (Opus) · —
 - 2026-10-19 21:50 · S5 · dev · lancé (Opus) · —
+- 2026-10-19 21:53 · run · décision · Anaël : clé OpenRouter disponible, recommandations validées (générateurs v12 : Mistral Large 4 en référence, DeepSeek V4 Pro et GLM-5.x via OpenRouter ; GPT et Gemini en comparaison seulement, licence à trancher par Anaël), budgets Mistral et OpenRouter rechargés. Plafonds retenus : openai 10 €, google 10 €, openrouter 10 €, mistral.generation 10 € · —
+- 2026-10-19 21:53 · S3 · décision · fournisseur openrouter ajouté au périmètre (message à l'agent) · —
