@@ -86,6 +86,8 @@ CAMPAGNES_V2 = {
     "minicpm5-2b-v2": sorted(_RUNS.glob("m*-minicpm5-2b.toml")),
     "granite-4.0-1b-v2": sorted(_RUNS.glob("m*-granite-4.0-1b-v2.toml")),
 }
+# M4 lu sur les paires ORPO de data/train/v3 (build de v2) : campagne et jeu à part (2026-10-19).
+M4_A_PART = {"minicpm5-2b-v2": ("minicpm5-2b-v2-orpo", "v3")}
 
 
 @pytest.mark.parametrize("campagne", sorted(CAMPAGNES_V2))
@@ -94,10 +96,13 @@ def test_campagne_v2_invariants(campagne: str) -> None:
     assert [f.name.split("-")[0] for f in fichiers] == ["m1", "m2", "m3", "m4"]
     configs = [charger_run_config(f) for f in fichiers]
     assert [c.methode for c in configs] == ["qlora", "lora", "dora", "orpo"]
-    for c in configs:
-        assert c.campagne == campagne
+    attendus = [(campagne, "v2")] * 4
+    if campagne in M4_A_PART:
+        attendus[3] = M4_A_PART[campagne]
+    for c, (camp, jeu) in zip(configs, attendus, strict=True):
+        assert c.campagne == camp
         assert (c.jeu_version, c.graine, c.longueur_max, c.precision_base) == (
-            "v2",
+            jeu,
             1234,
             8192,
             "bf16",
@@ -105,7 +110,13 @@ def test_campagne_v2_invariants(campagne: str) -> None:
         assert c.hyperparametres.pas_max is None
     communs = [
         c.model_dump(
-            exclude={"methode": True, "sft_run_id": True, "hyperparametres": {"orpo_beta"}}
+            exclude={
+                "methode": True,
+                "sft_run_id": True,
+                "campagne": True,
+                "jeu_version": True,
+                "hyperparametres": {"orpo_beta"},
+            }
         )
         for c in configs
     ]

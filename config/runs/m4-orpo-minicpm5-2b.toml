@@ -7,10 +7,12 @@
 # de la supervision du jeu v2.
 # Lancement : uv run --no-sync slmsp train run --config config/runs/m4-orpo-minicpm5-2b.toml
 
-campagne = "minicpm5-2b-v2"
+# Campagne à part : les paires ORPO sont rangées dans data/train/v3 (build de v2), et jeu_version
+# est un invariant de campagne, sans exception pour ORPO (story à créer, 2026-10-19).
+campagne = "minicpm5-2b-v2-orpo"
 modele = "minicpm5-2b"
 methode = "orpo"
-jeu_version = "v2"
+jeu_version = "v3"
 graine = 1234
 longueur_max = 8192
 precision_base = "bf16"
