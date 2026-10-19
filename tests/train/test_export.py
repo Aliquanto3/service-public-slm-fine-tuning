@@ -646,11 +646,15 @@ FICHIERS_PRE = ("chat_template.jinja", "preprocessor_config.json", "video_prepro
 VISION_VIDE = {"tenseurs": 1, "ecarts": [], "absents": [], "mtp_ignores": 0, "bloquants": []}
 
 
-def base_multimodale(projet: Any) -> Path:
-    """Poids factices de `SLUG_MM` avec les fichiers du préprocesseur."""
+def base_multimodale(projet: Any, *, mtp: int | None = 1) -> Path:
+    """Poids factices de `SLUG_MM` avec les fichiers du préprocesseur (tête MTP sous
+    `text_config` si `mtp` est donné)."""
     base = projet.modeles / SLUG_MM / "hf"
     base.mkdir(parents=True)
-    (base / "config.json").write_text(json.dumps({"model_type": "qwen3_5"}), encoding="utf-8")
+    config = {"model_type": "qwen3_5"}
+    if mtp is not None:
+        config["text_config"] = {"mtp_num_hidden_layers": mtp}
+    (base / "config.json").write_text(json.dumps(config), encoding="utf-8")
     (base / "model.safetensors").write_bytes(b"<poids-base-factices>")
     for nom in FICHIERS_PRE:
         (base / nom).write_text(f"<{nom}-factice>", encoding="utf-8")
@@ -703,6 +707,59 @@ def test_fusion_copie_preprocessor(projet, tmp_path) -> None:
         module_export.fusionner(
             PileExport(), base, [], tmp_path / "autre", multimodal="geler-vision"
         )
+
+
+def test_copie_preprocesseur_garde_le_template_du_tokenizer(tmp_path) -> None:
+    base, sortie = tmp_path / "base", tmp_path / "sortie"
+    base.mkdir()
+    sortie.mkdir()
+    (base / "preprocessor_config.json").write_text("{}", encoding="utf-8")
+    (base / "chat_template.jinja").write_text("base", encoding="utf-8")
+    (sortie / "chat_template.jinja").write_text("tokenizer", encoding="utf-8")
+    copies = module_export.copier_preprocesseur(base, sortie)
+    assert (sortie / "chat_template.jinja").read_text(encoding="utf-8") == "tokenizer"
+    assert "preprocessor_config.json" in copies and "chat_template.jinja" not in copies
+
+
+@pytest.mark.parametrize(
+    ("config", "attendu"),
+    [
+        ({"text_config": {"mtp_num_hidden_layers": 1}}, True),
+        ({"mtp_num_hidden_layers": 2}, True),
+        ({"text_config": {"mtp_num_hidden_layers": 0}}, False),
+        ({"model_type": "qwen3_5"}, False),
+        ({"mtp_num_hidden_layers": True}, False),
+    ],
+)
+def test_a_tete_mtp(projet, config: dict[str, Any], attendu: bool) -> None:
+    dossier = projet.modeles / "mtp-test" / "hf"
+    dossier.mkdir(parents=True)
+    (dossier / "config.json").write_text(json.dumps(config), encoding="utf-8")
+    assert module_export.a_tete_mtp(dossier / "absent", dossier, racine=projet.racine) is attendu
+
+
+def test_export_multimodal_sans_tete_mtp_pas_de_no_mtp(projet, vision_ok) -> None:
+    base_multimodale(projet, mtp=None)
+    outils = Outils()
+    run = exporter_mm(projet, module_export.source_temoin(SLUG_MM), outils, PileExport())
+    assert run.statut_courant() == "complet"
+    assert "sans_mtp" not in outils.appels[0][1]
+    assert run.manifeste.config["conversion"]["sans_mtp"] is False
+
+
+def test_regex_adaptateur_visee_vision_refusee_avant_tout_run(projet, vision_ok) -> None:
+    base_multimodale(projet)
+    train_id = run_train(projet, modele=SLUG_MM)
+    fichier = projet.racine / "runs" / "train" / train_id / "adaptateur" / "adapter_config.json"
+    fichier.write_text(
+        json.dumps({"peft_type": "LORA", "r": 16, "target_modules": r".*visual.*\.qkv$"}),
+        encoding="utf-8",
+    )
+    source = module_export.source_depuis_run(train_id, racine=projet.racine)
+    pile = PileExport()
+    with pytest.raises(ConfigurationInvalide, match="regex"):
+        exporter_mm(projet, source, Outils(), pile)
+    assert not (projet.racine / "runs" / "export").exists() and pile.ordre == []
 
 
 def test_fusion_dense_sans_preprocessor(projet, tmp_path) -> None:

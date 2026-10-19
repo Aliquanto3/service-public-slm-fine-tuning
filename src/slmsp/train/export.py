@@ -44,7 +44,7 @@ from slmsp.core.artefacts import (
 )
 from slmsp.core.canonique import json_canonique, sha256_fichier
 from slmsp.core.config import appliquer_environnement_impose, racine_ecriture
-from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide
+from slmsp.core.erreurs import ConfigurationInvalide, LectureInterdite, ManifesteInvalide
 from slmsp.core.var import verrou_gpu
 from slmsp.inference import serveur
 from slmsp.train import chargement, environnement
@@ -136,6 +136,12 @@ def adaptateur_du_run(run_id: str, *, racine: str | Path | None = None) -> Path:
     return dossier
 
 
+def _regex_cible_interdite(regex: str) -> bool:
+    """Vrai si la regex de `target_modules` nomme visual, lm_head ou embed_tokens (avant tout
+    chargement ; le contrôle exact reste celui du modèle chargé)."""
+    return any(mot in regex for mot in ("visual", *MODULES_LORA_INTERDITS))
+
+
 def controler_adaptateur(dossier: Path, *, racine: str | Path | None = None) -> dict[str, Any]:
     """`adapter_config.json` lu par le lecteur `train` ; refuse un PiSSA non converti."""
     brut = lire(dossier / "adapter_config.json", "train", racine=racine)
@@ -152,9 +158,16 @@ def controler_adaptateur(dossier: Path, *, racine: str | Path | None = None) -> 
             "l'enregistrer converti en LoRA relatif à la base d'origine "
             "(path_initial_model_for_weight_conversion de PEFT)"
         )
-    # `target_modules` en chaîne (regex, LoRA multimodal) : le contrôle porte alors sur les
-    # modules LoRA du modèle PEFT chargé (`controler_modules_lora`, appelé par la fusion).
+    # `target_modules` en chaîne (regex, LoRA multimodal) : la regex est seulement pré-contrôlée
+    # ici (`_regex_cible_interdite`) ; le contrôle complet porte sur les modules LoRA du modèle
+    # PEFT chargé (`controler_modules_lora`, appelé par la fusion, multimodal seulement). Pour un
+    # modèle dense, une chaîne n'est contrôlée que par ce pré-contrôle.
     cibles = config.get("target_modules") or []
+    if isinstance(cibles, str) and _regex_cible_interdite(cibles):
+        raise ConfigurationInvalide(
+            f"{dossier} : l'export refuse un adaptateur dont la regex target_modules "
+            f"vise vision, embeddings ou tête ({cibles!r})"
+        )
     interdites = sorted(
         {"embed_tokens", "lm_head"} & set(cibles if isinstance(cibles, list) else [])
     )
@@ -262,6 +275,25 @@ def controler_plage(torch: Any, modele: Any) -> dict[str, Any]:
     return {"tenseurs": tenseurs, "max_abs": maximum}
 
 
+def a_tete_mtp(*dossiers: Path, racine: str | Path | None = None) -> bool:
+    """Vrai si le premier `config.json` lisible déclare `mtp_num_hidden_layers` > 0, à la racine
+    ou sous `text_config` (la conversion texte passe alors `--no-mtp`)."""
+    for dossier in dossiers:
+        try:
+            config = json.loads(lire(dossier / "config.json", "train", racine=racine))
+        except (OSError, ValueError, LectureInterdite):
+            continue  # absent, illisible ou hors liste d'accès : dossier suivant
+        if not isinstance(config, dict):
+            return False
+        texte = config.get("text_config")
+        for niveau in (config, texte if isinstance(texte, dict) else {}):
+            couches = niveau.get("mtp_num_hidden_layers")
+            if isinstance(couches, int) and not isinstance(couches, bool) and couches > 0:
+                return True
+        return False
+    return False
+
+
 def copier_preprocesseur(dossier_base: Path, sortie: Path) -> list[str]:
     """Copie sans modification `FICHIERS_PREPROCESSEUR` de la base vers `sortie` (`--mmproj`)."""
     if not (dossier_base / "preprocessor_config.json").is_file():
@@ -270,6 +302,10 @@ def copier_preprocesseur(dossier_base: Path, sortie: Path) -> list[str]:
         )
     copies = []
     for nom in FICHIERS_PREPROCESSEUR:
+        # Un fichier déjà écrit par `tokenizer.save_pretrained` (chat_template.jinja) est gardé :
+        # c'est celui dont le SHA est contrôlé dans le GGUF.
+        if (sortie / nom).exists():
+            continue
         if (dossier_base / nom).is_file():
             shutil.copyfile(dossier_base / nom, sortie / nom)
             copies.append(nom)
@@ -434,7 +470,7 @@ def exporter(
         config["multimodal"] = multimodal
         config["conversion"] = {
             "outtype": TYPE_SORTIE_CONVERSION,
-            "sans_mtp": True,
+            "sans_mtp": a_tete_mtp(dossier_base, racine=base),
             "mmproj": NOM_MMPROJ,
         }
     commande = f"slmsp export {source.nom or source.slug}"
@@ -514,7 +550,10 @@ def _executer(
             }
             run.ecrire(NOM_EXPORT, json_canonique(echec) + b"\n")
             return "partiel-erreur", " ; ".join(vision["bloquants"])[:500]
-    options_texte: dict[str, Any] = {"sans_mtp": True} if multimodal is not None else {}
+    sans_mtp = multimodal is not None and a_tete_mtp(
+        run.dossier / DOSSIER_FUSION, dossier_base, racine=run.dossier.parents[2]
+    )
+    options_texte: dict[str, Any] = {"sans_mtp": True} if sans_mtp else {}
     f16 = convertir(
         run.dossier / DOSSIER_FUSION,
         run.dossier / NOM_F16,
