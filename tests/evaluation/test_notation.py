@@ -602,3 +602,141 @@ def test_second_juge_seulement_apres_verdict_principal_valide(
     rapport = noter(parent.run_id, juges=juges, racine=depot_eval)
     assert rapport.demandes_second == 0
     assert [v["juge"] for v in verdicts(rapport.run)] == ["principal"]
+
+
+# --- Plafond de coût estimé (story INC-3) ------------------------------------------------------
+
+
+class JugeAvecEstimation:
+    """Juge qui estime un coût fixe et échoue s'il est appelé (aucun appel payant permis)."""
+
+    def __init__(self, cout_estime: float) -> None:
+        self.cout_estime = cout_estime
+        self.estimations: list[int] = []
+        self.appels = 0
+
+    def estimer(self, demandes: Any) -> Any:
+        from slmsp.judge.claude import EstimationCout
+
+        self.estimations.append(len(demandes))
+        return EstimationCout(len(demandes), 1, len(demandes) - 1, self.cout_estime, 9.99)
+
+    def juger(self, demandes: Any) -> Any:
+        self.appels += 1
+        raise AssertionError("appel payant interdit")
+
+
+def juges_avec_estimation(cache: CacheVerdicts, juge: Any) -> Juges:
+    return Juges(principal=juge, second=None, cache=cache, description={})
+
+
+def test_plafond_depasse_aucun_run_ni_appel(depot_eval: Path, cache: CacheVerdicts) -> None:
+    parent = fabriquer_generation(depot_eval)
+    juge = JugeAvecEstimation(3.0)
+    with pytest.raises(SlmspError) as exc:
+        noter(
+            parent.run_id,
+            juges=juges_avec_estimation(cache, juge),
+            racine=depot_eval,
+            plafond_estime_eur=2.0,
+        )
+    message = str(exc.value)
+    assert "3.00" in message and "2.00" in message and "en cache" in message
+    assert "à juger" in message
+    assert juge.appels == 0 and len(juge.estimations) == 1
+    assert runs_notation(depot_eval) == []
+    assert cache.appels() == []
+
+
+def test_plafond_respecte_poursuit_et_affiche(depot_eval: Path, cache: CacheVerdicts) -> None:
+    parent = fabriquer_generation(depot_eval)
+    juges = juges_factices(cache)
+    estimateur = JugeAvecEstimation(1.0)
+    juges.principal.estimer = estimateur.estimer  # type: ignore[attr-defined]
+    messages: list[str] = []
+    rapport = noter(
+        parent.run_id,
+        juges=juges,
+        racine=depot_eval,
+        rapporter=messages.append,
+        plafond_estime_eur=2.0,
+    )
+    assert rapport.statut == "complet"
+    assert any(m.startswith("Estimation avant notation") for m in messages)
+    assert len(runs_notation(depot_eval)) == 1
+
+
+def test_plafond_sans_option_inchange(depot_eval: Path, cache: CacheVerdicts) -> None:
+    parent = fabriquer_generation(depot_eval)
+    juge = JugeAvecEstimation(100.0)
+    juges = juges_factices(cache)
+    juges.principal.estimer = juge.estimer  # type: ignore[attr-defined]
+    noter(parent.run_id, juges=juges, racine=depot_eval)
+    assert juge.estimations == []
+
+
+def test_plafond_juge_sans_estimer_refuse(depot_eval: Path, cache: CacheVerdicts) -> None:
+    parent = fabriquer_generation(depot_eval)
+    with pytest.raises(SlmspError, match="estimer"):
+        noter(
+            parent.run_id,
+            juges=juges_factices(cache),
+            racine=depot_eval,
+            plafond_estime_eur=5.0,
+        )
+    assert runs_notation(depot_eval) == []
+
+
+def test_relance_rejuge_les_non_juges(depot_eval: Path, cache: CacheVerdicts) -> None:
+    parent = fabriquer_generation(depot_eval, ["NR-001", "NR-002"])
+    premier = juges_factices(cache, non_juges={"NR-001": "erreur-creation-lot"})
+    noter(parent.run_id, juges=premier, racine=depot_eval)
+    assert premier.principal.recus == ["NR-001", "NR-002"]
+
+    second = juges_factices(cache)
+    rapport = noter(parent.run_id, juges=second, racine=depot_eval)
+    lignes = {v["item_id"]: v for v in verdicts(rapport.run) if v["juge"] == "principal"}
+    assert lignes["NR-001"]["statut"] == "juge"  # rejugé, absent du cache
+    assert second.principal.appels_payants == 1  # NR-002 vient du cache
+
+
+def test_cli_plafond_depasse_code_1(
+    depot_eval: Path,
+    cache: CacheVerdicts,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    juge = JugeAvecEstimation(3.0)
+    juges = juges_avec_estimation(cache, juge)
+    monkeypatch.setattr(notation, "ouvrir_juges", lambda racine=None, mode_appel=None: juges)
+    parent = fabriquer_generation(depot_eval)
+    commande = ["eval", "run", "--phase", "notation", "--depuis", parent.run_id]
+    code = main([*commande, "--plafond-estime", "2", "--racine", str(depot_eval)])
+    assert code == CodeSortie.ERREUR
+    assert "plafond" in capsys.readouterr().err
+    assert juge.appels == 0 and runs_notation(depot_eval) == []
+
+
+@pytest.mark.parametrize("valeur", ["0", "-1", "abc", "nan"])
+def test_cli_plafond_invalide_code_2(valeur: str, depot_eval: Path, juges_cli: list[Any]) -> None:
+    commande = ["eval", "run", "--phase", "notation", "--depuis", "x", "--plafond-estime", valeur]
+    assert main(commande) == CodeSortie.USAGE
+    assert juges_cli == []
+
+
+def test_cli_plafond_sans_objet_generation(depot_eval: Path, juges_cli: list[Any]) -> None:
+    code = main(
+        [
+            "eval",
+            "run",
+            "--phase",
+            "generation",
+            "--plafond-estime",
+            "2",
+            "--jeu",
+            "v1.0",
+            "--racine",
+            str(depot_eval),
+        ]
+    )
+    assert code == CodeSortie.USAGE

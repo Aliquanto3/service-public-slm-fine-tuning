@@ -96,6 +96,19 @@ def cout_pire_cas(
     return dollars * config.taux_usd_eur.valeur
 
 
+def cout_estime(
+    config: ConfigTarifs, modele: str, mode: str, tokens_entree: int, tokens_sortie: int
+) -> float:
+    """Coût estimé en euros d'une requête : entrées et sorties au tarif du mode, sans majoration."""
+    _verifier_entier("tokens_entree", tokens_entree, 0)
+    _verifier_entier("tokens_sortie", tokens_sortie, 0)
+    tarif_mode = tarif(config, modele, mode)
+    dollars = (tokens_entree * tarif_mode.entree + tokens_sortie * tarif_mode.sortie) / (
+        TOKENS_PAR_UNITE
+    )
+    return dollars * config.taux_usd_eur.valeur
+
+
 def cout_reel(config: ConfigTarifs, modele: str, mode: str, usage: UsageTokens) -> float:
     """Coût réel en euros des quatre compteurs de `usage`."""
     tarif_mode = tarif(config, modele, mode)
