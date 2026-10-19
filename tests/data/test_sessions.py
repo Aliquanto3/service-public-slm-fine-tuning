@@ -264,3 +264,26 @@ def test_rd_cassette_existante_relue_et_incoherente(monde: Any, doublures: Any) 
     chemin.write_text(json.dumps(cassette), encoding="utf-8")
     troisieme = monde.lancer(RD, seed=seed)
     assert _abandon(monde, troisieme)["motif"] == "cassette_incoherente"
+
+
+def _blocs(*textes: str) -> list[dict[str, Any]]:
+    pensee = [{"type": "text", "text": "<raisonnement-factice>"}]
+    return [
+        {"type": "thinking", "thinking": pensee},
+        *({"type": "text", "text": t} for t in textes),
+    ]
+
+
+def test_raisonnement_tronque_sans_texte_abandonne_comme_tronque(monde: Any) -> None:
+    seed = monde.ecrire_seed([monde.amorce("generique", "demande", ligne=1)])
+    monde.faux.reponses = [{"finish_reason": "length", "texte": _blocs()}]
+    resultat = monde.lancer(GENERIQUE, seed=seed)
+    assert _abandon(monde, resultat)["motif"] == "reponse_tronquee"
+
+
+def test_contenu_en_blocs_garde_le_texte_seul(monde: Any) -> None:
+    seed = monde.ecrire_seed([monde.amorce("generique", "demande", ligne=1)])
+    monde.faux.reponses = [{"texte": _blocs("<réponse-factice-1>")}]
+    resultat = monde.lancer(GENERIQUE, seed=seed)
+    assert resultat.statut == "complet"
+    assert "<raisonnement-factice>" not in json.dumps(monde.lignes(resultat, "brut.jsonl"))

@@ -1159,3 +1159,47 @@ def test_amorce_sur_plafond_mots_tache_refusee(monde: Monde) -> None:
     )
     with pytest.raises(ProvenanceInvalide, match="plafond_mots_tache"):
         monde.generateur().generer("generique", ["d", "p"], "s", "generique")
+
+
+# --- Modèle de raisonnement (Mistral Large 4) -------------------------------------------------
+
+
+def _brut_contenu(contenu: Any) -> bytes:
+    message = {"role": "assistant", "content": contenu}
+    return json.dumps({"choices": [{"message": message}]}).encode()
+
+
+def test_message_assistant_contenu_en_blocs() -> None:
+    blocs = [
+        {"type": "thinking", "thinking": [{"type": "text", "text": "<raisonnement-factice>"}]},
+        {"type": "text", "text": "<réponse-factice-1>"},
+        {"type": "text", "text": "<réponse-factice-2>"},
+    ]
+    attendu = {"role": "assistant", "content": "<réponse-factice-1><réponse-factice-2>"}
+    assert message_assistant(_brut_contenu(blocs)) == attendu
+    assert message_assistant(_brut_contenu("<réponse-factice-1>"))["content"] == (
+        "<réponse-factice-1>"  # chaîne inchangée
+    )
+    for sans_texte in (
+        [blocs[0]],
+        [{"type": "thinking", "thinking": [{"type": "text", "text": "<x>"}]}, {"type": "image"}],
+        [],
+    ):
+        with pytest.raises(ProvenanceInvalide, match="sans contenu"):
+            message_assistant(_brut_contenu(sans_texte))
+
+
+def test_marge_raisonnement_preversion_seulement(monde: Monde) -> None:
+    monde.ecrire_seed([amorce("d", "generique", "demande")])
+    generateur = monde.generateur()
+    base = generateur.max_tokens("generique", "generique")
+    assert generateur.client.config.marge_raisonnement_generateur == 4000  # config réelle
+    assert generateur.client.config.preversion is None  # stable : aucune marge
+    generateur.generer("generique", ["d"], "s", "generique")
+    (corps,) = monde.banc.faux.corps()
+    assert corps["max_tokens"] == base  # requête (donc hachage) inchangée pour un modèle stable
+    config = generateur.client.config.pour_generateur("mistral-large-4")
+    generateur.client.config = config
+    assert generateur.max_tokens("generique", "generique") == base + 4000  # estimation incluse
+    generateur.client.config = config.model_copy(update={"marge_raisonnement_generateur": 0})
+    assert generateur.max_tokens("generique", "generique") == base

@@ -271,6 +271,21 @@ def _normaliser_assistant(message: Mapping[str, Any]) -> dict[str, Any]:
     return normalise
 
 
+def _texte_du_contenu(contenu: Any) -> str:
+    """Texte d'un `content` Mistral : la chaîne telle quelle, ou, pour une liste de blocs
+    (modèle de raisonnement), la concaténation des seuls blocs `text` de premier niveau. Les
+    blocs `thinking` sont ignorés : jamais dans les données d'entraînement."""
+    if isinstance(contenu, str):
+        return contenu
+    if not isinstance(contenu, list):
+        return ""
+    return "".join(
+        b["text"]
+        for b in contenu
+        if isinstance(b, Mapping) and b.get("type") == "text" and isinstance(b.get("text"), str)
+    )
+
+
 def message_assistant(brut: bytes | str | None) -> dict[str, Any]:
     """Message `assistant` d'une réponse brute Mistral (`choices[0].message`).
 
@@ -289,8 +304,8 @@ def message_assistant(brut: bytes | str | None) -> dict[str, Any]:
     if not isinstance(message, Mapping) or message.get("role") != "assistant":
         raise ProvenanceInvalide("réponse brute : message assistant attendu")
     resultat: dict[str, Any] = {"role": "assistant"}
-    contenu = message.get("content")
-    if isinstance(contenu, str) and contenu:
+    contenu = _texte_du_contenu(message.get("content"))
+    if contenu:
         resultat["content"] = contenu
     appels = message.get("tool_calls")
     if isinstance(appels, list) and appels:
@@ -478,8 +493,15 @@ class Generateur:
 
     def max_tokens(self, gabarit_id: str, tache: str) -> int:
         """`max_tokens` du gabarit `gabarit_id` (défaut `MAX_TOKENS_DEFAUT`), avec les
-        contrôles de `generer` ; lève `GabaritInvalide`."""
-        return self._gabarit(gabarit_id, tache)[1]
+        contrôles de `generer`, plus la marge de raisonnement d'une préversion ; lève
+        `GabaritInvalide`."""
+        return self._gabarit(gabarit_id, tache)[1] + self._marge_raisonnement()
+
+    def _marge_raisonnement(self) -> int:
+        """Marge de tokens de raisonnement : celle de `config/mistral.toml` pour un
+        Générateur de préversion (modèle de raisonnement), 0 pour un modèle stable."""
+        config = self.client.config
+        return config.marge_raisonnement_generateur if config.preversion is not None else 0
 
     def gabarit(self, gabarit_id: str, tache: str) -> GabaritValide:
         """Gabarit `gabarit_id` validé pour `tache` (identifiant, version, SHA, emplacements),
@@ -815,6 +837,7 @@ class Generateur:
         if not isinstance(session_id, str) or not _RE_SESSION_ID.fullmatch(session_id):
             raise ProvenanceInvalide("session_id invalide (attendu : [A-Za-z0-9][A-Za-z0-9_-]*)")
         gabarit, max_tokens = self._gabarit(gabarit_id, tache)
+        max_tokens += self._marge_raisonnement()
         ids, valeurs = self._resoudre_amorces(amorce_ids, tache, gabarit)
         if EMPLACEMENT_PASSAGES in gabarit.emplacements:
             if self._rendre_passages is None:
