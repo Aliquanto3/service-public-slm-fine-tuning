@@ -88,6 +88,8 @@ CAMPAGNES_V2 = {
 }
 # M4 lu sur les paires ORPO de data/train/v3 (build de v2) : campagne et jeu à part (2026-10-19).
 M4_A_PART = {"minicpm5-2b-v2": ("minicpm5-2b-v2-orpo", "v3")}
+# Sonde du 2026-10-19 : Granite 1B tient 3072 tokens en QLoRA bf16, pas 4096.
+LONGUEUR_MAX = {"minicpm5-2b-v2": 8192, "granite-4.0-1b-v2": 3072}
 
 
 @pytest.mark.parametrize("campagne", sorted(CAMPAGNES_V2))
@@ -104,7 +106,7 @@ def test_campagne_v2_invariants(campagne: str) -> None:
         assert (c.jeu_version, c.graine, c.longueur_max, c.precision_base) == (
             jeu,
             1234,
-            8192,
+            LONGUEUR_MAX[campagne],
             "bf16",
         )
         assert c.hyperparametres.pas_max is None
