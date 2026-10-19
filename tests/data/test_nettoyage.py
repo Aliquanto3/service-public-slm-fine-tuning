@@ -19,7 +19,13 @@ from slmsp.core.artefacts import nouveau_run, ouvrir_run
 from slmsp.core.canonique import json_canonique, sha256_hex
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, ProvenanceInvalide
 from slmsp.core.evenements import Fin, Jeton
-from slmsp.core.nettoyage import analyser_preambule, nettoyer_cible, verifier_nettoyage
+from slmsp.core.nettoyage import (
+    analyser_preambule,
+    analyser_titre,
+    ligne_nettoyee,
+    nettoyer_cible,
+    verifier_nettoyage,
+)
 from slmsp.core.schemas.entrainement import LigneEntrainement, MetaLigne
 from slmsp.data.config import PreferencesDonnees
 from slmsp.data.nettoyage import (
@@ -61,7 +67,43 @@ MOTS = Tokeniseur(compter=lambda texte: len(texte.split()), sha256="b" * 64)
 )
 def test_preambule(texte: str, attendu: str | None, statut: str | None) -> None:
     assert analyser_preambule(texte) == (texte if attendu is None else attendu, statut)
+    assert nettoyer_cible(texte, 1) == (texte if attendu is None else attendu)
+
+
+# --- Titre de tête (version 2, story 9.10) -------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("texte", "attendu"),
+    [
+        ("**<titre>**\n\n<corps>", "<corps>"),
+        ("**<titre>**\r\n\r\n<corps>\n<suite>", "<corps>\n<suite>"),
+        ("# <titre>\n<corps>", "<corps>"),
+        ("### <titre>\n\n<corps>", "<corps>"),
+        ("\n**<titre>**\n\n<corps>", "<corps>"),
+        ("**<a>**\n\n**<b>**\n\n<corps>", "**<b>**\n\n<corps>"),
+        ("# <a>\n## <b>\n<corps>", "## <b>\n<corps>"),
+        ("<corps> **<gras>** <suite>\n<x>", None),
+        ("**<gras>** <suite>\n<x>", None),
+        ("<corps>\n\n# <titre>\n<x>", None),
+        ("<corps>\n**<titre>**\n<x>", None),
+        ("**<titre>**", None),
+        ("# <titre>\n\n  \n", None),
+        ("", None),
+    ],
+)
+def test_titre_de_tete(texte: str, attendu: str | None) -> None:
+    assert analyser_titre(texte) == ((texte, False) if attendu is None else (attendu, True))
+    assert nettoyer_cible(texte, 1) == texte  # version 1 : préambule seul
     assert nettoyer_cible(texte) == (texte if attendu is None else attendu)
+
+
+def test_version_2_preambule_puis_titre() -> None:
+    texte = "Voici <x> :\n\n**<titre>**\n\n<corps>"
+    assert nettoyer_cible(texte, 1) == "**<titre>**\n\n<corps>"
+    assert nettoyer_cible(texte, 2) == nettoyer_cible(texte) == "<corps>"
+    with pytest.raises(ValueError, match="version"):
+        nettoyer_cible(texte, 3)
 
 
 # --- Jeu source de fixture ----------------------------------------------------------------------
@@ -181,6 +223,7 @@ def test_nominal_preambule_longueur_lc_et_manifeste(tmp_path: Path) -> None:
         "preambules_retires": 0,
         "preambule_garde": 0,
         "preambule_seul": 0,
+        "titres_retires": 0,
         "ecartes_longueur": 1,
         "lc_signales": 0,
     }
@@ -196,7 +239,7 @@ def test_nominal_preambule_longueur_lc_et_manifeste(tmp_path: Path) -> None:
 
     brut = json.loads((resultat.dossier / "MANIFEST.json").read_bytes())
     assert brut["nettoyage"] == {
-        "version": 1,
+        "version": 2,
         "depuis_build": run_id,
         "depuis_version": "v1",
         "sha256_train_source": sha256_hex(octets),
@@ -341,9 +384,9 @@ def test_version_de_nettoyage_inconnue_refusee(tmp_path: Path) -> None:
     resultat = nettoyer(tmp_path, run_id)
     manifeste_chemin = resultat.dossier / "MANIFEST.json"
     brut = json.loads(manifeste_chemin.read_bytes())
-    brut["nettoyage"]["version"] = 2
+    brut["nettoyage"]["version"] = 3
     manifeste_chemin.write_bytes(json_canonique(brut))
-    with pytest.raises(ManifesteInvalide, match="version 2"):
+    with pytest.raises(ManifesteInvalide, match="version 3"):
         charger_jeu("v2", racine=tmp_path)
 
 
@@ -481,3 +524,53 @@ def test_tokenizers_absent_erreur_claire(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.setattr(builtins, "__import__", sans_tokenizers)
     with pytest.raises(ConfigurationInvalide, match="extra train"):
         tokeniseur_du_modele("slug-factice", racine=tmp_path)
+
+
+# --- Version 2 : titres comptés ; un jeu de version 1 reste vérifiable ---------------------------
+
+
+JEU_TITRES = [
+    ligne(1, "Q", "**<titre>**\n\n<reponse-factice-1>"),
+    ligne(2, "Q", "Voici <x> :\n\n# <titre>\n<reponse-factice-2>"),
+    ligne(3, "RD", "<reponse-factice-3> **<gras>**"),
+]
+
+
+def test_titres_retires_comptes_par_tache(tmp_path: Path) -> None:
+    run_id, _ = ecrire_source(tmp_path, JEU_TITRES)
+    resultat = nettoyer(tmp_path, run_id)
+    cibles = [x["messages"][-1]["content"] for x in lire_lignes(resultat.dossier / "train.jsonl")]
+    assert cibles == [
+        "<reponse-factice-1>",
+        "<reponse-factice-2>",
+        "<reponse-factice-3> **<gras>**",
+    ]
+    assert resultat.rapport["par_tache"]["Q"]["titres_retires"] == 2
+    assert resultat.rapport["par_tache"]["RD"]["titres_retires"] == 0
+    assert resultat.rapport["version_nettoyage"] == 2
+    assert len(charger_jeu("v2", racine=tmp_path).lignes) == 3
+
+
+def test_jeu_nettoye_en_version_1_reste_verifiable(tmp_path: Path) -> None:
+    """Un jeu v4 (version 1) se revérifie avec la règle de sa version, pas la courante."""
+    run_id, octets = ecrire_source(tmp_path, JEU_TITRES)
+    resultat = nettoyer(tmp_path, run_id)
+    # Jeu tel que la version 1 l'aurait produit (titres gardés), MANIFEST en version 1.
+    source = [t for t in octets.split(b"\n") if t.strip()]
+    contenu = b"".join(ligne_nettoyee(t, 1) + b"\n" for t in source)
+    assert b"<titre>" in contenu
+    (resultat.dossier / "train.jsonl").write_bytes(contenu)
+    chemin = resultat.dossier / "MANIFEST.json"
+    brut = json.loads(chemin.read_bytes())
+    brut["sha256_train"] = sha256_hex(contenu)
+    brut["nettoyage"]["version"] = 1
+    chemin.write_bytes(json_canonique(brut))
+    assert len(charger_jeu("v2", racine=tmp_path).lignes) == 3
+    verifier_nettoyage(contenu, octets, [], 1)
+    # La règle courante (titres retirés) ne prouve pas ce jeu : la version déclarée compte.
+    with pytest.raises(ProvenanceInvalide, match="version 2"):
+        verifier_nettoyage(contenu, octets, [], 2)
+    brut["nettoyage"]["version"] = 2
+    chemin.write_bytes(json_canonique(brut))
+    with pytest.raises(ProvenanceInvalide):
+        charger_jeu("v2", racine=tmp_path)

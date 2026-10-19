@@ -166,6 +166,13 @@ def test_build_toutes_les_taches(monde: Any, doublures: Any) -> None:
     lignes = {ligne.tache: ligne for ligne in lignes_train(resultat)}
     assert set(lignes) == set(TACHES)
     taches = charger_taches()
+    # D1.1 (story 9.10) : les consignes de longueur et de forme du gabarit, envoyées à Mistral,
+    # n'entrent dans aucun message SFT (ni le plafond de mots résolu).
+    for ligne in lignes.values():
+        for message in ligne.messages:
+            contenu = str(message.get("content") or "")
+            assert "ne dépasse pas" not in contenu and "mots." not in contenu
+            assert "Commence directement par le contenu" not in contenu
     for code, ligne in lignes.items():
         if code == "generique":
             assert ligne.messages[0]["role"] == "user"

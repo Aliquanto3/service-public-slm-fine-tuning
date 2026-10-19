@@ -1,8 +1,8 @@
 ---
 id: lc
-version: 1
+version: 2
 tache: LC
-max_tokens: 2048
+max_tokens: 800
 ---
 
 ## Consigne
@@ -16,6 +16,8 @@ Tu réécris en langage clair le texte administratif ci-dessous, pour que la per
 - Adresse-toi directement au lecteur quand le texte s'y prête.
 - N'ajoute aucune information absente du texte.
 - Donne seulement le texte réécrit.
+- Ta réponse ne dépasse pas {plafond_mots_tache} mots.
+- Commence directement par le contenu : pas de titre ni d'intertitre en première ligne, pas de phrase d'annonce ou d'introduction.
 
 Texte à réécrire.
 
@@ -24,3 +26,4 @@ Texte à réécrire.
 ## Emplacements
 
 - texte : texte administratif, issu d'un jeu public.
+- plafond_mots_tache : plafond de mots de la réponse pour la tâche du gabarit, lu dans la table generateur.plafonds_mots de config/donnees.toml (consigne de longueur, jamais une amorce).

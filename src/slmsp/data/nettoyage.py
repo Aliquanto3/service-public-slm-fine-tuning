@@ -3,7 +3,8 @@
 `lancer_nettoyage` lit le jeu SFT d'un run `data-build` (SHA revérifié contre son MANIFEST,
 comme `preferences._jeu_sft`) et écrit une **nouvelle version** `data/train/vN/` :
 
-1. préambule « Voici … » retiré de la réponse cible (`core.nettoyage.nettoyer_cible`) ;
+1. préambule « Voici … » puis titre de tête (story 9.10) retirés de la réponse cible
+   (`core.nettoyage.nettoyer_cible`, version `VERSION_NETTOYAGE`) ;
 2. cible de plus de `plafond_tokens` tokens (plafond de génération de l'évaluation, tokenizer
    du Modèle de base) **écartée**, jamais tronquée (motif `longueur`, `ecartes.jsonl`) ;
 3. fidélité LC **signalée** : nombres, références juridiques et sigles de la source absents de
@@ -33,7 +34,7 @@ from slmsp.core.config import dossier_modeles
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide
 from slmsp.core.nettoyage import (
     VERSION_NETTOYAGE,
-    analyser_preambule,
+    analyser_cible,
     cible_nettoyable,
     verifier_nettoyage,
 )
@@ -223,7 +224,7 @@ def lancer_nettoyage(
                 f"(plafond {plafond_tokens} tokens)"
             )
         contenu = b"".join(json_canonique(ligne) + b"\n" for ligne in gardees)
-        verifier_nettoyage(contenu, octets, [e.rang for e in ecartes])
+        verifier_nettoyage(contenu, octets, [e.rang for e in ecartes], VERSION_NETTOYAGE)
         version, dossier = _creer_version(base)
         (dossier / NOM_TRAIN).write_bytes(contenu)
         nettoyage = Nettoyage(
@@ -287,6 +288,7 @@ _COMPTES: Final = (
     "preambules_retires",
     "preambule_garde",
     "preambule_seul",
+    "titres_retires",
     "ecartes_longueur",
     "lc_signales",
 )
@@ -311,9 +313,10 @@ def _nettoyer(
         comptes[tache]["avant"] += 1
         cible = cible_nettoyable(ligne)
         if cible is not None:
-            texte, statut = analyser_preambule(cible["content"])
+            texte, statut, titre = analyser_cible(cible["content"], VERSION_NETTOYAGE)
             if statut is not None:
                 comptes[tache][_STATUTS[statut]] += 1
+            comptes[tache]["titres_retires"] += titre
             cible["content"] = texte
             tokens = tokeniseur.compter(texte)
             if tokens > plafond:

@@ -22,7 +22,7 @@ pytest.importorskip("mistralai")
 
 from slmsp.core.canonique import json_canonique, sha256_hex  # noqa: E402
 from slmsp.core.config import plafonds_re_evaluation, racine_projet  # noqa: E402
-from slmsp.core.erreurs import ProvenanceInvalide  # noqa: E402
+from slmsp.core.erreurs import ConfigurationInvalide, ProvenanceInvalide  # noqa: E402
 from slmsp.core.gabarits import GabaritInvalide, valider_gabarit  # noqa: E402
 from slmsp.core.schemas.amorce import Amorce  # noqa: E402
 from slmsp.mistral.client import ModeleMistralRefuse  # noqa: E402
@@ -49,6 +49,14 @@ cle_en_plus = "ignoree"
 
 [autre_table]
 seuil = 1
+
+[generateur.plafonds_mots]
+Q = 160
+RD = 120
+CR = 400
+LC = 150
+CT = 150
+generique = 200
 """
 
 
@@ -195,11 +203,15 @@ def test_appel_nominal(monde: Monde) -> None:
     monde.ecrire_seed([graine, amorce("autre-1", "Q", "question")])
     generation = monde.generateur().generer("generique", ["demande-1"], "session-1", "generique")
 
-    rendue = consigne("generique").replace("{demande}", graine["texte"])
+    rendue = (
+        consigne("generique")
+        .replace("{demande}", graine["texte"])
+        .replace("{plafond_mots_tache}", "200")
+    )
     (corps,) = monde.banc.faux.corps()
     assert corps["messages"] == [{"role": "user", "content": rendue}]
     assert graine["texte"] in corps["messages"][0]["content"]
-    assert corps["max_tokens"] == 2048
+    assert corps["max_tokens"] == 800
     assert "tools" not in corps and "tool_choice" not in corps
 
     (ligne,) = monde.banc.lignes_journal(JOURNAL_DONNEES)
@@ -210,7 +222,7 @@ def test_appel_nominal(monde: Monde) -> None:
     assert ligne["modele_demande"] == "mistral-large-latest"
     assert ligne["modele_resolu"] == "mistral-large-2512"
     assert json.loads(ligne["requete"]) == corps
-    assert ligne["gabarit_id"] == "generique" and ligne["version_gabarit"] == 1
+    assert ligne["gabarit_id"] == "generique" and ligne["version_gabarit"] == 2
     assert ligne["sha256_gabarit"] == sha256_hex(octets)
     assert json.loads(ligne["amorce_ids"]) == ["demande-1"]
     assert ligne["reponse_brute"] == monde.banc.faux.servis[0]
@@ -873,7 +885,11 @@ def test_passages_rendus_par_le_resolveur(monde: Monde) -> None:
     question = amorce("q", "Q", "question")
     monde.ecrire_seed([question])
     monde.generateur(rendre_passages=rendre).generer("traces-q", ["q"], "session-q", "Q")
-    attendu = consigne("traces-q").replace("{question}", question["texte"])
+    attendu = (
+        consigne("traces-q")
+        .replace("{question}", question["texte"])
+        .replace("{plafond_mots_tache}", "160")
+    )
     (corps,) = monde.banc.faux.corps()
     assert corps["messages"][0]["content"] == attendu.replace("{passages}", rendu)
     assert vus == ["session-q"]
@@ -933,7 +949,9 @@ def test_amorce_derivee_puis_utilisee(monde: Monde) -> None:
     assert meme == derivee
     generateur.generer("cr", ["session-cr.transcription"], "session-cr", "CR")
     (corps,) = monde.banc.faux.corps()
-    assert corps["messages"][0]["content"] == consigne("cr").replace("{transcription}", texte)
+    assert corps["messages"][0]["content"] == consigne("cr").replace(
+        "{transcription}", texte
+    ).replace("{plafond_mots_tache}", "400")
 
 
 @pytest.mark.parametrize("cas", ["outil", "tronquee", "inconnu", "autre-texte", "passages"])
@@ -1084,3 +1102,63 @@ def test_fabrique_courriers_relance_sans_second_appel(monde: Monde) -> None:
     assert len(monde.banc.faux.requetes) == 1
     assert fabrique(SEED_2, "ct.sujet.1", "seed-ct-1") == premier
     assert len(monde.banc.faux.requetes) == 1
+
+
+# --- Plafond de mots par Tâche (story 9.10) -------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("gabarit_id", "tache", "plafond"),
+    [("traces-q", "Q", 160), ("traces-rd", "RD", 120), ("cr", "CR", 400), ("lc", "LC", 150)],
+)
+def test_plafond_mots_tache_resolu_par_tache(
+    monde: Monde, gabarit_id: str, tache: str, plafond: int
+) -> None:
+    monde.ecrire_seed([amorce("d", "generique", "demande")])
+    generateur = monde.generateur(rendre_passages=lambda _s: "<passages-factices>")
+    assert generateur.plafonds_mots[tache] == plafond
+    assert "plafond_mots_tache" in generateur.gabarit(gabarit_id, tache).emplacements
+    attendu = 1600 if tache == "CR" else 800
+    assert generateur.max_tokens(gabarit_id, tache) == attendu
+
+
+def test_plafond_mots_tache_manquant_refuse_au_pre_vol(monde: Monde) -> None:
+    fichier = monde.racine / "config" / "donnees.toml"
+    fichier.write_text(DONNEES.replace("generique = 200\n", ""), encoding="utf-8")
+    monde.ecrire_seed([amorce("d", "generique", "demande")])
+    generateur = monde.generateur()
+    with pytest.raises(GabaritInvalide, match="plafond_mots_tache"):
+        generateur.gabarit("generique", "generique")
+    with pytest.raises(GabaritInvalide, match="plafond_mots_tache"):
+        generateur.generer("generique", ["d"], "s", "generique")
+    assert monde.banc.faux.corps() == []
+    # Un gabarit sans l'emplacement n'en dépend pas (RE garde plafond_mots).
+    assert "plafond_mots_tache" not in generateur.gabarit("re", "RE").emplacements
+    assert "plafond_mots" in generateur.gabarit("re", "RE").emplacements
+
+
+@pytest.mark.parametrize(
+    "table",
+    ["CO = 100\n", "Q = 0\n", "Q = -5\n", 'Q = "160"\n', "inconnue = 10\n"],
+)
+def test_plafonds_mots_invalides(monde: Monde, table: str) -> None:
+    fichier = monde.racine / "config" / "donnees.toml"
+    fichier.write_text(
+        DONNEES.split("[generateur.plafonds_mots]")[0] + "[generateur.plafonds_mots]\n" + table,
+        encoding="utf-8",
+    )
+    monde.ecrire_seed([amorce("d", "generique", "demande")])
+    if table.startswith("CO"):
+        # CO est une Tâche générable : accepté par le Générateur, refusé par data.config.
+        assert monde.generateur().plafonds_mots == {"CO": 100}
+        return
+    with pytest.raises(ConfigurationInvalide, match="plafonds_mots"):
+        monde.generateur()
+
+
+def test_amorce_sur_plafond_mots_tache_refusee(monde: Monde) -> None:
+    monde.ecrire_seed(
+        [amorce("d", "generique", "demande"), amorce("p", "generique", "plafond_mots_tache")]
+    )
+    with pytest.raises(ProvenanceInvalide, match="plafond_mots_tache"):
+        monde.generateur().generer("generique", ["d", "p"], "s", "generique")

@@ -72,3 +72,29 @@ def test_sha_des_octets() -> None:
         chemin = DOSSIER / f"{nom}.md"
         gabarit = valider_gabarit(chemin, cles_optionnelles=("max_tokens",))
         assert gabarit.sha256 == sha256_hex(chemin.read_bytes())
+
+
+PLAFONNES = ("traces-q", "traces-rd", "cr", "lc", "ct", "generique")
+
+
+@pytest.mark.parametrize("nom", PLAFONNES)
+def test_consignes_de_longueur_et_de_forme(nom: str) -> None:
+    """Story 9.10 : consigne de longueur sur l'emplacement réservé, consigne de forme, version
+    incrémentée et `max_tokens` resserré (1 600 pour CR, 800 sinon)."""
+    gabarit = valider_gabarit(DOSSIER / f"{nom}.md", cles_optionnelles=("max_tokens",))
+    assert "plafond_mots_tache" in gabarit.emplacements
+    longueur = (
+        "- Ta réponse finale à l'Agent ne dépasse pas {plafond_mots_tache} mots."
+        if nom == "traces-rd"
+        else "- Ta réponse ne dépasse pas {plafond_mots_tache} mots."
+    )
+    assert gabarit.consigne.count(longueur) == 1
+    assert "- Commence directement par le contenu : pas de titre" in gabarit.consigne
+    assert gabarit.version == 2
+    assert int(gabarit.front_matter["max_tokens"]) == (1600 if nom == "cr" else 800)
+
+
+@pytest.mark.parametrize("nom", sorted(set(GABARITS) - set(PLAFONNES)))
+def test_autres_gabarits_sans_plafond_de_tache(nom: str) -> None:
+    gabarit = valider_gabarit(DOSSIER / f"{nom}.md", cles_optionnelles=("max_tokens",))
+    assert "plafond_mots_tache" not in gabarit.emplacements

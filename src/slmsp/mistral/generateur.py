@@ -46,9 +46,9 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Any, Final
+from typing import Annotated, Any, Final
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, ValidationError
 
 from slmsp.core.artefacts import lire
 from slmsp.core.canonique import json_canonique, sha256_hex
@@ -67,6 +67,7 @@ __all__ = [
     "Generation",
     "PrealableNonSatisfait",
     "PrealablesGeneration",
+    "charger_plafonds_mots",
     "charger_prealables",
     "message_assistant",
     "raison_de_fin",
@@ -93,6 +94,14 @@ EMPLACEMENT_PLAFOND: Final = "plafond_mots"
 """Emplacement réservé : plafond de mots du résumé RE, dérivé de l'amorce `longueur_demandee`
 par `[re.longueurs]` de `config/evaluation.toml` (consigne de forme seulement, D1.1). Jamais
 rempli par une amorce ; le message de l'exemple d'entraînement garde le mot nu du Jeu."""
+EMPLACEMENT_PLAFOND_TACHE: Final = "plafond_mots_tache"
+"""Emplacement réservé (story 9.10) : plafond de mots de la réponse cible de la Tâche du
+gabarit, lu dans `[generateur.plafonds_mots]` de `config/donnees.toml` (consigne de longueur
+seulement, D1.1). Jamais rempli par une amorce, jamais recopié dans un exemple d'entraînement
+(les messages SFT sont reconstruits par `data.build`, sans la consigne du gabarit)."""
+EMPLACEMENTS_RESERVES: Final = frozenset(
+    {EMPLACEMENT_PASSAGES, EMPLACEMENT_PLAFOND, EMPLACEMENT_PLAFOND_TACHE}
+)
 
 _RE_GABARIT_ID = re.compile(r"[a-z0-9-]+")
 _RE_SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
@@ -118,6 +127,22 @@ class _FichierDonnees(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     mistral: _MistralDonnees
+
+
+class _GenerateurDonnees(BaseModel):
+    """Table `[generateur]` de `config/donnees.toml` (story 9.10) ; autres clés ignorées.
+
+    Modèle strict de référence : `slmsp.data.config.GenerateurDonnees` (couche supérieure)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    plafonds_mots: dict[str, Annotated[StrictInt, Field(gt=0)]] = Field(default_factory=dict)
+
+
+class _FichierGenerateur(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    generateur: _GenerateurDonnees = Field(default_factory=_GenerateurDonnees)
 
 
 @dataclass(frozen=True)
@@ -168,6 +193,27 @@ def charger_prealables(
         conditions_verifiees_le=table.conditions_verifiees_le,
         modeles_stables=tuple(table.modeles_stables),
     )
+
+
+def charger_plafonds_mots(fichier: str | Path) -> dict[str, int]:
+    """Plafonds de mots par Tâche de `[generateur.plafonds_mots]` de `fichier` (vide si la
+    table manque). Lève `ConfigurationInvalide` si le fichier est illisible, si une valeur
+    n'est pas un entier strictement positif ou si une clé n'est pas une Tâche générable."""
+    chemin = Path(fichier)
+    try:
+        donnees = tomllib.loads(chemin.read_bytes().decode("utf-8"))
+        table = _FichierGenerateur.model_validate(donnees).generateur.plafonds_mots
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError, ValidationError) as exc:
+        raise ConfigurationInvalide(
+            f"{chemin} : table [generateur.plafonds_mots] illisible ou invalide "
+            f"({type(exc).__name__})"
+        ) from None
+    inconnues = sorted(set(table) - set(TACHES))
+    if inconnues:
+        raise ConfigurationInvalide(
+            f"{chemin} : [generateur.plafonds_mots] : tâche(s) inconnue(s) {', '.join(inconnues)}"
+        )
+    return dict(table)
 
 
 def _normaliser_appels(appels: list[Any]) -> list[Any]:
@@ -339,6 +385,7 @@ class Generateur:
         )
         self.seed_run_id = seed_run_id
         self._amorces = self._charger_amorces(seed_run_id)
+        self.plafonds_mots = charger_plafonds_mots(self.fichier_donnees)
 
     # --- Chargements ---------------------------------------------------------------------
 
@@ -393,7 +440,17 @@ class Generateur:
             raise GabaritInvalide(
                 f"gabarit {gabarit_id!r} : emplacements de la consigne et déclarés différents"
             )
+        if EMPLACEMENT_PLAFOND_TACHE in gabarit.emplacements and tache not in self.plafonds_mots:
+            raise GabaritInvalide(
+                f"gabarit {gabarit_id!r} : « plafond_mots_tache » sans valeur pour la tâche "
+                f"{tache!r} dans [generateur.plafonds_mots] de {self.fichier_donnees.name}"
+            )
         return gabarit, max_tokens
+
+    def max_tokens(self, gabarit_id: str, tache: str) -> int:
+        """`max_tokens` du gabarit `gabarit_id` (défaut `MAX_TOKENS_DEFAUT`), avec les
+        contrôles de `generer` ; lève `GabaritInvalide`."""
+        return self._gabarit(gabarit_id, tache)[1]
 
     def gabarit(self, gabarit_id: str, tache: str) -> GabaritValide:
         """Gabarit `gabarit_id` validé pour `tache` (identifiant, version, SHA, emplacements),
@@ -434,10 +491,10 @@ class Generateur:
                 raise ProvenanceInvalide("amorce inconnue de l'artefact seed")
             if amorce.tache != tache:
                 raise ProvenanceInvalide(f"amorce {amorce_id!r} : tâche différente de {tache!r}")
-            if amorce.emplacement == EMPLACEMENT_PLAFOND:
+            if amorce.emplacement in (EMPLACEMENT_PLAFOND, EMPLACEMENT_PLAFOND_TACHE):
                 raise ProvenanceInvalide(
-                    f"amorce {amorce_id!r} : l'emplacement « plafond_mots » est dérivé de la "
-                    "configuration"
+                    f"amorce {amorce_id!r} : l'emplacement « {amorce.emplacement} » est dérivé "
+                    "de la configuration"
                 )
             if amorce.emplacement == EMPLACEMENT_PASSAGES:
                 raise ProvenanceInvalide(
@@ -466,7 +523,7 @@ class Generateur:
         manquants = [
             nom
             for nom in gabarit.emplacements
-            if nom not in groupes and nom not in (EMPLACEMENT_PASSAGES, EMPLACEMENT_PLAFOND)
+            if nom not in groupes and nom not in EMPLACEMENTS_RESERVES
         ]
         if manquants:
             raise GabaritInvalide(
@@ -740,6 +797,8 @@ class Generateur:
             valeurs[EMPLACEMENT_PASSAGES] = rendu
         if EMPLACEMENT_PLAFOND in gabarit.emplacements:
             valeurs[EMPLACEMENT_PLAFOND] = self._plafond_mots(valeurs, gabarit.id)
+        if EMPLACEMENT_PLAFOND_TACHE in gabarit.emplacements:
+            valeurs[EMPLACEMENT_PLAFOND_TACHE] = str(self.plafonds_mots[tache])
         consigne = _RE_EMPLACEMENT.sub(lambda m: valeurs[m.group(1)], gabarit.consigne)
         requete = [
             {"role": "user", "content": consigne},

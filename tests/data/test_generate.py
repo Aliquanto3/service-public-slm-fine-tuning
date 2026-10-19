@@ -17,6 +17,7 @@ from slmsp.core.canonique import sha256_hex  # noqa: E402
 from slmsp.core.erreurs import ManifesteInvalide, SlmspError  # noqa: E402
 from slmsp.core.gabarits import valider_gabarit  # noqa: E402
 from slmsp.data.generate import CHAINES, ORDRE_TACHES  # noqa: E402
+from slmsp.data.sessions import TOURS_OUTILS_MAX  # noqa: E402
 
 TOUTES = dict.fromkeys(ORDRE_TACHES, 1)
 
@@ -236,7 +237,7 @@ def test_seed_non_complet_refuse(monde: Any, statut: str) -> None:
 
 
 def test_budget_epuise_arret_propre(monde: Any) -> None:
-    monde.plafond = 0.003  # une réservation au pire cas passe, pas la deuxième
+    monde.plafond = 0.0015  # une réservation au pire cas passe, pas la deuxième (max_tokens 800)
     seed = monde.ecrire_seed([monde.amorce("generique", "demande", ligne=n) for n in (1, 2, 3)])
     resultat = monde.lancer({"generique": 3}, seed=seed)
 
@@ -269,3 +270,65 @@ def test_changement_de_jour(monde: Any, doublures: Any) -> None:
     assert resultat.statut == "partiel-erreur"
     assert "conditions Mistral à revérifier" in resultat.bilan["motif"]
     assert len(monde.faux.corps) == 1
+
+
+# --- Estimation avant dépense (story 9.10) ----------------------------------------------------
+
+
+def _estimations(lignes: list[tuple[str, int]]) -> dict[str, tuple[int, int]]:
+    """{gabarit : (appels, appels faits au moment de l'affichage)} des lignes d'estimation."""
+    resultat = {}
+    for ligne, faits in lignes:
+        if ligne.startswith("estimation ") and not ligne.startswith("estimation totale"):
+            gabarit_id = ligne.split()[1]
+            resultat[gabarit_id] = (int(ligne.split(" : ")[1].split()[0]), faits)
+    return resultat
+
+
+def test_estimation_affichee_avant_le_premier_appel(monde: Any, doublures: Any) -> None:
+    seed = _seed_complet(monde, doublures)
+    _scripter_rd(monde, doublures)
+    lignes: list[tuple[str, int]] = []
+    monde.lancer(TOUTES, seed=seed, consigner=lambda m: lignes.append((m, len(monde.faux.corps))))
+    estimations = _estimations(lignes)
+    assert {g: n for g, (n, _) in estimations.items()} == {
+        "traces-q": 1,
+        "traces-rd": TOURS_OUTILS_MAX + 1,
+        "transcription-cr": 1,
+        "cr": 1,
+        "lc": 1,
+        "generique": 1,
+        "ct": 1,
+        "re": 1,
+        "co": 1,
+    }
+    assert all(faits == 0 for _, faits in estimations.values())
+    (totale,) = [m for m, faits in lignes if m.startswith("estimation totale") and faits == 0]
+    assert f"{TOURS_OUTILS_MAX + 9} appels" in totale and "€" in totale
+    (rd,) = [m for m, _ in lignes if m.startswith("estimation traces-rd")]
+    assert "max_tokens 800" in rd
+    (cr,) = [m for m, _ in lignes if m.startswith("estimation cr ")]
+    assert "max_tokens 1600" in cr
+
+
+def test_estimation_en_reprise_deduit_le_journal(monde: Any, doublures: Any) -> None:
+    seed = monde.ecrire_seed(
+        [monde.amorce("generique", "demande", ligne=1), monde.amorce("RD", "demande", ligne=1)]
+    )
+    appel = doublures.appel_outil("search_datasets", {"query": doublures.factice()})
+    monde.faux.reponses = [{"appels": [appel]}, KeyboardInterrupt()]
+    with pytest.raises(KeyboardInterrupt):
+        monde.lancer({"RD": 1, "generique": 1}, seed=seed)
+    (run_id,) = [d.name for d in (monde.racine / "runs" / "data-generate").iterdir()]
+
+    lignes: list[tuple[str, int]] = []
+    monde.lancer(
+        {"RD": 1, "generique": 1},
+        reprendre=run_id,
+        consigner=lambda m: lignes.append((m, 0)),
+    )
+    # Un appel RD déjà journalisé n'est pas compté ; la session generique reste entière.
+    assert {g: n for g, (n, _) in _estimations(lignes).items()} == {
+        "traces-rd": TOURS_OUTILS_MAX,
+        "generique": 1,
+    }
