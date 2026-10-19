@@ -83,6 +83,8 @@ Consigne : prompt de reprise du 19 à midi (stories de l'incident, notation de M
 - 2026-10-19 13:42 · 9.10 · revue Opus (4aa8d2a) : estimation RD avec schéma d'outils (libellé « coût estimé », exclusions affichées) ; titre de tête retiré seulement s'il fait ≤ 12 mots et ne finit pas par une ponctuation (`.!?:;…`) ; sur v4, 55 retraits au lieu de 108 (les « **Réponse à l'Agent :** » restent). **Fusion 0cdfe06**, tests data + mistral + core verts (1 413).
 - 2026-10-19 13:42 · D1.2 · page des conditions Mistral relue par `net.client('outillage')` : SHA identique au 17 (`08ee882d…`), date passée au 2026-10-19 (243be1d).
 - 2026-10-19 13:42 · v6 · génération prévue : `data generate --depuis 20261017-111645-seed-b335` (seed de v2, 595 sessions, surplus 0). Une nouvelle campagne de budget est nécessaire (plafond Mistral génération 10 €) ; le registre la refuse tant que le lot de notation de M1 v4 est ouvert.
+- 2026-10-19 13:56 · M1 v4 · premier lot du juge (126 items) annulé au délai d'1 h, 124 déjà jugés : 2,26 € réels (pire cas réservé 8,70 €, régularisé). Les 44 restants partent dans un second lot (2,99 € réservés, ~0,8 € attendus).
+- 2026-10-19 14:04 · v6 · décision prise seul : génération lancée **sous la campagne actuelle** (Mistral génération : 8,75 € restants, estimation 4 à 7 €) plutôt que d'attendre la fin du lot pour ouvrir une campagne à 10 € ; en cas d'épuisement, arrêt propre puis reprise sous une nouvelle campagne. Run `runs/data-generate/20261019-140413-generate-9b48` (595 sessions planifiées).
 
 ## Journal du 19 (jour, Anaël absent)
 Consigne : point 0 à 4 du prompt de reprise du 19 au matin (nettoyage v4, campagne minicpm5-2b-v4, gdn et sondes, mesures CPU en fin de journée).
