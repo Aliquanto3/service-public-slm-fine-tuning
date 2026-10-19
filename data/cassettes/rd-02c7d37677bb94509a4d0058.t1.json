@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:01:19Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "conventions subventions Département Loire 2018",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'conventions subventions Département Loire 2018'\nPage 1 of results:\n\n1. Données essentielles des conventions  de subvention du Département de la Haute-Loire depuis 2017\n   ID: 6422edd86e01034917355591\n   Organization: Département de la Haute-Loire\n   Tags: convention-de-subvention, donnees-essentielles, haute-loire, subvention\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-des-conventions-de-subvention-du-departement-de-la-haute-loire-depuis-2017\n\n2. Données essentielles conventions subventions 2018 du Département de la Loire\n   ID: 6062e4e62fa99079ae69e3d3\n   Organization: Département de la Loire\n   Tags: 2018, conventions, departement, loire, subventions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-conventions-subventions-2018-du-departement-de-la-loire\n\n3. Conventions de subventions 2017-2019 du Département de Maine-et-Loire\n   ID: 5e33f2f806e3e76faa320bb4\n   Organization: Département de Maine-et-Loire\n   Tags: citoyennete-institution, subvention, vie-associative\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/conventions-de-subventions-2017-2019-du-departement-de-maine-et-loire\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'conventions subventions Département Loire 2018'\nPage 1 of results:\n\n1. Données essentielles des conventions  de subvention du Département de la Haute-Loire depuis 2017\n   ID: 6422edd86e01034917355591\n   Organization: Département de la Haute-Loire\n   Tags: convention-de-subvention, donnees-essentielles, haute-loire, subvention\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-des-conventions-de-subvention-du-departement-de-la-haute-loire-depuis-2017\n\n2. Données essentielles conventions subventions 2018 du Département de la Loire\n   ID: 6062e4e62fa99079ae69e3d3\n   Organization: Département de la Loire\n   Tags: 2018, conventions, departement, loire, subventions\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-essentielles-conventions-subventions-2018-du-departement-de-la-loire\n\n3. Conventions de subventions 2017-2019 du Département de Maine-et-Loire\n   ID: 5e33f2f806e3e76faa320bb4\n   Organization: Département de Maine-et-Loire\n   Tags: citoyennete-institution, subvention, vie-associative\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/conventions-de-subventions-2017-2019-du-departement-de-maine-et-loire\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

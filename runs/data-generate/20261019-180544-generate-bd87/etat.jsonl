@@ -1,0 +1,4 @@
+{"horodatage":"2026-10-19T18:05:46.598287+02:00","motif":null,"pid":29200,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-19T18:51:53.740049+02:00","motif":"ErreurApiMistral : API Mistral : échec sans réponse HTTP (RemoteProtocolError, generation)","pid":29200,"schema_version":1,"statut":"partiel-erreur"}
+{"horodatage":"2026-10-19T18:52:20.486843+02:00","motif":"reprise","pid":31996,"schema_version":1,"statut":"en_cours"}
+{"horodatage":"2026-10-19T19:04:39.070418+02:00","motif":null,"pid":31996,"schema_version":1,"statut":"complet"}

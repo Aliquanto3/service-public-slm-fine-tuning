@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:53:18Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5747f43d88ee380e9cd1b934"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Certification des comptes de l’État pour l’exercice 2015\nDataset ID: 5747f43d88ee380e9cd1b934\nTotal resources: 1\n\n1. Certification des comptes de l’État pour l’exercice 2015\n   Resource ID: 7209298e-41a9-4d27-b1e1-991dc1a57acb\n   Format: csv\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/EzPublish/CGE-2015.zip\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Certification des comptes de l’État pour l’exercice 2015\nDataset ID: 5747f43d88ee380e9cd1b934\nTotal resources: 1\n\n1. Certification des comptes de l’État pour l’exercice 2015\n   Resource ID: 7209298e-41a9-4d27-b1e1-991dc1a57acb\n   Format: csv\n   Type: main\n   URL: https://www.ccomptes.fr/sites/default/files/EzPublish/CGE-2015.zip\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

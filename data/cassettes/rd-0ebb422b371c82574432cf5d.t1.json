@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:00:38Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "DOCOB Habitats Provence-Alpes-Côte d'Azur",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'DOCOB Habitats Provence-Alpes-Côte d'Azur'\nPage 1 of results:\n\n1. Habitats des sites Natura 2000 (ZSC) - Document d'Objectifs (DOCOB) dans le Var\n   ID: 673788b12681d108c1c253d3\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-des-sites-natura-2000-zsc-document-dobjectifs-docob-dans-le-var\n\n2. Habitats des sites Natura 2000 (ZSC) - Document d'Objectifs (DOCOB) dans les Bouches du Rhône\n   ID: 673788ea2681d108c1c2540b\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-des-sites-natura-2000-zsc-document-dobjectifs-docob-dans-les-bouches-du-rhone\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'DOCOB Habitats Provence-Alpes-Côte d'Azur'\nPage 1 of results:\n\n1. Habitats des sites Natura 2000 (ZSC) - Document d'Objectifs (DOCOB) dans le Var\n   ID: 673788b12681d108c1c253d3\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-des-sites-natura-2000-zsc-document-dobjectifs-docob-dans-le-var\n\n2. Habitats des sites Natura 2000 (ZSC) - Document d'Objectifs (DOCOB) dans les Bouches du Rhône\n   ID: 673788ea2681d108c1c2540b\n   Organization: DREAL Provence-Alpes-Côte d'Azur\n   Tags: donnees-ouvertes, inspire, nature-paysage-biodiversite-zonages-nature, sites-proteges\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/habitats-des-sites-natura-2000-zsc-document-dobjectifs-docob-dans-les-bouches-du-rhone\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

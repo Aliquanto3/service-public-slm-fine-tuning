@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:59:21Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "délibérations Toulouse Métropole",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 11 dataset(s) for query: 'délibérations Toulouse Métropole'\nPage 1 of results:\n\n1. Délibérations à partir d'avril 2026 - Toulouse Métropole\n   ID: 6a3a05f6cff8cc685c467371\n   Organization: Toulouse métropole\n   Tags: citoyennete\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-a-partir-davril-2026-toulouse-metropole\n\n2. Délibérations à partir de mars 2026 - Mairie de Toulouse\n   ID: 6ab743c854c44f27cf04fa40\n   Organization: Toulouse métropole\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-a-partir-de-mars-2026-mairie-de-toulouse\n\n3. Délibérations de juillet 2020 à février 2026 - Mairie de Toulouse\n   ID: 69b23b8463f96de36da4f8d8\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-municipal, date, deliberation, listes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-juillet-2020-a-fevrier-2026-mairie-de-toulouse\n\n4. Délibérations de juillet 2020 à février 2026 Toulouse Métropole\n   ID: 69b23b6e63f96de36da4f8d7\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-juillet-2020-a-fevrier-2026-toulouse-metropole\n\n5. Délibérations de 2003 à Mars 2014 - Mairie de Toulouse\n   ID: 673d5f6ddc8972188b7733cb\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-municipal, date, deliberations, liste\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-2003-a-mars-2014-mairie-de-toulouse-2\n\n6. Itinéraires des balades sur Toulouse Métropole\n   ID: 66516543bf9d1e79a16740f0\n   Organization: Toulouse métropole\n   Tags: balades, biodiversite, decouverte, environnement, itineraires\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/itineraires-des-balades-sur-toulouse-metropole\n\n7. Délibérations d’Avril 2014 à Juin 2020 - Mairie de Toulouse\n   ID: 5f1668f37f5ea6572ad05ffd\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-municipal, date, deliberation, listes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-davril-2014-a-juin-2020-mairie-de-toulouse\n\n8. Liste de délibérations du conseil municipal de 1909 à 1969 - Toulouse\n   ID: 56b0c2c1a3a7294d39b88a5b\n   Organization: Toulouse métropole\n   Tags: archive, conseil-municipal, deliberation, liste, patrimoine\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-de-deliberations-du-conseil-municipal-de-1909-a-1969-toulouse\n\n9. Délibérations d'Avril 2014 à Juin 2020 - Toulouse Métropole\n   ID: 5f1668f302e19585f7d05ffd\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-davril-2014-a-juin-2020-toulouse-metropole\n\n10. Délibérations de 2011 à Février 2014- Toulouse Métropole\n   ID: 5d36872d06e3e779eae75019\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-2011-a-fevrier-2014-toulouse-metropole\n\n11. Délibérations de 2000 à 2011 - Toulouse Metropole\n   ID: 5d2808999ce2e75655f50c0d\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-2000-a-2011-toulouse-metropole\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 11 dataset(s) for query: 'délibérations Toulouse Métropole'\nPage 1 of results:\n\n1. Délibérations à partir d'avril 2026 - Toulouse Métropole\n   ID: 6a3a05f6cff8cc685c467371\n   Organization: Toulouse métropole\n   Tags: citoyennete\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-a-partir-davril-2026-toulouse-metropole\n\n2. Délibérations à partir de mars 2026 - Mairie de Toulouse\n   ID: 6ab743c854c44f27cf04fa40\n   Organization: Toulouse métropole\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-a-partir-de-mars-2026-mairie-de-toulouse\n\n3. Délibérations de juillet 2020 à février 2026 - Mairie de Toulouse\n   ID: 69b23b8463f96de36da4f8d8\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-municipal, date, deliberation, listes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-juillet-2020-a-fevrier-2026-mairie-de-toulouse\n\n4. Délibérations de juillet 2020 à février 2026 Toulouse Métropole\n   ID: 69b23b6e63f96de36da4f8d7\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-juillet-2020-a-fevrier-2026-toulouse-metropole\n\n5. Délibérations de 2003 à Mars 2014 - Mairie de Toulouse\n   ID: 673d5f6ddc8972188b7733cb\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-municipal, date, deliberations, liste\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-2003-a-mars-2014-mairie-de-toulouse-2\n\n6. Itinéraires des balades sur Toulouse Métropole\n   ID: 66516543bf9d1e79a16740f0\n   Organization: Toulouse métropole\n   Tags: balades, biodiversite, decouverte, environnement, itineraires\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/itineraires-des-balades-sur-toulouse-metropole\n\n7. Délibérations d’Avril 2014 à Juin 2020 - Mairie de Toulouse\n   ID: 5f1668f37f5ea6572ad05ffd\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-municipal, date, deliberation, listes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-davril-2014-a-juin-2020-mairie-de-toulouse\n\n8. Liste de délibérations du conseil municipal de 1909 à 1969 - Toulouse\n   ID: 56b0c2c1a3a7294d39b88a5b\n   Organization: Toulouse métropole\n   Tags: archive, conseil-municipal, deliberation, liste, patrimoine\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-de-deliberations-du-conseil-municipal-de-1909-a-1969-toulouse\n\n9. Délibérations d'Avril 2014 à Juin 2020 - Toulouse Métropole\n   ID: 5f1668f302e19585f7d05ffd\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-davril-2014-a-juin-2020-toulouse-metropole\n\n10. Délibérations de 2011 à Février 2014- Toulouse Métropole\n   ID: 5d36872d06e3e779eae75019\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-2011-a-fevrier-2014-toulouse-metropole\n\n11. Délibérations de 2000 à 2011 - Toulouse Metropole\n   ID: 5d2808999ce2e75655f50c0d\n   Organization: Toulouse métropole\n   Tags: citoyennete, conseil-de-metropole, deliberation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/deliberations-de-2000-a-2011-toulouse-metropole\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

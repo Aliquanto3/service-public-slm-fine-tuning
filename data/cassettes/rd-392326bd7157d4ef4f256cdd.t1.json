@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:58:08Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Plan de prévention des risques naturels Artagnan approuvé 2019"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'Plan de prévention des risques naturels Artagnan approuvé 2019'\nPage 1 of results:\n\n1. [DDT65] Plan de prévention des risques naturels (PPRN) de Artagnan, approuvé le 27/02/2019\n   ID: 67377ed0b561510ce3c253da\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ddt65-plan-de-prevention-des-risques-naturels-pprn-de-artagnan-approuve-le-27-02-2019\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'Plan de prévention des risques naturels Artagnan approuvé 2019'\nPage 1 of results:\n\n1. [DDT65] Plan de prévention des risques naturels (PPRN) de Artagnan, approuvé le 27/02/2019\n   ID: 67377ed0b561510ce3c253da\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ddt65-plan-de-prevention-des-risques-naturels-pprn-de-artagnan-approuve-le-27-02-2019\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PPRN Artagnan 2019"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'PPRN Artagnan 2019'\nPage 1 of results:\n\n1. [DDT65] Plan de prévention des risques naturels (PPRN) de Artagnan, approuvé le 27/02/2019\n   ID: 67377ed0b561510ce3c253da\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ddt65-plan-de-prevention-des-risques-naturels-pprn-de-artagnan-approuve-le-27-02-2019\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'PPRN Artagnan 2019'\nPage 1 of results:\n\n1. [DDT65] Plan de prévention des risques naturels (PPRN) de Artagnan, approuvé le 27/02/2019\n   ID: 67377ed0b561510ce3c253da\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ddt65-plan-de-prevention-des-risques-naturels-pprn-de-artagnan-approuve-le-27-02-2019\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Plan de prévention des risques naturels Hautes-Pyrénées approuvé"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 152 dataset(s) for query: 'Plan de prévention des risques naturels Hautes-Pyrénées approuvé'\nPage 1 of results:\n\n1. Plan de Prévention des Risques Naturels (PPRN) de Bonnemazon approuvé le 11/04/07\n   ID: 67377f6fb561510ce3c2549b\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-bonnemazon-approuve-le-11-04-07\n\n2. Plan de Prévention des Risques Naturels (PPRN) de Laméac approuvé le 11/04/07\n   ID: 67377f73b561510ce3c254a5\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-lameac-approuve-le-11-04-07\n\n3. Plan de Prévention des Risques Naturels (PPRN) d'Aubarède approuvé le 11/04/2007\n   ID: 67377ea0b561510ce3c2539f\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daubarede-approuve-le-11-04-2007\n\n4. Plan de Prévention des Risques Naturels (PPRN) d'Aureilhan approuvé le 18/04/2014.\n   ID: 67377f46b561510ce3c25469\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daureilhan-approuve-le-18-04-2014\n\n5. Plan de Prévention des Risques Naturels (PPRN) de Dours approuvé le 23/03/1992\n   ID: 67377f43b561510ce3c25461\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-dours-approuve-le-23-03-1992\n\n6. Plan de Prévention des Risques Naturels (PPRN) de Barbazan-Debat approuvé le 25/01/2010\n   ID: 67377ea3b561510ce3c253aa\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-barbazan-debat-approuve-le-25-01-2010\n\n7. Plan de Prévention des Risques Naturels (PPRN) de Germ approuvé le 16/07/1991\n   ID: 67377f6eb561510ce3c2549a\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-germ-approuve-le-16-07-1991\n\n8. Plan de Prévention des Risques Naturels (PPRN) de Gaillagos approuvé le 12/01/2004\n   ID: 67377f44b561510ce3c25464\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-gaillagos-approuve-le-12-01-2004\n\n9. Plan de Prévention des Risques Naturels (PPRN) de Maubourguet approuvé le 02/08/2010\n   ID: 67377f75b561510ce3c254aa\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-maubourguet-approuve-le-02-08-2010\n\n10. Plan de Prévention des Risques Naturels (PPRN) de Bénac approuvé le 28/03/2006\n   ID: 67377f6cb561510ce3c25492\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, source-de-nuisance-inclut-risques-industriels-et-naturels\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-benac-approuve-le-28-03-2006\n\n11. Plan de Prévention des Risques Naturels (PPRN) d'Aucun approuvé le 29/05/2002\n   ID: 67377e9fb561510ce3c2539e\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daucun-approuve-le-29-05-2002\n\n12. Plan de Prévention des Risques Naturels (PPRN) de Campan, approuvé le 10/07/2012\n   ID: 67377f07b561510ce3c25417\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-campan-approuve-le-10-07-2012\n\n13. Plan de Prévention des Risques Naturels (PPRN) de Sombrun approuvé le 02/08/2010\n   ID: 67377e78b561510ce3c2536c\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-sombrun-approuve-le-02-08-2010\n\n14. Plan de prévention des risques naturels (PPRN) de Larreule, approuvé le 25/07/2014\n   ID: 67377f4ab561510ce3c25475\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-larreule-approuve-le-25-07-2014\n\n15. Plan de Prévention des Risques Naturels (PPRN) de Loures-Barousse approuvé le 20/03/07\n   ID: 67377e77b561510ce3c25368\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-loures-barousse-approuve-le-20-03-07\n\n16. Plan de Prévention des Risques Naturels (PPRN) de Ricaud approuvé le 11/04/07\n   ID: 67377f86b561510ce3c254ad\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-ricaud-approuve-le-11-04-07\n\n17. Plan de Prévention des Risques Naturels (PPRN) d'Aragnouet approuvé le 23/02/1994\n   ID: 67377ea3b561510ce3c253a9\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daragnouet-approuve-le-23-02-1994\n\n18. Plan de Prévention des Risques Naturels (PPRN) de Marseillan approuvé le 11/04/07\n   ID: 67377f45b561510ce3c25467\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-marseillan-approuve-le-11-04-07\n\n19. Plan de Prévention des Risques Naturels (PPRN) de Barry approuvé le 28/03/06\n   ID: 67377f6eb561510ce3c25498\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-barry-approuve-le-28-03-06\n\n20. Plan de prévention des risques naturels (PPRN) de Ger, approuvé le 19/06/2018\n   ID: 67377f49b561510ce3c25472\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, risques, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-ger-approuve-le-19-06-2018\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 152 dataset(s) for query: 'Plan de prévention des risques naturels Hautes-Pyrénées approuvé'\nPage 1 of results:\n\n1. Plan de Prévention des Risques Naturels (PPRN) de Bonnemazon approuvé le 11/04/07\n   ID: 67377f6fb561510ce3c2549b\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-bonnemazon-approuve-le-11-04-07\n\n2. Plan de Prévention des Risques Naturels (PPRN) de Laméac approuvé le 11/04/07\n   ID: 67377f73b561510ce3c254a5\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-lameac-approuve-le-11-04-07\n\n3. Plan de Prévention des Risques Naturels (PPRN) d'Aubarède approuvé le 11/04/2007\n   ID: 67377ea0b561510ce3c2539f\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daubarede-approuve-le-11-04-2007\n\n4. Plan de Prévention des Risques Naturels (PPRN) d'Aureilhan approuvé le 18/04/2014.\n   ID: 67377f46b561510ce3c25469\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daureilhan-approuve-le-18-04-2014\n\n5. Plan de Prévention des Risques Naturels (PPRN) de Dours approuvé le 23/03/1992\n   ID: 67377f43b561510ce3c25461\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-dours-approuve-le-23-03-1992\n\n6. Plan de Prévention des Risques Naturels (PPRN) de Barbazan-Debat approuvé le 25/01/2010\n   ID: 67377ea3b561510ce3c253aa\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-barbazan-debat-approuve-le-25-01-2010\n\n7. Plan de Prévention des Risques Naturels (PPRN) de Germ approuvé le 16/07/1991\n   ID: 67377f6eb561510ce3c2549a\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-germ-approuve-le-16-07-1991\n\n8. Plan de Prévention des Risques Naturels (PPRN) de Gaillagos approuvé le 12/01/2004\n   ID: 67377f44b561510ce3c25464\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-gaillagos-approuve-le-12-01-2004\n\n9. Plan de Prévention des Risques Naturels (PPRN) de Maubourguet approuvé le 02/08/2010\n   ID: 67377f75b561510ce3c254aa\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-maubourguet-approuve-le-02-08-2010\n\n10. Plan de Prévention des Risques Naturels (PPRN) de Bénac approuvé le 28/03/2006\n   ID: 67377f6cb561510ce3c25492\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, source-de-nuisance-inclut-risques-industriels-et-naturels\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-benac-approuve-le-28-03-2006\n\n11. Plan de Prévention des Risques Naturels (PPRN) d'Aucun approuvé le 29/05/2002\n   ID: 67377e9fb561510ce3c2539e\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daucun-approuve-le-29-05-2002\n\n12. Plan de Prévention des Risques Naturels (PPRN) de Campan, approuvé le 10/07/2012\n   ID: 67377f07b561510ce3c25417\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-campan-approuve-le-10-07-2012\n\n13. Plan de Prévention des Risques Naturels (PPRN) de Sombrun approuvé le 02/08/2010\n   ID: 67377e78b561510ce3c2536c\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-sombrun-approuve-le-02-08-2010\n\n14. Plan de prévention des risques naturels (PPRN) de Larreule, approuvé le 25/07/2014\n   ID: 67377f4ab561510ce3c25475\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-larreule-approuve-le-25-07-2014\n\n15. Plan de Prévention des Risques Naturels (PPRN) de Loures-Barousse approuvé le 20/03/07\n   ID: 67377e77b561510ce3c25368\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-loures-barousse-approuve-le-20-03-07\n\n16. Plan de Prévention des Risques Naturels (PPRN) de Ricaud approuvé le 11/04/07\n   ID: 67377f86b561510ce3c254ad\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-ricaud-approuve-le-11-04-07\n\n17. Plan de Prévention des Risques Naturels (PPRN) d'Aragnouet approuvé le 23/02/1994\n   ID: 67377ea3b561510ce3c253a9\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-daragnouet-approuve-le-23-02-1994\n\n18. Plan de Prévention des Risques Naturels (PPRN) de Marseillan approuvé le 11/04/07\n   ID: 67377f45b561510ce3c25467\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-marseillan-approuve-le-11-04-07\n\n19. Plan de Prévention des Risques Naturels (PPRN) de Barry approuvé le 28/03/06\n   ID: 67377f6eb561510ce3c25498\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, nuisance, ressources-nuisances, risque-zonages-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-barry-approuve-le-28-03-06\n\n20. Plan de prévention des risques naturels (PPRN) de Ger, approuvé le 19/06/2018\n   ID: 67377f49b561510ce3c25472\n   Organization: DDT Hautes-Pyrénées\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, risques, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-de-ger-approuve-le-19-06-2018\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:07:24Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget primitif 2020 Hauts-de-France"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'budget primitif 2020 Hauts-de-France'\nPage 1 of results:\n\n1. Budget primitif 2020 - Hauts-de-France\n   ID: 607f6b5eaf9952b6029baccd\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, budget, budget-primitif, conseil-regional\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2020-hauts-de-france\n\n2. Budget primitif 2021 - Hauts-de-France\n   ID: 607f6b5df7c46c9960296bc5\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, budget, budget-primitif, conseil-regional\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2021-hauts-de-france\n\n3. Moyens en personnel des groupes politiques (mandat 2016-2021) du Conseil régional Hauts-de-France\n   ID: 6812ba270bb10b6b83622e22\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, aisne-departement, budget, dcat\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/moyens-en-personnel-des-groupes-politiques-mandat-2016-2021-du-conseil-regional-hauts-de-france\n\n4. Délibérations 2021 du Conseil Municipal de la Ville de Soissons\n   ID: 69f1f29b9065b11d3e7843ab\n   Organization: Ville de Soissons\n   Tags: 2021, conseil-municipal, deliberations\n   Resources: 614\n   URL: https://www.data.gouv.fr/datasets/deliberations-2021-du-conseil-municipal-de-la-ville-de-soissons\n\n5. Délibérations 2022 du Conseil Municipal de la Ville de Soissons\n   ID: 69f1cbc4494ad86e18b2199e\n   Organization: Ville de Soissons\n   Resources: 443\n   URL: https://www.data.gouv.fr/datasets/deliberations-2022-du-conseil-municipal-de-la-ville-de-soissons\n\n6. Budget primitif 2022 - Hauts-de-France\n   ID: 63c1f2f6399e245acdf0b7db\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, budget, budget-primitif, conseil-regional\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2022-hauts-de-france\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'budget primitif 2020 Hauts-de-France'\nPage 1 of results:\n\n1. Budget primitif 2020 - Hauts-de-France\n   ID: 607f6b5eaf9952b6029baccd\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, budget, budget-primitif, conseil-regional\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2020-hauts-de-france\n\n2. Budget primitif 2021 - Hauts-de-France\n   ID: 607f6b5df7c46c9960296bc5\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, budget, budget-primitif, conseil-regional\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2021-hauts-de-france\n\n3. Moyens en personnel des groupes politiques (mandat 2016-2021) du Conseil régional Hauts-de-France\n   ID: 6812ba270bb10b6b83622e22\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, aisne-departement, budget, dcat\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/moyens-en-personnel-des-groupes-politiques-mandat-2016-2021-du-conseil-regional-hauts-de-france\n\n4. Délibérations 2021 du Conseil Municipal de la Ville de Soissons\n   ID: 69f1f29b9065b11d3e7843ab\n   Organization: Ville de Soissons\n   Tags: 2021, conseil-municipal, deliberations\n   Resources: 614\n   URL: https://www.data.gouv.fr/datasets/deliberations-2021-du-conseil-municipal-de-la-ville-de-soissons\n\n5. Délibérations 2022 du Conseil Municipal de la Ville de Soissons\n   ID: 69f1cbc4494ad86e18b2199e\n   Organization: Ville de Soissons\n   Resources: 443\n   URL: https://www.data.gouv.fr/datasets/deliberations-2022-du-conseil-municipal-de-la-ville-de-soissons\n\n6. Budget primitif 2022 - Hauts-de-France\n   ID: 63c1f2f6399e245acdf0b7db\n   Organization: Région Hauts-de-France\n   Tags: administration, administration-regionale, budget, budget-primitif, conseil-regional\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/budget-primitif-2022-hauts-de-france\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

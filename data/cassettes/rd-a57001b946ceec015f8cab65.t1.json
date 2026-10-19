@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:10:28Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Plan Prévention Risques Naturels Angoumé Landes",
+      "last_update_range": "last_3_years"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'Plan Prévention Risques Naturels Angoumé Landes'\nPage 1 of results:\n\n1. Zones d'aléa du Plan de Prévention des Risques Naturels (PPRN) d'Angoumé – Landes (40)\n   ID: 6902c7e72fb1248d42a8a894\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: aleas, angoume, donnees-ouvertes, inondations, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-dalea-du-plan-de-prevention-des-risques-naturels-pprn-dangoume-landes-40-2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'Plan Prévention Risques Naturels Angoumé Landes'\nPage 1 of results:\n\n1. Zones d'aléa du Plan de Prévention des Risques Naturels (PPRN) d'Angoumé – Landes (40)\n   ID: 6902c7e72fb1248d42a8a894\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: aleas, angoume, donnees-ouvertes, inondations, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-dalea-du-plan-de-prevention-des-risques-naturels-pprn-dangoume-landes-40-2\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

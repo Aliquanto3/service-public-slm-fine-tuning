@@ -1,0 +1,122 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:00:32Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "diagnostics terrain Marne environnement",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'diagnostics terrain Marne environnement'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'diagnostics terrain Marne environnement'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "inspections sites Marne",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'inspections sites Marne'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'inspections sites Marne'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "contrôles environnementaux Marne",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'contrôles environnementaux Marne'\nPage 1 of results:\n\n1. Plan de Prévention des Risques naturels \"inondations\" de la Marne dans le département de la Seine-Saint-Denis - Zone règlementée\n   ID: 6ac6e0c587c21fac04fea7e8\n   Organization: Direction régionale et interdépartementale de l’environnement, de l’aménagement et des transports d'Île-de-France\n   Tags: alea, donnees-ouvertes, inspire, plan, prevention\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-inondations-de-la-marne-dans-le-departement-de-la-seine-saint-denis-zone-reglementee-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'contrôles environnementaux Marne'\nPage 1 of results:\n\n1. Plan de Prévention des Risques naturels \"inondations\" de la Marne dans le département de la Seine-Saint-Denis - Zone règlementée\n   ID: 6ac6e0c587c21fac04fea7e8\n   Organization: Direction régionale et interdépartementale de l’environnement, de l’aménagement et des transports d'Île-de-France\n   Tags: alea, donnees-ouvertes, inspire, plan, prevention\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-inondations-de-la-marne-dans-le-departement-de-la-seine-saint-denis-zone-reglementee-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

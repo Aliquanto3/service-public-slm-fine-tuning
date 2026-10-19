@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:08:28Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Plan Prévention Risques Naturels aléa Onard Landes"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'Plan Prévention Risques Naturels aléa Onard Landes'\nPage 1 of results:\n\n1. Zones d'aléa du Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6902c7962fb1248d42a8a886\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: aleas, donnees-ouvertes, inondations, inspire, landes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-dalea-du-plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-2\n\n2. Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6734d0963b82cd64f8c40a89\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: donnees-ouvertes, inondations, inspire, landes, onard\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-1\n\n3. Périmètres du Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6734d1303b82cd64f8c40b15\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: donnees-ouvertes, inondations, inspire, landes-40, onard\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/perimetres-du-plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-1\n\n4. Zones réglementées du Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6734d1a93b82cd64f8c40b71\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: donnees-ouvertes, inondations, inspire, landes-40, onard\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-reglementees-du-plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'Plan Prévention Risques Naturels aléa Onard Landes'\nPage 1 of results:\n\n1. Zones d'aléa du Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6902c7962fb1248d42a8a886\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: aleas, donnees-ouvertes, inondations, inspire, landes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-dalea-du-plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-2\n\n2. Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6734d0963b82cd64f8c40a89\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: donnees-ouvertes, inondations, inspire, landes, onard\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-1\n\n3. Périmètres du Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6734d1303b82cd64f8c40b15\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: donnees-ouvertes, inondations, inspire, landes-40, onard\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/perimetres-du-plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-1\n\n4. Zones réglementées du Plan de Prévention des Risques Naturels (PPRN) d'Onard – Landes (40)\n   ID: 6734d1a93b82cd64f8c40b71\n   Organization: Direction Départementale des Territoires et de la Mer des Landes\n   Tags: donnees-ouvertes, inondations, inspire, landes-40, onard\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-reglementees-du-plan-de-prevention-des-risques-naturels-pprn-donard-landes-40-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

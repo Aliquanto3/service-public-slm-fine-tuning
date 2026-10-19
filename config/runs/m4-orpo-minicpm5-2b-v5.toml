@@ -1,0 +1,31 @@
+# Run M4, ORPO après SFT, MiniCPM5-2B, sur les paires v5 (bâties depuis le jeu v4 nettoyé).
+# Campagne à part : jeu_version est un invariant de campagne, et les paires ORPO sont rangées
+# dans data/train/v5 (runs/data-build/20261019-101146-preferences-8576, 344 paires ; RD n'en
+# a que 11, la base répondant par un appel d'outil).
+# longueur_max = 2048 : 8192 et 4096 tombent en OOM en ORPO sur 6 Go (19 octobre au matin).
+# Garde mémoire (décision d'Anaël du 2026-10-19) : PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# et surveillance de la RAM du PC (arrêt propre au-delà de 28 Go).
+# Lancement : uv run --no-sync slmsp train run --config config/runs/m4-orpo-minicpm5-2b-v5.toml
+
+campagne = "minicpm5-2b-v5-orpo-2048"
+modele = "minicpm5-2b"
+methode = "orpo"
+jeu_version = "v5"
+graine = 1234
+longueur_max = 2048
+precision_base = "bf16"
+# Run SFT de départ : M1 de la campagne minicpm5-2b-v4 (QLoRA bf16, 8192 tokens, jeu v4).
+sft_run_id = "20261019-084321-m1-qlora-minicpm5-2b-v4-53fc"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
+orpo_beta = 0.1

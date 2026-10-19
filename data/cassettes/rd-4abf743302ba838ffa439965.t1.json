@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:08:33Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zones de bruit carte type A indice LN autoroute concédée",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 13 dataset(s) for query: 'zones de bruit carte type A indice LN autoroute concédée'\nPage 1 of results:\n\n1. Lot des cartes de Bruit 2019 - Département des Pyrénées-Atlantiques\n   ID: 67377ea1c9b74bce3bc40af4\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, cbs, ddtm64, donnees-ouvertes, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/lot-des-cartes-de-bruit-2019-departement-des-pyrenees-atlantiques\n\n2. Zones de bruit routier - 2022- Alpes de Haute-Provence\n   ID: 673771694f5de128fcc2536b\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-routier-2022-alpes-de-haute-provence\n\n3. Zones de bruit cartographiée sur les autoroutes concédées dans l'Hérault (échéance 4)\n   ID: 6734d021cca24127bdc40ae2\n   Organization: Direction Départementale des Territoires et de la Mer de l'Hérault\n   Tags: bruit, donnees-ouvertes, herault, inspire, nuisance\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-cartographiee-sur-les-autoroutes-concedees-dans-lherault-echeance-4-3\n\n4. Zones de Bruit (Carte de type A, indice LN) de la A28, réseau routier autoroutier concédé\n   ID: 6737f28afe0949993dc40ace\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: bruit, donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a28-reseau-routier-autoroutier-concede\n\n5. Agrégation zones de bruit routier A51 type C indice N 2022 - Alpes de Haute-Provence\n   ID: 6737716e4f5de128fcc2537a\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/agregation-zones-de-bruit-routier-a51-type-c-indice-n-2022-alpes-de-haute-provence\n\n6. Agrégation zones de bruit routier A51 type A indice N 2022- Alpes de Haute-Provence\n   ID: 6737718a4f5de128fcc25381\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/agregation-zones-de-bruit-routier-a51-type-a-indice-n-2022-alpes-de-haute-provence\n\n7. Zones de Bruit (Carte de type A indice LN) de la A0131, réseau routier autoroutier concédé\n   ID: 6737f314fe0949993dc40b24\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a0131-reseau-routier-autoroutier-concede\n\n8. Zones de Bruit (Carte de type A, indice LN) de la A0013, réseau routier autoroutier concédé\n   ID: 6737f315fe0949993dc40b27\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a0013-reseau-routier-autoroutier-concede\n\n9. Zones de Bruit (Carte de type A, indice LN) de la A0154, réseau routier autoroutier concédé\n   ID: 6737f311fe0949993dc40b1c\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a0154-reseau-routier-autoroutier-concede\n\n10. Carte de bruit (carte de type A NUIT LNA) - Département des Pyrénées-Atlantiques\n   ID: 67d3a358954b3c315124f8f7\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, inspire, lna\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-a-nuit-lna-departement-des-pyrenees-atlantiques-1\n\n11. Carte de bruit (carte de type A JOUR LDA) - Département des Pyrénées-Atlantiques\n   ID: 67d3a0e5954b3c315124f82b\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, inspire, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-a-jour-lda-departement-des-pyrenees-atlantiques-1\n\n12. Carte de bruit (carte de type C NUIT LNC) - Département des Pyrénées-Atlantiques\n   ID: 67d3a043954b3c315124f7e6\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, dtm64, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-c-nuit-lnc-departement-des-pyrenees-atlantiques-1\n\n13. Carte de bruit (carte de type C JOUR LDC) - Département des Pyrénées-Atlantiques\n   ID: 67d3a106954b3c315124f830\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, inspire, ldc\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-c-jour-ldc-departement-des-pyrenees-atlantiques-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 13 dataset(s) for query: 'zones de bruit carte type A indice LN autoroute concédée'\nPage 1 of results:\n\n1. Lot des cartes de Bruit 2019 - Département des Pyrénées-Atlantiques\n   ID: 67377ea1c9b74bce3bc40af4\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, cbs, ddtm64, donnees-ouvertes, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/lot-des-cartes-de-bruit-2019-departement-des-pyrenees-atlantiques\n\n2. Zones de bruit routier - 2022- Alpes de Haute-Provence\n   ID: 673771694f5de128fcc2536b\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-routier-2022-alpes-de-haute-provence\n\n3. Zones de bruit cartographiée sur les autoroutes concédées dans l'Hérault (échéance 4)\n   ID: 6734d021cca24127bdc40ae2\n   Organization: Direction Départementale des Territoires et de la Mer de l'Hérault\n   Tags: bruit, donnees-ouvertes, herault, inspire, nuisance\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-cartographiee-sur-les-autoroutes-concedees-dans-lherault-echeance-4-3\n\n4. Zones de Bruit (Carte de type A, indice LN) de la A28, réseau routier autoroutier concédé\n   ID: 6737f28afe0949993dc40ace\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: bruit, donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a28-reseau-routier-autoroutier-concede\n\n5. Agrégation zones de bruit routier A51 type C indice N 2022 - Alpes de Haute-Provence\n   ID: 6737716e4f5de128fcc2537a\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/agregation-zones-de-bruit-routier-a51-type-c-indice-n-2022-alpes-de-haute-provence\n\n6. Agrégation zones de bruit routier A51 type A indice N 2022- Alpes de Haute-Provence\n   ID: 6737718a4f5de128fcc25381\n   Organization: Direction Départementale des Territoires des Alpes-de-Haute-Provence\n   Tags: donnees-ouvertes, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/agregation-zones-de-bruit-routier-a51-type-a-indice-n-2022-alpes-de-haute-provence\n\n7. Zones de Bruit (Carte de type A indice LN) de la A0131, réseau routier autoroutier concédé\n   ID: 6737f314fe0949993dc40b24\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a0131-reseau-routier-autoroutier-concede\n\n8. Zones de Bruit (Carte de type A, indice LN) de la A0013, réseau routier autoroutier concédé\n   ID: 6737f315fe0949993dc40b27\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a0013-reseau-routier-autoroutier-concede\n\n9. Zones de Bruit (Carte de type A, indice LN) de la A0154, réseau routier autoroutier concédé\n   ID: 6737f311fe0949993dc40b1c\n   Organization: Direction Départementale des Territoires et de la Mer de l'Eure\n   Tags: donnees-ouvertes, inspire, nuisance-bruit, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-de-bruit-carte-de-type-a-indice-ln-de-la-a0154-reseau-routier-autoroutier-concede\n\n10. Carte de bruit (carte de type A NUIT LNA) - Département des Pyrénées-Atlantiques\n   ID: 67d3a358954b3c315124f8f7\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, inspire, lna\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-a-nuit-lna-departement-des-pyrenees-atlantiques-1\n\n11. Carte de bruit (carte de type A JOUR LDA) - Département des Pyrénées-Atlantiques\n   ID: 67d3a0e5954b3c315124f82b\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, inspire, nuisance-bruit\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-a-jour-lda-departement-des-pyrenees-atlantiques-1\n\n12. Carte de bruit (carte de type C NUIT LNC) - Département des Pyrénées-Atlantiques\n   ID: 67d3a043954b3c315124f7e6\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, dtm64, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-c-nuit-lnc-departement-des-pyrenees-atlantiques-1\n\n13. Carte de bruit (carte de type C JOUR LDC) - Département des Pyrénées-Atlantiques\n   ID: 67d3a106954b3c315124f830\n   Organization: Direction Départementale des Territoires et de la Mer des Pyrénées-Atlantiques\n   Tags: bruit, ddtm64, donnees-ouvertes, inspire, ldc\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/carte-de-bruit-carte-de-type-c-jour-ldc-departement-des-pyrenees-atlantiques-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

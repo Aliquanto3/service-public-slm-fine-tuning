@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:59:35Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5be560b906e3e70c7277c6e7"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Démographie 2013 Communes m2A\nDataset ID: 5be560b906e3e70c7277c6e7\nTotal resources: 4\n\n1. demographie-2013-m2a.csv\n   Resource ID: f5f0c893-795b-4419-8908-b343d9fe1e39\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/csv?use_labels=true\n\n2. demographie-2013-m2a.json\n   Resource ID: e2eb9d53-e93c-45f0-8624-7b73a98372ac\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/json\n\n3. demographie-2013-m2a.geojson\n   Resource ID: 8531c353-3a1c-4322-ba86-679b10844917\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/geojson\n\n4. demographie-2013-m2a.zip\n   Resource ID: e688a3bb-fa9a-4777-b016-3aab604e72ad\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/shp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Démographie 2013 Communes m2A\nDataset ID: 5be560b906e3e70c7277c6e7\nTotal resources: 4\n\n1. demographie-2013-m2a.csv\n   Resource ID: f5f0c893-795b-4419-8908-b343d9fe1e39\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/csv?use_labels=true\n\n2. demographie-2013-m2a.json\n   Resource ID: e2eb9d53-e93c-45f0-8624-7b73a98372ac\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/json\n\n3. demographie-2013-m2a.geojson\n   Resource ID: 8531c353-3a1c-4322-ba86-679b10844917\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/geojson\n\n4. demographie-2013-m2a.zip\n   Resource ID: e688a3bb-fa9a-4777-b016-3aab604e72ad\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/demographie-2013-m2a/exports/shp\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

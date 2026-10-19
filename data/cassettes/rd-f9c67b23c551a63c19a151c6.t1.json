@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:02:02Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "DPE avant juillet 2021",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 9 dataset(s) for query: 'DPE avant juillet 2021'\nPage 1 of results:\n\n1. DPE Tertiaire (depuis juillet 2021)\n   ID: 67f7e59231d941e1b216cb37\n   Organization: ADEME\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-tertiaire-depuis-juillet-2021\n\n2. DPE Logements existants (depuis juillet 2021)\n   ID: 67f7e557cb268460ce66c8d4\n   Description: Le Diagnostic de Performance Energétique (DPE) renseigne sur la performance énergétique et environnementale d’un logement ou d’un bâtiment, en évaluant sa consommation d’énergie et son impact en ma......\n   Organization: ADEME\n   Tags: dpe\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-logements-existants-depuis-juillet-2021\n\n3. DPE Logements neufs  (depuis juillet 2021)\n   ID: 67f7e5758ffc5d79ab9e8c27\n   Organization: ADEME\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-logements-neufs-depuis-juillet-2021\n\n4. Réforme DPE 2027 : passoires thermiques qui sortent des classes F et G, par commune et par département\n   ID: 6ad09151bfec3a55fd76ec82\n   Organization: Portail DPE\n   Tags: dpe, reforme-2027\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/reforme-dpe-2027-passoires-thermiques-qui-sortent-des-classes-f-et-g-par-commune-et-par-departement\n\n5. Confort d’été : l’indicateur du DPE ne suit pas la chaleur\n   ID: 6ace11840ffac3f4536eba8b\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/confort-dete-lindicateur-du-dpe-ne-suit-pas-la-chaleur\n\n6. DPE Logements (avant juillet 2021)\n   ID: 5ee2391763c79811ddfbc86a\n   Organization: ADEME\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-logements-avant-juillet-2021\n\n7. DPE tertiaire (avant juillet 2021)\n   ID: 6061abe367b3cc046a5a7e13\n   Organization: ADEME\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/dpe-tertiaire-avant-juillet-2021\n\n8. Diagnostic de performance énergétique (DPE) sur Rennes Métropole\n   ID: 665e83c9b84820ce2fa6b731\n   Organization: Rennes Métropole en accès libre\n   Tags: batiment, referentiels-geographiques\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/diagnostic-de-performance-energetique-dpe-sur-rennes-metropole\n\n9. DPE (avant juillet 2021)\n   ID: 662156ed3d4213813036e16d\n   Organization: Dijon métropole\n   Tags: dpe, environnement-et-energie, ges\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dpe-avant-juillet-2021\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 9 dataset(s) for query: 'DPE avant juillet 2021'\nPage 1 of results:\n\n1. DPE Tertiaire (depuis juillet 2021)\n   ID: 67f7e59231d941e1b216cb37\n   Organization: ADEME\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-tertiaire-depuis-juillet-2021\n\n2. DPE Logements existants (depuis juillet 2021)\n   ID: 67f7e557cb268460ce66c8d4\n   Description: Le Diagnostic de Performance Energétique (DPE) renseigne sur la performance énergétique et environnementale d’un logement ou d’un bâtiment, en évaluant sa consommation d’énergie et son impact en ma......\n   Organization: ADEME\n   Tags: dpe\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-logements-existants-depuis-juillet-2021\n\n3. DPE Logements neufs  (depuis juillet 2021)\n   ID: 67f7e5758ffc5d79ab9e8c27\n   Organization: ADEME\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-logements-neufs-depuis-juillet-2021\n\n4. Réforme DPE 2027 : passoires thermiques qui sortent des classes F et G, par commune et par département\n   ID: 6ad09151bfec3a55fd76ec82\n   Organization: Portail DPE\n   Tags: dpe, reforme-2027\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/reforme-dpe-2027-passoires-thermiques-qui-sortent-des-classes-f-et-g-par-commune-et-par-departement\n\n5. Confort d’été : l’indicateur du DPE ne suit pas la chaleur\n   ID: 6ace11840ffac3f4536eba8b\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/confort-dete-lindicateur-du-dpe-ne-suit-pas-la-chaleur\n\n6. DPE Logements (avant juillet 2021)\n   ID: 5ee2391763c79811ddfbc86a\n   Organization: ADEME\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/dpe-logements-avant-juillet-2021\n\n7. DPE tertiaire (avant juillet 2021)\n   ID: 6061abe367b3cc046a5a7e13\n   Organization: ADEME\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/dpe-tertiaire-avant-juillet-2021\n\n8. Diagnostic de performance énergétique (DPE) sur Rennes Métropole\n   ID: 665e83c9b84820ce2fa6b731\n   Organization: Rennes Métropole en accès libre\n   Tags: batiment, referentiels-geographiques\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/diagnostic-de-performance-energetique-dpe-sur-rennes-metropole\n\n9. DPE (avant juillet 2021)\n   ID: 662156ed3d4213813036e16d\n   Organization: Dijon métropole\n   Tags: dpe, environnement-et-energie, ges\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/dpe-avant-juillet-2021\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

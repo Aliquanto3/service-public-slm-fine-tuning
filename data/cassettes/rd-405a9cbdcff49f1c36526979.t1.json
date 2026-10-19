@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:57:01Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zones risques technologiques Meurthe-et-Moselle",
+      "last_update_range": "last_12_months"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'zones risques technologiques Meurthe-et-Moselle'\nPage 1 of results:\n\n1. PPRN - Zones réglementées des PPR inondation en Meurthe-et-Moselle\n   ID: 6734d5cbf99e38eb1fc25659\n   Organization: Direction Départementale des Territoires de Meurthe-et-Moselle\n   Tags: ddt54, donnees-ouvertes, inondation, inspire, ppri\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/pprn-zones-reglementees-des-ppr-inondation-en-meurthe-et-moselle-1\n\n2. L_ICPE_AVEC_PAC_S_054\n   ID: 6734d2b2f99e38eb1fc25440\n   Organization: Direction Départementale des Territoires de Meurthe-et-Moselle\n   Tags: anthropique, ddt54, donnees-ouvertes, icpe, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/l-icpe-avec-pac-s-054\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'zones risques technologiques Meurthe-et-Moselle'\nPage 1 of results:\n\n1. PPRN - Zones réglementées des PPR inondation en Meurthe-et-Moselle\n   ID: 6734d5cbf99e38eb1fc25659\n   Organization: Direction Départementale des Territoires de Meurthe-et-Moselle\n   Tags: ddt54, donnees-ouvertes, inondation, inspire, ppri\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/pprn-zones-reglementees-des-ppr-inondation-en-meurthe-et-moselle-1\n\n2. L_ICPE_AVEC_PAC_S_054\n   ID: 6734d2b2f99e38eb1fc25440\n   Organization: Direction Départementale des Territoires de Meurthe-et-Moselle\n   Tags: anthropique, ddt54, donnees-ouvertes, icpe, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/l-icpe-avec-pac-s-054\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

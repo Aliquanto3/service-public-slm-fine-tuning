@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:10:33Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PPRT Primagaz zones réglementées"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 7 dataset(s) for query: 'PPRT Primagaz zones réglementées'\nPage 1 of results:\n\n1. Zone réglementée d'un PPRT – PRIMAGAZ DAINVILLE\n   ID: 67377f951018607db6c40c11\n   Organization: DDTM Pas-de-Calais\n   Tags: donnees-ouvertes, risque-risque-technologique\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-reglementee-dun-pprt-primagaz-dainville\n\n2. Zones réglementées du PPRT PRIMAGAZ CCMP DPSPC\n   ID: 6737404b79c29a6c22c40aed\n   Organization: Direction Départementale des Territoires d'Indre-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-risque-technologique, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-reglementees-du-pprt-primagaz-ccmp-dpspc-1\n\n3. Zones reglementées du PPRT Primagaz\n   ID: 67454c31a5ff06b0467733ee\n   Organization: DDT Haute-Vienne\n   Tags: donnees-ouvertes, inspire, risque-n-zonages-risque-technologique-id-gaspar, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-reglementees-du-pprt-primagaz\n\n4. Zone réglementée du PPRT de PRIMAGAZ à Coltainville (Eure-et-Loir)\n   ID: 6737788e8705bc2edfc253f1\n   Organization: Direction Départementale des Territoires d'Eure-et-Loir\n   Tags: donnees-ouvertes, inspire, pprt, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-reglementee-du-pprt-de-primagaz-a-coltainville-eure-et-loir-1\n\n5. LOT DE DONNEES GRAPHIQUES DU PPRT DE PRIMAGAZ DAINVILLE\n   ID: 67377daa1018607db6c40a9d\n   Organization: DDTM Pas-de-Calais\n   Tags: donnees-ouvertes, inspire, pprt, risque-zonages-risque-technologique, risques\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/lot-de-donnees-graphiques-du-pprt-de-primagaz-dainville\n\n6. Documents du PPRT Primagaz\n   ID: 67454c2ea5ff06b0467733e3\n   Organization: DDT Haute-Vienne\n   Tags: donnees-ouvertes, inspire, risque-n-zonages-risque-technologique, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/documents-du-pprt-primagaz\n\n7. PPRT - Lot de données comprenant l'ensemble des couches réglementaires du PPRT Primagaz\n   ID: 67454c0fa5ff06b0467733cc\n   Organization: DDT Haute-Vienne\n   Tags: donnees-ouvertes, id-gaspar, inspire, risque, risque-zonages-risque-technologique\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/pprt-lot-de-donnees-comprenant-lensemble-des-couches-reglementaires-du-pprt-primagaz\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 7 dataset(s) for query: 'PPRT Primagaz zones réglementées'\nPage 1 of results:\n\n1. Zone réglementée d'un PPRT – PRIMAGAZ DAINVILLE\n   ID: 67377f951018607db6c40c11\n   Organization: DDTM Pas-de-Calais\n   Tags: donnees-ouvertes, risque-risque-technologique\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-reglementee-dun-pprt-primagaz-dainville\n\n2. Zones réglementées du PPRT PRIMAGAZ CCMP DPSPC\n   ID: 6737404b79c29a6c22c40aed\n   Organization: Direction Départementale des Territoires d'Indre-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-risque-technologique, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-reglementees-du-pprt-primagaz-ccmp-dpspc-1\n\n3. Zones reglementées du PPRT Primagaz\n   ID: 67454c31a5ff06b0467733ee\n   Organization: DDT Haute-Vienne\n   Tags: donnees-ouvertes, inspire, risque-n-zonages-risque-technologique-id-gaspar, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zones-reglementees-du-pprt-primagaz\n\n4. Zone réglementée du PPRT de PRIMAGAZ à Coltainville (Eure-et-Loir)\n   ID: 6737788e8705bc2edfc253f1\n   Organization: Direction Départementale des Territoires d'Eure-et-Loir\n   Tags: donnees-ouvertes, inspire, pprt, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-reglementee-du-pprt-de-primagaz-a-coltainville-eure-et-loir-1\n\n5. LOT DE DONNEES GRAPHIQUES DU PPRT DE PRIMAGAZ DAINVILLE\n   ID: 67377daa1018607db6c40a9d\n   Organization: DDTM Pas-de-Calais\n   Tags: donnees-ouvertes, inspire, pprt, risque-zonages-risque-technologique, risques\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/lot-de-donnees-graphiques-du-pprt-de-primagaz-dainville\n\n6. Documents du PPRT Primagaz\n   ID: 67454c2ea5ff06b0467733e3\n   Organization: DDT Haute-Vienne\n   Tags: donnees-ouvertes, inspire, risque-n-zonages-risque-technologique, risque-zonages-risque-technologique, zones-de-gestion-de-restriction-ou-de-reglementation-et-unites-de-declaration\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/documents-du-pprt-primagaz\n\n7. PPRT - Lot de données comprenant l'ensemble des couches réglementaires du PPRT Primagaz\n   ID: 67454c0fa5ff06b0467733cc\n   Organization: DDT Haute-Vienne\n   Tags: donnees-ouvertes, id-gaspar, inspire, risque, risque-zonages-risque-technologique\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/pprt-lot-de-donnees-comprenant-lensemble-des-couches-reglementaires-du-pprt-primagaz\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

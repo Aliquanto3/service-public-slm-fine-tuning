@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:10:28Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6902c7e72fb1248d42a8a894"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Zones d'aléa du Plan de Prévention des Risques Naturels (PPRN) d'Angoumé – Landes (40)\nDataset ID: 6902c7e72fb1248d42a8a894\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 03ae5790-59a7-4abd-8862-48947300eb48\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=8fb9baeb-4338-443f-9936-f5a7799f84cf&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 4d7b1717-03cb-4be3-abb9-6c139480a0c8\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=8fb9baeb-4338-443f-9936-f5a7799f84cf&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 94de6569-8828-4bf2-b77c-7529b733f14d\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: c862d2d5-cf3f-4c82-8853-afd0be7770d9\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 27cd9c8c-9160-446f-857f-5657e80a8478\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 4c6df745-f026-4f76-a59f-be1aa8a4eb4b\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Zones d'aléa du Plan de Prévention des Risques Naturels (PPRN) d'Angoumé – Landes (40)\nDataset ID: 6902c7e72fb1248d42a8a894\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: 03ae5790-59a7-4abd-8862-48947300eb48\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=8fb9baeb-4338-443f-9936-f5a7799f84cf&dataType=dataset\n\n2. Téléchargement simple (Atom) du jeu et des documents associés via intranet\n   Resource ID: 4d7b1717-03cb-4be3-abb9-6c139480a0c8\n   Format: esri shapefile (shp)\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=8fb9baeb-4338-443f-9936-f5a7799f84cf&dataType=dataset\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: 94de6569-8828-4bf2-b77c-7529b733f14d\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: c862d2d5-cf3f-4c82-8853-afd0be7770d9\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 27cd9c8c-9160-446f-857f-5657e80a8478\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 4c6df745-f026-4f76-a59f-be1aa8a4eb4b\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38022/8fb9baeb-4338-443f-9936-f5a7799f84cf.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:08:24Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "Plan Prévention Risques Inondation Bourbince Montceau"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'Plan Prévention Risques Inondation Bourbince Montceau'\nPage 1 of results:\n\n1. Plan de Prévention des Risques Inondation de la Bourbince - Secteur Montceau les Mines\n   ID: 673781c29fe27305adc2536a\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-montceau-les-mines-1\n\n2. Zones d'aléa du Plan de Prévention des Risques Inondation de la Bourbince - Secteur Montceau\n   ID: 674fce1ac8c3641aa0c74fca\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/zones-dalea-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-montceau-2\n\n3. Périmètre du Plan de Prévention des Risques Inondation de la Bourbince - secteur de Montceau les Mines\n   ID: 674fcd9ec8c3641aa0c74fbc\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/perimetre-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-de-montceau-les-mines-2\n\n4. Zonage réglementaire du Plan de Prévention des Risques Inondation de la Bourbince - secteur de Montceau les Mines\n   ID: 673782119fe27305adc253b3\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/zonage-reglementaire-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-de-montceau-les-mines-1\n\n5. Enjeux surfaciques du Plan de Prévention des Risques Inondation de la Bourbince - secteur de Montceau les Mines\n   ID: 674fcdfdc8c3641aa0c74fc6\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/enjeux-surfaciques-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-de-montceau-les-mines-2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'Plan Prévention Risques Inondation Bourbince Montceau'\nPage 1 of results:\n\n1. Plan de Prévention des Risques Inondation de la Bourbince - Secteur Montceau les Mines\n   ID: 673781c29fe27305adc2536a\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-montceau-les-mines-1\n\n2. Zones d'aléa du Plan de Prévention des Risques Inondation de la Bourbince - Secteur Montceau\n   ID: 674fce1ac8c3641aa0c74fca\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/zones-dalea-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-montceau-2\n\n3. Périmètre du Plan de Prévention des Risques Inondation de la Bourbince - secteur de Montceau les Mines\n   ID: 674fcd9ec8c3641aa0c74fbc\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/perimetre-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-de-montceau-les-mines-2\n\n4. Zonage réglementaire du Plan de Prévention des Risques Inondation de la Bourbince - secteur de Montceau les Mines\n   ID: 673782119fe27305adc253b3\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/zonage-reglementaire-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-de-montceau-les-mines-1\n\n5. Enjeux surfaciques du Plan de Prévention des Risques Inondation de la Bourbince - secteur de Montceau les Mines\n   ID: 674fcdfdc8c3641aa0c74fc6\n   Organization: Direction Départementale des Territoires de Saône-et-Loire\n   Tags: donnees-ouvertes, inspire, risque-zonages-risque-naturel, zones-a-risque-naturel\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/enjeux-surfaciques-du-plan-de-prevention-des-risques-inondation-de-la-bourbince-secteur-de-montceau-les-mines-2\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

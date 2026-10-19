@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:07:41Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6737833c550dbfecabc25396"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Plan local d'urbanisme de la commune de Doingt\nDataset ID: 6737833c550dbfecabc25396\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du lot et des documents associés via internet\n   Resource ID: 2710a995-4d95-4001-ae2e-8e3b7e16624c\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163&dataType=datasetAggregate\n\n2. Téléchargement simple (Atom) du lot et des documents associés via intranet\n   Resource ID: a5d6a4d5-2a98-43ce-a217-6b4175be7ad6\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163&dataType=datasetAggregate\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: c6743e4b-e967-458c-b579-bbda1ccfa3c1\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 3264be0a-b40e-4834-915b-2c3579d718e3\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 18ff377d-3644-47fe-bfe7-11e0a5375545\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 596f3c0e-5607-4db9-8149-9b042e774584\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Plan local d'urbanisme de la commune de Doingt\nDataset ID: 6737833c550dbfecabc25396\nTotal resources: 6\n\n1. Téléchargement simple (Atom) du lot et des documents associés via internet\n   Resource ID: 2710a995-4d95-4001-ae2e-8e3b7e16624c\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163&dataType=datasetAggregate\n\n2. Téléchargement simple (Atom) du lot et des documents associés via intranet\n   Resource ID: a5d6a4d5-2a98-43ce-a217-6b4175be7ad6\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.e2.rie.gouv.fr/atomArchive/GetResource?id=fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163&dataType=datasetAggregate\n\n3. URL du GetCapabilities du service wms sur internet\n   Resource ID: c6743e4b-e967-458c-b579-bbda1ccfa3c1\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n4. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 3264be0a-b40e-4834-915b-2c3579d718e3\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n\n5. URL du GetCapabilities du service wms sur intranet\n   Resource ID: 18ff377d-3644-47fe-bfe7-11e0a5375545\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.intranet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n6. URL du GetCapabilities du service wfs sur intranet\n   Resource ID: 596f3c0e-5607-4db9-8149-9b042e774584\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.e2.rie.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38100/fr-120066022-orphan-residentifier-1a13f454-08f7-4b6a-88df-bc9d97ec6163.intranet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

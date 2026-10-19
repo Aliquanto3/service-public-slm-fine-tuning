@@ -1,0 +1,90 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:52:39Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "684be6d37dd2fdcc07ae01a0"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Habitats marins de la zone d'étude de la mission de création du Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygone\nDataset ID: 684be6d37dd2fdcc07ae01a0\nTotal resources: 3\n\n1. habitat:eco_atl_n2000_dhff_pnmba_habitats_v5_aamp_pol_3857\n   Resource ID: 5dc97200-9a5f-4c44-be2e-594bda08ed55\n   Type: main\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0\n\n2. eco_atl_n2000_dhff_pnmba_habitats_v5_aamp_pol_3857\n   Resource ID: 1477e7d5-5aff-4b56-a6f3-082d3154ac92\n   Format: wms\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WMS&request=GetCapabilities\n\n3. habitat:eco_atl_n2000_dhff_pnmba_habitats_v5_aamp_pol_3857\n   Resource ID: 9da53821-a85b-4a38-b058-2372999cdcea\n   Format: wfs\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WFS&request=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Habitats marins de la zone d'étude de la mission de création du Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygone\nDataset ID: 684be6d37dd2fdcc07ae01a0\nTotal resources: 3\n\n1. habitat:eco_atl_n2000_dhff_pnmba_habitats_v5_aamp_pol_3857\n   Resource ID: 5dc97200-9a5f-4c44-be2e-594bda08ed55\n   Type: main\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0\n\n2. eco_atl_n2000_dhff_pnmba_habitats_v5_aamp_pol_3857\n   Resource ID: 1477e7d5-5aff-4b56-a6f3-082d3154ac92\n   Format: wms\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WMS&request=GetCapabilities\n\n3. habitat:eco_atl_n2000_dhff_pnmba_habitats_v5_aamp_pol_3857\n   Resource ID: 9da53821-a85b-4a38-b058-2372999cdcea\n   Format: wfs\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WFS&request=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "684be6c27dd2fdcc07ae017f"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Habitats marins de la réserve naturelle d'Arès et de Lège - Cap-Ferret au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\nDataset ID: 684be6c27dd2fdcc07ae017f\nTotal resources: 3\n\n1. habitat:eco_atl_pnmba_habitat_rnn_pres_ares_2012_pol_3857\n   Resource ID: 6d9a47c4-c5d9-423e-85b9-1d157b1839bb\n   Type: main\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0\n\n2. habitat:eco_atl_pnmba_habitat_rnn_pres_ares_2012_pol_3857\n   Resource ID: d66d8803-675a-4cce-a067-aa49379baf2b\n   Format: wfs\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WFS&request=GetCapabilities\n\n3. eco_atl_pnmba_habitat_rnn_pres_ares_2012_pol_3857\n   Resource ID: b65800d2-afce-42fa-a677-8e55bf731ee3\n   Format: wms\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WMS&request=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Habitats marins de la réserve naturelle d'Arès et de Lège - Cap-Ferret au sein de la zone d'étude de la mission de création de Parc naturel marin du Bassin d'Arcachon (état 2010-2012) - polygones\nDataset ID: 684be6c27dd2fdcc07ae017f\nTotal resources: 3\n\n1. habitat:eco_atl_pnmba_habitat_rnn_pres_ares_2012_pol_3857\n   Resource ID: 6d9a47c4-c5d9-423e-85b9-1d157b1839bb\n   Type: main\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0\n\n2. habitat:eco_atl_pnmba_habitat_rnn_pres_ares_2012_pol_3857\n   Resource ID: d66d8803-675a-4cce-a067-aa49379baf2b\n   Format: wfs\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WFS&request=GetCapabilities\n\n3. eco_atl_pnmba_habitat_rnn_pres_ares_2012_pol_3857\n   Resource ID: b65800d2-afce-42fa-a677-8e55bf731ee3\n   Format: wms\n   Type: api\n   URL: https://wxs.ofb.fr/geoserver/habitat/ows?version=2.0.0&service=WMS&request=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:07:49Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zone humide surfacique Isère",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'zone humide surfacique Isère'\nPage 1 of results:\n\n1. Zone humide surfacique - Isère\n   ID: 6863a89a3492920481cfefb6\n   Organization: DDT de l'Isère\n   Tags: ddt-isere, donnees-ouvertes, grand-public, hydrographie, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-humide-surfacique-isere\n\n2. Zone humide remblayée - Isère\n   ID: 6863a8663492920481cfef9d\n   Organization: DDT de l'Isère\n   Tags: donnees-ouvertes, hydrographie, inspire, isere\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zone-humide-remblayee-isere\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'zone humide surfacique Isère'\nPage 1 of results:\n\n1. Zone humide surfacique - Isère\n   ID: 6863a89a3492920481cfefb6\n   Organization: DDT de l'Isère\n   Tags: ddt-isere, donnees-ouvertes, grand-public, hydrographie, inspire\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-humide-surfacique-isere\n\n2. Zone humide remblayée - Isère\n   ID: 6863a8663492920481cfef9d\n   Organization: DDT de l'Isère\n   Tags: donnees-ouvertes, hydrographie, inspire, isere\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/zone-humide-remblayee-isere\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

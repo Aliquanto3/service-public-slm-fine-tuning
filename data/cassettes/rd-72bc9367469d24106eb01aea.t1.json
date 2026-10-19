@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:08:04Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget supplémentaire Région Occitanie 2026 crédits de paiement"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'budget supplémentaire Région Occitanie 2026 crédits de paiement'\nPage 1 of results:\n\n1. Budget supplémentaire 2026 de la Région Occitanie (crédits de paiement)\n   ID: 6a4c4608e90f46aad17fa59c\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-supplementaire, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-supplementaire-2026-de-la-region-occitanie-credits-de-paiement\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'budget supplémentaire Région Occitanie 2026 crédits de paiement'\nPage 1 of results:\n\n1. Budget supplémentaire 2026 de la Région Occitanie (crédits de paiement)\n   ID: 6a4c4608e90f46aad17fa59c\n   Organization: Région Occitanie / Pyrénées Méditerranée\n   Tags: budget-supplementaire, credits-de-paiement, democratie-et-citoyennete, execution-budgetaire, finance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-supplementaire-2026-de-la-region-occitanie-credits-de-paiement\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

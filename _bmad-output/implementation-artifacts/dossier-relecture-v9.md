@@ -1,5 +1,7 @@
 # Dossier de relecture : jeu v9 et campagne minicpm5-2b-v9
 
+**Mise à jour du 19 au soir** : le point RD est réglé par la story 9.12, qui ne demande le producteur et la date de mise à jour que s'ils figurent au résultat d'outil. RD a ensuite été régénéré pour 1,09 €. Le jeu final est **v11** : 552 lignes, dont RD 132 (contre 64 en v9). La campagne est autorisée par Anaël sur v11 (voir `etat-campagne-v11.md`).
+
 Préparé le 19 octobre 2026 en fin d'après-midi, pour Anaël. **Aucun entraînement n'a été lancé** : il attend ta relecture.
 
 ## 1. Le jeu v9 en bref

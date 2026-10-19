@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:00:26Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "diagnostics immobiliers vente DDT Bon Cap"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'diagnostics immobiliers vente DDT Bon Cap'\nPage 1 of results:\n\n1. Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\n   ID: 6a09b73c5bc5f04710b2fdf5\n   Organization: Bon Cap\n   Tags: amiante, audit-energetique, carrez, cch, ddt\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'diagnostics immobiliers vente DDT Bon Cap'\nPage 1 of results:\n\n1. Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\n   ID: 6a09b73c5bc5f04710b2fdf5\n   Organization: Bon Cap\n   Tags: amiante, audit-energetique, carrez, cch, ddt\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "diagnostics immobiliers obligatoire vente typologie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'diagnostics immobiliers obligatoire vente typologie'\nPage 1 of results:\n\n1. Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\n   ID: 6a09b73c5bc5f04710b2fdf5\n   Organization: Bon Cap\n   Tags: amiante, audit-energetique, carrez, cch, ddt\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'diagnostics immobiliers obligatoire vente typologie'\nPage 1 of results:\n\n1. Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\n   ID: 6a09b73c5bc5f04710b2fdf5\n   Organization: Bon Cap\n   Tags: amiante, audit-energetique, carrez, cch, ddt\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "diagnostics techniques immobiliers vente DDT"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'diagnostics techniques immobiliers vente DDT'\nPage 1 of results:\n\n1. Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\n   ID: 6a09b73c5bc5f04710b2fdf5\n   Organization: Bon Cap\n   Tags: amiante, audit-energetique, carrez, cch, ddt\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'diagnostics techniques immobiliers vente DDT'\nPage 1 of results:\n\n1. Diagnostics immobiliers obligatoires à la vente — Typologie complète DDT (Bon Cap)\n   ID: 6a09b73c5bc5f04710b2fdf5\n   Organization: Bon Cap\n   Tags: amiante, audit-energetique, carrez, cch, ddt\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/diagnostics-immobiliers-obligatoires-a-la-vente-typologie-complete-ddt-bon-cap\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

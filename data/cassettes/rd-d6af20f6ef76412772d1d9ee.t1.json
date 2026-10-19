@@ -1,0 +1,92 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:11:31Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "prénoms nouveau-nés Carrières-sous-Poissy",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'prénoms nouveau-nés Carrières-sous-Poissy'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'prénoms nouveau-nés Carrières-sous-Poissy'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "prénoms naissances Yvelines",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'prénoms naissances Yvelines'\nPage 1 of results:\n\n1. Prénoms des enfants nés dans le département de la Haute-Garonne - année 2019\n   ID: 61b17f84afcba441124ed79a\n   Organization: Conseil départemental de la Haute-Garonne - Haute-Garonne Open Data\n   Tags: enfance-et-famille, etat-civil, famille, naissance, petite-enfance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/prenoms-des-enfants-nes-dans-le-departement-de-la-haute-garonne-annee-2019\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'prénoms naissances Yvelines'\nPage 1 of results:\n\n1. Prénoms des enfants nés dans le département de la Haute-Garonne - année 2019\n   ID: 61b17f84afcba441124ed79a\n   Organization: Conseil départemental de la Haute-Garonne - Haute-Garonne Open Data\n   Tags: enfance-et-famille, etat-civil, famille, naissance, petite-enfance\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/prenoms-des-enfants-nes-dans-le-departement-de-la-haute-garonne-annee-2019\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

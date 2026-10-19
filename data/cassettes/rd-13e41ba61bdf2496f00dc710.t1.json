@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:57:25Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "DCE Bassin Artois-Picardie état écologique hydromorphologie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'DCE Bassin Artois-Picardie état écologique hydromorphologie'\nPage 1 of results:\n\n1. DCE – Bassin Artois-Picardie - Etat écologique - Etat hydromorphologique - Hydromorphologie\n   ID: 6756b86cd6f163559eab28b2\n   Organization: Institut français de recherche pour l'exploitation de la mer (IFREMER)\n   Tags: dce, directive-cadre-sur-leau-dce, donnees-ouvertes, environnement, etat-du-milieu-geologie\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/dce-bassin-artois-picardie-etat-ecologique-etat-hydromorphologique-hydromorphologie-1\n\n2. DCE – Bassin Artois-Picardie - Etat écologique\n   ID: 6756b82cd6f163559eab2832\n   Organization: Institut français de recherche pour l'exploitation de la mer (IFREMER)\n   Tags: boulogne-sur-mer, dce, directive-cadre-pour-la-planification-de-lespace-maritime-dcpem, directive-cadre-strategie-pour-le-milieu-marin-dcsmm, directive-cadre-sur-leau-dce\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/dce-bassin-artois-picardie-etat-ecologique-1\n\n3. Hydromorphologie des cours d'eau (bassin Artois-Picardie)\n   ID: 6a58200c77c58f2d2ec2774b\n   Organization: Office Français de la Biodiversité\n   Tags: cours-deau, hydrodynamisme, hydrographie, hydromorphologie, inspire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/hydromorphologie-des-cours-deau-bassin-artois-picardie\n\n4. SYRAH-CE (SYstème Relationnel d’Audit de l’Hydromorphologie des Cours d’Eau)\n   ID: 6a58219ef9121211f67fa5b6\n   Organization: Système d'Information sur l'Eau\n   Tags: cours-deau, donnees-ouvertes, donnees-quantitatives, eaux-interieures-de-surface-rivieres-et-lacs, environnement\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/syrah-ce-systeme-relationnel-daudit-de-lhydromorphologie-des-cours-deau-1\n\n5. Hydromorphologie des cours d'eau - Fiche parent\n   ID: 6a581f5577c58f2d2ec27655\n   Organization: Office Français de la Biodiversité\n   Tags: cours-deau, hydrodynamisme, hydrographie, hydromorphologie, inspire\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/hydromorphologie-des-cours-deau-fiche-parent\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'DCE Bassin Artois-Picardie état écologique hydromorphologie'\nPage 1 of results:\n\n1. DCE – Bassin Artois-Picardie - Etat écologique - Etat hydromorphologique - Hydromorphologie\n   ID: 6756b86cd6f163559eab28b2\n   Organization: Institut français de recherche pour l'exploitation de la mer (IFREMER)\n   Tags: dce, directive-cadre-sur-leau-dce, donnees-ouvertes, environnement, etat-du-milieu-geologie\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/dce-bassin-artois-picardie-etat-ecologique-etat-hydromorphologique-hydromorphologie-1\n\n2. DCE – Bassin Artois-Picardie - Etat écologique\n   ID: 6756b82cd6f163559eab2832\n   Organization: Institut français de recherche pour l'exploitation de la mer (IFREMER)\n   Tags: boulogne-sur-mer, dce, directive-cadre-pour-la-planification-de-lespace-maritime-dcpem, directive-cadre-strategie-pour-le-milieu-marin-dcsmm, directive-cadre-sur-leau-dce\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/dce-bassin-artois-picardie-etat-ecologique-1\n\n3. Hydromorphologie des cours d'eau (bassin Artois-Picardie)\n   ID: 6a58200c77c58f2d2ec2774b\n   Organization: Office Français de la Biodiversité\n   Tags: cours-deau, hydrodynamisme, hydrographie, hydromorphologie, inspire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/hydromorphologie-des-cours-deau-bassin-artois-picardie\n\n4. SYRAH-CE (SYstème Relationnel d’Audit de l’Hydromorphologie des Cours d’Eau)\n   ID: 6a58219ef9121211f67fa5b6\n   Organization: Système d'Information sur l'Eau\n   Tags: cours-deau, donnees-ouvertes, donnees-quantitatives, eaux-interieures-de-surface-rivieres-et-lacs, environnement\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/syrah-ce-systeme-relationnel-daudit-de-lhydromorphologie-des-cours-deau-1\n\n5. Hydromorphologie des cours d'eau - Fiche parent\n   ID: 6a581f5577c58f2d2ec27655\n   Organization: Office Français de la Biodiversité\n   Tags: cours-deau, hydrodynamisme, hydrographie, hydromorphologie, inspire\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/hydromorphologie-des-cours-deau-fiche-parent\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

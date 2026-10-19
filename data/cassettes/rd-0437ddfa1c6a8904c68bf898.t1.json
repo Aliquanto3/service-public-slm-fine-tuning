@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:55:19Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "communes nouvelles création fusion France"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 7 dataset(s) for query: 'communes nouvelles création fusion France'\nPage 1 of results:\n\n1. quartiers prioritaires de la politique de la ville au 1er janvier 2023\n   ID: 64d2d9a36efe2bd9482acfea\n   Organization: Caisse des Dépôts\n   Tags: amenagement-du-territoire-et-urbanisme, investissement-territoire, quartier, ville\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2023\n\n2. Identifiants des collectivités territoriales et leurs établissements\n   ID: 60f960c36634406bff4aa249\n   Organization: Datactivist\n   Tags: cog, collectivites, epci, siren\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/identifiants-des-collectivites-territoriales-et-leurs-etablissements\n\n3. Zonage communal et infracommunal (sur la commune d'Amiens) pour les AFR (Aides à Finalités Régionales) en Hauts-de-France pour la période 2022-2027\n   ID: 667005e913503ed936c4be7f\n   Organization: Région Hauts-de-France\n   Tags: afr, aide-a-finalite-regionale, aisne-departement, anct, commune\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/zonage-communal-et-infracommunal-sur-la-commune-damiens-pour-les-afr-aides-a-finalites-regionales-en-hauts-de-france-pour-la-periode-2022-2027\n\n4. Liste des communes de France : code INSEE, codes postaux, EPCI, population, superficie - 62 indicateurs\n   ID: 6745d9ae4524d845d2138193\n   Organization: Ville de rêve\n   Tags: academie, agglomeration, altitude, centre-dequipement, centre-dequipements-et-de-services\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-de-france-code-insee-codes-postaux-epci-population-superficie-62-indicateurs\n\n5. Référentiel Structure de la plateforme Services Publics Plus de la DITP\n   ID: 62225f6a523b5729143b138c\n   Organization: Direction Interministérielle de la Transformation Publique\n   Tags: action-publique, ademe, administration, administration-centrale-du-ministere-de-la-culture, administration-territoriale-de-letat\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/referentiel-structure-de-la-plateforme-services-publics-plus-de-la-ditp\n\n6. Codes postaux de France métropolitaine\n   ID: 68de8be0e01147455c3c3b41\n   Tags: codes-postaux, decoupages, donnees-geographiques, france-metropolitaine\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/codes-postaux-de-france-metropolitaine\n\n7. Effectifs de police municipale par commune (France entière, 2013-2024)\n   ID: 696d882cec9d22a43b536ac8\n   Description: Versions nettoyées des fichiers \"Police municipale : Effectifs par commune\" du Ministère de l'Intérieur. Déc 2013-déc 2024. 3 régions, + Outre-Mers, + communes métropolitaines > 15 000 hab...\n   Tags: bretagne, commune, communes, corse, criminalite\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-police-municipale-par-commune-france-entiere-2013-2024\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 7 dataset(s) for query: 'communes nouvelles création fusion France'\nPage 1 of results:\n\n1. quartiers prioritaires de la politique de la ville au 1er janvier 2023\n   ID: 64d2d9a36efe2bd9482acfea\n   Organization: Caisse des Dépôts\n   Tags: amenagement-du-territoire-et-urbanisme, investissement-territoire, quartier, ville\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2023\n\n2. Identifiants des collectivités territoriales et leurs établissements\n   ID: 60f960c36634406bff4aa249\n   Organization: Datactivist\n   Tags: cog, collectivites, epci, siren\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/identifiants-des-collectivites-territoriales-et-leurs-etablissements\n\n3. Zonage communal et infracommunal (sur la commune d'Amiens) pour les AFR (Aides à Finalités Régionales) en Hauts-de-France pour la période 2022-2027\n   ID: 667005e913503ed936c4be7f\n   Organization: Région Hauts-de-France\n   Tags: afr, aide-a-finalite-regionale, aisne-departement, anct, commune\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/zonage-communal-et-infracommunal-sur-la-commune-damiens-pour-les-afr-aides-a-finalites-regionales-en-hauts-de-france-pour-la-periode-2022-2027\n\n4. Liste des communes de France : code INSEE, codes postaux, EPCI, population, superficie - 62 indicateurs\n   ID: 6745d9ae4524d845d2138193\n   Organization: Ville de rêve\n   Tags: academie, agglomeration, altitude, centre-dequipement, centre-dequipements-et-de-services\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-de-france-code-insee-codes-postaux-epci-population-superficie-62-indicateurs\n\n5. Référentiel Structure de la plateforme Services Publics Plus de la DITP\n   ID: 62225f6a523b5729143b138c\n   Organization: Direction Interministérielle de la Transformation Publique\n   Tags: action-publique, ademe, administration, administration-centrale-du-ministere-de-la-culture, administration-territoriale-de-letat\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/referentiel-structure-de-la-plateforme-services-publics-plus-de-la-ditp\n\n6. Codes postaux de France métropolitaine\n   ID: 68de8be0e01147455c3c3b41\n   Tags: codes-postaux, decoupages, donnees-geographiques, france-metropolitaine\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/codes-postaux-de-france-metropolitaine\n\n7. Effectifs de police municipale par commune (France entière, 2013-2024)\n   ID: 696d882cec9d22a43b536ac8\n   Description: Versions nettoyées des fichiers \"Police municipale : Effectifs par commune\" du Ministère de l'Intérieur. Déc 2013-déc 2024. 3 régions, + Outre-Mers, + communes métropolitaines > 15 000 hab...\n   Tags: bretagne, commune, communes, corse, criminalite\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/effectifs-de-police-municipale-par-commune-france-entiere-2013-2024\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:06:23Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PLU Auxon zonage"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'PLU Auxon zonage'\nPage 1 of results:\n\n1. Zonage du PLU d'Auxon\n   ID: 6737747f466c96acc3c40c21\n   Organization: Direction Départementale des Territoires de l'Aube\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zonage-du-plu-dauxon-1\n\n2. Document d'urbanisme d'Auxon\n   ID: 6737725f466c96acc3c40a93\n   Organization: Direction Départementale des Territoires de l'Aube\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/document-durbanisme-dauxon-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'PLU Auxon zonage'\nPage 1 of results:\n\n1. Zonage du PLU d'Auxon\n   ID: 6737747f466c96acc3c40c21\n   Organization: Direction Départementale des Territoires de l'Aube\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zonage-du-plu-dauxon-1\n\n2. Document d'urbanisme d'Auxon\n   ID: 6737725f466c96acc3c40a93\n   Organization: Direction Départementale des Territoires de l'Aube\n   Tags: amenagement-urbanisme-zonages-planification, donnees-ouvertes, inspire, usage-des-sols\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/document-durbanisme-dauxon-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

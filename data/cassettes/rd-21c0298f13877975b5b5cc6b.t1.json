@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:08:20Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "PPRN risques littoraux érosion côtière submersion marine Angoulins Charente-Maritime"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'PPRN risques littoraux érosion côtière submersion marine Angoulins Charente-Maritime'\nPage 1 of results:\n\n1. PPRN de la commune d'Angoulins (Risques littoraux - érosion cotière et submersion marine) - Charente-Maritime\n   ID: 673773f41881e8d970c253af\n   Organization: Direction Départementale des Territoires et de la Mer de Charente-Maritime\n   Tags: amenagement, donnees-ouvertes, inondation, inspire, perimetre\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/pprn-de-la-commune-dangoulins-risques-littoraux-erosion-cotiere-et-submersion-marine-charente-maritime\n\n2. Périmètre dU PPRN de la commune de Angoulins (Risques littoraux - érosion cotière et submersion marine) - Charente-Maritime\n   ID: 6737edbb932ed34abec40b48\n   Organization: Direction Départementale des Territoires et de la Mer de Charente-Maritime\n   Tags: donnees-ouvertes, inondation, inspire, perimetre, pprn\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/perimetre-du-pprn-de-la-commune-de-angoulins-risques-littoraux-erosion-cotiere-et-submersion-marine-charente-maritime\n\n3. Zone réglementée du PPRN de la commune de Angoulins (Risques littoraux - érosion cotière et submersion marine) - Charente-Maritime\n   ID: 6737efd2932ed34abec40c54\n   Organization: Direction Départementale des Territoires et de la Mer de Charente-Maritime\n   Tags: donnees-ouvertes, inondation, inspire, pprn, risque-naturel\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-reglementee-du-pprn-de-la-commune-de-angoulins-risques-littoraux-erosion-cotiere-et-submersion-marine-charente-maritime\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'PPRN risques littoraux érosion côtière submersion marine Angoulins Charente-Maritime'\nPage 1 of results:\n\n1. PPRN de la commune d'Angoulins (Risques littoraux - érosion cotière et submersion marine) - Charente-Maritime\n   ID: 673773f41881e8d970c253af\n   Organization: Direction Départementale des Territoires et de la Mer de Charente-Maritime\n   Tags: amenagement, donnees-ouvertes, inondation, inspire, perimetre\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/pprn-de-la-commune-dangoulins-risques-littoraux-erosion-cotiere-et-submersion-marine-charente-maritime\n\n2. Périmètre dU PPRN de la commune de Angoulins (Risques littoraux - érosion cotière et submersion marine) - Charente-Maritime\n   ID: 6737edbb932ed34abec40b48\n   Organization: Direction Départementale des Territoires et de la Mer de Charente-Maritime\n   Tags: donnees-ouvertes, inondation, inspire, perimetre, pprn\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/perimetre-du-pprn-de-la-commune-de-angoulins-risques-littoraux-erosion-cotiere-et-submersion-marine-charente-maritime\n\n3. Zone réglementée du PPRN de la commune de Angoulins (Risques littoraux - érosion cotière et submersion marine) - Charente-Maritime\n   ID: 6737efd2932ed34abec40c54\n   Organization: Direction Départementale des Territoires et de la Mer de Charente-Maritime\n   Tags: donnees-ouvertes, inondation, inspire, pprn, risque-naturel\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/zone-reglementee-du-pprn-de-la-commune-de-angoulins-risques-littoraux-erosion-cotiere-et-submersion-marine-charente-maritime\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

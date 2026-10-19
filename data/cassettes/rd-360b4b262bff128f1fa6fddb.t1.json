@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:01:14Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget primitif 2018 Région Grand Est"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 9 dataset(s) for query: 'budget primitif 2018 Région Grand Est'\nPage 1 of results:\n\n1. DONNEE - Budget primitif 2018 Région Grand Est\n   ID: 60f6829ed668d5901a47aa40\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2018-region-grand-est\n\n2. DONNEE - Budget primitif 2018 Région Grand Est\n   ID: 6a03344fc762c94feac14aae\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2018-region-grand-est-2\n\n3. Répertoire des Conseils Municipaux 2020\n   ID: 5f071b2a33a44dbdde2f8108\n   Organization: Mairie de Berck-sur-Mer\n   Resources: 160\n   URL: https://www.data.gouv.fr/datasets/repertoire-des-conseils-municipaux-2020\n\n4. DONNEE - Budget primitif 2017 Région Grand Est\n   ID: 60f687c870d55f7e043351d3\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2017-region-grand-est\n\n5. DONNEE - Budget primitif 2016 Région Grand Est\n   ID: 60f68b34d7a5cad4d47de6c3\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2016-region-grand-est\n\n6. DONNEE - Budget primitif 2019 Région Grand Est\n   ID: 60f67a957c556e3c993f99ca\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2019-region-grand-est\n\n7. DONNEE - Budget primitif 2017 Région Grand Est\n   ID: 6a033451c762c94feac14ab2\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2017-region-grand-est-2\n\n8. DONNEE - Budget primitif 2016 Région Grand Est\n   ID: 6a033453c762c94feac14ab6\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2016-region-grand-est-2\n\n9. DONNEE - Budget primitif 2019 Région Grand Est\n   ID: 6a03344dc762c94feac14aab\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2019-region-grand-est-2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 9 dataset(s) for query: 'budget primitif 2018 Région Grand Est'\nPage 1 of results:\n\n1. DONNEE - Budget primitif 2018 Région Grand Est\n   ID: 60f6829ed668d5901a47aa40\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2018-region-grand-est\n\n2. DONNEE - Budget primitif 2018 Région Grand Est\n   ID: 6a03344fc762c94feac14aae\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2018-region-grand-est-2\n\n3. Répertoire des Conseils Municipaux 2020\n   ID: 5f071b2a33a44dbdde2f8108\n   Organization: Mairie de Berck-sur-Mer\n   Resources: 160\n   URL: https://www.data.gouv.fr/datasets/repertoire-des-conseils-municipaux-2020\n\n4. DONNEE - Budget primitif 2017 Région Grand Est\n   ID: 60f687c870d55f7e043351d3\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2017-region-grand-est\n\n5. DONNEE - Budget primitif 2016 Région Grand Est\n   ID: 60f68b34d7a5cad4d47de6c3\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2016-region-grand-est\n\n6. DONNEE - Budget primitif 2019 Région Grand Est\n   ID: 60f67a957c556e3c993f99ca\n   Organization: Région GRAND EST\n   Tags: budget, compte, donnees-ouvertes, finances-publiques, m71\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2019-region-grand-est\n\n7. DONNEE - Budget primitif 2017 Région Grand Est\n   ID: 6a033451c762c94feac14ab2\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2017-region-grand-est-2\n\n8. DONNEE - Budget primitif 2016 Région Grand Est\n   ID: 6a033453c762c94feac14ab6\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2016-region-grand-est-2\n\n9. DONNEE - Budget primitif 2019 Région Grand Est\n   ID: 6a03344dc762c94feac14aab\n   Organization: Région GRAND EST\n   Tags: budget, budget-primitif, compte, donnees-ouvertes, finances-publiques\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/donnee-budget-primitif-2019-region-grand-est-2\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

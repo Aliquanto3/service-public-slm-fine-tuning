@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:03:55Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "électricité consommation bâtiment tertiaire"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'électricité consommation bâtiment tertiaire'\nPage 1 of results:\n\n1. Consommation des bâtiments tertiaires par vecteur énergétique\n   ID: 67c0a0875324d35e4fae98da\n   Organization: ADEME\n   Tags: batiment\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/consommation-des-batiments-tertiaires-par-vecteur-energetique\n\n2. Transition(s) 2050 - Quatre scénarios pour atteindre la neutralité carbone\n   ID: 61f3ba1456816c41f28c43ac\n   Organization: ADEME\n   Tags: ademe, neutralite-carbone, prospective, transition-ecologique\n   Resources: 337\n   URL: https://www.data.gouv.fr/datasets/transition-s-2050-quatre-scenarios-pour-atteindre-la-neutralite-carbone\n\n3. Perspectives Gaz 2022 - Scénario de consommation de gaz à l'horizon 2050\n   ID: 640aab529edae1d2f530406a\n   Organization: GRDF\n   Tags: consommation, gaz, gaz-naturel, gnv, mobilite-gaz\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/perspectives-gaz-2022-scenario-de-consommation-de-gaz-a-lhorizon-2050\n\n4. Données statistiques de consommation du parc de bâtiment tertiaires issu de la BDNB\n   ID: 65ae49ee62de48442b1db61e\n   Organization: Centre Scientifique et Technique du Batiment\n   Tags: batiments, bdnb, consommation-d-energie, consommation-delectricite, consommation-denergie-primaire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-statistiques-de-consommation-du-parc-de-batiment-tertiaires-issu-de-la-bdnb\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'électricité consommation bâtiment tertiaire'\nPage 1 of results:\n\n1. Consommation des bâtiments tertiaires par vecteur énergétique\n   ID: 67c0a0875324d35e4fae98da\n   Organization: ADEME\n   Tags: batiment\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/consommation-des-batiments-tertiaires-par-vecteur-energetique\n\n2. Transition(s) 2050 - Quatre scénarios pour atteindre la neutralité carbone\n   ID: 61f3ba1456816c41f28c43ac\n   Organization: ADEME\n   Tags: ademe, neutralite-carbone, prospective, transition-ecologique\n   Resources: 337\n   URL: https://www.data.gouv.fr/datasets/transition-s-2050-quatre-scenarios-pour-atteindre-la-neutralite-carbone\n\n3. Perspectives Gaz 2022 - Scénario de consommation de gaz à l'horizon 2050\n   ID: 640aab529edae1d2f530406a\n   Organization: GRDF\n   Tags: consommation, gaz, gaz-naturel, gnv, mobilite-gaz\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/perspectives-gaz-2022-scenario-de-consommation-de-gaz-a-lhorizon-2050\n\n4. Données statistiques de consommation du parc de bâtiment tertiaires issu de la BDNB\n   ID: 65ae49ee62de48442b1db61e\n   Organization: Centre Scientifique et Technique du Batiment\n   Tags: batiments, bdnb, consommation-d-energie, consommation-delectricite, consommation-denergie-primaire\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/donnees-statistiques-de-consommation-du-parc-de-batiment-tertiaires-issu-de-la-bdnb\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

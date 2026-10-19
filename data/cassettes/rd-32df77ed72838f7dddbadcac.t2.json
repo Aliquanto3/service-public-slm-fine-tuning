@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:54:21Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "67377fddb561510ce3c25500"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Circonscriptions législatives - Hautes-Pyrénées\nDataset ID: 67377fddb561510ce3c25500\nTotal resources: 3\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: e6bc65f4-e99d-4a7a-9aed-cebe803918f0\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=739e8db0-6e3c-4b35-bc76-3b24dbccda41&dataType=dataset\n\n2. URL du GetCapabilities du service wms sur internet\n   Resource ID: 587be2f3-f32f-47ff-946d-a6a665cdd11d\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/739e8db0-6e3c-4b35-bc76-3b24dbccda41.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n3. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 39501c66-58d4-44f9-9506-bebc8357ef16\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/739e8db0-6e3c-4b35-bc76-3b24dbccda41.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Circonscriptions législatives - Hautes-Pyrénées\nDataset ID: 67377fddb561510ce3c25500\nTotal resources: 3\n\n1. Téléchargement simple (Atom) du jeu et des documents associés via internet\n   Resource ID: e6bc65f4-e99d-4a7a-9aed-cebe803918f0\n   Format: mapinfo tab\n   Type: main\n   URL: https://atom.geo-ide.developpement-durable.gouv.fr/atomArchive/GetResource?id=739e8db0-6e3c-4b35-bc76-3b24dbccda41&dataType=dataset\n\n2. URL du GetCapabilities du service wms sur internet\n   Resource ID: 587be2f3-f32f-47ff-946d-a6a665cdd11d\n   Format: wms\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/739e8db0-6e3c-4b35-bc76-3b24dbccda41.internet.map&SERVICE=WMS&REQUEST=GetCapabilities\n\n3. URL du GetCapabilities du service wfs sur internet\n   Resource ID: 39501c66-58d4-44f9-9506-bebc8357ef16\n   Format: wfs\n   Type: api\n   URL: https://ogc.geo-ide.developpement-durable.gouv.fr/wxs?map=/opt/data/stack/mapfiles/1.4/org_38072/739e8db0-6e3c-4b35-bc76-3b24dbccda41.internet.map&SERVICE=WFS&REQUEST=GetCapabilities\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

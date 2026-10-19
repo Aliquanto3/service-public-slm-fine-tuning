@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:05:57Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "budget prévisionnel Saint-Herblain 2022-2026"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'budget prévisionnel Saint-Herblain 2022-2026'\nPage 1 of results:\n\n1. Budget prévisionnel 2022-2026 de la Ville de Saint-Herblain\n   ID: 67f70b36c7f49c50e69ac79a\n   Organization: Ville de Saint-Herblain\n   Tags: bp, citoyennete-institution, finances\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-previsionnel-2022-2026-de-la-ville-de-saint-herblain\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'budget prévisionnel Saint-Herblain 2022-2026'\nPage 1 of results:\n\n1. Budget prévisionnel 2022-2026 de la Ville de Saint-Herblain\n   ID: 67f70b36c7f49c50e69ac79a\n   Organization: Ville de Saint-Herblain\n   Tags: bp, citoyennete-institution, finances\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-previsionnel-2022-2026-de-la-ville-de-saint-herblain\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:00:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "hydrographie linéaire Ile de France",
+      "sort": "-last_update"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'hydrographie linéaire Ile de France'\nPage 1 of results:\n\n1. Hydrographie linéaire Île-de-France 2018\n   ID: 5d0da8bf06e3e737b0c89a4c\n   Organization: Région Île-de-France\n   Tags: bd-inventaire, cadre-de-vie-environnement, eau, geoidf, hydrographie\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/hydrographie-lineaire-ile-de-france-2018\n\n2. Réseau hydrographique principal simplifié d'Île-de-France\n   ID: 53699f11a3a729239d20603e\n   Organization: Région Île-de-France\n   Tags: eau, environnement, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/reseau-hydrographique-principal-simplifie-d-ile-de-france-idf\n\n3. Réseau hydrographique\n   ID: 53699f10a3a729239d20603c\n   Organization: Région Île-de-France\n   Tags: eau, environnement, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/reseau-hydrographique-idf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'hydrographie linéaire Ile de France'\nPage 1 of results:\n\n1. Hydrographie linéaire Île-de-France 2018\n   ID: 5d0da8bf06e3e737b0c89a4c\n   Organization: Région Île-de-France\n   Tags: bd-inventaire, cadre-de-vie-environnement, eau, geoidf, hydrographie\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/hydrographie-lineaire-ile-de-france-2018\n\n2. Réseau hydrographique principal simplifié d'Île-de-France\n   ID: 53699f11a3a729239d20603e\n   Organization: Région Île-de-France\n   Tags: eau, environnement, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/reseau-hydrographique-principal-simplifie-d-ile-de-france-idf\n\n3. Réseau hydrographique\n   ID: 53699f10a3a729239d20603c\n   Organization: Région Île-de-France\n   Tags: eau, environnement, geolocalisation\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/reseau-hydrographique-idf\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -10,12 +10,12 @@ Suite de `etat-run-2026-10-19-portable.md` (journal du 19, décisions d'Anaël) 
 
 ## Protocole
 1. **M1 QLoRA sur les trois modèles, en série sur le GPU** : MiniCPM5-2B, puis Qwen3.5-2B, puis Qwen3.5-0.8B.
-   - Configs `config/runs/m1-qlora-<slug>-v9.toml`, à faire passer à `jeu_version = "v11"` et `campagne = "<slug>-v11"` avant le lancement.
+   - Configs `config/runs/m1-qlora-<slug>-v11.toml` (prêtes et validées par `charger_run_config` ; campagne `<slug>-v11`, `jeu_version = "v11"`).
    - Hyperparamètres : bf16, 8 192 tokens, rang 16, lr 2e-4, 1 époque, lot 1 × 8, graine 1234.
 2. Pour chaque M1 : export cuda, génération q4_k_m sur le jeu v1.1 en cuda, puis notation avec `--plafond-estime 4.5`.
    - Script : `C:\Users\Anael\dev\slmsp-wt\scripts-campagne\campagne-run.ps1 -Toml <toml>`. Il tourne sous garde RAM à 28 Go, avec `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
    - La notation d'un run peut tourner pendant l'entraînement suivant.
-3. **Règle de suite** : M3 DoRA (`m3-dora-<slug>-v9.toml`, à passer en v11) et M4 ORPO seulement pour un modèle dont M1 dépasse **sa** Baseline.
+3. **Règle de suite** : M3 DoRA (`m3-dora-<slug>-v11.toml`, prêtes) et M4 ORPO seulement pour un modèle dont M1 dépasse **sa** Baseline.
    - Baselines : MiniCPM5-2B 41,1 ; Qwen3.5-2B 36,0 ; Qwen3.5-0.8B 27,5.
    - M4 : paires locales `data build --preferences --depuis <nettoyage v11> --modele base:<slug> --llama cuda`, puis TOML ORPO à 2 048 tokens, avec `sft_run_id` = M1 du modèle, dans une campagne à part.
 4. **Benchmarks de non-régression** (`bench run --variante-llamacpp cuda --parallele 4`) sur le meilleur run de chaque modèle qui passe le critère de gain : +10 points contre la meilleure Baseline sur au moins 2 tâches parmi Q, RD, CR et LC.
@@ -28,3 +28,4 @@ Suite de `etat-run-2026-10-19-portable.md` (journal du 19, décisions d'Anaël) 
 - Arrêt : si une notation dépasse 4,5 €, ou si la RAM dépasse le seuil de la garde. Un blocage ne suspend que ses suites.
 
 ## Journal de la campagne
+- 2026-10-19 19:46 · v11 prêt : `data/train/v11` (552 lignes, SHA-256 `3b193710…`), nettoyage `runs/data-build/20261019-194543-nettoyage-c782` (build v10 `20261019-194535-build-ba68`, filtre `20261019-193107-filter-9026`, validation `20261019-190452-validate-b064`, génération `20261019-180544-generate-bd87`). Médianes en mots : Q 106, RD 46 (132 lignes), CR 396, LC 113, CT 152, RE 112, generique 96 ; titres en tête : RD 5, CT 2, autres 0. Configs M1 et M3 en v11 pour les trois modèles, prêtes. Prochaine étape : bloqueur de veille, puis M1 MiniCPM5-2B.

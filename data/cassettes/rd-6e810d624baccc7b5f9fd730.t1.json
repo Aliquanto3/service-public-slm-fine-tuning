@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T16:55:24Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "comptage routier capteurs permanents trafic 2012"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'comptage routier capteurs permanents trafic 2012'\nPage 1 of results:\n\n1. Comptages permanents sur le réseau routier départemental des Alpes-Maritimes\n   ID: 68108b02b49b7c6c559e6b71\n   Organization: Département des Alpes-Maritimes\n   Tags: comptage-vehicules, route, route-departementale, trafic, trafic-routier\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/comptage-vehicules-reseau-routier-departemental-des-alpes-maritimes-permanents\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'comptage routier capteurs permanents trafic 2012'\nPage 1 of results:\n\n1. Comptages permanents sur le réseau routier départemental des Alpes-Maritimes\n   ID: 68108b02b49b7c6c559e6b71\n   Organization: Département des Alpes-Maritimes\n   Tags: comptage-vehicules, route, route-departementale, trafic, trafic-routier\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/comptage-vehicules-reseau-routier-departemental-des-alpes-maritimes-permanents\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

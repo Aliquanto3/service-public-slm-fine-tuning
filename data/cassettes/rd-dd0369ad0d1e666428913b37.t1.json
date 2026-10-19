@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:00:18Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "déplacements Henri de Raincourt Coopération Affaires étrangères"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'déplacements Henri de Raincourt Coopération Affaires étrangères'\nPage 1 of results:\n\n1. Déplacements de Henri de Raincourt, ancien ministre auprès du ministre d’Etat, ministre des Affaires étrangères et européennes, chargé de la Coopération\n   ID: 536992cca3a729239d204003\n   Organization: Ministère de l'Europe et des Affaires Etrangères (MEAE)\n   Tags: cooperation, deplacements, ministre, raincourt, visite\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/deplacements-de-henri-de-raincourt-ancien-ministre-aupres-du-ministre-d-etat-ministre-des-affaires-e\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'déplacements Henri de Raincourt Coopération Affaires étrangères'\nPage 1 of results:\n\n1. Déplacements de Henri de Raincourt, ancien ministre auprès du ministre d’Etat, ministre des Affaires étrangères et européennes, chargé de la Coopération\n   ID: 536992cca3a729239d204003\n   Organization: Ministère de l'Europe et des Affaires Etrangères (MEAE)\n   Tags: cooperation, deplacements, ministre, raincourt, visite\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/deplacements-de-henri-de-raincourt-ancien-ministre-aupres-du-ministre-d-etat-ministre-des-affaires-e\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "missions ministérielles Coopération Afrique francophone"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'missions ministérielles Coopération Afrique francophone'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'missions ministérielles Coopération Afrique francophone'"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "voyages officiels ministres Affaires étrangères historique"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'voyages officiels ministres Affaires étrangères historique'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'voyages officiels ministres Affaires étrangères historique'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

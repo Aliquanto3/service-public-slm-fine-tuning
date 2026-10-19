@@ -1,0 +1,119 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:04:23Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "mouette tridactyle télémétrie Fécamp"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'mouette tridactyle télémétrie Fécamp'\nPage 1 of results:\n\n1. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be6527dd2fdcc07ae00b6\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n\n2. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be5d97dd2fdcc07adffb0\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'mouette tridactyle télémétrie Fécamp'\nPage 1 of results:\n\n1. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be6527dd2fdcc07ae00b6\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n\n2. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be5d97dd2fdcc07adffb0\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "suivi ornithologique télémétrie Normandie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'suivi ornithologique télémétrie Normandie'\nPage 1 of results:\n\n1. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be6527dd2fdcc07ae00b6\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n\n2. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Boulogne-sur-mer\n   ID: 684be5bb7dd2fdcc07adff6b\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-boulogne-sur-mer\n\n3. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be5d97dd2fdcc07adffb0\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n\n4. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Saint-Pierre-du-Mont\n   ID: 684be6757dd2fdcc07ae0102\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, manche, mer, mouette-tridactyle\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-saint-pierre-du-mont\n\n5. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Boulogne-sur-mer\n   ID: 684be8017dd2fdcc07ae037f\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-boulogne-sur-mer\n\n6. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Saint-Pierre-du-Mont\n   ID: 684be7507dd2fdcc07ae0270\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-saint-pierre-du-mont\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'suivi ornithologique télémétrie Normandie'\nPage 1 of results:\n\n1. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be6527dd2fdcc07ae00b6\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n\n2. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Boulogne-sur-mer\n   ID: 684be5bb7dd2fdcc07adff6b\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-boulogne-sur-mer\n\n3. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Fécamp\n   ID: 684be5d97dd2fdcc07adffb0\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-fecamp\n\n4. [en cours] Suivi télémétrique des mouettes tridactyles de la colonie de Saint-Pierre-du-Mont\n   ID: 684be6757dd2fdcc07ae0102\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, manche, mer, mouette-tridactyle\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-saint-pierre-du-mont\n\n5. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Boulogne-sur-mer\n   ID: 684be8017dd2fdcc07ae037f\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-boulogne-sur-mer\n\n6. [en cours] Trajets issus du suivi télémétrique des mouettes tridactyles de la colonie de Saint-Pierre-du-Mont\n   ID: 684be7507dd2fdcc07ae0270\n   Organization: Office Français de la Biodiversité\n   Tags: avifaune, colonie, estuaires-picards-et-mer-dopale, manche, mer\n   Resources: 0\n   URL: https://www.data.gouv.fr/datasets/en-cours-trajets-issus-du-suivi-telemetrique-des-mouettes-tridactyles-de-la-colonie-de-saint-pierre-du-mont\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "oiseau marin tracking GPS colonie"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "No datasets found for query: 'oiseau marin tracking GPS colonie'"
+      }
+     ],
+     "structuredContent": {
+      "result": "No datasets found for query: 'oiseau marin tracking GPS colonie'"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

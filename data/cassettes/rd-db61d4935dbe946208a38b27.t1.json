@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-19T17:02:24Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "indication géographique protégée IGP Troyes Champagne Métropole"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'indication géographique protégée IGP Troyes Champagne Métropole'\nPage 1 of results:\n\n1. Aire géographique des  indications géographiques protégées (IGP) de  Troyes Champagne Métropole\n   ID: 66b617f66421e1ab911e65cb\n   Organization: Troyes Champagne Métropole\n   Tags: igp, troyes-champagne-metropole\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/aire-geographique-des-indications-geographiques-protegees-igp-de-troyes-champagne-metropole\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'indication géographique protégée IGP Troyes Champagne Métropole'\nPage 1 of results:\n\n1. Aire géographique des  indications géographiques protégées (IGP) de  Troyes Champagne Métropole\n   ID: 66b617f66421e1ab911e65cb\n   Organization: Troyes Champagne Métropole\n   Tags: igp, troyes-champagne-metropole\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/aire-geographique-des-indications-geographiques-protegees-igp-de-troyes-champagne-metropole\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}
