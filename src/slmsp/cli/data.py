@@ -186,6 +186,19 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     p.set_defaults(func=_seed)
 
+    c = actions.add_parser(
+        "conditions",
+        help="vérifier les conditions commerciales de Mistral (préalable D1.2)",
+        description="GET de la page des conditions, SHA-256 ; identique : date du jour inscrite.",
+    )
+    c.add_argument("verbe", choices=["verifier"], help="verifier : relire la page des conditions")
+    c.add_argument(
+        "--verifier-seulement",
+        action="store_true",
+        help="ne rien écrire dans config/donnees.toml (compare seulement le SHA)",
+    )
+    c.set_defaults(func=_conditions)
+
     g = actions.add_parser(
         "generate",
         help="générer les exemples par Mistral (idempotent, traces d'outils enregistrées)",
@@ -560,6 +573,47 @@ class _RechercheParesseuse:
         self._pile.close()
 
 
+def _conditions_perimees(fichier: Path) -> bool:
+    import tomllib
+
+    try:
+        valeur = tomllib.loads(fichier.read_text(encoding="utf-8"))["mistral"][
+            "conditions_verifiees_le"
+        ]
+    except KeyError:
+        return False  # charger_prealables signalera la clé absente
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        from slmsp.mistral.conditions import ConditionsAVerifier
+
+        raise ConditionsAVerifier(
+            f"{fichier} illisible ({type(exc).__name__}) : génération bloquée"
+        ) from None
+    return valeur != date.today()
+
+
+def _verifier_conditions(*, ecrire: bool = True) -> Any:
+    from slmsp import net
+    from slmsp.core.var import dossier_var
+    from slmsp.mistral.conditions import verifier_conditions
+
+    racine = racine_projet()
+    resultat = verifier_conditions(
+        racine / "config" / "donnees.toml",
+        fabrique_client=lambda: net.client("outillage"),
+        aujourd_hui=date.today(),
+        ecrire=ecrire,
+        journal=dossier_var() / "mistral-conditions.jsonl",
+    )
+    suite = "date du jour inscrite" if resultat.ecrit else "rien écrit"
+    _consigner(f"conditions Mistral inchangées (SHA {resultat.sha_obtenu[:12]}…) : {suite}")
+    return resultat
+
+
+def _conditions(args: argparse.Namespace) -> int:
+    _verifier_conditions(ecrire=not args.verifier_seulement)
+    return 0
+
+
 def _generate(args: argparse.Namespace) -> int:
     from slmsp.budget.registre import RegistreBudget
     from slmsp.core.items import identifiants_proteges
@@ -588,6 +642,10 @@ def _generate(args: argparse.Namespace) -> int:
     preversion = config_mistral.preversion
     dossier = racine_projet() / "config"
     fichier_donnees = dossier / "donnees.toml"
+    # Date des conditions périmée : vérification automatique (C9) ; bloque si la page a changé.
+    if _conditions_perimees(fichier_donnees):
+        _consigner("conditions Mistral non vérifiées aujourd'hui : vérification automatique")
+        _verifier_conditions()
     # Préalables D1.2 (code 1) avant d'ouvrir le registre de budget ou le journal.
     charger_prealables(
         fichier_donnees,

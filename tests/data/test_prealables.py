@@ -71,10 +71,56 @@ def test_conditions_mistral_d_hier_code_1(
         lambda version, racine=None: type("Gel", (), {"commit_gel": "0" * 40})(),
     )
     monkeypatch.setattr("slmsp.cli.data.racine_projet", lambda: projet)
+    monkeypatch.setattr("slmsp.cli.data._verifier_conditions", lambda **_: None)  # C9 neutralisée
     assert racine_projet() != projet
     code = main(["data", "generate", "--depuis", SEED, "--racine", str(depot)])
     assert code == CodeSortie.ERREUR
     assert f"vérifiées le {hier}" in capsys.readouterr().err
+    _rien_ecrit(depot)
+
+
+def test_conditions_changees_bloquent_avant_tout_appel_mistral(
+    depot: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    projet = tmp_path / "projet"
+    (projet / "config").mkdir(parents=True)
+    hier = date.today() - timedelta(days=1)
+    donnees = projet / "config" / "donnees.toml"
+    donnees.write_text(
+        f"[mistral]\nconditions_verifiees_le = {hier}\n"
+        'conditions_url = "https://exemple.invalide/"\n'
+        f'conditions_sha256 = "{"0" * 64}"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "slmsp.evaluation.gel.jeu_gele_et_commite",
+        lambda version, racine=None: type("Gel", (), {"commit_gel": "0" * 40})(),
+    )
+    monkeypatch.setattr("slmsp.cli.data.racine_projet", lambda: projet)
+    monkeypatch.setattr("slmsp.core.var.dossier_var", lambda: tmp_path / "var")
+
+    class _Client:
+        def __enter__(self) -> Any:
+            return self
+
+        def __exit__(self, *_: Any) -> None:
+            return None
+
+        def get(self, url: str) -> Any:
+            return type("R", (), {"content": b"<autre>", "raise_for_status": lambda s: None})()
+
+    monkeypatch.setattr("slmsp.net.client", lambda profil: _Client())
+    monkeypatch.setattr(
+        "slmsp.mistral.client.fabriquer_sdk",
+        lambda *_: pytest.fail("appel Mistral avant la vérification des conditions"),
+    )
+    code = main(["data", "generate", "--depuis", SEED, "--racine", str(depot)])
+    assert code == CodeSortie.ERREUR
+    assert "conditions Mistral modifiées" in capsys.readouterr().err
+    assert f"conditions_verifiees_le = {hier}" in donnees.read_text(encoding="utf-8")
     _rien_ecrit(depot)
 
 
