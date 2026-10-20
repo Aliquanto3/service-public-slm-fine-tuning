@@ -109,3 +109,19 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-20 05:13 · v14 · Qwen3.5-0.8B : M3 DoRA (`config/runs/m3-dora-qwen3.5-0.8b-v14.toml`), paires ORPO locales depuis v14 puis M4 ORPO 2048 (campagne `qwen3.5-0.8b-v14-orpo-2048`, sft = M1 `20261020-042850-…-4346`) lancés : entraînement, export, génération seulement. **Notations en attente d'Anaël** : il reste 4,5 € Anthropic sous le plafond de 30 € de la nuit, une notation réserve ~12 € au pire cas (coût réel ~3 €) · —
 - 2026-10-20 06:12 · v14 · Qwen3.5-0.8B **M3 DoRA** : entraînement complet (`runs/train/20261020-051347-m3-dora-qwen3.5-0.8b-v14-1f18`, 25 min) mais **export en échec** : « fusion : valeur non finie dans model.language_model.layers.0.linear_attn.in_proj_qkv.weight » (`runs/export/20261020-053854-ft-qwen3.5-0.8b-f4f4`). Probable incompatibilité de la fusion DoRA avec l'attention linéaire de Qwen3.5 : **story à créer** (non corrigé cette nuit) · —
 - 2026-10-20 06:12 · v14 · paires ORPO **v16** : 505 paires depuis v14 (base Qwen3.5-0.8B, cuda), 43 écartées (tronquee 35, non_texte 7, contexte 1). M4 ORPO 2048 : premier essai en échec sur « CUDA driver error: device not ready » (passager), relancé · —
+- 2026-10-20 06:13 · v14 · M4 ORPO Qwen3.5-0.8B : second essai, même erreur « CUDA driver error: device not ready / Failed to create GPU mapping » au démarrage (`runs/train/20261020-061248-…-a0b4`) : reproductible, **story à créer** · —
+- 2026-10-20 06:13 · run · fin du travail GPU ; bloqueur de veille arrêté ; suite complète de fin lancée · —
+
+## Bilan de la nuit (pour Anaël)
+| Run | Jeu | Q | RD | CR | LC | CO | RE | CT | NR | Qualité | Baseline |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| MiniCPM5-2B M1 | v11 | 3,3 | 77,8 | 21,7 | 4,0 | 71,3 | 39,0 | 13,3 | 30,0 | 32,6 | 41,1 |
+| MiniCPM5-2B M1 | v12 partiel | 0,0 | 85,6 | 30,5 | 0,0 | 81,2 | 32,9 | 43,3 | 20,0 | 36,7 | 41,1 |
+| MiniCPM5-2B M1 lr 1e-4 | v12 partiel | 0,0 | 84,4 | 32,2 | 0,0 | 71,5 | 34,9 | 40,0 | 20,0 | 35,4 | 41,1 |
+| MiniCPM5-2B M1 | v14 | 1,7 | 83,2 | 33,9 | 0,0 | 74,1 | 31,9 | 46,7 | 16,7 | 36,0 | 41,1 |
+| MiniCPM5-2B M1 | v15 (sans Q, generique) | 5,0 | 76,9 | 32,0 | 0,0 | 72,6 | 35,5 | 46,7 | 16,7 | 35,7 | 41,1 |
+| Qwen3.5-2B M1 | v11 | 1,7 | 66,0 | 25,2 | 0,0 | 88,5 | 27,6 | 13,3 | 40,0 | 32,8 | 36,0 |
+| Qwen3.5-2B M1 | v14 | 0,0 | 65,4 | 22,0 | 0,0 | 84,0 | 30,4 | 33,3 | 40,0 | 34,4 | 36,0 |
+| Qwen3.5-0.8B M1 | v11 | 0,0 | 67,9 | 14,2 | 0,0 | 69,3 | 21,4 | 10,0 | 16,7 | 24,9 | 27,5 |
+| **Qwen3.5-0.8B M1** | **v14** | 0,0 | 65,3 | 14,0 | 4,0 | 73,3 | 28,1 | 46,7 | 10,0 | **30,2** | 27,5 |
+Dépenses de la nuit (campagne nuit-2026-10-19, en plus de 11,23 € anthropic et 2,75 € mistral sur la campagne v9) : voir `slmsp budget etat`.
