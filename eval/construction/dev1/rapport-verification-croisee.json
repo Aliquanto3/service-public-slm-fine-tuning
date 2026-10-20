@@ -1,9 +1,9 @@
 {
   "global": {
     "incomplets": 0,
-    "rejetes": 5,
-    "retenus": 155,
-    "taux_rejet": 0.0312,
+    "rejetes": 1,
+    "retenus": 159,
+    "taux_rejet": 0.0063,
     "total": 160
   },
   "juges": [
@@ -41,9 +41,9 @@
     },
     "Non-régression": {
       "incomplets": 0,
-      "rejetes": 3,
-      "retenus": 17,
-      "taux_rejet": 0.15,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
       "total": 20
     },
     "Question": {
@@ -55,9 +55,9 @@
     },
     "Recherche de données": {
       "incomplets": 0,
-      "rejetes": 1,
-      "retenus": 19,
-      "taux_rejet": 0.05,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
       "total": 20
     },
     "Résumé": {
