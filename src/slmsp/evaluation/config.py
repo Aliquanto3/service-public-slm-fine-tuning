@@ -79,6 +79,11 @@ STATUT_RELU_LLM: Final = "relu-llm"
 STATUTS_BLOQUANTS: Final[tuple[str, ...]] = ("relu", STATUT_RELU_LLM)
 """Statuts de gel qui rendent les écarts de composition bloquants."""
 
+VERSION_CONSIGNE_CROISEE: Final = 3
+"""Consigne courante de la contre-vérification croisée (`eval/outils/verifier_jeu_croise.py`,
+`VERSION_PROMPT`, égalité testée) : le gel `relu-llm` n'admet que ses verdicts."""
+NOM_VERDICTS_CROISES: Final = "verdicts-croises.jsonl"
+
 MOTIF_JEU_DEV: Final = re.compile(r"^dev[0-9]+$")
 
 
@@ -149,6 +154,11 @@ def dossier_jeu(racine: Path, version: str) -> Path:
 def chemin_manifeste(racine: Path, version: str) -> Path:
     """`<racine>/eval/jeu/<version>/MANIFEST.json`."""
     return dossier_jeu(racine, version) / NOM_MANIFESTE
+
+
+def chemin_verdicts_croises(racine: Path, version: str) -> Path:
+    """Verdicts croisés (ajout seul) : `eval/construction/<version>/verdicts-croises.jsonl`."""
+    return racine / "eval" / "construction" / version / NOM_VERDICTS_CROISES
 
 
 def chemin_revue(racine: Path, version: str) -> Path:

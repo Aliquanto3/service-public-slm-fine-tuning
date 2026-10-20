@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 import re
 import sys
 from itertools import cycle
@@ -18,6 +19,7 @@ from typing import Any
 import pytest
 
 from slmsp.cli import main
+from slmsp.core.canonique import json_canonique, sha256_hex
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import CodeSortie, ConfigurationInvalide
 from slmsp.core.items import CODES, MOTIF_VERSION, chemins_jeu, valider_item
@@ -132,8 +134,38 @@ def test_jeu_dev_compare_a_v11_donne_des_ecarts() -> None:
 # --- Gel `relu-llm` --------------------------------------------------------------------------
 
 
+def retenir(depot: Path, version: str = "dev1", **remplace: dict[str, Any]) -> Path:
+    """Écrit un verdict croisé « retenu » (consigne courante) pour chaque item du jeu ;
+    `remplace[id]` surcharge des champs de la ligne de cet item."""
+    chemin_items = cfg.dossier_jeu(depot, version) / "items.jsonl"
+    juge = {
+        "coherent": True,
+        "ambigu": False,
+        "fait_absent_de_la_source": False,
+        "remarque": "<remarque-factice>",
+    }
+    lignes = []
+    for brut in chemin_items.read_text(encoding="utf-8").splitlines():
+        item_ = json.loads(brut)
+        ligne = {
+            "item_id": item_["id"],
+            "item_sha256": sha256_hex(json_canonique(item_)),
+            "tache": item_["id"].split("-")[0],
+            "juges": {"deepseek": juge, "glm": juge},
+            "decision": "retenu",
+            "motifs": [],
+            "version_prompt": cfg.VERSION_CONSIGNE_CROISEE,
+        }
+        lignes.append({**ligne, **remplace.get(item_["id"].replace("-", "_"), {})})
+    chemin = cfg.chemin_verdicts_croises(depot, version)
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    chemin.write_text("".join(json.dumps(x) + "\n" for x in lignes), encoding="utf-8")
+    return chemin
+
+
 def test_gel_relu_llm_d_un_jeu_dev_conforme(depot: Path) -> None:
     ecrire_items(depot, jeu_dev(), "dev1")
+    retenir(depot)
     manifeste = gel("dev1", "relu-llm", 5, depot)
     assert manifeste.statut == "relu-llm" and manifeste.version == "dev1"
     assert manifeste.ecarts == [] and manifeste.nb_items == 160
@@ -156,6 +188,53 @@ def test_gel_relu_llm_refuse_un_ecart_de_composition(depot: Path) -> None:
     assert etat(depot) == avant
 
 
+# --- Gel `relu-llm` et verdicts croisés (revue O4c) -------------------------------------------
+
+
+def test_gel_relu_llm_refuse_sans_verdicts_croises(depot: Path) -> None:
+    ecrire_items(depot, jeu_dev(), "dev1")
+    with pytest.raises(JeuNonConforme, match="verdicts croisés absents"):
+        gel("dev1", "relu-llm", 5, depot)
+
+
+@pytest.mark.parametrize(
+    ("remplace", "attendu"),
+    [
+        ({"decision": "rejete", "motifs": ["glm : ambigu"]}, r"'rejete' \(glm : ambigu\)"),
+        ({"decision": "incomplet"}, "'incomplet'"),
+        ({"item_sha256": "0" * 64}, "version antérieure de l'item"),
+        ({"version_prompt": 2}, "consigne 2"),
+        ({"juges": {"deepseek": None, "glm": None}}, "'retenu'"),
+        ({"juges": {"glm": {"coherent": True, "ambigu": False,
+                            "fait_absent_de_la_source": False}}}, "'retenu'"),
+    ],
+)  # fmt: skip
+def test_gel_relu_llm_exige_un_retenu_courant_par_item(
+    depot: Path, remplace: dict[str, Any], attendu: str
+) -> None:
+    ecrire_items(depot, jeu_dev(), "dev1")
+    retenir(depot, CR_507=remplace)
+    avant = etat(depot)
+    with pytest.raises(JeuNonConforme, match="CR-507 : .*" + attendu):
+        gel("dev1", "relu-llm", 5, depot)
+    assert etat(depot) == avant
+
+
+def test_gel_relu_llm_dernier_verdict_l_emporte(depot: Path) -> None:
+    ecrire_items(depot, jeu_dev(), "dev1")
+    chemin = retenir(depot)
+    lignes = chemin.read_text(encoding="utf-8").splitlines()
+    rejet = {**json.loads(lignes[0]), "decision": "rejete"}
+    chemin.write_text("\n".join([json.dumps(rejet), *lignes]) + "\n", encoding="utf-8")
+    assert gel("dev1", "relu-llm", 5, depot).nb_items == 160  # le rejet est antérieur
+
+
+def test_version_de_consigne_alignee_sur_l_outil() -> None:
+    outil = racine_projet() / "eval" / "outils" / "verifier_jeu_croise.py"
+    trouve = re.search(r"^VERSION_PROMPT = (\d+)$", outil.read_text(encoding="utf-8"), re.M)
+    assert trouve and int(trouve.group(1)) == cfg.VERSION_CONSIGNE_CROISEE
+
+
 def test_gel_relu_d_une_version_vn_garde_la_composition_de_v11(depot: Path) -> None:
     """Les cibles dépendent de la version : 160 items sous `v1.0` restent un écart bloquant."""
     ecrire_items(depot, jeu_dev(), "v1.0")
@@ -170,6 +249,7 @@ def test_gel_statut_inconnu_cite_les_statuts() -> None:
 
 def test_gel_cli_accepte_dev1_et_relu_llm(depot: Path, capsys: pytest.CaptureFixture[str]) -> None:
     ecrire_items(depot, jeu_dev(), "dev1")
+    retenir(depot)
     code = main(
         ["eval", "gel", "--version", "dev1", "--statut", "relu-llm", "--graine", "5",
          "--racine", str(depot)]

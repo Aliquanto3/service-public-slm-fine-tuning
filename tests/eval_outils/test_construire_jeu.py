@@ -1070,5 +1070,60 @@ def test_assembler_jeu_de_developpement(tmp_path):
     _brouillon(tmp_path, "Q", [_item("Q-501")], version="dev1")
     croises = tmp_path / "eval" / "construction" / "dev1" / "verdicts-croises.jsonl"
     croises.write_text('{"id": "Q-501"}\n', encoding="utf-8")
+    contestations = croises.parent / "contestations.jsonl"  # rejets contestés (O4c)
+    contestations.write_text('{"item_id": "Q-501"}\n', encoding="utf-8")
     assert cj.main(["assembler", "--version", "dev1", "--racine", str(tmp_path)]) == 0
     assert (tmp_path / "eval" / "jeu" / "dev1" / "items.jsonl").is_file()
+
+
+def _charger_vjc():
+    chemin = OUTIL.with_name("verifier_jeu_croise.py")
+    spec = importlib.util.spec_from_file_location("verifier_jeu_croise_cj", chemin)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_assembler_exclut_les_rejets_croises_courants(tmp_path, capsys):
+    """Revue O4c : un rejet croisé (empreinte et consigne courantes) retire l'item ; un rejet
+    d'une version antérieure de l'item ou d'une autre consigne ne compte pas."""
+    vjc = _charger_vjc()
+    assert cj.VERSION_CONSIGNE_CROISEE == vjc.VERSION_PROMPT
+    items = [_item(f"Q-50{i}") for i in range(1, 5)]
+    assert cj.empreinte_item(items[0]) == vjc.empreinte_item(items[0])
+    _brouillon(tmp_path, "Q", items, version="dev1")
+
+    def ligne(it, decision="rejete", sha=None, version=cj.VERSION_CONSIGNE_CROISEE):
+        return {
+            "item_id": it["id"],
+            "item_sha256": sha or cj.empreinte_item(it),
+            "decision": decision,
+            "motifs": ["glm : ambigu"],
+            "version_prompt": version,
+        }
+
+    lignes = [
+        ligne(items[0]),
+        ligne(items[1], sha="0" * 64),
+        ligne(items[2], version=cj.VERSION_CONSIGNE_CROISEE - 1),
+        ligne(items[3]),
+        ligne(items[3], decision="retenu"),  # le dernier verdict l'emporte
+    ]
+    croises = tmp_path / "eval" / "construction" / "dev1" / "verdicts-croises.jsonl"
+    croises.write_text("".join(json.dumps(x) + "\n" for x in lignes), encoding="utf-8")
+    assert cj.main(["assembler", "--version", "dev1", "--racine", str(tmp_path)]) == 0
+    sortie = capsys.readouterr().out
+    ecrits = (tmp_path / "eval" / "jeu" / "dev1" / "items.jsonl").read_text(encoding="utf-8")
+    assert [json.loads(x)["id"] for x in ecrits.splitlines()] == ["Q-502", "Q-503", "Q-504"]
+    assert "`Q-501` : glm : ambigu" in sortie
+    assert cj.main(["composition", "--version", "dev1", "--racine", str(tmp_path)]) == 0
+    assert "1 exclus (contre-vérification croisée `rejete`)" in capsys.readouterr().out
+
+
+def test_assembler_refuse_des_verdicts_croises_illisibles(tmp_path, capsys):
+    _brouillon(tmp_path, "Q", [_item("Q-501")], version="dev1")
+    croises = tmp_path / "eval" / "construction" / "dev1" / "verdicts-croises.jsonl"
+    croises.write_text("{illisible\n", encoding="utf-8")
+    assert cj.main(["assembler", "--version", "dev1", "--racine", str(tmp_path)]) == 2
+    assert "verdicts-croises.jsonl:1" in capsys.readouterr().err

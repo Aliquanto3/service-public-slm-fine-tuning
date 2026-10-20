@@ -61,9 +61,14 @@ from typing import Any
 # Constantes : SPEC §2, §3, §5.2, §7 bis
 # ---------------------------------------------------------------------------
 CODES = ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "NR")
-FICHIERS_ANNEXES = frozenset({"verdicts-croises.jsonl"})
+NOM_VERDICTS_CROISES = "verdicts-croises.jsonl"
+FICHIERS_ANNEXES = frozenset({NOM_VERDICTS_CROISES, "contestations.jsonl"})
 """Fichiers `.jsonl` admis à côté des brouillons d'un jeu de développement : verdicts de la
-contre-vérification croisée (`verifier_jeu_croise.py`), jamais lus comme brouillons (O4b)."""
+contre-vérification croisée (`verifier_jeu_croise.py`, lus par `assembler`) et trace des
+rejets contestés par l'auteur (sans effet sur les outils), jamais lus comme brouillons."""
+VERSION_CONSIGNE_CROISEE = 3
+"""Consigne courante de la contre-vérification croisée (`verifier_jeu_croise.VERSION_PROMPT`,
+égalité testée) : seul un verdict de cette version exclut un item à l'assemblage."""
 TACHES = {
     "Q": "Question",
     "RD": "Recherche de données",
@@ -861,6 +866,38 @@ def derniers_verdicts(construction: Path) -> tuple[dict[str, dict], list[str]]:
     return verdicts, erreurs
 
 
+def empreinte_item(item: Any) -> str:
+    """SHA-256 du JSON canonique de l'item, comme `verifier_jeu_croise.empreinte_item`."""
+    canonique = json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonique.encode("utf-8")).hexdigest()
+
+
+def rejets_croises(construction: Path) -> tuple[dict[str, dict], list[str]]:
+    """`item_id -> dernier verdict croisé` (revue O4c) et lignes illisibles.
+
+    Une ligne sans `item_id` est ignorée ; l'appelant compare l'empreinte et la consigne."""
+    chemin = construction / NOM_VERDICTS_CROISES
+    if not chemin.is_file():
+        return {}, []
+    objets, erreurs = lire_jsonl(chemin)
+    derniers = {str(v["item_id"]): v for _, v in objets if isinstance(v, dict) and "item_id" in v}
+    return derniers, erreurs
+
+
+def rejete_croise(it: dict, croises: dict[str, dict]) -> dict | None:
+    """Dernier verdict croisé `rejete` de l'item sur son empreinte courante, avec la consigne
+    courante ; `None` sinon (un item corrigé ou jamais vérifié reste à vérifier)."""
+    v = croises.get(it.get("id"))
+    if (
+        v
+        and v.get("decision") == "rejete"
+        and v.get("version_prompt") == VERSION_CONSIGNE_CROISEE
+        and v.get("item_sha256") == empreinte_item(it)
+    ):
+        return v
+    return None
+
+
 def _couverture_verdicts(ids_brouillons: list[str], verdicts: dict[str, dict]) -> list[str]:
     """Lignes Markdown : brouillons sans verdict et verdicts sans brouillon (non bloquant)."""
     sans_verdict = sorted((i for i in ids_brouillons if i not in verdicts), key=cle_id)
@@ -893,13 +930,20 @@ def cmd_assembler(racine: Path, version: str, force: bool = False) -> int:
     erreurs += erreurs_identifiants(items)
     verdicts, err_verif = derniers_verdicts(construction)
     erreurs += err_verif
+    croises, err_croises = rejets_croises(construction)
+    erreurs += err_croises
     if not items and not erreurs:
         erreurs.append(f"aucun brouillon dans {construction}")
-    retenus, exclus = [], []
+    retenus, exclus, exclus_croises = [], [], []
     if not erreurs:
         for _, _, it in items:
             v = verdicts.get(it["id"])
-            (exclus if v and v.get("verdict") == "rejete" else retenus).append(it)
+            if v and v.get("verdict") == "rejete":
+                exclus.append(it)
+            elif rejete_croise(it, croises):
+                exclus_croises.append(it)
+            else:
+                retenus.append(it)
         if not retenus:
             erreurs.append("aucun item retenu (tous rejetés)")
     if erreurs:
@@ -922,6 +966,13 @@ def cmd_assembler(racine: Path, version: str, force: bool = False) -> int:
     for it in sorted(exclus, key=lambda i: cle_id(i["id"])):
         v = verdicts[it["id"]]
         out.append(f"  - `{it['id']}` : {v.get('motif', '?')} — {v.get('detail', '')}".rstrip(" —"))
+    out.append(
+        f"- Items exclus (contre-vérification croisée `rejete`, consigne "
+        f"{VERSION_CONSIGNE_CROISEE}) : {len(exclus_croises)}"
+    )
+    for it in sorted(exclus_croises, key=lambda i: cle_id(i["id"])):
+        motifs = croises[it["id"]].get("motifs") or []
+        out.append(f"  - `{it['id']}` : {'; '.join(str(m) for m in motifs) or '?'}")
     out += _couverture_verdicts([it["id"] for _, _, it in items], verdicts)
     print("\n".join(out))
     return 0
@@ -1086,8 +1137,10 @@ def cmd_composition(racine: Path, version: str) -> int:
     erreurs += erreurs_identifiants(brouillons)
     verdicts, err_verif = derniers_verdicts(construction)
     erreurs += err_verif
+    croises, err_croises = rejets_croises(construction)
+    erreurs += err_croises
     retenus: list[tuple[str, dict]] = []
-    nb_rejetes = 0
+    nb_rejetes = nb_rejetes_croises = 0
     for code, n, it in brouillons:
         if not isinstance(it, dict):
             erreurs.append(f"{code}.jsonl:{n} : l'item n'est pas un objet JSON")
@@ -1096,6 +1149,9 @@ def cmd_composition(racine: Path, version: str) -> int:
         if v and v.get("verdict") == "rejete":
             nb_rejetes += 1
             continue
+        if rejete_croise(it, croises):  # exclu de l'assemblage aussi (revue O4c)
+            nb_rejetes_croises += 1
+            continue
         retenus.append((code, it))
 
     out = [
@@ -1103,7 +1159,8 @@ def cmd_composition(racine: Path, version: str) -> int:
         "",
         (
             f"Source : `eval/construction/{version}/` ; {len(retenus)} items retenus, "
-            f"{nb_rejetes} exclus (dernier verdict `rejete`)."
+            f"{nb_rejetes} exclus (dernier verdict `rejete`), {nb_rejetes_croises} exclus "
+            "(contre-vérification croisée `rejete`)."
         ),
         "",
     ]

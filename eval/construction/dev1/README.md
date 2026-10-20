@@ -27,6 +27,10 @@ Relecture séparée de chaque item contre sa source (nombres des références re
 
 Échantillon de 24 items (3 par Tâche) relu contre les sources, plus des contrôles automatiques des 160 items (`tests/eval_outils/test_items_dev1.py`) : 8 items corrigés en `version_item` 2 (LC-503, LC-508, LC-509, LC-511, LC-512 : termes à conserver absents du texte ; RD-502, RD-513 : identifiant du catalogue ; CO-518 : faute à deux corrections justes). Détail : `_bmad-output/implementation-artifacts/revue-o4b.md`.
 
+## Contre-vérification croisée et suite (O4c)
+
+Premier passage (DeepSeek V4 Pro, GLM-5.3) : 76 retenus, 30 rejetés, 54 incomplets. Les incomplets venaient de l'outil : il n'envoyait pas l'effort de raisonnement, et GLM coupait 50 sorties vides à 8 000 tokens. Les paramètres du juge sont désormais transmis, avec une relance corrective et une consigne neutre unique (version 3, revue O4c). Sur les 30 rejets, 13 sont corrigés en `version_item` 2 ; 17 sont contestés par l'auteur dans `contestations.jsonl`, simple trace sans effet sur les outils. 4 items incomplets, dont le grief DeepSeek était fondé, sont aussi corrigés. Un item rejeté par l'un des juges est retiré à l'assemblage, sauf correction retenue ensuite par les deux ; le gel `relu-llm` exige un verdict croisé « retenu » courant pour chaque item. Détail : `_bmad-output/implementation-artifacts/spec-o4c-dev1-suite.md`.
+
 ## Reste à faire (orchestrateur)
 
-Contre-vérification croisée payante (`verifier_jeu_croise.py verifier --version dev1 --juges deepseek,glm`, verdicts dans `verdicts-croises.jsonl`, ignoré par l'assemblage), puis gel `relu-llm`.
+Revérification payante des 160 items avec la consigne 3 (`verifier_jeu_croise.py verifier --version dev1 --juges deepseek,glm`, environ 1,7 $, pire cas environ 4 $), réassemblage (`construire_jeu.py assembler --version dev1`), remplacement des items rejetés, puis gel `relu-llm`.

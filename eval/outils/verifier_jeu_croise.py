@@ -19,7 +19,12 @@ Sous-commandes :
   incohérent ou ambigu par l'un des juges est écarté. Les verdicts s'ajoutent à
   `eval/construction/<version>/verdicts-croises.jsonl` (ajout seul) et le taux de rejet est
   écrit dans `rapport-verification-croisee.json`. Appels payants : lancés par l'orchestrateur ;
-  les tests injectent un faux appelant.
+  les tests injectent un faux appelant. Story O4c : paramètres du juge (`reasoning`, schéma
+  strict), une relance corrective, verdicts valides repris pour un item `incomplet` inchangé
+  (même consigne). Un verdict d'une autre version de la consigne n'est jamais repris : tout
+  item est revérifié par les deux juges. Pas de voie d'appel : un rejet n'est levé que par
+  une correction de l'item (nouvelle empreinte) retenue par les deux juges. `construire_jeu.py
+  assembler` retire les rejetés et le gel `relu-llm` exige un « retenu » courant par item.
 
 Aucun contenu d'entraînement n'est produit : les juges ne reçoivent que des items d'évaluation.
 """
@@ -331,8 +336,32 @@ def controler_disjonction(
 CRITERES = ("coherent", "ambigu", "fait_absent_de_la_source")
 
 
+SCHEMA_VERDICT: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "coherent": {"type": "boolean"},
+        "ambigu": {"type": "boolean"},
+        "fait_absent_de_la_source": {"type": "boolean"},
+        "remarque": {"type": "string"},
+    },
+    "required": [*CRITERES, "remarque"],
+    "additionalProperties": False,
+}
+"""Schéma strict de la réponse (`response_format` `json_schema`, story O4c)."""
+VERSION_PROMPT = 3
+"""Version de la consigne (3 : revue O4c, consigne neutre unique) ; un verdict n'est repris,
+compté au rapport, à l'assemblage et au gel qu'à version égale. Égale à
+`slmsp.evaluation.config.VERSION_CONSIGNE_CROISEE` (test)."""
+RELANCES_MAX = 1
+"""Relance corrective après une sortie sans verdict valide (comme C7 pour le juge tiers)."""
+
+
 def prompt_verification(item: Mapping[str, Any]) -> str:
-    """Consigne de contre-vérification d'un item d'évaluation (aucun exemple de réponse)."""
+    """Consigne de contre-vérification d'un item d'évaluation (aucun exemple de réponse).
+
+    Consigne neutre, la même pour tous les items (revue O4c) : seules des précisions
+    factuelles sur le format (où se trouvent la grille et la source), rien qui oriente le
+    verdict."""
     corps = json.dumps(item, ensure_ascii=False, indent=2, sort_keys=True)
     return (
         "Tu contre-vérifies un item d'un jeu d'évaluation. Lis l'item ci-dessous (entrée, "
@@ -340,7 +369,24 @@ def prompt_verification(item: Mapping[str, Any]) -> str:
         '"coherent" (booléen : l\'item, sa référence et sa grille sont cohérents entre eux), '
         '"ambigu" (booléen : plusieurs réponses justes non prévues par la référence sont '
         'possibles), "fait_absent_de_la_source" (booléen : un fait de la référence ne figure '
-        'pas dans la source fournie), "remarque" (texte court).\n\nITEM :\n' + corps
+        'pas dans la source fournie), "remarque" (texte court).\n\n'
+        "Précisions sur le format :\n"
+        "- La grille de l'item est portée par ses clés de notation, selon la Tâche : "
+        "elements_cles, criteres, points_cles_reference, informations_a_conserver, "
+        "termes_juridiques_a_conserver, elements_obligatoires, valeurs_interdites, "
+        "participants_reference, decisions_reference, actions_reference, fautes.\n"
+        "- La source est la provenance (extraits cités) et, quand l'item fournit le texte à "
+        "traiter (document, notes, texte, éléments connus), ce texte lui-même ; un item "
+        "« fictif » a pour source son entrée.\n\nITEM :\n" + corps
+    )
+
+
+def prompt_correction(prompt: str) -> str:
+    """Relance corrective : rappel du format attendu, puis la consigne d'origine inchangée."""
+    return (
+        "Ta réponse précédente ne contenait pas d'objet JSON conforme (quatre clés : "
+        "coherent, ambigu, fait_absent_de_la_source booléens, remarque texte). Réponds "
+        "uniquement par cet objet JSON, sans autre texte, avec une remarque courte.\n\n" + prompt
     )
 
 
@@ -375,20 +421,43 @@ def decision(verdicts: Mapping[str, dict[str, Any] | None]) -> tuple[str, list[s
     return ("rejete" if motifs else "retenu"), motifs
 
 
+def _juger(item_id: Any, juge: str, prompt: str, appeler: Appelant) -> dict[str, Any] | None:
+    """Verdict d'un juge, après au plus `RELANCES_MAX` relances correctives ; `None` sinon."""
+    for essai in range(RELANCES_MAX + 1):
+        try:
+            texte = appeler(juge, prompt if essai == 0 else prompt_correction(prompt))
+        except Exception as exc:  # noqa: BLE001 - un échec d'appel laisse l'item rejouable
+            print(f"{item_id} : {juge} : {type(exc).__name__}", file=sys.stderr)
+            return None
+        lu = lire_verdict(texte)
+        if lu is not None:
+            return lu
+        print(f"{item_id} : {juge} : sortie sans verdict (essai {essai + 1})", file=sys.stderr)
+    return None
+
+
 def verifier_items(
-    items: Sequence[Mapping[str, Any]], juges: Sequence[str], appeler: Appelant
+    items: Sequence[Mapping[str, Any]],
+    juges: Sequence[str],
+    appeler: Appelant,
+    acquis: Mapping[str, Mapping[str, dict[str, Any] | None]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Une ligne de verdict par item : verdict de chaque juge, décision et motifs."""
+    """Une ligne de verdict par item : verdict de chaque juge, décision et motifs.
+
+    `acquis` : verdicts valides déjà obtenus pour un item inchangé resté `incomplet` ; seuls
+    les juges sans verdict valide sont rappelés (story O4c)."""
     lignes: list[dict[str, Any]] = []
     for item in items:
         prompt = prompt_verification(item)
+        deja = (acquis or {}).get(str(item.get("id")), {})
         verdicts: dict[str, dict[str, Any] | None] = {}
         for juge in juges:
-            try:
-                verdicts[juge] = lire_verdict(appeler(juge, prompt))
-            except Exception as exc:  # noqa: BLE001 - un échec d'appel laisse l'item rejouable
-                verdicts[juge] = None
-                print(f"{item.get('id')} : {juge} : {type(exc).__name__}", file=sys.stderr)
+            precedent = deja.get(juge)
+            verdicts[juge] = (
+                precedent
+                if precedent is not None
+                else _juger(item.get("id"), juge, prompt, appeler)
+            )
         etat, motifs = decision(verdicts)
         lignes.append(
             {
@@ -398,6 +467,7 @@ def verifier_items(
                 "juges": verdicts,
                 "decision": etat,
                 "motifs": motifs,
+                "version_prompt": VERSION_PROMPT,
             }
         )
     return lignes
@@ -441,6 +511,28 @@ def verdicts_courants(chemin: Path) -> dict[str, dict[str, Any]]:
     return {str(ligne["item_id"]): ligne for ligne in lire_jsonl(chemin)}
 
 
+def parametres_appel(config: Any) -> dict[str, Any]:
+    """Paramètres OpenRouter d'un juge (`ConfigJugeTiers`) : température, effort de
+    raisonnement et format de réponse de `juges.toml`, comme `JugeTiers._parametres`.
+
+    Story O4c : sans `reasoning`, GLM-5.3 raisonnait jusqu'à `max_tokens` (50 sorties vides
+    coupées à 8 000 tokens sur 160) et DeepSeek dépassait le délai de lecture sur deux CR."""
+    parametres: dict[str, Any] = {}
+    if config.temperature is not None:
+        parametres["temperature"] = config.temperature
+    if config.effort_raisonnement is not None:
+        parametres["reasoning"] = {"effort": config.effort_raisonnement}
+    if config.format_reponse == "json_object":
+        parametres["response_format"] = {"type": "json_object"}
+    else:
+        parametres["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {"name": "verdict_croise", "schema": SCHEMA_VERDICT, "strict": True},
+        }
+    parametres["provider"] = {"require_parameters": True}
+    return parametres
+
+
 def ouvrir_appelant(juges: Sequence[str], racine: Path) -> Appelant:
     """Appelant réel : clients OpenRouter des `juges` (`juges.toml`), usage de budget dérivé.
 
@@ -461,10 +553,7 @@ def ouvrir_appelant(juges: Sequence[str], racine: Path) -> Appelant:
             modele=juge.config.modele,
             max_tokens=juge.config.max_tokens,
             tokens_entree_estimes=max(1, len(prompt) // 3),
-            parametres={
-                "response_format": {"type": "json_object"},
-                "provider": {"require_parameters": True},
-            },
+            parametres=parametres_appel(juge.config),
         )
         return reponse.texte
 
@@ -515,17 +604,26 @@ def cmd_verifier(
     deja = verdicts_courants(chemin)
 
     def _a_jour(item: Mapping[str, Any], ligne: Mapping[str, Any] | None) -> bool:
-        return ligne is not None and ligne.get("item_sha256") == empreinte_item(item)
+        """Verdict sur l'empreinte courante de l'item et avec la consigne courante."""
+        return (
+            ligne is not None
+            and ligne.get("item_sha256") == empreinte_item(item)
+            and ligne.get("version_prompt") == VERSION_PROMPT
+        )
 
-    a_faire = [
-        i
-        for i in items
-        if not _a_jour(i, deja.get(str(i.get("id"))))
-        or deja[str(i.get("id"))].get("decision") == "incomplet"
-    ]
+    def _a_refaire(item: Mapping[str, Any]) -> bool:
+        ligne = deja.get(str(item.get("id")))
+        return ligne is None or not _a_jour(item, ligne) or ligne.get("decision") == "incomplet"
+
+    a_faire = [i for i in items if _a_refaire(i)]
+    acquis = {
+        str(i.get("id")): deja[str(i.get("id"))].get("juges", {})
+        for i in a_faire
+        if _a_jour(i, deja.get(str(i.get("id"))))
+    }
     if appeler is None:
         appeler = ouvrir_appelant(juges, racine)
-    lignes = verifier_items(a_faire, juges, appeler)
+    lignes = verifier_items(a_faire, juges, appeler, acquis)
     construction.mkdir(parents=True, exist_ok=True)
     with chemin.open("a", encoding="utf-8", newline="\n") as sortie:
         for ligne in lignes:

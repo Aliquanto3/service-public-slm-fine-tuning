@@ -405,3 +405,159 @@ def test_preferences_dans_la_disjonction(depot: Path) -> None:
     item = {"id": "Q-501", "tache": "Q", "entree": {"question": texte}, "provenance": []}
     conflits = vjc.controler_disjonction([item], depot)
     assert any("data/train/v9/preferences#1" in c for c in conflits), conflits
+
+
+# --- Story O4c ---------------------------------------------------------------------------------
+
+
+def test_parametres_du_juge_transmis() -> None:
+    """Sans `reasoning`, GLM raisonnait jusqu'à `max_tokens` : la config du juge est transmise."""
+    from slmsp.judge.config import ConfigJugeTiers
+
+    config = ConfigJugeTiers(
+        modele="<modele-factice>", temperature=0.0, max_tokens=8000, effort_raisonnement="low"
+    )
+    parametres = vjc.parametres_appel(config)
+    assert parametres["reasoning"] == {"effort": "low"}
+    assert parametres["temperature"] == 0.0
+    schema = parametres["response_format"]["json_schema"]
+    assert schema["strict"] is True and schema["schema"] is vjc.SCHEMA_VERDICT
+    assert parametres["provider"] == {"require_parameters": True}
+    objet = ConfigJugeTiers(modele="<m>", max_tokens=10, format_reponse="json_object")
+    assert vjc.parametres_appel(objet)["response_format"] == {"type": "json_object"}
+    assert "reasoning" not in vjc.parametres_appel(objet)
+
+
+def test_relance_corrective_apres_sortie_vide() -> None:
+    prompts: list[str] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        prompts.append(prompt)
+        return "" if len(prompts) == 1 else verdict()
+
+    lignes = vjc.verifier_items(ITEMS[:1], ["deepseek"], appeler)
+    assert lignes[0]["decision"] == "retenu"
+    assert len(prompts) == 2 and prompts[1].startswith("Ta réponse précédente")
+    assert identifiant_du(prompts[1]) == ITEMS[0]["id"]  # consigne d'origine incluse
+
+
+def test_relance_bornee() -> None:
+    appels: list[str] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append(juge)
+        return "{}"
+
+    lignes = vjc.verifier_items(ITEMS[:1], ["deepseek", "glm"], appeler)
+    assert lignes[0]["decision"] == "incomplet"
+    assert len(appels) == 2 * (vjc.RELANCES_MAX + 1)
+
+
+def test_incomplet_rejoue_seulement_le_juge_manquant(depot: Path) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:1])
+    appels: list[str] = []
+    panne = {"glm": True}
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append(juge)
+        if juge == "glm" and panne["glm"]:
+            raise TimeoutError("<delai-factice>")
+        return verdict()
+
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 1
+    panne["glm"] = False
+    appels.clear()
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    assert appels == ["glm"]
+
+
+def test_verdict_d_une_ancienne_consigne_non_repris(depot: Path) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:1])
+    ancien = {
+        "item_id": ITEMS[0]["id"],
+        "item_sha256": vjc.empreinte_item(ITEMS[0]),
+        "tache": "Q",
+        "juges": {"deepseek": json.loads(verdict(ambigu=True)), "glm": None},
+        "decision": "incomplet",
+        "motifs": ["glm : pas de verdict valide"],
+    }
+    ecrire(depot / "eval/construction/dev1/verdicts-croises.jsonl", [ancien])
+    appels: list[str] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append(juge)
+        return verdict()
+
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    assert appels == ["deepseek", "glm"]
+
+
+def test_contestation_sans_effet_rejet_maintenu(depot: Path) -> None:
+    """Revue O4c : plus de voie d'appel ; seul un item corrigé est revérifié."""
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    reponses: dict[tuple[str, str], str | Exception] = {
+        ("deepseek", ITEMS[0]["id"]): verdict(ambigu=True)
+    }
+    appels: list[str] = []
+    base = appelant(reponses)
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append(identifiant_du(prompt))
+        return base(juge, prompt)
+
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    ecrire(
+        depot / "eval/construction/dev1/contestations.jsonl",
+        [
+            {
+                "item_id": ITEMS[0]["id"],
+                "item_sha256": vjc.empreinte_item(ITEMS[0]),
+                "justification": "<justification-factice>",
+            }
+        ],
+    )
+    appels.clear()
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    assert appels == []  # la contestation ne relance rien
+    corrige = [{**ITEMS[0], "version_item": 2}, ITEMS[1]]
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", corrige)
+    reponses.clear()
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    assert appels == [ITEMS[0]["id"]] * 2  # l'item corrigé, par les deux juges
+    courant = vjc.verdicts_courants(depot / "eval/construction/dev1/verdicts-croises.jsonl")
+    assert courant[ITEMS[0]["id"]]["decision"] == "retenu"
+
+
+def test_tout_verdict_d_une_autre_consigne_est_refait(depot: Path) -> None:
+    """Revue O4c : un retenu ou un rejeté d'une consigne antérieure n'est pas repris."""
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    anciens = [
+        {
+            "item_id": it["id"],
+            "item_sha256": vjc.empreinte_item(it),
+            "tache": "Q",
+            "juges": {"deepseek": json.loads(verdict()), "glm": json.loads(verdict())},
+            "decision": decision,
+            "motifs": [],
+            "version_prompt": vjc.VERSION_PROMPT - 1,
+        }
+        for it, decision in zip(ITEMS[:2], ("retenu", "rejete"), strict=True)
+    ]
+    ecrire(depot / "eval/construction/dev1/verdicts-croises.jsonl", anciens)
+    appels: list[str] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append(identifiant_du(prompt))
+        return verdict()
+
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    assert sorted(appels) == sorted([ITEMS[0]["id"], ITEMS[1]["id"]] * 2)
+    courants = vjc.verdicts_courants(depot / "eval/construction/dev1/verdicts-croises.jsonl")
+    assert {v["version_prompt"] for v in courants.values()} == {vjc.VERSION_PROMPT}
+
+
+def test_consigne_neutre_sans_incitation_a_retenir() -> None:
+    prompt = vjc.prompt_verification(ITEMS[0])
+    assert "points_cles_reference" in prompt and "fictif" in prompt
+    for incitation in ("ne rendent pas", "n'est pas un défaut", "parmi d'autres"):
+        assert incitation not in prompt

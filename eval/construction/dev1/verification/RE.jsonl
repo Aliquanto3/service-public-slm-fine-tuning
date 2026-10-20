@@ -18,3 +18,5 @@
 {"id": "RE-518", "verdict": "accepte", "detail": "second passage : points clés relus dans le document (chunks de la fiche)", "verifie_le": "2026-10-20"}
 {"id": "RE-519", "verdict": "accepte", "detail": "second passage : points clés relus dans le document (chunks de la fiche)", "verifie_le": "2026-10-20"}
 {"id": "RE-520", "verdict": "accepte", "detail": "second passage : points clés relus dans le document (chunks de la fiche)", "verifie_le": "2026-10-20"}
+{"id": "RE-503", "verdict": "accepte", "detail": "O4c, après contre-vérification croisée : public de la consigne rendu cohérent avec des points clés généraux (lycéen de 17 ans remplacé par un agent d'accueil ; GLM)", "verifie_le": "2026-10-20"}
+{"id": "RE-515", "verdict": "accepte", "detail": "O4c, après contre-vérification croisée : public de la consigne rendu cohérent avec des points clés généraux (couple de retraités remplacé par un agent d'accueil du CCAS ; DeepSeek et GLM)", "verifie_le": "2026-10-20"}

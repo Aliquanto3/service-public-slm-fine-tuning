@@ -431,6 +431,64 @@ def _ecrire_exclusif(chemin: Path, donnees: bytes) -> None:
         raise ArtefactExistant(f"{chemin} existe déjà : un gel n'est jamais réécrit") from None
 
 
+def _retenu_par_tous(ligne: Mapping[str, object]) -> bool:
+    """Décision `retenu` et, pour au moins deux juges, un verdict sans aucun grief."""
+    juges = ligne.get("juges")
+    if ligne.get("decision") != "retenu" or not isinstance(juges, Mapping) or len(juges) < 2:
+        return False
+    return all(
+        isinstance(v, Mapping)
+        and v.get("coherent") is True
+        and v.get("ambigu") is False
+        and v.get("fait_absent_de_la_source") is False
+        for v in juges.values()
+    )
+
+
+def ecarts_verdicts_croises(chemin_items: Path, chemin_verdicts: Path) -> list[str]:
+    """Items sans dernier verdict croisé « retenu » par les juges sur leur empreinte courante
+    (JSON canonique de la ligne d'`items.jsonl`) et avec la consigne courante (gel `relu-llm`,
+    revue O4c). Liste vide : tous retenus."""
+    if not chemin_verdicts.is_file():
+        return [f"verdicts croisés absents : {chemin_verdicts}"]
+    derniers: dict[str, Mapping[str, object]] = {}
+    for rang, ligne in enumerate(chemin_verdicts.read_text(encoding="utf-8").splitlines(), 1):
+        if not ligne.strip():
+            continue
+        try:
+            valeur = json.loads(ligne)
+        except json.JSONDecodeError:
+            return [f"{chemin_verdicts} ligne {rang} : JSON invalide"]
+        if isinstance(valeur, dict) and "item_id" in valeur:
+            derniers[str(valeur["item_id"])] = valeur
+    ecarts: list[str] = []
+    for ligne in chemin_items.read_text(encoding="utf-8").splitlines():
+        if not ligne.strip():
+            continue
+        item = json.loads(ligne)
+        identifiant = str(item.get("id"))
+        verdict = derniers.get(identifiant)
+        if verdict is None:
+            motif = "aucun verdict croisé"
+        elif verdict.get("item_sha256") != sha256_hex(json_canonique(item)):
+            motif = "verdict croisé d'une version antérieure de l'item"
+        elif verdict.get("version_prompt") != cfg.VERSION_CONSIGNE_CROISEE:
+            motif = (
+                f"verdict croisé de la consigne {verdict.get('version_prompt')!r} "
+                f"(attendu {cfg.VERSION_CONSIGNE_CROISEE})"
+            )
+        elif not _retenu_par_tous(verdict):
+            motifs = verdict.get("motifs")
+            detail = "; ".join(str(m) for m in motifs) if isinstance(motifs, list) else ""
+            motif = f"contre-vérification croisée {verdict.get('decision')!r}" + (
+                f" ({detail})" if detail else ""
+            )
+        else:
+            continue
+        ecarts.append(f"{identifiant} : {motif}")
+    return ecarts
+
+
 def gel(
     version: str,
     statut: str,
@@ -474,6 +532,10 @@ def gel(
     bloquants = list(rapport.erreurs)
     if statut in cfg.STATUTS_BLOQUANTS:
         bloquants += [f"écart de composition (statut {statut}) : {e}" for e in rapport.ecarts]
+    if statut == cfg.STATUT_RELU_LLM and rapport.jeu is not None:
+        bloquants += ecarts_verdicts_croises(
+            rapport.jeu.chemin_items, cfg.chemin_verdicts_croises(base, version)
+        )
     grille = cfg.chemin_grille(base)
     if not grille.is_file():
         bloquants.append(f"grille du Juge absente : {grille}")

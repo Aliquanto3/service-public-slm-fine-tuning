@@ -18,3 +18,5 @@
 {"id": "NR-518", "verdict": "accepte", "detail": "second passage : calculs refaits, faits relus dans la fiche citée, critères cohérents avec la consigne", "verifie_le": "2026-10-20"}
 {"id": "NR-519", "verdict": "accepte", "detail": "second passage : calculs refaits, faits relus dans la fiche citée, critères cohérents avec la consigne", "verifie_le": "2026-10-20"}
 {"id": "NR-520", "verdict": "accepte", "detail": "second passage : calculs refaits, faits relus dans la fiche citée, critères cohérents avec la consigne", "verifie_le": "2026-10-20"}
+{"id": "NR-505", "verdict": "accepte", "detail": "O4c, après contre-vérification croisée : parenthèse sur les durées réduites, absente de l'extrait cité (DeepSeek et GLM), retirée de la référence", "verifie_le": "2026-10-20"}
+{"id": "NR-511", "verdict": "accepte", "detail": "O4c, après contre-vérification croisée : signature « L'accueil de la mairie » (service non nommé par la consigne, DeepSeek) remplacée par « La mairie »", "verifie_le": "2026-10-20"}
