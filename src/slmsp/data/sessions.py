@@ -15,6 +15,15 @@ Une session (`SessionPlanifiee`) est exécutée selon sa Tâche :
   `data/cassettes/<session_id>.t<k>.json` ; les résultats repartent au Générateur en
   messages `assistant` et `tool` qu'il revérifie (verrou 3).
 
+**Régénération (story O6b, `regenerer`)** : la dernière étape d'une session CR, LC ou CT
+refusée par la vérification est rejouée avec le gabarit `*-correction` de la Tâche, ses
+amorces (CR : la transcription dérivée, gardée) et l'amorce de corrections que le Générateur
+rend lui-même depuis les motifs structurés (`Generateur.amorce_corrections`, consignée dans
+`amorces-derivees.jsonl`). Le `session_id` est gardé ; la `SessionBrute` rendue cite la seule
+chaîne retenue (CR : transcription puis compte rendu corrigé) et jamais l'amorce de
+corrections (ni dans `amorce_ids`, ni dans `amorces_derivees`) : elle n'entre dans aucun
+exemple d'entraînement.
+
 **Aucun appel n'est repayé** : avant chaque appel, le journal Mistral (lecteur `data`) est
 parcouru à la recherche d'une ligne `generation`/`ok` d'un modèle stable, de même gabarit
 (identifiant, version, SHA), mêmes amorces et mêmes messages précédents ; sa réponse est
@@ -56,8 +65,10 @@ from slmsp.mcp.erreurs import ErreurTransportMcp
 from slmsp.mcp.outils import valider_appel
 from slmsp.mistral.generateur import (
     FINS_TRONQUEES,
+    GABARITS_CORRECTION,
     TACHES_OUTILLEES,
     Generateur,
+    MotifCorrection,
     message_assistant,
     reponse_reutilisable,
 )
@@ -219,13 +230,66 @@ class ExecuteurSessions:
     ) -> SessionBrute | AbandonSession:
         """Exécute `session` ; `compteur` reflète les appels et cassettes, même en cas
         d'exception (`BudgetEpuise`, `ErreurApiMistral`, `IncidentOutils`…, propagées)."""
-        try:
+
+        def etapes() -> None:
             if session.tache in TACHES_OUTILLEES:
                 self._trace_outils(session, compteur)
             elif len(session.gabarits) == 2:
                 self._deux_temps(session, compteur)
             else:
                 self._appel_final(session, compteur, session.gabarits[0], session.amorce_ids)
+
+        return self._issue(session, compteur, etapes)
+
+    def regenerer(
+        self,
+        session: SessionPlanifiee,
+        refusee: SessionBrute,
+        essai: int,
+        motifs: Sequence[MotifCorrection],
+        compteur: Compteur,
+    ) -> SessionBrute | AbandonSession:
+        """Essai `essai` (2 ou 3) de la session `refusee` : sa dernière étape rejouée avec le
+        gabarit de correction de la Tâche et l'amorce de corrections rendue par le Générateur
+        depuis `motifs` (voir le module). Mêmes erreurs et même issue qu'`executer`."""
+        generateur = self.ctx.generateur
+
+        def etapes() -> None:
+            if session.tache not in GABARITS_CORRECTION:
+                raise ProvenanceInvalide(f"Tâche {session.tache} non régénérable")
+            valide = generateur.gabarit(GABARITS_CORRECTION[session.tache], session.tache)
+            ref = RefGabarit(id=valide.id, version=valide.version, sha256=valide.sha256)
+            if session.tache == "CR":
+                # La transcription (premier appel, amorce dérivée) est gardée.
+                if len(refusee.appel_ids) != 2 or len(refusee.amorces_derivees) != 1:
+                    raise ProvenanceInvalide("CR refusé : transcription et compte rendu attendus")
+                sources = list(refusee.amorces_derivees)
+                compteur.appel_ids.append(refusee.appel_ids[0])
+                compteur.amorces_derivees.extend(sources)
+            else:
+                sources = list(session.amorce_ids)
+            corrections = generateur.amorce_corrections(
+                session.session_id,
+                session.tache,
+                essai,
+                motifs,
+                appel_refuse=refusee.appel_ids[-1],
+                amorce_ids=sources,
+            )
+            if corrections.amorce_id not in self._derivees:
+                self.ctx.run.ajouter_jsonl(
+                    NOM_AMORCES_DERIVEES, corrections.model_dump(mode="json")
+                )
+                self._derivees.add(corrections.amorce_id)
+            self._appel_final(session, compteur, ref, [*sources, corrections.amorce_id])
+
+        return self._issue(session, compteur, etapes)
+
+    def _issue(
+        self, session: SessionPlanifiee, compteur: Compteur, etapes: Callable[[], None]
+    ) -> SessionBrute | AbandonSession:
+        try:
+            etapes()
         except Abandon as abandon:
             motif, detail = abandon.motif, abandon.detail
         except (ProvenanceInvalide, AppelNonConforme) as exc:

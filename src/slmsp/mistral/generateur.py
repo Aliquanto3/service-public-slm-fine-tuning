@@ -24,6 +24,17 @@ Extensions de la story 9.4, toujours sans texte libre :
 - `deriver_amorce(appel_id, …)` fait d'une réponse journalisée de la session une amorce
   `mistral` (transcription du CR en deux temps).
 
+Extension de la story O6b (régénération, toujours sans texte libre) : l'emplacement
+`corrections` des gabarits `*-correction` n'est rempli que par une amorce `verification`
+créée par `amorce_corrections(session_id, tache, essai, motifs, appel_refuse=…,
+amorce_ids=…)`. Le Générateur **re-rend lui-même** le bloc depuis des motifs structurés
+(`MotifCorrection`) : la phrase fixe de chaque code (`corrections.md`, validé par
+`core.gabarits`) et les extraits qui sont des sous-chaînes exactes de la réponse refusée
+journalisée ou des amorces de la session. Aucun texte libre d'un contrôle ou du juge de
+données n'entre dans la requête (revue O6b, D1) ; aucune chaîne de l'appelant n'entre
+telle quelle ; une
+amorce `verification` lue dans un seed est refusée.
+
 La requête vaut `[{"role": "user", "content": consigne_rendue}] + messages_precedents` :
 aucun autre texte n'y entre. L'appel passe par `ClientMistral._appeler` avec le jeton de
 preuve `_JETON`, seul moyen d'écrire une ligne `generation` au journal
@@ -56,7 +67,7 @@ from slmsp.core.config import plafonds_re_evaluation, racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ProvenanceInvalide, SlmspError
 from slmsp.core.gabarits import GabaritInvalide, GabaritValide, valider_gabarit
 from slmsp.core.messages import ConversationInvalide, valider_conversation
-from slmsp.core.schemas.amorce import Amorce, texte_mistral_conforme
+from slmsp.core.schemas.amorce import EMPLACEMENT_CORRECTIONS, Amorce, texte_mistral_conforme
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.run import MOTIF_RUN_ID
 from slmsp.mistral.client import ClientMistral, ModeleMistralRefuse, ReponseMistral
@@ -64,8 +75,10 @@ from slmsp.mistral.config import preversion_admise
 from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, LigneAppel, journal_pour
 
 __all__ = [
+    "GABARITS_CORRECTION",
     "Generateur",
     "Generation",
+    "MotifCorrection",
     "PrealableNonSatisfait",
     "PrealablesGeneration",
     "charger_plafonds_mots",
@@ -107,11 +120,41 @@ TACHES_PLAFONNABLES: Final = ("Q", "RD", "CR", "LC", "CT", "generique")
 """Tâches admises dans `[generateur.plafonds_mots]`, copie de `slmsp.data.config` (couche
 supérieure, non importable ici ; l'égalité des deux est testée)."""
 
+GABARITS_CORRECTION: Final[Mapping[str, str]] = {
+    "CR": "cr-correction",
+    "LC": "lc-correction",
+    "CT": "ct-correction",
+}
+"""Gabarit de régénération de la dernière étape de chaque Tâche vérifiée (story O6b)."""
+GABARIT_PHRASES_CORRECTIONS: Final = "corrections"
+"""Fichier des phrases fixes de l'outillage, une par code de motif (`corrections.md`)."""
+LIBELLE_EXTRAITS: Final = "libelle_extraits"
+ESSAIS_CORRECTION: Final = (2, 3)
+EXTRAITS_MAX: Final = 5
+LONGUEUR_EXTRAIT_MAX: Final = 200
+
 _RE_GABARIT_ID = re.compile(r"[a-z0-9-]+")
 _RE_SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
 _RE_RUN_ID = re.compile(MOTIF_RUN_ID)
 _RE_EMPLACEMENT = re.compile(r"\{([a-z_]+)\}")
 _RE_ENTIER = re.compile(r"[1-9][0-9]*")
+
+
+@dataclass(frozen=True)
+class MotifCorrection:
+    """Motif de refus structuré transmis à `Generateur.amorce_corrections` (story O6b).
+
+    `code` choisit une phrase fixe de `corrections.md` (code inconnu : refus) ; `extraits`
+    ne sont rendus que s'ils sont des sous-chaînes exactes de la réponse refusée ou des
+    amorces de la session. Aucun texte libre d'un contrôle ou du juge (son `motif`) n'entre
+    dans la requête (D1, revue O6b) : il reste consigné dans `verification.jsonl`."""
+
+    code: str
+    extraits: tuple[str, ...] = ()
+
+
+def _present(segment: str, textes: Sequence[str]) -> bool:
+    return bool(segment) and any(segment in texte for texte in textes)
 
 
 class PrealableNonSatisfait(SlmspError):
@@ -456,6 +499,8 @@ class Generateur:
         )
         self.seed_run_id = seed_run_id
         self._amorces = self._charger_amorces(seed_run_id)
+        self._corrections: dict[str, Amorce] = {}
+        self._phrases: dict[str, str] | None = None
         self.plafonds_mots = charger_plafonds_mots(self.fichier_donnees)
 
     # --- Chargements ---------------------------------------------------------------------
@@ -481,6 +526,11 @@ class Generateur:
             if amorce.amorce_id in amorces:
                 raise ProvenanceInvalide(
                     f"artefact seed {seed_run_id} : amorce {amorce.amorce_id!r} en double"
+                )
+            if amorce.auteur_contenu == "verification":
+                raise ProvenanceInvalide(
+                    f"artefact seed {seed_run_id} : amorce {amorce.amorce_id!r} de provenance "
+                    "« verification » (réservée au Générateur)"
                 )
             amorces[amorce.amorce_id] = amorce
         return amorces
@@ -564,7 +614,11 @@ class Generateur:
         journal: JournalMistral | None = None
         groupes: dict[str, list[str]] = {}
         for amorce_id in ids:
-            amorce = self._amorces.get(amorce_id) if isinstance(amorce_id, str) else None
+            amorce = (
+                self._amorces.get(amorce_id) or self._corrections.get(amorce_id)
+                if isinstance(amorce_id, str)
+                else None
+            )
             if amorce is None:
                 raise ProvenanceInvalide("amorce inconnue de l'artefact seed")
             if amorce.tache != tache:
@@ -703,6 +757,106 @@ class Generateur:
                 f"amorce {amorce.amorce_id!r} déjà connue avec une autre provenance"
             )
         self._amorces[amorce.amorce_id] = amorce
+        return amorce
+
+    # --- Corrections (story O6b) -----------------------------------------------------------
+
+    def phrases_corrections(self) -> dict[str, str]:
+        """Phrases fixes de `corrections.md` par code (et libellés), fichier validé par
+        `core.gabarits` (verrou 6) ; lève `GabaritInvalide`."""
+        if self._phrases is None:
+            chemin = self.dossier_gabarits / f"{GABARIT_PHRASES_CORRECTIONS}.md"
+            if not chemin.is_file():
+                raise GabaritInvalide(f"phrases de corrections {chemin.name!r} introuvables")
+            gabarit = valider_gabarit(chemin)
+            if (
+                gabarit.id != GABARIT_PHRASES_CORRECTIONS
+                or gabarit.front_matter.get("tache") != "verification"
+            ):
+                raise GabaritInvalide(f"{chemin.name} : id ou tâche inattendus")
+            if LIBELLE_EXTRAITS not in gabarit.emplacements:
+                raise GabaritInvalide(f"{chemin.name} : libellé des extraits absent")
+            self._phrases = dict(gabarit.emplacements)
+        return dict(self._phrases)
+
+    def amorce_corrections(
+        self,
+        session_id: str,
+        tache: str,
+        essai: int,
+        motifs: Sequence[MotifCorrection],
+        *,
+        appel_refuse: str,
+        amorce_ids: Sequence[str],
+    ) -> Amorce:
+        """Amorce `verification` (emplacement `corrections`) de l'essai `essai` (2 ou 3) de la
+        session, rendue ici depuis les motifs structurés de la cible refusée `appel_refuse`
+        (réponse journalisée de la session) et les amorces `amorce_ids` de la session.
+
+        Rendu déterministe : mêmes motifs, même réponse refusée, mêmes amorces → mêmes octets,
+        même `amorce_id` (`corr-<session_id>-e<essai>-<sha12>`). Lève `ProvenanceInvalide`
+        (appel, amorce ou motif refusé) ou `GabaritInvalide` (`corrections.md`)."""
+        if tache not in GABARITS_CORRECTION:
+            raise ProvenanceInvalide(f"corrections : tâche {tache!r} non régénérable")
+        if not isinstance(essai, int) or isinstance(essai, bool) or essai not in ESSAIS_CORRECTION:
+            raise ProvenanceInvalide("corrections : essai 2 ou 3 attendu")
+        if not isinstance(session_id, str) or not _RE_SESSION_ID.fullmatch(session_id):
+            raise ProvenanceInvalide("corrections : session_id invalide")
+        ligne = self._journal().lire(appel_refuse) if isinstance(appel_refuse, str) else None
+        if ligne is None or not self._ligne_admise(ligne) or ligne.session_id != session_id:
+            raise ProvenanceInvalide(
+                "corrections : réponse refusée absente du journal, non « ok » ou d'une autre "
+                "session"
+            )
+        refusee = message_assistant(ligne.reponse_brute).get("content")
+        if not isinstance(refusee, str):
+            raise ProvenanceInvalide("corrections : réponse refusée sans contenu texte")
+        if isinstance(amorce_ids, (str, bytes)) or not isinstance(amorce_ids, Sequence):
+            raise ProvenanceInvalide("corrections : liste d'amorces attendue")
+        sources: list[str] = []
+        for amorce_id in amorce_ids:
+            amorce = self._amorces.get(amorce_id) if isinstance(amorce_id, str) else None
+            if amorce is None or amorce.tache != tache:
+                raise ProvenanceInvalide("corrections : amorce inconnue ou d'une autre tâche")
+            sources.append(amorce.texte)
+        textes = [refusee, *sources]
+        phrases = self.phrases_corrections()
+        if not motifs:
+            raise ProvenanceInvalide("corrections : aucun motif")
+        lignes: list[str] = []
+        for motif in motifs:
+            if not isinstance(motif, MotifCorrection):
+                raise ProvenanceInvalide("corrections : MotifCorrection attendu")
+            if motif.code == LIBELLE_EXTRAITS or motif.code not in phrases:
+                raise ProvenanceInvalide(f"corrections : code {motif.code!r} sans phrase fixe")
+            lignes.append(f"- {phrases[motif.code]}")
+            extraits: list[str] = []
+            for extrait in motif.extraits:
+                if not isinstance(extrait, str):
+                    continue
+                # Sous-chaîne exacte, d'une ligne, bornée (aucun texte libre du juge).
+                rendu = extrait[:LONGUEUR_EXTRAIT_MAX].strip()
+                if "\n" in rendu or not _present(rendu, textes) or rendu in extraits:
+                    continue
+                extraits.append(rendu)
+            if extraits:
+                cites = " ; ".join(f"« {e} »" for e in extraits[:EXTRAITS_MAX])
+                lignes.append(f"  {phrases[LIBELLE_EXTRAITS]} : {cites}")
+        texte = "\n".join(lignes)
+        empreinte = sha256_hex(texte)
+        try:
+            amorce = Amorce(
+                schema_version=1,
+                amorce_id=f"corr-{session_id.lower()}-e{essai}-{empreinte[:12]}",
+                tache=tache,
+                emplacement=EMPLACEMENT_CORRECTIONS,
+                texte=texte,
+                sha_texte=empreinte,
+                auteur_contenu="verification",
+            )
+        except ValidationError:
+            raise ProvenanceInvalide("amorce de corrections non conforme") from None
+        self._corrections[amorce.amorce_id] = amorce
         return amorce
 
     def _precedents(
@@ -870,6 +1024,13 @@ class Generateur:
         gabarit, max_tokens = self._gabarit(gabarit_id, tache)
         max_tokens += self._marge_raisonnement()
         ids, valeurs = self._resoudre_amorces(amorce_ids, tache, gabarit)
+        for amorce_id in ids:
+            if amorce_id in self._corrections and not amorce_id.startswith(
+                f"corr-{session_id.lower()}-"
+            ):
+                raise ProvenanceInvalide(
+                    f"amorce {amorce_id!r} : corrections d'une autre session que {session_id!r}"
+                )
         if EMPLACEMENT_PASSAGES in gabarit.emplacements:
             if self._rendre_passages is None:
                 raise ProvenanceInvalide(

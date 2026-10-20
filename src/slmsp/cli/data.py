@@ -3,7 +3,8 @@
 Les étapes `seed` (9.3), `generate` (9.4), `validate`, `filter` (9.5) et `build` (9.6) sont
 implémentées.
 
-`seed [--racine DIR] [--facteur N] [--scenarios N] [--courriers {N,auto}]` constitue
+`seed [--racine DIR] [--facteur N] [--scenarios N] [--courriers {N,auto}]
+[--taches T1,T2 --completer-depuis SEED_RUN_ID]` constitue
 `runs/data-seed/<run_id>/` (`amorces.jsonl`, `comptes.json`) depuis les jeux publics de
 `config/sources.toml`, déjà téléchargés sous `<racine>/data/raw/mediatech/` par
 `slmsp fetch sources` (extra `data` : pyarrow). Les longueurs RE sont tirées dans
@@ -11,7 +12,8 @@ implémentées.
 et les amorces de courrier type (`--courriers N`, ou `auto` = volume CT x facteur) sont
 générés par Mistral, opt-in (0 par défaut) : ils exigent le gel commité du Jeu d'évaluation
 v1.1 (code 4 sinon). Les amorces CT d'une session déjà journalisée sont réutilisées sans
-nouvel appel (relance idempotente).
+nouvel appel (relance idempotente). `--taches LC --completer-depuis SEED_RUN_ID` (seed
+partiel, story O6b) ne tire que ces Tâches et recopie à l'identique les amorces des autres.
 
 `generate (--depuis SEED_RUN_ID | --reprendre RUN_ID) [--racine DIR] [--surplus X]` produit
 `runs/data-generate/<run_id>/` par le Générateur Mistral (`slmsp.data.generate`). Il exige
@@ -24,9 +26,11 @@ ou préversion du Générateur ; à la reprise, défaut : le modèle du run). `-
 ne génère que ces Tâches ; `--completer-depuis GENERATE_RUN_ID` y ajoute, sans appel, les
 sessions closes des autres Tâches d'un run du même seed (story S5). `--verifiee [--sans-juge]
 [--essais-max N] [--plafond-estime-openrouter EUR]` vérifie chaque cible CR, LC, CT (contrôles
-déterministes puis juge de données, `slmsp.data.generation_verifiee`, story O6a) et écarte les
-refusées ; `--plafond-estime-mistral EUR` refuse un lancement plus cher (0 : aucun appel
-Mistral nouveau). À la reprise, les réglages de vérification sont relus du run.
+déterministes puis juge de données, `slmsp.data.generation_verifiee`, story O6a), régénère
+une cible refusée avec ses motifs (gabarits `*-correction`, au plus `essais_max - 1` fois,
+story O6b) puis écarte les refusées ; `--plafond-estime-mistral EUR` refuse un lancement plus
+cher (0 : aucun appel Mistral nouveau). À la reprise, les réglages de vérification sont
+relus du run.
 
 `validate --depuis GENERATE_RUN_ID [--racine DIR] [--controle-mistral]` rejoue les traces RD
 sur le Bac à sable et vérifie URL et valeurs de chaque exemple contre ses sources
@@ -230,6 +234,19 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         help="appels Mistral pour les amorces de courrier type CT (auto : volume CT x "
         "facteur ; défaut : 0, aucun appel d'API)",
     )
+    p.add_argument(
+        "--taches",
+        type=_liste_taches,
+        default=None,
+        metavar="T1,T2",
+        help="seed partiel (avec --completer-depuis) : ne tirer que ces Tâches",
+    )
+    p.add_argument(
+        "--completer-depuis",
+        default=None,
+        metavar="SEED_RUN_ID",
+        help="avec --taches : recopier à l'identique les amorces des autres Tâches de ce seed",
+    )
     p.set_defaults(func=_seed)
 
     c = actions.add_parser(
@@ -283,13 +300,14 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--completer-depuis",
         default=None,
         metavar="GENERATE_RUN_ID",
-        help="avec --taches : reprendre sans appel les autres Tâches de ce run du même seed",
+        help="avec --taches : reprendre sans appel les autres Tâches de ce run du même seed "
+        "(ou d'un seed dont le seed courant recopie les amorces, seed partiel)",
     )
     g.add_argument(
         "--verifiee",
         action="store_true",
         help="génération vérifiée CR, LC, CT : contrôles déterministes puis juge de données "
-        "(story O6a ; une cible refusée est écartée)",
+        "(story O6a), régénération des cibles refusées (story O6b) puis écart",
     )
     g.add_argument(
         "--sans-juge",
@@ -302,7 +320,7 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         default=None,
         metavar="N",
         help="avec --verifiee : essais par session, de 1 à 3 (défaut : [verification] "
-        "essais_max ; O6a n'en fait qu'un)",
+        "essais_max) ; au-delà de 1, régénération des cibles refusées (story O6b)",
     )
     g.add_argument(
         "--plafond-estime-mistral",
@@ -573,6 +591,9 @@ def _consigner(message: str) -> None:
 
 def _seed(args: argparse.Namespace) -> int:
     racine = _racine(args)
+    if (args.taches is None) != (args.completer_depuis is None):
+        print("slmsp : --taches et --completer-depuis vont ensemble", file=sys.stderr)
+        return int(CodeSortie.ERREUR)
     decodeur = _decodeur_pyarrow()
     config_sources = charger_config_sources()
     config = charger_config_donnees()
@@ -604,6 +625,8 @@ def _seed(args: argparse.Namespace) -> int:
             nb_courriers=courriers,
             fabrique_courriers=fabrique_ct,
             consigner=_consigner,
+            taches=args.taches,
+            completer_depuis=args.completer_depuis,
         )
     except ProvenanceInvalide as exc:
         print(f"slmsp : {exc}", file=sys.stderr)

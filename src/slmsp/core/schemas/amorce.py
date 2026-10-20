@@ -10,7 +10,11 @@ générateur. Sa provenance est l'une de :
 - `config` : un paramètre de configuration tiré par graine, sans contenu rédigé (`lie_a`
   requis, interdit ailleurs : l'amorce jointe dans le même appel). Seuls les emplacements de
   `EMPLACEMENTS_CONFIG` l'admettent, avec pour texte une longueur du Jeu
-  (`courte`, `moyenne`, `detaillee`).
+  (`courte`, `moyenne`, `detaillee`) ;
+- `verification` (story O6b) : bloc de corrections d'une régénération, rendu par le
+  Générateur lui-même (`Generateur.amorce_corrections`) depuis des motifs de refus
+  structurés ; emplacement `corrections` seul, et seule provenance admise pour lui. Jamais
+  dans un seed, jamais dans un exemple d'entraînement.
 
 Une amorce `mistral` reprend soit le contenu entier de la réponse journalisée, soit la
 valeur de la clé `emplacement` de l'objet JSON que ce contenu porte (`texte_de_reponse`).
@@ -34,8 +38,11 @@ MOTIF_EMPLACEMENT = r"^[a-z_]+$"
 
 AuteurContenu = Literal["public", "mistral", "anael"]
 """Auteurs de contenu admis au Registre des licences."""
-AuteurAmorce = Literal["public", "mistral", "anael", "config"]
-"""Provenances d'une amorce : celles du Registre, plus `config` (paramètre tiré par graine)."""
+AuteurAmorce = Literal["public", "mistral", "anael", "config", "verification"]
+"""Provenances d'une amorce : celles du Registre, plus `config` (paramètre tiré par graine) et
+`verification` (bloc de corrections rendu par le Générateur, story O6b)."""
+EMPLACEMENT_CORRECTIONS: Final = "corrections"
+"""Seul emplacement d'une amorce `verification`, qui est sa seule provenance admise."""
 
 EMPLACEMENTS_CONFIG: Final[frozenset[tuple[str, str]]] = frozenset({("RE", "longueur_demandee")})
 """(Tâche, emplacement) qui admettent une amorce `config`."""
@@ -88,6 +95,8 @@ class Amorce(SchemaBase):
                 raise ValueError("texte d'amorce config hors de la forme admise")
         elif self.lie_a is not None:
             raise ValueError("lie_a réservé aux amorces config")
+        if (self.auteur_contenu == "verification") != (self.emplacement == EMPLACEMENT_CORRECTIONS):
+            raise ValueError("emplacement corrections réservé aux amorces verification")
         return self
 
 

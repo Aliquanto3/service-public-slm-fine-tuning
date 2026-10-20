@@ -467,8 +467,8 @@ class VerificationConfig(ModeleConfig):
     Règles d'outillage (expressions et listes), jamais un exemple de réponse (D1).
     """
 
-    essais_max: Annotated[StrictInt, Field(ge=1, le=3)] = 1
-    """Essais par session au total (O6b : régénérations ; O6a : un seul essai)."""
+    essais_max: Annotated[StrictInt, Field(ge=1, le=3)] = 3
+    """Essais par session au total : 1 essai puis au plus 2 régénérations (story O6b)."""
     gain_km_min: Annotated[float, Field(allow_inf_nan=False)] = 10.0
     """Gain de Kandel-Moles minimal d'une cible LC (copie de `gain_km_min` d'`evaluation.toml` :
     le paquet `data` ne lit pas la config d'évaluation)."""

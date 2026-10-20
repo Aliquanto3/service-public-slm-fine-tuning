@@ -35,6 +35,10 @@ CONFIG = VerificationConfig(gain_km_min=-1e9)
 @pytest.fixture
 def banc(tmp_path: Path) -> Any:
     """Faux OpenRouter du juge de données (même banc que `test_juge_donnees`)."""
+    return banc_factice(tmp_path)
+
+
+def banc_factice(tmp_path: Path) -> Any:
     dossier = tmp_path / "banc"
     dossier.mkdir()
     (dossier / ".env").write_text(f"OPENROUTER_API_KEY={F.CLE_FACTICE}\n", encoding="utf-8")
@@ -51,6 +55,7 @@ def banc(tmp_path: Path) -> Any:
 
 
 def verificateur(j: Any = None, **kw: Any) -> Verificateur:
+    kw.setdefault("essais_max", 1)  # O6a : un essai ; la régénération est testée en O6b
     return Verificateur(CONFIG, plafonds_mots={"LC": 150}, juge=j, **kw)
 
 
@@ -151,10 +156,11 @@ def test_rejeu_gratuit_sous_plafond_mistral_nul(monde: Any) -> None:
 # --- Revue O6a -----------------------------------------------------------------------------
 
 
-def test_essais_max_au_dela_de_un_refuse_avant_o6b() -> None:
-    with pytest.raises(ValueError, match="O6b"):
-        verificateur(essais_max=3)
-    assert VerificationConfig().essais_max == 1
+def test_essais_max_borne_et_trois_par_defaut_depuis_o6b() -> None:
+    assert verificateur(essais_max=3).essais_max == 3
+    with pytest.raises(ValueError):
+        verificateur(essais_max=4)
+    assert VerificationConfig().essais_max == 3
 
 
 def test_completer_depuis_refuse_les_taches_verifiees_non_regenerees(monde: Any) -> None:

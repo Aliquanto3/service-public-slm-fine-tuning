@@ -37,6 +37,12 @@ révision et SHA-256 (le CLI les convertit en `JeuPublic`).
   valeur tirée par graine dans
   `[seed].re_longueurs` de `config/donnees.toml` : un paramètre, pas un contenu.
 
+**Seed partiel** (story O6b, `taches` + `completer_depuis`) : seules les Tâches `taches` sont
+tirées (règles, scénarios et courriers des autres Tâches ignorés) ; les amorces des autres
+Tâches sont recopiées à l'identique d'un seed parent `complet`. Les sessions de ces Tâches
+gardent donc leur `session_id` dans `generate` (réponses Mistral réutilisées du journal) et un
+run `generate` du seed parent peut compléter un run du nouveau seed (`--completer-depuis`).
+
 Le run `data-seed` contient `amorces.jsonl` (écrit en ajout) et `comptes.json`.
 `verifier_amorces` relit un `amorces.jsonl` : schéma (provenance complète), `sha_texte`,
 ligne publique relue dans le jeu. L'`appel_id` d'une amorce Mistral est contrôlé au journal
@@ -49,20 +55,22 @@ import json
 import random
 import re
 from collections import Counter
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Final
 
 from pydantic import ValidationError
 
-from slmsp.core.artefacts import Run, lire, nouveau_run
+from slmsp.core.artefacts import Run, lire, nouveau_run, ouvrir_run
 from slmsp.core.canonique import sha256_hex
 from slmsp.core.erreurs import (
     BudgetEpuise,
     ConfigurationInvalide,
+    ManifesteInvalide,
     ProvenanceInvalide,
     ReponseTronquee,
+    SlmspError,
 )
 from slmsp.core.items import (
     LONGUEUR_EMPREINTE,
@@ -564,6 +572,20 @@ def _config_run(
     }
 
 
+def _amorces_parent(seed_run_id: str, racine: Path) -> list[Amorce]:
+    """Amorces d'un seed parent `complet` (seed partiel) ; lève `ManifesteInvalide`."""
+    try:
+        parent = ouvrir_run(seed_run_id, racine=racine)
+    except (OSError, ValueError, SlmspError):
+        raise ManifesteInvalide(f"seed parent {seed_run_id} illisible") from None
+    if parent.type != TYPE_RUN or parent.statut_courant() != "complet":
+        raise ManifesteInvalide(f"run {seed_run_id} : seed complet attendu")
+    try:
+        return [Amorce.model_validate(ligne) for ligne in parent.lire_jsonl(NOM_AMORCES)]
+    except ValidationError:
+        raise ManifesteInvalide(f"seed {seed_run_id} : amorce non conforme") from None
+
+
 def _ecrire_amorce(run: Run, amorce: Amorce) -> None:
     run.ajouter_jsonl(NOM_AMORCES, amorce.model_dump(mode="json", exclude_none=True))
 
@@ -589,6 +611,8 @@ def executer_seed(
     nb_courriers: int = 0,
     fabrique_courriers: FabriqueCourrier | None = None,
     consigner: Callable[[str], None] | None = None,
+    taches: Collection[str] | None = None,
+    completer_depuis: str | None = None,
 ) -> ResultatSeed:
     """Constitue `runs/data-seed/<run_id>/{amorces.jsonl, comptes.json}`.
 
@@ -599,6 +623,9 @@ def executer_seed(
     conservées (le résultat est renvoyé, rien n'est levé). `nb_scenarios > 0` exige
     `fabrique_scenarios` ; sans scénario, la fabrique n'est jamais appelée. De même,
     `nb_courriers > 0` exige `fabrique_courriers`, appelée au plus `nb_courriers` fois.
+
+    `taches` (avec `completer_depuis`, seed `complet` de même type) : seed partiel, voir le
+    module ; `ManifesteInvalide` si le parent n'est pas un seed complet.
     """
     if not isinstance(facteur, int) or isinstance(facteur, bool) or facteur < 1:
         raise ValueError(f"facteur doit être un entier positif (reçu {facteur!r})")
@@ -610,11 +637,21 @@ def executer_seed(
         raise ValueError(f"nb_courriers doit être un entier positif ou nul (reçu {nb_courriers!r})")
     if nb_courriers > 0 and fabrique_courriers is None:
         raise ValueError("nb_courriers > 0 exige une fabrique de courriers")
+    if (taches is None) != (completer_depuis is None):
+        raise ValueError("taches et completer_depuis vont ensemble (seed partiel)")
     consigner = consigner or (lambda _message: None)
     base = Path(racine).resolve()
     par_nom = {jeu.nom: jeu for jeu in jeux}
     volumes = config.volumes.par_tache()
     regles = regles_alignees(regles, config.alignement)
+    recopiees: list[Amorce] = []
+    if taches is not None:
+        assert completer_depuis is not None
+        taches = frozenset(taches)
+        if not taches or not taches <= set(volumes):
+            raise ValueError("taches : Tâches inconnues ou liste vide")
+        regles = tuple(r for r in regles if r.tache in taches)
+        recopiees = [a for a in _amorces_parent(completer_depuis, base) if a.tache not in taches]
     _verifier_regles(regles, par_nom, volumes)
 
     # Licences, puis présence des fichiers : avant tout run.
@@ -647,7 +684,13 @@ def executer_seed(
             facteur=facteur,
             nb_scenarios=nb_scenarios,
             nb_courriers=nb_courriers,
+        )
+        | (
+            {}
+            if taches is None
+            else {"taches": sorted(taches), "completer_depuis": completer_depuis}
         ),
+        parents=[] if completer_depuis is None else [completer_depuis],
         entrees=entrees,
         racine=base,
     )
@@ -670,6 +713,11 @@ def executer_seed(
             fabrique_courriers=fabrique_courriers,
             consigner=consigner,
         )
+        for amorce in recopiees:
+            _ecrire_amorce(run, amorce)
+        if completer_depuis is not None:
+            comptes["recopiees"] = {"seed": completer_depuis, "amorces": len(recopiees)}
+            consigner(f"{len(recopiees)} amorce(s) recopiée(s) du seed {completer_depuis}")
     except KeyboardInterrupt:
         run.terminer("interrompu", "KeyboardInterrupt")
         raise

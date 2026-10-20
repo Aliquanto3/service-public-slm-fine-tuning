@@ -62,6 +62,7 @@ from slmsp.core.erreurs import (
     ConfigurationInvalide,
     ManifesteInvalide,
     ProvenanceInvalide,
+    SlmspError,
     TarifInconnu,
 )
 from slmsp.core.gabarits import GabaritInvalide, GabaritValide
@@ -99,6 +100,8 @@ from slmsp.mistral.generateur import (
     CARACTERES_PAR_TOKEN,
     EMPLACEMENT_PASSAGES,
     EMPLACEMENTS_RESERVES,
+    GABARIT_PHRASES_CORRECTIONS,
+    GABARITS_CORRECTION,
     TACHES_OUTILLEES,
     Generateur,
     PrealableNonSatisfait,
@@ -107,7 +110,7 @@ from slmsp.mistral.generateur import (
 from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, journal_pour
 
 if TYPE_CHECKING:
-    from slmsp.data.generation_verifiee import Verificateur
+    from slmsp.data.generation_verifiee import Regeneration, Verificateur
 
 __all__ = [
     "CHAINES",
@@ -145,6 +148,8 @@ NOM_ABANDONS: Final = "abandons.jsonl"
 NOM_INCIDENTS: Final = "incidents.jsonl"
 NOM_BILAN: Final = "bilan.jsonl"
 NOM_AMORCES: Final = "amorces.jsonl"
+CORRECTIONS_CARACTERES_PIRE: Final = 3000
+"""Caractères comptés pour le bloc de corrections d'un appel de régénération (estimation)."""
 
 
 class SourcePassages(Protocol):
@@ -337,11 +342,18 @@ def modele_generateur_du_run(run_id: str, *, racine: str | Path | None = None) -
     return modele if isinstance(modele, str) else None
 
 
-def _entrees(seed: Run, chemin_outils: Path, generateur: Generateur) -> dict[str, Path]:
-    """Fichiers dont le SHA-256 est inscrit au run et revérifié à la reprise."""
+def _entrees(
+    seed: Run, chemin_outils: Path, generateur: Generateur, *, regeneration: bool = False
+) -> dict[str, Path]:
+    """Fichiers dont le SHA-256 est inscrit au run et revérifié à la reprise ; avec
+    `regeneration` (O6b), aussi les gabarits de correction et `corrections.md` (un run créé
+    sans régénération garde la liste de sa création)."""
     entrees = {"amorces": seed.dossier / NOM_AMORCES, "outils-mcp": chemin_outils}
     for tache in ORDRE_TACHES:
         for gabarit_id in CHAINES[tache]:
+            entrees[f"gabarit-{gabarit_id}"] = generateur.dossier_gabarits / f"{gabarit_id}.md"
+    if regeneration:
+        for gabarit_id in (*GABARITS_CORRECTION.values(), GABARIT_PHRASES_CORRECTIONS):
             entrees[f"gabarit-{gabarit_id}"] = generateur.dossier_gabarits / f"{gabarit_id}.md"
     return entrees
 
@@ -381,14 +393,46 @@ class _Reprises:
     non_closes: Counter[str]
     """Par Tâche reprise, sessions planifiées du run source sans brut ni abandon (incident,
     arrêt) : ni reprises ni régénérées, comptées au plan et signalées (revue S5)."""
+    verifiee: bool = False
+    """Run source créé `--verifiee` avec le juge : ses sessions CR, LC, CT retenues ont passé
+    contrôles et juge, et peuvent compléter un run vérifié (story O6b)."""
+    autre_seed: bool = False
+    """Run source d'un autre seed (seed partiel recopié, story O6b)."""
+    modele_generateur: str | None = None
+    """Modèle demandé du Générateur du run source."""
+
+
+def _exiger_memes_amorces(
+    sessions: Sequence[SessionPlanifiee],
+    seed_source: str,
+    seed_run_id: str,
+    source_id: str,
+    racine: Path,
+) -> None:
+    """Story O6b : un run d'un autre seed ne complète celui-ci que si chaque amorce de ses
+    sessions reprises existe à l'identique dans `seed_run_id` (seed partiel recopié)."""
+    ecart = ManifesteInvalide(
+        f"run {source_id} : seed {seed_source!r}, {seed_run_id} attendu (ou un seed partiel "
+        "qui en recopie les amorces à l'identique)"
+    )
+    try:
+        source = {a.amorce_id: a for a in _amorces(_ouvrir_seed(seed_source, racine), racine)}
+    except (SlmspError, ValueError):
+        raise ecart from None
+    actuel = {a.amorce_id: a for a in _amorces(_ouvrir_seed(seed_run_id, racine), racine)}
+    for session in sessions:
+        for amorce_id in session.amorce_ids:
+            if amorce_id not in source or actuel.get(amorce_id) != source[amorce_id]:
+                raise ecart
 
 
 def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine: Path) -> _Reprises:
     """Sessions closes du run `source_id` dont la Tâche n'est pas dans `taches`.
 
-    Le run source doit être un run `data-generate` terminé du même seed ; sinon
-    `ManifesteInvalide`. Une session planifiée mais non close (ni brut ni abandon) n'est pas
-    reprise : elle est comptée dans `non_closes`.
+    Le run source doit être un run `data-generate` terminé du même seed, ou d'un seed dont
+    les amorces des sessions reprises sont identiques dans `seed_run_id` (seed partiel recopié,
+    story O6b) ; sinon `ManifesteInvalide`. Une session planifiée mais non close (ni brut ni
+    abandon) n'est pas reprise : elle est comptée dans `non_closes`.
     """
     source = ouvrir_run(source_id, racine=racine)
     if source.type != TYPE_RUN:
@@ -396,8 +440,6 @@ def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine:
     if source.statut_courant() == "en_cours":
         raise ManifesteInvalide(f"run {source_id} encore en cours : reprise refusée")
     seed_source = source.manifeste.config.get("seed_run_id")
-    if seed_source != seed_run_id:
-        raise ManifesteInvalide(f"run {source_id} : seed {seed_source!r}, {seed_run_id} attendu")
     plan = _plan_du_run(source, source.manifeste.config.get("comptes_plan"))
     try:
         bruts = [
@@ -424,6 +466,9 @@ def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine:
     if {ligne["amorce_id"] for ligne in derivees} != citees:
         raise ManifesteInvalide(f"run {source_id} : amorce dérivée citée introuvable")
     sessions = [session for session in plan if session.session_id in closes]
+    verification = source.manifeste.config.get("verification")
+    if seed_source != seed_run_id:
+        _exiger_memes_amorces(sessions, str(seed_source), seed_run_id, source_id, racine)
     non_closes = Counter(
         s.tache for s in plan if s.tache not in taches and s.session_id not in closes
     )
@@ -435,7 +480,32 @@ def _reprises(source_id: str, seed_run_id: str, taches: Collection[str], racine:
         derivees=derivees,
         index_version=source.manifeste.config.get("index_version"),
         non_closes=non_closes,
+        verifiee=isinstance(verification, dict) and not verification.get("sans_juge", True),
+        autre_seed=seed_source != seed_run_id,
+        modele_generateur=source.manifeste.config.get("modele_generateur"),
     )
+
+
+def _exiger_meme_generation(
+    reprises: _Reprises, modele: str, gabarits: Mapping[str, Sequence[GabaritValide]]
+) -> None:
+    """Revue O6b : un run d'un autre seed ne complète celui-ci que s'il a le même modèle du
+    Générateur et que ses sessions reprises ont les gabarits courants (identifiant, version,
+    SHA) ; sinon `ManifesteInvalide`."""
+    if not reprises.autre_seed:
+        return
+    if reprises.modele_generateur != modele:
+        raise ManifesteInvalide(
+            f"run {reprises.run_id} : Générateur {reprises.modele_generateur!r}, {modele!r} "
+            "attendu pour compléter depuis un autre seed"
+        )
+    for session in reprises.sessions:
+        courants = [(g.id, g.version, g.sha256) for g in gabarits[session.tache]]
+        if [(r.id, r.version, r.sha256) for r in session.gabarits] != courants:
+            raise ManifesteInvalide(
+                f"run {reprises.run_id} : gabarits de la Tâche {session.tache} différents des "
+                "gabarits courants (complément depuis un autre seed refusé)"
+            )
 
 
 def _gabarits(generateur: Generateur) -> dict[str, list[GabaritValide]]:
@@ -528,6 +598,7 @@ def estimer_plan(
     textes_amorces: Mapping[str, str],
     tours_outils_max: int,
     journalises: Callable[[str], int],
+    regenerations: Mapping[str, tuple[str, int]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Appels prévus et coût pire cas par gabarit, pour les sessions du plan hors `deja`.
 
@@ -541,6 +612,10 @@ def estimer_plan(
     résultats d'outils RD et l'enveloppe des messages ne sont pas comptés (taille non bornée
     a priori) : l'entrée n'est pas un pire cas, l'affichage le dit, et le registre de budget
     reste le garde-fou. `cout_pire_cas_eur` vaut `None` si le modèle n'a pas de tarif.
+
+    `regenerations` (story O6b) : par Tâche vérifiée, `(gabarit de correction, nombre)` ;
+    chaque session de la Tâche compte ce nombre d'appels de correction en plus (pire cas :
+    toutes refusées), entrée majorée de `CORRECTIONS_CARACTERES_PIRE` pour le bloc rendu.
     """
     registre = generateur.client.registre
     modele = generateur.client.config.modele
@@ -550,7 +625,9 @@ def estimer_plan(
     for session in plan:
         if session.session_id in deja:
             continue
-        gabarits = list(session.gabarits)
+        gabarits: list[Any] = list(session.gabarits)
+        correction, n_corrections = (regenerations or {}).get(session.tache, ("", 0))
+        gabarits += [_RefEstimation(correction)] * n_corrections
         base = sum(len(textes_amorces.get(a, "")) for a in session.amorce_ids)
         base += sum(len(p.texte) for p in session.passages or [])
         if session.tache in TACHES_OUTILLEES:
@@ -568,6 +645,8 @@ def estimer_plan(
                     generateur.max_tokens(ref.id, session.tache),
                 )
             consigne, max_tokens = gabarits_lus[cle]
+            if ref.id == correction:
+                consigne += CORRECTIONS_CARACTERES_PIRE
             entree = math.ceil((consigne + base) / CARACTERES_PAR_TOKEN) + sorties
             sorties += max_tokens
             if rang < faits:
@@ -591,6 +670,13 @@ def estimer_plan(
                 if ligne["cout_pire_cas_eur"] is not None:
                     ligne["cout_pire_cas_eur"] += cout
     return estimation
+
+
+@dataclass(frozen=True)
+class _RefEstimation:
+    """Gabarit compté par `estimer_plan` hors de la chaîne du plan (correction, O6b)."""
+
+    id: str
 
 
 def _afficher_estimation(
@@ -676,7 +762,16 @@ def lancer_generation(
             f"Générateur construit sur le seed {generateur.seed_run_id}, run sur {seed_run_id}"
         )
     seed = _ouvrir_seed(seed_run_id, racine)
-    entrees = _entrees(seed, outils, generateur)
+    regeneration = verificateur is not None and verificateur.essais_max > 1
+    regenerations: dict[str, tuple[str, int]] = {}
+    if regeneration:
+        assert verificateur is not None
+        generateur.phrases_corrections()  # GabaritInvalide au pré-vol
+        for tache in verificateur.taches:
+            gabarit_id = GABARITS_CORRECTION[tache]
+            generateur.gabarit(gabarit_id, tache)
+            regenerations[tache] = (gabarit_id, verificateur.essais_max - 1)
+    entrees = _entrees(seed, outils, generateur, regeneration=regeneration)
     journal = journal_pour(
         USAGE_GENERATION,
         generateur.client.config,
@@ -701,6 +796,7 @@ def lancer_generation(
                 modele,
                 _max_tokens_session(generateur, par_session[session_id]),
             ),
+            regenerations=regenerations,
         )
         _afficher_estimation(estimation, consigner)
         if plafond_estime_mistral is not None:
@@ -721,8 +817,11 @@ def lancer_generation(
             if completer_depuis is None
             else _reprises(completer_depuis, seed_run_id, taches or (), racine)
         )
-        if verificateur is not None and reprises is not None:
-            # Revue O6a : une session CR, LC, CT recopiée du run source n'est jamais vérifiée.
+        if reprises is not None:
+            _exiger_meme_generation(reprises, modele, gabarits)
+        if verificateur is not None and reprises is not None and not reprises.verifiee:
+            # Revue O6a : une session CR, LC, CT recopiée d'un run source non vérifié (ou
+            # vérifié sans juge) n'est jamais vérifiée.
             non_verifiees = sorted(
                 {s.tache for s in reprises.sessions if s.tache in verificateur.taches}
             )
@@ -886,6 +985,8 @@ def _executer_plan(
     consigner: Callable[[str], None],
     verificateur: Verificateur | None = None,
 ) -> ResultatGeneration:
+    from slmsp.data.generation_verifiee import Regeneration  # import différé (cycle)
+
     taches = _bilan_vide(plan)
     statut, motif = "complet", None
     incidents = 0
@@ -912,23 +1013,48 @@ def _executer_plan(
             etat = f"abandon ({resultat.motif})"
         consigner(f"[{session.rang + 1}/{len(plan)}] {session.session_id} : {etat}")
 
+    def regenerer(session: SessionPlanifiee, demande: Regeneration) -> None:
+        """Essai suivant d'une cible refusée (O6b) : appel de correction, puis nouvelle cible
+        resoumise au vérificateur (ou session écartée si l'appel ne donne pas de cible)."""
+        assert verificateur is not None
+        compteur = Compteur()
+        try:
+            nouveau = executeur.regenerer(
+                session, demande.brut, demande.essai, demande.corrections, compteur
+            )
+        finally:
+            _cumuler(taches[session.tache], compteur)
+        if isinstance(nouveau, SessionBrute):
+            verificateur.soumettre(nouveau, session, demande.essais)
+        else:
+            ecrire(session, verificateur.abandonner(demande, nouveau))
+
     def ecrire_verifiees(*, attendre: bool) -> None:
-        """Résultats prêts du vérificateur, dans l'ordre du plan ; lève la première erreur
-        d'un jugement (session non écrite, rejouée à la reprise) après avoir arrêté la file."""
+        """Résultats prêts du vérificateur, dans l'ordre de soumission ; lève la première
+        erreur d'un jugement ou d'une régénération (session non écrite, rejouée à la reprise)
+        après avoir arrêté la file. Une régénération resoumet la session en fin de file."""
         assert verificateur is not None
         for session, resultat, erreur in verificateur.resultats(attendre=attendre):
             if erreur is not None:
                 verificateur.arreter()
                 raise erreur
+            if isinstance(resultat, Regeneration):
+                try:
+                    regenerer(session, resultat)
+                except BaseException:
+                    verificateur.arreter()
+                    raise
+                continue
             ecrire(session, resultat)
 
     def vider_apres_erreur() -> None:
-        """Après une erreur : plus de jugement lancé ; ceux déjà faits (payés) sont écrits."""
+        """Après une erreur : plus de jugement lancé ; ceux déjà faits (payés) sont écrits.
+        Une session à régénérer reste ouverte (rejouée à la reprise, sans repayer)."""
         if verificateur is None:
             return
         verificateur.arreter()
         for session, resultat, erreur in verificateur.resultats(attendre=True):
-            if erreur is None:
+            if erreur is None and not isinstance(resultat, Regeneration):
                 ecrire(session, resultat)
 
     try:

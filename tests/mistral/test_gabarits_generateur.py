@@ -29,10 +29,17 @@ GABARITS = (
     "generique",
     "validation",
     "amorces-ct",
+    # Story O6b : régénération (gabarits de correction et phrases fixes par code de motif).
+    "cr-correction",
+    "lc-correction",
+    "ct-correction",
+    "corrections",
 )
-TACHES = ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "generique", "validation")
+TACHES = ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "generique", "validation", "verification")
 INTERDITS = ("?", "«", "»", '"', "“", "”")
 RE_EMPLACEMENT = re.compile(r"\{([a-z_]+)\}")
+CORRECTIONS = ("cr-correction", "lc-correction", "ct-correction")
+PHRASES_CORRECTIONS = "corrections"
 
 
 def test_jeu_de_gabarits_complet() -> None:
@@ -49,6 +56,9 @@ def test_gabarit_conforme(nom: str) -> None:
     assert gabarit.front_matter["tache"] in TACHES
     if "max_tokens" in gabarit.front_matter:
         assert int(gabarit.front_matter["max_tokens"]) >= 1
+    if nom == PHRASES_CORRECTIONS:  # phrases fixes par code : déclarées, jamais des emplacements
+        assert RE_EMPLACEMENT.findall(gabarit.consigne) == []
+        return
     assert set(RE_EMPLACEMENT.findall(gabarit.consigne)) == set(gabarit.emplacements)
 
 
@@ -161,7 +171,19 @@ def test_date_de_mise_a_jour_rd_conditionnelle() -> None:
     assert gabarit.version == 3
 
 
-@pytest.mark.parametrize("nom", sorted(set(GABARITS) - set(PLAFONNES)))
+@pytest.mark.parametrize("nom", CORRECTIONS)
+def test_gabarits_de_correction_gardent_la_consigne_et_le_plafond(nom: str) -> None:
+    """Story O6b : consigne de la Tâche inchangée, plafond de mots, emplacement corrections."""
+    gabarit = valider_gabarit(DOSSIER / f"{nom}.md", cles_optionnelles=("max_tokens",))
+    origine = valider_gabarit(
+        DOSSIER / f"{nom.removesuffix('-correction')}.md", cles_optionnelles=("max_tokens",)
+    )
+    assert gabarit.consigne.startswith(origine.consigne)
+    assert set(gabarit.emplacements) == {*origine.emplacements, "corrections"}
+    assert gabarit.front_matter["max_tokens"] == origine.front_matter["max_tokens"]
+
+
+@pytest.mark.parametrize("nom", sorted(set(GABARITS) - set(PLAFONNES) - set(CORRECTIONS)))
 def test_autres_gabarits_sans_plafond_de_tache(nom: str) -> None:
     gabarit = valider_gabarit(DOSSIER / f"{nom}.md", cles_optionnelles=("max_tokens",))
     assert "plafond_mots_tache" not in gabarit.emplacements

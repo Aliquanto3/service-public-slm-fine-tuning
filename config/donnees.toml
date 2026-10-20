@@ -225,8 +225,10 @@ tolerance = 0.3
 # avec `validate` (url_inventee, valeur_absente, cr_sections_manquantes, ct_format_incomplet,
 # lc_valeur_perdue) restent toujours bloquants.
 [verification]
-# Essais par session au total : 1 tant que la régénération (O6b) n'est pas livrée, puis 3.
-essais_max = 1
+# Essais par session au total (story O6b) : la cible refusée est régénérée par Mistral avec ses
+# motifs de refus (gabarits *-correction) au plus essais_max - 1 fois. 1 : aucune régénération
+# (calibrage, `--essais-max 1`).
+essais_max = 3
 # Gain de Kandel-Moles minimal d'une cible LC (copie de gain_km_min de evaluation.toml).
 gain_km_min = 10.0
 # Graine des tirages de echantillon.md et calibrage.md.

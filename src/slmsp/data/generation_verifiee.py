@@ -1,4 +1,4 @@
-"""Génération vérifiée, partie vérification (story O6a, méthodologie v2).
+"""Génération vérifiée : vérification (story O6a) et régénération (story O6b), méthodologie v2.
 
 `Verificateur` est branché sur `lancer_generation` (`slmsp data generate --verifiee`) : chaque
 session CR, LC, CT terminée par le Générateur passe, avant d'entrer dans `brut.jsonl` :
@@ -9,8 +9,14 @@ session CR, LC, CT terminée par le Générateur passe, avant d'entrer dans `bru
 
 Acceptée : la session entre dans `brut.jsonl` (format `SessionBrute` inchangé). Refusée : elle
 est **écartée** (`ecartees.jsonl`) et close par un `AbandonSession` de motif
-`verification_refusee`, pour que la reprise ne la rejoue pas. En O6a, une session n'a qu'un
-essai (la régénération par Mistral avec le motif du refus vient avec O6b).
+`verification_refusee`, pour que la reprise ne la rejoue pas.
+
+**Régénération (O6b)** : tant que `essais_max` n'est pas atteint, une cible refusée par les
+contrôles ou par le juge n'est pas écartée : `verifier` et `resultats` rendent une
+`Regeneration` (motifs bloquants structurés, essais déjà faits) ; `generate` rejoue la
+dernière étape par Mistral (`ExecuteurSessions.regenerer`, gabarit `*-correction`) et
+resoumet la nouvelle cible, qui repasse contrôles et juge. La ligne de `verification.jsonl`
+porte tous les essais de la session (même `session_id`).
 
 Fichiers du run `data-generate` :
 
@@ -59,16 +65,19 @@ from slmsp.data.juge_donnees import (
 from slmsp.data.validate import LecteurGeneration
 from slmsp.data.verification import TACHES_VERIFIEES, Motif, refusee, verifier_cible
 from slmsp.fournisseurs.client import MODE
+from slmsp.mistral.generateur import MotifCorrection
 from slmsp.mistral.journal import JournalMistral
 
 __all__ = [
     "MOTIF_ABANDON",
+    "MOTIF_REGENERATION_ABANDONNEE",
     "NOM_CALIBRAGE",
     "NOM_ECARTEES",
     "NOM_ECHANTILLON",
     "NOM_RAPPORT",
     "NOM_VERDICTS",
     "NOM_VERIFICATION",
+    "Regeneration",
     "Verificateur",
     "rapport_verification",
 ]
@@ -86,8 +95,10 @@ MOTIF_ABANDON: Final = "verification_refusee"
 ENTREE_SESSION_TOKENS_PIRE: Final = 6000
 """Tokens d'entrée comptés par session, en plus de la grille, pour la source et la cible dans
 l'estimation pire cas du juge (CR : transcription et compte rendu ≈ 3 000 tokens observés)."""
-ESSAIS_O6A: Final = 1
-"""Essais faits en O6a : la régénération (essais 2 et 3) vient avec O6b."""
+MOTIF_REGENERATION_ABANDONNEE: Final = "regeneration"
+"""`refus_par` d'un essai de régénération sans cible (réponse tronquée, provenance)."""
+CODES_SANS_REGENERATION: Final = frozenset({"cible_illisible"})
+"""Codes dont le refus n'est pas régénéré (rien à corriger dans la cible)."""
 
 
 def _motifs_juge(verdict: VerdictDonnees, seuils: Mapping[str, float]) -> list[Motif]:
@@ -115,6 +126,19 @@ class _Preparation:
     source: str
     cible: str
     a_juger: bool
+    precedents: tuple[dict[str, Any], ...] = ()
+
+
+@dataclass(frozen=True)
+class Regeneration:
+    """Cible refusée à régénérer (O6b) : numéro de l'essai suivant, motifs bloquants du refus
+    (structurés, rendus par le Générateur) et essais déjà faits (lignes de
+    `verification.jsonl`)."""
+
+    brut: SessionBrute
+    essai: int
+    corrections: tuple[MotifCorrection, ...]
+    essais: tuple[dict[str, Any], ...]
 
 
 class Verificateur:
@@ -137,13 +161,6 @@ class Verificateur:
         self.essais_max = essais_max if essais_max is not None else config.essais_max
         if not 1 <= self.essais_max <= 3:
             raise ValueError("essais_max dans [1, 3] attendu")
-        if self.essais_max > ESSAIS_O6A:
-            # Revue O6a : un run créé avec essais_max 3 annoncerait des régénérations absentes
-            # et changerait de comportement à sa reprise après O6b.
-            raise ValueError(
-                f"essais_max {self.essais_max} : un seul essai tant que la régénération "
-                "(story O6b) n'est pas livrée"
-            )
         self._file: FileOrdonnee | None = None
         self.plafond_estime_openrouter = plafond_estime_openrouter
         self._run: Run | None = None
@@ -159,7 +176,6 @@ class Verificateur:
         return {
             "taches": list(self.taches),
             "essais_max": self.essais_max,
-            "essais_faits": ESSAIS_O6A,
             "sans_juge": self.juge is None,
             "regles_sha256": sha256_hex(json_canonique(regles)),
             "non_bloquants": list(self.config.non_bloquants),
@@ -169,8 +185,8 @@ class Verificateur:
 
     def estimer_pire_cas(self, taches_sessions: Iterable[str]) -> float:
         """Coût OpenRouter pire cas (€) des sessions à vérifier, sans cache (la cible n'est pas
-        connue avant la génération) : `TENTATIVES_MAX` appels par essai, au `max_tokens` du
-        juge, entrée = grille + `ENTREE_SESSION_TOKENS_PIRE`."""
+        connue avant la génération) : `TENTATIVES_MAX` appels par essai, `essais_max` essais
+        par session, au `max_tokens` du juge, entrée = grille + `ENTREE_SESSION_TOKENS_PIRE`."""
         if self.juge is None:
             return 0.0
         juge = self.juge
@@ -192,17 +208,13 @@ class Verificateur:
                     juge.config.max_tokens,
                     registre.config.majoration_entree,
                 )
-            total += par_tache[tache] * ESSAIS_O6A
+            total += par_tache[tache] * self.essais_max
         return total
 
     def borner(self, taches_sessions: Sequence[str], consigner: Callable[[str], None]) -> None:
         """Affiche l'estimation OpenRouter ; lève `PlafondEstimeDepasse` au-delà du plafond."""
         a_verifier = [t for t in taches_sessions if t in self.taches]
-        if self.essais_max > ESSAIS_O6A:
-            consigner(
-                f"vérification : {ESSAIS_O6A} essai par session (régénération : story O6b), "
-                f"essais_max {self.essais_max} consigné"
-            )
+        consigner(f"vérification : au plus {self.essais_max} essai(s) par session")
         if self.juge is None:
             consigner(f"vérification sans juge : {len(a_verifier)} session(s), aucun appel")
             return
@@ -243,22 +255,28 @@ class Verificateur:
                 raise ProvenanceInvalide("amorce dérivée non conforme") from None
             lecteur.amorces.setdefault(derivee.amorce_id, derivee)
 
-    def verifier(self, brut: SessionBrute) -> SessionBrute | AbandonSession | None:
-        """Session retenue (`brut` inchangé), écartée (`AbandonSession`), ou `None` si le juge
-        n'a pas conclu (session rejouable à la reprise). Lève `BudgetEpuise`,
-        `ErreurApiFournisseur` (session non écrite, rejouée à la reprise). Séquentiel ; la
-        génération passe par `soumettre` et `resultats` (jugements en parallèle)."""
-        preparation = self._preparer(brut)
+    def verifier(
+        self, brut: SessionBrute, precedents: Sequence[dict[str, Any]] = ()
+    ) -> SessionBrute | AbandonSession | Regeneration | None:
+        """Session retenue (`brut` inchangé), écartée (`AbandonSession`), à régénérer
+        (`Regeneration`, essais restants), ou `None` si le juge n'a pas conclu (session
+        rejouable à la reprise). Lève `BudgetEpuise`, `ErreurApiFournisseur` (session non
+        écrite, rejouée à la reprise). Séquentiel ; la génération passe par `soumettre` et
+        `resultats` (jugements en parallèle). `precedents` : essais déjà faits."""
+        preparation = self._preparer(brut, precedents)
         verdict = None
         if preparation.a_juger:
             assert self.juge is not None
             verdict = self.juge.juger_candidat(brut.tache, preparation.source, preparation.cible)
         return self._conclure(preparation, verdict)
 
-    def soumettre(self, brut: SessionBrute, etiquette: Any) -> None:
+    def soumettre(
+        self, brut: SessionBrute, etiquette: Any, precedents: Sequence[dict[str, Any]] = ()
+    ) -> None:
         """Contrôles déterministes tout de suite ; jugement mis en file (`appels_paralleles`
-        threads). Le résultat sort de `resultats`, dans l'ordre de soumission."""
-        preparation = self._preparer(brut)
+        threads). Le résultat sort de `resultats`, dans l'ordre de soumission. `precedents` :
+        essais déjà faits (régénération)."""
+        preparation = self._preparer(brut, precedents)
         appel: Callable[[], VerdictDonnees] | None = None
         if preparation.a_juger:
             juge = self.juge
@@ -275,7 +293,9 @@ class Verificateur:
 
     def resultats(
         self, *, attendre: bool = False
-    ) -> Iterator[tuple[Any, SessionBrute | AbandonSession | None, Exception | None]]:
+    ) -> Iterator[
+        tuple[Any, SessionBrute | AbandonSession | Regeneration | None, Exception | None]
+    ]:
         """`(etiquette, résultat de verifier ou transmis, erreur)` dans l'ordre de soumission.
         `erreur` (`BudgetEpuise`, `ErreurApiFournisseur`, `JugementAnnule`…) : session non
         écrite, rejouée à la reprise."""
@@ -305,11 +325,13 @@ class Verificateur:
             self._file = FileOrdonnee(paralleles)
         return self._file
 
-    def _preparer(self, brut: SessionBrute) -> _Preparation:
+    def _preparer(
+        self, brut: SessionBrute, precedents: Sequence[dict[str, Any]] = ()
+    ) -> _Preparation:
         """Contrôles déterministes (fil appelant) ; `a_juger` si le juge doit conclure."""
         _run, lecteur = self._ouvert()
         essai: dict[str, Any] = {
-            "essai": 1,
+            "essai": len(precedents) + 1,
             "appel_ids": list(brut.appel_ids),
             "candidat_id": f"mistral:{brut.appel_ids[-1]}",
             "motifs": [],
@@ -339,11 +361,11 @@ class Verificateur:
         if refusee(motifs):
             essai["refus_par"] = "tests"
         a_juger = essai["refus_par"] is None and self.juge is not None
-        return _Preparation(brut, essai, motifs, source, cible, a_juger)
+        return _Preparation(brut, essai, motifs, source, cible, a_juger, tuple(precedents))
 
     def _conclure(
         self, preparation: _Preparation, verdict: VerdictDonnees | None
-    ) -> SessionBrute | AbandonSession | None:
+    ) -> SessionBrute | AbandonSession | Regeneration | None:
         """Écrit les fichiers de vérification (fil appelant seulement) et rend l'issue."""
         run, _lecteur = self._ouvert()
         brut, essai, motifs = preparation.brut, preparation.essai, preparation.motifs
@@ -382,30 +404,81 @@ class Verificateur:
                     essai["refus_par"] = "juge"
                     motifs = [*motifs, *_motifs_juge(verdict, seuils)]
         essai["motifs"] = [m.ligne() for m in motifs]
-        issue = "retenue" if essai["refus_par"] is None else "ecartee"
+        essais = (*preparation.precedents, essai)
+        bloquants = [m for m in motifs if m.bloquant]
+        if (
+            essai["refus_par"] in ("tests", "juge")
+            and len(essais) < self.essais_max
+            and bloquants
+            and not {m.code for m in bloquants} & CODES_SANS_REGENERATION
+        ):
+            return Regeneration(
+                brut,
+                len(essais) + 1,
+                # Code et extraits seulement : le `message` (texte libre du juge ou d'un
+                # contrôle) reste dans verification.jsonl, jamais dans la requête (D1).
+                tuple(MotifCorrection(m.code, m.extraits) for m in bloquants),
+                essais,
+            )
+        return self._clore_session(brut, essais, motifs)
+
+    def abandonner(self, regeneration: Regeneration, abandon: AbandonSession) -> AbandonSession:
+        """Essai de régénération sans cible (réponse tronquée, provenance) : la session est
+        écartée avec ses essais ; rend l'abandon à écrire (`abandons.jsonl`)."""
+        essai = {
+            "essai": regeneration.essai,
+            "appel_ids": list(abandon.appel_ids),
+            "candidat_id": None,
+            "motifs": [],
+            "refus_par": MOTIF_REGENERATION_ABANDONNEE,
+            "cle_verdict": None,
+            "verdict": None,
+            "abandon": abandon.motif,
+        }
+        essais = (*regeneration.essais, essai)
+        self._ecrire_issue(regeneration.brut, essais, "ecartee", [f"abandon_{abandon.motif}"])
+        return abandon
+
+    def _ecrire_issue(
+        self,
+        brut: SessionBrute,
+        essais: Sequence[dict[str, Any]],
+        issue: str,
+        codes: Sequence[str] = (),
+    ) -> None:
+        run, _lecteur = self._ouvert()
         run.ajouter_jsonl(
             NOM_VERIFICATION,
             {
                 "schema_version": 1,
                 "session_id": brut.session_id,
                 "tache": brut.tache,
-                "essais": [essai],
+                "essais": list(essais),
                 "issue": issue,
             },
         )
-        if issue == "retenue":
+        if issue == "ecartee":
+            run.ajouter_jsonl(
+                NOM_ECARTEES,
+                {
+                    "session_id": brut.session_id,
+                    "tache": brut.tache,
+                    "essais": len(essais),
+                    "refus_par": essais[-1]["refus_par"],
+                    "codes": list(codes),
+                },
+            )
+
+    def _clore_session(
+        self, brut: SessionBrute, essais: Sequence[dict[str, Any]], motifs: Sequence[Motif]
+    ) -> SessionBrute | AbandonSession:
+        """Dernier essai : session retenue ou écartée (fichiers de vérification écrits)."""
+        essai = essais[-1]
+        if essai["refus_par"] is None:
+            self._ecrire_issue(brut, essais, "retenue")
             return brut
         codes = sorted({m.code for m in motifs if m.bloquant}) or [str(essai["refus_par"])]
-        run.ajouter_jsonl(
-            NOM_ECARTEES,
-            {
-                "session_id": brut.session_id,
-                "tache": brut.tache,
-                "essais": 1,
-                "refus_par": essai["refus_par"],
-                "codes": codes,
-            },
-        )
+        self._ecrire_issue(brut, essais, "ecartee", codes)
         return AbandonSession(
             session_id=brut.session_id,
             tache=brut.tache,
