@@ -50,6 +50,14 @@ Rédigé le 2026-10-20 au matin, après la campagne v11 et le run autonome de nu
 | O4 | **Jeu de développement** | ~150 items (≈20 par tâche) construits comme le jeu v1.1 mais disjoints, notés par DeepSeek ; commande `eval run --jeu dev`. Gel par Anaël. |
 | O5 | **Alignement LC** | Consigne d'Agent dans les entrées LC d'entraînement ; entrées de longueur comparable à l'évaluation. |
 
+## 4 bis. Ordre retenu après échange avec Anaël (20/10) : deux étages
+**Étage 1 (d'abord) : génération Mistral vérifiée et régénérée** — une story « O6 » qui regroupe :
+- tests déterministes étendus, nourris par les faits du scénario de seed : CR, chaque décision et action présente avec responsable et échéance connus, aucun nom ni date hors des notes ; LC, marqueurs de condition et d'obligation de l'entrée conservés (si, sauf, uniquement, au plus tard, doit, peut, ne peut pas), aucun nombre ni date nouveaux, pas de formule de conseil ; CT, blocs du format administratif dans l'ordre, emplacements pour les informations inconnues ;
+- juge DeepSeek V4 Pro (grille adaptée aux faits du scénario) pour le fond que les tests ne voient pas (O1) ;
+- boucle : cible refusée → régénérée par Mistral avec le motif du refus en consigne (2 à 3 essais), puis écartée. D1 respecté : les motifs viennent des tests ou de DeepSeek, jamais de Claude.
+Coût estimé : ~1 € OpenRouter + ~1 € Mistral pour CR, CT, LC. Puis M1 MiniCPM5-2B sur ce jeu vérifié, aligné (O5).
+**Étage 2 (si la base reste meilleure sur certaines tâches)** : candidats de la base locale (O2), sélection (O3), paires notées (C5), soit E2 et E3.
+
 ## 5. Expériences proposées (ordre, coût, décision attendue)
 
 | # | Expérience | Coût estimé | Question |
