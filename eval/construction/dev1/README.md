@@ -31,6 +31,14 @@ Relecture séparée de chaque item contre sa source (nombres des références re
 
 Premier passage (DeepSeek V4 Pro, GLM-5.3) : 76 retenus, 30 rejetés, 54 incomplets. Les incomplets venaient de l'outil : il n'envoyait pas l'effort de raisonnement, et GLM coupait 50 sorties vides à 8 000 tokens. Les paramètres du juge sont désormais transmis, avec une relance corrective et une consigne neutre unique (version 3, revue O4c). Sur les 30 rejets, 13 sont corrigés en `version_item` 2 ; 17 sont contestés par l'auteur dans `contestations.jsonl`, simple trace sans effet sur les outils. 4 items incomplets, dont le grief DeepSeek était fondé, sont aussi corrigés. Un item rejeté par l'un des juges est retiré à l'assemblage, sauf correction retenue ensuite par les deux ; le gel `relu-llm` exige un verdict croisé « retenu » courant pour chaque item. Détail : `_bmad-output/implementation-artifacts/spec-o4c-dev1-suite.md`.
 
+## Revérification (consigne 3) et corrections O4d
+
+Revérification des 160 items : 123 retenus, 37 rejetés. Les 37 passent en `version_item` + 1, avec un verdict de construction O4d dans `verification/` ; aucun n'est remplacé. Deux causes communes :
+- **CR** : la consigne demande les « points abordés », qu'aucune clé du schéma CR ne porte (critère Structure seulement). Elle est conservée, pour rester comparable à v1.1 ; les 6 CR rejetés pour ce motif attendent une décision de l'orchestrateur. CR-518 et CR-511 gagnent une décision (date de la prochaine réunion).
+- **NR** : la consigne ou les critères laissaient la forme ouverte (ordre, format, démarche de calcul, libellés). Consignes et critères sont précisés sur les 8 NR rejetés.
+
+Les autres items sont corrigés au cas par cas : extraits complétés (Q-503, Q-511), référence alignée sur la source (Q-519, LC-504, LC-507, RE-501, RE-510, RE-515), expéditeur fourni (CT), « pré-demande » (CO-514), extrait de cassette en provenance (RD-501, RD-519), `filter_operator` obligatoire (RD-505), public ou sujets de la consigne précisés (RE-502, RE-520). Détail : `_bmad-output/implementation-artifacts/spec-o4d-dev1-remplacements.md`.
+
 ## Reste à faire (orchestrateur)
 
-Revérification payante des 160 items avec la consigne 3 (`verifier_jeu_croise.py verifier --version dev1 --juges deepseek,glm`, environ 1,7 $, pire cas environ 4 $), réassemblage (`construire_jeu.py assembler --version dev1`), remplacement des items rejetés, puis gel `relu-llm`.
+Revérification des 37 items modifiés (`verifier_jeu_croise.py verifier --version dev1 --juges deepseek,glm` : les 123 autres sont repris à empreinte égale), réassemblage, puis gel `relu-llm`.
