@@ -71,3 +71,21 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-20 07:20 · 14.7 (C7) · dev · fini : causes = références d'éléments manquantes (schéma sans minItems ; GLM 105 listes vides) et sorties DeepSeek coupées à 8000 tokens (raisonnement 7 500-8 000 même en effort low) ; relance corrective, max_tokens deepseek 16000, `--rejouer-invalides` ; rejeu estimé ~2 € ; second-avis lancé · bfba6e5
 - 2026-10-20 07:20 · run · décision · Anaël : amélioration continue ; branche `feat/avancement-run-ids-hors-epics` ouverte sur agent-cost-kit (clone `~/dev/agent-cost-kit`, rien poussé) · —
 - 2026-10-20 07:22 · 14.7 (C7) · second-avis · 2 medium (archivage d'un invalide avant le test d'arrêt ou de budget ; estimation à un appel par item malgré la relance corrective), 2 low ; review lancée (Sonnet) · —
+- 2026-10-20 07:28 · 14.11 (O4a) · review · 5 medium corrigés (disjonction avec URL des Q et amorces seed, --jeu cohérent à la reprise, eval comparer refuse jeux ou juges différents, verdicts croisés avec empreinte d'item) · ec11d98
+- 2026-10-20 07:28 · 14.11 (O4a) · fusion · squash dans main ; tests evaluation, eval_outils, compare, judge : 1 463 passés · 30e47ed
+- 2026-10-20 07:28 · 14.10 (O1) · review · 5 medium corrigés (seuils fusionnés par critère, couverture non évaluable = refus, balises anti-injection, max_tokens 16000, relance corrective), 6 low · dcd48be
+- 2026-10-20 07:28 · 14.10 (O1) · fusion · squash dans main · 9afcc9c
+- 2026-10-20 07:28 · 14.7 (C7) · review · 2 medium corrigés (archivage après réponse exploitable seulement, pire cas à 2 appels par item) · f5309a6
+- 2026-10-20 07:28 · 14.7 (C7) · fusion · squash dans main (conflit avec O1 résolu : `extraire_json` déplacé dans fournisseurs/lecture) ; tests judge, juges tiers, juge de données, fournisseurs, cli : 291 passés · a25242c
+- 2026-10-20 07:28 · 14.16 (E1) · génération finie (`runs/eval-generation/20261020-070903-ft-minicpm5-2b-5a5f`, 225 ok) ; notation en cours (`20261020-072634-ft-minicpm5-2b-6664`) · —
+- 2026-10-20 07:28 · 14.10 (O1) · calibrage payant lancé : `data juger --depuis 20261019-225253-generate-9ba4 --limite 10 --plafond-estime 1.5` (~0,34 €) · —
+- 2026-10-20 07:28 · 14.14 (O6a) · dev · lancé (Opus) · —
+- 2026-10-20 07:28 · 14.12 (O4b) · dev · lancé (Opus, construction de dev1, sans appel payant) · —
+- 2026-10-20 07:28 · 14.4 (C4) · dev · lancé (essais GPU courts autorisés) · —
+- 2026-10-20 07:30 · run · décision · agent-cost-kit : branche `feat/avancement-run-ids-hors-epics` revue (second-avis 3 medium, review corrigée, 77 tests) et poussée ; PR à ouvrir sur accord d'Anaël · 3d6300a
+- 2026-10-20 07:55 · 14.4 (C4) · dev · fini : cause = TRL 1.13 ne borne pas la longueur en ORPO (177/505 paires v16 > 2048 jetons, logits du vocabulaire Qwen3.5 248k) → débordement VRAM en mémoire partagée WDDM puis « device not ready » ; correctif : paires trop longues écartées (328/505 gardées) ; 5 pas prouvés ; second-avis lancé · 6914e7e
+- 2026-10-20 07:55 · 14.14 (O6a) · dev · fini ; calibrage gratuit sur v14 : CR 0/77 écartés, CT 0/35, LC 61/80 (gain de lisibilité 47, modalité perdue 17, valeur absente 13, URL inventée 2) ; second-avis lancé · 491abf2
+- 2026-10-20 07:55 · 14.14 (O6a) · décision · contrôle du gain de lisibilité LC gardé **bloquant** (la grille plafonne LC sans gain Kandel-Moles ; la régénération O6b recevra ce motif) ; réversible par config · —
+- 2026-10-20 07:57 · 14.4 (C4) · second-avis · 3 medium (reprise silencieuse d'un run d'avant le correctif, filtre absent des invariants de campagne, diagnostic qui surévalue le correctif : débordement en mémoire partagée persistant), 3 low ; review lancée · —
+- 2026-10-20 07:57 · 14.3 (C3) · dev · lancé (essais de fusion réels gratuits autorisés) · —
+- 2026-10-20 08:00 · 14.10 (O1) · calibrage réel `runs/data-juger/20261020-072807-juger-85c1` (partiel-erreur, 0,11 €) : CR 8/10 acceptés (couverture 80 %, invention 90 %, structure 100 %), 29 extraits invalides ; **lenteur** : 11 appels en 31 min (~2,8 min par appel, raisonnement DeepSeek), puis ReadTimeout au délai de lecture par défaut (300 s) ; LC et CT non jugés. Suite : délai de lecture 900 s et appels parallèles à ajouter (revue O6a), sinon ~9 h pour 192 candidats · —
