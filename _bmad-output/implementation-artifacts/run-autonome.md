@@ -139,3 +139,5 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-20 15:49 · 14.17 (V17) · génération v1.1 de M1 Qwen3.5-0.8B v18 prête (`runs/eval-generation/20261020-153559-ft-qwen3.5-0.8b-50a1`, 33 sorties tronquées) · —
 - 2026-10-20 16:13 · 14.12 (O4d) · revérification ciblée : **155 retenus, 5 rejetés** (CR 1, NR 3, RD 1) ; fusion O4d 2e2caca ; story O4e lancée (remplacement des 5) · —
 - 2026-10-20 16:26 · 14.12 (O4e) · 5 items remplacés (second-avis sans défaut) ; fusion · vérification : **159/160 retenus**, CR-521 rejeté par DeepSeek (« points abordés » non référencés, année des dates) ; correction des dates lancée (O4f), consigne CR commune conservée · —
+- 2026-10-20 16:37 · 14.12 (O4b) · **dev1 gelé relu-llm** (159 items : CR 19 car CR-521 reste rejeté par DeepSeek sur un grief de grille commun à v1.1, exclu ; tous les autres retenus par DeepSeek et GLM ; consigne de vérification v3 neutre) · 2226401
+- 2026-10-20 16:37 · 14.17 (V17) · chaîne dev1 lancée (génération cuda + notation GLM, plafond 3 € par notation) : Baselines MiniCPM5-2B et Qwen3.5-0.8B, M1 v14 et M1 v18 de chacun · —
