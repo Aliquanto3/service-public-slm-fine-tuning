@@ -362,12 +362,21 @@ def _tirer(
     return sorted(retenus, key=numero_id)
 
 
-def tirer_echantillons(items: Iterable[Item], graine: int) -> Echantillons:
+def jeu_sans_second_juge(jeu: str | None) -> bool:
+    """Vrai pour tout jeu de développement (`dev*`) : le second juge Mistral n'y tourne jamais."""
+    return jeu is not None and jeu.startswith("dev")
+
+
+def tirer_echantillons(
+    items: Iterable[Item], graine: int, *, second_juge: bool = True
+) -> Echantillons:
     """Échantillons du second juge et de la relecture, déterministes pour une graine.
 
     Second juge : par Tâche jugée présente, `min(n, max(3, ceil(n / 5)))` items. Relecture :
     par strate Tâche × difficulté, `min(n, max(1, ceil(n / 5)))`. Chaque strate est tirée
-    par `random.Random(f"{graine}:{nom}:{strate}")` sur ses identifiants triés.
+    par `random.Random(f"{graine}:{nom}:{strate}")` sur ses identifiants triés. Avec
+    `second_juge=False` (jeux `dev*`, story 15.4), l'échantillon du second juge est vide ; la
+    relecture est inchangée.
     """
     items = list(items)
     par_tache: dict[str, list[str]] = {}
@@ -378,8 +387,10 @@ def tirer_echantillons(items: Iterable[Item], graine: int) -> Echantillons:
         par_strate.setdefault(f"{item.code}/{item.difficulte}", []).append(item.id)
     return Echantillons(
         graine=graine,
-        second_juge=_tirer(
-            "second_juge", par_tache, graine, cfg.PART_SECOND_JUGE, cfg.MIN_SECOND_JUGE
+        second_juge=(
+            _tirer("second_juge", par_tache, graine, cfg.PART_SECOND_JUGE, cfg.MIN_SECOND_JUGE)
+            if second_juge
+            else []
         ),
         relecture=_tirer("relecture", par_strate, graine, cfg.PART_RELECTURE, cfg.MIN_RELECTURE),
     )
@@ -572,7 +583,9 @@ def gel(
         nb_items=len(jeu.items),
         composition=rapport.composition(),
         ecarts=rapport.ecarts,
-        echantillons=tirer_echantillons(jeu.items, graine),
+        echantillons=tirer_echantillons(
+            jeu.items, graine, second_juge=not jeu_sans_second_juge(version)
+        ),
         date_reference=date_reference,
     )
     revue = rendre_revue(manifeste, jeu).encode("utf-8")
@@ -737,6 +750,7 @@ __all__ = [
     "producteurs_rd",
     "rendre_revue",
     "sha256_lf",
+    "jeu_sans_second_juge",
     "tirer_echantillons",
     "verifier_jeu",
     "verifier_manifeste",

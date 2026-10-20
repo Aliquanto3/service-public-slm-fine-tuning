@@ -832,3 +832,14 @@ def test_cli_usage(arguments: list[str], depot: Path, capsys: pytest.CaptureFixt
 def test_cli_run_options_manquantes(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["eval", "run", "--modele", "base:x"]) == CodeSortie.USAGE
     assert "--quantification, --jeu requis" in capsys.readouterr().err
+
+
+def test_echantillon_second_juge_vide_pour_un_jeu_dev() -> None:
+    from slmsp.evaluation.gel import jeu_sans_second_juge
+
+    items = [valider_item(i, strict=True) for i in jeu_complet()]
+    avec = tirer_echantillons(items, 7)
+    sans = tirer_echantillons(items, 7, second_juge=False)
+    assert avec.second_juge and sans.second_juge == []
+    assert sans.relecture == avec.relecture
+    assert jeu_sans_second_juge("dev2") and not jeu_sans_second_juge("v1.1")

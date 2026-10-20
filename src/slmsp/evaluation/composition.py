@@ -53,6 +53,11 @@ def _principal(run: Run) -> dict[str, Any]:
     return {champ: principal.get(champ) for champ in CHAMPS_JUGE}
 
 
+def _second_present(run: Run) -> bool:
+    juges = _config(run).get("juges")
+    return isinstance(juges, dict) and bool(juges.get("second"))
+
+
 def _empreintes(run: Run, base: Path) -> dict[str, Any]:
     config = _config(run)
     items = config.get("items")
@@ -66,6 +71,7 @@ def _empreintes(run: Run, base: Path) -> dict[str, Any]:
         "grille_sha256": grille,
         "manifeste_jeu_sha256": run.manifeste.entrees.get("manifeste_jeu"),
         "juge_principal": _principal(run),
+        "second_juge": _second_present(run),
         "taches_sha256": generation.manifeste.entrees.get("taches"),
     }
 

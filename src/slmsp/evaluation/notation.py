@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Collection, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Final, Protocol
 
@@ -49,7 +49,12 @@ from slmsp.core.schemas.verdict import Verdict
 from slmsp.evaluation import config as cfg
 from slmsp.evaluation import generation as phase_generation
 from slmsp.evaluation.controles import controler
-from slmsp.evaluation.gel import sha256_lf, tirer_echantillons, verifier_manifeste
+from slmsp.evaluation.gel import (
+    jeu_sans_second_juge,
+    sha256_lf,
+    tirer_echantillons,
+    verifier_manifeste,
+)
 from slmsp.evaluation.relecture import NOM_RELECTURE, NOM_SCORES, rendre_relecture
 from slmsp.evaluation.scores import Jugement, calculer_scores
 from slmsp.judge.cache import CacheVerdicts
@@ -111,6 +116,14 @@ class Juges:
     """Juge principal : `claude` ou le nom d'un juge tiers ; inscrit dans `scores.json`."""
 
 
+def _juges_du_jeu(juges: Juges, jeu_version: str) -> Juges:
+    """Retire le second juge d'un jeu `dev*`, quelle que soit la façon dont `juges` a été ouvert."""
+    if juges.second is None or not jeu_sans_second_juge(jeu_version):
+        return juges
+    description = {k: v for k, v in juges.description.items() if k != JUGE_SECOND}
+    return replace(juges, second=None, description=description)
+
+
 def jeu_du_run(depuis: str, racine: str | Path | None = None) -> str:
     """Version du jeu du run de génération `depuis` (pour choisir les juges avant la notation)."""
     return ouvrir_run(depuis, racine=_racine(racine)).manifeste.jeu_version or ""
@@ -140,6 +153,8 @@ def ouvrir_juges(
         raise ValueError(f"mode d'appel inconnu : {mode_appel!r} (attendu : batch, direct)")
     cfg_jeu = config.jeux.get(jeu) if jeu is not None else None
     cfg_jeu = cfg_jeu or ConfigJeuJuge()
+    if jeu_sans_second_juge(jeu):  # tout jeu dev*, section dédiée ou non (story 15.4)
+        cfg_jeu = cfg_jeu.model_copy(update={"second_juge": False})
     registre = RegistreBudget()
     if cfg_jeu.juge_principal is not None:
         from slmsp.evaluation.juges_tiers import ouvrir_juge_tiers
@@ -377,6 +392,7 @@ def noter(
     jeu_version = manifeste_parent.jeu_version
     assert jeu_version is not None
     evaluation = config if config is not None else cfg.charger_evaluation()
+    juges = _juges_du_jeu(juges, jeu_version)  # avant le manifeste du run (story 15.4)
 
     manifeste_sha: str | None = None
     if jeu_version == VERSION_CALIBRAGE:
@@ -514,6 +530,7 @@ def _noter_dans(
     manifeste_sha: str | None,
     dire: Rapporteur,
 ) -> RapportNotation:
+    juges = _juges_du_jeu(juges, jeu_version)
     ok, controles, demandes, non_jugeables = _demandes(selection, generations, evaluation)
     for item in ok:
         run.ajouter_jsonl(
@@ -536,7 +553,9 @@ def _noter_dans(
         and j.statut == "juge"
     ]
     second = _Issue()
-    if juges.second is not None and demandes_second:
+    if juges.second is None:
+        demandes_second = []
+    elif demandes_second:
         dire(f"Second juge : {len(demandes_second)} demande(s).")
         juge_second = juges.second
         second = _juger(lambda: juge_second.juger(demandes_second, echantillon), demandes_second)

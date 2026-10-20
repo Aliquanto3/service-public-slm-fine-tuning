@@ -289,6 +289,8 @@ COLONNES: Final = (
 
 def tableau_scores(scores: Any) -> str:
     """Tableau texte des Scores de Tâche : score, effectifs, kappa et statuts."""
+    from slmsp.evaluation.scores import CRITERES_KAPPA
+
     lignes = ["  ".join(titre.ljust(largeur) for titre, largeur in COLONNES) + "  Statuts"]
     for code, score in scores.taches.items():
         effectifs = score.effectifs
@@ -296,6 +298,8 @@ def tableau_scores(scores: Any) -> str:
         statuts.append("relu" if score.statuts.verdicts_relus else "non relu")
         if score.statuts.fragile:
             statuts.append("fragile")
+        elif code in CRITERES_KAPPA and score.kappa.valeur is None:
+            statuts.append("kappa non calculé")
         if score.statuts.plafonne_lc:
             statuts.append("plafonné LC")
         valeurs = (

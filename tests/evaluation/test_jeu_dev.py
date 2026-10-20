@@ -352,7 +352,7 @@ def test_ouvrir_juges_v11_garde_claude_et_mistral(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(
         module_tiers, "ouvrir_juge_tiers", lambda *a, **k: pytest.fail("juge tiers ouvert")
     )
-    for jeu in (None, "v1.1", "dev2"):  # dev2 : pas de section [jeux.dev2]
+    for jeu in (None, "v1.1"):
         juges = notation.ouvrir_juges(racine_projet(), None, jeu)
         assert juges.nom_principal == "claude" and juges.second is not None
         assert juges.principal.cache is juges.cache is juges.second.cache
@@ -437,3 +437,82 @@ def test_protection_ecarte_une_amorce_recouvrant_dev1(tmp_path: Path) -> None:
 def test_construire_protection_sans_dev_inchange(tmp_path: Path) -> None:
     with pytest.raises(ConfigurationInvalide):
         construire_protection(("dev1",), charger_config_donnees(), tmp_path)
+
+
+def test_ouvrir_juges_dev2_sans_section_n_ouvre_pas_mistral(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import slmsp.judge.claude as module_claude
+
+    monkeypatch.setattr(module_claude, "fabriquer_client", lambda config: object())
+    appels_mistral = _sdk_mistral_interdit(monkeypatch)
+    for jeu in ("dev2", "dev10"):  # pas de section [jeux.dev2] : la règle vaut pour tout dev*
+        juges = notation.ouvrir_juges(racine_projet(), None, jeu)
+        assert juges.second is None and juges.nom_principal == "claude"
+        assert "second" not in juges.description
+    assert appels_mistral == []
+
+
+def test_juges_du_jeu_retire_le_second_juge_d_un_jeu_dev() -> None:
+    """Défense en profondeur (reprise comprise) : un `Juges` fourni avec un second juge."""
+    second = object()
+    juges = notation.Juges(
+        principal=object(), second=second, cache=object(), description={"second": {"m": 1}}
+    )
+    for jeu in ("dev1", "dev2", "dev12"):
+        assert notation._juges_du_jeu(juges, jeu).second is None
+        assert "second" not in notation._juges_du_jeu(juges, jeu).description
+    for jeu in ("v1.1", "v1.0", ""):
+        assert notation._juges_du_jeu(juges, jeu).second is second
+
+
+def test_noter_retire_le_second_juge_avant_le_manifeste_du_run(
+    depot_eval: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`noter` applique la règle avant `nouveau_run` : manifeste sans second, aucun appel."""
+    from evaluation_factices import ITEMS_8, JugeFactice, verdict_factice
+
+    from slmsp.core.artefacts import nouveau_run, ouvrir_run
+    from slmsp.core.items import lire_jeu
+    from slmsp.core.schemas.generation import Generation
+    from slmsp.evaluation import generation as phase_generation
+    from slmsp.judge.cache import CacheVerdicts
+
+    run = nouveau_run(
+        phase_generation.TYPE_RUN,
+        "granite-4.0-1b",
+        {"phase": "generation", "items": list(ITEMS_8)},
+        racine=depot_eval,
+        modele_ref="base:granite-4.0-1b",
+        quantification="q4_k_m",
+        variante_llamacpp="cpu",
+        jeu_version="v1.0",
+    )
+    jeu = lire_jeu("v1.0", depot_eval)
+    for identifiant in ITEMS_8:
+        run.ajouter_jsonl(
+            phase_generation.FICHIER_GENERATIONS,
+            Generation(
+                item_id=identifiant,
+                tache=jeu.item(identifiant).code,
+                statut="ok",
+                sortie_canonique={"texte": f"<réponse-{identifiant}>"},
+                trace=[{"type": "fin", "raison": "terminee"}],
+                duree_ms=1,
+            ),
+        )
+    run.terminer("complet")
+    # Le jeu de calibrage v1.0 joue ici le rôle d'un jeu dev* : seul le prédicat change.
+    monkeypatch.setattr(notation, "jeu_sans_second_juge", lambda jeu: jeu == "v1.0")
+    cache = CacheVerdicts(tmp_path / "verdicts.sqlite")
+    second = JugeFactice(cache, "second")
+    juges = notation.Juges(
+        principal=JugeFactice(cache, "principal", fabriquer=lambda i: verdict_factice(i, max)),
+        second=second,
+        cache=cache,
+        description={"principal": {"modele": "factice"}, "second": {"modele": "mistral"}},
+    )
+    rapport = notation.noter(run.run_id, juges=juges, racine=depot_eval)
+    config = ouvrir_run(rapport.run.run_id, racine=depot_eval).manifeste.config
+    assert "second" not in config["juges"]
+    assert rapport.demandes_second == 0 and second.recus == []

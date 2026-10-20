@@ -214,3 +214,10 @@ def test_cli_composer(notations: tuple[Path, str, str], capsys: Any) -> None:
     code = main(["eval", "composer", "--route", f"CR={b}", "--defaut", a, "--racine", str(depot)])
     assert code == int(CodeSortie.USAGE)
     assert "statut" in capsys.readouterr().err
+
+
+def test_refus_si_la_presence_du_second_juge_differe(notations: tuple[Path, str, str]) -> None:
+    depot, a, b = notations
+    _modifier_manifeste(b, depot, lambda d: d["config"]["juges"].update(second={"modele": "x"}))
+    with pytest.raises(composition.ErreurComposition, match="second_juge"):
+        composition.composer({"CR": b}, a, racine=depot)
