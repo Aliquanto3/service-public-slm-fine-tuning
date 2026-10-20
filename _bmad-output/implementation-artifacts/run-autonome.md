@@ -141,3 +141,21 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-20 16:26 · 14.12 (O4e) · 5 items remplacés (second-avis sans défaut) ; fusion · vérification : **159/160 retenus**, CR-521 rejeté par DeepSeek (« points abordés » non référencés, année des dates) ; correction des dates lancée (O4f), consigne CR commune conservée · —
 - 2026-10-20 16:37 · 14.12 (O4b) · **dev1 gelé relu-llm** (159 items : CR 19 car CR-521 reste rejeté par DeepSeek sur un grief de grille commun à v1.1, exclu ; tous les autres retenus par DeepSeek et GLM ; consigne de vérification v3 neutre) · 2226401
 - 2026-10-20 16:37 · 14.17 (V17) · chaîne dev1 lancée (génération cuda + notation GLM, plafond 3 € par notation) : Baselines MiniCPM5-2B et Qwen3.5-0.8B, M1 v14 et M1 v18 de chacun · —
+- 2026-10-20 22:20 · 14.17 (V17) · **décision** : M1 v18 non retenu (dev1, bootstrap apparié : MiniCPM5-2B 47,3 contre Baseline 54,5, écart −7,2, IC95 [−11,8 ; −1,4] ; Qwen3.5-0.8B 31,8 contre 36,8, −5,0, IC95 [−10,3 ; +0,3]) ; pas de mesure finale v1.1 (règle §6). M1 v14 également sous la Baseline sur dev1 (MiniCPM −7,5 ; Qwen −2,1, dans le bruit) : le gain v1.1 de Qwen v14 (+2,7) n'était pas significatif · —
+- 2026-10-20 22:20 · run · fin du travail GPU ; bloqueur de veille arrêté ; suite complète de fin lancée · —
+
+## Bilan du run (pour Anaël)
+Qualité (moyenne des 8 Scores de Tâche).
+| Modèle | Jeu | Q | RD | CR | LC | CO | RE | CT | NR | Qualité |
+|---|---|---|---|---|---|---|---|---|---|---|
+| MiniCPM5-2B Baseline | dev1 (GLM) | 15,0 | 74,8 | 75,3 | 50,0 | 72,1 | 58,5 | 45,0 | 45,0 | **54,5** |
+| MiniCPM5-2B M1 v14 | dev1 | 10,0 | 82,3 | 51,9 | 15,0 | 78,5 | 33,4 | 50,0 | 55,0 | 47,0 |
+| MiniCPM5-2B M1 v18 (vérifié) | dev1 | 15,0 | 84,8 | 40,4 | 30,0 | 82,5 | 40,7 | 45,0 | 40,0 | 47,3 |
+| Qwen3.5-0.8B Baseline | dev1 | 5,0 | 54,3 | 39,7 | 35,0 | 74,9 | 28,1 | 32,5 | 25,0 | **36,8** |
+| Qwen3.5-0.8B M1 v14 | dev1 | 0,0 | 59,4 | 41,1 | 10,0 | 78,3 | 27,8 | 45,0 | 15,8 | 34,7 |
+| Qwen3.5-0.8B M1 v18 | dev1 | 0,0 | 55,6 | 35,3 | 15,0 | 77,0 | 29,7 | 31,6 | 10,0 | 31,8 |
+| MiniCPM5-2B Baseline | v1.1 (Claude) | 5,0 | 75,1 | 50,1 | 24,0 | 58,9 | 35,5 | 50,0 | 30,0 | **41,1** |
+| MiniCPM5-2B M1 v14 graine 1234 | v1.1 | 1,7 | 83,2 | 33,9 | 0,0 | 74,1 | 31,9 | 46,7 | 16,7 | 36,0 |
+| MiniCPM5-2B M1 v14 graine 4321 (E1) | v1.1 | 0,0 | 86,2 | 29,1 | 0,0 | 77,4 | 29,8 | 46,7 | 20,0 | 36,2 |
+Bruit : graines +0,1 (IC95 ±2,5) ; items ±4 à ±5 par run sur dev1, ±2,5 à ±4 sur v1.1.
+Dépenses du jour : anthropic 2,78 € ; mistral 1,95 € ; openrouter 9,66 € (≈ 14,4 €).
