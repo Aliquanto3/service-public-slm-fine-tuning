@@ -167,3 +167,10 @@ development_status:
   14-16-variance-bootstrap-et-graine: done  # E1
   14-17-jeu-v17-verifie-et-m1-minicpm5-2b: in-progress  # V17
   14-18-routage-par-tache-sur-jeu-dev: backlog  # E5
+  epic-15: in-progress
+  15-1-eval-composer-routage-par-tache: ready-for-dev  # N1
+  15-2-candidats-multiples-base-et-deepseek: ready-for-dev  # N2 (O2)
+  15-3-selection-des-cibles: backlog  # N3 (O3)
+  15-4-second-juge-desactive-pour-dev: ready-for-dev  # N4
+  15-5-dev2-vingt-items-par-tache: ready-for-dev  # N5
+  15-6-lora-gguf-et-lora-scaled: ready-for-dev  # N6

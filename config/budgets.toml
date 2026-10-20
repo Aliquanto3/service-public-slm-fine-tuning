@@ -38,7 +38,10 @@ schema_version = 1
 # Campagne methodo-v2-2026-10-20 close le 2026-10-20 vers 9 h avec : anthropic 2,78 €, mistral 0,32 € (génération
 # 0,10 €, juge 0,21 €) et openrouter 1,48 € dépensés. Anaël a relevé le 2026-10-20 au matin l'enveloppe du run
 # à 60 € pour anthropic et 50 $ (~46 €) pour openrouter : plafonds = enveloppe - dépensé ; mistral reporte son reste.
-campagne_id = "methodo-v2-2026-10-20b"
+# Campagne methodo-v2-2026-10-20b close le 2026-10-20 vers 22 h 40 avec : anthropic 0 €, mistral 1,63 € (génération)
+# et openrouter 8,18 € dépensés. Run de nuit du 20-21/10 : plafonds de nuit fixés par Anaël (openrouter 20 €, anthropic 50 €, relevé de 10 à 50 € par Anaël),
+# dans l'enveloppe restante ; mistral reporte son reste.
+campagne_id = "nuit-2026-10-20"
 
 # Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
 # réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
@@ -51,18 +54,18 @@ majoration_entree = 1.25
 [postes.anthropic]
 # PRD : 10 €. Relevé par Anaël le 2026-10-16 et le 2026-10-17 (10 $ ≈ 8,6 € + 5 € + 5 €), Baseline
 # complète et trois nouveaux Modèles de base candidats.
-plafond_eur = 57.0  # enveloppe 60 € moins 2,78 € dépensés (2026-10-20, méthodologie v2)
+plafond_eur = 50.0  # plafond de nuit 20-21/10 relevé à 50 € par Anaël à 22 h 50 (enveloppe restante : 57 €)
 
 [postes.mistral]
-plafond_eur = 9.5  # reste de la campagne methodo-v2 (2026-10-20)
+plafond_eur = 7.85  # reste de la campagne methodo-v2-2026-10-20b
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
-generation = 7.8
+generation = 6.15
 juge = 1.7
 
 [postes.openrouter]
-plafond_eur = 44.5  # enveloppe 50 $ (~46 €) moins 1,48 € dépensés (2026-10-20)
+plafond_eur = 20.0  # plafond de nuit 20-21/10 (reste de l'enveloppe : 36,3 €)
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]

@@ -1,0 +1,23 @@
+# Témoin « sous-ensemble utile » (run de nuit 20-21/10, plan §4) : M1 sur v19 = v18 sans CR, LC, RE (NR absent de v18).
+# Mêmes hyperparamètres que m1-qlora-minicpm5-2b-v18.toml. Notation sur dev1 (GLM) seulement.
+
+
+campagne = "minicpm5-2b-v19-sous-ensemble"
+modele = "minicpm5-2b"
+methode = "qlora"
+jeu_version = "v19"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
