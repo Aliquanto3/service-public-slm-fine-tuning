@@ -1,0 +1,24 @@
+# Run M1 sur le jeu v18 (= v17 nettoyé ; méthodologie v2, étage 1, 2026-10-20) : CR, CT, LC vérifiés par
+# contrôles déterministes et juge de données DeepSeek V4 Pro, refusées régénérées par Mistral (au plus
+# 3 essais), consignes d'Agent dans les entrées (O5). Mêmes hyperparamètres que m1-qlora-qwen3.5-0.8b-v14.
+# Lancement : scripts-campagne\campagne-run.ps1 -Toml config/runs/m1-qlora-qwen3.5-0.8b-v18.toml -SansNotation
+
+campagne = "qwen3.5-0.8b-v18"
+modele = "qwen3.5-0.8b"
+methode = "qlora"
+jeu_version = "v18"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
