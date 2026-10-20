@@ -160,3 +160,4 @@ Qualité (moyenne des 8 Scores de Tâche).
 Bruit : graines +0,1 (IC95 ±2,5) ; items ±4 à ±5 par run sur dev1, ±2,5 à ±4 sur v1.1.
 Dépenses du jour : anthropic 2,78 € ; mistral 1,95 € ; openrouter 9,66 € (≈ 14,4 €).
 - 2026-10-20 22:26 · run · décision · Anaël valide : LC `lc_gain_lisibilite` et `lc_modalite_perdue` non bloquants ; consigne CR commune conservée (comparabilité v1.1) ; dev1 à 19 CR (CR-521 exclu) ; facteur d'espace d'export 3 ; consignes d'Agent génériques (O5) ; GLM juge de dev1 ; PR agent-cost-kit ouverte (#17) ; worktrees du run supprimés (20) · —
+- 2026-10-20 22:31 · run · suite complète de fin : **5 948 passés**, 13 ignorés, 0 échec · c731669
