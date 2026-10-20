@@ -54,3 +54,7 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-20 23:27 · témoin · génération dev1 complète (`20261020-230047-ft-minicpm5-2b-c13a`), notation GLM en cours (`20261020-232214-ft-minicpm5-2b-5203`) · —
 - 2026-10-20 23:27 · E2/E4 · candidats lancés sur GPU (CR, LC ; base minicpm5-2b à 0,3 et 0,7 ; DeepSeek sur LC ; plafond 2 €) · —
 - 2026-10-20 23:27 · 15.3 · relecture de la spec amendée lancée (second-avis, avant code) · —
+- 2026-10-20 23:31 · 15.3 · spec relue (second-avis) : 4 high (Registre sans format pour une sortie de modèle local ; lecteur `train` sans journal OpenRouter ; RE contradictoire ; ligne sans candidat accepté), 6 medium, 2 low. **Décision** : pas de cible DeepSeek cette nuit (5 lignes LC), sources = Mistral et base ; 9 amendements écrits dans la section 15.3 des stories · 1506f48
+- 2026-10-20 23:31 · 15.6 · review · 1 medium et 3 low corrigés (`alpha_pattern` refusé, échelle bornée 0 < s ≤ 4, écart de gabarit signalé, sonde absente consignée), 1 medium et 2 low rejetés avec raison · 5b65d88
+- 2026-10-20 23:31 · 15.6 · fusion · squash dans main · 3cae049
+- 2026-10-20 23:31 · 15.3 · dev · lancé (Opus, story pivot) · —
