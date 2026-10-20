@@ -1,9 +1,9 @@
 {
   "global": {
     "incomplets": 0,
-    "rejetes": 37,
-    "retenus": 123,
-    "taux_rejet": 0.2313,
+    "rejetes": 5,
+    "retenus": 155,
+    "taux_rejet": 0.0312,
     "total": 160
   },
   "juges": [
@@ -13,58 +13,58 @@
   "par_tache": {
     "Compte rendu": {
       "incomplets": 0,
-      "rejetes": 8,
-      "retenus": 12,
-      "taux_rejet": 0.4,
+      "rejetes": 1,
+      "retenus": 19,
+      "taux_rejet": 0.05,
       "total": 20
     },
     "Correction": {
       "incomplets": 0,
-      "rejetes": 2,
-      "retenus": 18,
-      "taux_rejet": 0.1,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
       "total": 20
     },
     "Courrier type": {
       "incomplets": 0,
-      "rejetes": 3,
-      "retenus": 17,
-      "taux_rejet": 0.15,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
       "total": 20
     },
     "Langage clair": {
       "incomplets": 0,
-      "rejetes": 2,
-      "retenus": 18,
-      "taux_rejet": 0.1,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
       "total": 20
     },
     "Non-régression": {
-      "incomplets": 0,
-      "rejetes": 8,
-      "retenus": 12,
-      "taux_rejet": 0.4,
-      "total": 20
-    },
-    "Question": {
-      "incomplets": 0,
-      "rejetes": 5,
-      "retenus": 15,
-      "taux_rejet": 0.25,
-      "total": 20
-    },
-    "Recherche de données": {
       "incomplets": 0,
       "rejetes": 3,
       "retenus": 17,
       "taux_rejet": 0.15,
       "total": 20
     },
+    "Question": {
+      "incomplets": 0,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
+      "total": 20
+    },
+    "Recherche de données": {
+      "incomplets": 0,
+      "rejetes": 1,
+      "retenus": 19,
+      "taux_rejet": 0.05,
+      "total": 20
+    },
     "Résumé": {
       "incomplets": 0,
-      "rejetes": 6,
-      "retenus": 14,
-      "taux_rejet": 0.3,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
       "total": 20
     }
   }
