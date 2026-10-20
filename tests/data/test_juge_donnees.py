@@ -118,6 +118,8 @@ def banc(tmp_path: Path) -> Any:
 
 
 def juge(banc: Any, cache: dict[str, Any] | None = None, **options: Any) -> JugeDonnees:
+    # Séquentiel par défaut (réponses scriptées dans l'ordre) ; le parallélisme a ses tests.
+    options = {"appels_paralleles": 1, **options}
     config = JugeDonneesConfig(modele=F.MODELE, max_tokens=500, **options)
     return JugeDonnees(config, banc.client(), charger_grilles(), cache)
 
@@ -537,3 +539,87 @@ def test_pire_cas_compte_la_relance(banc: Any) -> None:
         registre.config.majoration_entree,
     )
     assert une.cout_pire_cas_eur == pytest.approx(2 * simple)
+
+
+# --- Parallélisme et délais (revue O6a) ------------------------------------------------------
+
+
+def test_file_ordonnee_rend_dans_l_ordre_et_en_parallele() -> None:
+    import time
+
+    from slmsp.data.juge_donnees import FileOrdonnee
+
+    file = FileOrdonnee(4)
+    debut = time.monotonic()
+    for i in range(8):
+        file.soumettre(i, lambda i=i: (time.sleep(0.05 * (8 - i)), i)[1])
+    rendus = [(e, v, err) for e, v, err in file.resultats(attendre=True)]
+    file.fermer()
+    assert rendus == [(i, i, None) for i in range(8)]
+    assert time.monotonic() - debut < 0.05 * sum(range(1, 9)) * 0.8
+
+
+def test_file_ordonnee_erreur_annule_les_jugements_non_lances() -> None:
+    import time
+
+    from slmsp.data.juge_donnees import FileOrdonnee, JugementAnnule
+
+    def echec() -> None:
+        time.sleep(0.05)
+        raise BudgetEpuise("<budget-factice>")
+
+    file = FileOrdonnee(2)
+    file.soumettre(0, echec)
+    file.soumettre(1, lambda: (time.sleep(0.3), "en-cours")[1])
+    for i in range(2, 5):
+        file.soumettre(i, lambda i=i: i)
+    rendus = list(file.resultats(attendre=True))
+    file.fermer()
+    assert isinstance(rendus[0][2], BudgetEpuise)
+    assert rendus[1][1:] == ("en-cours", None)  # déjà lancé : payé, rendu
+    assert all(isinstance(err, JugementAnnule) for _, _, err in rendus[2:])
+
+
+def test_lancer_jugement_parallele_client_lent_verdicts_ordonnes(
+    banc: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import threading
+    import time
+
+    j = juge(banc, appels_paralleles=4)
+    appeler, actifs, pic = j.client.appeler, [0], [0]
+    verrou = threading.Lock()
+
+    def lent(*args: Any, **kwargs: Any) -> Any:
+        with verrou:
+            actifs[0] += 1
+            pic[0] = max(pic[0], actifs[0])
+        time.sleep(0.2)
+        try:
+            return appeler(*args, **kwargs)
+        finally:
+            with verrou:
+                actifs[0] -= 1
+
+    monkeypatch.setattr(j.client, "appeler", lent)
+    resultat = lancer(banc, tmp_path / "racine", candidats(8), j)
+    assert resultat.statut == "complet" and pic[0] == 4
+    lignes = resultat.run.lire_jsonl(NOM_VERDICTS)
+    assert [ligne["candidat_id"] for ligne in lignes] == [c.candidat_id for c in candidats(8)]
+    # Registre de budget partagé entre threads : 8 réservations réglées, aucune en suspens.
+    assert len(banc.faux.corps()) == 8
+    assert j.cout_total == pytest.approx(sum(ligne["cout_eur"] for ligne in lignes))
+
+
+def test_delais_du_juge_transmis_au_client() -> None:
+    from slmsp.data.config import charger_config_donnees
+    from slmsp.data.juge_donnees import config_openrouter
+
+    config = charger_config_donnees().juge_donnees
+    assert config.appels_paralleles == 8
+    fournisseur = config_openrouter(config)
+    assert (fournisseur.delai_lecture, fournisseur.delai_appel) == (900.0, 900.0)
+    assert fournisseur.duree_totale_max_appel >= fournisseur.delai_appel
+    assert fournisseur.base_url == "https://openrouter.ai/api/v1"
+    with pytest.raises(ValueError):
+        JugeDonneesConfig(delai_appel=900.0, duree_totale_max_appel=600.0)

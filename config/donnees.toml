@@ -132,6 +132,15 @@ sortie_estimee = 1500
 marge_raisonnement = 8000
 # Usage de budget (imputé au poste openrouter, config/budgets.toml).
 usage_budget = "juge-donnees-openrouter"
+# Délai de lecture HTTP (s) : DeepSeek V4 Pro met ~2,8 min par appel (calibrage O1), le défaut
+# du client (300 s) coupait l'appel.
+delai_lecture = 900.0
+# Délai total d'une tentative (s).
+delai_appel = 900.0
+# Durée maximale d'un appel, réessais compris (s), au moins delai_appel.
+duree_totale_max_appel = 1800.0
+# Jugements menés en parallèle (data juger, data generate --verifiee), verdicts écrits dans l'ordre.
+appels_paralleles = 8
 
 # Seuils d'acceptation (note >= seuil pour chaque critère), alignés sur les scores du test.
 # Fusion par critère avec les défauts du code : un critère omis garde son seuil par défaut ;
@@ -209,3 +218,182 @@ CO = [
 mediane_mots = 278
 # Écart relatif admis autour de la médiane (0,3 = ± 30 %).
 tolerance = 0.3
+
+# Génération vérifiée (story O6a, `slmsp data generate --verifiee`) : contrôles déterministes des
+# cibles CR, LC, CT avant le juge de données (`slmsp.data.verification`). Règles d'outillage
+# (expressions régulières, listes de mots), jamais un exemple de réponse (D1). Les codes partagés
+# avec `validate` (url_inventee, valeur_absente, cr_sections_manquantes, ct_format_incomplet,
+# lc_valeur_perdue) restent toujours bloquants.
+[verification]
+# Essais par session au total : 1 tant que la régénération (O6b) n'est pas livrée, puis 3.
+essais_max = 1
+# Gain de Kandel-Moles minimal d'une cible LC (copie de gain_km_min de evaluation.toml).
+gain_km_min = 10.0
+# Graine des tirages de echantillon.md et calibrage.md.
+graine = 42
+# Cibles retenues tirées par Tâche (et cibles écartées) dans echantillon.md.
+echantillon = 5
+# Refus des contrôles tirés dans calibrage.md, relus avant le run payant.
+calibrage = 20
+# Codes non bloquants (transmis au juge et au rapport). nom_absent le reste jusqu'au calibrage ;
+# un code dont plus de 20 % des refus relus sont des faux positifs y est ajouté.
+non_bloquants = [
+  'nom_absent',
+]
+# Mots capitalisés jamais tenus pour des noms propres (casse et accents ignorés) : titres de
+# section, civilités et abréviations, mois et jours, institutions génériques.
+exceptions_noms = [
+  'Participants',
+  'Points',
+  'Décisions',
+  'Décision',
+  'Actions',
+  'Action',
+  'Objet',
+  'Références',
+  'Référence',
+  'Réf',
+  'Ordre',
+  'Compte',
+  'Rendu',
+  'Synthèse',
+  'Contexte',
+  'Pièces',
+  'Pièce',
+  'Signature',
+  'Responsable',
+  'Échéance',
+  'Copie',
+  'M',
+  'MM',
+  'Mme',
+  'Mmes',
+  'Mlle',
+  'Madame',
+  'Monsieur',
+  'Mesdames',
+  'Messieurs',
+  'Maître',
+  'Docteur',
+  'Dr',
+  'Me',
+  'Pr',
+  'N',
+  'V',
+  'Cf',
+  'Tél',
+  'Courriel',
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+  'Lundi',
+  'Mardi',
+  'Mercredi',
+  'Jeudi',
+  'Vendredi',
+  'Samedi',
+  'Dimanche',
+  'État',
+  'République',
+  'Française',
+  'Français',
+]
+# Formules de conseil refusées dans une cible LC quand la source ne les porte pas.
+lc_conseils = [
+  '\bnous vous conseillons\b',
+  '''\bn['’]hésitez pas\b''',
+  '\bpensez à\b',
+  '\bil est recommandé\b',
+  '\bnous vous recommandons\b',
+  '\bil est conseillé\b',
+]
+
+# Classes de modalité et de condition LC : chaque classe présente dans la source doit rester
+# présente dans la cible (présence, pas nombre ; une baisse du nombre est un motif non bloquant).
+[verification.lc_marqueurs]
+# Marqueurs de la classe condition.
+condition = [
+  '\bsi\b',
+  '''\bs['’]ils?\b''',
+  '\bsauf\b',
+  '\bà condition\b',
+  '\bsous réserve\b',
+  '''\ben cas d(?:e\b|['’])''',
+  '''\blorsqu(?:e\b|['’])''',
+  '\bquand\b',
+  '''\bdès qu(?:e\b|['’])''',
+  '\bau cas où\b',
+]
+# Marqueurs de la classe restriction.
+restriction = [
+  '\buniquement\b',
+  '\bseulement\b',
+  '\bexclusivement\b',
+  '\bseule?s?\b',
+  '''\bne\b[^.;!?\n]{0,60}?\bqu(?:e\b|['’])''',
+  '''\bn['’][^.;!?\n]{0,60}?\bqu(?:e\b|['’])''',
+]
+# Marqueurs de la classe obligation.
+obligation = [
+  '\bdoi(?:t|s|vent)\b',
+  '\bdev(?:ez|ons|oir|ra|ras|rez|rons|ront|rait|raient)\b',
+  '\bobligatoires?\b',
+  '\bobligatoirement\b',
+  '\bobligations?\b',
+  '\bobligée?s?\b',
+  '''\btenue?s? d(?:e\b|['’])''',
+  '\bil (?:vous )?(?:faut|faudra)\b',
+  '\bnécessaires?\b',
+]
+# Marqueurs de la classe permission.
+permission = [
+  '\bpeu(?:t|x|vent)\b',
+  '\bpouv(?:ez|ons|oir|ait|aient)\b',
+  '\bpourr(?:a|as|ez|ons|ont|ait|aient)\b',
+  '\bpossibles?\b',
+  '\bpossibilités?\b',
+  '\b(?:avez|avons|a|ont|avoir|aurez|aura|auront) (?:le )?droit\b',
+  '\bautorisée?s?\b',
+]
+# Marqueurs de la classe interdiction.
+interdiction = [
+  '\binterdite?s?\b',
+  '\binterdiction\b',
+  '\bdéfendu\b',
+  '\bne (?:peu\w*|pouv\w*|pourr\w*|doi\w*|dev\w*) pas\b',
+  '\bpas (?:le )?droit\b',
+  '''\bn['’](?:est|êtes|sont) pas (?:autorisé|permis)''',
+]
+# Marqueurs de la classe echeance.
+echeance = [
+  '\bau plus tard\b',
+  '''\bavant (?:le|la|l['’]|ce|cette)\b''',
+  '\bdans un délai\b',
+  '\bdélais?\b',
+  '''\bjusqu['’]''',
+]
+
+# Blocs détectables d'un CT, dans l'ordre attendu (recherche ligne par ligne, casse ignorée).
+# Expéditeur et destinataire, non détectables de façon fiable, sont laissés au juge.
+[verification.ct_blocs]
+# Bloc lieu_date.
+lieu_date = '^[^\n]{0,60}\ble\s+(?:\[[^\]\n]+\]|\d{1,2}(?:er)?\s+[^\W\d_]+\s+\d{4}|\d{1,2}/\d{1,2}/\d{4})[ .*_]*$'
+# Bloc objet.
+objet = '^[#*_\s]*objet\b[^\n:]{0,40}:'
+# Bloc references.
+references = '^[#*_\s\[]*(?:[nv]\s*/\s*|vos\s+|nos\s+)?r[ée]f(?:[ée]rences?|\.)?(?![^\W_])'
+# Bloc appel.
+appel = '^[#*_\s]*(?:madame|monsieur|mesdames|messieurs|ma[iî]tre|docteur|\[[^\]\n]*(?:civilit|appel)[^\]\n]*\])[^\n]{0,60},[*_\s]*$'
+# Bloc politesse.
+politesse = '\b(?:agr[ée]er|salutations|consid[ée]ration|sentiments|cordialement|respectueusement)\b'
+# Bloc signature.
+signature = '^[#*_\s]*(?:\[[^\]\n]*(?:signat|nom|qualit|fonction|pr[ée]nom)[^\]\n]*\]|l[ea]\s+\S+|p\.?\s*o\.?\s|pour\s+l[ea]\b|sign(?:[ée]|ature\b))'

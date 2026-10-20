@@ -29,6 +29,13 @@ seed, sans aucun appel : le run produit est un jeu complet pour `validate`, `fil
 Le run consigne le modèle demandé du Générateur (`modele_generateur`) et s'il est une
 préversion (`generateur_preversion`).
 
+`verificateur` (story O6a, `--verifiee`) : chaque session CR, LC, CT terminée passe les
+contrôles déterministes puis le juge de données avant `brut.jsonl` ; refusée, elle est écartée
+(`AbandonSession` `verification_refusee`, `slmsp.data.generation_verifiee`). Les estimations
+pire cas (Mistral, puis OpenRouter du juge) sont affichées avant toute création de run et tout
+appel ; `plafond_estime_mistral` et le plafond du vérificateur refusent un lancement trop cher
+(`PlafondEstimeDepasse`, rien n'est écrit).
+
 `reprendre_run_id` reprend un run en ajout seul : le plan est relu, les SHA du seed, des
 gabarits et de `config/outils-mcp.toml` sont revérifiés (`ManifesteInvalide` si l'un a
 changé, avant toute écriture), et les sessions présentes dans `brut.jsonl` ou
@@ -42,7 +49,7 @@ from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Final, Protocol
+from typing import TYPE_CHECKING, Any, Final, Protocol
 
 from pydantic import ValidationError
 
@@ -70,6 +77,7 @@ from slmsp.core.schemas.session_donnees import (
     SessionPlanifiee,
 )
 from slmsp.core.texte import normaliser
+from slmsp.data.juge_donnees import JugementAnnule, PlafondEstimeDepasse
 from slmsp.data.seed import _url_canonique
 from slmsp.data.sessions import (
     NOM_AMORCES_DERIVEES,
@@ -82,6 +90,7 @@ from slmsp.data.sessions import (
     ResolveurPassages,
     passage_depuis_plan,
 )
+from slmsp.fournisseurs.client import ErreurApiFournisseur
 from slmsp.harness.prompts import formater_passages
 from slmsp.harness.recherche_index import RequeteVide
 from slmsp.mcp.outils import charger_config
@@ -97,9 +106,13 @@ from slmsp.mistral.generateur import (
 )
 from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, journal_pour
 
+if TYPE_CHECKING:
+    from slmsp.data.generation_verifiee import Verificateur
+
 __all__ = [
     "CHAINES",
     "ORDRE_TACHES",
+    "PlafondEstimeDepasse",
     "TYPE_RUN",
     "ResultatGeneration",
     "SourcePassages",
@@ -617,6 +630,8 @@ def lancer_generation(
     consigner: Callable[[str], None] = print,
     taches: Collection[str] | None = None,
     completer_depuis: str | None = None,
+    verificateur: Verificateur | None = None,
+    plafond_estime_mistral: float | None = None,
 ) -> ResultatGeneration:
     """Crée (`seed_run_id`) ou reprend (`reprendre_run_id`) un run `data-generate`.
 
@@ -627,6 +642,9 @@ def lancer_generation(
 
     `taches` (nouveau run seulement) : Tâches à générer ; `completer_depuis` (exige `taches`) :
     run `data-generate` du même seed dont les sessions closes des autres Tâches sont reprises.
+    `verificateur` : génération vérifiée (O6a) ; à la reprise, exigé si et seulement si le run
+    a été créé vérifié. `plafond_estime_mistral` : `PlafondEstimeDepasse` si le coût Mistral
+    pire cas estimé le dépasse (avant tout run et tout appel).
     """
     if (seed_run_id is None) == (reprendre_run_id is None):
         raise ValueError("seed_run_id ou reprendre_run_id attendu (exactement un)")
@@ -659,6 +677,43 @@ def lancer_generation(
         )
     seed = _ouvrir_seed(seed_run_id, racine)
     entrees = _entrees(seed, outils, generateur)
+    journal = journal_pour(
+        USAGE_GENERATION,
+        generateur.client.config,
+        generateur.client.dossier_journaux,
+        lecteur="data",
+    )
+    textes_amorces = {a.amorce_id: a.texte for a in _amorces(seed, racine)}
+
+    def estimer_et_borner(plan: Sequence[SessionPlanifiee], deja: set[str]) -> None:
+        """Estimations pire cas affichées avant le premier appel ; plafonds vérifiés avant
+        toute écriture."""
+        par_session = {session.session_id: session.tache for session in plan}
+        estimation = estimer_plan(
+            plan,
+            generateur,
+            deja=deja,
+            textes_amorces=textes_amorces,
+            tours_outils_max=tours_outils_max,
+            journalises=lambda session_id: appels_journalises(
+                journal,
+                session_id,
+                modele,
+                _max_tokens_session(generateur, par_session[session_id]),
+            ),
+        )
+        _afficher_estimation(estimation, consigner)
+        if plafond_estime_mistral is not None:
+            couts = [ligne["cout_pire_cas_eur"] for ligne in estimation.values()]
+            pire = None if None in couts else sum(couts)
+            if pire is None or pire > plafond_estime_mistral:
+                raise PlafondEstimeDepasse(
+                    f"génération refusée : coût Mistral pire cas "
+                    f"{'inconnu' if pire is None else f'{pire:.2f} €'}, plafond "
+                    f"{plafond_estime_mistral:.2f} € ; aucun run créé, aucun appel fait"
+                )
+        if verificateur is not None:
+            verificateur.borner([s.tache for s in plan if s.session_id not in deja], consigner)
 
     if reprendre_run_id is None:
         reprises = (
@@ -666,6 +721,17 @@ def lancer_generation(
             if completer_depuis is None
             else _reprises(completer_depuis, seed_run_id, taches or (), racine)
         )
+        if verificateur is not None and reprises is not None:
+            # Revue O6a : une session CR, LC, CT recopiée du run source n'est jamais vérifiée.
+            non_verifiees = sorted(
+                {s.tache for s in reprises.sessions if s.tache in verificateur.taches}
+            )
+            if non_verifiees:
+                raise ManifesteInvalide(
+                    f"génération vérifiée : sessions {', '.join(non_verifiees)} du run "
+                    f"{completer_depuis} reprises sans vérification ; ajouter ces Tâches à "
+                    "--taches"
+                )
         amorces = _amorces(seed, racine)
         plan, comptes_plan = planifier(
             amorces,
@@ -697,22 +763,28 @@ def lancer_generation(
                         "reprises": n,
                         "non_closes_source": reprises.non_closes[tache],
                     }
+        estimer_et_borner(
+            plan, set() if reprises is None else {s.session_id for s in reprises.sessions}
+        )
+        config_run: dict[str, Any] = {
+            "seed_run_id": seed_run_id,
+            "commit_gel": commit_gel,
+            "volumes": dict(volumes),
+            "surplus": surplus,
+            "tours_outils_max": tours_outils_max,
+            "index_version": index_version,
+            "comptes_plan": comptes_plan,
+            "modele_generateur": modele,
+            "generateur_preversion": preversion,
+            "taches": None if taches is None else sorted(taches),
+            "completer_depuis": completer_depuis,
+        }
+        if verificateur is not None:
+            config_run["verification"] = verificateur.description()
         run = nouveau_run(
             TYPE_RUN,
             "generate",
-            {
-                "seed_run_id": seed_run_id,
-                "commit_gel": commit_gel,
-                "volumes": dict(volumes),
-                "surplus": surplus,
-                "tours_outils_max": tours_outils_max,
-                "index_version": index_version,
-                "comptes_plan": comptes_plan,
-                "modele_generateur": modele,
-                "generateur_preversion": preversion,
-                "taches": None if taches is None else sorted(taches),
-                "completer_depuis": completer_depuis,
-            },
+            config_run,
             parents=[seed_run_id] if reprises is None else [seed_run_id, reprises.run_id],
             entrees=entrees,
             racine=racine,
@@ -762,6 +834,21 @@ def lancer_generation(
         plan = _plan_du_run(existant, comptes_plan)  # avant toute écriture
         index_version = existant.manifeste.config.get("index_version")
         tours_outils_max = int(existant.manifeste.config.get("tours_outils_max", tours_outils_max))
+        if (existant.manifeste.config.get("verification") is not None) != (
+            verificateur is not None
+        ):
+            raise ManifesteInvalide(
+                f"run {reprendre_run_id} : génération vérifiée à la création "
+                f"{'oui' if verificateur is None else 'non'}, à la reprise "
+                f"{'non' if verificateur is None else 'oui'} : reprise refusée"
+            )
+        closes = {
+            str(ligne["session_id"])
+            for nom in (NOM_BRUT, NOM_ABANDONS)
+            for ligne in existant.lire_jsonl(nom)
+            if isinstance(ligne, dict) and "session_id" in ligne
+        }
+        estimer_et_borner(plan, closes)
         run, deja = reprendre(reprendre_run_id, fichier=NOM_BRUT, cle="session_id", racine=racine)
         deja |= {
             str(ligne["session_id"])
@@ -772,24 +859,8 @@ def lancer_generation(
     for session in plan:
         if session.passages is not None:
             passages.definir(session.session_id, [passage_depuis_plan(p) for p in session.passages])
-    journal = journal_pour(
-        USAGE_GENERATION,
-        generateur.client.config,
-        generateur.client.dossier_journaux,
-        lecteur="data",
-    )
-    taches = {session.session_id: session.tache for session in plan}
-    estimation = estimer_plan(
-        plan,
-        generateur,
-        deja=deja,
-        textes_amorces={a.amorce_id: a.texte for a in _amorces(seed, racine)},
-        tours_outils_max=tours_outils_max,
-        journalises=lambda session_id: appels_journalises(
-            journal, session_id, modele, _max_tokens_session(generateur, taches[session_id])
-        ),
-    )
-    _afficher_estimation(estimation, consigner)  # avant le premier appel
+    if verificateur is not None:
+        verificateur.ouvrir(run, journal, racine)
     executeur = ExecuteurSessions(
         ContexteSessions(
             generateur=generateur,
@@ -803,7 +874,7 @@ def lancer_generation(
             index_version=index_version,
         )
     )
-    return _executer_plan(run, plan, deja, executeur, comptes_plan, consigner)
+    return _executer_plan(run, plan, deja, executeur, comptes_plan, consigner, verificateur)
 
 
 def _executer_plan(
@@ -813,10 +884,53 @@ def _executer_plan(
     executeur: ExecuteurSessions,
     comptes_plan: Any,
     consigner: Callable[[str], None],
+    verificateur: Verificateur | None = None,
 ) -> ResultatGeneration:
     taches = _bilan_vide(plan)
     statut, motif = "complet", None
     incidents = 0
+    non_jugees = 0
+
+    def ecrire(session: SessionPlanifiee, resultat: SessionBrute | AbandonSession | None) -> None:
+        nonlocal non_jugees
+        ligne = taches[session.tache]
+        if resultat is None:
+            non_jugees += 1
+            consigner(
+                f"[{session.rang + 1}/{len(plan)}] {session.session_id} : "
+                "juge non conclusif, à reprendre"
+            )
+            return
+        if isinstance(resultat, SessionBrute):
+            run.ajouter_jsonl(NOM_BRUT, resultat.model_dump(mode="json"))
+            ligne["completes"] += 1
+            etat = "ok"
+        else:
+            assert isinstance(resultat, AbandonSession)
+            run.ajouter_jsonl(NOM_ABANDONS, resultat.model_dump(mode="json"))
+            ligne["abandons"][resultat.motif] = ligne["abandons"].get(resultat.motif, 0) + 1
+            etat = f"abandon ({resultat.motif})"
+        consigner(f"[{session.rang + 1}/{len(plan)}] {session.session_id} : {etat}")
+
+    def ecrire_verifiees(*, attendre: bool) -> None:
+        """Résultats prêts du vérificateur, dans l'ordre du plan ; lève la première erreur
+        d'un jugement (session non écrite, rejouée à la reprise) après avoir arrêté la file."""
+        assert verificateur is not None
+        for session, resultat, erreur in verificateur.resultats(attendre=attendre):
+            if erreur is not None:
+                verificateur.arreter()
+                raise erreur
+            ecrire(session, resultat)
+
+    def vider_apres_erreur() -> None:
+        """Après une erreur : plus de jugement lancé ; ceux déjà faits (payés) sont écrits."""
+        if verificateur is None:
+            return
+        verificateur.arreter()
+        for session, resultat, erreur in verificateur.resultats(attendre=True):
+            if erreur is None:
+                ecrire(session, resultat)
+
     try:
         for session in plan:
             if session.session_id in deja:
@@ -842,31 +956,52 @@ def _executer_plan(
                 continue
             finally:
                 _cumuler(ligne, compteur)
-            if isinstance(resultat, SessionBrute):
-                run.ajouter_jsonl(NOM_BRUT, resultat.model_dump(mode="json"))
-                ligne["completes"] += 1
-                etat = "ok"
+            if verificateur is None:
+                ecrire(session, resultat)
+                continue
+            # Jugements en parallèle (`[juge_donnees] appels_paralleles`) ; toutes les sessions
+            # passent par la file du vérificateur pour être écrites dans l'ordre du plan.
+            if isinstance(resultat, SessionBrute) and resultat.tache in verificateur.taches:
+                verificateur.soumettre(resultat, session)
             else:
-                assert isinstance(resultat, AbandonSession)
-                run.ajouter_jsonl(NOM_ABANDONS, resultat.model_dump(mode="json"))
-                ligne["abandons"][resultat.motif] = ligne["abandons"].get(resultat.motif, 0) + 1
-                etat = f"abandon ({resultat.motif})"
-            consigner(f"[{session.rang + 1}/{len(plan)}] {session.session_id} : {etat}")
+                verificateur.transmettre(resultat, session)
+            ecrire_verifiees(attendre=False)
+        if verificateur is not None:
+            ecrire_verifiees(attendre=True)
     except BudgetEpuise as exc:
         statut, motif = "partiel-budget", str(exc)
+        vider_apres_erreur()
     except PrealableNonSatisfait as exc:
         statut, motif = "partiel-erreur", f"conditions Mistral à revérifier : {exc}"
-    except (ErreurApiMistral, ModeleMistralRefuse) as exc:
+        vider_apres_erreur()
+    except (ErreurApiMistral, ModeleMistralRefuse, ErreurApiFournisseur, JugementAnnule) as exc:
         statut, motif = "partiel-erreur", f"{type(exc).__name__} : {exc}"
+        vider_apres_erreur()
     except KeyboardInterrupt:
+        if verificateur is not None:
+            verificateur.arreter()
+            verificateur.fermer(attendre=False)
         _clore(run, "interrompu", "interruption clavier", taches, comptes_plan)
         raise
     except BaseException as exc:
+        if verificateur is not None:
+            verificateur.arreter()
+            verificateur.fermer(attendre=False)
         _clore(run, "partiel-erreur", f"{type(exc).__name__} : {exc}", taches, comptes_plan)
         raise
     else:
         if incidents:
             statut = "partiel-erreur"
             motif = f"{incidents} session(s) en incident MCP, à reprendre"
+        elif non_jugees:
+            statut = "partiel-erreur"
+            motif = f"{non_jugees} session(s) non jugée(s) par le juge de données, à reprendre"
+    if verificateur is not None:
+        verificateur.fermer()
+        try:
+            verificateur.clore(statut, sum(t["cout_eur"] for t in taches.values()))
+        except Exception as exc:  # revue O6a : le run est toujours clos
+            _clore(run, "partiel-erreur", f"rapport de vérification : {exc}", taches, comptes_plan)
+            raise
     bilan = _clore(run, statut, motif, taches, comptes_plan)
     return ResultatGeneration(run=run, statut=statut, bilan=bilan)

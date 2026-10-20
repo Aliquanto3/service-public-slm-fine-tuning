@@ -54,7 +54,6 @@ import re
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Final, Protocol
 
@@ -77,9 +76,20 @@ from slmsp.core.schemas.amorce import Amorce, texte_mistral_conforme
 from slmsp.core.schemas.cassette import Cassette
 from slmsp.core.schemas.rejet_donnees import RejetExemple
 from slmsp.core.schemas.session_donnees import SessionBrute, SessionPlanifiee
-from slmsp.core.texte import compter_mots, extraire_nombres
+from slmsp.core.texte import compter_mots
 from slmsp.data.extraction import extraire_contenu, extraire_message
-from slmsp.harness.citations import extraire_urls, urls_inventees
+from slmsp.data.verification import (
+    SECTIONS_CR,
+    TACHES_A_VALEURS,
+    TACHES_VALEURS_CONSERVEES,
+    ct_a_emplacement,
+    ct_format_manques,
+    lc_valeurs_perdues,
+    sections_cr_manquantes,
+    valeurs_absentes,
+    valeurs_perdues,
+)
+from slmsp.harness.citations import urls_inventees
 from slmsp.harness.taches import TableTaches, charger_taches
 from slmsp.harness.taches.recherche import contenu_resultat
 from slmsp.mcp.bac_a_sable import BacASable
@@ -94,6 +104,7 @@ from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, LigneAppel
 
 __all__ = [
     "GABARIT_VALIDATION",
+    "SECTIONS_CR",
     "TACHES_A_VALEURS",
     "TACHES_CONTROLE_FIDELITE",
     "TACHES_VALEURS_CONSERVEES",
@@ -118,14 +129,8 @@ NOM_AMORCES_DERIVEES: Final = "amorces-derivees.jsonl"
 NOM_VALIDES: Final = "valides.jsonl"
 NOM_REJETS: Final = "rejets.jsonl"
 NOM_RAPPORT: Final = "rapport.json"
-TACHES_A_VALEURS: Final = frozenset({"Q", "RD", "CR", "LC", "RE", "CT", "CO"})
-"""Tâches dont la réponse doit rester appuyée par des valeurs de sa source."""
-TACHES_VALEURS_CONSERVEES: Final = frozenset({"CO"})
-"""Tâches dont la sortie doit garder toutes les valeurs notables de sa source (règle de
-fidélité automatique : une correction ne change ni dates ni montants)."""
 TACHES_CONTROLE_FIDELITE: Final = frozenset({"CR", "LC", "RE"})
 """Tâches dont la fidélité à la source peut être contrôlée par Mistral."""
-ENTIER_IGNORE_MAX: Final = 9
 CARACTERES_PAR_TOKEN: Final = 3
 
 
@@ -447,68 +452,6 @@ def _rejouer(lecteur: LecteurGeneration, brut: SessionBrute, chemin_outils: Path
     return resultats
 
 
-def _nombres_notables(texte: str) -> set[Decimal]:
-    return {
-        abs(n)
-        for n in extraire_nombres(texte)
-        if not (n == n.to_integral_value() and abs(n) <= ENTIER_IGNORE_MAX)
-    }
-
-
-def _sans_urls(texte: str) -> str:
-    for url in extraire_urls(texte):
-        texte = texte.replace(url, " ")
-    return texte
-
-
-_MOIS: Final = {
-    mois: numero
-    for numero, mois in enumerate(
-        (
-            "janvier février mars avril mai juin juillet août septembre octobre novembre décembre"
-        ).split(),
-        start=1,
-    )
-}
-_DATE: Final = re.compile(
-    r"(?<![\w.,/-])(?:"
-    r"(?P<iso_a>\d{4})-(?P<iso_m>\d{1,2})-(?P<iso_j>\d{1,2})"
-    r"|(?P<num_j>\d{1,2})[/.-](?P<num_m>\d{1,2})[/.-](?P<num_a>\d{4})"
-    r"|(?P<lit_j>\d{1,2})(?:er)?\s+(?P<lit_m>[A-Za-zéèêûôîàç]+)\s+(?P<lit_a>\d{4})"
-    r")(?![\w,/-]|\.\d)",
-    re.IGNORECASE,
-)
-_ANNOTATION_MOTS: Final = re.compile(
-    r"(?<![\w,.])(?:\d{1,3}(?:[    ]\d{3})+|\d+)\s*mots?\b", re.IGNORECASE
-)
-"""Compte de mots écrit par le générateur (« (80 mots max.) », « de 200 mots au plus ») :
-seul le nombre suivi de « mots » est retiré ; le reste d'une parenthèse reste contrôlé."""
-
-
-def _dates(texte: str) -> list[tuple[re.Match[str], tuple[int, int, int]]]:
-    """Dates du texte (ISO, jj/mm/aaaa, « 20 avril 2021 ») avec leur forme (année, mois, jour)."""
-    trouvees = []
-    for m in _DATE.finditer(texte):
-        if m["iso_a"]:
-            a, mois, j = m["iso_a"], m["iso_m"], m["iso_j"]
-        elif m["num_a"]:
-            a, mois, j = m["num_a"], m["num_m"], m["num_j"]
-        else:
-            mois = str(_MOIS.get(m["lit_m"].lower(), 0))
-            a, j = m["lit_a"], m["lit_j"]
-        if 1 <= int(mois) <= 12 and 1 <= int(j) <= 31:
-            trouvees.append((m, (int(a), int(mois), int(j))))
-    return trouvees
-
-
-def _retirer_dates_connues(texte: str, connues: set[tuple[int, int, int]]) -> str:
-    """Retire du texte les dates déjà présentes (sous une autre forme) dans les sources."""
-    for m, forme in reversed(_dates(texte)):
-        if forme in connues:
-            texte = texte[: m.start()] + " " + texte[m.end() :]
-    return texte
-
-
 def _controler_sources(
     texte: str,
     tache: str,
@@ -516,107 +459,28 @@ def _controler_sources(
     outils: Sequence[str],
     fournis: Sequence[str],
 ) -> None:
+    """Règles partagées de `slmsp.data.verification` ; lève `_Rejet`."""
     inventees = urls_inventees(texte, passages, outils, fournis)
     if inventees:
         raise _Rejet("url_inventee", f"{len(inventees)} URL absente(s) des sources")
-    if tache not in TACHES_A_VALEURS:
-        return
-    connus: set[Decimal] = set()
-    dates_connues: set[tuple[int, int, int]] = set()
-    for source in (*(p.titre for p in passages), *(p.texte for p in passages), *outils, *fournis):
-        connus |= {abs(n) for n in extraire_nombres(source)}
-        dates_connues |= {forme for _, forme in _dates(source)}
-    controle = texte
-    if tache == "RE":
-        # Le compte de mots recopié du gabarit (« (80 mots max.) ») n'est pas une valeur du
-        # résumé ; un plafond écrit comme valeur libre (« 200 euros ») reste contrôlé.
-        controle = _ANNOTATION_MOTS.sub(" ", controle)
-    sortie = _nombres_notables(_retirer_dates_connues(_sans_urls(controle), dates_connues))
-    absents = sortie - connus
+    absents = valeurs_absentes(texte, tache, passages, outils, fournis)
     if absents:
         raise _Rejet("valeur_absente", f"{len(absents)} valeur(s) absente(s) des sources")
     if tache in TACHES_VALEURS_CONSERVEES:
-        perdues = set().union(*(_nombres_notables(_sans_urls(f)) for f in fournis)) - (
-            _nombres_notables(_sans_urls(texte))
-        )
+        perdues = valeurs_perdues(texte, fournis)
         if perdues:
             raise _Rejet("infidele", f"{len(perdues)} valeur(s) de la source perdue(s)")
 
 
-SECTIONS_CR: Final = ("Participants", "Points abordés", "Décisions", "Actions")
-"""Titres des quatre sections d'un compte rendu (grille CR, story S5)."""
-_RE_OBJET: Final = re.compile(r"^[#*_\s]*objet\b[^\n:]{0,40}:", re.IGNORECASE | re.MULTILINE)
-"""Ligne d'objet : « Objet : », « **Objet** : », « Objet du courrier : »…"""
-_RE_POLITESSE: Final = re.compile(
-    r"\b(?:agr[ée]er|salutations|consid[ée]ration|sentiments|cordialement|respectueusement)\b",
-    re.IGNORECASE,
-)
-_RE_EMPLACEMENT: Final = re.compile(r"\[[^\[\]\n]*[^\W\d_][^\[\]\n]*\](?!\()")
-"""Emplacement entre crochets qui nomme un champ (au moins une lettre), hors lien Markdown
-`[texte](url)`."""
 OBSERVATION_CT_SANS_EMPLACEMENT: Final = "ct_sans_emplacement"
 """Observation (non bloquante) : CT sans emplacement entre crochets. La demande ne dit pas
 quels champs sont inconnus : un courrier sans crochet n'est pas rejeté, il est compté dans
 `observations` du rapport (revue S5)."""
 
-_UNITES: Final = (
-    "zéro un deux trois quatre cinq six sept huit neuf dix onze douze treize quatorze quinze "
-    "seize dix-sept dix-huit dix-neuf"
-).split()
-_DIZAINES: Final = {"vingt": 20, "trente": 30, "quarante": 40, "cinquante": 50, "soixante": 60}
-
-
-def _table_nombres_en_lettres() -> dict[str, int]:
-    """Nombres en lettres courants : 0 à 69, 70 à 99 (soixante-dix, quatre-vingts…), centaines
-    et milliers simples (cent, deux cents… neuf cents, mille)."""
-    table = {mot: n for n, mot in enumerate(_UNITES)}
-    for mot, d in _DIZAINES.items():
-        table[mot] = d
-        table[f"{mot} et un"] = table[f"{mot}-et-un"] = d + 1
-        for u in range(2, 10):
-            table[f"{mot}-{_UNITES[u]}"] = d + u
-    for u in range(10, 20):
-        table[f"soixante-{_UNITES[u]}"] = 60 + u
-    table["soixante et onze"] = table["soixante-et-onze"] = 71
-    table["quatre-vingts"] = table["quatre-vingt"] = 80
-    for u in range(1, 20):
-        table[f"quatre-vingt-{_UNITES[u]}"] = 80 + u
-    table["cent"] = 100
-    for u in range(2, 10):
-        table[f"{_UNITES[u]} cents"] = table[f"{_UNITES[u]}-cents"] = 100 * u
-    table["mille"] = 1000
-    return table
-
-
-_NOMBRES_EN_LETTRES: Final = _table_nombres_en_lettres()
-_RE_NOMBRE_EN_LETTRES: Final = re.compile(
-    r"(?<![^\W_])(?:"
-    + "|".join(re.escape(m) for m in sorted(_NOMBRES_EN_LETTRES, key=len, reverse=True))
-    + r")(?![^\W_]|-)",
-    re.IGNORECASE,
-)
-
-
-def _nombres_en_lettres(texte: str) -> set[Decimal]:
-    """Nombres écrits en lettres courants (`_NOMBRES_EN_LETTRES`), pour ne pas tenir pour
-    perdue une valeur de l'entrée LC reprise en lettres (« 15 jours » → « quinze jours »)."""
-    return {
-        Decimal(_NOMBRES_EN_LETTRES[m.group(0).casefold()])
-        for m in _RE_NOMBRE_EN_LETTRES.finditer(texte)
-    }
-
-
-def _a_section(texte: str, titre: str) -> bool:
-    """Vrai si une ligne de `texte` commence par `titre` (marques `#`, `*`, `_`, numérotation
-    et casse ignorées), quelle que soit la suite du titre (« Décisions prises », « Actions à
-    mener : »)."""
-    motif = rf"^[#*_\s\d.)]*{re.escape(titre)}(?![^\W_])"
-    return re.search(motif, texte, re.IGNORECASE | re.MULTILINE) is not None
-
 
 def _controler_structure(texte: str, tache: str, fournis: Sequence[str]) -> list[str]:
-    """Contrôles de structure de la story S5 ; lève `_Rejet`, rend les observations non
-    bloquantes.
+    """Contrôles de structure de la story S5 (règles de `slmsp.data.verification`) ; lève
+    `_Rejet`, rend les observations non bloquantes.
 
     CR : les quatre titres de `SECTIONS_CR`, chacun en tête de ligne
     (`cr_sections_manquantes`). CT : une ligne d'objet et une formule de politesse
@@ -627,30 +491,21 @@ def _controler_structure(texte: str, tache: str, fournis: Sequence[str]) -> list
     (`valeur_absente`).
     """
     if tache == "CR":
-        manquantes = [s for s in SECTIONS_CR if not _a_section(texte, s)]
+        manquantes = sections_cr_manquantes(texte)
         if manquantes:
             raise _Rejet("cr_sections_manquantes", f"sections absentes : {', '.join(manquantes)}")
     elif tache == "CT":
-        manques = []
-        if _RE_OBJET.search(texte) is None:
-            manques.append("objet")
-        if _RE_POLITESSE.search(texte) is None:
-            manques.append("formule de politesse")
+        manques = ct_format_manques(texte)
         if manques:
             raise _Rejet("ct_format_incomplet", f"absents : {', '.join(manques)}")
-        if _RE_EMPLACEMENT.search(texte) is None:
+        if not ct_a_emplacement(texte):
             return [OBSERVATION_CT_SANS_EMPLACEMENT]
     elif tache == "LC":
-        sortie = _sans_urls(texte)
-        source = _sans_urls("\n".join(fournis))
-        nombres = (
-            _nombres_notables(source) - _nombres_notables(sortie) - _nombres_en_lettres(sortie)
-        )
-        dates = {f for _, f in _dates(source)} - {f for _, f in _dates(sortie)}
-        if nombres or dates:
+        nombres, dates_perdues = lc_valeurs_perdues(texte, fournis)
+        if nombres or dates_perdues:
             raise _Rejet(
                 "lc_valeur_perdue",
-                f"{len(nombres)} nombre(s) et {len(dates)} date(s) de l'entrée perdus",
+                f"{len(nombres)} nombre(s) et {len(dates_perdues)} date(s) de l'entrée perdus",
             )
     return []
 

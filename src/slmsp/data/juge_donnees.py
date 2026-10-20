@@ -40,12 +40,15 @@ interruptions, le candidat n'est plus redemandé à la reprise (`interrompu-plaf
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import math
 import re
+import threading
 import unicodedata
-from collections import Counter
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections import Counter, deque
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final, Literal
@@ -60,25 +63,32 @@ from slmsp.core.erreurs import BudgetEpuise, ManifesteInvalide, SlmspError
 from slmsp.data.config import CRITERES_JUGE_DONNEES, JugeDonneesConfig
 from slmsp.fournisseurs.client import (
     MODE,
+    OPENROUTER,
     ClientCompatibleOpenAI,
+    ConfigFournisseur,
     ErreurApiFournisseur,
     nouvelle_session,
 )
 from slmsp.fournisseurs.lecture import extraire_json
 
 __all__ = [
+    "source_session",
     "TACHES_JUGEES",
     "TYPE_RUN",
     "Candidat",
     "EstimationJuge",
+    "FileOrdonnee",
     "GrilleDonnees",
+    "JugementAnnule",
     "JugeDonnees",
     "PlafondEstimeDepasse",
     "ResultatJugementDonnees",
     "VerdictDonnees",
     "candidats_depuis_generation",
     "charger_grilles",
+    "config_openrouter",
     "indexer_cache",
+    "juger_en_parallele",
     "lancer_jugement",
     "normaliser_extrait",
     "schema_sortie",
@@ -131,6 +141,16 @@ Verdict = Literal["accepte", "refuse", "invalide", "non-juge"]
 
 class PlafondEstimeDepasse(SlmspError):
     """Coût pire cas estimé au-dessus de `--plafond-estime` : aucun run, aucun appel."""
+
+
+def config_openrouter(config: JugeDonneesConfig) -> ConfigFournisseur:
+    """Fournisseur OpenRouter aux délais de `[juge_donnees]` (raisonnement long de DeepSeek)."""
+    return dataclasses.replace(
+        OPENROUTER,
+        delai_lecture=config.delai_lecture,
+        delai_appel=config.delai_appel,
+        duree_totale_max_appel=config.duree_totale_max_appel,
+    )
 
 
 class SortieNonConforme(ValueError):
@@ -403,6 +423,113 @@ class EstimationJuge:
     cout_pire_cas_eur: float
 
 
+class JugementAnnule(SlmspError):
+    """Jugement non lancé : une erreur (budget, API) a arrêté la file avant son tour."""
+
+
+class FileOrdonnee:
+    """Appels menés par `paralleles` threads, résultats rendus dans l'ordre de soumission.
+
+    À 1 (ou sans pool), chaque appel est fait au moment où `resultats` atteint son tour : le
+    comportement reste celui d'une boucle séquentielle. Une erreur d'appel arrête la file : les
+    appels non commencés lèvent `JugementAnnule`, ceux en cours vont à leur terme (déjà payés,
+    leur résultat est rendu). Seul le thread appelant écrit : l'ordre des fichiers est celui
+    de la soumission. Le registre de budget et le journal des appels ouvrent une connexion
+    SQLite par opération (`BEGIN IMMEDIATE`, WAL) : sûrs entre threads.
+    """
+
+    def __init__(self, paralleles: int) -> None:
+        if paralleles < 1:
+            raise ValueError("paralleles ≥ 1 attendu")
+        self._pool = (
+            ThreadPoolExecutor(max_workers=paralleles, thread_name_prefix="juge-donnees")
+            if paralleles > 1
+            else None
+        )
+        self._arret = threading.Event()
+        self._file: deque[tuple[Any, Future[Any] | Callable[[], Any] | None]] = deque()
+
+    def _garde(self, appel: Callable[[], Any]) -> Callable[[], Any]:
+        def execution() -> Any:
+            if self._arret.is_set():
+                raise JugementAnnule("jugement non lancé après une erreur")
+            try:
+                return appel()
+            except BaseException:
+                self._arret.set()
+                raise
+
+        return execution
+
+    def soumettre(self, etiquette: Any, appel: Callable[[], Any] | None) -> None:
+        """`appel` (sans argument) à faire ; `None` : rien à appeler, résultat `None`."""
+        if appel is None:
+            self._file.append((etiquette, None))
+        elif self._pool is None:
+            self._file.append((etiquette, self._garde(appel)))
+        else:
+            self._file.append((etiquette, self._pool.submit(self._garde(appel))))
+
+    def __len__(self) -> int:
+        return len(self._file)
+
+    def resultats(self, *, attendre: bool = False) -> Iterator[tuple[Any, Any, Exception | None]]:
+        """`(etiquette, résultat, erreur)` dans l'ordre de soumission, tant que la tête est
+        prête (ou jusqu'au bout avec `attendre`) ; `erreur` : l'exception de l'appel (résultat
+        `None`). Une interruption (`KeyboardInterrupt`) est propagée."""
+        while self._file:
+            etiquette, travail = self._file[0]
+            if isinstance(travail, Future) and not travail.done():
+                if not attendre:
+                    return
+                while not travail.done():  # attente interruptible (Ctrl-C sous Windows)
+                    wait([travail], timeout=1.0)
+            self._file.popleft()
+            try:
+                if travail is None:
+                    valeur = None
+                elif isinstance(travail, Future):
+                    valeur = travail.result()
+                else:
+                    valeur = travail()
+            except Exception as exc:
+                yield etiquette, None, exc
+            else:
+                yield etiquette, valeur, None
+
+    def arreter(self) -> None:
+        """Plus aucun appel lancé ; ceux en cours vont à leur terme."""
+        self._arret.set()
+
+    def fermer(self, *, attendre: bool = True) -> None:
+        if self._pool is not None:
+            self._pool.shutdown(wait=attendre, cancel_futures=True)
+
+
+def juger_en_parallele(
+    juge: JugeDonnees,
+    demandes: Iterable[tuple[Any, str, str, str]],
+    paralleles: int | None = None,
+) -> Iterator[tuple[Any, VerdictDonnees | BaseException]]:
+    """Juge `(etiquette, tache, source, candidat)` sur `paralleles` threads (défaut :
+    `[juge_donnees] appels_paralleles`) ; rend `(etiquette, verdict ou erreur)` dans l'ordre
+    des demandes. Après une erreur, les demandes non lancées rendent `JugementAnnule`."""
+    file = FileOrdonnee(paralleles or juge.config.appels_paralleles)
+    try:
+        for etiquette, tache, source, candidat in demandes:
+            file.soumettre(
+                etiquette,
+                lambda t=tache, s=source, c=candidat: juge.juger_candidat(t, s, c),
+            )
+        for etiquette, verdict, erreur in file.resultats(attendre=True):
+            yield etiquette, verdict if erreur is None else erreur
+    except BaseException:
+        file.arreter()
+        file.fermer(attendre=False)
+        raise
+    file.fermer()
+
+
 class JugeDonnees:
     """Juge de données : `juger_candidat` et `estimer` (voir le module)."""
 
@@ -420,6 +547,8 @@ class JugeDonnees:
         self.session_id = nouvelle_session(PREFIXE_SESSION)
         self.cout_total = 0.0
         """Coût de tous les appels faits, y compris ceux d'un verdict qui a levé ensuite."""
+        self._verrou = threading.Lock()
+        """`juger_candidat` est appelé depuis plusieurs threads (`juger_en_parallele`)."""
 
     def description(self) -> dict[str, Any]:
         """Modèle, réglages, version du prompt et SHA des grilles, inscrits dans le run."""
@@ -561,7 +690,8 @@ class JugeDonnees:
                 parametres=self._parametres(tache),
             )
             cout += reponse.cout_eur
-            self.cout_total += reponse.cout_eur
+            with self._verrou:
+                self.cout_total += reponse.cout_eur
             appels.append(reponse.appel_id)
             if (reponse.finish_reason or "").lower() in FINS_INTERROMPUES:
                 return VerdictDonnees(
@@ -586,7 +716,8 @@ class JugeDonnees:
                 tokens += math.ceil((len(reponse.texte) + len(correction)) / CARACTERES_PAR_TOKEN)
                 continue
             verdict = self._verdict(tache, cle, sortie, source, candidat, cout, tuple(appels))
-            self.cache[cle] = verdict.ligne()
+            with self._verrou:
+                self.cache[cle] = verdict.ligne()
             return verdict
         return VerdictDonnees(
             tache, cle, "invalide", cout_eur=cout, motif=erreur, appel_ids=tuple(appels)
@@ -648,8 +779,9 @@ class Candidat:
     texte: str
 
 
-def _source(lecteur: Any, brut: Any) -> str:
-    """Source par Tâche : CR, la transcription seule ; LC, le texte ; CT, les amorces."""
+def source_session(lecteur: Any, brut: Any) -> str:
+    """Source par Tâche : CR, la transcription seule ; LC, le texte ; CT, les amorces
+    (`LecteurGeneration`, `SessionBrute` ; réutilisée par la génération vérifiée, O6a)."""
     if brut.tache == "CR":
         contenu = lecteur.message(brut.appel_ids[0]).get("content")
         return contenu if isinstance(contenu, str) else ""
@@ -677,7 +809,7 @@ def candidats_depuis_generation(
             continue
         try:
             texte = lecteur.reponse_finale(brut)
-            source = _source(lecteur, brut)
+            source = source_session(lecteur, brut)
         except (SlmspError, KeyError):
             ecartees += 1
             continue
@@ -834,16 +966,23 @@ def lancer_jugement(
         )
     statut, motif = "complet", None
     cout_depart = juge.cout_total
+    demandes = ((c, c.tache, c.source, c.texte) for c in a_juger)
     try:
-        for candidat in a_juger:
-            try:
-                verdict = juge.juger_candidat(candidat.tache, candidat.source, candidat.texte)
-            except BudgetEpuise as exc:
-                statut, motif = "partiel-budget", str(exc)
-                break
-            except ErreurApiFournisseur as exc:
-                statut, motif = "partiel-erreur", f"{type(exc).__name__} : {exc}"
-                break
+        # Jugements en parallèle (`appels_paralleles`), verdicts écrits dans l'ordre ; après une
+        # erreur de budget ou d'API, les jugements non lancés sont annulés, ceux en cours écrits.
+        for candidat, verdict in juger_en_parallele(juge, demandes):
+            if isinstance(verdict, JugementAnnule):
+                continue
+            if isinstance(verdict, BudgetEpuise):
+                if statut == "complet":
+                    statut, motif = "partiel-budget", str(verdict)
+                continue
+            if isinstance(verdict, ErreurApiFournisseur):
+                if statut == "complet":
+                    statut, motif = "partiel-erreur", f"{type(verdict).__name__} : {verdict}"
+                continue
+            if isinstance(verdict, BaseException):
+                raise verdict
             if verdict.verdict == "non-juge":
                 non_juges[verdict.motif or "non-juge"] += 1
                 run.ajouter_jsonl(

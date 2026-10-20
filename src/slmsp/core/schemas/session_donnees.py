@@ -34,6 +34,7 @@ MotifAbandon = Literal[
     "sans_contenu",
     "cassette_incoherente",
     "provenance_invalide",
+    "verification_refusee",
 ]
 MOTIFS_ABANDON: Final[tuple[str, ...]] = get_args(MotifAbandon)
 

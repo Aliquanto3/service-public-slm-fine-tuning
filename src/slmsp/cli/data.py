@@ -22,7 +22,11 @@ local (BGE-M3 démarré à la première recherche) ; les traces RD passent par `
 `--modele-generateur MODELE` remplace `modele_generateur` de `config/mistral.toml` (liste stable
 ou préversion du Générateur ; à la reprise, défaut : le modèle du run). `--taches CR,CT,LC`
 ne génère que ces Tâches ; `--completer-depuis GENERATE_RUN_ID` y ajoute, sans appel, les
-sessions closes des autres Tâches d'un run du même seed (story S5).
+sessions closes des autres Tâches d'un run du même seed (story S5). `--verifiee [--sans-juge]
+[--essais-max N] [--plafond-estime-openrouter EUR]` vérifie chaque cible CR, LC, CT (contrôles
+déterministes puis juge de données, `slmsp.data.generation_verifiee`, story O6a) et écarte les
+refusées ; `--plafond-estime-mistral EUR` refuse un lancement plus cher (0 : aucun appel
+Mistral nouveau). À la reprise, les réglages de vérification sont relus du run.
 
 `validate --depuis GENERATE_RUN_ID [--racine DIR] [--controle-mistral]` rejoue les traces RD
 sur le Bac à sable et vérifie URL et valeurs de chaque exemple contre ses sources
@@ -167,6 +171,23 @@ def _euros(valeur: str) -> float:
     return nombre
 
 
+def _euros_ou_zero(valeur: str) -> float:
+    try:
+        nombre = float(valeur)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"nombre attendu (reçu {valeur!r})") from None
+    if not 0 <= nombre < float("inf"):
+        raise argparse.ArgumentTypeError("montant positif ou nul attendu")
+    return nombre
+
+
+def _essais(valeur: str) -> int:
+    nombre = _entier_positif(valeur)
+    if nombre > 3:
+        raise argparse.ArgumentTypeError("entier de 1 à 3 attendu")
+    return nombre
+
+
 def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     """Ajoute `data` et ses actions."""
     parseur = sous_parseurs.add_parser(
@@ -263,6 +284,40 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         default=None,
         metavar="GENERATE_RUN_ID",
         help="avec --taches : reprendre sans appel les autres Tâches de ce run du même seed",
+    )
+    g.add_argument(
+        "--verifiee",
+        action="store_true",
+        help="génération vérifiée CR, LC, CT : contrôles déterministes puis juge de données "
+        "(story O6a ; une cible refusée est écartée)",
+    )
+    g.add_argument(
+        "--sans-juge",
+        action="store_true",
+        help="avec --verifiee : contrôles déterministes seuls, aucun appel OpenRouter (calibrage)",
+    )
+    g.add_argument(
+        "--essais-max",
+        type=_essais,
+        default=None,
+        metavar="N",
+        help="avec --verifiee : essais par session, de 1 à 3 (défaut : [verification] "
+        "essais_max ; O6a n'en fait qu'un)",
+    )
+    g.add_argument(
+        "--plafond-estime-mistral",
+        type=_euros_ou_zero,
+        default=None,
+        metavar="EUR",
+        help="refuser le lancement si le coût Mistral pire cas estimé dépasse ce montant "
+        "(0 : aucun appel Mistral nouveau admis)",
+    )
+    g.add_argument(
+        "--plafond-estime-openrouter",
+        type=_euros_ou_zero,
+        default=None,
+        metavar="EUR",
+        help="avec --verifiee : refuser le lancement si le coût pire cas du juge le dépasse",
     )
     g.set_defaults(func=_generate)
 
@@ -689,6 +744,24 @@ def _generate(args: argparse.Namespace) -> int:
         raise ConfigurationInvalide("--taches et --completer-depuis : nouveau run seulement")
     if args.completer_depuis and not args.taches:
         raise ConfigurationInvalide("--completer-depuis exige --taches")
+    verifiee, sans_juge, essais_max = args.verifiee, args.sans_juge, args.essais_max
+    if args.reprendre:
+        from slmsp.core.artefacts import ouvrir_run
+
+        if verifiee or sans_juge or essais_max is not None:
+            raise ConfigurationInvalide(
+                "--verifiee, --sans-juge et --essais-max : nouveau run seulement (relus du run)"
+            )
+        reglages = ouvrir_run(args.reprendre, racine=racine).manifeste.config.get("verification")
+        if reglages is not None:
+            verifiee, sans_juge = True, bool(reglages.get("sans_juge"))
+            essais_max = reglages.get("essais_max")
+    if not verifiee and (
+        sans_juge or essais_max is not None or args.plafond_estime_openrouter is not None
+    ):
+        raise ConfigurationInvalide(
+            "--sans-juge, --essais-max et --plafond-estime-openrouter exigent --verifiee"
+        )
     modele = args.modele_generateur
     if modele is None and args.reprendre:
         modele = modele_generateur_du_run(args.reprendre, racine=racine)
@@ -725,6 +798,11 @@ def _generate(args: argparse.Namespace) -> int:
         fichier_outils=dossier / "outils-mcp.toml",
         rendre_passages=passages,
     )
+    verificateur = (
+        _verificateur(racine, config, sans_juge, essais_max, args.plafond_estime_openrouter)
+        if verifiee
+        else None
+    )
     recherche = _RechercheParesseuse(racine)
     try:
         resultat = lancer_generation(
@@ -743,10 +821,62 @@ def _generate(args: argparse.Namespace) -> int:
             consigner=_consigner,
             taches=args.taches,
             completer_depuis=args.completer_depuis,
+            verificateur=verificateur,
+            plafond_estime_mistral=args.plafond_estime_mistral,
         )
     finally:
         recherche.fermer()
     return _afficher_generation(resultat)
+
+
+def _verificateur(
+    racine: Path,
+    config: Any,
+    sans_juge: bool,
+    essais_max: int | None,
+    plafond_openrouter: float | None,
+) -> Any:
+    """Vérificateur O6a : contrôles déterministes, et juge de données sauf `sans_juge`."""
+    from slmsp.data.generation_verifiee import Verificateur
+    from slmsp.data.verification import TACHES_VERIFIEES
+
+    juge = None
+    if not sans_juge:
+        from slmsp.budget.registre import RegistreBudget
+        from slmsp.core.var import dossier_var
+        from slmsp.data.juge_donnees import (
+            JugeDonnees,
+            charger_grilles,
+            config_openrouter,
+            indexer_cache,
+        )
+        from slmsp.fournisseurs.client import ClientCompatibleOpenAI, fabriquer_http, lire_cle
+        from slmsp.fournisseurs.journal import NOM_JOURNAL_JUGE_DONNEES, JournalAppels
+
+        fournisseur = config_openrouter(config.juge_donnees)
+        client = ClientCompatibleOpenAI(
+            fournisseur,
+            RegistreBudget(),
+            fabriquer_http(fournisseur),
+            lire_cle(fournisseur),
+            journal=JournalAppels(dossier_var() / NOM_JOURNAL_JUGE_DONNEES),
+        )
+        juge = JugeDonnees(
+            config.juge_donnees,
+            client,
+            charger_grilles(TACHES_VERIFIEES),
+            indexer_cache(racine),
+        )
+    try:
+        return Verificateur(
+            config.verification,
+            plafonds_mots=config.generateur.plafonds_mots,
+            juge=juge,
+            essais_max=essais_max,
+            plafond_estime_openrouter=plafond_openrouter,
+        )
+    except ValueError as exc:
+        raise ConfigurationInvalide(f"--essais-max : {exc}") from None
 
 
 def _afficher_generation(resultat: Any) -> int:
@@ -758,6 +888,20 @@ def _afficher_generation(resultat: Any) -> int:
             f"({ligne['appels_nouveaux']} appels, {ligne['appels_reutilises']} réutilisés)"
         )
     print(f"dépense de cette invocation : {resultat.bilan['cout_eur']:.4f} €")
+    rapport = resultat.run.dossier / "rapport.json"
+    if rapport.is_file():
+        import json
+
+        verification = json.loads(rapport.read_bytes())
+        for tache, bloc in verification["taches"].items():
+            codes = ", ".join(f"{c} {n}" for c, n in bloc["codes_bloquants"].items())
+            print(
+                f"vérification {tache} : {bloc['verifiees'] - bloc['ecartees']}/"
+                f"{bloc['verifiees']} retenues, {bloc['ecartees']} écartées "
+                f"(tests {bloc['refus_tests']}, juge {bloc['refus_juge']}) ; "
+                f"{codes or 'aucun refus'}"
+            )
+        print(f"juge de données : {verification['cout_openrouter_eur']:.4f} €")
     print(f"run {resultat.run.run_id} ({resultat.statut}) : {resultat.run.dossier}")
     if resultat.statut == "partiel-budget":
         return int(CodeSortie.BUDGET_EPUISE)
@@ -834,16 +978,12 @@ def _juger(args: argparse.Namespace) -> int:
         candidats_depuis_generation,
         charger_grilles,
         config_du_run,
+        config_openrouter,
         indexer_cache,
         lancer_jugement,
     )
     from slmsp.data.validate import LecteurGeneration, ouvrir_generation
-    from slmsp.fournisseurs.client import (
-        OPENROUTER,
-        ClientCompatibleOpenAI,
-        fabriquer_http,
-        lire_cle,
-    )
+    from slmsp.fournisseurs.client import ClientCompatibleOpenAI, fabriquer_http, lire_cle
     from slmsp.fournisseurs.journal import NOM_JOURNAL_JUGE_DONNEES, JournalAppels
 
     racine = _racine(args)
@@ -859,11 +999,12 @@ def _juger(args: argparse.Namespace) -> int:
     candidats, ecartees = candidats_depuis_generation(lecteur, taches)
     if ecartees:
         print(f"{ecartees} session(s) écartée(s) : source ou réponse introuvable")
+    fournisseur = config_openrouter(config)
     client = ClientCompatibleOpenAI(
-        OPENROUTER,
+        fournisseur,
         RegistreBudget(),
-        fabriquer_http(OPENROUTER),
-        lire_cle(OPENROUTER),
+        fabriquer_http(fournisseur),
+        lire_cle(fournisseur),
         journal=JournalAppels(dossier_var() / NOM_JOURNAL_JUGE_DONNEES),
     )
     juge = JugeDonnees(config, client, charger_grilles(taches), indexer_cache(racine))

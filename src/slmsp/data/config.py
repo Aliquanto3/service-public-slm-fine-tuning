@@ -22,6 +22,8 @@
   de consigne d'Agent rendues dans le message user (`consignes_agent`, par Tâche, tirées par
   graine) et longueur visée des textes sources LC (`longueur_sources_lc`). Optionnelle, vide
   par défaut (rien n'est aligné).
+- `[verification]` : contrôles déterministes des cibles CR, LC, CT avant le juge de données
+  (story O6a, `slmsp data generate --verifiee`) ; optionnelle, règles par défaut ci-dessous.
 
 Le fichier est lu par `slmsp.core.config.charger_toml` (clés inconnues refusées) : toute
 non-conformité lève `ConfigurationInvalide`, sans citer la valeur saisie.
@@ -42,6 +44,8 @@ from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
 
 __all__ = [
+    "CODES_VALIDATE",
+    "CODES_VERIFICATION",
     "CRITERES_JUGE_DONNEES",
     "TACHES_A_CONSIGNE",
     "TACHES_PLAFONNABLES",
@@ -51,6 +55,7 @@ __all__ = [
     "ConfigDonnees",
     "JugeDonneesConfig",
     "LongueurSourcesLC",
+    "VerificationConfig",
     "charger_config_donnees",
 ]
 
@@ -244,6 +249,14 @@ class JugeDonneesConfig(ModeleConfig):
     sortie_estimee: Annotated[StrictInt, Field(ge=1)] = 1500
     marge_raisonnement: Annotated[StrictInt, Field(ge=0)] = 8000
     usage_budget: Texte = "juge-donnees-openrouter"
+    delai_lecture: float = Field(default=900.0, gt=0, allow_inf_nan=False)
+    """Délai de lecture HTTP (s) : DeepSeek V4 Pro raisonne ~2,8 min par appel (calibrage O1)."""
+    delai_appel: float = Field(default=900.0, gt=0, allow_inf_nan=False)
+    """Délai total d'une tentative (s)."""
+    duree_totale_max_appel: float = Field(default=1800.0, gt=0, allow_inf_nan=False)
+    """Durée maximale d'un appel, réessais compris (s) ; au moins `delai_appel`."""
+    appels_paralleles: Annotated[StrictInt, Field(ge=1, le=32)] = 8
+    """Jugements menés en parallèle (threads) ; verdicts écrits dans l'ordre des candidats."""
     seuils: dict[str, dict[str, Annotated[float, Field(ge=0, allow_inf_nan=False)]]] = Field(
         default_factory=_seuils_defaut
     )
@@ -276,6 +289,12 @@ class JugeDonneesConfig(ModeleConfig):
                 raise ValueError(f"seuils {tache} tous nuls : la Tâche accepterait tout")
         return fusion
 
+    @model_validator(mode="after")
+    def _delais_coherents(self) -> JugeDonneesConfig:
+        if self.duree_totale_max_appel < self.delai_appel:
+            raise ValueError("duree_totale_max_appel inférieure à delai_appel")
+        return self
+
     @property
     def sortie_estimation(self) -> int:
         """Tokens de sortie comptés par candidat dans l'estimation (raisonnement compris)."""
@@ -287,6 +306,218 @@ class JugeDonneesConfig(ModeleConfig):
         temperature = "sans" if self.temperature is None else f"{self.temperature:g}"
         effort = self.effort_raisonnement or "aucun"
         return f"temperature-{temperature}+effort-{effort}+{self.format_reponse}"
+
+
+# --- Vérification des cibles (story O6a) ---------------------------------------------------
+
+CODES_VALIDATE: Final = frozenset(
+    {
+        "url_inventee",
+        "valeur_absente",
+        "cr_sections_manquantes",
+        "ct_format_incomplet",
+        "lc_valeur_perdue",
+    }
+)
+"""Codes partagés avec `validate` : toujours bloquants (une cible acceptée par la vérification
+n'est jamais rejetée ensuite par `validate`)."""
+CODES_VERIFICATION: Final = frozenset(
+    CODES_VALIDATE
+    | {
+        "nom_absent",
+        "cr_sections_desordre",
+        "cr_plafond_mots",
+        "cr_actions_vide",
+        "lc_modalite_perdue",
+        "lc_modalite_reduite",
+        "lc_conseil_ajoute",
+        "lc_titre",
+        "lc_gain_lisibilite",
+        "ct_blocs",
+        "ct_sans_emplacement",
+    }
+)
+"""Codes des contrôles déterministes de `slmsp.data.verification`."""
+
+
+def _exceptions_noms_defaut() -> list[str]:
+    titres = (
+        "Participants Points Décisions Décision Actions Action Objet Références Référence Réf "
+        "Ordre Compte Rendu Synthèse Contexte Pièces Pièce Signature Responsable Échéance Copie"
+    )
+    civilites = (
+        "M MM Mme Mmes Mlle Madame Monsieur Mesdames Messieurs Maître Docteur Dr Me Pr N V Cf "
+        "Tél Courriel"
+    )
+    calendrier = (
+        "Janvier Février Mars Avril Mai Juin Juillet Août Septembre Octobre Novembre Décembre "
+        "Lundi Mardi Mercredi Jeudi Vendredi Samedi Dimanche"
+    )
+    institutions = "État République Française Français"
+    return f"{titres} {civilites} {calendrier} {institutions}".split()
+
+
+def _lc_marqueurs_defaut() -> dict[str, list[str]]:
+    return {
+        "condition": [
+            r"\bsi\b",
+            r"\bs['’]ils?\b",
+            r"\bsauf\b",
+            r"\bà condition\b",
+            r"\bsous réserve\b",
+            r"\ben cas d(?:e\b|['’])",
+            r"\blorsqu(?:e\b|['’])",
+            r"\bquand\b",
+            r"\bdès qu(?:e\b|['’])",
+            r"\bau cas où\b",
+        ],
+        "restriction": [
+            r"\buniquement\b",
+            r"\bseulement\b",
+            r"\bexclusivement\b",
+            r"\bseule?s?\b",
+            r"\bne\b[^.;!?\n]{0,60}?\bqu(?:e\b|['’])",
+            r"\bn['’][^.;!?\n]{0,60}?\bqu(?:e\b|['’])",
+        ],
+        "obligation": [
+            r"\bdoi(?:t|s|vent)\b",
+            r"\bdev(?:ez|ons|oir|ra|ras|rez|rons|ront|rait|raient)\b",
+            r"\bobligatoires?\b",
+            r"\bobligatoirement\b",
+            r"\bobligations?\b",
+            r"\bobligée?s?\b",
+            r"\btenue?s? d(?:e\b|['’])",
+            r"\bil (?:vous )?(?:faut|faudra)\b",
+            r"\bnécessaires?\b",
+        ],
+        "permission": [
+            r"\bpeu(?:t|x|vent)\b",
+            r"\bpouv(?:ez|ons|oir|ait|aient)\b",
+            r"\bpourr(?:a|as|ez|ons|ont|ait|aient)\b",
+            r"\bpossibles?\b",
+            r"\bpossibilités?\b",
+            r"\b(?:avez|avons|a|ont|avoir|aurez|aura|auront) (?:le )?droit\b",
+            r"\bautorisée?s?\b",
+        ],
+        "interdiction": [
+            r"\binterdite?s?\b",
+            r"\binterdiction\b",
+            r"\bdéfendu\b",
+            r"\bne (?:peu\w*|pouv\w*|pourr\w*|doi\w*|dev\w*) pas\b",
+            r"\bpas (?:le )?droit\b",
+            r"\bn['’](?:est|êtes|sont) pas (?:autorisé|permis)",
+        ],
+        "echeance": [
+            r"\bau plus tard\b",
+            r"\bavant (?:le|la|l['’]|ce|cette)\b",
+            r"\bdans un délai\b",
+            r"\bdélais?\b",
+            r"\bjusqu['’]",
+        ],
+    }
+
+
+def _lc_conseils_defaut() -> list[str]:
+    return [
+        r"\bnous vous conseillons\b",
+        r"\bn['’]hésitez pas\b",
+        r"\bpensez à\b",
+        r"\bil est recommandé\b",
+        r"\bnous vous recommandons\b",
+        r"\bil est conseillé\b",
+    ]
+
+
+def _ct_blocs_defaut() -> dict[str, str]:
+    return {
+        "lieu_date": (
+            r"^[^\n]{0,60}\ble\s+(?:\[[^\]\n]+\]|\d{1,2}(?:er)?\s+[^\W\d_]+\s+\d{4}"
+            r"|\d{1,2}/\d{1,2}/\d{4})[ .*_]*$"
+        ),
+        "objet": r"^[#*_\s]*objet\b[^\n:]{0,40}:",
+        "references": (
+            r"^[#*_\s\[]*(?:[nv]\s*/\s*|vos\s+|nos\s+)?r[ée]f(?:[ée]rences?|\.)?(?![^\W_])"
+        ),
+        "appel": (
+            r"^[#*_\s]*(?:madame|monsieur|mesdames|messieurs|ma[iî]tre|docteur"
+            r"|\[[^\]\n]*(?:civilit|appel)[^\]\n]*\])[^\n]{0,60},[*_\s]*$"
+        ),
+        "politesse": (
+            r"\b(?:agr[ée]er|salutations|consid[ée]ration|sentiments|cordialement"
+            r"|respectueusement)\b"
+        ),
+        "signature": (
+            r"^[#*_\s]*(?:\[[^\]\n]*(?:signat|nom|qualit|fonction|pr[ée]nom)[^\]\n]*\]"
+            r"|l[ea]\s+\S+|p\.?\s*o\.?\s|pour\s+l[ea]\b|sign(?:[ée]|ature\b))"
+        ),
+    }
+
+
+def _expressions_valides(expressions: list[str]) -> None:
+    for expression in expressions:
+        try:
+            re.compile(expression)
+        except re.error:
+            raise ValueError("expression régulière invalide") from None
+
+
+class VerificationConfig(ModeleConfig):
+    """Table `[verification]` : contrôles déterministes des cibles CR, LC, CT (story O6a).
+
+    Règles d'outillage (expressions et listes), jamais un exemple de réponse (D1).
+    """
+
+    essais_max: Annotated[StrictInt, Field(ge=1, le=3)] = 1
+    """Essais par session au total (O6b : régénérations ; O6a : un seul essai)."""
+    gain_km_min: Annotated[float, Field(allow_inf_nan=False)] = 10.0
+    """Gain de Kandel-Moles minimal d'une cible LC (copie de `gain_km_min` d'`evaluation.toml` :
+    le paquet `data` ne lit pas la config d'évaluation)."""
+    graine: Annotated[StrictInt, Field(ge=0)] = 42
+    """Graine des tirages de `echantillon.md` et `calibrage.md`."""
+    echantillon: Annotated[StrictInt, Field(ge=0)] = 5
+    """Cibles retenues tirées par Tâche, et cibles écartées tirées, dans `echantillon.md`."""
+    calibrage: Annotated[StrictInt, Field(ge=0)] = 20
+    """Refus tirés dans `calibrage.md`."""
+    non_bloquants: list[str] = Field(default_factory=lambda: ["nom_absent"])
+    """Codes rendus non bloquants (transmis au juge et au rapport sans refuser la cible)."""
+    exceptions_noms: list[Texte] = Field(default_factory=_exceptions_noms_defaut)
+    """Mots capitalisés jamais tenus pour des noms propres (casse et accents ignorés)."""
+    lc_marqueurs: dict[str, list[Texte]] = Field(default_factory=_lc_marqueurs_defaut)
+    """Classes de modalité et de condition LC : expressions régulières par classe."""
+    lc_conseils: list[Texte] = Field(default_factory=_lc_conseils_defaut)
+    """Formules de conseil refusées dans une cible LC quand la source ne les porte pas."""
+    ct_blocs: dict[str, Texte] = Field(default_factory=_ct_blocs_defaut)
+    """Blocs détectables d'un CT, dans l'ordre attendu (expressions régulières)."""
+
+    @field_validator("non_bloquants")
+    @classmethod
+    def _codes_connus(cls, codes: list[str]) -> list[str]:
+        if any(code not in CODES_VERIFICATION for code in codes):
+            raise ValueError("code de vérification inconnu")
+        if any(code in CODES_VALIDATE for code in codes):
+            raise ValueError("un code partagé avec validate reste bloquant")
+        return codes
+
+    @field_validator("lc_marqueurs")
+    @classmethod
+    def _marqueurs_valides(cls, valeurs: dict[str, list[str]]) -> dict[str, list[str]]:
+        for expressions in valeurs.values():
+            if not expressions:
+                raise ValueError("au moins une expression par classe")
+            _expressions_valides(expressions)
+        return valeurs
+
+    @field_validator("lc_conseils")
+    @classmethod
+    def _conseils_valides(cls, valeurs: list[str]) -> list[str]:
+        _expressions_valides(valeurs)
+        return valeurs
+
+    @field_validator("ct_blocs")
+    @classmethod
+    def _blocs_valides(cls, valeurs: dict[str, str]) -> dict[str, str]:
+        _expressions_valides(list(valeurs.values()))
+        return valeurs
 
 
 class LongueurSourcesLC(ModeleConfig):
@@ -340,6 +571,7 @@ class ConfigDonnees(ModeleConfig):
     generateur: GenerateurDonnees = Field(default_factory=GenerateurDonnees)
     juge_donnees: JugeDonneesConfig = Field(default_factory=JugeDonneesConfig)
     alignement: AlignementDonnees = Field(default_factory=AlignementDonnees)
+    verification: VerificationConfig = Field(default_factory=VerificationConfig)
 
     @property
     def total(self) -> int:
