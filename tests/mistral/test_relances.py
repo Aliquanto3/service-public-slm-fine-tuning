@@ -70,10 +70,22 @@ def test_429_sans_retry_after_attente_exponentielle_puis_abandon(banc: Any) -> N
 
 
 def test_attente_totale_bornee(banc: Any) -> None:
-    banc.faux.reponses.extend([(429, {"Retry-After": "400"})] * 3)
+    # Bornes posées par le test : indépendantes des délais de la config réelle.
+    total_max = 600
+    attente = total_max * 2 / 3
+    banc.faux.reponses.extend([(429, {"Retry-After": str(int(attente))})] * 3)
+    reglage = config(
+        banc,
+        attente_totale_max=total_max,
+        attente_plafond=total_max,
+        delai_appel=10,
+        delai_lecture=10,
+        duree_totale_max_appel=10 * total_max,
+        reessais_max=5,
+    )
     with pytest.raises(ErreurApiMistral) as erreur:
-        appeler(banc.client(config(banc, attente_totale_max=600)))
-    assert banc.attentes == [400.0]  # la seconde attente dépasserait 600 s au total
+        appeler(banc.client(reglage))
+    assert banc.attentes == [attente]  # la seconde attente dépasserait la borne au total
     assert erreur.value.reessais == 1
     assert len(banc.faux.requetes) == 2
 
@@ -245,3 +257,23 @@ def test_interruption_pendant_l_attente(banc: Any) -> None:
     (reservation,) = banc.lignes_registre()
     assert reservation["etat"] == "regularisee" and reservation["montant_reel_eur"] == 0
     assert len(banc.faux.requetes) == 1
+
+
+def test_retry_after_plausible_attendu_avec_la_config_reelle(banc: Any) -> None:
+    from slmsp.mistral.config import charger_mistral
+
+    reelle = charger_mistral()
+    attente = 400.0
+    assert attente <= reelle.attente_totale_max
+    banc.faux.reponses.extend([(429, {"Retry-After": str(int(attente))})])
+    reglage = config(
+        banc,
+        attente_totale_max=reelle.attente_totale_max,
+        delai_appel=reelle.delai_appel,
+        delai_lecture=reelle.delai_lecture,
+        duree_totale_max_appel=reelle.duree_totale_max_appel,
+        reessais_max=reelle.reessais_max,
+    )
+    reponse = appeler(banc.client(reglage))
+    assert reponse.texte == "<verdict-factice>"
+    assert banc.attentes == [attente]

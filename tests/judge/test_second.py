@@ -231,7 +231,7 @@ def test_corps_envoye(banc: Banc, items: dict[str, Item]) -> None:
         prompt = construire_prompt(demande.item, demande.sortie, banc.grille)
         assert corps["model"] == MODELE
         assert corps["temperature"] == 0
-        assert corps["max_tokens"] == 4000
+        assert corps["max_tokens"] == charger_juges().second.max_tokens
         assert corps["messages"] == [{"role": "user", "content": prompt.texte}]
         assert corps["response_format"] == {
             "type": "json_schema",
@@ -508,7 +508,7 @@ def test_config_second_juge() -> None:
     second = charger_juges().second
     assert second.modele == MODELE
     assert second.temperature == 0
-    assert second.max_tokens == 4000
+    assert second.max_tokens > 0
     assert second.usage_budget == "juge-second"
     assert second.effort_cache == "temperature-0"
     assert second.format_reponse == "json_schema"

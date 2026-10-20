@@ -68,7 +68,9 @@ attente_base = 2
 # Plafond d'une attente exponentielle (secondes).
 attente_plafond = 60
 # Durée maximale d'un appel, tentatives et attentes comprises (secondes).
-duree_totale_max_appel = 900
+# 1800 s (2026-10-20, revue C1) : avec delai_appel = 600, 900 s refusait tout Retry-After > 300 s
+# (écoulé + attente + 600 > 900) ; 1800 s admet un Retry-After jusqu'à attente_totale_max.
+duree_totale_max_appel = 1800
 
 # Journaux des appels, dans `SLMSP_VAR_DIR`. Journal des données (`generation`, `validation`) :
 # lisible par les pipelines `data` et `train` (AD-24) ; son nom doit rester celui de

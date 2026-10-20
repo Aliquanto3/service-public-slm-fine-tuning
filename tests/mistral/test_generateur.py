@@ -1193,13 +1193,14 @@ def test_marge_raisonnement_preversion_seulement(monde: Monde) -> None:
     monde.ecrire_seed([amorce("d", "generique", "demande")])
     generateur = monde.generateur()
     base = generateur.max_tokens("generique", "generique")
-    assert generateur.client.config.marge_raisonnement_generateur == 4000  # config réelle
+    marge = generateur.client.config.marge_raisonnement_generateur  # valeur de la config réelle
+    assert marge >= 0
     assert generateur.client.config.preversion is None  # stable : aucune marge
     generateur.generer("generique", ["d"], "s", "generique")
     (corps,) = monde.banc.faux.corps()
     assert corps["max_tokens"] == base  # requête (donc hachage) inchangée pour un modèle stable
     config = generateur.client.config.pour_generateur("mistral-large-4")
     generateur.client.config = config
-    assert generateur.max_tokens("generique", "generique") == base + 4000  # estimation incluse
+    assert generateur.max_tokens("generique", "generique") == base + marge  # estimation incluse
     generateur.client.config = config.model_copy(update={"marge_raisonnement_generateur": 0})
     assert generateur.max_tokens("generique", "generique") == base

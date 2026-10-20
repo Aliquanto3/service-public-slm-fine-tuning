@@ -42,21 +42,14 @@ def test_critere_11_base_absente_non_creee(capsys: pytest.CaptureFixture[str]) -
     assert list(dossier_var().iterdir()) == []
     assert releve["campagne_id"] == charger_budgets().campagne_id
     lignes = _par_ligne(releve)
-    assert list(lignes) == [
-        ("anthropic", None),
-        ("mistral", None),
-        ("mistral", "generation"),
-        ("mistral", "juge"),
-    ]
-    plafonds = {cle: ligne["plafond_eur"] for cle, ligne in lignes.items()}
     config = charger_budgets()
-    mistral = config.postes["mistral"]
-    assert plafonds == {
-        ("anthropic", None): config.postes["anthropic"].plafond_eur,
-        ("mistral", None): mistral.plafond_eur,
-        ("mistral", "generation"): mistral.sous_postes["generation"],
-        ("mistral", "juge"): mistral.sous_postes["juge"],
-    }
+    attendues = {}  # une ligne par poste, puis une par sous-poste, dans l'ordre de la config
+    for nom, poste in config.postes.items():
+        attendues[(nom, None)] = poste.plafond_eur
+        for sous_poste, plafond in poste.sous_postes.items():
+            attendues[(nom, sous_poste)] = plafond
+    assert list(lignes) == list(attendues)
+    assert {cle: ligne["plafond_eur"] for cle, ligne in lignes.items()} == attendues
     for ligne in releve["lignes"]:
         assert set(ligne) == {
             "poste",

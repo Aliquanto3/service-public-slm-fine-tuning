@@ -82,8 +82,8 @@ def test_budgets_de_depart() -> None:
     config = charger_budgets()
     assert config.campagne_id
     # Les plafonds changent à chaque campagne : on vérifie leur cohérence, pas leurs valeurs.
-    assert set(config.postes) == {"anthropic", "mistral"}
-    assert config.postes["anthropic"].plafond_eur > 0
+    assert {"anthropic", "mistral"} <= set(config.postes)  # d'autres postes peuvent s'ajouter
+    assert all(poste.plafond_eur > 0 for poste in config.postes.values())
     assert config.postes["anthropic"].sous_postes == {}
     mistral = config.postes["mistral"]
     assert set(mistral.sous_postes) == {"generation", "juge"}

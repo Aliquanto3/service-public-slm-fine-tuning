@@ -93,7 +93,7 @@ def test_client_profil_outillage_sans_relance(banc: Any, doublures: SimpleNamesp
     juge = banc.juge()
     client = juge.client
     assert client.max_retries == 0
-    assert client.timeout == 600
+    assert client.timeout == charger_juges().principal.delai_appel
     assert str(client.base_url).rstrip("/") == "https://api.anthropic.com"
     # Le client HTTP est celui de la passerelle : un hôte hors règle est refusé.
     with pytest.raises(Exception, match="refusée"):
