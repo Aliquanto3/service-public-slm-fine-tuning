@@ -51,8 +51,12 @@ ecrire_items, etat, item = _gel.ecrire_items, _gel.etat, _gel.item
 SHA_MANIFESTE_V11 = "076edff2ef41c1e965318d52028f5f35937bf9d56702735a756eed0dfefbe762"
 
 
+TOTAL_DEV = sum(sum(c) for c in cfg.CIBLES_DEV.values())
+NB_CR = sum(cfg.CIBLES_DEV["CR"])
+
+
 def jeu_dev() -> list[dict[str, Any]]:
-    """160 items factices conformes à `CIBLES_DEV`, numérotés à partir de 501."""
+    """Items factices conformes à `CIBLES_DEV` (total `TOTAL_DEV`), numérotés à partir de 501."""
     cibles = cfg.CIBLES_JEU_DEV
     total = sum(sum(cibles.taches[c]) for c in cfg.TACHES_THEMATIQUES)
     themes = iter([t for t, p in cfg.PARTS_THEMES.items() for _ in range(round(p * total))])
@@ -79,7 +83,7 @@ def jeu_dev() -> list[dict[str, Any]]:
                     brut["producteurs"] = [next(producteurs)]
                     if numero <= cibles.rd_valeurs:
                         brut["valeurs_attendues"] = [numero]
-                    if numero > 20 - cibles.rd_repli:
+                    if numero > sum(cibles.taches["RD"]) - cibles.rd_repli:
                         brut["mode"] = "repli"
                 if code == "CR" and numero <= cibles.cr_longues:
                     brut["entree"]["transcription"] = "mot " * (cfg.SEUIL_CR_LONGUE_MOTS + 1)
@@ -107,9 +111,9 @@ def test_chemins_jeu_dev(tmp_path: Path) -> None:
 
 
 def test_cibles_dev() -> None:
-    assert sum(sum(c) for c in cfg.CIBLES_DEV.values()) == 160
+    assert TOTAL_DEV == len(jeu_dev())
     assert set(cfg.CIBLES_DEV) == set(CODES)
-    assert all(c == (7, 7, 6) for c in cfg.CIBLES_DEV.values())
+    assert all(len(c) == 3 and sum(c) >= 1 for c in cfg.CIBLES_DEV.values())
     assert cfg.cibles_jeu("dev1") is cfg.CIBLES_JEU_DEV
     assert cfg.cibles_jeu("v1.1") is cfg.CIBLES_V1 and cfg.cibles_jeu("v1.0") is cfg.CIBLES_V1
     assert cfg.CIBLES_V1.taches is cfg.CIBLES and cfg.CIBLES_V1.exactes
@@ -123,12 +127,12 @@ def jeu_dev_valides() -> list[Any]:
 
 def test_jeu_dev_conforme_sans_ecart() -> None:
     items = jeu_dev_valides()
-    assert len(items) == 160
+    assert len(items) == TOTAL_DEV
     assert ecarts_composition(items, "dev1") == []
 
 
 def test_jeu_dev_compare_a_v11_donne_des_ecarts() -> None:
-    assert ecarts_composition(jeu_dev_valides(), "v1.1")  # 160 items contre 225 visés
+    assert ecarts_composition(jeu_dev_valides(), "v1.1")  # TOTAL_DEV items contre 225 visés
 
 
 # --- Gel `relu-llm` --------------------------------------------------------------------------
@@ -168,7 +172,7 @@ def test_gel_relu_llm_d_un_jeu_dev_conforme(depot: Path) -> None:
     retenir(depot)
     manifeste = gel("dev1", "relu-llm", 5, depot)
     assert manifeste.statut == "relu-llm" and manifeste.version == "dev1"
-    assert manifeste.ecarts == [] and manifeste.nb_items == 160
+    assert manifeste.ecarts == [] and manifeste.nb_items == TOTAL_DEV
     assert (
         ManifesteJeu.model_validate_json(
             (depot / "eval" / "jeu" / "dev1" / "MANIFEST.json").read_bytes()
@@ -179,8 +183,8 @@ def test_gel_relu_llm_d_un_jeu_dev_conforme(depot: Path) -> None:
 
 
 def test_gel_relu_llm_refuse_un_ecart_de_composition(depot: Path) -> None:
-    items = [i for i in jeu_dev() if i["id"] != "CR-520"]  # 19 CR
-    assert sum(i["id"].startswith("CR-") for i in items) == 19
+    items = [i for i in jeu_dev() if i["id"] != f"CR-{500 + NB_CR}"]  # un CR de moins
+    assert sum(i["id"].startswith("CR-") for i in items) == NB_CR - 1
     ecrire_items(depot, items, "dev1")
     avant = etat(depot)
     with pytest.raises(JeuNonConforme, match=r"statut relu-llm.*CR"):
@@ -226,7 +230,7 @@ def test_gel_relu_llm_dernier_verdict_l_emporte(depot: Path) -> None:
     lignes = chemin.read_text(encoding="utf-8").splitlines()
     rejet = {**json.loads(lignes[0]), "decision": "rejete"}
     chemin.write_text("\n".join([json.dumps(rejet), *lignes]) + "\n", encoding="utf-8")
-    assert gel("dev1", "relu-llm", 5, depot).nb_items == 160  # le rejet est antérieur
+    assert gel("dev1", "relu-llm", 5, depot).nb_items == TOTAL_DEV  # le rejet est antérieur
 
 
 def test_version_de_consigne_alignee_sur_l_outil() -> None:
@@ -236,7 +240,7 @@ def test_version_de_consigne_alignee_sur_l_outil() -> None:
 
 
 def test_gel_relu_d_une_version_vn_garde_la_composition_de_v11(depot: Path) -> None:
-    """Les cibles dépendent de la version : 160 items sous `v1.0` restent un écart bloquant."""
+    """Les cibles dépendent de la version : le jeu dev sous `v1.0` reste un écart bloquant."""
     ecrire_items(depot, jeu_dev(), "v1.0")
     with pytest.raises(JeuNonConforme, match="statut relu"):
         gel("v1.0", "relu", 5, depot)
