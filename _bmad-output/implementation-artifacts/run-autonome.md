@@ -32,3 +32,4 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-20 22:46 · 15.1, 15.2, 15.6, 15.5 · dev · lancés (Sonnet ; 15.5 sur Opus, qualité des items) · —
 - 2026-10-20 22:46 · D0 · diagnostics lancés (agent Sonnet, lecture seule : pertes CR et RE par critère, troncatures CT, passages Q) · —
 - 2026-10-20 22:46 · E5 · décision (règle ci-dessus, bootstrap 2 000 tirages, `e5/e5-minicpm.md`, `e5/e5-qwen.md`) : MiniCPM5-2B, seul **CO** est routé, vers M1 v18 (+10,4, IC95 [+4,9 ; +16,3] ; v14 +6,4 [+2,6 ; +10,7]) ; NR sans baisse significative (−5, [−25 ; +15]). Qualité attendue de la composition ≈ 54,5 + 10,4/8 ≈ 55,8 (+1,3, dans le bruit de ±4,5). Qwen3.5-0.8B : aucune tâche routée (CT v14 borne basse +0,0, pas > 0) · —
+- 2026-10-20 22:47 · run · décision · Anaël valide les trois choix par défaut : 3 mesures finales v1.1 au plus (chacune après sa règle sur dev1), `export purger --tous-notes` sous 25 Go libres, dev2 rédigé par agent et non gelé cette nuit · —
