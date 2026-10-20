@@ -66,3 +66,5 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-21 00:02 · E2/E4 · candidats complets (`runs/data-candidats/20261020-232707-candidats-a5fd`) : 209 écrits (CR : Mistral 64, base 125 ; LC : Mistral 5, base 10, DeepSeek 5), 3 tronqués écartés ; OpenRouter 0,02 € · —
 - 2026-10-21 00:02 · E2/E4 · jugement DeepSeek des candidats CR et LC lancé (plafond 6 €) ; Kimi non lancé (aucune cible DeepSeek cette nuit) · —
 - 2026-10-21 00:02 · E7 + déploiement · chaîne GPU lancée : LoRA v18 sur base Q4_K_M, échelles 1 (test de déploiement contre la fusion v18), 0,5 et 0,25, dev1 cuda + GLM (plafond 3 € chacune) · —
+- 2026-10-21 00:11 · 15.3 · review · 2 medium et 5 low corrigés (run source `complet` exigé sauf `--accepter-partiel` consigné ; preferences et candidats refusent un jeu sélectionné ; `--retirer` obligatoire ; base vérifiée par `train run` ; erreurs propres) ; 1 low laissé à Anaël (source `mistral/reponses-generateur` gardée sur les lignes LC v2, prudent) ; 755 tests ciblés · 3c58e3e
+- 2026-10-21 00:11 · 15.3 · fusion · squash dans main · 01d7571
