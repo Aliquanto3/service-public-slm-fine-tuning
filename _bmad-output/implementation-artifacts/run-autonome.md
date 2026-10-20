@@ -2,7 +2,7 @@
 
 Plan : `plan-nuit-2026-10-20.md` (version 2, réponses d'Anaël au §9 : Kimi juge croisé, usage recherche pour la sélection, mesure CPU de qwen-4b). Stories : `../planning-artifacts/stories-epic-15-nuit-2026-10-20.md`. Consignes des sous-agents : `consignes-sous-agents-2026-10-20.md`. Run précédent : `archive/run-autonome-2026-10-20.md`.
 Garde-fous : D1 ; v1.1 = mesure finale seulement ; aucun push ; appels payants lancés par l'orchestrateur ; qualité sur GPU, charge sur CPU (machine au calme) ; bloqueur de veille pendant le GPU.
-Budget : campagne `nuit-2026-10-20` (plafonds durs du registre) — openrouter 20 €, anthropic 50 € (relevé de 10 à 50 € par Anaël à 22 h 50), mistral 7,85 € (reste, non prévu).
+Budget : campagne `nuit-2026-10-20` (plafonds durs du registre) — openrouter 20 €, anthropic 50 € (relevé de 10 à 50 € par Anaël le 20/10 au soir), mistral 7,85 € (reste, non prévu).
 
 ## Périmètre
 | Périmètre | Epics | Note |
@@ -26,6 +26,6 @@ Au plus 4 stories en développement à la fois.
 
 ## Journal
 - 2026-10-20 22:41 · run · décision · campagne de budget `nuit-2026-10-20` ouverte (méthodo-v2-2026-10-20b close : mistral 1,63 €, openrouter 8,18 €) ; ancien run archivé (`archive/run-autonome-2026-10-20.md`) · —
-- 2026-10-20 22:50 · run · décision · Anaël relève le plafond de nuit Anthropic à 50 € ; questions laissées avant son départ (3 mesures v1.1 au plus, `export purger --tous-notes` sous 25 Go libres, dev2 rédigé par agent) avec choix par défaut « oui » · —
+- 2026-10-20 · run · décision · Anaël relève le plafond de nuit Anthropic à 50 € ; questions laissées avant son départ (3 mesures v1.1 au plus, `export purger --tous-notes` sous 25 Go libres, dev2 rédigé par agent) avec choix par défaut « oui » · —
 - 2026-10-20 22:43 · témoin · décision · jeu **v19** = v18 sans CR, LC, RE (365 lignes ; NR absent de v18), `runs/data-build/20261020-224334-sous-ensemble-6d33` ; le jeu de sélection du plan (« v19 ») s'appellera **v20** · —
-- 2026-10-20 22:55 · témoin · M1 MiniCPM5-2B v19 lancé (bloqueur de veille actif ; train + export cuda puis génération dev1 cuda + GLM, plafond 3 €), `config/runs/m1-qlora-minicpm5-2b-v19-sous-ensemble.toml` · —
+- 2026-10-20 22:44 · témoin · M1 MiniCPM5-2B v19 lancé (bloqueur de veille actif ; train + export cuda puis génération dev1 cuda + GLM, plafond 3 €), `config/runs/m1-qlora-minicpm5-2b-v19-sous-ensemble.toml` · —

@@ -1,3 +1,4 @@
 {"chat_template_sha256":"bc1f78ef8a86b6bdf64a056cf89dd0ac506db4f198ab363d85168e2500ab44dd","evenement":"fusion","max_abs":7.8125,"tenseurs":381}
 {"evenement":"conversion","fichier":"modele-f16.gguf"}
 {"evenement":"quantification","fichier":"modele-q4_k_m.gguf"}
+{"evenement":"purge","forcee":false,"notations":["20261019-050830-ft-minicpm5-2b-fa99"],"octets_liberes":10082460839,"supprimes":["hf-f16","modele-f16.gguf"]}

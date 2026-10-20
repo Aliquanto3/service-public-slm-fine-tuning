@@ -54,7 +54,7 @@ majoration_entree = 1.25
 [postes.anthropic]
 # PRD : 10 €. Relevé par Anaël le 2026-10-16 et le 2026-10-17 (10 $ ≈ 8,6 € + 5 € + 5 €), Baseline
 # complète et trois nouveaux Modèles de base candidats.
-plafond_eur = 50.0  # plafond de nuit 20-21/10 relevé à 50 € par Anaël à 22 h 50 (enveloppe restante : 57 €)
+plafond_eur = 50.0  # plafond de nuit 20-21/10 relevé à 50 € par Anaël le 20/10 au soir (enveloppe restante : 57 €)
 
 [postes.mistral]
 plafond_eur = 7.85  # reste de la campagne methodo-v2-2026-10-20b
