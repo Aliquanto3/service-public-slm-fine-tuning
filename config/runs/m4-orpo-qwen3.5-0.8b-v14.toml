@@ -1,0 +1,23 @@
+# Run M4 ORPO (2048 tokens) de Qwen3.5-0.8B aprÃ¨s M1 v14, paires locales v16 depuis v14. Run autonome du 2026-10-20.
+
+campagne = "qwen3.5-0.8b-v14-orpo-2048"
+modele = "qwen3.5-0.8b"
+methode = "orpo"
+jeu_version = "v16"
+graine = 1234
+longueur_max = 2048
+precision_base = "bf16"
+sft_run_id = "20261020-042850-m1-qlora-qwen3.5-0.8b-v14-4346"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
+orpo_beta = 0.1
