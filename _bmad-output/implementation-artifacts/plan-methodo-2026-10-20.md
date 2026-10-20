@@ -77,6 +77,15 @@ Budget total indicatif : Anthropic ~25-30 €, OpenRouter ~10-15 €, Mistral ~0
 - M3/M4 ne sont lancés qu'après une recette SFT gagnante (E2) ; M4 utilise les paires notées (C5/O3).
 - Benchmarks et mesures CPU : inchangés (critère de gain, puis machine au repos).
 
+## 7 bis. Décisions d'Anaël (2026-10-20, matin)
+- **Expériences E1 à E6 autorisées**, ainsi que les recommandations ci-dessous ; ajout **graduel** des étages (étage 1 d'abord, étage 2 si nécessaire).
+- DeepSeek V4 Pro **autorisé comme juge de sélection** des données (ses sorties ne deviennent jamais des cibles) ; auto-distillation depuis la base autorisée.
+- Générateur non Mistral (DeepSeek, via OpenRouter) autorisé **comme candidat** en E4, licence MIT ; GPT et Gemini restent exclus.
+- Budgets : Anthropic rechargé de 36 € (nouvelle campagne de budget à ouvrir), OpenRouter +10 €, Mistral dans l'enveloppe de 30 € par API ; relèvement ponctuel possible sur demande.
+- Purge des intermédiaires d'export (`hf-f16`, `modele-f16.gguf`) **autorisée** pour les runs notés, Q4_K_M et runs d'entraînement gardés (C8).
+- **Jeu de développement (O4)** : Anaël ne le relit pas aujourd'hui. La session le fiabilise elle-même : relecture par Claude (autorisé pour le jeu d'évaluation, pas pour l'entraînement) et contre-vérification croisée par DeepSeek et GLM (cohérence item / référence / grille, items ambigus écartés). Gel avec un statut distinct de `relu` (par ex. `relu-llm`), car un gel `relu` exige la relecture d'Anaël ; le jeu v1.1 reste la seule mesure finale.
+- La relecture d'Anaël avant entraînement est levée pour les jeux de cette méthodologie (étage 1 et 2), à condition de consigner échantillons et rapports dans le run.
+
 ## 7. Décisions qui reviennent à Anaël
 1. Valider les principes 1 à 7, en particulier l'usage de DeepSeek comme juge de sélection des données (provenance chinoise, sortie non utilisée comme cible) et l'auto-distillation depuis la base.
 2. Autoriser un générateur non Mistral comme candidat (E4) ou rester sur Mistral.
