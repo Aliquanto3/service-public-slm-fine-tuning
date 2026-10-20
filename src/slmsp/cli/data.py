@@ -62,6 +62,10 @@ dans `generations-locales.sqlite`) dans une nouvelle version `data/train/vN/pref
 `build --sous-ensemble --depuis BUILD_RUN_ID --taches T1,T2,...` garde, dans une nouvelle version
 `data/train/vN/`, les seules lignes des Tâches demandées, copiées à l'identique
 (`slmsp.data.sous_ensemble`, test M1 partiel).
+`build --selection --candidats RUN --verdicts RUN[,RUN] --variante V --retirer RE|""
+[--taches-selection CR,LC] [--accepter-partiel]` remplace les cibles des Tâches sélectionnées
+par le meilleur candidat accepté
+(`slmsp.data.selection`, story 15.3).
 `build --nettoyage --depuis BUILD_RUN_ID --modele base:SLUG` retire le préambule « Voici » des
 cibles, écarte celles qui dépassent `max_tokens` de l'évaluation (tokenizer du modèle) et signale
 les LC infidèles, dans une nouvelle version `data/train/vN/` (`slmsp.data.nettoyage`, story 9.9).
@@ -501,10 +505,9 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     b.add_argument(
         "--depuis",
-        required=True,
         metavar="RUN_ID",
         help="run data-filter ; avec --preferences, --nettoyage ou --sous-ensemble, "
-        "run data-build du jeu SFT",
+        "run data-build du jeu SFT (requis, sauf avec --selection)",
     )
     b.add_argument(
         "--variante",
@@ -536,6 +539,37 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--modele",
         metavar="base:SLUG",
         help="Modèle de base local (--preferences) ou tokenizer (--nettoyage)",
+    )
+    b.add_argument(
+        "--selection",
+        action="store_true",
+        help="sélectionner les cibles parmi des candidats notés (story 15.3) : exige "
+        "--candidats, --verdicts et --variante",
+    )
+    b.add_argument("--candidats", metavar="RUN_ID", help="run data-candidats (--selection)")
+    b.add_argument(
+        "--verdicts",
+        metavar="RUN_ID[,RUN_ID...]",
+        help="runs data-juger sur --candidats, un par juge (--selection)",
+    )
+    b.add_argument(
+        "--taches-selection",
+        metavar="T1,T2",
+        default="CR,LC",
+        help="Tâches dont la cible est sélectionnée (--selection, défaut CR,LC)",
+    )
+    b.add_argument(
+        "--retirer",
+        metavar="T1,T2",
+        default=None,
+        help='Tâches retirées du jeu (--selection, obligatoire : ex. RE ; "" pour n\'en '
+        "retirer aucune)",
+    )
+    b.add_argument(
+        "--accepter-partiel",
+        action="store_true",
+        help="--selection : admettre des runs de candidats ou de jugement non « complet » "
+        "(candidats sans verdict comptés par Tâche au MANIFEST)",
     )
     b.add_argument("--llama", choices=["cpu", "cuda"], default="cpu", help="variante llama.cpp")
     b.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
@@ -1422,11 +1456,81 @@ def _sous_ensemble(args: argparse.Namespace, racine: Path) -> int:
     return int(CodeSortie.SUCCES)
 
 
+def _liste(texte: str | None) -> list[str]:
+    return [t.strip() for t in (texte or "").split(",") if t.strip()]
+
+
+def _selection(args: argparse.Namespace, racine: Path) -> int:
+    from slmsp.core.erreurs import ManifesteInvalide, ProvenanceInvalide, SourceSansLicence
+    from slmsp.data.selection import lancer_selection
+
+    verdicts = _liste(args.verdicts)
+    if (
+        not args.candidats
+        or not verdicts
+        or not args.variante
+        or args.retirer is None
+        or args.depuis
+        or args.modele
+        or args.taches
+        or args.preferences
+        or args.nettoyage
+        or args.sous_ensemble
+    ):
+        print(
+            "slmsp : --selection exige --candidats, --verdicts, --variante et --retirer "
+            '(--retirer "" pour n\'en retirer aucune), et exclut '
+            "--depuis, --modele, --taches, --preferences, --nettoyage et --sous-ensemble",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
+    try:
+        resultat = lancer_selection(
+            racine=racine,
+            candidats_run_id=args.candidats,
+            verdicts_run_ids=verdicts,
+            taches=_liste(args.taches_selection),
+            retirer=_liste(args.retirer),
+            variante=args.variante,
+            registre=RegistreLicences.charger(racine=racine),
+            juge=charger_config_donnees().juge_donnees.modele,
+            accepter_partiel=args.accepter_partiel,
+            consigner=_consigner,
+        )
+    except (ManifesteInvalide, ProvenanceInvalide, SourceSansLicence, ValueError) as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    rapport = resultat.rapport
+    print("Tâche : source → retenues (gagnants ; écartées)")
+    for tache, b in rapport["par_tache"].items():
+        print(
+            f"{tache} : {b['lignes_source']} → {b['retenues']} ({b['gagnants']} ; {b['ecartees']})"
+        )
+    print(f"candidats ignorés : {rapport['candidats_ignores'] or 'aucun'}")
+    for avertissement in rapport["avertissements"]:
+        print(f"avertissement : {avertissement}")
+    print(f"jeu {resultat.version} ({args.variante}, {rapport['nb_lignes']} lignes)")
+    print(f"dossier : {resultat.dossier}")
+    print(f"run {resultat.run.run_id} (complet) : {resultat.run.dossier}")
+    return int(CodeSortie.SUCCES)
+
+
 def _build(args: argparse.Namespace) -> int:
     from slmsp.data.build import lancer_build
     from slmsp.harness.taches import charger_taches
 
     racine = _racine(args)
+    if args.selection:
+        return _selection(args, racine)
+    if args.candidats or args.verdicts or args.retirer is not None or args.accepter_partiel:
+        print(
+            "slmsp : --candidats, --verdicts, --retirer et --accepter-partiel exigent --selection",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
+    if not args.depuis:
+        print("slmsp : build exige --depuis RUN_ID", file=sys.stderr)
+        return int(CodeSortie.USAGE)
     if args.sous_ensemble:
         return _sous_ensemble(args, racine)
     if args.taches is not None:

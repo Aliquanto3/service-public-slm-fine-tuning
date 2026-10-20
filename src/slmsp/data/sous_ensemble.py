@@ -78,6 +78,11 @@ def lancer_sous_ensemble(
         ) from None
     if source.sous_ensemble is not None:
         raise ManifesteInvalide(f"jeu {version_src} : déjà restreint (repartir du jeu source)")
+    if source.selection is not None:
+        raise ManifesteInvalide(
+            f"jeu {version_src} : cibles sélectionnées (restreindre le jeu source, puis "
+            "sélectionner)"
+        )
     try:
         lignes = [json.loads(texte) for texte in octets.split(b"\n") if texte.strip()]
         for ligne in lignes:

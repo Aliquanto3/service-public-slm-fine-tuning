@@ -334,6 +334,8 @@ def executer(
             raise
         return _bloquer(nom, config, str(exc), racine=racine, sortie=sortie)
     appels = chargement.recontroler_appel_ids(jeu.lignes, journal=journal_mistral, racine=racine)
+    if plan.entraineur != "orpo":
+        chargement.recontroler_cibles(jeu, racine=racine, base=f"slm:{config.modele}")
     if plan.entraineur == "orpo":
         chargement.recontroler_rejected(jeu.lignes, racine=racine)
     adaptateur_sft = None

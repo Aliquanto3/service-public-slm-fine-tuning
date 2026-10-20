@@ -30,7 +30,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Final
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from slmsp.core.artefacts import (
     NOM_JOURNAL_LOCAL,
@@ -43,14 +43,16 @@ from slmsp.core.balises import PROTOCOLE_BALISES, messages_balises
 from slmsp.core.canonique import sha256_fichier
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspError
-from slmsp.core.nettoyage import VERSIONS_NETTOYAGE, verifier_nettoyage
+from slmsp.core.nettoyage import VERSIONS_NETTOYAGE, nettoyer_cible, verifier_nettoyage
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.schemas.entrainement import (
     EnteteManifesteJeu,
     EntetePaire,
     Nettoyage,
+    Selection,
     SousEnsemble,
 )
+from slmsp.core.selection import verifier_selection
 from slmsp.core.sous_ensemble import verifier_sous_ensemble
 from slmsp.core.var import dossier_var
 from slmsp.mcp.outils import NOM_CONFIG as NOM_CONFIG_OUTILS
@@ -80,7 +82,16 @@ _Manifeste = EnteteManifesteJeu
 
 
 class _Meta(_Libre):
-    appel_ids: list[str] = Field(min_length=1)
+    appel_ids: list[str]
+    cible: dict[str, Any] | None = None
+    """Ligne v2 (story 15.3) : cible du Modèle de base local, recontrôlée par
+    `recontroler_cibles` ; `appel_ids` ne porte alors que l'entrée et peut être vide."""
+
+    @model_validator(mode="after")
+    def _appels(self) -> _Meta:
+        if self.cible is None and not self.appel_ids:
+            raise ValueError("meta.appel_ids : au moins un appel attendu sans meta.cible")
+        return self
 
 
 class _Ligne(_Libre):
@@ -159,6 +170,10 @@ def charger_jeu(version: str, *, racine: str | Path | None = None, fichier: str 
     if fichier == NOM_TRAIN and brut_manifeste.get("sous_ensemble") is not None:
         controler_sous_ensemble(
             brut_manifeste["sous_ensemble"], brut, racine=racine, manifeste=brut_manifeste
+        )
+    if fichier == NOM_TRAIN and brut_manifeste.get("selection") is not None:
+        controler_selection(
+            brut_manifeste["selection"], brut, racine=racine, manifeste=brut_manifeste
         )
     schema = _Paire if fichier == NOM_PREFERENCES else _Ligne
     lignes: list[Any] = []
@@ -250,6 +265,47 @@ def controler_sous_ensemble(
             )
 
 
+def controler_selection(
+    selection: Any,
+    octets: bytes,
+    *,
+    racine: str | Path | None = None,
+    manifeste: Mapping[str, Any] | None = None,
+) -> None:
+    """Revérifie un jeu à cibles sélectionnées (story 15.3) contre son jeu source.
+
+    Le `train.jsonl` du jeu `depuis_version` doit avoir le SHA `sha256_train_source`, sa chaîne
+    de nettoyage éventuelle est revérifiée, et `octets` doit en être une sélection
+    (`core.selection.verifier_selection`) ; avec `manifeste`, `nb_lignes` et
+    `comptes_par_tache` sont recoupés. Les cibles locales sont recontrôlées à part
+    (`recontroler_cibles`). Lève `ManifesteInvalide` ou `ProvenanceInvalide`.
+    """
+    try:
+        bloc = Selection.model_validate(selection)
+    except ValidationError as exc:
+        raise ManifesteInvalide(f"bloc « selection » du MANIFEST invalide ({exc})") from None
+    chemin = dossier_jeu(bloc.depuis_version, racine=racine) / NOM_TRAIN
+    try:
+        source = lire(chemin, "train", racine=racine)
+    except FileNotFoundError:
+        raise ManifesteInvalide(f"jeu source de la sélection absent : {chemin}") from None
+    if hashlib.sha256(source).hexdigest() != bloc.sha256_train_source:
+        raise ManifesteInvalide(f"{chemin} : SHA-256 différent de « sha256_train_source »")
+    if bloc.nettoyage_source is not None:
+        controler_nettoyage(bloc.nettoyage_source.model_dump(mode="json"), source, racine=racine)
+    verifier_selection(octets, source, bloc.taches, bloc.retirees)
+    if manifeste is not None:
+        comptes = _comptes_taches(octets)
+        if (manifeste.get("comptes_par_tache"), manifeste.get("nb_lignes")) != (
+            comptes,
+            sum(comptes.values()),
+        ):
+            raise ManifesteInvalide(
+                "jeu sélectionné : « nb_lignes » ou « comptes_par_tache » ne recoupe pas "
+                "train.jsonl"
+            )
+
+
 def _comptes_taches(octets: bytes) -> dict[str, int]:
     """Nombre de lignes par Tâche d'un `train.jsonl`."""
     comptes: dict[str, int] = {}
@@ -299,6 +355,91 @@ def recontroler_appel_ids(
             f"usage {usage}, statut {statut})"
         )
     return len(ids)
+
+
+def recontroler_cibles(
+    jeu: Jeu,
+    *,
+    journal: str | Path | None = None,
+    racine: str | Path | None = None,
+    base: str | None = None,
+) -> int:
+    """Vérifie la cible de chaque ligne v2 (`meta.cible`, story 15.3) dans le journal local.
+
+    L'appel `meta.cible.appel_local_id` doit exister dans `generations-locales.sqlite` (lecture
+    seule) avec `usage = generation-locale`, `statut = ok`, `generateur = meta.cible.source`,
+    la session de la ligne, une conversation de requête égale aux messages avant la cible, un
+    SHA-256 de réponse conforme, et la cible doit valoir `nettoyer_cible` de cette réponse
+    (règle `selection.version_nettoyage` du MANIFEST). Avec `base` (`slm:<slug>` du Modèle
+    entraîné), `meta.cible.source` et `selection.base` doivent la valoir : un jeu sélectionné
+    sur les sorties d'une autre base est refusé. Renvoie le nombre de lignes contrôlées
+    (0, sans lire le journal, pour un jeu v1). Lève `ManifesteInvalide` sinon.
+    """
+    a_controler = [
+        (numero, ligne)
+        for numero, ligne in enumerate(jeu.lignes, start=1)
+        if isinstance(ligne, _Ligne) and ligne.meta.cible is not None
+    ]
+    if not a_controler:
+        return 0
+    try:
+        version = int(jeu.manifeste["selection"]["version_nettoyage"])
+    except (KeyError, TypeError, ValueError):
+        raise ManifesteInvalide(
+            "lignes à cible locale sans bloc « selection » (version_nettoyage) au MANIFEST"
+        ) from None
+    if version not in VERSIONS_NETTOYAGE:
+        raise ManifesteInvalide(f"sélection : version de nettoyage {version} non vérifiable")
+    if base is not None:
+        sources = {str((ligne.meta.cible or {}).get("source")) for _, ligne in a_controler}
+        sources.add(str(jeu.manifeste["selection"].get("base")))
+        if sources != {base}:
+            raise ManifesteInvalide(
+                f"jeu à cibles sélectionnées sur {', '.join(sorted(sources))} : sorties d'un "
+                f"autre Modèle de base que {base} (entraîné), refusé"
+            )
+    chemin = Path(journal) if journal is not None else dossier_var() / NOM_JOURNAL_LOCAL
+    if not chemin_autorise(chemin, "train", racine=racine).is_file():
+        raise ManifesteInvalide(f"journal local absent : {chemin} (cibles non vérifiables)")
+    connexion = ouvrir_sqlite_lecture(chemin, "train", racine=racine)
+    try:
+        for numero, ligne in a_controler:
+            cible = ligne.meta.cible or {}
+            appel_id, source = cible.get("appel_local_id"), cible.get("source")
+            trouve = connexion.execute(
+                "SELECT session_id, usage, generateur, requete, reponse_brute, sha256_reponse, "
+                "statut FROM appels WHERE appel_id = ?",
+                (appel_id,),
+            ).fetchone()
+            if trouve is None:
+                raise ManifesteInvalide(
+                    f"ligne {numero} : cible {appel_id} absente du journal local"
+                )
+            session_id, usage, generateur, requete, brut, sha, statut = trouve
+            try:
+                messages = json.loads(requete)["messages"]
+            except (ValueError, KeyError, TypeError):
+                messages = None
+            extra = ligne.meta.model_extra or {}
+            conforme = (
+                session_id == extra.get("session_id")
+                and usage == "generation-locale"
+                and statut == "ok"
+                and generateur == source
+                and brut is not None
+                and hashlib.sha256(bytes(brut)).hexdigest() == sha
+                and messages == ligne.messages[:-1]
+                and nettoyer_cible(bytes(brut).decode("utf-8"), version, ligne.tache)
+                == ligne.messages[-1].get("content")
+            )
+            if not conforme:
+                raise ManifesteInvalide(
+                    f"ligne {numero} : cible {appel_id} non conforme au journal local (session, "
+                    "usage, statut, générateur, conversation, SHA ou texte nettoyé)"
+                )
+    finally:
+        connexion.close()
+    return len(a_controler)
 
 
 def recontroler_rejected(

@@ -43,6 +43,8 @@ SOURCES_SANS_REVISION = {
     "data.gouv/reponses-outils-mcp",
     "insee/fichier-des-prenoms",
 }
+MODELES_BASE = {"openbmb/MiniCPM5-2B"}
+"""Sorties de Modèles de base locaux devenues cibles par sélection (story 15.3)."""
 
 
 # --- Fixtures -----------------------------------------------------------------------------
@@ -95,9 +97,24 @@ def registre(tmp_path: Path) -> RegistreLicences:
 
 def test_registre_reel_charge() -> None:
     registre = RegistreLicences.charger()
-    assert set(registre.ids) == set(REVISIONS_RELEVEES) | SOURCES_SANS_REVISION
+    assert set(registre.ids) == set(REVISIONS_RELEVEES) | SOURCES_SANS_REVISION | MODELES_BASE
     assert len(registre.ids) == len(set(registre.ids))
     assert registre.chemin == Path("data/registre-licences.toml")
+
+
+def test_registre_reel_sorties_minicpm5_en_recherche() -> None:
+    registre = RegistreLicences.charger()
+    source = registre.source_modele_base("slm:minicpm5-2b")
+    assert (source.id, source.usage, source.genere_par) == (
+        "openbmb/MiniCPM5-2B",
+        "recherche",
+        "modele-base",
+    )
+    assert source.revision and source.verifie_le
+    with pytest.raises(UsageInterdit):
+        registre.exiger(source.id, "diffusable")
+    with pytest.raises(SourceSansLicence):
+        registre.source_modele_base("slm:autre-base")
 
 
 def test_registre_reel_releve_des_jeux() -> None:
@@ -215,6 +232,7 @@ def test_listes_admises_figees() -> None:
         "humain": frozenset({"public", "anael"}),
         "mistral": frozenset({"mistral"}),
         "api-publique": frozenset({"public"}),
+        "modele-base": frozenset({"modele-base"}),
     }
     assert USAGES == ("diffusable", "recherche", "evaluation_seulement")
     assert VARIANTES == ("diffusable", "recherche")

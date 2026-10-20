@@ -71,7 +71,7 @@ from slmsp.data.juge_donnees import (
     source_session,
 )
 from slmsp.data.nettoyage import Tokeniseur, tokeniseur_du_modele
-from slmsp.data.preferences import _generer, _jeu_sft
+from slmsp.data.preferences import _exiger_sans_selection, _generer, _jeu_sft
 from slmsp.fournisseurs.client import MODE, ClientCompatibleOpenAI, ErreurApiFournisseur
 from slmsp.fournisseurs.client import _texte as texte_reponse
 from slmsp.inference.journal_local import JournalLocal
@@ -338,7 +338,8 @@ def lancer_candidats(
             f"données (attendu parmi {', '.join(TACHES_CANDIDATES)})"
         )
     base = Path(racine).resolve()
-    version_sft, _manifeste, octets = _jeu_sft(build_run_id, base)
+    version_sft, manifeste_sft, octets = _jeu_sft(build_run_id, base)
+    _exiger_sans_selection(version_sft, manifeste_sft, "candidats")
     lignes = _lignes_sft(octets, version_sft)
     voulues = [(rang, ligne) for rang, ligne in enumerate(lignes) if ligne.tache in taches]
     if not voulues:

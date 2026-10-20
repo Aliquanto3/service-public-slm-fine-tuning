@@ -203,6 +203,10 @@ def lancer_nettoyage(
         raise ManifesteInvalide(
             f"jeu {version_src} : restreint à des Tâches (nettoyer le jeu source, puis restreindre)"
         )
+    if source.selection is not None:
+        raise ManifesteInvalide(
+            f"jeu {version_src} : cibles sélectionnées, déjà nettoyées (repartir du jeu source)"
+        )
     try:
         lignes = [json.loads(texte) for texte in octets.split(b"\n") if texte.strip()]
         for ligne in lignes:

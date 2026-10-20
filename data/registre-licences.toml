@@ -10,8 +10,10 @@
 # - `licence` : licence déclarée sur la fiche (ou « non-declaree ») ;
 # - `usage` : `diffusable` (variante diffusable admise), `recherche` (variante `recherche`
 #   seulement) ou `evaluation_seulement` (refusée par tout le pipeline de données) ;
-# - `auteur_contenu` : `public`, `mistral` ou `anael` (jamais `claude` ni `inconnu`) ;
-# - `genere_par` : `humain`, `mistral` ou `api-publique` (aucun modèle non autorisé) ;
+# - `auteur_contenu` : `public`, `mistral`, `anael` ou `modele-base` (jamais `claude` ni `inconnu`) ;
+# - `genere_par` : `humain`, `mistral`, `api-publique` ou `modele-base` (sorties d'un Modèle de
+#   base local devenues cibles par sélection, story 15.3 ; id = celui de la fiche HF du modèle,
+#   dont le nom vaut le slug `slm:<slug>` sans tenir compte de la casse) ;
 # - `revision` : commit du jeu lu (facultatif) ; `verifie_le` : date du relevé (facultatif) ;
 # - `notes` : précisions utiles à la diffusion (facultatif).
 
@@ -130,3 +132,13 @@ usage = "diffusable"
 auteur_contenu = "public"
 genere_par = "humain"
 notes = "`genere_par = humain` : seule valeur admise qui convienne (statistiques d'état civil produites sans modèle, comme les autres jeux publics téléchargés) ; `api-publique` désigne des réponses d'outils, `mistral` un modèle. prenoms.txt est filtré par la CLI, sans modèle. Fichier national des prénoms 1900-2022 relevé le 2026-10-17 (INSEE, fiche data.gouv 5bf42c958b4c4144b0110ce8). Licence Ouverte 2.0 : attribution obligatoire. Sert seulement à la détection Prénom Nom de l'export des Retours (ressources/prenoms.txt), pas de Donnée d'entraînement. SHA-256 de l'archive épinglé dans config/outillage.toml."
+
+[[sources]]
+id = "openbmb/MiniCPM5-2B"
+licence = "apache-2.0"
+usage = "recherche"
+auteur_contenu = "modele-base"
+genere_par = "modele-base"
+revision = "f97400052a43d642bbc6e9975e2397e3ae6a6b52"
+verifie_le = 2026-10-17
+notes = "Sorties du Modèle de base local slm:minicpm5-2b, cibles sélectionnées (story 15.3). Licence Apache 2.0 relevée dans config/modeles/minicpm5-2b.toml (fiche HF lue le 2026-10-17 via l'API Hugging Face, révision ci-dessus) ; carte du modèle absente de models/ : à relire sur la fiche avant toute variante diffusable. Usage recherche : décision d'Anaël du 20/10."

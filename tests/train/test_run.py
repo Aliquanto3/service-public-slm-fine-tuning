@@ -794,3 +794,20 @@ def test_reprise_orpo_refusee_sans_filtre_de_longueur(projet, pile, factices, mo
     manifeste.write_text(json.dumps(brut), encoding="utf-8")
     with pytest.raises(ConfigurationInvalide, match="configuration résolue diffère"):
         module_run.executer(toml, racine=projet.racine, pile=pile, reprendre_run=m4)
+
+
+def test_sft_recontrole_les_cibles_selectionnees_contre_la_base(projet, pile, monkeypatch) -> None:
+    """Story 15.3 : `train run` (SFT) appelle `recontroler_cibles` avec `slm:<modele>`."""
+    appels: list[str | None] = []
+    vrai = module_run.chargement.recontroler_cibles
+
+    def espion(jeu, **kw):
+        appels.append(kw.get("base"))
+        return vrai(jeu, **kw)
+
+    monkeypatch.setattr(module_run.chargement, "recontroler_cibles", espion)
+    projet.ecrire_jeu()
+    toml = projet.ecrire_toml("m1-qlora")
+    _executer(projet, pile, toml)
+    modele = module_run.charger_run_config(toml).modele
+    assert appels == [f"slm:{modele}"]

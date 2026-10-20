@@ -37,12 +37,25 @@ class EnteteManifesteJeu(BaseModel):
     run_id: RunId
 
 
+class CibleLigne(SousSchema):
+    """Cible d'une ligne v2 (story 15.3) : sortie du Modèle de base local `source`
+    (`slm:<slug>`), relue dans `generations-locales.sqlite` sous `appel_local_id`."""
+
+    source: Annotated[str, StringConstraints(pattern=r"^slm:[A-Za-z0-9][A-Za-z0-9._-]*$")]
+    appel_local_id: Annotated[str, StringConstraints(min_length=1)]
+
+
 class MetaLigne(SousSchema):
-    """Provenance d'une ligne : tout se retrouve au journal Mistral et au Registre."""
+    """Provenance d'une ligne : tout se retrouve au journal Mistral et au Registre.
+
+    v1 : `appel_ids` (au moins un) couvre l'entrée et la cible. v2 (`cible` présent) :
+    `appel_ids` ne porte que les appels Mistral de l'**entrée** (vide si l'entrée est publique)
+    et la cible vient du journal local (`cible`).
+    """
 
     generateur: str
     """Modèle(s) résolu(s) des appels, séparés par « + » s'il y en a plusieurs."""
-    appel_ids: list[AppelId] = Field(min_length=1)
+    appel_ids: list[AppelId]
     session_id: SessionId
     version_gabarit: dict[str, int]
     """Identifiant du gabarit du générateur → version, pour chaque appel de la session."""
@@ -52,13 +65,20 @@ class MetaLigne(SousSchema):
     licence: list[str] = Field(min_length=1)
     """Licence de chaque source, dans le même ordre que `source`."""
     date: Jour
-    """Jour du dernier appel de la session (journal Mistral)."""
+    """Jour du dernier appel de la session (journal Mistral, ou journal local en v2)."""
+    cible: CibleLigne | None = Field(default=None, exclude_if=lambda v: v is None)
+
+    @model_validator(mode="after")
+    def _appels(self) -> Self:
+        if self.cible is None and not self.appel_ids:
+            raise ValueError("appel_ids : au moins un appel Mistral attendu sans « cible »")
+        return self
 
 
 class LigneEntrainement(SchemaBase):
-    """Une ligne de `train.jsonl`."""
+    """Une ligne de `train.jsonl` : v1 (cible Mistral) ou v2 (cible locale, `meta.cible`)."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     messages: list[dict[str, Any]] = Field(min_length=2)
     tools: list[dict[str, Any]] = Field(default_factory=list)
     tache: str
@@ -77,6 +97,8 @@ class LigneEntrainement(SchemaBase):
             raise ValueError("le dernier message doit être « assistant »")
         if len(self.meta.source) != len(self.meta.licence):
             raise ValueError("source et licence de même longueur attendues")
+        if (self.schema_version == 2) != (self.meta.cible is not None):
+            raise ValueError("meta.cible présent si et seulement si schema_version = 2")
         return self
 
 
@@ -156,12 +178,79 @@ class SousEnsemble(SousSchema):
         return self
 
 
+class BilanSelection(SousSchema):
+    """Bilan d'une Tâche sélectionnée : lignes source, retenues, gagnants par source, écarts."""
+
+    lignes_source: int = Field(ge=0)
+    retenues: int = Field(ge=0)
+    gagnants: dict[Nom, int]
+    """Source du gagnant (`mistral`, `slm:<slug>`) → nombre de lignes."""
+    part_base: float | None = Field(ge=0, le=1)
+    """Part des gagnants de la base locale parmi les retenues (`None` sans ligne retenue)."""
+    score_moyen: float | None = Field(ge=0, le=1)
+    ecartees: dict[Nom, int]
+    """Lignes écartées par motif : `sans_candidat` (aucun candidat pour la ligne) ou
+    `aucun_accepte` (candidats tous refusés ou ignorés)."""
+
+
+class Selection(SousSchema):
+    """Provenance d'un jeu dont les cibles de `taches` sont sélectionnées (story 15.3, O3).
+
+    Le jeu est la suite, dans l'ordre, des lignes du jeu `depuis_version` (run `depuis_build`,
+    SHA `sha256_train_source`) : lignes des Tâches hors `taches` et hors `retirees` copiées à
+    l'octet près ; lignes de `taches` copiées (gagnant Mistral), remplacées par une ligne v2 de
+    même entrée (gagnant de la base locale `base`) ou écartées ; lignes de `retirees` absentes
+    (`core.selection.verifier_selection`). Le détail par ligne (gagnant, notes, score) est dans
+    `selection.jsonl` du run, de SHA `sha256_detail`.
+    """
+
+    depuis_build: RunId
+    depuis_version: VersionJeu
+    sha256_train_source: Sha256
+    nettoyage_source: Nettoyage | None = Field(default=None, exclude_if=lambda v: v is None)
+    candidats_run_id: RunId
+    sha256_candidats: Sha256
+    verdicts: dict[RunId, Sha256] = Field(min_length=1)
+    """Run `data-juger` → SHA de son `verdicts.jsonl`."""
+    juge: Nom
+    """Modèle du juge de données dont le verdict `accepte` décide (DeepSeek, règle O1)."""
+    sha_grilles: dict[Nom, Sha256]
+    base: Annotated[str, StringConstraints(pattern=r"^slm:[A-Za-z0-9][A-Za-z0-9._-]*$")]
+    version_nettoyage: int = Field(ge=1)
+    """Règle `nettoyer_cible` appliquée aux cibles locales (recontrôlée par `train run`)."""
+    tokenizer_sha256: Sha256
+    taches: list[Nom] = Field(min_length=1)
+    retirees: list[Nom]
+    par_tache: dict[Nom, BilanSelection]
+    candidats_ignores: dict[Nom, int]
+    """Candidats ignorés par motif (source OpenRouter, sans verdict, verdict invalide…)."""
+    sha256_detail: Sha256
+    runs_partiels: list[RunId] = Field(default_factory=list, exclude_if=lambda v: not v)
+    """Runs sources (candidats, jugements) non `complet` admis par `--accepter-partiel`."""
+    sans_verdict_par_tache: dict[Nom, int] = Field(default_factory=dict)
+    """Candidats sans verdict du juge principal, par Tâche (non nuls seulement)."""
+    avertissements: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _taches(self) -> Self:
+        for nom in ("taches", "retirees"):
+            valeurs = getattr(self, nom)
+            if valeurs != sorted(set(valeurs)):
+                raise ValueError(f"{nom} : liste triée sans doublon attendue")
+        if set(self.taches) & set(self.retirees):
+            raise ValueError("une Tâche ne peut être à la fois sélectionnée et retirée")
+        return self
+
+
 class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
-    """Contenu de `data/train/vN/MANIFEST.json` (`run_id` : le run `data-build`)."""
+    """Contenu de `data/train/vN/MANIFEST.json` (`run_id` : le run `data-build`).
+
+    v2 : jeu à cibles sélectionnées (bloc `selection`, story 15.3) ; v1 sinon.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     type_run: Literal["data-build"] = TYPE_RUN_BUILD
     variante: Variante
     cree_le: Jour
@@ -194,6 +283,15 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     """Présent sur un jeu nettoyé (story 9.9) : `train.chargement` revérifie la chaîne."""
     sous_ensemble: SousEnsemble | None = Field(default=None, exclude_if=lambda v: v is None)
     """Présent sur un jeu restreint à certaines Tâches : `train.chargement` revérifie la chaîne."""
+    selection: Selection | None = Field(default=None, exclude_if=lambda v: v is None)
+    """Présent sur un jeu à cibles sélectionnées (v2) : `train.chargement` revérifie la chaîne
+    et `train run` les cibles locales."""
+
+    @model_validator(mode="after")
+    def _version(self) -> Self:
+        if (self.schema_version == 2) != (self.selection is not None):
+            raise ValueError("bloc « selection » présent si et seulement si schema_version = 2")
+        return self
 
 
 # --- Paires de préférence ORPO (story 9.7, FR-34, D-nuit-A1-21) ---------------------------------

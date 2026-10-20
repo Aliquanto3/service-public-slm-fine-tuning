@@ -26,7 +26,7 @@ import json
 import re
 import unicodedata
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -111,6 +111,16 @@ def _jeu_sft(build_run_id: str, base: Path) -> tuple[str, dict[str, Any], bytes]
     raise ManifesteInvalide(f"aucun jeu data/train/vN issu du run {build_run_id}")
 
 
+def _exiger_sans_selection(version: str, manifeste: Mapping[str, Any], usage: str) -> None:
+    """Refuse un jeu à cibles sélectionnées (story 15.3) : ses cibles ne sont plus toutes des
+    cibles Mistral (lignes v2 de la base locale), `usage` doit repartir du jeu source."""
+    if manifeste.get("selection") is not None:
+        raise ManifesteInvalide(
+            f"jeu {version} : cibles sélectionnées (story 15.3), refusé pour les {usage} "
+            "(repartir du jeu source)"
+        )
+
+
 def _texte(reponse: dict[str, Any]) -> str | None:
     contenu = reponse.get("content")
     return contenu if isinstance(contenu, str) and contenu.strip() else None
@@ -168,6 +178,7 @@ def lancer_preferences(
         raise ValueError(f"modèle {modele!r} : forme attendue base:<slug>")
     base = Path(racine).resolve()
     version_sft, manifeste_sft, octets = _jeu_sft(build_run_id, base)
+    _exiger_sans_selection(version_sft, manifeste_sft, "paires de préférence")
     try:
         lignes = [
             LigneEntrainement.model_validate_json(texte)

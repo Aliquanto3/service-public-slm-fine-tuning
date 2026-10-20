@@ -36,8 +36,9 @@ from slmsp.core.schemas import SchemaBase, Sha256
 MOTIF_AMORCE_ID = r"^[a-z0-9][a-z0-9._-]*$"
 MOTIF_EMPLACEMENT = r"^[a-z_]+$"
 
-AuteurContenu = Literal["public", "mistral", "anael"]
-"""Auteurs de contenu admis au Registre des licences."""
+AuteurContenu = Literal["public", "mistral", "anael", "modele-base"]
+"""Auteurs de contenu admis au Registre des licences (`modele-base` : sorties d'un Modèle de
+base local, cibles sélectionnées de la story 15.3 ; jamais une amorce)."""
 AuteurAmorce = Literal["public", "mistral", "anael", "config", "verification"]
 """Provenances d'une amorce : celles du Registre, plus `config` (paramètre tiré par graine) et
 `verification` (bloc de corrections rendu par le Générateur, story O6b)."""

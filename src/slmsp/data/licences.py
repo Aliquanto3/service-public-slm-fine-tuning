@@ -5,9 +5,11 @@ admis et sa provenance :
 
 - `usage` ∈ `USAGES` : `diffusable` (admise par les deux variantes), `recherche` (variante
   `recherche` seulement) ou `evaluation_seulement` (refusée par tout le pipeline) ;
-- `auteur_contenu` ∈ {`public`, `mistral`, `anael`} et `genere_par` ∈ `GENERE_PAR_ADMIS`,
-  cohérents entre eux. `claude`, `inconnu` ou une source distillée d'un modèle non autorisé
-  lèvent `ProvenanceInvalide` au chargement. Ces listes sont un verrou (D1.1), pas un réglage.
+- `auteur_contenu` ∈ {`public`, `mistral`, `anael`, `modele-base`} et `genere_par` ∈
+  `GENERE_PAR_ADMIS`, cohérents entre eux (`modele-base` : sorties d'un Modèle de base local
+  devenues cibles par sélection, story 15.3, identifiant `org/nom` de sa fiche HF).
+  `claude`, `inconnu` ou une source distillée d'un modèle non autorisé lèvent
+  `ProvenanceInvalide` au chargement. Ces listes sont un verrou (D1.1), pas un réglage.
 
 Le fichier est lu par le lecteur contrôlé `slmsp.core.artefacts.lire` (AD-24). Un registre
 malformé (TOML invalide, clé inconnue, id en double, usage hors liste) lève
@@ -50,7 +52,7 @@ CHEMIN_REGISTRE: Final = "data/registre-licences.toml"
 
 Usage = Literal["diffusable", "recherche", "evaluation_seulement"]
 Variante = Literal["diffusable", "recherche"]
-GenerePar = Literal["humain", "mistral", "api-publique"]
+GenerePar = Literal["humain", "mistral", "api-publique", "modele-base"]
 
 USAGES: Final[tuple[str, ...]] = get_args(Usage)
 VARIANTES: Final[tuple[str, ...]] = get_args(Variante)
@@ -61,6 +63,7 @@ GENERE_PAR_ADMIS: Final[Mapping[str, frozenset[str]]] = MappingProxyType(
         "humain": frozenset({"public", "anael"}),
         "mistral": frozenset({"mistral"}),
         "api-publique": frozenset({"public"}),
+        "modele-base": frozenset({"modele-base"}),
     }
 )
 """Générateurs admis et, pour chacun, les `auteur_contenu` compatibles (verrou D1.1)."""
@@ -214,6 +217,23 @@ class RegistreLicences:
                 f"interdit dans la variante {variante!r}"
             )
         return source
+
+    def source_modele_base(self, base: str) -> SourceLicence:
+        """Entrée des sorties du Modèle de base `base` (`slm:<slug>`) : l'unique source
+        `genere_par = "modele-base"` dont le nom (après « / ») vaut `<slug>` sans tenir compte
+        de la casse. `SourceSansLicence` si aucune ou plusieurs."""
+        slug = base.removeprefix("slm:").casefold()
+        trouvees = [
+            s
+            for s in self._sources.values()
+            if s.genere_par == "modele-base" and s.id.split("/", 1)[1].casefold() == slug
+        ]
+        if len(trouvees) != 1:
+            raise SourceSansLicence(
+                f"sorties {base!r} : {len(trouvees)} entrée(s) « modele-base » au registre des "
+                f"licences ({self.chemin}), une attendue"
+            )
+        return trouvees[0]
 
     def instantane(self) -> dict[str, Any]:
         """Instantané JSON du registre (clés triées, sources triées par id) pour un MANIFEST."""
