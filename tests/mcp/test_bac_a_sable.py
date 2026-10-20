@@ -636,9 +636,9 @@ def test_rejeu_cassettes_calibrage(eval_intact: None) -> None:
 
 
 def test_rejeu_cassettes_rd_gelees(eval_intact: None) -> None:
-    # 40 cassettes de v1.0/v1.1 (75 appels, 4 pannes) et 20 de dev1, RD-501 à RD-520
-    # (39 appels, 2 pannes ; story O4b).
-    assert len(CASSETTES_RD) == 60
+    # 40 cassettes de v1.0/v1.1 (75 appels, 4 pannes) et 21 de dev1, RD-501 à RD-521
+    # (40 appels, 2 pannes ; stories O4b et O4e).
+    assert len(CASSETTES_RD) == 61
     appels = simulations = 0
     for chemin in CASSETTES_RD:
         collecte = _Collecte()
@@ -659,5 +659,5 @@ def test_rejeu_cassettes_rd_gelees(eval_intact: None) -> None:
             reponse = bac.appeler(nom, arguments, id_requete=requete["id"])
             assert reponse == interaction.response, chemin
         assert collecte.evenements == [], chemin
-    assert appels == 114
+    assert appels == 115
     assert simulations == 6

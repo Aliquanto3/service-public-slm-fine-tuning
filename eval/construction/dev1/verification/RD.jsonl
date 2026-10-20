@@ -24,3 +24,5 @@
 {"id": "RD-501", "verdict": "accepte", "detail": "O4d, après contre-vérification croisée (consigne 3) : provenance : extrait de la cassette (titre, identifiant, producteur, URL) (GLM)", "verifie_le": "2026-10-20"}
 {"id": "RD-505", "verdict": "accepte", "detail": "O4d, après contre-vérification croisée (consigne 3) : filter_operator « contains » obligatoire (sans lui, le filtre exact ne trouve pas la ligne) (DeepSeek)", "verifie_le": "2026-10-20"}
 {"id": "RD-519", "verdict": "accepte", "detail": "O4d, après contre-vérification croisée (consigne 3) : provenance : extrait de la cassette (URL « fiscalite-locale-des-entreprises » vérifiée) ; variante « Géo » située dans les critères (GLM)", "verifie_le": "2026-10-20"}
+{"id": "RD-501", "verdict": "rejete", "motif": "autre", "detail": "O4e : rejeté deux fois par la contre-vérification croisée, remplacé par RD-521", "verifie_le": "2026-10-20"}
+{"id": "RD-521", "verdict": "accepte", "detail": "O4e, second passage : titre, identifiant, producteur et URL relus dans la cassette RD-521/s1.json ; règle d'appel conforme à l'appel enregistré", "verifie_le": "2026-10-20"}

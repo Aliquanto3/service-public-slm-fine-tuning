@@ -39,6 +39,10 @@ Revérification des 160 items : 123 retenus, 37 rejetés. Les 37 passent en `ver
 
 Les autres items sont corrigés au cas par cas : extraits complétés (Q-503, Q-511), référence alignée sur la source (Q-519, LC-504, LC-507, RE-501, RE-510, RE-515), expéditeur fourni (CT), « pré-demande » (CO-514), extrait de cassette en provenance (RD-501, RD-519), `filter_operator` obligatoire (RD-505), public ou sujets de la consigne précisés (RE-502, RE-520). Détail : `_bmad-output/implementation-artifacts/spec-o4d-dev1-remplacements.md`.
 
+## Revérification après O4d et remplacements O4e
+
+Revérification des 37 items corrigés : 155 retenus, 5 rejetés une seconde fois (CR-512, NR-511, NR-516, NR-517, RD-501). Ils sont remplacés, sans plaidoyer, par des items neufs de même Tâche, difficulté et thème : CR-521 (notes fictives, commission des marchés de plein air), NR-521 à NR-523 (consignes à réponse unique : ordre, format et absence d'ajout imposés), RD-521 (cassette `eval/cassettes/RD-521/s1.json`, enregistrée le 2026-10-20 par `slmsp mcp record`, jeu « Bénéficiaires du minimum vieillesse »). Les items remplacés restent dans les brouillons avec un verdict `rejete` dans `verification/` : l'assemblage les exclut. Détail : `_bmad-output/implementation-artifacts/spec-o4e-dev1-5-remplacements.md`.
+
 ## Reste à faire (orchestrateur)
 
-Revérification des 37 items modifiés (`verifier_jeu_croise.py verifier --version dev1 --juges deepseek,glm` : les 123 autres sont repris à empreinte égale), réassemblage, puis gel `relu-llm`.
+Contre-vérification des 5 items neufs (`verifier_jeu_croise.py verifier --version dev1 --juges deepseek,glm` : les 155 retenus sont repris à empreinte égale, 10 appels), réassemblage, puis gel `relu-llm`.

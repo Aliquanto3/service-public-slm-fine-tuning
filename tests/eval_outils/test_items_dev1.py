@@ -80,7 +80,7 @@ def test_lc_termes_presents_dans_le_texte(it):
     assert absents == [], f"{it['id']} : termes absents de entree.texte : {absents}"
 
 
-def test_rd_cassettes_501_a_520_toutes_citees():
+def test_rd_cassettes_501_a_521_toutes_citees():
     """Chaque dossier `RD-5xx` est cité par un item RD de dev1, et chaque cassette citée existe."""
     cites = set()
     for it in RD:
@@ -89,7 +89,7 @@ def test_rd_cassettes_501_a_520_toutes_citees():
             assert chemin.is_file(), (it["id"], relatif)
             cites.add(chemin)
     dossiers = {d.name for d in CASSETTES.glob("RD-*") if int(d.name.split("-")[1]) >= 501}
-    assert dossiers == {it["id"] for it in RD} == {f"RD-{n}" for n in range(501, 521)}
+    assert dossiers == {it["id"] for it in RD} == {f"RD-{n}" for n in range(501, 522)}
     fichiers = {f.resolve() for d in dossiers for f in (CASSETTES / d).rglob("*") if f.is_file()}
     assert fichiers == cites
 

@@ -28,3 +28,9 @@
 {"id": "NR-516", "verdict": "accepte", "detail": "O4d, après contre-vérification croisée (consigne 3) : consigne précisée : chaque titre mentionne France services et la médiathèque ; référence alignée (DeepSeek)", "verifie_le": "2026-10-20"}
 {"id": "NR-517", "verdict": "accepte", "detail": "O4d, après contre-vérification croisée (consigne 3) : consigne précisée : une ligne par permanence, dans l'ordre du texte (DeepSeek)", "verifie_le": "2026-10-20"}
 {"id": "NR-520", "verdict": "accepte", "detail": "O4d, après contre-vérification croisée (consigne 3) : critères alignés mot pour mot sur la référence (DeepSeek)", "verifie_le": "2026-10-20"}
+{"id": "NR-511", "verdict": "rejete", "motif": "autre", "detail": "O4e : rejeté deux fois par la contre-vérification croisée, remplacé par NR-521", "verifie_le": "2026-10-20"}
+{"id": "NR-521", "verdict": "accepte", "detail": "O4e, second passage : réponse unique et forme imposée par la consigne (ordre, format, absence d'ajout) ; critères alignés sur la référence", "verifie_le": "2026-10-20"}
+{"id": "NR-516", "verdict": "rejete", "motif": "autre", "detail": "O4e : rejeté deux fois par la contre-vérification croisée, remplacé par NR-522", "verifie_le": "2026-10-20"}
+{"id": "NR-522", "verdict": "accepte", "detail": "O4e, second passage : réponse unique et forme imposée par la consigne (ordre, format, absence d'ajout) ; critères alignés sur la référence", "verifie_le": "2026-10-20"}
+{"id": "NR-517", "verdict": "rejete", "motif": "autre", "detail": "O4e : rejeté deux fois par la contre-vérification croisée, remplacé par NR-523", "verifie_le": "2026-10-20"}
+{"id": "NR-523", "verdict": "accepte", "detail": "O4e, second passage : réponse unique et forme imposée par la consigne (ordre, format, absence d'ajout) ; critères alignés sur la référence", "verifie_le": "2026-10-20"}

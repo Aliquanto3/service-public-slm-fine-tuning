@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T14:15:32Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "allocation de solidarité aux personnes âgées minimum vieillesse",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'allocation de solidarité aux personnes âgées minimum vieillesse'\nPage 1 of results:\n\n1. Bénéficiaires du minimum vieillesse\n   ID: 5369963ca3a729239d20493a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: allocation-de-solidarite-aux-per, aspa, minimum-vieillesse, personnes-agees, retraite\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/http-www-drees-sante-gouv-fr-donnees-relatives-au-minimum-vieillesse-10467-html\n\n2. Allocataires des minima sociaux\n   ID: 53698ed0a3a729239d203589\n   Organization: Ministère des Solidarités et de la Santé\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/allocataires-des-minima-sociaux-30378386\n\n3. Allocataires des minima sociaux\n   ID: 53698ecfa3a729239d203588\n   Organization: Ministère des Solidarités et de la Santé\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/allocataires-des-minima-sociaux-30378367\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'allocation de solidarité aux personnes âgées minimum vieillesse'\nPage 1 of results:\n\n1. Bénéficiaires du minimum vieillesse\n   ID: 5369963ca3a729239d20493a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: allocation-de-solidarite-aux-per, aspa, minimum-vieillesse, personnes-agees, retraite\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/http-www-drees-sante-gouv-fr-donnees-relatives-au-minimum-vieillesse-10467-html\n\n2. Allocataires des minima sociaux\n   ID: 53698ed0a3a729239d203589\n   Organization: Ministère des Solidarités et de la Santé\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/allocataires-des-minima-sociaux-30378386\n\n3. Allocataires des minima sociaux\n   ID: 53698ecfa3a729239d203588\n   Organization: Ministère des Solidarités et de la Santé\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/allocataires-des-minima-sociaux-30378367\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}
