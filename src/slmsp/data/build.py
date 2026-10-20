@@ -35,7 +35,7 @@ import random
 import re
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 from typing import Any, Final
@@ -56,7 +56,7 @@ from slmsp.core.schemas.entrainement import (
     MetaLigne,
 )
 from slmsp.core.schemas.session_donnees import SessionBrute
-from slmsp.data.config import ConfigDonnees
+from slmsp.data.config import AlignementDonnees, ConfigDonnees
 from slmsp.data.extraction import VERSION_EXTRACTEUR, extraire_contenu, extraire_message
 from slmsp.data.filter import NOM_RETENUS
 from slmsp.data.filter import TYPE_RUN as TYPE_RUN_FILTER
@@ -86,6 +86,7 @@ __all__ = [
     "ContexteBuild",
     "DerivationRefusee",
     "ResultatBuild",
+    "consigne_agent",
     "construire_conversation",
     "lancer_build",
     "rederiver_ligne",
@@ -128,6 +129,8 @@ class ContexteBuild:
     taches: TableTaches
     outils: Sequence[Mapping[str, Any]]
     registre: RegistreLicences
+    alignement: AlignementDonnees = field(default_factory=AlignementDonnees)
+    """Consignes d'Agent rendues dans le message user (story O5) ; vide : aucune."""
 
 
 @dataclass(frozen=True)
@@ -266,8 +269,19 @@ def sources_de(ctx: ContexteBuild, brut: SessionBrute) -> list[str]:
     return sorted(ids)
 
 
+def consigne_agent(alignement: AlignementDonnees, tache: str, session_id: str) -> str | None:
+    """Formulation générique de la session, tirée par graine ; `None` si la Tâche n'en a pas."""
+    variantes = alignement.consignes_agent.get(tache)
+    if not variantes:
+        return None
+    return random.Random(f"{alignement.graine}\0{session_id}").choice(variantes)
+
+
 def construire_conversation(
-    lecteur: LecteurGeneration, taches: TableTaches, brut: SessionBrute
+    lecteur: LecteurGeneration,
+    taches: TableTaches,
+    brut: SessionBrute,
+    alignement: AlignementDonnees | None = None,
 ) -> tuple[list[LigneAppel], list[dict[str, Any]]]:
     """Appels et messages de la session, sans licence ni variante.
 
@@ -283,6 +297,10 @@ def construire_conversation(
         if derivee.auteur_contenu == "config":
             _exiger_amorce_liee(derivee, brut)
     entree = _entree(brut, amorces, lignes)
+    if alignement is not None and isinstance(entree, dict) and "consigne" not in entree:
+        consigne = consigne_agent(alignement, brut.tache, brut.session_id)
+        if consigne is not None:  # même rendu qu'à l'évaluation : « Consigne : … / Texte : … »
+            entree = {"consigne": consigne, **entree}
     if brut.tache == "generique":
         if not isinstance(entree, dict) or set(entree) != {"demande"}:
             raise DerivationRefusee(
@@ -342,7 +360,7 @@ def rederiver_ligne(ctx: ContexteBuild, brut: SessionBrute) -> LigneEntrainement
     Lève `ProvenanceInvalide` (appel absent ou d'un autre usage, amorce falsifiée, résultat
     d'outil hors cassette, entrée incompatible avec la Tâche) ou une erreur de licence.
     """
-    lignes, messages = construire_conversation(ctx.lecteur, ctx.taches, brut)
+    lignes, messages = construire_conversation(ctx.lecteur, ctx.taches, brut, ctx.alignement)
 
     versions: dict[str, int] = {}
     for ligne in lignes:
@@ -480,7 +498,11 @@ def lancer_build(
     if not sessions:
         raise ManifesteInvalide(f"run {filter_run_id} : aucun exemple retenu à construire")
     ctx = ContexteBuild(
-        lecteur=lecteur, taches=taches, outils=charger_outils(chemin_outils), registre=registre
+        lecteur=lecteur,
+        taches=taches,
+        outils=charger_outils(chemin_outils),
+        registre=registre,
+        alignement=config.alignement,
     )
 
     # Licences : toute source absente du Registre, ou d'un usage refusé, fait échouer.
@@ -502,6 +524,7 @@ def lancer_build(
             "version_extracteur": VERSION_EXTRACTEUR,
             "registre_sha256": registre.sha256,
             "relecture": config.relecture.model_dump(mode="json"),
+            "alignement": config.alignement.model_dump(mode="json"),
         },
         parents=[filter_run_id],
         entrees=entrees,

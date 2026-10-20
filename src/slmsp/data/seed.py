@@ -50,7 +50,7 @@ import random
 import re
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Final
 
@@ -73,7 +73,7 @@ from slmsp.core.items import (
 from slmsp.core.schemas.amorce import Amorce, objet_de_reponse, texte_de_reponse
 from slmsp.core.schemas.run import MOTIF_RUN_ID
 from slmsp.core.texte import ngrammes, normaliser
-from slmsp.data.config import ConfigDonnees
+from slmsp.data.config import AlignementDonnees, ConfigDonnees
 from slmsp.data.licences import RegistreLicences
 
 __all__ = [
@@ -81,6 +81,7 @@ __all__ = [
     "FACTEUR_DEFAUT",
     "MOTIFS_EXCLUSION",
     "REGLES",
+    "regles_alignees",
     "SANS_SOURCE_PUBLIQUE",
     "VERSIONS_OBLIGATOIRES",
     "Decodeur",
@@ -180,6 +181,9 @@ class RegleAmorce:
     longueur_min: int
     longueur_max: int
     sous_cle: str | None = None
+    mots_min: int | None = None
+    mots_max: int | None = None
+    """Bornes de longueur en mots (story O5), en plus des bornes en caractères."""
 
 
 REGLES: Final[tuple[RegleAmorce, ...]] = (
@@ -415,8 +419,39 @@ def _valeurs_regle(
     return [
         (k, texte, url)
         for k, texte, url in bruts
-        if texte is not None and regle.longueur_min <= len(texte) <= regle.longueur_max
+        if texte is not None
+        and regle.longueur_min <= len(texte) <= regle.longueur_max
+        and (regle.mots_min is None or len(texte.split()) >= regle.mots_min)
+        and (regle.mots_max is None or len(texte.split()) <= regle.mots_max)
     ]
+
+
+FACTEUR_CARACTERES_PAR_MOT: Final = 15
+"""Majorant de caractères par mot : élargit la borne en caractères d'une règle bornée en mots."""
+
+
+def regles_alignees(
+    regles: Sequence[RegleAmorce], alignement: AlignementDonnees
+) -> tuple[RegleAmorce, ...]:
+    """Règles dont la source LC vise la médiane d'évaluation (`[alignement.longueur_sources_lc]`).
+
+    Aucune troncature : un texte hors bornes est écarté, jamais coupé. Sans configuration, les
+    règles sont rendues telles quelles.
+    """
+    cible = alignement.longueur_sources_lc
+    if cible is None:
+        return tuple(regles)
+    return tuple(
+        replace(
+            r,
+            longueur_max=max(r.longueur_max, cible.mots_max * FACTEUR_CARACTERES_PAR_MOT),
+            mots_min=cible.mots_min,
+            mots_max=cible.mots_max,
+        )
+        if (r.tache, r.emplacement) == ("LC", "texte")
+        else r
+        for r in regles
+    )
 
 
 def _identifiants_ligne(ligne: Mapping[str, Any]) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -570,6 +605,7 @@ def executer_seed(
     base = Path(racine).resolve()
     par_nom = {jeu.nom: jeu for jeu in jeux}
     volumes = config.volumes.par_tache()
+    regles = regles_alignees(regles, config.alignement)
     _verifier_regles(regles, par_nom, volumes)
 
     # Licences, puis présence des fichiers : avant tout run.
@@ -974,6 +1010,7 @@ def verifier_amorces(
     decodeur: Decodeur,
     *,
     regles: Sequence[RegleAmorce] = REGLES,
+    alignement: AlignementDonnees | None = None,
 ) -> list[Amorce]:
     """Relit `runs/data-seed/<run_id>/amorces.jsonl` et le confronte aux jeux sur disque.
 
@@ -983,6 +1020,8 @@ def verifier_amorces(
     exactement un candidat de la règle à la `ligne` du jeu (octets relus, SHA-256 vérifié).
     Lève `ProvenanceInvalide` au moindre écart.
     """
+    if alignement is not None:
+        regles = regles_alignees(regles, alignement)
     base = Path(racine).resolve()
     if not isinstance(run_id, str) or not re.fullmatch(MOTIF_RUN_ID, run_id):
         raise ProvenanceInvalide("identifiant de run seed invalide")

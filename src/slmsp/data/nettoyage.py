@@ -66,6 +66,7 @@ NOM_RAPPORT: Final = "rapport.json"
 TACHE_HORS_PLANCHER: Final = "CR"
 """Seule Tâche qui peut sortir entièrement du jeu (toutes ses cibles dépassent le plafond)."""
 PREFIXE_SOURCE_LC: Final = "Texte :\n"
+PREFIXE_CONSIGNE: Final = "Consigne :\n"
 
 _RE_REFERENCE: Final = re.compile(r"\b[Aa]rticles?\s+\d+(?:-\d+)*|\b[LRD]\.\s?\d+(?:-\d+)*")
 _RE_NOMBRE: Final = re.compile(
@@ -157,7 +158,13 @@ def elements_manquants(source: str, cible: str) -> list[str]:
 def _source_lc(ligne: dict[str, Any]) -> str | None:
     messages = ligne.get("messages") or []
     contenu = messages[1].get("content") if len(messages) > 1 else None
-    return contenu.removeprefix(PREFIXE_SOURCE_LC) if isinstance(contenu, str) else None
+    if not isinstance(contenu, str):
+        return None
+    if contenu.startswith(PREFIXE_CONSIGNE):  # consigne d'Agent (story O5) avant le texte
+        debut = contenu.find("\n\n" + PREFIXE_SOURCE_LC)
+        if debut >= 0:
+            contenu = contenu[debut + 2 :]
+    return contenu.removeprefix(PREFIXE_SOURCE_LC)
 
 
 def lancer_nettoyage(

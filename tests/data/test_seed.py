@@ -105,6 +105,7 @@ def decodeur_json(octets: bytes, colonnes: Sequence[str]) -> Iterable[Mapping[st
 def config_petite(**volumes: int) -> ConfigDonnees:
     """Config réelle, volumes réduits (2 par Tâche) ; `generique` reste dans [10 %, 20 %]."""
     donnees = charger_config_donnees().model_dump()
+    donnees["alignement"]["longueur_sources_lc"] = None  # textes factices courts
     metier = {"Q": 2, "RD": 2, "CR": 2, "LC": 2, "CO": 2, "RE": 2, "CT": 2} | volumes
     metier.pop("generique", None)
     generique = volumes.get("generique", max(2, round(sum(metier.values()) * 0.15 / 0.85)))
@@ -1241,3 +1242,37 @@ def test_courrier_tronque_ecarte_et_compte(monde: Monde) -> None:
     comptes = monde.comptes(resultat.run_id)["courriers"]
     assert (comptes["appels"], comptes["tronques"], comptes["schema_invalide"]) == (2, 1, 0)
     assert comptes["produits"] == 1
+
+
+# --- Filtre en mots des sources LC (story O5), chemin réel -------------------------------
+
+
+def test_filtre_lc_en_mots_actif_au_seed(monde: Monde) -> None:
+    """Filtre actif : seuls les textes LC dans la médiane ± tolérance (en mots) sont tirés,
+    entiers ; la borne en caractères est élargie et `verifier_amorces` suit l'alignement."""
+    longueurs = {0: ("c", 3), 1: ("motlong", 12), 2: ("m", 10), 3: ("l", 30)}
+    lignes = [ligne_sp(i, text=phrase(f"{p}{i}-", n)) for i, (p, n) in longueurs.items()]
+    jeux = [
+        monde.jeu("service-public", "Org/service-public", REV_SP, [lignes[:2], lignes[2:]]),
+        monde.jeu("piaf", "Org/piaf", REV_PIAF, [[ligne_piaf(i) for i in range(3)]]),
+    ]
+    donnees = config_petite().model_dump()
+    donnees["alignement"]["longueur_sources_lc"] = {"mediane_mots": 10, "tolerance": 0.3}
+    config = ConfigDonnees.model_validate(donnees)
+
+    resultat = monde.executer(jeux, config=config)
+
+    lc = [a for a in monde.amorces(resultat.run_id) if a["tache"] == "LC"]
+    attendus = {lignes[1]["text"], lignes[2]["text"]}  # 12 et 10 mots ; 3 et 30 écartés
+    assert {a["texte"] for a in lc} == attendus
+    assert len(lignes[1]["text"]) > 100  # au-delà de la borne de REGLES_TEST, gardé quand même
+    assert verifier_amorces(
+        monde.racine,
+        resultat.run_id,
+        jeux,
+        decodeur_json,
+        regles=REGLES_TEST,
+        alignement=config.alignement,
+    )
+    with pytest.raises(ProvenanceInvalide):  # sans l'alignement, le texte long sort des bornes
+        verifier_amorces(monde.racine, resultat.run_id, jeux, decodeur_json, regles=REGLES_TEST)

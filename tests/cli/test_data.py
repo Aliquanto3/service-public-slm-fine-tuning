@@ -142,6 +142,11 @@ def monde(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     monkeypatch.setattr(
         cli_data, "construire_protection", lambda versions, config, racine: Protection.vide()
     )
+    reelle = cli_data.charger_config_donnees()
+    sans_longueur_lc = reelle.model_copy(
+        update={"alignement": reelle.alignement.model_copy(update={"longueur_sources_lc": None})}
+    )  # amorces factices courtes : pas de filtre en mots (story O5)
+    monkeypatch.setattr(cli_data, "charger_config_donnees", lambda: sans_longueur_lc)
     return SimpleNamespace(racine=tmp_path, config=config, fichiers=fichiers)
 
 

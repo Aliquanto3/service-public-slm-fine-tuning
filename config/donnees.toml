@@ -108,3 +108,56 @@ LC = 150
 CT = 250
 # Idem (generique, sans référence mesurable).
 generique = 200
+
+# Alignement entraînement / évaluation (story O5). À l'évaluation, chaque item des Tâches CR, LC,
+# CT, RE et CO porte une consigne d'Agent rendue par `harness.prompts` (« Consigne : … ») ; à
+# l'entraînement ce message n'avait que le texte. Les formulations ci-dessous sont des consignes
+# génériques d'outillage (ni réponses ni exemples, D1) ; l'une d'elles est tirée par graine pour
+# chaque session. Une Tâche absente n'a pas de consigne.
+[alignement]
+# Graine du tirage de la consigne : une même session reçoit toujours la même.
+graine = 42
+
+[alignement.consignes_agent]
+# Formulations d'outillage neutres, sans exemple de réponse (D1). Aucune ne doit ressembler à une
+# consigne du Jeu d'évaluation (difflib < 0,6, ni préfixe) : `tests/data/test_alignement_o5.py`.
+# Langage clair.
+LC = [
+  "Tâche : mise en langage clair du texte fourni, destinée au grand public.",
+  "Objectif : version accessible à tout public du texte suivant, contenu inchangé.",
+  "Objectif : lisibilité maximale pour tout public, aucune information perdue.",
+  "Adapter le texte suivant pour un lecteur non spécialiste.",
+]
+# Compte rendu.
+CR = [
+  "Tâche : compte rendu des notes fournies.",
+  "Objectif : produire le compte rendu à partir des notes suivantes.",
+  "Synthétiser les notes suivantes sous forme de compte rendu.",
+]
+# Courrier type.
+CT = [
+  "Tâche : courrier type à partir des éléments fournis.",
+  "Objectif : produire le courrier correspondant aux éléments indiqués.",
+  "Établir le courrier demandé à partir des champs suivants.",
+]
+# Résumé.
+RE = [
+  "Tâche : résumé du document fourni.",
+  "Objectif : synthèse fidèle du document suivant.",
+  "Condenser le document suivant en conservant l'essentiel.",
+]
+# Correction.
+CO = [
+  "Tâche : élimination des fautes d’accord et de frappe, contenu intact.",
+  "Objectif : texte suivant corrigé, sans autre modification.",
+  "Supprimer les fautes du texte suivant, sans le réécrire.",
+]
+
+# Longueur des textes sources LC : médiane de l'entrée LC du Jeu d'évaluation (278 mots,
+# statistique de `outils/comparer_entrainement_evaluation.py`), contre 108 mots à l'entraînement
+# en v14. Le seed ne garde que les textes entiers dans médiane ± tolerance (aucune troncature).
+[alignement.longueur_sources_lc]
+# Médiane (mots) de l'entrée LC du Jeu d'évaluation.
+mediane_mots = 278
+# Écart relatif admis autour de la médiane (0,3 = ± 30 %).
+tolerance = 0.3

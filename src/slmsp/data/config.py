@@ -14,7 +14,11 @@
   température, longueur maximale ; optionnelle, valeurs par défaut ci-dessous) ;
 - `[generateur.plafonds_mots]` : plafond de mots de la réponse cible par Tâche, consigne de
   longueur des gabarits (story 9.10 ; optionnelle, vide par défaut). Le Générateur relit
-  la même table (`slmsp.mistral.generateur.charger_plafonds_mots`).
+  la même table (`slmsp.mistral.generateur.charger_plafonds_mots`) ;
+- `[alignement]` : alignement entraînement / évaluation (story O5) : formulations génériques
+  de consigne d'Agent rendues dans le message user (`consignes_agent`, par Tâche, tirées par
+  graine) et longueur visée des textes sources LC (`longueur_sources_lc`). Optionnelle, vide
+  par défaut (rien n'est aligné).
 
 Le fichier est lu par `slmsp.core.config.charger_toml` (clés inconnues refusées) : toute
 non-conformité lève `ConfigurationInvalide`, sans citer la valeur saisie.
@@ -22,6 +26,7 @@ non-conformité lève `ConfigurationInvalide`, sans citer la valeur saisie.
 
 from __future__ import annotations
 
+import math
 import re
 from datetime import date
 from pathlib import Path
@@ -34,10 +39,13 @@ from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
 
 __all__ = [
+    "TACHES_A_CONSIGNE",
     "TACHES_PLAFONNABLES",
     "PART_GENERIQUE_MAX",
     "PART_GENERIQUE_MIN",
+    "AlignementDonnees",
     "ConfigDonnees",
+    "LongueurSourcesLC",
     "charger_config_donnees",
 ]
 
@@ -47,6 +55,9 @@ PART_GENERIQUE_MAX: Final = 0.20
 TACHES_PLAFONNABLES: Final = ("Q", "RD", "CR", "LC", "CT", "generique")
 """Tâches admises dans `[generateur.plafonds_mots]` : CO suit la longueur de son texte, RE a
 son propre plafond (`longueur_demandee`)."""
+
+TACHES_A_CONSIGNE: Final = ("CR", "LC", "CT", "RE", "CO")
+"""Tâches dont le prompt déclare l'emplacement `consigne` et dont l'évaluation en porte une."""
 
 _RE_SHA256 = re.compile(r"[0-9a-f]{64}")
 
@@ -197,6 +208,43 @@ class GenerateurDonnees(ModeleConfig):
         return valeurs
 
 
+class LongueurSourcesLC(ModeleConfig):
+    """Longueur visée des textes sources LC : médiane d'évaluation ± `tolerance`."""
+
+    mediane_mots: Annotated[StrictInt, Field(ge=1)]
+    """Médiane (mots) de l'entrée LC du Jeu d'évaluation (statistique, jamais un texte)."""
+    tolerance: Annotated[float, Field(gt=0, lt=1, allow_inf_nan=False)] = 0.3
+    """Écart relatif admis autour de la médiane (0,3 = ± 30 %)."""
+
+    @property
+    def mots_min(self) -> int:
+        return max(1, math.ceil(self.mediane_mots * (1 - self.tolerance)))
+
+    @property
+    def mots_max(self) -> int:
+        return math.floor(self.mediane_mots * (1 + self.tolerance))
+
+
+class AlignementDonnees(ModeleConfig):
+    """Table `[alignement]` : mêmes consignes d'Agent et mêmes longueurs qu'à l'évaluation."""
+
+    graine: Annotated[StrictInt, Field(ge=0)] = 42
+    """Graine du tirage de la consigne : une même session reçoit toujours la même."""
+    consignes_agent: dict[str, list[Texte]] = Field(default_factory=dict)
+    """Formulations génériques d'outillage (des consignes, jamais des réponses), par Tâche de
+    `TACHES_A_CONSIGNE` ; une Tâche absente n'a pas de consigne à l'entraînement."""
+    longueur_sources_lc: LongueurSourcesLC | None = None
+
+    @field_validator("consignes_agent")
+    @classmethod
+    def _consignes_valides(cls, valeurs: dict[str, list[str]]) -> dict[str, list[str]]:
+        if any(tache not in TACHES_A_CONSIGNE for tache in valeurs):
+            raise ValueError(f"tâche inconnue (attendu parmi : {', '.join(TACHES_A_CONSIGNE)})")
+        if any(not variantes for variantes in valeurs.values()):
+            raise ValueError("au moins une formulation par Tâche")
+        return valeurs
+
+
 class ConfigDonnees(ModeleConfig):
     """Contenu de `config/donnees.toml`."""
 
@@ -209,6 +257,7 @@ class ConfigDonnees(ModeleConfig):
     preferences: PreferencesDonnees = Field(default_factory=PreferencesDonnees)
     seed: SeedDonnees = Field(default_factory=SeedDonnees)
     generateur: GenerateurDonnees = Field(default_factory=GenerateurDonnees)
+    alignement: AlignementDonnees = Field(default_factory=AlignementDonnees)
 
     @property
     def total(self) -> int:
