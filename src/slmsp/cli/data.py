@@ -36,10 +36,19 @@ relus du run.
 sur le Bac à sable et vérifie URL et valeurs de chaque exemple contre ses sources
 (`slmsp.data.validate`) ; `--controle-mistral` ajoute un contrôle de fidélité des Tâches CR, LC
 et RE par Mistral (`usage = validation`, appels payants, jamais le Juge Claude).
-`juger (--depuis GENERATE_RUN_ID | --reprendre RUN_ID) [--taches CR,LC,CT] [--limite N]
-[--plafond-estime EUR]` note les cibles candidates par le juge de données DeepSeek via OpenRouter
+`juger (--depuis GENERATE_RUN_ID | --candidats CANDIDATS_RUN_ID | --reprendre RUN_ID)
+[--juge {deepseek,kimi}] [--taches CR,LC,CT] [--limite N] [--plafond-estime EUR]` note les cibles
+candidates par le juge de données DeepSeek (ou le juge croisé Kimi) via OpenRouter
 (`slmsp.data.juge_donnees`, story O1, appels payants, usage `juge-donnees-openrouter`) et écrit
-`runs/data-juger/<run_id>/` ; jamais le Juge Claude, rien n'est lu sous `eval/`.
+`runs/data-juger/<run_id>/` ; jamais le Juge Claude, rien n'est lu sous `eval/`. `--candidats`
+juge les candidats d'un run `data candidats` (verdicts par `candidat_id`, story 15.2) ; le juge
+croisé `--juge kimi` n'y note par défaut que les candidats DeepSeek (`--toutes-sources` : tous).
+`candidats --build BUILD_RUN_ID --base SLUG --temperatures T1,T2 [--taches CR,LC]
+[--deepseek-taches LC] [--variante {cpu,cuda}] [--plafond-estime EUR] [--reprendre RUN_ID]`
+produit `runs/data-candidats/<run_id>/candidats.jsonl` (`slmsp.data.candidats`, story 15.2) : la
+cible Mistral de chaque ligne, une sortie du Modèle de base par température (conversation
+d'entraînement exacte, journal `generations-locales.sqlite`) et, pour les Tâches de
+`--deepseek-taches`, une sortie DeepSeek (OpenRouter, budget `generateur-openrouter`).
 `filter --depuis VALIDATE_RUN_ID [--racine DIR]` retire doublons et fuites du Jeu d'évaluation
 (v1.0, v1.1, calibrage) par n-grammes hachés et cosinus BGE-M3 (`slmsp.data.filter`). Chacune
 imprime exemples et taux de rejet par motif et par Tâche (FR-30).
@@ -68,6 +77,7 @@ l'exécution de `seed`.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import io
 import sys
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -163,6 +173,33 @@ def _taches_jugees(valeur: str) -> list[str]:
             f"Tâches attendues parmi {', '.join(TACHES_JUGEES)} : {valeur!r}"
         )
     return taches
+
+
+def _taches_candidates(valeur: str) -> list[str]:
+    from slmsp.data.candidats import TACHES_CANDIDATES
+
+    taches = [t.strip() for t in valeur.split(",") if t.strip()]
+    if "RE" in taches:
+        raise argparse.ArgumentTypeError(
+            "RE : aucune grille de jugement de données, donc aucun candidat RE (décision du 20/10)"
+        )
+    if not taches or any(t not in TACHES_CANDIDATES for t in taches):
+        raise argparse.ArgumentTypeError(
+            f"Tâches attendues parmi {', '.join(TACHES_CANDIDATES)} : {valeur!r}"
+        )
+    return taches
+
+
+def _temperatures(valeur: str) -> list[float]:
+    try:
+        nombres = [float(t) for t in valeur.split(",") if t.strip()]
+    except ValueError:
+        nombres = []
+    if not nombres or any(not 0 <= t <= 2 for t in nombres) or len(set(nombres)) != len(nombres):
+        raise argparse.ArgumentTypeError(
+            f"températures distinctes dans [0, 2] attendues (ex. 0.3,0.7) : {valeur!r}"
+        )
+    return nombres
 
 
 def _euros(valeur: str) -> float:
@@ -370,6 +407,21 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     origine_j = j.add_mutually_exclusive_group(required=True)
     origine_j.add_argument("--depuis", metavar="GENERATE_RUN_ID", help="run data-generate")
     origine_j.add_argument("--reprendre", metavar="RUN_ID", help="run data-juger à reprendre")
+    origine_j.add_argument(
+        "--candidats", metavar="CANDIDATS_RUN_ID", help="run data-candidats (story 15.2)"
+    )
+    j.add_argument(
+        "--juge",
+        choices=["deepseek", "kimi"],
+        default=None,
+        help="juge OpenRouter (défaut : deepseek, ou celui du run repris) ; kimi = juge croisé, "
+        "qui ne note par défaut que les candidats DeepSeek d'un run --candidats",
+    )
+    j.add_argument(
+        "--toutes-sources",
+        action="store_true",
+        help="avec --candidats --juge kimi : noter aussi les candidats Mistral et locaux",
+    )
     j.add_argument(
         "--taches",
         type=_taches_jugees,
@@ -393,6 +445,54 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     j.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
     j.set_defaults(func=_juger)
+
+    c = actions.add_parser(
+        "candidats",
+        help="candidats multiples de cibles : Mistral, base locale échantillonnée, DeepSeek",
+        description="Candidats de sélection (story 15.2) : candidats.jsonl, textes en journal.",
+    )
+    c.add_argument(
+        "--build", metavar="BUILD_RUN_ID", help="run data-build (requis sans --reprendre)"
+    )
+    c.add_argument(
+        "--taches",
+        type=_taches_candidates,
+        default=None,
+        metavar="CR,LC",
+        help="Tâches des candidats (défaut : CR, LC ; RE n'a pas de grille de jugement)",
+    )
+    c.add_argument(
+        "--base", metavar="SLUG", help="Modèle de base local (slug, requis sans --reprendre)"
+    )
+    c.add_argument(
+        "--temperatures",
+        type=_temperatures,
+        metavar="0.3,0.7",
+        help="une sortie de la base par température",
+    )
+    c.add_argument(
+        "--deepseek-taches",
+        type=_taches_candidates,
+        default=None,
+        metavar="LC",
+        help="Tâches qui reçoivent aussi un candidat DeepSeek (OpenRouter, payant)",
+    )
+    c.add_argument("--variante", choices=["cpu", "cuda"], default="cuda", help="variante llama.cpp")
+    c.add_argument(
+        "--plafond-estime",
+        type=_euros,
+        default=None,
+        metavar="EUR",
+        help="refus avant tout appel si le coût OpenRouter pire cas estimé dépasse ce montant",
+    )
+    c.add_argument(
+        "--reprendre",
+        metavar="RUN_ID",
+        help="run data-candidats à compléter (réglages relus du run ; un argument divergent "
+        "est refusé)",
+    )
+    c.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
+    c.set_defaults(func=_candidats)
 
     b = actions.add_parser(
         "build",
@@ -995,6 +1095,7 @@ def _validate(args: argparse.Namespace) -> int:
 def _juger(args: argparse.Namespace) -> int:
     from slmsp.budget.registre import RegistreBudget
     from slmsp.core.var import dossier_var
+    from slmsp.data.candidats import SOURCES_JUGE_CROISE, candidats_depuis_run, config_candidats
     from slmsp.data.juge_donnees import (
         TACHES_JUGEES,
         JugeDonnees,
@@ -1010,18 +1111,49 @@ def _juger(args: argparse.Namespace) -> int:
     from slmsp.fournisseurs.journal import NOM_JOURNAL_JUGE_DONNEES, JournalAppels
 
     racine = _racine(args)
-    depuis, taches, limite = args.depuis, args.taches, args.limite
+    depuis, taches, limite, nom_juge = args.depuis, args.taches, args.limite, args.juge
+    candidats_id = args.candidats
+    sources_run: Any = ...
     if args.reprendre is not None:
         config_run = config_du_run(args.reprendre, racine)
         depuis = config_run["depuis"]
         taches = taches or config_run.get("taches")
         limite = limite if limite is not None else config_run.get("limite")
+        nom_juge = nom_juge or config_run.get("juge_nom")
+        if config_run.get("origine") == "candidats":
+            candidats_id = depuis
+            sources_run = config_run.get("sources")
     taches = list(taches or TACHES_JUGEES)
+    nom_juge = nom_juge or "deepseek"
     config = charger_config_donnees().juge_donnees
-    lecteur = LecteurGeneration(ouvrir_generation(depuis, racine), _journal_lecture(), racine)
-    candidats, ecartees = candidats_depuis_generation(lecteur, taches)
-    if ecartees:
-        print(f"{ecartees} session(s) écartée(s) : source ou réponse introuvable")
+    try:
+        config = config.pour_juge(nom_juge)
+    except ValueError as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    sources: list[str] | None = None
+    if candidats_id is not None:
+        if sources_run is not ...:
+            sources = sources_run
+        elif nom_juge != "deepseek" and not args.toutes_sources:
+            sources = list(SOURCES_JUGE_CROISE)
+        if sources is not None:
+            print(f"juge {nom_juge} : candidats des sources {', '.join(sources)} seulement")
+        generation = config_candidats(candidats_id, racine)["generate_run_id"]
+        lecteur = LecteurGeneration(
+            ouvrir_generation(generation, racine), _journal_lecture(), racine
+        )
+        candidats, ecartes = candidats_depuis_run(
+            candidats_id, lecteur, taches, racine=racine, sources=sources
+        )
+        depuis = candidats_id
+        if ecartes:
+            print(f"candidats écartés : {ecartes}")
+    else:
+        lecteur = LecteurGeneration(ouvrir_generation(depuis, racine), _journal_lecture(), racine)
+        candidats, ecartees = candidats_depuis_generation(lecteur, taches)
+        if ecartees:
+            print(f"{ecartees} session(s) écartée(s) : source ou réponse introuvable")
     fournisseur = config_openrouter(config)
     client = ClientCompatibleOpenAI(
         fournisseur,
@@ -1040,6 +1172,11 @@ def _juger(args: argparse.Namespace) -> int:
         limite=limite,
         plafond_estime_eur=args.plafond_estime,
         reprendre_run_id=args.reprendre,
+        config_run={
+            "juge_nom": nom_juge,
+            "origine": "candidats" if candidats_id is not None else "generation",
+            "sources": sources,
+        },
         consigner=_consigner,
     )
     rapport = resultat.rapport
@@ -1051,6 +1188,95 @@ def _juger(args: argparse.Namespace) -> int:
             f"{ligne['extraits_invalides']} extrait(s) invalide(s) ; {criteres}"
         )
     print(f"coût {rapport['cout_invocation_eur']:.4f} € (invocation)")
+    print(f"run {resultat.run.run_id} ({resultat.statut}) : {resultat.run.dossier}")
+    if resultat.statut == "partiel-budget":
+        return int(CodeSortie.BUDGET_EPUISE)
+    return int(CodeSortie.SUCCES if resultat.statut == "complet" else CodeSortie.ERREUR)
+
+
+def _candidats(args: argparse.Namespace) -> int:
+    from slmsp.budget.registre import RegistreBudget
+    from slmsp.core.artefacts import NOM_JOURNAL_GENERATEUR_OPENROUTER
+    from slmsp.core.var import dossier_var
+    from slmsp.data.candidats import TACHES_CANDIDATES, config_candidats, lancer_candidats
+    from slmsp.data.juge_donnees import PlafondEstimeDepasse
+    from slmsp.evaluation.config import charger_evaluation
+    from slmsp.fournisseurs.client import (
+        OPENROUTER,
+        ClientCompatibleOpenAI,
+        fabriquer_http,
+        lire_cle,
+    )
+    from slmsp.fournisseurs.journal import JournalAppels
+    from slmsp.inference.serveur import ServeurLlama, charger_config_modele
+
+    racine = _racine(args)
+    config = charger_config_donnees().candidats
+    build, base, temperatures = args.build, args.base, args.temperatures
+    taches, deepseek = args.taches, args.deepseek_taches
+    if args.reprendre is not None:
+        # Réglages relus du run ; un argument explicite divergent est refusé par lancer_candidats.
+        precedent = config_candidats(args.reprendre, racine)
+        build = build or precedent.get("build_run_id")
+        base = base or str(precedent.get("base") or "").removeprefix("slm:") or None
+        temperatures = temperatures or precedent.get("temperatures")
+        taches = taches or precedent.get("taches")
+        deepseek = deepseek if deepseek is not None else precedent.get("deepseek_taches")
+    if not build or not base or not temperatures:
+        print(
+            "slmsp : --build, --base et --temperatures sont requis sans --reprendre",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
+    taches = list(taches or TACHES_CANDIDATES)
+    deepseek = list(deepseek or [])
+    if any(t not in taches for t in deepseek):
+        print("slmsp : --deepseek-taches doit figurer dans --taches", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    client = None
+    if deepseek:
+        fournisseur = dataclasses.replace(
+            OPENROUTER,
+            delai_lecture=config.delai_lecture,
+            delai_appel=config.delai_appel,
+            duree_totale_max_appel=config.duree_totale_max_appel,
+        )
+        client = ClientCompatibleOpenAI(
+            fournisseur,
+            RegistreBudget(),
+            fabriquer_http(fournisseur),
+            lire_cle(fournisseur),
+            journal=JournalAppels(dossier_var() / NOM_JOURNAL_GENERATEUR_OPENROUTER),
+        )
+    try:
+        with ServeurLlama(
+            charger_config_modele(base),
+            args.variante,
+            slug=base,
+        ) as serveur:
+            resultat = lancer_candidats(
+                racine=racine,
+                build_run_id=build,
+                taches=taches,
+                slug=base,
+                temperatures=temperatures,
+                llm=serveur.client(),
+                config=config,
+                plafond_tokens=charger_evaluation().generation.max_tokens,
+                deepseek_taches=deepseek,
+                client=client,
+                plafond_estime_eur=args.plafond_estime,
+                reprendre_run_id=args.reprendre,
+                consigner=_consigner,
+            )
+    except PlafondEstimeDepasse as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.ERREUR)
+    rapport = resultat.rapport
+    for cle, nombre in rapport["candidats"].items():
+        print(f"{cle} : {nombre} candidat(s)")
+    motifs = ", ".join(f"{m} {n}" for m, n in rapport["ecartes_par_motif"].items())
+    print(f"écartés : {motifs or 'aucun'} ; coût OpenRouter {rapport['cout_openrouter_eur']:.4f} €")
     print(f"run {resultat.run.run_id} ({resultat.statut}) : {resultat.run.dossier}")
     if resultat.statut == "partiel-budget":
         return int(CodeSortie.BUDGET_EPUISE)

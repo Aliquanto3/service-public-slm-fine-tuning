@@ -97,3 +97,13 @@ note = "à vérifier par Anaël sur la page de prix de Mistral avant la généra
 [modeles."mistral-large-4".modes.direct]
 entree = 1.36
 sortie = 4.18
+
+# Juge croisé Kimi K2.6 (story 15.2).
+[modeles."moonshotai/kimi-k2.6"]
+devise = "USD"
+date = 2026-10-20
+source = "API des modèles d'OpenRouter (relevé de l'orchestrateur, 20/10)"
+
+[modeles."moonshotai/kimi-k2.6".modes.direct]
+entree = 0.65
+sortie = 3.41

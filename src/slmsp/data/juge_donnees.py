@@ -905,12 +905,15 @@ def lancer_jugement(
     limite: int | None = None,
     plafond_estime_eur: float | None = None,
     reprendre_run_id: str | None = None,
+    config_run: Mapping[str, Any] | None = None,
     consigner: Callable[[str], None] = print,
 ) -> ResultatJugementDonnees:
     """Juge `candidats` dans un run `data-juger` nouveau ou repris (voir le module).
 
     Lève `PlafondEstimeDepasse` avant tout run et tout appel si le coût pire cas estimé
-    dépasse `plafond_estime_eur`.
+    dépasse `plafond_estime_eur`. `config_run` s'ajoute à la config du run (origine, juge).
+    Chaque verdict porte `juge` (identifiant du modèle) : la sélection joint par
+    `(session_id, candidat_id)` et peut ainsi distinguer deux juges.
     """
     base = Path(racine).resolve()
     retenus = limiter([c for c in candidats if c.tache in taches], limite)
@@ -960,6 +963,7 @@ def lancer_jugement(
                 "taches": list(taches),
                 "limite": limite,
                 "juge": juge.description(),
+                **(config_run or {}),
             },
             parents=[depuis_run_id],
             racine=base,
@@ -1001,6 +1005,7 @@ def lancer_jugement(
                 {
                     "session_id": candidat.session_id,
                     "candidat_id": candidat.candidat_id,
+                    "juge": juge.config.modele,
                     **verdict.ligne(),
                     "seuils": juge.config.seuils[candidat.tache],
                 },

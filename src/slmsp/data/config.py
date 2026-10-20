@@ -53,6 +53,8 @@ __all__ = [
     "PART_GENERIQUE_MIN",
     "AlignementDonnees",
     "ConfigDonnees",
+    "CandidatsDonnees",
+    "JugeAlternatif",
     "JugeDonneesConfig",
     "LongueurSourcesLC",
     "VerificationConfig",
@@ -234,6 +236,46 @@ def _seuils_defaut() -> dict[str, dict[str, float]]:
     }
 
 
+class JugeAlternatif(ModeleConfig):
+    """Table `[juge_donnees.juges.<nom>]` : réglages d'un autre juge OpenRouter (story 15.2).
+
+    Chaque champ présent remplace celui de `[juge_donnees]` ; les seuils et la grille restent
+    ceux du juge de données.
+    """
+
+    modele: Texte
+    temperature: Annotated[float, Field(ge=0, le=0, allow_inf_nan=False)] | None = 0.0
+    max_tokens: Annotated[StrictInt, Field(ge=1)] = 16000
+    effort_raisonnement: Literal["minimal", "low", "medium", "high"] | None = None
+    sortie_estimee: Annotated[StrictInt, Field(ge=1)] = 1500
+    marge_raisonnement: Annotated[StrictInt, Field(ge=0)] = 0
+
+
+class CandidatsDonnees(ModeleConfig):
+    """Table `[candidats]` : candidats multiples de la sélection des cibles (story 15.2)."""
+
+    graine: Annotated[StrictInt, Field(ge=0)] = 42
+    """Graine de base ; la ligne de rang `i` utilise `graine + i` (comme `[preferences]`)."""
+    max_tokens: Annotated[StrictInt, Field(ge=1)] = 1024
+    """Longueur maximale d'un candidat de la base locale."""
+    modele_openrouter: Texte = "deepseek/deepseek-v4-pro"
+    temperature_openrouter: Annotated[float, Field(ge=0, le=2, allow_inf_nan=False)] = 0.3
+    max_tokens_openrouter: Annotated[StrictInt, Field(ge=1)] = 8000
+    """Sortie maximale, raisonnement compris ; réservée au registre à chaque appel (pire cas)."""
+    effort_raisonnement: Literal["minimal", "low", "medium", "high"] | None = "low"
+    usage_budget: Texte = "generateur-openrouter"
+    appels_paralleles: Annotated[StrictInt, Field(ge=1, le=32)] = 4
+    delai_lecture: float = Field(default=900.0, gt=0, allow_inf_nan=False)
+    delai_appel: float = Field(default=900.0, gt=0, allow_inf_nan=False)
+    duree_totale_max_appel: float = Field(default=1800.0, gt=0, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def _delais_coherents(self) -> CandidatsDonnees:
+        if self.duree_totale_max_appel < self.delai_appel:
+            raise ValueError("duree_totale_max_appel inférieure à delai_appel")
+        return self
+
+
 class JugeDonneesConfig(ModeleConfig):
     """Table `[juge_donnees]` : juge de données DeepSeek via OpenRouter (story O1).
 
@@ -260,6 +302,18 @@ class JugeDonneesConfig(ModeleConfig):
     seuils: dict[str, dict[str, Annotated[float, Field(ge=0, allow_inf_nan=False)]]] = Field(
         default_factory=_seuils_defaut
     )
+    juges: dict[str, JugeAlternatif] = Field(default_factory=dict)
+    """Autres juges, choisis par `data juger --juge <nom>` (`deepseek` : cette table)."""
+
+    def pour_juge(self, nom: str) -> JugeDonneesConfig:
+        """Configuration du juge `nom` (`deepseek` : celle-ci) ; `ValueError` si inconnu."""
+        if nom == "deepseek":
+            return self
+        alternatif = self.juges.get(nom)
+        if alternatif is None:
+            connus = ", ".join(["deepseek", *sorted(self.juges)])
+            raise ValueError(f"juge inconnu : {nom!r} (attendu parmi : {connus})")
+        return self.model_copy(update=alternatif.model_dump())
 
     @field_validator("seuils")
     @classmethod
@@ -570,6 +624,7 @@ class ConfigDonnees(ModeleConfig):
     anti_fuite: AntiFuiteDonnees
     relecture: RelectureDonnees
     preferences: PreferencesDonnees = Field(default_factory=PreferencesDonnees)
+    candidats: CandidatsDonnees = Field(default_factory=CandidatsDonnees)
     seed: SeedDonnees = Field(default_factory=SeedDonnees)
     generateur: GenerateurDonnees = Field(default_factory=GenerateurDonnees)
     juge_donnees: JugeDonneesConfig = Field(default_factory=JugeDonneesConfig)

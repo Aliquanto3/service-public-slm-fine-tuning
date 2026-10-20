@@ -88,6 +88,31 @@ temperature = 0.8
 # Longueur maximale de la réponse rejetée, en tokens.
 max_tokens = 1024
 
+# Candidats multiples de la sélection des cibles (story 15.2, `slmsp data candidats`).
+[candidats]
+# Graine de base de la base locale ; la ligne de rang i utilise graine + i.
+graine = 42
+# Longueur maximale d'un candidat de la base locale, en tokens (une sortie tronquée est exclue).
+max_tokens = 1024
+# Second générateur autorisé (DeepSeek, LC seulement, décision d'Anaël du 20/10, licence MIT).
+modele_openrouter = "deepseek/deepseek-v4-pro"
+# Température du candidat DeepSeek.
+temperature_openrouter = 0.3
+# Sortie maximale, raisonnement compris ; réservée au registre à chaque appel (pire cas).
+max_tokens_openrouter = 8000
+# Effort de raisonnement envoyé en `reasoning.effort`.
+effort_raisonnement = "low"
+# Usage de budget (imputé au poste openrouter, config/budgets.toml).
+usage_budget = "generateur-openrouter"
+# Appels OpenRouter menés en parallèle.
+appels_paralleles = 4
+# Délai de lecture HTTP (s) : DeepSeek raisonne plusieurs minutes par appel.
+delai_lecture = 900.0
+# Délai total d'une tentative (s).
+delai_appel = 900.0
+# Durée maximale d'un appel, réessais compris (s).
+duree_totale_max_appel = 1800.0
+
 # Générateur (story 9.10) : plafond de mots de la réponse cible, par Tâche, envoyé à Mistral
 # comme consigne de longueur (emplacement plafond_mots_tache des gabarits). Une consigne de
 # forme seulement : elle n'entre jamais dans les exemples d'entraînement (D1.1).
@@ -141,6 +166,21 @@ delai_appel = 900.0
 duree_totale_max_appel = 1800.0
 # Jugements menés en parallèle (data juger, data generate --verifiee), verdicts écrits dans l'ordre.
 appels_paralleles = 8
+
+# Juge croisé Kimi (story 15.2, `data juger --juge kimi`) : troisième famille, décision d'Anaël
+# du 20/10. Modèle `moonshotai/kimi-k2.6` (sorties structurées annoncées par OpenRouter),
+# décision de l'orchestrateur du 20/10. Sans raisonnement imposé.
+[juge_donnees.juges.kimi]
+# Identifiant OpenRouter du modèle (tarifé dans tarifs.toml).
+modele = "moonshotai/kimi-k2.6"
+# Température : 0 pour un verdict reproductible.
+temperature = 0.0
+# Tokens de sortie maximum ; réservés au registre à chaque appel (pire cas).
+max_tokens = 8000
+# Tokens de verdict comptés dans l'estimation.
+sortie_estimee = 1500
+# Pas de raisonnement imposé : aucune marge ajoutée à l'estimation.
+marge_raisonnement = 0
 
 # Seuils d'acceptation (note >= seuil pour chaque critère), alignés sur les scores du test.
 # Fusion par critère avec les défauts du code : un critère omis garde son seuil par défaut ;

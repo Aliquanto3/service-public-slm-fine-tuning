@@ -141,6 +141,19 @@ class JournalAppels:
             )
         return appel_id
 
+    def reussis(self, usage: str, modele_demande: str) -> dict[str, dict[str, Any]]:
+        """Dernier appel `ok` de `usage` et `modele_demande` par SHA-256 de requête : `appel_id`,
+        `session_id`, `reponse_brute`, `sha256_reponse` (reprise sans second paiement)."""
+        with closing(ouvrir_sqlite(self.chemin)) as connexion:
+            connexion.row_factory = sqlite3.Row
+            lignes = connexion.execute(
+                "SELECT appel_id, session_id, sha256_requete, reponse_brute, sha256_reponse "
+                "FROM appels WHERE statut = 'ok' AND usage = ? AND modele_demande = ? "
+                "ORDER BY rowid",
+                (usage, modele_demande),
+            ).fetchall()
+        return {str(ligne["sha256_requete"]): dict(ligne) for ligne in lignes}
+
     def appels(self) -> list[dict[str, Any]]:
         """Toutes les lignes, dans l'ordre d'inscription."""
         with closing(ouvrir_sqlite(self.chemin)) as connexion:

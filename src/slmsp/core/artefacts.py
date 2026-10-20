@@ -61,7 +61,10 @@ NOM_ETAT: Final = "etat.jsonl"
 NOM_JOURNAL_MISTRAL: Final = "appels-mistral.sqlite"
 NOM_CACHE_VERDICTS: Final = "verdicts.sqlite"
 NOM_JOURNAL_LOCAL: Final = "generations-locales.sqlite"
-"""Journal des générations du Modèle de base local (story 9.7), lisible par `train`."""
+"""Journal des générations du Modèle de base local (story 9.7), lisible par `train` et, en
+lecture seule, par `data` (candidats de sélection, story 15.2)."""
+NOM_JOURNAL_GENERATEUR_OPENROUTER: Final = "appels-generateur-openrouter.sqlite"
+"""Journal des candidats générés par OpenRouter (story 15.2), lisible par `data`."""
 """Cache des verdicts du Juge (`slmsp.judge.cache.NOM_CACHE`), refusé à `data` et `train`."""
 ESSAIS_RUN_ID: Final = 20
 DELAI_GIT: Final = 10.0
@@ -540,6 +543,8 @@ def chemin_autorise(chemin: str | Path, lecteur: str, *, racine: str | Path | No
             or _egal(resolu, base("config/outils-mcp.toml"))
             or _egal(resolu, base("data/registre-licences.toml"))
             or _egal(resolu, journal)
+            or _egal(resolu, (var / NOM_JOURNAL_LOCAL).resolve())
+            or _egal(resolu, (var / NOM_JOURNAL_GENERATEUR_OPENROUTER).resolve())
         )
     else:
         autorise = (

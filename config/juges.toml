@@ -88,6 +88,17 @@ format_reponse = "json_schema"
 sortie_estimee = 1500
 marge_raisonnement = 2000
 
+# Kimi K2.6 (story 15.2) : troisième famille, juge croisé des candidats de sélection (sorties
+# structurées annoncées par OpenRouter). Pas d'effort de raisonnement imposé.
+[juges_tiers.kimi]
+fournisseur = "openrouter"
+modele = "moonshotai/kimi-k2.6"
+temperature = 0.0
+max_tokens = 8000
+format_reponse = "json_schema"
+sortie_estimee = 1500
+marge_raisonnement = 0
+
 # Juge par jeu (spec O4) : le jeu de développement `dev1` n'est jamais noté par le juge de
 # test (Claude) ni par le juge de sélection des données (DeepSeek, O1) ; GLM-5.3 retenu par
 # décision d'Anaël du 2026-10-20 (réversible : changer `juge_principal`). Le second juge Mistral
