@@ -384,9 +384,16 @@ def _phase_notation(args: argparse.Namespace, racine: Path | None) -> int:
 
 def executer_run(args: argparse.Namespace) -> int:
     """`slmsp eval run` : génération (lancement ou reprise), notation, ou les deux."""
-    from slmsp.evaluation import notation
+    from slmsp.evaluation import modele_ref, notation
 
     racine = Path(args.racine) if args.racine is not None else None
+    try:
+        if args.modele is not None:
+            args.modele = modele_ref.composer_lora(args.modele, args.echelle_lora)
+        elif args.echelle_lora is not None:
+            return _usage_run("--echelle-lora exige --modele lora:<EXPORT_LORA_RUN_ID>")
+    except ValueError as exc:
+        return _usage_run(str(exc))
     if args.phase == "notation":
         return _phase_notation(args, racine)
     if args.depuis is not None:
@@ -674,7 +681,17 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
             "(contrôles automatiques, juges, Scores de Tâche)."
         ),
     )
-    run.add_argument("--modele", help="modèle évalué : base:<slug> ou ft:<export_run_id>")
+    run.add_argument(
+        "--modele",
+        help="modèle évalué : base:<slug>, ft:<export_run_id> ou lora:<export_lora_run_id>",
+    )
+    run.add_argument(
+        "--echelle-lora",
+        type=_reel_positif,
+        metavar="ECHELLE",
+        help="avec lora:<id> : échelle de --lora-scaled sur la base q4_k_m (défaut 1.0) ; "
+        "consignée dans la référence du run (lora:<id>@<échelle>) et dans son manifeste",
+    )
     run.add_argument("--quantification", choices=("f16", "q4_k_m"), help="quantification")
     run.add_argument("--jeu", help="version du jeu (vN, vN.M, devN ou calibrage)")
     run.add_argument("--variante", choices=("cpu", "cuda"), help="variante llama.cpp (cpu)")

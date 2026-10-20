@@ -42,6 +42,7 @@ from slmsp.harness.taches import TableTaches, charger_taches
 from slmsp.index.lecture import ouvrir_index
 from slmsp.inference.processus import ErreurInference
 from slmsp.inference.serveur import (
+    Lora,
     ServeurLlama,
     Variante,
     charger_config_llamacpp,
@@ -154,6 +155,7 @@ def ouvrir_harnais(
                 gguf=modele.gguf,
                 config_llamacpp=config_llamacpp,
                 prendre_verrou_gpu=False,
+                lora=None if modele.lora is None else Lora(modele.lora, modele.echelle_lora or 1.0),
             )
         )
         embedding = pile.enter_context(

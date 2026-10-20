@@ -32,7 +32,9 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import json
 import struct
+import sys
 import zlib
 from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
@@ -43,7 +45,7 @@ from slmsp.core.canonique import json_canonique
 from slmsp.core.config import dossier_modeles, racine_ecriture
 from slmsp.core.erreurs import CodeSortie
 from slmsp.fetch.verifications import GgufInvalide, lire_metadonnees_gguf
-from slmsp.inference.serveur import VARIANTES, ServeurLlama, charger_config_modele
+from slmsp.inference.serveur import VARIANTES, Lora, ServeurLlama, charger_config_modele
 from slmsp.net.client import client_local
 from slmsp.train import export as train_export
 from slmsp.train import purge
@@ -74,9 +76,10 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     p.add_argument(
         "action",
         nargs="?",
-        choices=["purger"],
+        choices=["purger", "lora"],
         help="`purger` : supprime hf-f16/ et modele-f16.gguf d'un export noté "
-        "(--depuis EXPORT_RUN_ID, ou --tous-notes)",
+        "(--depuis EXPORT_RUN_ID, ou --tous-notes) ; `lora` : convertit l'adaptateur du run "
+        "d'entraînement --depuis en LoRA GGUF (sans fusion) pour `eval run --modele lora:<id>`",
     )
     source = p.add_mutually_exclusive_group()
     source.add_argument("--depuis", metavar="TRAIN_RUN_ID", help="run d'entraînement complet")
@@ -94,10 +97,13 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--variante",
         choices=VARIANTES,
         default="cpu",
-        help="variante llama.cpp de la sonde d'outils (défaut : cpu)",
+        help="variante llama.cpp de la sonde (outils ; chargement du LoRA pour `lora`) "
+        "(défaut : cpu)",
     )
     p.add_argument(
-        "--sans-sonde", action="store_true", help="ne pas lancer les sondes (outils, vision)"
+        "--sans-sonde",
+        action="store_true",
+        help="ne pas lancer les sondes (outils, vision ; chargement du LoRA pour `lora`)",
     )
     p.add_argument(
         "--python",
@@ -214,6 +220,8 @@ def _exporter(args: argparse.Namespace) -> int:
     racine = _racine(args)
     if args.action == "purger":
         return _purger(args, racine)
+    if args.action == "lora":
+        return _exporter_lora(args, racine)
     if args.tous_notes or args.forcer_non_note or args.dry_run:
         print("slmsp : export : --tous-notes, --forcer-non-note et --dry-run vont avec `purger`")
         return int(CodeSortie.USAGE)
@@ -253,6 +261,169 @@ def _exporter(args: argparse.Namespace) -> int:
             "`slmsp export purger --tous-notes` les supprime"
         )
     return code
+
+
+CLES_LORA: Final = ("general.type", CLE_ARCHITECTURE, "adapter.type", "adapter.lora.alpha")
+NOM_SONDE_LORA: Final = "sonde-lora.json"
+
+
+def controler_lora(slug: str) -> Any:
+    """Contrôles de compatibilité injectés dans `train.export.exporter_lora` : le GGUF est un
+    adaptateur LoRA, de la même architecture que la base Q4_K_M officielle de `slug`."""
+
+    def controler(run: Run, export: Mapping[str, Any]) -> dict[str, Any]:
+        bloquants: list[str] = []
+        alertes: list[str] = []
+        nom = export["fichiers"]["lora"]
+        try:
+            lora = lire_metadonnees_gguf(run.dossier / nom, CLES_LORA)
+        except (GgufInvalide, OSError) as exc:
+            return {"bloquants": [f"{nom} illisible : {exc}"], "alertes": [], "metadonnees": {}}
+        if lora.get("general.type") != "adapter" or lora.get("adapter.type") != "lora":
+            bloquants.append(
+                f"{nom} n'est pas un adaptateur LoRA GGUF "
+                f"(general.type {lora.get('general.type')!r}, adapter.type "
+                f"{lora.get('adapter.type')!r})"
+            )
+        base = gguf_officiel(slug)
+        comparaison: dict[str, Any] = {"base_q4_k_m": base.name if base else None}
+        if base is None:
+            alertes.append(f"GGUF q4_k_m de {slug} absent : compatibilité non vérifiée")
+        else:
+            try:
+                architecture = metadonnees(base).get(CLE_ARCHITECTURE)
+            except (GgufInvalide, OSError) as exc:
+                alertes.append(f"GGUF de base illisible ({exc}) : compatibilité non vérifiée")
+            else:
+                comparaison["architecture_base"] = architecture
+                if lora.get(CLE_ARCHITECTURE) != architecture:
+                    bloquants.append(
+                        f"architecture du LoRA ({lora.get(CLE_ARCHITECTURE)!r}) différente de "
+                        f"celle de la base q4_k_m ({architecture!r})"
+                    )
+            attendu = run.manifeste.chat_template_sha256
+            alertes += _comparer_template(slug, base, attendu, comparaison)
+        return {
+            "bloquants": bloquants,
+            "alertes": alertes,
+            "metadonnees": {**comparaison, "lora": lora},
+        }
+
+    return controler
+
+
+def _comparer_template(
+    slug: str, base: Path, attendu: str | None, comparaison: dict[str, Any]
+) -> list[str]:
+    """Le LoRA est servi avec le gabarit de la base (`chat_template.jinja` imposé, sinon celui
+    du GGUF q4_k_m) : alerte s'il diffère du gabarit du tokenizer d'entraînement."""
+    try:
+        if charger_config_modele(slug).chat_template_force:
+            texte = (dossier_modeles() / slug / "chat_template.jinja").read_text(encoding="utf-8")
+            servi: str | None = hashlib.sha256(texte.encode("utf-8")).hexdigest()
+        else:
+            servi = sha_template(base)
+    except (GgufInvalide, OSError) as exc:
+        return [f"gabarit servi de la base illisible ({exc}) : non comparé à l'entraînement"]
+    comparaison["chat_template_sha256_servi"] = servi
+    comparaison["chat_template_sha256_entrainement"] = attendu
+    if attendu is None or servi != attendu:
+        return [
+            f"gabarit servi de la base ({servi}) différent de celui du tokenizer "
+            f"d'entraînement ({attendu}) : scores à lire avec ce biais"
+        ]
+    return []
+
+
+def _alertes_export(run: Run) -> list[str]:
+    try:
+        export = json.loads((run.dossier / train_export.NOM_EXPORT).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [str(a) for a in export.get("controles", {}).get("alertes", [])]
+
+
+def sonder_lora(
+    base: Path,
+    lora: Path,
+    slug: str,
+    variante: str,
+    *,
+    fabrique: Any = ServeurLlama,
+    http: Any = client_local,
+) -> dict[str, Any]:
+    """Démarre llama-server sur `base` + `--lora-scaled lora:1` et lit `/lora-adapters`.
+
+    Un LoRA incompatible avec la base fait échouer le chargement. Renvoie
+    `{"valide", "echelle", "motif"}` ; ne lève pas.
+    """
+    bilan: dict[str, Any] = {"echelle": None, "motif": None}
+    try:
+        config = charger_config_modele(slug)
+        with fabrique(
+            config, variante, slug=slug, gguf=base, lora=Lora(lora, 1.0), prendre_verrou_gpu=True
+        ) as serveur:
+            client = http(serveur.port)
+            try:
+                url = f"http://127.0.0.1:{serveur.port}/lora-adapters"
+                reponse = client.get(url, timeout=60)
+                adaptateurs = reponse.json() if reponse.status_code == 200 else []
+                if isinstance(adaptateurs, list) and adaptateurs:
+                    bilan["echelle"] = adaptateurs[0].get("scale")
+                else:
+                    bilan["motif"] = f"aucun adaptateur servi (HTTP {reponse.status_code})"
+            finally:
+                client.close()
+    except Exception as exc:  # démarrage, réseau, JSON : l'échec est le résultat de la sonde
+        bilan["motif"] = f"{type(exc).__name__} : {exc}"[:300]
+    bilan["valide"] = bilan["echelle"] == 1.0
+    if bilan["motif"] is None and not bilan["valide"]:
+        bilan["motif"] = f"échelle servie {bilan['echelle']!r} au lieu de 1.0"
+    return bilan
+
+
+def _exporter_lora(args: argparse.Namespace, racine: Path) -> int:
+    if args.depuis is None or args.base is not None:
+        print("slmsp : export lora : --depuis TRAIN_RUN_ID requis (pas --base)")
+        return int(CodeSortie.USAGE)
+    if args.tous_notes or args.forcer_non_note or args.dry_run:
+        print("slmsp : export lora : --tous-notes, --forcer-non-note, --dry-run vont avec `purger`")
+        return int(CodeSortie.USAGE)
+    source = train_export.source_depuis_run(args.depuis, racine=racine)
+    run = train_export.exporter_lora(
+        source,
+        racine=racine,
+        python=args.python,
+        controles=controler_lora(source.slug),
+        delai=args.delai,
+    )
+    statut = run.statut_courant()
+    print(f"export lora : run {run.run_id} {statut}")
+    if statut != "complet":
+        print(f"slmsp : export lora {run.run_id} non complet (voir export.json)")
+        return int(CodeSortie.ERREUR)
+    ref = f"lora:{run.run_id}"
+    print(f"{ref} : {train_export.NOM_LORA} ; échelle au choix : eval run --echelle-lora")
+    for alerte in _alertes_export(run):
+        print(f"slmsp : alerte : {alerte}", file=sys.stderr)
+    base = gguf_officiel(source.slug)
+    if args.sans_sonde or base is None:
+        motif = "--sans-sonde" if args.sans_sonde else f"GGUF q4_k_m de {source.slug} absent"
+        # Consigné dans le run : un export sans sonde se distingue d'un export sondé valide.
+        sans = {"lancee": False, "valide": None, "motif": motif, "variante": args.variante}
+        run.ecrire(NOM_SONDE_LORA, json_canonique(sans) + b"\n")
+        print(f"slmsp : sonde de chargement non lancée ({motif}) : voir {NOM_SONDE_LORA}")
+        return int(CodeSortie.SUCCES)
+    bilan = sonder_lora(base, run.dossier / train_export.NOM_LORA, source.slug, args.variante)
+    bilan = {"lancee": True, **bilan, "variante": args.variante}
+    run.ecrire(NOM_SONDE_LORA, json_canonique(bilan) + b"\n")
+    etat = "valide" if bilan["valide"] else f"non valide ({bilan['motif']})"
+    print(f"sonde de chargement {ref} : {etat}")
+    if not bilan["valide"]:
+        run.terminer("degrade", f"chargement du LoRA non valide ({bilan['motif']})"[:500])
+        print(f"slmsp : export lora {run.run_id} degrade : {ref} refusé par l'évaluation")
+        return int(CodeSortie.ERREUR)
+    return int(CodeSortie.SUCCES)
 
 
 def _go(octets: int) -> str:
@@ -409,10 +580,12 @@ def _sonder(run: Run, ref: str, variante: str, racine: Path) -> int:
 
 __all__ = [
     "controler_format",
+    "controler_lora",
     "enregistrer",
     "gguf_officiel",
     "metadonnees",
     "png_uni",
     "sha_template",
+    "sonder_lora",
     "sonder_vision",
 ]

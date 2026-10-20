@@ -313,6 +313,8 @@ def _nouveau_run(
         "precision_gguf": modele.precision,
         "profil_reseau": PROFIL_RESEAU,
     }
+    if modele.lora is not None:
+        config["lora"] = {"echelle": modele.echelle_lora, "gguf": modele.lora.name}
     return nouveau_run(
         TYPE_RUN,
         modele.slug_run,

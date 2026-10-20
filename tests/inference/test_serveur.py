@@ -939,3 +939,106 @@ def test_executer_vers_reessaie_le_renommage(
     assert sortie.is_file()
     assert not partiel.exists()
     assert pauses == [0.5]
+
+
+# --- LoRA GGUF (story 15.6) -------------------------------------------------------------------
+
+
+def test_arguments_serveur_lora_scaled(vendor_factice, modeles: Path, tmp_path: Path) -> None:
+    lora = tmp_path / "export-lora" / "adaptateur-lora.gguf"
+    instance = ServeurLlama(
+        config_modele(),
+        "cpu",
+        slug=SLUG,
+        config_llamacpp=vendor_factice.config,
+        lora=serveur.Lora(lora, 0.5),
+    )
+    arguments = instance.arguments(5555)
+    # Nom de fichier seul : llama-server coupe `FNAME:SCALE` sur `:`, que `C:\...` contient.
+    assert arguments[arguments.index("--lora-scaled") + 1] == "adaptateur-lora.gguf:0.5"
+    assert "--lora" not in arguments
+    assert instance.description()["lora"] == {"gguf": "adaptateur-lora.gguf", "echelle": 0.5}
+    with pytest.raises(ConfigurationInvalide, match="LoRA GGUF absent"):
+        instance._verifier_fichiers()
+
+
+def test_lora_echelle_par_defaut_et_validation(tmp_path: Path) -> None:
+    assert serveur.Lora(tmp_path / "a.gguf").argument() == "a.gguf:1"
+    for invalide in (-0.1, float("nan"), float("inf"), True, "0.5"):
+        with pytest.raises(ConfigurationInvalide, match="échelle LoRA"):
+            serveur.Lora(tmp_path / "a.gguf", invalide)  # type: ignore[arg-type]
+
+
+def test_arguments_sans_lora_par_defaut(vendor_factice, modeles: Path) -> None:
+    instance = ServeurLlama(
+        config_modele(), "cpu", slug=SLUG, config_llamacpp=vendor_factice.config
+    )
+    assert "--lora-scaled" not in instance.arguments(5555)
+    assert "lora" not in instance.description()
+
+
+def test_lora_refuse_en_embedding(vendor_factice, modeles: Path, tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationInvalide, match="génération"):
+        ServeurLlama(
+            config_modele(**EMBEDDING),
+            "cpu",
+            slug=SLUG,
+            config_llamacpp=vendor_factice.config,
+            lora=serveur.Lora(tmp_path / "a.gguf"),
+        )
+
+
+def test_lora_demarre_dans_le_dossier_du_gguf(
+    vendor_factice, modeles: Path, tmp_path: Path, lancements: list, monkeypatch
+) -> None:
+    _factice(monkeypatch)
+    lora = tmp_path / "export-lora" / "adaptateur-lora.gguf"
+    lora.parent.mkdir()
+    lora.write_bytes(b"GGUF factice")
+    with ServeurLlama(
+        config_modele(),
+        "cpu",
+        slug=SLUG,
+        config_llamacpp=vendor_factice.config,
+        lora=serveur.Lora(lora, 0.5),
+    ):
+        pass
+    assert Path(lancements[0]["cwd"]) == lora.parent
+
+
+def test_commande_conversion_lora(vendor_factice, tmp_path: Path) -> None:
+    tag = vendor_factice.tag.resolve()
+    commande = serveur.commande_conversion_lora(
+        tmp_path / "adaptateur", tmp_path / "hf", tmp_path / "l.gguf", config=vendor_factice.config
+    )
+    assert commande.arguments == [
+        PY,
+        str(tag / "src" / "convert_lora_to_gguf.py"),
+        "--base",
+        str(tmp_path / "hf"),
+        "--outfile",
+        str(tmp_path / "l.gguf"),
+        "--outtype",
+        "f16",
+        str(tmp_path / "adaptateur"),
+    ]
+    assert commande.env["PYTHONPATH"].split(os.pathsep)[0] == str(tag / "src" / "gguf-py")
+
+
+def test_convertir_lora_ecrit_en_partiel_puis_renomme(
+    vendor_factice, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def executer(arguments, **options):
+        Path(arguments[arguments.index("--outfile") + 1]).write_bytes(b"lora")
+        return 0, ""
+
+    monkeypatch.setattr(processus, "executer", executer)
+    sortie = tmp_path / "l.gguf"
+    serveur.convertir_lora_vers_gguf(
+        tmp_path / "a", tmp_path / "hf", sortie, config=vendor_factice.config
+    )
+    assert sortie.read_bytes() == b"lora"
+    with pytest.raises(ArtefactExistant):
+        serveur.convertir_lora_vers_gguf(
+            tmp_path / "a", tmp_path / "hf", sortie, config=vendor_factice.config
+        )

@@ -15,6 +15,7 @@ toute la vie du serveur, sauf si l'appelant le détient déjà (`prendre_verrou_
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import socket
@@ -237,6 +238,43 @@ def commande_conversion(
     return Commande(arguments, env)
 
 
+def commande_conversion_lora(
+    adaptateur: str | os.PathLike[str],
+    dossier_base: str | os.PathLike[str],
+    sortie: str | os.PathLike[str],
+    *,
+    type_sortie: str = "f16",
+    python: str | os.PathLike[str] | None = None,
+    config: ConfigLlamacpp | None = None,
+) -> Commande:
+    """`convert_lora_to_gguf.py` de `src/` du tag : adaptateur PEFT (dossier) → LoRA GGUF.
+
+    `dossier_base` (`--base`) porte seulement `config.json` et le tokenizer du Modèle de
+    base (les poids ne sont pas lus). Mêmes dépendances que `commande_conversion` (torch,
+    transformers, numpy) ; `gguf` vient de `src/gguf-py` du tag.
+    """
+    config = charger_config_llamacpp() if config is None else config
+    script = verifier_fichier("src/convert_lora_to_gguf.py", config)
+    gguf_py = dossier_llamacpp(config) / "src" / "gguf-py"
+    if not gguf_py.is_dir():
+        raise ConfigurationInvalide(f"paquet gguf-py absent : {gguf_py}")
+    env = env_sous_processus()
+    existant = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = os.pathsep.join(p for p in (str(gguf_py), existant) if p)
+    arguments = [
+        os.fspath(python) if python is not None else sys.executable,
+        str(script),
+        "--base",
+        os.fspath(dossier_base),
+        "--outfile",
+        os.fspath(sortie),
+        "--outtype",
+        type_sortie,
+        os.fspath(adaptateur),
+    ]
+    return Commande(arguments, env)
+
+
 def commande_quantification(
     entree: str | os.PathLike[str],
     sortie: str | os.PathLike[str],
@@ -344,6 +382,37 @@ def convertir_hf_vers_gguf(
     )
     return _executer_vers(
         "convert_hf_to_gguf.py",
+        commande,
+        sortie,
+        partiel,
+        delai=delai,
+        journal=None if journal is None else Path(journal),
+    )
+
+
+def convertir_lora_vers_gguf(
+    adaptateur: str | os.PathLike[str],
+    dossier_base: str | os.PathLike[str],
+    sortie: str | os.PathLike[str],
+    *,
+    type_sortie: str = "f16",
+    python: str | os.PathLike[str] | None = None,
+    delai: float | None = None,
+    journal: str | os.PathLike[str] | None = None,
+    config: ConfigLlamacpp | None = None,
+) -> Path:
+    """Convertit un adaptateur PEFT en LoRA GGUF `sortie` (écrit d'abord en `.part`).
+
+    Lève `ArtefactExistant` si `sortie` ou `sortie.part` existe, `ErreurInference` si la
+    conversion échoue.
+    """
+    sortie = Path(sortie)
+    partiel = _verifier_sortie_libre(sortie)
+    commande = commande_conversion_lora(
+        adaptateur, dossier_base, partiel, type_sortie=type_sortie, python=python, config=config
+    )
+    return _executer_vers(
+        "convert_lora_to_gguf.py",
         commande,
         sortie,
         partiel,
@@ -485,6 +554,35 @@ def verifier_vocabulaire_brouillon(
             )
 
 
+# --- LoRA ------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Lora:
+    """Adaptateur LoRA GGUF appliqué à la base par `--lora-scaled <gguf>:<échelle>`."""
+
+    gguf: Path
+    echelle: float = 1.0
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.echelle, bool)
+            or not isinstance(self.echelle, int | float)
+            or not math.isfinite(self.echelle)
+            or self.echelle < 0
+        ):
+            raise ConfigurationInvalide(f"échelle LoRA invalide : {self.echelle!r} (réel >= 0)")
+        object.__setattr__(self, "gguf", Path(self.gguf))
+
+    def argument(self) -> str:
+        r"""`<nom du fichier>:<échelle>` : llama-server coupe sur `:`, un chemin Windows
+        (`C:\...`) est donc refusé ; le serveur est lancé dans le dossier du GGUF."""
+        return f"{self.gguf.name}:{float(self.echelle):g}"
+
+    def decrire(self) -> dict[str, Any]:
+        return {"gguf": self.gguf.name, "echelle": float(self.echelle)}
+
+
 # --- Serveur ---------------------------------------------------------------------------------
 
 
@@ -519,8 +617,11 @@ class ServeurLlama:
         parallele: int = 1,
         speculatif: Speculatif | Mapping[str, Any] | None = None,
         mmproj: str | os.PathLike[str] | None = None,
+        lora: Lora | None = None,
     ) -> None:
         _verifier_variante(variante)
+        if lora is not None and config.embedding:
+            raise ConfigurationInvalide("lora : réservé à un serveur de génération")
         if mmproj is not None and config.embedding:
             raise ConfigurationInvalide("mmproj : réservé à un serveur de génération")
         if parallele < 1:
@@ -564,6 +665,7 @@ class ServeurLlama:
         # Projecteur de vision (`--mmproj`) : le Harnais ne le passe jamais, seule la sonde
         # vision de l'export le fait.
         self.mmproj = None if mmproj is None else Path(mmproj)
+        self.lora = lora
         self._config_llamacpp = config_llamacpp
         self.prendre_verrou_gpu = prendre_verrou_gpu
         self.delai_demarrage = delai_demarrage
@@ -678,6 +780,8 @@ class ServeurLlama:
             arguments += self._arguments_speculatifs()
             if self.mmproj is not None:
                 arguments += ["--mmproj", str(self.mmproj)]
+            if self.lora is not None:
+                arguments += ["--lora-scaled", self.lora.argument()]
         return arguments
 
     def _arguments_speculatifs(self) -> list[str]:
@@ -740,6 +844,8 @@ class ServeurLlama:
             raise ConfigurationInvalide(f"GGUF absent : {self.gguf}")
         if self.mmproj is not None and not self.mmproj.is_file():
             raise ConfigurationInvalide(f"mmproj absent : {self.mmproj}")
+        if self.lora is not None and not self.lora.gguf.is_file():
+            raise ConfigurationInvalide(f"LoRA GGUF absent : {self.lora.gguf}")
         brouillon = self.gguf_brouillon
         if brouillon is not None and not brouillon.is_file():
             raise ConfigurationInvalide(f"GGUF du brouillon absent : {brouillon}")
@@ -763,7 +869,12 @@ class ServeurLlama:
             journal = self._journal or self._chemin_journal(port)
             self._journal = journal  # gardé aussi quand le démarrage échoue
             gere = processus.lancer(
-                arguments, role=self.role, port=port, journal=journal, env=env_sous_processus()
+                arguments,
+                role=self.role,
+                port=port,
+                journal=journal,
+                env=env_sous_processus(),
+                cwd=None if self.lora is None else self.lora.gguf.parent,
             )
             pile.callback(gere.arreter, DELAI_ARRET)
             self._attendre_sante(gere, port, journal)
@@ -837,6 +948,8 @@ class ServeurLlama:
                 chat_template_force=self.config.chat_template_force,
                 protocole_outils=self.config.protocole_outils,
             )
+        if self.lora is not None:
+            description["lora"] = self.lora.decrire()
         if self.speculatif is not None:
             description["speculatif"] = self.speculatif.decrire()
             brouillon = self.gguf_brouillon
@@ -879,6 +992,7 @@ __all__ = [
     "DELAI_DEMARRAGE",
     "ErreurInference",
     "INTERVALLE_SONDE",
+    "Lora",
     "ServeurLlama",
     "Speculatif",
     "Variante",
@@ -887,8 +1001,10 @@ __all__ = [
     "config_llamacpp_modele",
     "charger_config_modele",
     "commande_conversion",
+    "commande_conversion_lora",
     "commande_quantification",
     "convertir_hf_vers_gguf",
+    "convertir_lora_vers_gguf",
     "dossier_llamacpp",
     "dossier_vendor",
     "port_libre",

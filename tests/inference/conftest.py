@@ -79,6 +79,7 @@ FICHIERS_FACTICES = {
     "bin-cuda/ggml-cuda.dll": b"dll cuda factice",
     "bin-cpu/llama-quantize.exe": b"quantize factice",
     "src/convert_hf_to_gguf.py": b"# conversion factice\n",
+    "src/convert_lora_to_gguf.py": b"# conversion lora factice\n",
     "src/gguf-py/gguf/__init__.py": b"",
 }
 

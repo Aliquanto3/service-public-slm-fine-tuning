@@ -70,7 +70,13 @@ CONFIG_MODELE = SimpleNamespace(llamacpp=None)
 
 
 def modele(tmp_path: Path, config: Any = CONFIG_MODELE) -> Any:
-    return SimpleNamespace(config=config, slug="granite-4.0-1b", gguf=tmp_path / "modele.gguf")
+    return SimpleNamespace(
+        config=config,
+        slug="granite-4.0-1b",
+        gguf=tmp_path / "modele.gguf",
+        lora=None,
+        echelle_lora=None,
+    )
 
 
 def test_ouvrir_harnais_empreintes_et_serveurs(

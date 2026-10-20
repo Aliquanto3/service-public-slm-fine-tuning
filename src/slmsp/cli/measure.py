@@ -30,7 +30,17 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     actions = parseur.add_subparsers(dest="action", metavar="<action>", required=True)
     p = actions.add_parser("run", help="mesurer RAM, débit, premier token et taille installée")
-    p.add_argument("--modele", required=True, help="modèle : base:<slug>")
+    p.add_argument(
+        "--modele", required=True, help="modèle : base:<slug> ou lora:<export_lora_run_id>"
+    )
+    p.add_argument(
+        "--echelle-lora",
+        type=float,
+        default=None,
+        metavar="ECHELLE",
+        help="avec lora:<id> : échelle de --lora-scaled (défaut 1.0), consignée dans la "
+        "référence du modèle (lora:<id>@<échelle>)",
+    )
     p.add_argument(
         "--quantification",
         choices=("f16", "q4_k_m"),
@@ -77,6 +87,9 @@ def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[
     brouillon = next((g for s in serveurs if (g := getattr(s, "gguf_brouillon", None))), None)
     if brouillon is not None:
         composants["brouillon"] = brouillon
+    lora = next((s.lora.gguf for s in serveurs if getattr(s, "lora", None) is not None), None)
+    if lora is not None:
+        composants["lora"] = lora
     if version is not None:
         composants["index"] = dossier_index(racine) / version
     # NFR-6 : tous les binaires installés (bin-cpu et bin-cuda si présent), sans sous-estimer,
@@ -134,6 +147,22 @@ def _speculatif(args: argparse.Namespace, slug: str) -> Any:
     return speculatif
 
 
+def _modele_et_lora(args: argparse.Namespace, racine: Path) -> tuple[str, str, Any]:
+    """(référence consignée, `base:<slug>` servi, `Lora` ou `None`)
+
+    Lève `ValueError` (échelle ou référence mal formée), `ConfigurationInvalide` (run).
+    """
+    from slmsp.evaluation import modele_ref
+    from slmsp.inference.serveur import Lora
+
+    ref = modele_ref.composer_lora(args.modele, args.echelle_lora)
+    if not ref.startswith("lora:"):
+        return ref, ref, None
+    resolu = modele_ref.resoudre(ref, "q4_k_m", racine=racine)
+    assert resolu.lora is not None and resolu.echelle_lora is not None
+    return ref, f"base:{resolu.slug}", Lora(resolu.lora, resolu.echelle_lora)
+
+
 def _run(args: argparse.Namespace) -> int:
     from slmsp.cli._assemblage import ModeleInvalide, assembler, slug_modele
     from slmsp.core.erreurs import ConfigurationInvalide
@@ -143,11 +172,13 @@ def _run(args: argparse.Namespace) -> int:
     from slmsp.measure.config import charger_config_mesures
     from slmsp.measure.protocole import ContexteInsuffisant, mesurer, verrou_mesure
 
+    ecriture = (args.racine if args.racine is not None else racine_ecriture()).resolve()
     try:
-        slug = slug_modele(args.modele)
+        ref, modele, lora = _modele_et_lora(args, ecriture)
+        slug = slug_modele(modele)
         maximum = charger_config_modele(slug).contexte
         speculatif = _speculatif(args, slug)
-    except (ModeleInvalide, ConfigurationInvalide) as exc:
+    except (ModeleInvalide, ConfigurationInvalide, ValueError) as exc:
         print(f"slmsp : {exc}", file=sys.stderr)
         return int(CodeSortie.USAGE)
     if args.contexte is not None and not 0 < args.contexte <= maximum:
@@ -163,20 +194,20 @@ def _run(args: argparse.Namespace) -> int:
     config = charger_config_mesures()
     racine = (args.racine if args.racine is not None else racine_projet()).resolve()
     # Index lu sous les ressources ; le run s'écrit sous la racine d'écriture (AD-23).
-    ecriture = (args.racine if args.racine is not None else racine_ecriture()).resolve()
     versions = versions_disponibles(racine)
     version = versions[-1] if versions else None
     fiche = charger_taches().defaut
     with (
         verrou_mesure(),
         assembler(
-            args.modele,
+            modele,
             fiche,
             variante="cpu",
             racine=racine,
             threads=config.plafond_threads,
             contexte=args.contexte,
             speculatif=speculatif,
+            lora=lora,
         ) as assemblage,
     ):
         if args.quantification is not None:
@@ -198,7 +229,7 @@ def _run(args: argparse.Namespace) -> int:
             resultat = mesurer(
                 repondre,
                 config,
-                modele=args.modele,
+                modele=ref,
                 quantification=args.quantification,
                 serveurs=[s.description() for s in assemblage.serveurs],
                 composants=_composants(assemblage.serveurs, racine, version),
@@ -220,7 +251,7 @@ def _run(args: argparse.Namespace) -> int:
             "du prompt dans --contexte n'a PAS pu être vérifiée (troncature possible)",
             file=sys.stderr,
         )
-    print(f"{resultat.hypothese} ({args.modele}) : {resultat.verdict}")
+    print(f"{resultat.hypothese} ({ref}) : {resultat.verdict}")
     for nom, valeur in valeurs.items():
         print(f"  {nom} : {'n/d' if valeur is None else f'{valeur:.3f}'}")
     for nom, ok in resultat.conformite.items():

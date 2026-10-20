@@ -14,12 +14,20 @@
   porte le template du tokenizer). Un run `degrade` (sonde d'outils non valide sur le
   Q4_K_M, story 10.6) est refusé, sauf `accepter_degrade=True` explicite.
 
+- `lora:<export_lora_run_id>[@<échelle>]` : run `runs/export-lora/<id>/` (story 15.6),
+  `complet` (ou `degrade`, voir `ft:`), dont le `run.json` porte `modele_ref = base:<slug>` ;
+  la base est le GGUF Q4_K_M officiel de `<slug>` (comme `base:<slug>`, template compris),
+  l'adaptateur `adaptateur-lora.gguf` du run s'applique par `--lora-scaled`. L'échelle
+  (défaut 1.0) fait partie de la référence normalisée `lora:<id>@<échelle>`, donc du
+  `modele_ref` des runs d'évaluation (reprise et comparaison sans ambiguïté). `f16` refusé.
+
 Toute incohérence lève `ConfigurationInvalide` ; une référence ou une quantification mal
 formée lève `ValueError` (erreur d'usage).
 """
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -36,6 +44,13 @@ Quantification = Literal["f16", "q4_k_m"]
 QUANTIFICATIONS: Final[tuple[str, ...]] = get_args(Quantification)
 
 TYPE_RUN_EXPORT: Final = "export"
+TYPE_RUN_EXPORT_LORA: Final = "export-lora"
+NOM_LORA: Final = "adaptateur-lora.gguf"
+ECHELLE_LORA_DEFAUT: Final = 1.0
+ECHELLE_LORA_MAX: Final = 4.0
+"""Borne haute de l'échelle LoRA (au-delà, l'adaptateur n'est plus un réglage fin)."""
+DECIMALES_ECHELLE_LORA: Final = 4
+"""Avec la borne, `:g` rend l'échelle sans arrondi ni exposant (motif de `ModeleRef`)."""
 NOM_TEMPLATE: Final = "chat_template.jinja"
 
 _MOTIF_REF: Final = re.compile(get_args(ModeleRef)[1].pattern)
@@ -51,7 +66,7 @@ class ModeleResolu:
     """
 
     ref: str
-    genre: Literal["base", "ft"]
+    genre: Literal["base", "ft", "lora"]
     quantification: Quantification
     slug: str
     slug_run: str
@@ -59,6 +74,9 @@ class ModeleResolu:
     gguf: Path
     precision: str
     """Précision réelle du GGUF servi : `q4_k_m`, `f16` ou `bf16` (`[gguf_f16].precision`)."""
+    lora: Path | None = None
+    """`lora:` seulement : LoRA GGUF appliqué à `gguf` par `--lora-scaled`."""
+    echelle_lora: float | None = None
 
 
 def _config_generation(slug: str) -> ConfigModele:
@@ -126,6 +144,92 @@ def _resoudre_ft(
     return ModeleResolu(ref, "ft", quantification, slug, f"ft-{slug}", config, gguf, quantification)
 
 
+def echelle_lora_de(ref: str) -> float | None:
+    """Échelle de `lora:<id>[@<échelle>]` (`ECHELLE_LORA_DEFAUT` sans `@`), `None` hors `lora:`."""
+    if not ref.startswith("lora:"):
+        return None
+    _, _, echelle = ref.partition("@")
+    return float(echelle) if echelle else ECHELLE_LORA_DEFAUT
+
+
+def composer_lora(ref: str, echelle: float | None) -> str:
+    """Référence normalisée `lora:<id>@<échelle>` ; `ref` sans `@` prend `echelle` (défaut 1.0).
+
+    Lève `ValueError` si `ref` n'est pas `lora:` (alors `echelle` doit être `None`, il est
+    ignoré sinon), si `echelle` n'est pas un réel fini positif ou diffère de celle de `ref`.
+    """
+    if not ref.startswith("lora:"):
+        if echelle is not None:
+            raise ValueError(f"--echelle-lora : réservé à une référence lora:<id> (reçu {ref!r})")
+        return ref
+    identifiant, arobase, deja = ref.partition("@")
+    if echelle is None:
+        echelle = float(deja) if arobase else ECHELLE_LORA_DEFAUT
+    elif arobase and float(deja) != float(echelle):
+        raise ValueError(f"échelle LoRA contradictoire : {ref!r} et --echelle-lora {echelle:g}")
+    if not math.isfinite(echelle) or not 0 < echelle <= ECHELLE_LORA_MAX:
+        raise ValueError(
+            f"échelle LoRA invalide : {echelle!r} (0 < échelle <= {ECHELLE_LORA_MAX:g})"
+        )
+    if round(echelle, DECIMALES_ECHELLE_LORA) != echelle:
+        # `:g` arrondirait en silence : la référence et `--lora-scaled` diffèreraient de la
+        # valeur demandée.
+        raise ValueError(
+            f"échelle LoRA invalide : {echelle!r} ({DECIMALES_ECHELLE_LORA} décimales au plus)"
+        )
+    return f"{identifiant}@{float(echelle):g}"
+
+
+def _resoudre_lora(
+    ref: str, run_id: str, quantification: Quantification, racine: Path, accepter_degrade: bool
+) -> ModeleResolu:
+    if quantification != "q4_k_m":
+        raise ConfigurationInvalide(
+            f"{ref} : seule la base q4_k_m porte un LoRA (quantification {quantification!r})"
+        )
+    identifiant = run_id.partition("@")[0]
+    ref = composer_lora(ref, None)
+    echelle = echelle_lora_de(ref)
+    try:
+        run = ouvrir_run(identifiant, racine=racine)
+    except ManifesteInvalide as exc:
+        raise ConfigurationInvalide(f"{ref} : run d'export LoRA illisible ({exc})") from None
+    if run.manifeste.type != TYPE_RUN_EXPORT_LORA:
+        raise ConfigurationInvalide(
+            f"{ref} : le run {identifiant} est de type {run.manifeste.type!r}, "
+            f"pas {TYPE_RUN_EXPORT_LORA!r}"
+        )
+    statut = run.statut_courant()
+    if statut == "degrade" and not accepter_degrade:
+        raise ConfigurationInvalide(
+            f"{ref} : run d'export LoRA degrade (chargement non valide) ; refusé sans "
+            "accepter_degrade explicite"
+        )
+    if statut not in ("complet", "degrade"):
+        raise ConfigurationInvalide(f"{ref} : run d'export LoRA {statut}, pas complet")
+    base = run.manifeste.modele_ref
+    if base is None or not base.startswith("base:"):
+        raise ConfigurationInvalide(
+            f"{ref} : run d'export LoRA sans Modèle de base (modele_ref = {base!r})"
+        )
+    lora = run.dossier / NOM_LORA
+    if not lora.is_file():
+        raise ConfigurationInvalide(f"{ref} : LoRA GGUF absent du run d'export : {lora}")
+    de_base = _resoudre_base(base, base.removeprefix("base:"), "q4_k_m")
+    return ModeleResolu(
+        ref,
+        "lora",
+        "q4_k_m",
+        de_base.slug,
+        f"lora-{de_base.slug}",
+        de_base.config,
+        de_base.gguf,
+        "q4_k_m",
+        lora,
+        echelle,
+    )
+
+
 def resoudre(
     ref: str,
     quantification: str,
@@ -133,23 +237,38 @@ def resoudre(
     racine: str | Path | None = None,
     accepter_degrade: bool = False,
 ) -> ModeleResolu:
-    """Résout `ref` (`base:<slug>` ou `ft:<export_run_id>`) × `quantification`.
+    """Résout `ref` (`base:<slug>`, `ft:<export_run_id>` ou `lora:<export_lora_run_id>[@<échelle>]`)
+    × `quantification`.
 
     Lève `ValueError` pour une référence ou une quantification mal formée,
     `ConfigurationInvalide` pour un modèle introuvable ou incohérent (voir le module).
     `accepter_degrade` : accepte un run d'export `degrade` (choix explicite de l'appelant).
     """
     if not isinstance(ref, str) or not _MOTIF_REF.fullmatch(ref):
-        raise ValueError(f"référence de modèle invalide : {ref!r} (base:<slug> ou ft:<run_id>)")
+        raise ValueError(
+            f"référence de modèle invalide : {ref!r} "
+            "(base:<slug> ou ft:<run_id> ; lora:<run_id>[@<échelle>])"
+        )
     if quantification not in QUANTIFICATIONS:
         raise ValueError(
             f"quantification invalide : {quantification!r} (attendu : {', '.join(QUANTIFICATIONS)})"
         )
     genre, valeur = ref.split(":", 1)
+    if genre == "lora":
+        base = (Path(racine) if racine is not None else racine_projet()).resolve()
+        return _resoudre_lora(ref, valeur, quantification, base, accepter_degrade)  # type: ignore[arg-type]
     if genre == "base":
         return _resoudre_base(ref, valeur, quantification)  # type: ignore[arg-type]
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
     return _resoudre_ft(ref, valeur, quantification, base, accepter_degrade)  # type: ignore[arg-type]
 
 
-__all__ = ["QUANTIFICATIONS", "ModeleResolu", "Quantification", "resoudre"]
+__all__ = [
+    "ECHELLE_LORA_DEFAUT",
+    "QUANTIFICATIONS",
+    "ModeleResolu",
+    "Quantification",
+    "composer_lora",
+    "echelle_lora_de",
+    "resoudre",
+]

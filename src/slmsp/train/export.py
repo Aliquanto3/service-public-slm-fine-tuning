@@ -53,6 +53,11 @@ from slmsp.train import chargement, environnement
 from slmsp.train.config import charger_config_export
 
 TYPE_RUN: Final = "export"
+TYPE_RUN_LORA: Final = "export-lora"
+NOM_LORA: Final = "adaptateur-lora.gguf"
+NOM_LOG_LORA: Final = "conversion-lora.log"
+TYPE_SORTIE_LORA: Final = "f16"
+"""Précision du LoRA GGUF : F16 (le convertisseur accepte f32, f16, bf16, q8_0, auto)."""
 TYPE_RUN_TRAIN: Final = "train"
 DOSSIER_ADAPTATEUR: Final = "adaptateur"
 FICHIERS_ADAPTATEUR: Final = ("adapter_config.json", "adapter_model.safetensors")
@@ -663,21 +668,148 @@ def _executer(
     return "complet", None
 
 
+def controler_lora_convertible(
+    dossier: Path, *, racine: str | Path | None = None
+) -> dict[str, Any]:
+    """Contrôles de `controler_adaptateur`, plus ce que `convert_lora_to_gguf.py` ne sait pas
+    porter : refuse DoRA (magnitude), rsLoRA (échelle alpha/sqrt(r), llama.cpp applique
+    alpha/r) et tout `peft_type` autre que LORA. Renvoie `r`, `lora_alpha`, `peft_type`."""
+    details = controler_adaptateur(dossier, racine=racine)
+    config = json.loads(lire(dossier / "adapter_config.json", "train", racine=racine))
+    if details.get("peft_type") != "LORA":
+        raise ConfigurationInvalide(
+            f"{dossier} : peft_type {details.get('peft_type')!r} non convertible en LoRA GGUF"
+        )
+    if config.get("use_dora"):
+        raise ConfigurationInvalide(
+            f"{dossier} : adaptateur DoRA non convertible en LoRA GGUF (llama.cpp n'applique "
+            "pas la magnitude DoRA) ; utiliser `slmsp export --depuis` (fusion)"
+        )
+    if config.get("use_rslora"):
+        raise ConfigurationInvalide(
+            f"{dossier} : adaptateur rsLoRA non convertible fidèlement (échelle alpha/sqrt(r), "
+            "llama.cpp applique alpha/r) ; utiliser `slmsp export --depuis` (fusion)"
+        )
+    # Le convertisseur n'écrit que `lora_alpha` (global) et llama.cpp applique alpha / rang du
+    # tenseur : un `rank_pattern` reste fidèle, un `alpha_pattern` non (PEFT : alpha_m / r_m).
+    if config.get("alpha_pattern"):
+        raise ConfigurationInvalide(
+            f"{dossier} : alpha_pattern {config.get('alpha_pattern')!r} non porté par le LoRA "
+            "GGUF (alpha global seulement) ; utiliser `slmsp export --depuis` (fusion)"
+        )
+    return {**details, "lora_alpha": config.get("lora_alpha")}
+
+
+def exporter_lora(
+    source: Source,
+    *,
+    racine: str | Path | None = None,
+    convertir: Convertir | None = None,
+    python: str | os.PathLike[str] | None = None,
+    controles: Controles,
+    delai: float | None = None,
+    sortie: Callable[[str], None] = print,
+) -> Run:
+    """Convertit l'adaptateur de `source` en LoRA GGUF sous `runs/export-lora/<run_id>/`.
+
+    Pas de fusion ni de quantification : l'évaluation sert la base Q4_K_M officielle avec
+    `--lora-scaled`. Statut `complet`, ou `partiel-erreur` si un contrôle bloquant échoue
+    (sur exception, relancée). `controles(run, export)` : voir `Controles`. Lève
+    `ConfigurationInvalide` (adaptateur non convertible : DoRA, rsLoRA, PiSSA…).
+    """
+    convertir = convertir if convertir is not None else serveur.convertir_lora_vers_gguf
+    appliquer_environnement_impose()
+    os.environ.setdefault("PYTHONUTF8", "1")
+    base = _racine(racine)
+    if source.temoin or len(source.adaptateurs) != 1:
+        raise ConfigurationInvalide("export lora : un seul adaptateur d'un run train attendu")
+    if not source.slug:
+        raise ConfigurationInvalide("export lora : slug du Modèle de base absent")
+    dossier_base = environnement.dossier_poids(source.slug, racine=base)
+    details = controler_lora_convertible(source.adaptateurs[0], racine=base)
+    config_llamacpp = serveur.charger_config_llamacpp()
+    if delai is None:
+        delai = delai_outils(octets_poids(dossier_base))
+    if delai <= 0:
+        raise ConfigurationInvalide(f"export lora : délai de l'outil invalide ({delai} s)")
+    config = {
+        "source": "train",
+        "format": "lora-gguf",
+        "methode": source.methode,
+        "runs_train": list(source.runs_train),
+        "adaptateur": {"run_id": source.runs_train[0], "dossier": DOSSIER_ADAPTATEUR, **details},
+        "dossier_poids": environnement.chemin_portable(dossier_base, racine=base),
+        "conversion": {"script": "convert_lora_to_gguf.py", "outtype": TYPE_SORTIE_LORA},
+        "base_gguf": "q4_k_m",
+        "delai_outil_s": delai,
+    }
+    run = nouveau_run(
+        TYPE_RUN_LORA,
+        f"lora-{source.slug}",
+        config,
+        parents=source.runs_train,
+        racine=base,
+        modele_ref=f"base:{source.slug}",
+        llamacpp_tag=config_llamacpp.tag,
+        chat_template_sha256=source.chat_template_sha256,
+    )
+    sortie(f"run {run.run_id} : {run.dossier}")
+    try:
+        convertir(
+            source.adaptateurs[0],
+            dossier_base,
+            run.dossier / NOM_LORA,
+            type_sortie=TYPE_SORTIE_LORA,
+            python=python,
+            delai=delai,
+            journal=run.dossier / NOM_LOG_LORA,
+        )
+        run.ajouter_jsonl(NOM_LOG, {"evenement": "conversion-lora", "fichier": NOM_LORA})
+        sortie("export lora : conversion")
+        export: dict[str, Any] = {
+            "fichiers": {"lora": NOM_LORA},
+            "precision": TYPE_SORTIE_LORA,
+            "sha256": {"lora": sha256_fichier(run.dossier / NOM_LORA)},
+            "adaptateur": details,
+            "base": f"base:{source.slug}",
+            "llamacpp_tag": config_llamacpp.tag,
+        }
+        resultat = dict(controles(run, export))
+        bloquants = list(resultat.get("bloquants", []))
+        export["controles"] = {**resultat, "bloquants": bloquants}
+        run.ecrire(NOM_EXPORT, json_canonique(export) + b"\n")
+    except KeyboardInterrupt:
+        run.terminer("interrompu", "arrêt demandé")
+        raise
+    except Exception as exc:
+        run.terminer("partiel-erreur", f"{type(exc).__name__} : {exc}"[:500])
+        raise
+    if bloquants:
+        run.terminer("partiel-erreur", " ; ".join(bloquants)[:500])
+    else:
+        run.terminer("complet")
+    return run
+
+
 __all__ = [
     "NOM_F16",
+    "NOM_LORA",
     "NOM_MMPROJ",
     "NOM_Q4",
     "PRECISIONS",
     "Source",
     "TYPE_RUN",
+    "TYPE_RUN_LORA",
     "adaptateur_du_run",
     "controler_adaptateur",
+    "controler_lora_convertible",
     "controler_modules_lora",
     "controler_plage",
     "controler_vision_inchangee",
     "copier_preprocesseur",
     "delai_outils",
     "exporter",
+    "exporter_lora",
     "fusionner",
     "octets_prevus",
     "source_depuis_run",

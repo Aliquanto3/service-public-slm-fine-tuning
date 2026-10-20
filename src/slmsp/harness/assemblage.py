@@ -137,6 +137,7 @@ def assembler(
     threads: int | None = None,
     contexte: int | None = None,
     speculatif: Any = None,
+    lora: Any = None,
 ) -> Iterator[Assemblage]:
     """Assemble l'Assistant pour `modele` (`base:<slug>`) et la Tâche `tache` (Q par défaut).
 
@@ -146,7 +147,8 @@ def assembler(
     (jamais au-dessus de la valeur de leur configuration). `contexte` remplace le contexte du
     seul serveur de génération (mesure à contexte réduit) ; l'appelant l'a validé.
     `speculatif` (`Speculatif` ou dict, défaut aucun) active le décodage spéculatif du seul
-    serveur de génération.
+    serveur de génération. `lora` (`inference.serveur.Lora`, défaut aucun) applique un LoRA
+    GGUF au seul serveur de génération (`--lora-scaled`).
     """
     slug = slug_modele(modele)
     table = charger_taches()
@@ -175,7 +177,9 @@ def assembler(
         if llm is None:
             from slmsp.inference.serveur import ServeurLlama, charger_config_modele
 
-            options = {} if speculatif is None else {"speculatif": speculatif}
+            options: dict[str, Any] = {} if speculatif is None else {"speculatif": speculatif}
+            if lora is not None:
+                options["lora"] = lora
             serveur = pile.enter_context(
                 ServeurLlama(
                     avec_contexte(plafonner(charger_config_modele(slug)), contexte),

@@ -218,6 +218,8 @@ def lancer(
         raise ConfigurationInvalide(
             f"modèle invalide : {modele_ref!r} (attendu : base:<slug> ou ft:<run_id>)"
         ) from None
+    if modele_ref.startswith("lora:"):
+        raise ConfigurationInvalide(f"{modele_ref} : le banc ne prend pas encore de LoRA GGUF")
     if parallele < 1:
         raise ConfigurationInvalide(f"parallele doit être >= 1 : {parallele}")
     racine = Path(racine).resolve()

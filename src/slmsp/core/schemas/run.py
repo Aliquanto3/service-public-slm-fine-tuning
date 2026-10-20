@@ -29,9 +29,13 @@ MOTIF_TYPE: Final = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 
 ModeleRef = Annotated[
     str,
-    StringConstraints(pattern=r"^(base:[a-z0-9.-]+|ft:\d{8}-\d{6}-[a-z0-9.-]+-[0-9a-f]{4})$"),
+    StringConstraints(
+        pattern=r"^(base:[a-z0-9.-]+|ft:\d{8}-\d{6}-[a-z0-9.-]+-[0-9a-f]{4}"
+        r"|lora:\d{8}-\d{6}-[a-z0-9.-]+-[0-9a-f]{4}(@\d+(\.\d+)?)?)$"
+    ),
 ]
-"""Modèle évalué : `base:<slug>` ou `ft:<run_id du Run d'entraînement>`."""
+"""Modèle évalué : `base:<slug>`, `ft:<run_id du Run d'export>` ou `lora:<run_id du Run
+d'export LoRA>[@<échelle>]` (base Q4_K_M + `--lora-scaled`, story 15.6)."""
 
 
 class Gpu(SousSchema):
