@@ -98,3 +98,7 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-20 08:11 · 14.3 (C3) · fusion · squash dans main · cfa04ee
 - 2026-10-20 08:12 · run · décision · Anaël (absent toute la journée, autonomie) : budget Anthropic relevé à 60 € à l'échelle du projet, OpenRouter à 50 $ (~46 €). Nouvelle campagne de budget à ouvrir dès qu'aucun lot n'est ouvert (notation E1 en cours) : plafonds = enveloppe − dépensé de la campagne methodo-v2 · —
 - 2026-10-20 08:12 · 14.7 (C7) · rejeu de contrôle lancé : juges tiers glm puis deepseek, CR, Baseline MiniCPM (`20261018-112201-minicpm5-2b-e6f2`), `--rejouer-invalides`, plafond 1 € chacun · —
+- 2026-10-20 08:29 · 14.14 (O6a) · review · 3 high corrigés (`--completer-depuis` refusé en mode vérifié pour CR/LC/CT, délais 900 s, 8 appels parallèles avec écriture ordonnée), 1 medium, 3 low · 9cf8944
+- 2026-10-20 08:29 · 14.14 (O6a) · fusion · squash dans main ; tests data, budget, fournisseurs, cli data : 774 passés · e847667
+- 2026-10-20 08:29 · 14.17 (V17) · calibrage gratuit sur le seed b335 + cibles v14 (`runs/data-generate/20261020-082601-generate-6eff`, 0,10 € Mistral pour 3 CR non réutilisables) : CR 80/80, CT 35/35, LC 19/80 retenues (gain de lisibilité 47, modalité perdue 17, valeur absente 13, URL inventée 2) · —
+- 2026-10-20 08:29 · 14.17 (V17) · vérification payante lancée (juge DeepSeek, 8 appels parallèles, plafond OpenRouter 9 €, Mistral 0,5 €) · —

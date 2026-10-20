@@ -162,8 +162,8 @@ development_status:
   14-11-jeu-de-developpement-code: done  # O4a
   14-12-jeu-de-developpement-construction: in-progress  # O4b
   14-13-alignement-entrainement-evaluation: done  # O5
-  14-14-generation-verifiee-verification: review  # O6a
+  14-14-generation-verifiee-verification: done  # O6a
   14-15-generation-verifiee-regeneration: backlog  # O6b
   14-16-variance-bootstrap-et-graine: in-progress  # E1
-  14-17-jeu-v17-verifie-et-m1-minicpm5-2b: backlog  # V17
+  14-17-jeu-v17-verifie-et-m1-minicpm5-2b: in-progress  # V17
   14-18-routage-par-tache-sur-jeu-dev: backlog  # E5
