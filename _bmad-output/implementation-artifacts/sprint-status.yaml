@@ -171,6 +171,6 @@ development_status:
   15-1-eval-composer-routage-par-tache: done  # N1
   15-2-candidats-multiples-base-et-deepseek: ready-for-dev  # N2 (O2)
   15-3-selection-des-cibles: backlog  # N3 (O3)
-  15-4-second-juge-desactive-pour-dev: ready-for-dev  # N4
+  15-4-second-juge-desactive-pour-dev: done  # N4
   15-5-dev2-vingt-items-par-tache: ready-for-dev  # N5
   15-6-lora-gguf-et-lora-scaled: ready-for-dev  # N6
