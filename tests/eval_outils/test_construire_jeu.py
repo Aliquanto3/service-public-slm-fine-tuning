@@ -1063,3 +1063,12 @@ def test_anomalie_par_branche(code, modif, attendu):
         it.update(modif)
     anomalies = cj.anomalies_item(code, it)
     assert any(attendu in a for a in anomalies), anomalies
+
+
+def test_assembler_jeu_de_developpement(tmp_path):
+    """`--version devN` est admis et les verdicts croisés ne sont pas lus comme brouillons (O4b)."""
+    _brouillon(tmp_path, "Q", [_item("Q-501")], version="dev1")
+    croises = tmp_path / "eval" / "construction" / "dev1" / "verdicts-croises.jsonl"
+    croises.write_text('{"id": "Q-501"}\n', encoding="utf-8")
+    assert cj.main(["assembler", "--version", "dev1", "--racine", str(tmp_path)]) == 0
+    assert (tmp_path / "eval" / "jeu" / "dev1" / "items.jsonl").is_file()

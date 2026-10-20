@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:21Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "AAH allocataires âge département",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'AAH allocataires âge département'\nPage 1 of results:\n\n1. AAH - Répartition des allocataires selon l'âge [Département]\n   ID: 66d1e5a879919854e97093ba\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-lage-departement\n\n2. AAH - Répartition des allocataires selon le complément d'AAH et l'âge [Département]\n   ID: 66d1e59b79919854e970938e\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-complement-daah-et-lage-departement\n\n3. AAH - Répartition des allocataires selon le taux d'incapacité et l'âge [Département]\n   ID: 66d1e59d79919854e9709396\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-et-lage-departement\n\n4. AAH - Répartition des allocataires selon le complément d'AAH et l'âge [National]\n   ID: 66d1e5ad79919854e97093cb\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-complement-daah-et-lage-national\n\n5. AAH - Répartition des allocataires selon le sexe et l'âge [National]\n   ID: 66d1e5a079919854e97093a1\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-sexe-et-lage-national\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'AAH allocataires âge département'\nPage 1 of results:\n\n1. AAH - Répartition des allocataires selon l'âge [Département]\n   ID: 66d1e5a879919854e97093ba\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-lage-departement\n\n2. AAH - Répartition des allocataires selon le complément d'AAH et l'âge [Département]\n   ID: 66d1e59b79919854e970938e\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-complement-daah-et-lage-departement\n\n3. AAH - Répartition des allocataires selon le taux d'incapacité et l'âge [Département]\n   ID: 66d1e59d79919854e9709396\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-et-lage-departement\n\n4. AAH - Répartition des allocataires selon le complément d'AAH et l'âge [National]\n   ID: 66d1e5ad79919854e97093cb\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-complement-daah-et-lage-national\n\n5. AAH - Répartition des allocataires selon le sexe et l'âge [National]\n   ID: 66d1e5a079919854e97093a1\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-sexe-et-lage-national\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "66d1e5a879919854e97093ba"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: AAH - Répartition des allocataires selon l'âge [Département]\nDataset ID: 66d1e5a879919854e97093ba\nTotal resources: 2\n\n1. aah_s_sexe_age_5_dep.csv\n   Resource ID: d04af08a-e382-4ec2-8f54-84af6ea32d50\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_sexe_age_5_dep/exports/csv?use_labels=true\n\n2. aah_s_sexe_age_5_dep.json\n   Resource ID: cec059fe-5f3f-4adf-a658-d57fe88bda5c\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_sexe_age_5_dep/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: AAH - Répartition des allocataires selon l'âge [Département]\nDataset ID: 66d1e5a879919854e97093ba\nTotal resources: 2\n\n1. aah_s_sexe_age_5_dep.csv\n   Resource ID: d04af08a-e382-4ec2-8f54-84af6ea32d50\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_sexe_age_5_dep/exports/csv?use_labels=true\n\n2. aah_s_sexe_age_5_dep.json\n   Resource ID: cec059fe-5f3f-4adf-a658-d57fe88bda5c\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_sexe_age_5_dep/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

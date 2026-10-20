@@ -61,3 +61,28 @@ Reports pour O4b : intégration du rapport de vérification croisée au MANIFEST
 
 ## Revue
 Revue du 2026-10-20 (détail : `revue-o4a.md`) : 5 medium corrigés (`sources_attendues` et amorces seed dans la disjonction, `--jeu` cohérent avec le run repris, `eval comparer` refuse jeux ou juges différents sauf option, verdicts croisés indexés par SHA d'item), 2 low corrigés (textes courts identiques, `--mode-juge` refusé avec juge tiers), 2 low rejetés (extras présents dans le venv ; clé de cache déjà propre au modèle). Juge du jeu dev : GLM-5.3, décision d'Anaël confirmée.
+
+## Auto Run Result (O4b, construction)
+
+Statut : review. Livré : 160 brouillons `eval/construction/dev1/<CODE>.jsonl` (20 par Tâche, 7 / 7 / 6, identifiants 501 à 520), verdicts du second passage `verification/`, `eval/jeu/dev1/items.jsonl` assemblé (SHA-256 22ab85f1…), 20 cassettes `eval/cassettes/RD-501` à `RD-520` (dont 2 de panne), README de construction. `eval gel --version dev1 --verifier-seulement` : 0 erreur, 0 écart avec `CIBLES_DEV` ; disjonction : disjoint (v1.0, v1.1, 13 `train.jsonl`, 4 runs seed). Second passage : 2 rejets sur 162 verdicts (RD-519, CT-520), corrigés en `version_item` 2.
+
+Décisions prises seul :
+- Provenance sans `url` quand l'URL serait commune à tout un corpus déjà cité par v1.1 (fichier Excel de `sp_questions_corpus`, endpoint MCP, parquet service-public) : `depot` / `revision` / `serveur` à la place ; sinon la disjonction par URL rejetterait tout item d'amorce ou RD.
+- CT : le texte des articles fournis va dans `elements_connus.texte_applicable` (la `base_reglementaire` n'est pas transmise au modèle par `vers_requete`, limite de v1.1).
+- Outils hors paquet : `verifier_jeu_croise.py` ignore la clé `type` (type de courrier CT, vocabulaire fermé) ; `construire_jeu.py` admet `--version devN` et ignore `verdicts-croises.jsonl` à l'assemblage (sinon l'assemblage échouerait après la contre-vérification). Tests ajoutés.
+- CO réels : ponctuation et espaces normalisés, coquilles de la source corrigées dans la référence (F2956, F32457).
+
+Reports : contre-vérification payante DeepSeek + GLM (`verifier_jeu_croise.py verifier --version dev1 --juges deepseek,glm`, ~1 à 1,5 €, pire cas ~4 € réservé), gel `relu-llm`, option `--ecart-admis` sans objet (RD complet). `data/train/v16` n'a pas de `train.jsonl` (seulement des préférences) : non contrôlé par la disjonction. Longueurs : CR faciles plus courtes que v1.1 (210 à 310 mots contre ~450), à confirmer par Anaël.
+
+## Revue (O4b)
+Revue du 2026-10-20, qui tient lieu de relecture Claude du jeu (détail dans `revue-o4b.md`). Échantillon de 24 items relus contre leurs sources : 3 défauts (12,5 %), tous corrigés, aucun item écarté.
+- medium, rejeté : CO-508 « connaitre » (graphie rectifiée, présente dans la source ; fautes = référence vérifiée sur les 20 CO).
+- medium, corrigé : dev1 sans contrôle de verbatim ni de sources → `tests/eval_outils/test_items_dev1.py`.
+- medium, corrigé : 5 LC dont un terme à conserver était absent du texte d'entrée (LC-503, LC-508, LC-509, LC-511, LC-512).
+- medium, corrigé : identifiant de catalogue des replis RD-502 et RD-513.
+- medium, corrigé : CO-518, faute à deux corrections justes, remplacée.
+- low, corrigé : la disjonction compare aussi la fiche, l'article LEGI et la ligne de corpus.
+- low, corrigé : la disjonction lit aussi les `preferences.jsonl`.
+- low, corrigé : test de citation des cassettes RD-501 à RD-520.
+- low, rejeté : fragments RD non normalisés et espaces de milliers, sans effet sur la notation.
+- low, rejeté : CT-509 et CT-518 reprennent le même scénario (signalé).

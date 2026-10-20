@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:18Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "minima sociaux RSA prime d'activité",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 16 dataset(s) for query: 'minima sociaux RSA prime d'activité'\nPage 1 of results:\n\n1. Minima sociaux, RSA et prime d’activité\n   ID: 6226330c5eafccb7033e0c4a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: beneficiaires-de-minima-sociaux-et-de-la-prime-dactivite, depenses-de-minima-sociaux-et-de-la-prime-dactivite, handicap-et-invalidite, minima-sociaux-et-pauvrete\n   Resources: 12\n   URL: https://www.data.gouv.fr/datasets/minima-sociaux-rsa-et-prime-dactivite\n\n2. Suivi mensuel des prestations de solidarité pendant la crise sanitaire - source DREES\n   ID: 5fe355a7180bc779cc22ef70\n   Organization: icem7\n   Tags: aah, prestations-solidarite, rsa\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/suivi-mensuel-des-prestations-de-solidarite-pendant-la-crise-sanitaire-source-drees\n\n3. RSA EP Suspensions CD76 2017a2022 20230807\n   ID: 651dfe76c4803cd73b6e33b0\n   Organization: Département de la Seine-Maritime\n   Tags: brsa, departement, rsa, social, suspension\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/rsa-ep-suspensions-cd76-2017a2022-2023-08-07\n\n4. RSA Motifs Suspensions CD76 2016a2022 20230803\n   ID: 651dfe760f524d1e666e33b0\n   Organization: Département de la Seine-Maritime\n   Tags: brsa, departement, rsa, social, suspension\n   Resources: 12\n   URL: https://www.data.gouv.fr/datasets/rsa-motifs-suspensions-cd76-2016a2022-20230308\n\n5. RSA76 EP Motifs suspensions 2017a2021\n   ID: 63002561a8302a5b059c016d\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial, rsa, social\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/rsa76-ep-motifs-suspensions-2017a2021-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 16 dataset(s) for query: 'minima sociaux RSA prime d'activité'\nPage 1 of results:\n\n1. Minima sociaux, RSA et prime d’activité\n   ID: 6226330c5eafccb7033e0c4a\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: beneficiaires-de-minima-sociaux-et-de-la-prime-dactivite, depenses-de-minima-sociaux-et-de-la-prime-dactivite, handicap-et-invalidite, minima-sociaux-et-pauvrete\n   Resources: 12\n   URL: https://www.data.gouv.fr/datasets/minima-sociaux-rsa-et-prime-dactivite\n\n2. Suivi mensuel des prestations de solidarité pendant la crise sanitaire - source DREES\n   ID: 5fe355a7180bc779cc22ef70\n   Organization: icem7\n   Tags: aah, prestations-solidarite, rsa\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/suivi-mensuel-des-prestations-de-solidarite-pendant-la-crise-sanitaire-source-drees\n\n3. RSA EP Suspensions CD76 2017a2022 20230807\n   ID: 651dfe76c4803cd73b6e33b0\n   Organization: Département de la Seine-Maritime\n   Tags: brsa, departement, rsa, social, suspension\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/rsa-ep-suspensions-cd76-2017a2022-2023-08-07\n\n4. RSA Motifs Suspensions CD76 2016a2022 20230803\n   ID: 651dfe760f524d1e666e33b0\n   Organization: Département de la Seine-Maritime\n   Tags: brsa, departement, rsa, social, suspension\n   Resources: 12\n   URL: https://www.data.gouv.fr/datasets/rsa-motifs-suspensions-cd76-2016a2022-20230308\n\n5. RSA76 EP Motifs suspensions 2017a2021\n   ID: 63002561a8302a5b059c016d\n   Organization: Département de la Seine-Maritime\n   Tags: geospatial, rsa, social\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/rsa76-ep-motifs-suspensions-2017a2021-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

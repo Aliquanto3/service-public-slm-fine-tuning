@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:59Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "fiscalité locale des professionnels",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 24 dataset(s) for query: 'fiscalité locale des professionnels'\nPage 1 of results:\n\n1. Fiscalité locale des professionnels\n   ID: 64ac9d02e0951b41b712a193\n   Organization: Ministères économiques et financiers\n   Tags: bati, cfe, collectivites-locales, entreprise, entreprises\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises\n\n2. Fiscalité locale des professionnels - Géo\n   ID: 64ac9d008a3ef9d72912a193\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, entreprises, fiscalite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises-geo\n\n3. Fiscalité locale des particuliers\n   ID: 66512b67b8c9abb821e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers\n\n4. Tableaux Statistiques de la Direction Générale des Finances Publiques (DGFiP)\n   ID: 53698ee1a3a729239d2035bc\n   Organization: Ministères économiques et financiers\n   Tags: amende, annuaire-statistique, audiovisuel-public, cadastre, cet\n   Resources: 17\n   URL: https://www.data.gouv.fr/datasets/tableaux-statistiques-de-la-direction-generale-des-finances-publiques-dgfip\n\n5. Fiscalité locale des particuliers - Géo\n   ID: 66512be37d2d55cbd2e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers-geo\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 24 dataset(s) for query: 'fiscalité locale des professionnels'\nPage 1 of results:\n\n1. Fiscalité locale des professionnels\n   ID: 64ac9d02e0951b41b712a193\n   Organization: Ministères économiques et financiers\n   Tags: bati, cfe, collectivites-locales, entreprise, entreprises\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises\n\n2. Fiscalité locale des professionnels - Géo\n   ID: 64ac9d008a3ef9d72912a193\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, entreprises, fiscalite\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-entreprises-geo\n\n3. Fiscalité locale des particuliers\n   ID: 66512b67b8c9abb821e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers\n\n4. Tableaux Statistiques de la Direction Générale des Finances Publiques (DGFiP)\n   ID: 53698ee1a3a729239d2035bc\n   Organization: Ministères économiques et financiers\n   Tags: amende, annuaire-statistique, audiovisuel-public, cadastre, cet\n   Resources: 17\n   URL: https://www.data.gouv.fr/datasets/tableaux-statistiques-de-la-direction-generale-des-finances-publiques-dgfip\n\n5. Fiscalité locale des particuliers - Géo\n   ID: 66512be37d2d55cbd2e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers-geo\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

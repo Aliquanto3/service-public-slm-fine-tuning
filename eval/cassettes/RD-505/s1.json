@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:27Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "établissements pour personnes âgées Hauts-de-Seine",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 16 dataset(s) for query: 'établissements pour personnes âgées Hauts-de-Seine'\nPage 1 of results:\n\n1. Établissements pour personnes âgées dans les Hauts-de-Seine\n   ID: 536994f5a3a729239d204595\n   Organization: Région Île-de-France\n   Tags: geolocalisation, hebergement, sante, vieillir\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/etablissements-pour-personnes-agees-dans-les-hauts-de-seine-idf\n\n2. Etablissements pour personnes âgées\n   ID: 57868ef0a3a7295d371add34\n   Organization: Département des Hauts-de-Seine\n   Tags: accueil-de-jour, ehpa, ehpad, etablissements, etablissements-dhebergement-pour-personnes-agees-dependantes\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/etablissements-pour-personnes-agees\n\n3. Données relatives aux livraisons de vaccins contre la COVID-19\n   ID: 600aed4bb7a890065a11297e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, livraisons, vaccins\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-livraisons-de-vaccins-contre-la-covid-19\n\n4.  La prise en charge médicale des personnes âgées en Ehpad \n   ID: 628e21b1ad1038cfd2bd56d1\n   Organization: Cour des comptes\n   Tags: ehpad, personnes-agees\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/la-prise-en-charge-medicale-des-personnes-agees-en-ehpad\n\n5. Personnes adultes handicapées bénéficiaires de l'aide sociale à l'hébergement (ASH)\n   ID: 57868ec9a3a7295d371add14\n   Organization: Département des Hauts-de-Seine\n   Tags: adultes, aide-sociale-a-lhebergement, aides-sociales, ash, etablissements-specialises\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/personnes-adultes-handicapees-beneficiaires-de-laide-sociale-a-lhebergement-ash\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 16 dataset(s) for query: 'établissements pour personnes âgées Hauts-de-Seine'\nPage 1 of results:\n\n1. Établissements pour personnes âgées dans les Hauts-de-Seine\n   ID: 536994f5a3a729239d204595\n   Organization: Région Île-de-France\n   Tags: geolocalisation, hebergement, sante, vieillir\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/etablissements-pour-personnes-agees-dans-les-hauts-de-seine-idf\n\n2. Etablissements pour personnes âgées\n   ID: 57868ef0a3a7295d371add34\n   Organization: Département des Hauts-de-Seine\n   Tags: accueil-de-jour, ehpa, ehpad, etablissements, etablissements-dhebergement-pour-personnes-agees-dependantes\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/etablissements-pour-personnes-agees\n\n3. Données relatives aux livraisons de vaccins contre la COVID-19\n   ID: 600aed4bb7a890065a11297e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: coronavirus, covid, covid19, livraisons, vaccins\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/donnees-relatives-aux-livraisons-de-vaccins-contre-la-covid-19\n\n4.  La prise en charge médicale des personnes âgées en Ehpad \n   ID: 628e21b1ad1038cfd2bd56d1\n   Organization: Cour des comptes\n   Tags: ehpad, personnes-agees\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/la-prise-en-charge-medicale-des-personnes-agees-en-ehpad\n\n5. Personnes adultes handicapées bénéficiaires de l'aide sociale à l'hébergement (ASH)\n   ID: 57868ec9a3a7295d371add14\n   Organization: Département des Hauts-de-Seine\n   Tags: adultes, aide-sociale-a-lhebergement, aides-sociales, ash, etablissements-specialises\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/personnes-adultes-handicapees-beneficiaires-de-laide-sociale-a-lhebergement-ash\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "57868ef0a3a7295d371add34"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Etablissements pour personnes âgées\nDataset ID: 57868ef0a3a7295d371add34\nTotal resources: 4\n\n1. etablissements-pour-personnes-agees.csv\n   Resource ID: d935d96b-bd43-4b78-a59b-4df20b57a0db\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/csv?use_labels=true\n\n2. etablissements-pour-personnes-agees.json\n   Resource ID: 7ecc0669-f415-4015-a651-d38991708314\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/json\n\n3. etablissements-pour-personnes-agees.geojson\n   Resource ID: 469ef657-ebda-4925-a5e5-dce73bcaf300\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/geojson\n\n4. etablissements-pour-personnes-agees.zip\n   Resource ID: c9b4a3ae-80e3-4d0b-ab9b-0b64918e200f\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/shp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Etablissements pour personnes âgées\nDataset ID: 57868ef0a3a7295d371add34\nTotal resources: 4\n\n1. etablissements-pour-personnes-agees.csv\n   Resource ID: d935d96b-bd43-4b78-a59b-4df20b57a0db\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/csv?use_labels=true\n\n2. etablissements-pour-personnes-agees.json\n   Resource ID: 7ecc0669-f415-4015-a651-d38991708314\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/json\n\n3. etablissements-pour-personnes-agees.geojson\n   Resource ID: 469ef657-ebda-4925-a5e5-dce73bcaf300\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/geojson\n\n4. etablissements-pour-personnes-agees.zip\n   Resource ID: c9b4a3ae-80e3-4d0b-ab9b-0b64918e200f\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://opendata.hauts-de-seine.fr/api/explore/v2.1/catalog/datasets/etablissements-pour-personnes-agees/exports/shp\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "d935d96b-bd43-4b78-a59b-4df20b57a0db",
+      "page_size": 5,
+      "filter_column": "NOM",
+      "filter_value": "Charlotte Montfort",
+      "filter_operator": "contains"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: etablissements-pour-personnes-agees.csv\nResource ID: d935d96b-bd43-4b78-a59b-4df20b57a0db\nDataset: Etablissements pour personnes âgées (ID: 57868ef0a3a7295d371add34)\n\nFilter: NOM contains Charlotte Montfort\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, NOM, ADRESSE, CODE POSTAL, COMMUNE, CODE_INSEE, TELEPHONE, GESTION, CAP_ACCUEIL_JOUR, CAP RES AUTONOM, CAP_EHPAD, CAP_USLD, CAP_TOTAL, AIDE ACC JOUR, AIDE RES AUTONOM, AIDE_EHPAD, AIDE_USLD, ALZ_EHPAD, HAB AIDE SOC, HEBERG TEMP, CAP HEBERG TEMP, PLACES ALZ, GESTIONNAIRE, TYPE_STRUCTURE, TYPE_SERVICE_ETABLISSEMENT, MODALITE_ACC, PLACES_UPHV, CAPACITE_UPHV, geo_shape, geo_point_2d\n\nData (1 row):\n  Row 1:\n    __id: 18\n    NOM: Résidence Autonomie - Charlotte Montfort\n    ADRESSE: 13 RUE HENRI GATINOT\n    CODE POSTAL: 92320\n    COMMUNE: CHATILLON\n    CODE_INSEE: 92020\n    TELEPHONE: 01.46.55.39.22\n    GESTION: Public\n    CAP_ACCUEIL_JOUR: 0\n    CAP RES AUTONOM: 77\n    CAP_EHPAD: 0\n    CAP_USLD: 0\n    CAP_TOTAL: 77\n    AIDE ACC JOUR: 0\n    AIDE RES AUTONOM: 5\n    AIDE_EHPAD: 0\n    AIDE_USLD: 0\n    ALZ_EHPAD: 0\n    HAB AIDE SOC: True\n    HEBERG TEMP: False\n    CAP HEBERG TEMP: 0\n    PLACES ALZ: False\n    GESTIONNAIRE: CCAS Châtillon\n    TYPE_STRUCTURE: Etablissement\n    TYPE_SERVICE_ETABLISSEMENT: Résidence autonomie\n    MODALITE_ACC: hébergement\n    PLACES_UPHV: False\n    CAPACITE_UPHV: 0\n    geo_shape: {'coordinates': [2.2947475515745315, 48.80573849967555], 'type': 'Point'}\n    geo_point_2d: 48.80573849967555, 2.2947475515745315"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: etablissements-pour-personnes-agees.csv\nResource ID: d935d96b-bd43-4b78-a59b-4df20b57a0db\nDataset: Etablissements pour personnes âgées (ID: 57868ef0a3a7295d371add34)\n\nFilter: NOM contains Charlotte Montfort\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, NOM, ADRESSE, CODE POSTAL, COMMUNE, CODE_INSEE, TELEPHONE, GESTION, CAP_ACCUEIL_JOUR, CAP RES AUTONOM, CAP_EHPAD, CAP_USLD, CAP_TOTAL, AIDE ACC JOUR, AIDE RES AUTONOM, AIDE_EHPAD, AIDE_USLD, ALZ_EHPAD, HAB AIDE SOC, HEBERG TEMP, CAP HEBERG TEMP, PLACES ALZ, GESTIONNAIRE, TYPE_STRUCTURE, TYPE_SERVICE_ETABLISSEMENT, MODALITE_ACC, PLACES_UPHV, CAPACITE_UPHV, geo_shape, geo_point_2d\n\nData (1 row):\n  Row 1:\n    __id: 18\n    NOM: Résidence Autonomie - Charlotte Montfort\n    ADRESSE: 13 RUE HENRI GATINOT\n    CODE POSTAL: 92320\n    COMMUNE: CHATILLON\n    CODE_INSEE: 92020\n    TELEPHONE: 01.46.55.39.22\n    GESTION: Public\n    CAP_ACCUEIL_JOUR: 0\n    CAP RES AUTONOM: 77\n    CAP_EHPAD: 0\n    CAP_USLD: 0\n    CAP_TOTAL: 77\n    AIDE ACC JOUR: 0\n    AIDE RES AUTONOM: 5\n    AIDE_EHPAD: 0\n    AIDE_USLD: 0\n    ALZ_EHPAD: 0\n    HAB AIDE SOC: True\n    HEBERG TEMP: False\n    CAP HEBERG TEMP: 0\n    PLACES ALZ: False\n    GESTIONNAIRE: CCAS Châtillon\n    TYPE_STRUCTURE: Etablissement\n    TYPE_SERVICE_ETABLISSEMENT: Résidence autonomie\n    MODALITE_ACC: hébergement\n    PLACES_UPHV: False\n    CAPACITE_UPHV: 0\n    geo_shape: {'coordinates': [2.2947475515745315, 48.80573849967555], 'type': 'Point'}\n    geo_point_2d: 48.80573849967555, 2.2947475515745315"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

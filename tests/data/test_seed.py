@@ -589,7 +589,8 @@ def test_construire_protection_sur_les_vrais_jeux() -> None:
 
 
 def test_versions_protegees(tmp_path: Path) -> None:
-    assert versions_protegees(racine_projet()) == ("v1.0", "v1.1", "calibrage")
+    # Le jeu de développement dev1 (story O4b) est protégé dès que son fichier existe.
+    assert versions_protegees(racine_projet()) == ("v1.0", "v1.1", "calibrage", "dev1")
     assert versions_protegees(tmp_path) == ("v1.0", "v1.1")
     with pytest.raises(ConfigurationInvalide, match="v1.0"):
         construire_protection(("v1.0", "v1.1"), charger_config_donnees(), tmp_path)

@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:30Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "AAH taux d'incapacité département",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 4 dataset(s) for query: 'AAH taux d'incapacité département'\nPage 1 of results:\n\n1. AAH - Répartition des allocataires selon le taux d'incapacité [Département]\n   ID: 66d1e59679919854e9709380\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-departement\n\n2. AAH - Répartition des allocataires selon le taux d'incapacité et l'âge [Département]\n   ID: 66d1e59d79919854e9709396\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-et-lage-departement\n\n3. AAH - Répartition des allocataires selon le taux d'incapacité et l'âge [National]\n   ID: 66d1e59579919854e970937d\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-et-lage-national\n\n4. AAH - Répartition des allocataires selon le sexe et le taux d'incapacité [National]\n   ID: 67411c4cac5c209fc17733e4\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-sexe-et-le-taux-dincapacite-national\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 4 dataset(s) for query: 'AAH taux d'incapacité département'\nPage 1 of results:\n\n1. AAH - Répartition des allocataires selon le taux d'incapacité [Département]\n   ID: 66d1e59679919854e9709380\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-departement\n\n2. AAH - Répartition des allocataires selon le taux d'incapacité et l'âge [Département]\n   ID: 66d1e59d79919854e9709396\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-et-lage-departement\n\n3. AAH - Répartition des allocataires selon le taux d'incapacité et l'âge [National]\n   ID: 66d1e59579919854e970937d\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-taux-dincapacite-et-lage-national\n\n4. AAH - Répartition des allocataires selon le sexe et le taux d'incapacité [National]\n   ID: 67411c4cac5c209fc17733e4\n   Organization: Caisse Nationale des Allocations familiales \n   Tags: aah, adulte-handicape, allocation-adulte-handicapee, handicap, handicap-et-autonomie\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/aah-repartition-des-allocataires-selon-le-sexe-et-le-taux-dincapacite-national\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "66d1e59679919854e9709380"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: AAH - Répartition des allocataires selon le taux d'incapacité [Département]\nDataset ID: 66d1e59679919854e9709380\nTotal resources: 2\n\n1. aah_s_tx_inca_dep.csv\n   Resource ID: d4f95076-b6a7-48ef-b1ef-6822fc1c437b\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_tx_inca_dep/exports/csv?use_labels=true\n\n2. aah_s_tx_inca_dep.json\n   Resource ID: 5fd221c4-f2da-44ea-b3c5-b771ff41152f\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_tx_inca_dep/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: AAH - Répartition des allocataires selon le taux d'incapacité [Département]\nDataset ID: 66d1e59679919854e9709380\nTotal resources: 2\n\n1. aah_s_tx_inca_dep.csv\n   Resource ID: d4f95076-b6a7-48ef-b1ef-6822fc1c437b\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_tx_inca_dep/exports/csv?use_labels=true\n\n2. aah_s_tx_inca_dep.json\n   Resource ID: 5fd221c4-f2da-44ea-b3c5-b771ff41152f\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_tx_inca_dep/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "get_resource_info",
+     "arguments": {
+      "resource_id": "d4f95076-b6a7-48ef-b1ef-6822fc1c437b"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resource Information: aah_s_tx_inca_dep.csv\n\nResource ID: d4f95076-b6a7-48ef-b1ef-6822fc1c437b\nFormat: csv\nMIME type: text/csv\nType: main\n\nURL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_tx_inca_dep/exports/csv?use_labels=true\n\nDescription: AAH - Répartition des allocataires selon le taux d'incapacité [Département] (csv)\n\nDataset ID: 66d1e59679919854e9709380\nDataset: AAH - Répartition des allocataires selon le taux d'incapacité [Département]\n\nTabular API availability:\n✅ Available via Tabular API (can be queried)"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resource Information: aah_s_tx_inca_dep.csv\n\nResource ID: d4f95076-b6a7-48ef-b1ef-6822fc1c437b\nFormat: csv\nMIME type: text/csv\nType: main\n\nURL: https://data.caf.fr/api/explore/v2.1/catalog/datasets/aah_s_tx_inca_dep/exports/csv?use_labels=true\n\nDescription: AAH - Répartition des allocataires selon le taux d'incapacité [Département] (csv)\n\nDataset ID: 66d1e59679919854e9709380\nDataset: AAH - Répartition des allocataires selon le taux d'incapacité [Département]\n\nTabular API availability:\n✅ Available via Tabular API (can be queried)"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -628,10 +628,17 @@ def test_hors_sujets_du_calibrage(version):
 
 @pytest.mark.parametrize("version", VERSIONS)
 def test_cassettes_sans_orphelines(version):
-    """Chaque fichier sous `eval/cassettes/RD-*/` est cité par un item retenu."""
+    """Chaque fichier sous `eval/cassettes/RD-*/` est cité par un item retenu (les dossiers
+    `RD-501` et suivants appartiennent au jeu de développement `dev1`, spec O4)."""
     dossier = RACINE / "eval" / "cassettes"
     cites = {chemin_cassette(c) for it in RETENUS_V[version] for c in it["cassettes"]}
-    fichiers = {f.resolve() for d in dossier.glob("RD-*") for f in d.rglob("*") if f.is_file()}
+    fichiers = {
+        f.resolve()
+        for d in dossier.glob("RD-*")
+        if int(d.name.split("-")[1]) < 501
+        for f in d.rglob("*")
+        if f.is_file()
+    }
     assert sorted(str(f) for f in fichiers - cites) == []
     assert sorted(str(f) for f in cites - fichiers) == []
 

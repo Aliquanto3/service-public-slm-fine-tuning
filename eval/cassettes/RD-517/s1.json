@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:55Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "établissements d'accueil des jeunes enfants Mayenne",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'établissements d'accueil des jeunes enfants Mayenne'\nPage 1 of results:\n\n1. Etablissements d'accueil des jeunes enfants en Mayenne\n   ID: 64a51dd12129cd19d5c92212\n   Organization: Le Conseil Départemental de la Mayenne\n   Tags: accueil-jeune-enfant, appli-mobile, creche, eaje, education-formation-jeunesse\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/etablissements-daccueil-des-jeunes-enfants-en-mayenne\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'établissements d'accueil des jeunes enfants Mayenne'\nPage 1 of results:\n\n1. Etablissements d'accueil des jeunes enfants en Mayenne\n   ID: 64a51dd12129cd19d5c92212\n   Organization: Le Conseil Départemental de la Mayenne\n   Tags: accueil-jeune-enfant, appli-mobile, creche, eaje, education-formation-jeunesse\n   Resources: 15\n   URL: https://www.data.gouv.fr/datasets/etablissements-daccueil-des-jeunes-enfants-en-mayenne\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "64a51dd12129cd19d5c92212"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Etablissements d'accueil des jeunes enfants en Mayenne\nDataset ID: 64a51dd12129cd19d5c92212\nTotal resources: 15\n\n1. 225300011_mayenne_etablissement_accueil_petite_enfance.json\n   Resource ID: ca4566ba-7024-4ec2-8e75-46a893bb3d78\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/json\n\n2. 225300011_mayenne_etablissement_accueil_petite_enfance.csv\n   Resource ID: bb2c7d98-bdac-485a-8f45-0df7d8427baa\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/csv?use_labels=true\n\n3. 225300011_mayenne_etablissement_accueil_petite_enfance.geojson\n   Resource ID: 2d3167fa-b882-45f0-8a4c-055361c62be9\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/geojson\n\n4. 225300011_mayenne_etablissement_accueil_petite_enfance.zip\n   Resource ID: 53487ec0-e894-4830-8ecf-8aac1d8e9f40\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/shp\n\n5. 225300011_mayenne_etablissement_accueil_petite_enfance.fgb\n   Resource ID: 95c15093-68d8-45ec-9524-09b7ffd05c21\n   Format: octet-stream\n   MIME type: application/octet-stream\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/fgb\n\n6. 225300011_mayenne_etablissement_accueil_petite_enfance.gpx\n   Resource ID: 95bca2a9-c30e-442b-9adb-2dbb8661b15c\n   Format: gpx+xml\n   MIME type: application/gpx+xml\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/gpx\n\n7. 225300011_mayenne_etablissement_accueil_petite_enfance.jsonl\n   Resource ID: 13da3ac8-b66a-41f0-b301-171c703f19ba\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/jsonl\n\n8. 225300011_mayenne_etablissement_accueil_petite_enfance.kml\n   Resource ID: 18ecfef0-74eb-443f-a900-426c88910693\n   Format: vnd.google-earth.kml+xml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/kml\n\n9. 225300011_mayenne_etablissement_accueil_petite_enfance.ov2\n   Resource ID: b15cb6bc-bd2e-483e-86a2-63692ad63523\n   Format: plain\n   MIME type: text/plain\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/ov2\n\n10. 225300011_mayenne_etablissement_accueil_petite_enfance.rdf\n   Resource ID: 88ec14d3-767d-4ba2-bf78-14a92ac7e847\n   Format: rdf+xml\n   MIME type: application/rdf+xml\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/rdfxml\n\n11. 225300011_mayenne_etablissement_accueil_petite_enfance.jsonld\n   Resource ID: f4f8c80b-2eba-4e65-9afc-4869ff81c4a7\n   Format: ld+json\n   MIME type: application/ld+json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/jsonld\n\n12. 225300011_mayenne_etablissement_accueil_petite_enfance.ttl\n   Resource ID: f8350c9c-bcc4-4b28-8fef-64df90eee3d8\n   Format: turtle\n   MIME type: text/turtle\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/turtle\n\n13. 225300011_mayenne_etablissement_accueil_petite_enfance.n3\n   Resource ID: b52e167b-cdfa-4f21-b931-751d1690cd59\n   Format: n3\n   MIME type: text/n3\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/n3\n\n14. 225300011_mayenne_etablissement_accueil_petite_enfance.xlsx\n   Resource ID: bab7c161-cc67-4f87-90e3-9401efda833d\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   MIME type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/xlsx?use_labels=true\n\n15. 225300011_mayenne_etablissement_accueil_petite_enfance.parquet\n   Resource ID: 9d603ffc-6285-4161-9d3e-29d53f26f2c6\n   Format: parquet\n   MIME type: application/parquet\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/parquet\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Etablissements d'accueil des jeunes enfants en Mayenne\nDataset ID: 64a51dd12129cd19d5c92212\nTotal resources: 15\n\n1. 225300011_mayenne_etablissement_accueil_petite_enfance.json\n   Resource ID: ca4566ba-7024-4ec2-8e75-46a893bb3d78\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/json\n\n2. 225300011_mayenne_etablissement_accueil_petite_enfance.csv\n   Resource ID: bb2c7d98-bdac-485a-8f45-0df7d8427baa\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/csv?use_labels=true\n\n3. 225300011_mayenne_etablissement_accueil_petite_enfance.geojson\n   Resource ID: 2d3167fa-b882-45f0-8a4c-055361c62be9\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/geojson\n\n4. 225300011_mayenne_etablissement_accueil_petite_enfance.zip\n   Resource ID: 53487ec0-e894-4830-8ecf-8aac1d8e9f40\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/shp\n\n5. 225300011_mayenne_etablissement_accueil_petite_enfance.fgb\n   Resource ID: 95c15093-68d8-45ec-9524-09b7ffd05c21\n   Format: octet-stream\n   MIME type: application/octet-stream\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/fgb\n\n6. 225300011_mayenne_etablissement_accueil_petite_enfance.gpx\n   Resource ID: 95bca2a9-c30e-442b-9adb-2dbb8661b15c\n   Format: gpx+xml\n   MIME type: application/gpx+xml\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/gpx\n\n7. 225300011_mayenne_etablissement_accueil_petite_enfance.jsonl\n   Resource ID: 13da3ac8-b66a-41f0-b301-171c703f19ba\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/jsonl\n\n8. 225300011_mayenne_etablissement_accueil_petite_enfance.kml\n   Resource ID: 18ecfef0-74eb-443f-a900-426c88910693\n   Format: vnd.google-earth.kml+xml\n   MIME type: application/vnd.google-earth.kml+xml\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/kml\n\n9. 225300011_mayenne_etablissement_accueil_petite_enfance.ov2\n   Resource ID: b15cb6bc-bd2e-483e-86a2-63692ad63523\n   Format: plain\n   MIME type: text/plain\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/ov2\n\n10. 225300011_mayenne_etablissement_accueil_petite_enfance.rdf\n   Resource ID: 88ec14d3-767d-4ba2-bf78-14a92ac7e847\n   Format: rdf+xml\n   MIME type: application/rdf+xml\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/rdfxml\n\n11. 225300011_mayenne_etablissement_accueil_petite_enfance.jsonld\n   Resource ID: f4f8c80b-2eba-4e65-9afc-4869ff81c4a7\n   Format: ld+json\n   MIME type: application/ld+json\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/jsonld\n\n12. 225300011_mayenne_etablissement_accueil_petite_enfance.ttl\n   Resource ID: f8350c9c-bcc4-4b28-8fef-64df90eee3d8\n   Format: turtle\n   MIME type: text/turtle\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/turtle\n\n13. 225300011_mayenne_etablissement_accueil_petite_enfance.n3\n   Resource ID: b52e167b-cdfa-4f21-b931-751d1690cd59\n   Format: n3\n   MIME type: text/n3\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/n3\n\n14. 225300011_mayenne_etablissement_accueil_petite_enfance.xlsx\n   Resource ID: bab7c161-cc67-4f87-90e3-9401efda833d\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   MIME type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/xlsx?use_labels=true\n\n15. 225300011_mayenne_etablissement_accueil_petite_enfance.parquet\n   Resource ID: 9d603ffc-6285-4161-9d3e-29d53f26f2c6\n   Format: parquet\n   MIME type: application/parquet\n   Type: main\n   URL: https://data.lamayenne.fr/api/explore/v2.1/catalog/datasets/225300011_mayenne_etablissement_accueil_petite_enfance/exports/parquet\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

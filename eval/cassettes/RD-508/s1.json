@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:35Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "caractéristiques du corps électoral",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'caractéristiques du corps électoral'\nPage 1 of results:\n\n1. Caractéristiques du corps électoral\n   ID: 67d4c55efe1f619a6624f7cf\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: electeurs, statistiques\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/caracteristiques-du-corps-electoral\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'caractéristiques du corps électoral'\nPage 1 of results:\n\n1. Caractéristiques du corps électoral\n   ID: 67d4c55efe1f619a6624f7cf\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: electeurs, statistiques\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/caracteristiques-du-corps-electoral\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "67d4c55efe1f619a6624f7cf"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Caractéristiques du corps électoral\n\nID: 67d4c55efe1f619a6624f7cf\nSlug: caracteristiques-du-corps-electoral\nURL: https://www.data.gouv.fr/datasets/caracteristiques-du-corps-electoral/\n\nFull description: Caractéristiques des électeurs inscrits sur une liste électorale selon différents critères tels que le type de liste électorale, le sexe et l'âge. La disponibilité des données aux différents niveaux géographiques (communal, départemental , régional et France entière y compris les collectivités d'outre mer hors Nouvelle-Calédonie) dépend de l'indicateur. Quelques données sont disponibles sur plusieurs millésimes antérieurs à l'année courante. Les données sur les électeurs sont extraites à la clôt...\n\nOrganization: Institut national de la statistique et des études économiques (Insee)\n  Organization ID: 534fff81a3a7292c64a77e5c\n\nTags: electeurs, statistiques\n\nResources: 1 file(s)\n\nCreated: 2024-10-08T13:24:37+00:00\nLast updated: 2026-08-03T17:15:20.057000+00:00\n\nLicense: lov2\nUpdate frequency: irregular"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Caractéristiques du corps électoral\n\nID: 67d4c55efe1f619a6624f7cf\nSlug: caracteristiques-du-corps-electoral\nURL: https://www.data.gouv.fr/datasets/caracteristiques-du-corps-electoral/\n\nFull description: Caractéristiques des électeurs inscrits sur une liste électorale selon différents critères tels que le type de liste électorale, le sexe et l'âge. La disponibilité des données aux différents niveaux géographiques (communal, départemental , régional et France entière y compris les collectivités d'outre mer hors Nouvelle-Calédonie) dépend de l'indicateur. Quelques données sont disponibles sur plusieurs millésimes antérieurs à l'année courante. Les données sur les électeurs sont extraites à la clôt...\n\nOrganization: Institut national de la statistique et des études économiques (Insee)\n  Organization ID: 534fff81a3a7292c64a77e5c\n\nTags: electeurs, statistiques\n\nResources: 1 file(s)\n\nCreated: 2024-10-08T13:24:37+00:00\nLast updated: 2026-08-03T17:15:20.057000+00:00\n\nLicense: lov2\nUpdate frequency: irregular"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

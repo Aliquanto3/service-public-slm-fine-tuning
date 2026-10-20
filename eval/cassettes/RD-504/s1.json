@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:24Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "accessibilité potentielle localisée structures personnes âgées",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 9 dataset(s) for query: 'accessibilité potentielle localisée structures personnes âgées'\nPage 1 of results:\n\n1. Accessibilité potentielle localisée (APL) aux structures médico-sociales destinées aux personnes âgées\n   ID: 62263312ca3d6516043e0c4e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: accessibilite-geographique, etablissement-dhebergement-pour-personnes-agees, grand-age-et-autonomie, personne-agee, residence-autonomie\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/accessibilite-potentielle-localisee-apl-aux-structures-medico-sociales-destinees-aux-personnes-agees\n\n2. Accueil familial personnes agees AFPA par EPCI CD76 2022\n   ID: 64f6709bfb8b29ba3fae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: accueil-familial, afpa, aides, epci, geospatial\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-personnes-agees-afpa-par-epci-cd76-2022\n\n3. Accueil familial personnes agees AFPA par Canton CD76 2022\n   ID: 64f6709bb178127becae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: accueil-familial, afpa, aides, cantons, geospatial\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-personnes-agees-afpa-par-canton-cd76-2022\n\n4. Accueil Familial Pers Agées Depenses et beneficiaires EPCI76 2023\n   ID: 672c0481e6b0ba637920e0de\n   Organization: Département de la Seine-Maritime\n   Tags: afpa, aides, epci, geospatial, personnes-agees\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-pers-agees-depenses-et-beneficiaires-epci76-2023\n\n5. Accueil Familial Pers Agées Depenses et Beneficiaires CANTONS76 2023\n   ID: 672c0483e6b0ba637920e0e1\n   Organization: Département de la Seine-Maritime\n   Tags: afpa, aides, canton, geospatial, personnes-agees\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-pers-agees-depenses-et-beneficiaires-cantons76-2023\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 9 dataset(s) for query: 'accessibilité potentielle localisée structures personnes âgées'\nPage 1 of results:\n\n1. Accessibilité potentielle localisée (APL) aux structures médico-sociales destinées aux personnes âgées\n   ID: 62263312ca3d6516043e0c4e\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: accessibilite-geographique, etablissement-dhebergement-pour-personnes-agees, grand-age-et-autonomie, personne-agee, residence-autonomie\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/accessibilite-potentielle-localisee-apl-aux-structures-medico-sociales-destinees-aux-personnes-agees\n\n2. Accueil familial personnes agees AFPA par EPCI CD76 2022\n   ID: 64f6709bfb8b29ba3fae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: accueil-familial, afpa, aides, epci, geospatial\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-personnes-agees-afpa-par-epci-cd76-2022\n\n3. Accueil familial personnes agees AFPA par Canton CD76 2022\n   ID: 64f6709bb178127becae9bff\n   Organization: Département de la Seine-Maritime\n   Tags: accueil-familial, afpa, aides, cantons, geospatial\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-personnes-agees-afpa-par-canton-cd76-2022\n\n4. Accueil Familial Pers Agées Depenses et beneficiaires EPCI76 2023\n   ID: 672c0481e6b0ba637920e0de\n   Organization: Département de la Seine-Maritime\n   Tags: afpa, aides, epci, geospatial, personnes-agees\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-pers-agees-depenses-et-beneficiaires-epci76-2023\n\n5. Accueil Familial Pers Agées Depenses et Beneficiaires CANTONS76 2023\n   ID: 672c0483e6b0ba637920e0e1\n   Organization: Département de la Seine-Maritime\n   Tags: afpa, aides, canton, geospatial, personnes-agees\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/accueil-familial-pers-agees-depenses-et-beneficiaires-cantons76-2023\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "62263312ca3d6516043e0c4e"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Accessibilité potentielle localisée (APL) aux structures médico-sociales destinées aux personnes âgées\n\nID: 62263312ca3d6516043e0c4e\nSlug: accessibilite-potentielle-localisee-apl-aux-structures-medico-sociales-destinees-aux-personnes-agees\nURL: https://www.data.gouv.fr/datasets/accessibilite-potentielle-localisee-apl-aux-structures-medico-sociales-destinees-aux-personnes-agees/\n\nFull description: L’APL est un indicateur local, qui tient compte de l’offre et de la demande issue des communes environnantes. Calculé à l’échelle communale, l’APL met en évidence des disparités d’offre de soins qu’un indicateur usuel de densité, calculé sur des mailles beaucoup plus larges (bassins de vie, départements...), aura tendance à masquer. Le champ porte sur la France métropolitaine.\n\nTrois indicateurs d’APL sont diffusés, chacun ayant un seuil d’accessibilité (d0), une mesure de la demande (patientèle...\n\nOrganization: Ministère des Solidarités et de la Santé\n  Organization ID: 534fff94a3a7292c64a77fc1\n\nTags: accessibilite-geographique, etablissement-dhebergement-pour-personnes-agees, grand-age-et-autonomie, personne-agee, residence-autonomie, service-daide-et-daccompagnement-a-domicile-pour-personnes-agees\n\nResources: 3 file(s)\n\nCreated: 2021-12-08T10:06:00+00:00\nLast updated: 2021-12-08T10:06:00+00:00\n\nLicense: lov2\nUpdate frequency: punctual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Accessibilité potentielle localisée (APL) aux structures médico-sociales destinées aux personnes âgées\n\nID: 62263312ca3d6516043e0c4e\nSlug: accessibilite-potentielle-localisee-apl-aux-structures-medico-sociales-destinees-aux-personnes-agees\nURL: https://www.data.gouv.fr/datasets/accessibilite-potentielle-localisee-apl-aux-structures-medico-sociales-destinees-aux-personnes-agees/\n\nFull description: L’APL est un indicateur local, qui tient compte de l’offre et de la demande issue des communes environnantes. Calculé à l’échelle communale, l’APL met en évidence des disparités d’offre de soins qu’un indicateur usuel de densité, calculé sur des mailles beaucoup plus larges (bassins de vie, départements...), aura tendance à masquer. Le champ porte sur la France métropolitaine.\n\nTrois indicateurs d’APL sont diffusés, chacun ayant un seuil d’accessibilité (d0), une mesure de la demande (patientèle...\n\nOrganization: Ministère des Solidarités et de la Santé\n  Organization ID: 534fff94a3a7292c64a77fc1\n\nTags: accessibilite-geographique, etablissement-dhebergement-pour-personnes-agees, grand-age-et-autonomie, personne-agee, residence-autonomie, service-daide-et-daccompagnement-a-domicile-pour-personnes-agees\n\nResources: 3 file(s)\n\nCreated: 2021-12-08T10:06:00+00:00\nLast updated: 2021-12-08T10:06:00+00:00\n\nLicense: lov2\nUpdate frequency: punctual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

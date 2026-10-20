@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:50Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "pari-score communes élections municipales 2020",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'pari-score communes élections municipales 2020'\nPage 1 of results:\n\n1. Pari-scores des communes françaises (élections municipales 2020)\n   ID: 69baa78ffb29d1c59d89b45f\n   Organization: Démocratiser la politique\n   Tags: classes-sociales, elections, elections-municipales-2020, indicateur, liste-electorale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/pari-scores-des-communes-francaises-elections-municipales-2020\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'pari-score communes élections municipales 2020'\nPage 1 of results:\n\n1. Pari-scores des communes françaises (élections municipales 2020)\n   ID: 69baa78ffb29d1c59d89b45f\n   Organization: Démocratiser la politique\n   Tags: classes-sociales, elections, elections-municipales-2020, indicateur, liste-electorale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/pari-scores-des-communes-francaises-elections-municipales-2020\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "69baa78ffb29d1c59d89b45f"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Pari-scores des communes françaises (élections municipales 2020)\nDataset ID: 69baa78ffb29d1c59d89b45f\nTotal resources: 2\n\n1. Note de recherche sur la version beta-2026 du Pari-score\n   Resource ID: bbfca305-bb90-45ae-9036-58573f12c7a8\n   Format: pdf\n   Size: 929.7 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/pari-scores-des-communes-francaises-elections-municipales-2020/20260318-132707/pariscore-note-09022026-bat.pdf\n\n2. Pari-score des communes françaises (élections municipales 2020)\n   Resource ID: 82f21052-a189-4406-bd96-297bbdf1d52c\n   Format: csv\n   Size: 20.9 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/pari-scores-des-communes-francaises-elections-municipales-2020/20260318-141224/pariscore-muni-2020.csv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Pari-scores des communes françaises (élections municipales 2020)\nDataset ID: 69baa78ffb29d1c59d89b45f\nTotal resources: 2\n\n1. Note de recherche sur la version beta-2026 du Pari-score\n   Resource ID: bbfca305-bb90-45ae-9036-58573f12c7a8\n   Format: pdf\n   Size: 929.7 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/pari-scores-des-communes-francaises-elections-municipales-2020/20260318-132707/pariscore-note-09022026-bat.pdf\n\n2. Pari-score des communes françaises (élections municipales 2020)\n   Resource ID: 82f21052-a189-4406-bd96-297bbdf1d52c\n   Format: csv\n   Size: 20.9 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/pari-scores-des-communes-francaises-elections-municipales-2020/20260318-141224/pariscore-muni-2020.csv\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "82f21052-a189-4406-bd96-297bbdf1d52c",
+      "page_size": 5,
+      "filter_column": "code_circo",
+      "filter_value": "35238",
+      "filter_operator": "exact"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: Pari-score des communes françaises (élections municipales 2020)\nResource ID: 82f21052-a189-4406-bd96-297bbdf1d52c\nDataset: Pari-scores des communes françaises (élections municipales 2020) (ID: 69baa78ffb29d1c59d89b45f)\n\nFilter: code_circo exact 35238\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, nom, code_circo, population_totale, population_consideree, taille_liste, tot_elus_attendus, pop_pct_CSUP, pop_pct_CMOY, pop_pct_CPOP, pop_pct_RET, elus_attendus_CSUP, elus_attendus_CMOY, elus_attendus_CPOP, elus_attendus_RET, elus_actuels_CSUP, elus_actuels_CMOY, elus_actuels_CPOP, elus_actuels_RET, elus_actuels_pct_CSUP, elus_actuels_pct_CMOY, elus_actuels_pct_CPOP, elus_actuels_pct_RET, ir_elus_CSUP, ir_elus_CMOY, ir_elus_CPOP, ir_elus_RET, type_commune, nuance, mediane_niveau_vie, part_bac5, pariscore, raison, pariscore_wo_ret, alert_ret\n\nData (1 row):\n  Row 1:\n    __id: 13404\n    nom: Rennes\n    code_circo: 35238\n    population_totale: 216815\n    population_consideree: 140422\n    taille_liste: 61\n    tot_elus_attendus: 59.010000000000005\n    pop_pct_CSUP: 21.98\n    pop_pct_CMOY: 22.13\n    pop_pct_CPOP: 30.2\n    pop_pct_RET: 25.69\n    elus_attendus_CSUP: 12.97\n    elus_attendus_CMOY: 13.06\n    elus_attendus_CPOP: 17.82\n    elus_attendus_RET: 15.16\n    elus_actuels_CSUP: 49\n    elus_actuels_CMOY: 7\n    elus_actuels_CPOP: 2\n    elus_actuels_RET: 1\n    elus_actuels_pct_CSUP: 83.05\n    elus_actuels_pct_CMOY: 11.86\n    elus_actuels_pct_CPOP: 3.39\n    elus_actuels_pct_RET: 1.69\n    ir_elus_CSUP: 0.61\n    ir_elus_CMOY: -0.1\n    ir_elus_CPOP: -0.27\n    ir_elus_RET: -0.24\n    type_commune: Grands centres urbains\n    nuance: Gauche\n    mediane_niveau_vie: 22770\n    part_bac5: 24.1\n    pariscore: F-\n    raison: Situation de domination structurelle extrême. Les classes supérieures monopolisent quasi totalement ...\n    pariscore_wo_ret: F-\n    alert_ret: Précision du pari-score : très bonne. L'absence de données suffisantes à propos des retraité·es ne s..."
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: Pari-score des communes françaises (élections municipales 2020)\nResource ID: 82f21052-a189-4406-bd96-297bbdf1d52c\nDataset: Pari-scores des communes françaises (élections municipales 2020) (ID: 69baa78ffb29d1c59d89b45f)\n\nFilter: code_circo exact 35238\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, nom, code_circo, population_totale, population_consideree, taille_liste, tot_elus_attendus, pop_pct_CSUP, pop_pct_CMOY, pop_pct_CPOP, pop_pct_RET, elus_attendus_CSUP, elus_attendus_CMOY, elus_attendus_CPOP, elus_attendus_RET, elus_actuels_CSUP, elus_actuels_CMOY, elus_actuels_CPOP, elus_actuels_RET, elus_actuels_pct_CSUP, elus_actuels_pct_CMOY, elus_actuels_pct_CPOP, elus_actuels_pct_RET, ir_elus_CSUP, ir_elus_CMOY, ir_elus_CPOP, ir_elus_RET, type_commune, nuance, mediane_niveau_vie, part_bac5, pariscore, raison, pariscore_wo_ret, alert_ret\n\nData (1 row):\n  Row 1:\n    __id: 13404\n    nom: Rennes\n    code_circo: 35238\n    population_totale: 216815\n    population_consideree: 140422\n    taille_liste: 61\n    tot_elus_attendus: 59.010000000000005\n    pop_pct_CSUP: 21.98\n    pop_pct_CMOY: 22.13\n    pop_pct_CPOP: 30.2\n    pop_pct_RET: 25.69\n    elus_attendus_CSUP: 12.97\n    elus_attendus_CMOY: 13.06\n    elus_attendus_CPOP: 17.82\n    elus_attendus_RET: 15.16\n    elus_actuels_CSUP: 49\n    elus_actuels_CMOY: 7\n    elus_actuels_CPOP: 2\n    elus_actuels_RET: 1\n    elus_actuels_pct_CSUP: 83.05\n    elus_actuels_pct_CMOY: 11.86\n    elus_actuels_pct_CPOP: 3.39\n    elus_actuels_pct_RET: 1.69\n    ir_elus_CSUP: 0.61\n    ir_elus_CMOY: -0.1\n    ir_elus_CPOP: -0.27\n    ir_elus_RET: -0.24\n    type_commune: Grands centres urbains\n    nuance: Gauche\n    mediane_niveau_vie: 22770\n    part_bac5: 24.1\n    pariscore: F-\n    raison: Situation de domination structurelle extrême. Les classes supérieures monopolisent quasi totalement ...\n    pariscore_wo_ret: F-\n    alert_ret: Précision du pari-score : très bonne. L'absence de données suffisantes à propos des retraité·es ne s..."
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:37Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "bureaux de vote adresses électeurs",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 22 dataset(s) for query: 'bureaux de vote adresses électeurs'\nPage 1 of results:\n\n1. Bureaux de vote et adresses de leurs électeurs\n   ID: 649998d50f6f27459dc6cf5b\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: adresses-des-electeurs, bureaux-de-vote, reu\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/bureaux-de-vote-et-adresses-de-leurs-electeurs\n\n2. Proposition de contours des bureaux de vote\n   ID: 649db7717013c57353de997a\n   Organization: data.gouv.fr\n   Tags: bureaux-de-vote, elections\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/proposition-de-contours-des-bureaux-de-vote\n\n3. Citoyenneté - Découpage des bureaux de vote - Grand Poitiers Données de référence\n   ID: 612da9f3a811778045ef6a5c\n   Description: Délimite les périmètres des bureaux de vote de la ville de Poitiers, avec le numéro de bureau, le canton, la circonscription législative et le site accueillant le scrutin. Le découpage respecte les......\n   Organization: Grand Poitiers Open Data\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/citoyennete-decoupage-des-bureaux-de-vote-grand-poitiers-donnees-de-reference-1\n\n4. Secteurs des bureaux de vote en 2021\n   ID: 6245279542c7581857eb4ce1\n   Organization: Ville de Paris\n   Tags: citoyennete, ddct, election, suffrages\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/secteurs-des-bureaux-de-vote-en-2021\n\n5. Secteurs des bureaux de vote 2022\n   ID: 59590d09a3a7291dd09c7fec\n   Organization: Ville de Paris\n   Tags: bureau-de-vote, citoyennete, ddct, election, suffrages\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/secteurs-des-bureaux-de-vote-2022\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 22 dataset(s) for query: 'bureaux de vote adresses électeurs'\nPage 1 of results:\n\n1. Bureaux de vote et adresses de leurs électeurs\n   ID: 649998d50f6f27459dc6cf5b\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: adresses-des-electeurs, bureaux-de-vote, reu\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/bureaux-de-vote-et-adresses-de-leurs-electeurs\n\n2. Proposition de contours des bureaux de vote\n   ID: 649db7717013c57353de997a\n   Organization: data.gouv.fr\n   Tags: bureaux-de-vote, elections\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/proposition-de-contours-des-bureaux-de-vote\n\n3. Citoyenneté - Découpage des bureaux de vote - Grand Poitiers Données de référence\n   ID: 612da9f3a811778045ef6a5c\n   Description: Délimite les périmètres des bureaux de vote de la ville de Poitiers, avec le numéro de bureau, le canton, la circonscription législative et le site accueillant le scrutin. Le découpage respecte les......\n   Organization: Grand Poitiers Open Data\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/citoyennete-decoupage-des-bureaux-de-vote-grand-poitiers-donnees-de-reference-1\n\n4. Secteurs des bureaux de vote en 2021\n   ID: 6245279542c7581857eb4ce1\n   Organization: Ville de Paris\n   Tags: citoyennete, ddct, election, suffrages\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/secteurs-des-bureaux-de-vote-en-2021\n\n5. Secteurs des bureaux de vote 2022\n   ID: 59590d09a3a7291dd09c7fec\n   Organization: Ville de Paris\n   Tags: bureau-de-vote, citoyennete, ddct, election, suffrages\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/secteurs-des-bureaux-de-vote-2022\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "649998d50f6f27459dc6cf5b"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Bureaux de vote et adresses de leurs électeurs\nDataset ID: 649998d50f6f27459dc6cf5b\nTotal resources: 7\n\n1. table-adresses-reu.parquet\n   Resource ID: 8b5c75df-24ea-43ae-9f4c-6f5c633e942b\n   Format: parquet\n   Size: 467.9 MB\n   MIME type: application/octet-stream\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-135723/table-adresses-reu.parquet\n\n2. table-adresses-reu.csv\n   Resource ID: 5142e8a9-15f3-4216-b865-deeeb02dde70\n   Format: csv\n   Size: 1.8 GB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-140445/table-adresses-reu.csv\n\n3. dictionnaire-donnees-adresses.pdf\n   Resource ID: 45ff30bb-d1f1-416a-8fcd-1dcc04edd520\n   Format: pdf\n   Size: 286.5 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230627-150505/dictionnaire-donnees-adresses.pdf\n\n4. table-bv-reu.parquet\n   Resource ID: 6faacf36-1897-43f5-bf39-af8b41a15d26\n   Format: parquet\n   Size: 3.3 MB\n   MIME type: application/octet-stream\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-135809/table-bv-reu.parquet\n\n5. table-bv-reu.csv\n   Resource ID: 3a321a06-9e05-4de9-8dd3-421da6abd4c5\n   Format: csv\n   Size: 6.6 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-135808/table-bv-reu.csv\n\n6. dictionnaire-donnees-bv.pdf\n   Resource ID: 8c5fa7a6-d5c6-439f-9d45-9e11865bc6d4\n   Format: pdf\n   Size: 281.8 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230627-150505/dictionnaire-donnees-bv.pdf\n\n7. methodologie.pdf\n   Resource ID: 5ba909b1-6900-42d2-b970-ceae2f381abd\n   Format: pdf\n   Size: 416.9 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230627-150505/methodologie.pdf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Bureaux de vote et adresses de leurs électeurs\nDataset ID: 649998d50f6f27459dc6cf5b\nTotal resources: 7\n\n1. table-adresses-reu.parquet\n   Resource ID: 8b5c75df-24ea-43ae-9f4c-6f5c633e942b\n   Format: parquet\n   Size: 467.9 MB\n   MIME type: application/octet-stream\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-135723/table-adresses-reu.parquet\n\n2. table-adresses-reu.csv\n   Resource ID: 5142e8a9-15f3-4216-b865-deeeb02dde70\n   Format: csv\n   Size: 1.8 GB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-140445/table-adresses-reu.csv\n\n3. dictionnaire-donnees-adresses.pdf\n   Resource ID: 45ff30bb-d1f1-416a-8fcd-1dcc04edd520\n   Format: pdf\n   Size: 286.5 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230627-150505/dictionnaire-donnees-adresses.pdf\n\n4. table-bv-reu.parquet\n   Resource ID: 6faacf36-1897-43f5-bf39-af8b41a15d26\n   Format: parquet\n   Size: 3.3 MB\n   MIME type: application/octet-stream\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-135809/table-bv-reu.parquet\n\n5. table-bv-reu.csv\n   Resource ID: 3a321a06-9e05-4de9-8dd3-421da6abd4c5\n   Format: csv\n   Size: 6.6 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230626-135808/table-bv-reu.csv\n\n6. dictionnaire-donnees-bv.pdf\n   Resource ID: 8c5fa7a6-d5c6-439f-9d45-9e11865bc6d4\n   Format: pdf\n   Size: 281.8 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230627-150505/dictionnaire-donnees-bv.pdf\n\n7. methodologie.pdf\n   Resource ID: 5ba909b1-6900-42d2-b970-ceae2f381abd\n   Format: pdf\n   Size: 416.9 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/bureaux-de-vote-et-adresses-de-leurs-electeurs/20230627-150505/methodologie.pdf\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "3a321a06-9e05-4de9-8dd3-421da6abd4c5",
+      "page_size": 20,
+      "filter_column": "code_commune",
+      "filter_value": "01004",
+      "filter_operator": "exact"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: table-bv-reu.csv\nResource ID: 3a321a06-9e05-4de9-8dd3-421da6abd4c5\nDataset: Bureaux de vote et adresses de leurs électeurs (ID: 649998d50f6f27459dc6cf5b)\n\nFilter: code_commune exact 01004\n\nTotal rows (Tabular API): 8\nTotal pages: 1 (page size: 20)\nRetrieved: 8 row(s) from page 1\nColumns: __id, id_brut_reu, id_brut_insee, code_commune, code, libelle_reu, num_voie_reu, voie_reu, cp_reu, commune_reu, nb_adresses_initial, nb_adresses_final, id_brut_miom\n\nData (8 rows):\n  Row 1:\n    __id: 3\n    id_brut_reu: 01004_1\n    id_brut_insee: 1004_1\n    code_commune: 01004\n    code: 1\n    libelle_reu: b1 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 633\n    nb_adresses_final: 630\n    id_brut_miom: 01004_0001\n  Row 2:\n    __id: 4\n    id_brut_reu: 01004_2\n    id_brut_insee: 1004_2\n    code_commune: 01004\n    code: 2\n    libelle_reu: b2 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 640\n    nb_adresses_final: 638\n    id_brut_miom: 01004_0002\n  Row 3:\n    __id: 5\n    id_brut_reu: 01004_3\n    id_brut_insee: 1004_3\n    code_commune: 01004\n    code: 3\n    libelle_reu: b3 chateau des echelles\n    num_voie_reu:  \n    voie_reu: RUE DES ARENES\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 736\n    nb_adresses_final: 730\n    id_brut_miom: 01004_0003\n  Row 4:\n    __id: 6\n    id_brut_reu: 01004_4\n    id_brut_insee: 1004_4\n    code_commune: 01004\n    code: 4\n    libelle_reu: b4 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 532\n    nb_adresses_final: 527\n    id_brut_miom: 01004_0004\n  Row 5:\n    __id: 7\n    id_brut_reu: 01004_5\n    id_brut_insee: 1004_5\n    code_commune: 01004\n    code: 5\n    libelle_reu: b5 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 531\n    nb_adresses_final: 529\n    id_brut_miom: 01004_0005\n  Row 6:\n    __id: 8\n    id_brut_reu: 01004_6\n    id_brut_insee: 1004_6\n    code_commune: 01004\n    code: 6\n    libelle_reu: b6 groupe scolaire jules ferry\n    num_voie_reu:  \n    voie_reu: RUE VICTOR HUGO\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 628\n    nb_adresses_final: 627\n    id_brut_miom: 01004_0006\n  Row 7:\n    __id: 9\n    id_brut_reu: 01004_7\n    id_brut_insee: 1004_7\n    code_commune: 01004\n    code: 7\n    libelle_reu: b7 ecole maternelle de tiret\n    num_voie_reu:  \n    voie_reu: RUE JACQUES PREVERT\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 582\n    nb_adresses_final: 577\n    id_brut_miom: 01004_0007\n  Row 8:\n    __id: 10\n    id_brut_reu: 01004_8\n    id_brut_insee: 1004_8\n    code_commune: 01004\n    code: 8\n    libelle_reu: b8 ecole maternelle de tiret\n    num_voie_reu:  \n    voie_reu: RUE JACQUES PREVERT\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 691\n    nb_adresses_final: 688\n    id_brut_miom: 01004_0008"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: table-bv-reu.csv\nResource ID: 3a321a06-9e05-4de9-8dd3-421da6abd4c5\nDataset: Bureaux de vote et adresses de leurs électeurs (ID: 649998d50f6f27459dc6cf5b)\n\nFilter: code_commune exact 01004\n\nTotal rows (Tabular API): 8\nTotal pages: 1 (page size: 20)\nRetrieved: 8 row(s) from page 1\nColumns: __id, id_brut_reu, id_brut_insee, code_commune, code, libelle_reu, num_voie_reu, voie_reu, cp_reu, commune_reu, nb_adresses_initial, nb_adresses_final, id_brut_miom\n\nData (8 rows):\n  Row 1:\n    __id: 3\n    id_brut_reu: 01004_1\n    id_brut_insee: 1004_1\n    code_commune: 01004\n    code: 1\n    libelle_reu: b1 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 633\n    nb_adresses_final: 630\n    id_brut_miom: 01004_0001\n  Row 2:\n    __id: 4\n    id_brut_reu: 01004_2\n    id_brut_insee: 1004_2\n    code_commune: 01004\n    code: 2\n    libelle_reu: b2 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 640\n    nb_adresses_final: 638\n    id_brut_miom: 01004_0002\n  Row 3:\n    __id: 5\n    id_brut_reu: 01004_3\n    id_brut_insee: 1004_3\n    code_commune: 01004\n    code: 3\n    libelle_reu: b3 chateau des echelles\n    num_voie_reu:  \n    voie_reu: RUE DES ARENES\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 736\n    nb_adresses_final: 730\n    id_brut_miom: 01004_0003\n  Row 4:\n    __id: 6\n    id_brut_reu: 01004_4\n    id_brut_insee: 1004_4\n    code_commune: 01004\n    code: 4\n    libelle_reu: b4 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 532\n    nb_adresses_final: 527\n    id_brut_miom: 01004_0004\n  Row 5:\n    __id: 7\n    id_brut_reu: 01004_5\n    id_brut_insee: 1004_5\n    code_commune: 01004\n    code: 5\n    libelle_reu: b5 espace 1500\n    num_voie_reu:  \n    voie_reu: AVENUE LEON BLUM\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 531\n    nb_adresses_final: 529\n    id_brut_miom: 01004_0005\n  Row 6:\n    __id: 8\n    id_brut_reu: 01004_6\n    id_brut_insee: 1004_6\n    code_commune: 01004\n    code: 6\n    libelle_reu: b6 groupe scolaire jules ferry\n    num_voie_reu:  \n    voie_reu: RUE VICTOR HUGO\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 628\n    nb_adresses_final: 627\n    id_brut_miom: 01004_0006\n  Row 7:\n    __id: 9\n    id_brut_reu: 01004_7\n    id_brut_insee: 1004_7\n    code_commune: 01004\n    code: 7\n    libelle_reu: b7 ecole maternelle de tiret\n    num_voie_reu:  \n    voie_reu: RUE JACQUES PREVERT\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 582\n    nb_adresses_final: 577\n    id_brut_miom: 01004_0007\n  Row 8:\n    __id: 10\n    id_brut_reu: 01004_8\n    id_brut_insee: 1004_8\n    code_commune: 01004\n    code: 8\n    libelle_reu: b8 ecole maternelle de tiret\n    num_voie_reu:  \n    voie_reu: RUE JACQUES PREVERT\n    cp_reu: 01500\n    commune_reu: amberieu en bugey\n    nb_adresses_initial: 691\n    nb_adresses_final: 688\n    id_brut_miom: 01004_0008"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

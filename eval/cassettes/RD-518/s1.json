@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:57Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "indices de position sociale lycées",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 9 dataset(s) for query: 'indices de position sociale lycées'\nPage 1 of results:\n\n1. Indices de position sociale des lycées (2016-2021)\n   ID: 63bce30c70d6d100b09dde9a\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleves, etablissements-dont-ips, lycees\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-lycees-de-france-metropolitaine-et-drom\n\n2. Indices de position sociale dans les lycées (2022)\n   ID: 64265b673eb38d94e6538672\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleves, eleves-etudiants-et-apprentis, lycees\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-lycees-a-partir-de-2022\n\n3. Indices de position sociale des lycées (à partir de 2023)\n   ID: 664d720768d6ab64e06740f0\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleve, etablissement-prive-sous-contrat, etablissement-public, etablissements-dont-ips, indice-de-position-sociale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ips-lycees-a-partir-de-2023\n\n4. Indices de position sociale des lycées franciliens (à partir de 2023)\n   ID: 685e6fe09d65365742cfee50\n   Organization: Région Île-de-France\n   Tags: eleve, enseignement-formation-recherche, lycee, lyceen, lyceenne\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-des-lycees-franciliens-a-partir-de-2023\n\n5. Indices de position sociale dans les lycées 2016-2021 - Académie de Rennes\n   ID: 64028c61203937b9f4be3876\n   Organization: Région Bretagne\n   Tags: education-formation, eleves, lycees\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-lycees-2016-2021-academie-de-rennes\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 9 dataset(s) for query: 'indices de position sociale lycées'\nPage 1 of results:\n\n1. Indices de position sociale des lycées (2016-2021)\n   ID: 63bce30c70d6d100b09dde9a\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleves, etablissements-dont-ips, lycees\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-lycees-de-france-metropolitaine-et-drom\n\n2. Indices de position sociale dans les lycées (2022)\n   ID: 64265b673eb38d94e6538672\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleves, eleves-etudiants-et-apprentis, lycees\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-lycees-a-partir-de-2022\n\n3. Indices de position sociale des lycées (à partir de 2023)\n   ID: 664d720768d6ab64e06740f0\n   Organization: Ministères de l'Éducation nationale\n   Tags: eleve, etablissement-prive-sous-contrat, etablissement-public, etablissements-dont-ips, indice-de-position-sociale\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/ips-lycees-a-partir-de-2023\n\n4. Indices de position sociale des lycées franciliens (à partir de 2023)\n   ID: 685e6fe09d65365742cfee50\n   Organization: Région Île-de-France\n   Tags: eleve, enseignement-formation-recherche, lycee, lyceen, lyceenne\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-des-lycees-franciliens-a-partir-de-2023\n\n5. Indices de position sociale dans les lycées 2016-2021 - Académie de Rennes\n   ID: 64028c61203937b9f4be3876\n   Organization: Région Bretagne\n   Tags: education-formation, eleves, lycees\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indices-de-position-sociale-dans-les-lycees-2016-2021-academie-de-rennes\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "64265b673eb38d94e6538672"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Indices de position sociale dans les lycées (2022)\nDataset ID: 64265b673eb38d94e6538672\nTotal resources: 4\n\n1. fr-en-ips-lycees-ap2022.csv\n   Resource ID: df2cbcb3-da0a-4265-a24e-c36f2c787db2\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-lycees-ap2022/exports/csv?use_labels=true\n\n2. fr-en-ips-lycees-ap2022.json\n   Resource ID: b46c0301-9b0c-4889-99af-af4d66bc1391\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-lycees-ap2022/exports/json\n\n3. IPS-PCS - Table de passage - Septembre 2022.xlsx\n   Resource ID: f795b99f-cc4e-4ca7-af29-00988f25ba4e\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-lycees-ap2022/attachments/ips_pcs_table_de_passage_septembre_2022_xlsx\n\n4. Table de passage IPS-PCS 2022.xlsx\n   Resource ID: 309884f5-545d-4225-ac4b-3c2259d70509\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-lycees-ap2022/attachments/table_de_passage_ips_pcs_2022_xlsx\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Indices de position sociale dans les lycées (2022)\nDataset ID: 64265b673eb38d94e6538672\nTotal resources: 4\n\n1. fr-en-ips-lycees-ap2022.csv\n   Resource ID: df2cbcb3-da0a-4265-a24e-c36f2c787db2\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-lycees-ap2022/exports/csv?use_labels=true\n\n2. fr-en-ips-lycees-ap2022.json\n   Resource ID: b46c0301-9b0c-4889-99af-af4d66bc1391\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-ips-lycees-ap2022/exports/json\n\n3. IPS-PCS - Table de passage - Septembre 2022.xlsx\n   Resource ID: f795b99f-cc4e-4ca7-af29-00988f25ba4e\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-lycees-ap2022/attachments/ips_pcs_table_de_passage_septembre_2022_xlsx\n\n4. Table de passage IPS-PCS 2022.xlsx\n   Resource ID: 309884f5-545d-4225-ac4b-3c2259d70509\n   Format: vnd.openxmlformats-officedocument.spreadsheetml.sheet\n   Type: other\n   URL: https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-ips-lycees-ap2022/attachments/table_de_passage_ips_pcs_2022_xlsx\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "df2cbcb3-da0a-4265-a24e-c36f2c787db2",
+      "page_size": 5,
+      "filter_column": "UAI",
+      "filter_value": "0010032E",
+      "filter_operator": "exact"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: fr-en-ips-lycees-ap2022.csv\nResource ID: df2cbcb3-da0a-4265-a24e-c36f2c787db2\nDataset: Indices de position sociale dans les lycées (2022) (ID: 64265b673eb38d94e6538672)\n\nFilter: UAI exact 0010032E\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Rentrée scolaire, Académie, Code du département, Département, UAI, Nom de l'établissment, Code INSEE de la commune, Nom de la commune, Secteur, Type de lycée, Effectifs voie GT, Effectifs voie PRO, Effectifs Ensemble GT-PRO, IPS voie GT, IPS voie PRO, IPS Ensemble GT-PRO, Ecart-type de l'IPS voie GT, Ecart-type de l'IPS voie PRO\n\nData (1 row):\n  Row 1:\n    __id: 1\n    Rentrée scolaire: 2022-2023\n    Académie: LYON\n    Code du département: 001\n    Département: AIN\n    UAI: 0010032E\n    Nom de l'établissment: LYCEE POLYVALENT XAVIER BICHAT\n    Code INSEE de la commune: 01269\n    Nom de la commune: NANTUA\n    Secteur: public\n    Type de lycée: LPO\n    Effectifs voie GT: 475\n    Effectifs voie PRO: 109\n    Effectifs Ensemble GT-PRO: 584\n    IPS voie GT: 105.9\n    IPS voie PRO: 74.8\n    IPS Ensemble GT-PRO: 100.1\n    Ecart-type de l'IPS voie GT: 36.6\n    Ecart-type de l'IPS voie PRO: 24.7"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: fr-en-ips-lycees-ap2022.csv\nResource ID: df2cbcb3-da0a-4265-a24e-c36f2c787db2\nDataset: Indices de position sociale dans les lycées (2022) (ID: 64265b673eb38d94e6538672)\n\nFilter: UAI exact 0010032E\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Rentrée scolaire, Académie, Code du département, Département, UAI, Nom de l'établissment, Code INSEE de la commune, Nom de la commune, Secteur, Type de lycée, Effectifs voie GT, Effectifs voie PRO, Effectifs Ensemble GT-PRO, IPS voie GT, IPS voie PRO, IPS Ensemble GT-PRO, Ecart-type de l'IPS voie GT, Ecart-type de l'IPS voie PRO\n\nData (1 row):\n  Row 1:\n    __id: 1\n    Rentrée scolaire: 2022-2023\n    Académie: LYON\n    Code du département: 001\n    Département: AIN\n    UAI: 0010032E\n    Nom de l'établissment: LYCEE POLYVALENT XAVIER BICHAT\n    Code INSEE de la commune: 01269\n    Nom de la commune: NANTUA\n    Secteur: public\n    Type de lycée: LPO\n    Effectifs voie GT: 475\n    Effectifs voie PRO: 109\n    Effectifs Ensemble GT-PRO: 584\n    IPS voie GT: 105.9\n    IPS voie PRO: 74.8\n    IPS Ensemble GT-PRO: 100.1\n    Ecart-type de l'IPS voie GT: 36.6\n    Ecart-type de l'IPS voie PRO: 24.7"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -61,6 +61,9 @@ from typing import Any
 # Constantes : SPEC §2, §3, §5.2, §7 bis
 # ---------------------------------------------------------------------------
 CODES = ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "NR")
+FICHIERS_ANNEXES = frozenset({"verdicts-croises.jsonl"})
+"""Fichiers `.jsonl` admis à côté des brouillons d'un jeu de développement : verdicts de la
+contre-vérification croisée (`verifier_jeu_croise.py`), jamais lus comme brouillons (O4b)."""
 TACHES = {
     "Q": "Question",
     "RD": "Recherche de données",
@@ -794,6 +797,8 @@ def lire_brouillons(construction: Path) -> tuple[list[tuple[str, int, Any]], lis
     if not construction.is_dir():
         return items, [f"dossier des brouillons introuvable : {construction}"]
     for chemin in sorted(construction.glob("*.jsonl")):
+        if chemin.name in FICHIERS_ANNEXES:
+            continue
         if chemin.stem not in CODES:
             erreurs.append(f"{chemin.name} : fichier inattendu (codes admis : {', '.join(CODES)})")
             continue
@@ -1751,7 +1756,7 @@ def main(argv: list[str] | None = None, client: ClientHTTP | None = None) -> int
     a = analyser(argv)
     for option in ("version", "reference"):
         valeur = getattr(a, option, "v1")
-        if not re.fullmatch(r"v\d+(\.\d+)*", valeur):
+        if not re.fullmatch(r"v\d+(\.\d+)*|dev\d+", valeur):
             print(f"{option} invalide : {valeur!r}", file=sys.stderr)
             return 2
     try:

@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:42Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "allocataires de l'assurance chômage",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 8 dataset(s) for query: 'allocataires de l'assurance chômage'\nPage 1 of results:\n\n1. Allocataires de l'assurance chômage\n   ID: 561fa8bbc751df54a1cdbb48\n   Organization: France Travail\n   Tags: allocataire, assurance-chomage, indemnisation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocataires-de-lassurance-chomage\n\n2. Montant d'allocation chômage et salaires de référence des allocataires de l'Assurance chômage\n   ID: 57235a51c751df3898fcca0d\n   Organization: France Travail\n   Tags: allocation, assurance-chomage, indemnisation, salaire-de-reference\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/montant-dallocation-chomage-et-salaires-de-reference-des-allocataires-de-lassurance-chomage\n\n3. Indicateurs de suivi de l'Assurance chômage - par département\n   ID: 63a4384ab7505d95e39dde9a\n   Organization: Unédic\n   Tags: allocataires-de-lassurance-chomage, allocataires-indemnises, allocataires-pris-en-charge, depenses\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indicateurs-de-suivi-de-lassurance-chomage-par-departement\n\n4. Dépenses et recettes de l'Assurance chômage\n   ID: 63a4384a1b57813fbca80dc8\n   Organization: Unédic\n   Tags: depenses, depenses-recettes, finances, recettes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/depenses-et-recettes-de-lassurance-chomage\n\n5. Indicateurs de suivi de l'Assurance chômage - total France\n   ID: 665fabcc97cb6fb80b9fc8f3\n   Organization: Unédic\n   Tags: allocataires-de-lassurance-chomage, allocataires-indemnises, allocataires-pris-en-charge, depenses\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/indicateurs-de-suivi-de-lassurance-chomage-total-france\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 8 dataset(s) for query: 'allocataires de l'assurance chômage'\nPage 1 of results:\n\n1. Allocataires de l'assurance chômage\n   ID: 561fa8bbc751df54a1cdbb48\n   Organization: France Travail\n   Tags: allocataire, assurance-chomage, indemnisation\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocataires-de-lassurance-chomage\n\n2. Montant d'allocation chômage et salaires de référence des allocataires de l'Assurance chômage\n   ID: 57235a51c751df3898fcca0d\n   Organization: France Travail\n   Tags: allocation, assurance-chomage, indemnisation, salaire-de-reference\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/montant-dallocation-chomage-et-salaires-de-reference-des-allocataires-de-lassurance-chomage\n\n3. Indicateurs de suivi de l'Assurance chômage - par département\n   ID: 63a4384ab7505d95e39dde9a\n   Organization: Unédic\n   Tags: allocataires-de-lassurance-chomage, allocataires-indemnises, allocataires-pris-en-charge, depenses\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/indicateurs-de-suivi-de-lassurance-chomage-par-departement\n\n4. Dépenses et recettes de l'Assurance chômage\n   ID: 63a4384a1b57813fbca80dc8\n   Organization: Unédic\n   Tags: depenses, depenses-recettes, finances, recettes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/depenses-et-recettes-de-lassurance-chomage\n\n5. Indicateurs de suivi de l'Assurance chômage - total France\n   ID: 665fabcc97cb6fb80b9fc8f3\n   Organization: Unédic\n   Tags: allocataires-de-lassurance-chomage, allocataires-indemnises, allocataires-pris-en-charge, depenses\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/indicateurs-de-suivi-de-lassurance-chomage-total-france\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "561fa8bbc751df54a1cdbb48"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Allocataires de l'assurance chômage\nDataset ID: 561fa8bbc751df54a1cdbb48\nTotal resources: 2\n\n1. Séries brutes et CVS sur l’indemnisation (France métropolitaine et France entière)\n   Resource ID: 67cf122f-2ae7-404a-8f78-c43c3dcc7271\n   Format: excel\n   Type: api\n   URL: https://statistiques.francetravail.org/indem/teleindemalloc\n\n2. Séries brutes sur l’indemnisation (par régions et départements)\n   Resource ID: 4b599eb2-0b15-48bd-bac0-7849ca995797\n   Format: excel\n   Type: api\n   URL: https://statistiques.francetravail.org/indem/teleindemalloc\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Allocataires de l'assurance chômage\nDataset ID: 561fa8bbc751df54a1cdbb48\nTotal resources: 2\n\n1. Séries brutes et CVS sur l’indemnisation (France métropolitaine et France entière)\n   Resource ID: 67cf122f-2ae7-404a-8f78-c43c3dcc7271\n   Format: excel\n   Type: api\n   URL: https://statistiques.francetravail.org/indem/teleindemalloc\n\n2. Séries brutes sur l’indemnisation (par régions et départements)\n   Resource ID: 4b599eb2-0b15-48bd-bac0-7849ca995797\n   Format: excel\n   Type: api\n   URL: https://statistiques.francetravail.org/indem/teleindemalloc\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

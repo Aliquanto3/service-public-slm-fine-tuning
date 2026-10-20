@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:40Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "offres d'emploi diffusées France Travail",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'offres d'emploi diffusées France Travail'\nPage 1 of results:\n\n1. Offres d'emploi diffusées à France Travail\n   ID: 561fc15688ee3836b1628efc\n   Organization: France Travail\n   Tags: assurance-chomage, employeur, offre-d-emploi\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/offres-demploi-diffusees-a-france-travail\n\n2. Inscrits à France Travail - Stock - France (trimestrielles, brutes)\n   ID: 66df098424d76afbdd70937b\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-stock-france-trimestrielles-brutes\n\n3. Part d'actifs selon le mode de transport principalement utilisé pour aller travailler\n   ID: 69b987f0c23eb0dd77b7ef87\n   Description: L’indicateur représente la part d'actifs occupés de 15 ans ou plus qui résident dans le territoire selon le mode de transport principal utilisé pour aller travailler  : Marche, Vélo (depuis 2017), Deu...\n   Organization: Tableau de bord des mobilités durables\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/part-dactifs-selon-le-mode-de-transport-principalement-utilise-pour-aller-travailler-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'offres d'emploi diffusées France Travail'\nPage 1 of results:\n\n1. Offres d'emploi diffusées à France Travail\n   ID: 561fc15688ee3836b1628efc\n   Organization: France Travail\n   Tags: assurance-chomage, employeur, offre-d-emploi\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/offres-demploi-diffusees-a-france-travail\n\n2. Inscrits à France Travail - Stock - France (trimestrielles, brutes)\n   ID: 66df098424d76afbdd70937b\n   Organization: Dares - statistiques Travail\n   Tags: chomage-et-inscrits-a-france-travail, inscrits-a-france-travail\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/inscrits-a-france-travail-stock-france-trimestrielles-brutes\n\n3. Part d'actifs selon le mode de transport principalement utilisé pour aller travailler\n   ID: 69b987f0c23eb0dd77b7ef87\n   Description: L’indicateur représente la part d'actifs occupés de 15 ans ou plus qui résident dans le territoire selon le mode de transport principal utilisé pour aller travailler  : Marche, Vélo (depuis 2017), Deu...\n   Organization: Tableau de bord des mobilités durables\n   Resources: 8\n   URL: https://www.data.gouv.fr/datasets/part-dactifs-selon-le-mode-de-transport-principalement-utilise-pour-aller-travailler-1\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -36,7 +36,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 MOTIF_DEV = re.compile(r"^dev[0-9]+$")
 VERSIONS_REFERENCE = ("v1.0", "v1.1")
@@ -48,6 +48,9 @@ NOM_VERDICTS = "verdicts-croises.jsonl"
 NOM_RAPPORT = "rapport-verification-croisee.json"
 USAGE_BUDGET = "juge-tiers-openrouter"
 DEFAUT_JUGES = ("deepseek", "glm")
+CLES_NON_TEXTE = frozenset({"consigne", "type"})
+"""Clés d'entrée ignorées par la disjonction : la consigne et le type de courrier CT, valeurs
+d'un vocabulaire fermé (« accusé de réception ») communes à tous les jeux (story O4b)."""
 
 Appelant = Callable[[str, str], str]
 """`appeler(nom_du_juge, prompt) -> texte brut de la réponse` (injecté dans les tests)."""
@@ -81,7 +84,7 @@ def _textes(valeur: Any) -> Iterator[str]:
         yield valeur
     elif isinstance(valeur, Mapping):
         for cle, sous in valeur.items():
-            if cle != "consigne":
+            if cle not in CLES_NON_TEXTE:
                 yield from _textes(sous)
     elif isinstance(valeur, list):
         for sous in valeur:
@@ -115,19 +118,52 @@ def urls_item(item: Mapping[str, Any]) -> set[str]:
     return urls
 
 
+RE_DOC_SOURCE = re.compile(r"(?:^|/)((?:F|N|R)[0-9]+|LEGIARTI[0-9]+)$")
+"""Identifiant de fiche service-public ou d'article LEGI en fin de chemin d'URL."""
+
+
+def sources_item(item: Mapping[str, Any]) -> set[str]:
+    """Identifiants de document des provenances (story O4b, revue) : fiche (`doc_id`, ou
+    fin d'URL `F…`), article LEGI (`legiarti`), ligne d'un fichier de corpus (`fichier` ou
+    nom du fichier de l'URL, et `ligne`). Une provenance sans `url` ne passe donc plus à côté
+    d'un document déjà cité."""
+    ids: set[str] = set()
+    for source in item.get("provenance") or []:
+        if not isinstance(source, Mapping):
+            continue
+        url = source.get("url") if isinstance(source.get("url"), str) else ""
+        chemin = unquote(urlsplit(url.strip()).path).rstrip("/") if url else ""
+        for cle in ("doc_id", "legiarti"):
+            if isinstance(source.get(cle), str) and source[cle].strip():
+                ids.add(f"doc:{source[cle].strip()}")
+        trouve = RE_DOC_SOURCE.search(chemin)
+        if trouve:
+            ids.add(f"doc:{trouve.group(1)}")
+        ligne = source.get("ligne")
+        if type(ligne) is int:
+            fichier = source.get("fichier") if isinstance(source.get("fichier"), str) else ""
+            fichier = fichier.strip() or chemin.rsplit("/", 1)[-1]
+            if fichier:
+                ids.add(f"ligne:{fichier.lower()}#{ligne}")
+    return ids
+
+
 def textes_item(item: Mapping[str, Any]) -> list[str]:
-    """Textes de `entree` (hors `consigne`), normalisés."""
+    """Textes de `entree` (hors `consigne` et `type`), normalisés."""
     return [t for t in (_normaliser(x) for x in _textes(item.get("entree"))) if t]
 
 
 def textes_exemple(exemple: Mapping[str, Any]) -> tuple[list[str], set[str]]:
-    """Textes normalisés et URL d'un exemple d'entraînement (`messages`, `meta.source`)."""
+    """Textes normalisés et URL d'un exemple d'entraînement (`messages`, `meta.source`) ou
+    d'une paire de préférences (`prompt`, `chosen`, `rejected`)."""
     brut: list[str] = []
     urls: set[str] = set()
-    for message in exemple.get("messages") or []:
-        contenu = message.get("content") if isinstance(message, Mapping) else None
-        if isinstance(contenu, str):
-            brut.append(contenu)
+    for cle in ("messages", "prompt", "chosen", "rejected"):
+        messages = exemple.get(cle)
+        for message in messages if isinstance(messages, list) else []:
+            contenu = message.get("content") if isinstance(message, Mapping) else None
+            if isinstance(contenu, str):
+                brut.append(contenu)
     meta = exemple.get("meta")
     source = meta.get("source") if isinstance(meta, Mapping) else None
     if isinstance(source, str) and source.startswith("http"):
@@ -162,6 +198,7 @@ class _Reference:
     def __init__(self, n: int) -> None:
         self.n = n
         self.urls: dict[str, str] = {}
+        self.sources: dict[str, str] = {}
         self.textes: dict[str, str] = {}
         self.ids: dict[str, str] = {}
         self.grammes: dict[tuple[str, ...], list[int]] = {}
@@ -202,7 +239,7 @@ class _Reference:
 
 
 def construire_reference(racine: Path, n: int) -> tuple[_Reference, list[str]]:
-    """Index de v1.0, v1.1, `data/train/v*/train.jsonl` et des amorces des runs seed
+    """Index de v1.0, v1.1, `data/train/v*/{train,preferences}.jsonl` et des amorces des runs seed
     (`runs/data-seed/*/amorces.jsonl`) ; liste des jeux lus."""
     reference = _Reference(n)
     lus: list[str] = []
@@ -215,16 +252,22 @@ def construire_reference(racine: Path, n: int) -> tuple[_Reference, list[str]]:
             nom = f"{version}/{item.get('id', '?')}"
             reference.ids.setdefault(str(item.get("id")), nom)
             reference.ajouter(nom, textes_item(item), urls_item(item))
+            for source in sources_item(item):
+                reference.sources.setdefault(source, nom)
     train = racine / "data" / "train"
     if train.is_dir():
         for dossier in sorted(train.glob("v*")):
-            chemin = dossier / "train.jsonl"
-            if not chemin.is_file():
-                continue
-            lus.append(f"data/train/{dossier.name}")
-            for rang, exemple in enumerate(lire_jsonl(chemin), 1):
-                textes, urls = textes_exemple(exemple)
-                reference.ajouter(f"data/train/{dossier.name}#{rang}", textes, urls)
+            for fichier in ("train.jsonl", "preferences.jsonl"):
+                chemin = dossier / fichier
+                if not chemin.is_file():
+                    continue
+                nom = f"data/train/{dossier.name}" + (
+                    "" if fichier == "train.jsonl" else "/preferences"
+                )
+                lus.append(nom)
+                for rang, exemple in enumerate(lire_jsonl(chemin), 1):
+                    textes, urls = textes_exemple(exemple)
+                    reference.ajouter(f"{nom}#{rang}", textes, urls)
     seeds = racine / "runs" / "data-seed"
     if seeds.is_dir():
         for chemin in sorted(seeds.glob("*/amorces.jsonl")):
@@ -266,6 +309,11 @@ def controler_disjonction(
             if url in reference.urls:
                 conflits.append(
                     f"{identifiant} : URL source déjà utilisée par {reference.urls[url]}"
+                )
+        for source in sorted(sources_item(item)):
+            if source in reference.sources:
+                conflits.append(
+                    f"{identifiant} : document source déjà cité par {reference.sources[source]}"
                 )
         textes = textes_item(item)
         for texte in textes:

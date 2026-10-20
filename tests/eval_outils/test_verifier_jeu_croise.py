@@ -346,3 +346,62 @@ def test_item_modifie_reverifie(depot: Path) -> None:
     ecrire(depot / "eval/construction/dev1/Q.jsonl", items)
     assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
     assert set(appels) == {items[1]["id"]}
+
+
+def test_type_de_courrier_commun_ignore(depot: Path) -> None:
+    """Le type CT (vocabulaire fermé) n'est ni un texte identique ni un recouvrement (O4b)."""
+    ct = lambda i, t: {  # noqa: E731
+        "id": i,
+        "tache": "CT",
+        "entree": {"type": "accusé de réception", "consigne": "<c>", "objet": t},
+        "provenance": [{"source": "<s>"}],
+    }
+    ecrire(depot / "eval/jeu/v1.1/items.jsonl", [ct("CT-001", mots("d", 12))])
+    assert vjc.controler_disjonction([ct("CT-501", mots("e", 12))], depot) == []
+
+
+def test_document_source_sans_url_refuse(depot: Path) -> None:
+    """Fiche, article LEGI ou ligne de corpus déjà cités : refus même sans `url` (revue O4b)."""
+    ancien = {
+        "id": "Q-001",
+        "tache": "Q",
+        "entree": {"question": mots("f", 12)},
+        "provenance": [
+            {"url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F123"},
+            {"url": "https://huggingface.co/datasets/x/resolve/abc/corpus%26A.xlsx", "ligne": 7},
+            {"legiarti": "LEGIARTI000001"},
+        ],
+    }
+    ecrire(depot / "eval/jeu/v1.1/items.jsonl", [ancien])
+
+    def nouveau(i: str, source: dict) -> dict:
+        return {"id": i, "tache": "Q", "entree": {"question": mots(i, 12)}, "provenance": [source]}
+
+    conflits = vjc.controler_disjonction(
+        [
+            nouveau("Q-501", {"doc_id": "F123"}),
+            nouveau("Q-502", {"fichier": "corpus&A.xlsx", "ligne": 7}),
+            nouveau("Q-503", {"legiarti": "LEGIARTI000001"}),
+            nouveau("Q-504", {"fichier": "corpus&A.xlsx", "ligne": 8}),
+        ],
+        depot,
+    )
+    assert sorted(c.split(" ")[0] for c in conflits if "document source" in c) == [
+        "Q-501",
+        "Q-502",
+        "Q-503",
+    ]
+
+
+def test_preferences_dans_la_disjonction(depot: Path) -> None:
+    """`data/train/v*/preferences.jsonl` (prompt, chosen, rejected) est comparé (revue O4b)."""
+    texte = mots("p", 30)
+    paire = {
+        "prompt": [{"role": "user", "content": texte}],
+        "chosen": [{"role": "assistant", "content": "<réponse-factice-1>"}],
+        "rejected": [{"role": "assistant", "content": "<réponse-factice-2>"}],
+    }
+    ecrire(depot / "data/train/v9/preferences.jsonl", [paire])
+    item = {"id": "Q-501", "tache": "Q", "entree": {"question": texte}, "provenance": []}
+    conflits = vjc.controler_disjonction([item], depot)
+    assert any("data/train/v9/preferences#1" in c for c in conflits), conflits

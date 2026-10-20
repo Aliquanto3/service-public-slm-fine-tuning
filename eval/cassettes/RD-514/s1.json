@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:48Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "ratios légaux budget primitif départemental",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'ratios légaux budget primitif départemental'\nPage 1 of results:\n\n1. Budget départemental : les ratios légaux (budget primitif)\n   ID: 57868ed4a3a7295d371add1e\n   Organization: Département des Hauts-de-Seine\n   Tags: coefficients, dette, finances, ratios\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-departemental-les-ratios-legaux-budget-primitif\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'ratios légaux budget primitif départemental'\nPage 1 of results:\n\n1. Budget départemental : les ratios légaux (budget primitif)\n   ID: 57868ed4a3a7295d371add1e\n   Organization: Département des Hauts-de-Seine\n   Tags: coefficients, dette, finances, ratios\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/budget-departemental-les-ratios-legaux-budget-primitif\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "57868ed4a3a7295d371add1e"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Budget départemental : les ratios légaux (budget primitif)\n\nID: 57868ed4a3a7295d371add1e\nSlug: budget-departemental-les-ratios-legaux-budget-primitif\nURL: https://www.data.gouv.fr/datasets/budget-departemental-les-ratios-legaux-budget-primitif/\n\nFull description: Ratios légaux du budget départemental (budget primitif)\n\n* * *\n\nCe jeu de données comporte 10 indicateurs (11 indicateurs jusqu'en 2013 et 10 depuis 2014) permettant d'estimer la santé financière des collectivités. Ils permettent de comparer les données financières entre collectivités de même strate. Pour les utiliser, il est indispensable d'en connaître les modes de calcul afin d'en discerner les avantages et les limites. Les ratios financiers sont définis par le code général des collectivités ...\n\nOrganization: Département des Hauts-de-Seine\n  Organization ID: 544e1b0888ee38289ae1ed05\n\nTags: coefficients, dette, finances, ratios\n\nResources: 2 file(s)\n\nCreated: 2012-12-17T00:00:00+00:00\nLast updated: 2022-05-20T13:15:49+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Budget départemental : les ratios légaux (budget primitif)\n\nID: 57868ed4a3a7295d371add1e\nSlug: budget-departemental-les-ratios-legaux-budget-primitif\nURL: https://www.data.gouv.fr/datasets/budget-departemental-les-ratios-legaux-budget-primitif/\n\nFull description: Ratios légaux du budget départemental (budget primitif)\n\n* * *\n\nCe jeu de données comporte 10 indicateurs (11 indicateurs jusqu'en 2013 et 10 depuis 2014) permettant d'estimer la santé financière des collectivités. Ils permettent de comparer les données financières entre collectivités de même strate. Pour les utiliser, il est indispensable d'en connaître les modes de calcul afin d'en discerner les avantages et les limites. Les ratios financiers sont définis par le code général des collectivités ...\n\nOrganization: Département des Hauts-de-Seine\n  Organization ID: 544e1b0888ee38289ae1ed05\n\nTags: coefficients, dette, finances, ratios\n\nResources: 2 file(s)\n\nCreated: 2012-12-17T00:00:00+00:00\nLast updated: 2022-05-20T13:15:49+00:00\n\nLicense: fr-lo\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

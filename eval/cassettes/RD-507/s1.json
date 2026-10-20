@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:33Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "nombre de naissances annuelles par commune",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 14 dataset(s) for query: 'nombre de naissances annuelles par commune'\nPage 1 of results:\n\n1. Nombre de naissances annuelles par commune\n   ID: 67e34385efc54deb6b388baa\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: statistiques\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/nombre-de-naissances-annuelles-par-commune\n\n2. La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy\n   ID: 5d2c2919634f41429aae86ce\n   Organization: Ville de Nancy\n   Tags: bebes, etat-civil, naissances, prenoms, scdl\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy\n\n3. Démographie de la Polynésie française\n   ID: 5ca7c5ba8b4c412051d92552\n   Organization: Institut de la statistique de la Polynésie française\n   Tags: deces, demographie, etat-civil, mairies, naissances\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/demographie-de-la-polynesie-francaise\n\n4. Évolution du nombre de naissances de 2014 à 2021 dans les 16 communes de Grand Paris Sud Est Avenir\n   ID: 64d25222727646d87974a7ac\n   Organization: Grand Paris Sud Est Avenir\n   Tags: demographie, naissance, population\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/evolution-du-nombre-de-naissances-de-2014-a-2021-dans-les-16-communes-de-grand-paris-sud-est-avenir\n\n5. Nombre annuel de naissances à Orvault\n   ID: 67f70af7c7f49c50e69ac751\n   Organization: Nantes Métropole\n   Tags: citoyennete-institution, etat-civil\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/nombre-annuel-de-naissances-a-orvault\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 14 dataset(s) for query: 'nombre de naissances annuelles par commune'\nPage 1 of results:\n\n1. Nombre de naissances annuelles par commune\n   ID: 67e34385efc54deb6b388baa\n   Organization: Institut national de la statistique et des études économiques (Insee)\n   Tags: statistiques\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/nombre-de-naissances-annuelles-par-commune\n\n2. La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy\n   ID: 5d2c2919634f41429aae86ce\n   Organization: Ville de Nancy\n   Tags: bebes, etat-civil, naissances, prenoms, scdl\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy\n\n3. Démographie de la Polynésie française\n   ID: 5ca7c5ba8b4c412051d92552\n   Organization: Institut de la statistique de la Polynésie française\n   Tags: deces, demographie, etat-civil, mairies, naissances\n   Resources: 7\n   URL: https://www.data.gouv.fr/datasets/demographie-de-la-polynesie-francaise\n\n4. Évolution du nombre de naissances de 2014 à 2021 dans les 16 communes de Grand Paris Sud Est Avenir\n   ID: 64d25222727646d87974a7ac\n   Organization: Grand Paris Sud Est Avenir\n   Tags: demographie, naissance, population\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/evolution-du-nombre-de-naissances-de-2014-a-2021-dans-les-16-communes-de-grand-paris-sud-est-avenir\n\n5. Nombre annuel de naissances à Orvault\n   ID: 67f70af7c7f49c50e69ac751\n   Organization: Nantes Métropole\n   Tags: citoyennete-institution, etat-civil\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/nombre-annuel-de-naissances-a-orvault\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

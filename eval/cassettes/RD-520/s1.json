@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:48:01Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "zonage TLV communes franciliennes",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'zonage TLV communes franciliennes'\nPage 1 of results:\n\n1. Liste des communes franciliennes selon le zonage TLV\n   ID: 6a34bf96a2c3822723467387\n   Organization: Région Île-de-France\n   Tags: logement, logement-sante-social, taxe\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-franciliennes-selon-le-zonage-tlv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'zonage TLV communes franciliennes'\nPage 1 of results:\n\n1. Liste des communes franciliennes selon le zonage TLV\n   ID: 6a34bf96a2c3822723467387\n   Organization: Région Île-de-France\n   Tags: logement, logement-sante-social, taxe\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-franciliennes-selon-le-zonage-tlv\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "6a34bf96a2c3822723467387"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Liste des communes franciliennes selon le zonage TLV\n\nID: 6a34bf96a2c3822723467387\nSlug: liste-des-communes-franciliennes-selon-le-zonage-tlv\nURL: https://www.data.gouv.fr/datasets/liste-des-communes-franciliennes-selon-le-zonage-tlv/\n\nFull description: Défini à l'article 232 du code général des impôts, le zonage de la taxe sur les logements vacants (TLV) a été créé en 2013 puis refondu le 25 août 2023 dans l'objectif de répondre aux problématiques soulevées par le phénomène d'attrition des résidences permanentes dans les zones touristiques.\n\nLe zonage TLV classe les communes en deux catégories : tendues et non-tendues.\n\nLes zones tendues sont définies selon deux cas :\n\n  1. Les communes appartenant à une zone d'urbanisation continue (UU : unit...\n\nOrganization: Région Île-de-France\n  Organization ID: 534fffa8a3a7292c64a780c8\n\nTags: logement, logement-sante-social, taxe\n\nResources: 5 file(s)\n\nCreated: 2025-12-29T00:00:00+00:00\nLast updated: 2026-06-18T16:45:07.734000+00:00\n\nLicense: lov2\nUpdate frequency: irregular"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Liste des communes franciliennes selon le zonage TLV\n\nID: 6a34bf96a2c3822723467387\nSlug: liste-des-communes-franciliennes-selon-le-zonage-tlv\nURL: https://www.data.gouv.fr/datasets/liste-des-communes-franciliennes-selon-le-zonage-tlv/\n\nFull description: Défini à l'article 232 du code général des impôts, le zonage de la taxe sur les logements vacants (TLV) a été créé en 2013 puis refondu le 25 août 2023 dans l'objectif de répondre aux problématiques soulevées par le phénomène d'attrition des résidences permanentes dans les zones touristiques.\n\nLe zonage TLV classe les communes en deux catégories : tendues et non-tendues.\n\nLes zones tendues sont définies selon deux cas :\n\n  1. Les communes appartenant à une zone d'urbanisation continue (UU : unit...\n\nOrganization: Région Île-de-France\n  Organization ID: 534fffa8a3a7292c64a780c8\n\nTags: logement, logement-sante-social, taxe\n\nResources: 5 file(s)\n\nCreated: 2025-12-29T00:00:00+00:00\nLast updated: 2026-06-18T16:45:07.734000+00:00\n\nLicense: lov2\nUpdate frequency: irregular"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

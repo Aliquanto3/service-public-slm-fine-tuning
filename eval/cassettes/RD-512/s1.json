@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T05:47:44Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "demandeurs d'emploi inscrits Seine-Saint-Denis commune",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'demandeurs d'emploi inscrits Seine-Saint-Denis commune'\nPage 1 of results:\n\n1. Demandeurs d’emploi inscrits en fin de mois à France Travail par Commune de plus de 5000 hab. en Seine-Saint-Denis - Juillet 2016 à Septembre 2024\n   ID: 6a0eba0b4780a16c39e21ba8\n   Organization: Seine-Saint-Denis - Le Département\n   Tags: chomage, demandeurs-demploi, economie-business-pme-developpement-economique-emploi, emploi, france-travail\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/demandeurs-demploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus-de-5000-hab-en-seine-saint-denis-juillet-2016-a-septembre-2024\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'demandeurs d'emploi inscrits Seine-Saint-Denis commune'\nPage 1 of results:\n\n1. Demandeurs d’emploi inscrits en fin de mois à France Travail par Commune de plus de 5000 hab. en Seine-Saint-Denis - Juillet 2016 à Septembre 2024\n   ID: 6a0eba0b4780a16c39e21ba8\n   Organization: Seine-Saint-Denis - Le Département\n   Tags: chomage, demandeurs-demploi, economie-business-pme-developpement-economique-emploi, emploi, france-travail\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/demandeurs-demploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus-de-5000-hab-en-seine-saint-denis-juillet-2016-a-septembre-2024\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6a0eba0b4780a16c39e21ba8"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Demandeurs d’emploi inscrits en fin de mois à France Travail par Commune de plus de 5000 hab. en Seine-Saint-Denis - Juillet 2016 à Septembre 2024\nDataset ID: 6a0eba0b4780a16c39e21ba8\nTotal resources: 2\n\n1. demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus.csv\n   Resource ID: cd9030b8-1f63-4f1c-b980-9fc865e349c5\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.seinesaintdenis.fr/api/explore/v2.1/catalog/datasets/demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus/exports/csv?use_labels=true\n\n2. demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus.json\n   Resource ID: 19cd7270-913d-4309-ad56-45220f43850e\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seinesaintdenis.fr/api/explore/v2.1/catalog/datasets/demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Demandeurs d’emploi inscrits en fin de mois à France Travail par Commune de plus de 5000 hab. en Seine-Saint-Denis - Juillet 2016 à Septembre 2024\nDataset ID: 6a0eba0b4780a16c39e21ba8\nTotal resources: 2\n\n1. demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus.csv\n   Resource ID: cd9030b8-1f63-4f1c-b980-9fc865e349c5\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.seinesaintdenis.fr/api/explore/v2.1/catalog/datasets/demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus/exports/csv?use_labels=true\n\n2. demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus.json\n   Resource ID: 19cd7270-913d-4309-ad56-45220f43850e\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seinesaintdenis.fr/api/explore/v2.1/catalog/datasets/demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "cd9030b8-1f63-4f1c-b980-9fc865e349c5",
+      "page_size": 5,
+      "filter_column": "Mois",
+      "filter_value": "Septembre 2024",
+      "filter_operator": "exact"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus.csv\nResource ID: cd9030b8-1f63-4f1c-b980-9fc865e349c5\nDataset: Demandeurs d’emploi inscrits en fin de mois à France Travail par Commune de plus de 5000 hab. en Seine-Saint-Denis - Juillet 2016 à Septembre 2024 (ID: 6a0eba0b4780a16c39e21ba8)\n\nFilter: Mois exact Septembre 2024\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Mois, Aubervilliers 93300, Aulnay-sous-Bois 93600, Bagnolet 93170, Bobigny 93000, Bondy 93140, Clichy-sous-Bois 93390, Coubron 93470, Drancy 93700, Dugny 93440, Épinay-sur-Seine 93800, Gagny 93220, Gournay-sur-Marne 93460, La Courneuve 93120, Le Blanc-Mesnil 93150, Le Bourget 93350, Le Pré-Saint-Gervais 93310, Le Raincy 93340, Les Lilas 93260, Les Pavillons-sous-Bois 93320, L'Île-Saint-Denis 93450, Livry-Gargan 93190, Montfermeil 93370, Montreuil 93100, Neuilly-Plaisance 93360, Neuilly-sur-Marne 93330, Noisy-le-Grand 93160, Noisy-le-Sec 93130, Pantin 93500, Pierrefitte-sur-Seine 93380, Romainville 93230, Rosny-sous-Bois 93110, Saint-Denis 93200, Saint-Ouen 93400, Sevran 93270, Stains 93240, Tremblay-en-France 93290, Vaujours 93410, Villemomble 93250, Villepinte 93420, Villetaneuse 93430, Communes de moins de 5 000 habitants ou données indisponibles, Total\n\nData (1 row):\n  Row 1:\n    __id: 31\n    Mois: Septembre 2024\n    Aubervilliers 93300: 10780\n    Aulnay-sous-Bois 93600: 8890\n    Bagnolet 93170: 5210\n    Bobigny 93000: 6260\n    Bondy 93140: 6620\n    Clichy-sous-Bois 93390: 3130\n    Coubron 93470: 310\n    Drancy 93700: 7250\n    Dugny 93440: 1300\n    Épinay-sur-Seine 93800: 5640\n    Gagny 93220: 3800\n    Gournay-sur-Marne 93460: 470\n    La Courneuve 93120: 4640\n    Le Blanc-Mesnil 93150: 6310\n    Le Bourget 93350: 1560\n    Le Pré-Saint-Gervais 93310: 2310\n    Le Raincy 93340: 1140\n    Les Lilas 93260: 2490\n    Les Pavillons-sous-Bois 93320: 2290\n    L'Île-Saint-Denis 93450: 960\n    Livry-Gargan 93190: 4440\n    Montfermeil 93370: 2680\n    Montreuil 93100: 15560\n    Neuilly-Plaisance 93360: 1820\n    Neuilly-sur-Marne 93330: 3820\n    Noisy-le-Grand 93160: 6770\n    Noisy-le-Sec 93130: 5340\n    Pantin 93500: 7680\n    Pierrefitte-sur-Seine 93380: 3450\n    Romainville 93230: 4170\n    Rosny-sous-Bois 93110: 5310\n    Saint-Denis 93200: 13650\n    Saint-Ouen 93400: 6840\n    Sevran 93270: 5890\n    Stains 93240: 4810\n    Tremblay-en-France 93290: 3700\n    Vaujours 93410: 710\n    Villemomble 93250: 2840\n    Villepinte 93420: 3940\n    Villetaneuse 93430: 1370\n    Communes de moins de 5 000 habitants ou données indisponibles: 30\n    Total: 186150"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: demandeurs-d-emploi-inscrits-en-fin-de-mois-a-france-travail-par-commune-de-plus.csv\nResource ID: cd9030b8-1f63-4f1c-b980-9fc865e349c5\nDataset: Demandeurs d’emploi inscrits en fin de mois à France Travail par Commune de plus de 5000 hab. en Seine-Saint-Denis - Juillet 2016 à Septembre 2024 (ID: 6a0eba0b4780a16c39e21ba8)\n\nFilter: Mois exact Septembre 2024\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 5)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Mois, Aubervilliers 93300, Aulnay-sous-Bois 93600, Bagnolet 93170, Bobigny 93000, Bondy 93140, Clichy-sous-Bois 93390, Coubron 93470, Drancy 93700, Dugny 93440, Épinay-sur-Seine 93800, Gagny 93220, Gournay-sur-Marne 93460, La Courneuve 93120, Le Blanc-Mesnil 93150, Le Bourget 93350, Le Pré-Saint-Gervais 93310, Le Raincy 93340, Les Lilas 93260, Les Pavillons-sous-Bois 93320, L'Île-Saint-Denis 93450, Livry-Gargan 93190, Montfermeil 93370, Montreuil 93100, Neuilly-Plaisance 93360, Neuilly-sur-Marne 93330, Noisy-le-Grand 93160, Noisy-le-Sec 93130, Pantin 93500, Pierrefitte-sur-Seine 93380, Romainville 93230, Rosny-sous-Bois 93110, Saint-Denis 93200, Saint-Ouen 93400, Sevran 93270, Stains 93240, Tremblay-en-France 93290, Vaujours 93410, Villemomble 93250, Villepinte 93420, Villetaneuse 93430, Communes de moins de 5 000 habitants ou données indisponibles, Total\n\nData (1 row):\n  Row 1:\n    __id: 31\n    Mois: Septembre 2024\n    Aubervilliers 93300: 10780\n    Aulnay-sous-Bois 93600: 8890\n    Bagnolet 93170: 5210\n    Bobigny 93000: 6260\n    Bondy 93140: 6620\n    Clichy-sous-Bois 93390: 3130\n    Coubron 93470: 310\n    Drancy 93700: 7250\n    Dugny 93440: 1300\n    Épinay-sur-Seine 93800: 5640\n    Gagny 93220: 3800\n    Gournay-sur-Marne 93460: 470\n    La Courneuve 93120: 4640\n    Le Blanc-Mesnil 93150: 6310\n    Le Bourget 93350: 1560\n    Le Pré-Saint-Gervais 93310: 2310\n    Le Raincy 93340: 1140\n    Les Lilas 93260: 2490\n    Les Pavillons-sous-Bois 93320: 2290\n    L'Île-Saint-Denis 93450: 960\n    Livry-Gargan 93190: 4440\n    Montfermeil 93370: 2680\n    Montreuil 93100: 15560\n    Neuilly-Plaisance 93360: 1820\n    Neuilly-sur-Marne 93330: 3820\n    Noisy-le-Grand 93160: 6770\n    Noisy-le-Sec 93130: 5340\n    Pantin 93500: 7680\n    Pierrefitte-sur-Seine 93380: 3450\n    Romainville 93230: 4170\n    Rosny-sous-Bois 93110: 5310\n    Saint-Denis 93200: 13650\n    Saint-Ouen 93400: 6840\n    Sevran 93270: 5890\n    Stains 93240: 4810\n    Tremblay-en-France 93290: 3700\n    Vaujours 93410: 710\n    Villemomble 93250: 2840\n    Villepinte 93420: 3940\n    Villetaneuse 93430: 1370\n    Communes de moins de 5 000 habitants ou données indisponibles: 30\n    Total: 186150"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}
