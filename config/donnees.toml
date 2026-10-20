@@ -239,8 +239,13 @@ echantillon = 5
 calibrage = 20
 # Codes non bloquants (transmis au juge et au rapport). nom_absent le reste jusqu'au calibrage ;
 # un code dont plus de 20 % des refus relus sont des faux positifs y est ajouté.
+# 2026-10-20 (run autonome) : lc_gain_lisibilite et lc_modalite_perdue passent non bloquants. La grille ne
+# plafonne LC (à plafond_lc) que si le gain moyen de la Tâche est sous gain_km_min, jamais par item ; la
+# fidélité (modalités comprises) est jugée par DeepSeek. Le gain moyen des LC retenues est contrôlé au build.
 non_bloquants = [
   'nom_absent',
+  'lc_gain_lisibilite',
+  'lc_modalite_perdue',
 ]
 # Mots capitalisés jamais tenus pour des noms propres (casse et accents ignorés) : titres de
 # section, civilités et abréviations, mois et jours, institutions génériques.

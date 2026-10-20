@@ -478,7 +478,9 @@ class VerificationConfig(ModeleConfig):
     """Cibles retenues tirées par Tâche, et cibles écartées tirées, dans `echantillon.md`."""
     calibrage: Annotated[StrictInt, Field(ge=0)] = 20
     """Refus tirés dans `calibrage.md`."""
-    non_bloquants: list[str] = Field(default_factory=lambda: ["nom_absent"])
+    non_bloquants: list[str] = Field(
+        default_factory=lambda: ["nom_absent", "lc_gain_lisibilite", "lc_modalite_perdue"]
+    )
     """Codes rendus non bloquants (transmis au juge et au rapport sans refuser la cible)."""
     exceptions_noms: list[Texte] = Field(default_factory=_exceptions_noms_defaut)
     """Mots capitalisés jamais tenus pour des noms propres (casse et accents ignorés)."""

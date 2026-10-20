@@ -15,7 +15,7 @@ from slmsp.data.config import VerificationConfig
 from slmsp.data.validate import _controler_sources, _controler_structure, _Rejet
 from slmsp.data.verification import Motif, refusee, verifier_cible
 
-NEUTRE = VerificationConfig(gain_km_min=-1e9)
+NEUTRE = VerificationConfig(gain_km_min=-1e9, non_bloquants=["nom_absent"])
 """Gain de lisibilité neutralisé : chaque test LC ne regarde que son contrôle."""
 
 CR = (
@@ -145,9 +145,11 @@ def test_lc_valeur_perdue_et_ajoutee() -> None:
 def test_lc_gain_de_lisibilite() -> None:
     longue = "Conformément aux dispositions réglementaires applicables, l'administration procède."
     courte = "On vous aide. Tout va vite."
-    config = VerificationConfig()
+    config = VerificationConfig(non_bloquants=["nom_absent"])
     assert "lc_gain_lisibilite" not in codes("LC", courte, longue, config)
     assert codes("LC", longue, courte, config)["lc_gain_lisibilite"] is True
+    # Défaut du dépôt (2026-10-20) : le gain par item n'est plus bloquant.
+    assert codes("LC", longue, courte, VerificationConfig())["lc_gain_lisibilite"] is False
 
 
 # --- CT ------------------------------------------------------------------------------------
