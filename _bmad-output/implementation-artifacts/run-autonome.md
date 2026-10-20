@@ -70,3 +70,6 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-21 00:11 · 15.3 · fusion · squash dans main · 01d7571
 - 2026-10-21 00:17 · 15.5 · dev · fini : 160 items (601-620), `eval gel --verifier-seulement` 0 erreur, disjoint de v1.0, v1.1, dev1, data/train/v* et des seeds ; aucun run de modèle lu ; hors zone : `evaluation/config.py` (cibles devN), `verifier_jeu_croise.py` ; second-avis lancé · a790620
 - 2026-10-21 00:25 · 15.5 · second-avis · aucun high ni medium (D1, disjonction avec `--reference` contre v1.0, v1.1, dev1, v1 à v19 et 5 seeds, 24 items relus) ; 4 low (« disjoint » affiché sans référence complète, calibrage hors référence, attribution ambiguë CR-601, dates du corps sans année) ; review lancée (Sonnet) · —
+- 2026-10-21 00:27 · 15.5 · review · 4 low traités (disjonction « INCOMPLET » sans référence complète, calibrage dans la référence, CR-601 désambiguïsé, dates du corps laissées) · eb97cc7
+- 2026-10-21 00:27 · 15.5 · fusion · squash dans main ; tests jeu_dev et verifier_jeu_croise : 86 passés (venv principal) · 45f2fb2
+- 2026-10-21 00:27 · 15.5 · vérification croisée de dev2 lancée (DeepSeek + GLM, 320 appels, ~1,7 $, pire cas ~4 $) ; pas de gel cette nuit · —
