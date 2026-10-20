@@ -11,6 +11,7 @@
         [--plafond-estime EUR] [--racine DIR]
     slmsp eval juges-tiers --verifier
     slmsp eval juges-tiers --depuis RUN_NOTATION --juge NOM [--taches CR,LC,CT,RE]
+        [--rejouer-invalides]
         [--plafond-estime EUR] [--racine DIR]
     slmsp eval comparer --runs NOTATION_A NOTATION_B [...] [--bootstrap 2000] [--graine 7]
         [--sortie FICHIER.md] [--racine DIR]
@@ -563,7 +564,9 @@ def executer_juges_tiers(args: argparse.Namespace) -> int:
     taches = _items(args.taches) or list(juges_tiers.TACHES_DEFAUT)
     racine = Path(args.racine) if args.racine is not None else None
     try:
-        juge = juges_tiers.ouvrir_juge_tiers(args.juge, racine)
+        juge = juges_tiers.ouvrir_juge_tiers(
+            args.juge, racine, rejouer_invalides=args.rejouer_invalides
+        )
     except ValueError as exc:
         return _usage_tiers(str(exc))
     try:
@@ -679,6 +682,11 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         type=_reel_positif,
         metavar="EUR",
         help="refuser si le coût estimé du juge tiers dépasse ce plafond (EUR)",
+    )
+    tiers.add_argument(
+        "--rejouer-invalides",
+        action="store_true",
+        help="rejuger les items dont le verdict en cache est `invalide` (payant)",
     )
     tiers.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     tiers.set_defaults(func=executer_juges_tiers)

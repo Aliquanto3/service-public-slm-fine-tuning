@@ -9,7 +9,9 @@
 3. un appel par item (`ClientCompatibleOpenAI.appeler`, usage `juge-tiers-<fournisseur>`),
    réservation au pire cas de cet item, régularisation après l'appel.
 
-La sortie est lue avec tolérance (`extraire_json` : bloc de code ou texte autour). Deux
+La sortie est lue avec tolérance (`extraire_json` : bloc de code ou texte autour). Une
+sortie non conforme est renvoyée au juge avec l'écart constaté (conversation prolongée : sa
+réponse, puis la correction demandée), car un même prompt rend la même erreur. Deux
 sorties non conformes donnent un verdict `invalide` mis en cache si l'écart est au schéma ;
 si la dernière ne contient aucun JSON lisible, l'item reste `non-juge` (motif
 `sortie-illisible`), sans cache, rejouable. Une sortie interrompue (`finish_reason` de
@@ -59,6 +61,7 @@ from slmsp.judge.prompt import (
     SortieNonConforme,
     construire_prompt,
     estimer_tokens_entree,
+    refs_du_schema,
     valider_selon_schema,
 )
 
@@ -67,6 +70,8 @@ NOM_SCHEMA: Final = "verdict"
 MOTIF_INTERROMPUE: Final = "sortie-interrompue"
 ISSUE_INTERROMPUE: Final = "interrompue"
 MOTIF_ILLISIBLE: Final = "sortie-illisible"
+_TOKENS_CORRECTION: Final = 300
+"""Majorant des tokens du message de correction (écart et références dues)."""
 FINS_INTERROMPUES: Final = frozenset({"length", "max_tokens", "model_length"})
 """`finish_reason` d'une sortie coupée par la longueur (comparés en minuscules)."""
 
@@ -102,6 +107,21 @@ class _Etat:
             self.usages[cle] = usage if precedent is None else precedent + usage
 
 
+def _correction(ecart: str, schema: dict[str, Any]) -> str:
+    """Message renvoyé au juge après une sortie non conforme : l'écart et les références dues."""
+    refs = refs_du_schema(schema)
+    consigne = (
+        f" `criteres.presence_elements` doit contenir exactement une entrée par référence "
+        f"({', '.join(refs)}), chacune une seule fois, sans regrouper ni omettre."
+        if refs
+        else ""
+    )
+    return (
+        f"Ta réponse n'est pas conforme : {ecart}.{consigne} "
+        "Renvoie le JSON complet corrigé, sans autre texte."
+    )
+
+
 class JugeTiers:
     """Juge tiers : `juger(demandes)` et `estimer(demandes)` (voir le module)."""
 
@@ -112,7 +132,11 @@ class JugeTiers:
         client: ClientCompatibleOpenAI,
         cache: CacheVerdicts,
         grille: Grille,
+        *,
+        rejouer_invalides: bool = False,
     ) -> None:
+        self.rejouer_invalides = rejouer_invalides
+        self._rejoues: set[str] = set()
         self.nom = nom
         self.config = config
         self.client = client
@@ -136,6 +160,23 @@ class JugeTiers:
         )
         return _Preparee(demande.item, prompt, cle, estimer_tokens_entree(prompt))
 
+    def _en_cache(self, cle: str) -> Any:
+        """Verdict en cache ; avec `rejouer_invalides`, un verdict `invalide` est à rejuger.
+
+        Rien n'est archivé ici : l'archivage attend une réponse exploitable du juge
+        (`_liberer`), pour qu'un arrêt ou un budget épuisé laisse le cache intact.
+        """
+        en_cache = self.cache.lire(cle)
+        if en_cache is not None and en_cache.verdict.invalide and self.rejouer_invalides:
+            return None
+        return en_cache
+
+    def _liberer(self, cle: str) -> None:
+        """Archive l'ancien verdict `invalide` de `cle`, une seule fois par instance."""
+        if self.rejouer_invalides and cle not in self._rejoues:
+            self._rejoues.add(cle)
+            self.cache.archiver_invalide(cle)
+
     def _uniques(self, demandes: Sequence[DemandeJugement]) -> tuple[list[_Preparee], dict]:
         preparees = [self._preparer(d) for d in demandes]
         uniques: dict[str, _Preparee] = {}
@@ -154,7 +195,12 @@ class JugeTiers:
         registre = self.client.registre
         registre.verifier_usage(self.config.usage_budget)
         _, uniques = self._uniques(demandes)
-        a_juger = [p for cle, p in uniques.items() if self.cache.lire(cle) is None]
+        a_juger = [
+            p
+            for cle, p in uniques.items()
+            if (en_cache := self.cache.lire(cle)) is None
+            or (self.rejouer_invalides and en_cache.verdict.invalide)
+        ]
         modele = self.config.modele
         estime = sum(
             cout_estime(
@@ -162,16 +208,19 @@ class JugeTiers:
             )
             for p in a_juger
         )
+        # Pire cas : ECHECS_MAX appels ; chaque relance renvoie la réponse précédente (au plus
+        # `max_tokens`) et la correction, en plus du prompt.
         pire = sum(
             cout_pire_cas(
                 registre.tarifs,
                 modele,
                 MODE,
-                p.tokens_estimes,
+                p.tokens_estimes + rang * (self.config.max_tokens + _TOKENS_CORRECTION),
                 self.config.max_tokens,
                 registre.config.majoration_entree,
             )
             for p in a_juger
+            for rang in range(ECHECS_MAX)
         )
         return EstimationCout(
             nb_demandes=len(uniques),
@@ -189,7 +238,7 @@ class JugeTiers:
         etat = _Etat()
         session_id = nouvelle_session(PREFIXE_SESSION)
         for cle, preparee in uniques.items():
-            en_cache = self.cache.lire(cle)
+            en_cache = self._en_cache(cle)
             if en_cache is not None:
                 etat.issues[cle] = _Issue(
                     "invalide" if en_cache.verdict.invalide else "juge",
@@ -256,15 +305,17 @@ class JugeTiers:
 
     def _juger_un(self, preparee: _Preparee, session_id: str, etat: _Etat) -> None:
         item_id, cle = preparee.item.id, preparee.cle
+        messages: list[dict[str, str]] = [{"role": "user", "content": preparee.prompt.texte}]
+        tokens_estimes = preparee.tokens_estimes
         while True:  # au plus ECHECS_MAX sorties non conformes (compteur persisté)
             try:
                 reponse = self.client.appeler(
                     self.config.usage_budget,
                     session_id,
-                    [{"role": "user", "content": preparee.prompt.texte}],
+                    messages,
                     modele=self.config.modele,
                     max_tokens=self.config.max_tokens,
-                    tokens_entree_estimes=preparee.tokens_estimes,
+                    tokens_entree_estimes=tokens_estimes,
                     parametres=self._parametres(preparee.prompt),
                 )
             except BudgetEpuise:
@@ -290,6 +341,7 @@ class JugeTiers:
                 self._journaliser(cle, item_id, reponse.usage, reponse.cout_eur, ISSUE_INTERROMPUE)
                 etat.issues[cle] = _Issue("non-juge", motif=MOTIF_INTERROMPUE)
                 return  # ni cache ni échec compté : rejouable
+            self._liberer(cle)  # nouveau verdict en vue : l'ancien invalide est archivé
             texte = extraire_json(reponse.texte)
             try:
                 if texte is None:
@@ -305,6 +357,16 @@ class JugeTiers:
                     ISSUE_INVALIDE if invalide else ISSUE_NON_CONFORME,
                 )
                 if not invalide:
+                    correction = _correction(str(exc), preparee.prompt.schema)
+                    if reponse.texte.strip():  # une réponse vide ne se renvoie pas
+                        messages = [
+                            messages[0],
+                            {"role": "assistant", "content": reponse.texte},
+                            {"role": "user", "content": correction},
+                        ]
+                        tokens_estimes = (
+                            preparee.tokens_estimes + (len(reponse.texte) + len(correction)) // 3
+                        )
                     continue
                 if texte is None:
                     # Sortie sans JSON lisible : ni cache ni verdict durable, rejouable.

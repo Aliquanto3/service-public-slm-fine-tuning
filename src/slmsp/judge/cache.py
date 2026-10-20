@@ -12,7 +12,10 @@ jamais redemandé ni réservé deux fois. Tables :
 
 Statuts d'un lot : `reserve` (persisté, pas encore créé chez Anthropic), `en_cours` (créé,
 `batch_id` connu), `collecte`, `annule` (annulation confirmée), `abandonne` (création non
-confirmée). Les écritures sont transactionnelles ; rien n'est jamais supprimé. Les verdicts
+confirmée). Les écritures sont transactionnelles ; rien n'est jamais supprimé. Seule
+dérogation à « jamais réécrit » : `archiver_invalide` renomme la clé d'un verdict `invalide`
+(`<cle>#invalide-<horodatage>`, ligne conservée) pour le rejeu explicite, et remet son
+compteur d'échecs à zéro ; aucun autre chemin ne modifie une ligne. Les verdicts
 ne servent qu'au banc d'évaluation (AD-3 verrou 6) : ce module n'exporte rien vers `data` ni
 `train`.
 """
@@ -250,6 +253,21 @@ class CacheVerdicts:
                 ligne["tokens_lecture_cache"],
             ),
         )
+
+    def archiver_invalide(self, cle: str) -> bool:
+        """Libère `cle` d'un verdict `invalide` pour le rejouer, sans rien supprimer.
+
+        La ligne passe sous la clé `<cle>#invalide-<horodatage>` et le compteur d'échecs
+        repart à zéro. Sans effet (faux) si `cle` est absente ou porte un verdict valide.
+        """
+        archive = f"{cle}#invalide-{_maintenant()}"
+        with self._transaction() as connexion:
+            curseur = connexion.execute(
+                "UPDATE verdicts SET cle = ? WHERE cle = ? AND invalide = 1", (archive, cle)
+            )
+            if curseur.rowcount:
+                connexion.execute("UPDATE echecs SET nombre = 0 WHERE cle = ?", (cle,))
+            return bool(curseur.rowcount)
 
     def ecrire(
         self,

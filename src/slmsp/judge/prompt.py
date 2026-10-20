@@ -315,7 +315,7 @@ def estimer_tokens_entree(prompt: PromptJuge) -> int:
 # --- Validation ------------------------------------------------------------------------------
 
 
-def _refs_du_schema(schema: Mapping[str, Any]) -> list[str] | None:
+def refs_du_schema(schema: Mapping[str, Any]) -> list[str] | None:
     try:
         elements = schema["properties"]["criteres"]["properties"][CRITERE_ELEMENTS]
         return list(elements["items"]["properties"]["ref"]["enum"])
@@ -340,7 +340,7 @@ def valider_selon_schema(item_id: str, texte_json: str, schema: Mapping[str, Any
         raise SortieNonConforme(f"{item_id} : écart au schéma en {chemin} : {erreur.message}")
     if donnees.get("id") != item_id:
         raise SortieNonConforme(f"{item_id} : `id` différent de l'item")
-    refs = _refs_du_schema(schema)
+    refs = refs_du_schema(schema)
     if refs is not None:
         vues = [element["ref"] for element in donnees["criteres"][CRITERE_ELEMENTS]]
         doublons = sorted({r for r in vues if vues.count(r) > 1})

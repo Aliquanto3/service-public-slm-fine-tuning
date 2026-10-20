@@ -325,7 +325,9 @@ def noter_tiers(
     )
 
 
-def ouvrir_juge_tiers(nom: str, racine: str | Path | None = None) -> Any:
+def ouvrir_juge_tiers(
+    nom: str, racine: str | Path | None = None, *, rejouer_invalides: bool = False
+) -> Any:
     """Assemble le juge tiers réel `nom` (`[juges_tiers.<nom>]` de `juges.toml`).
 
     Lève `ValueError` pour un nom absent de `juges.toml`, `SecretManquant` si la clé du
@@ -361,4 +363,6 @@ def ouvrir_juge_tiers(nom: str, racine: str | Path | None = None) -> Any:
         journal=JournalAppels(dossier_var() / NOM_JOURNAL_JUGES_TIERS),
     )
     grille = charger_grille(config.principal.chemin_grille(base))
-    return JugeTiers(nom, tiers, client, CacheVerdicts(), grille)
+    return JugeTiers(
+        nom, tiers, client, CacheVerdicts(), grille, rejouer_invalides=rejouer_invalides
+    )

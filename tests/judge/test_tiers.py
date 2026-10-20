@@ -155,7 +155,11 @@ def test_estimer_sans_appel(
     assert estimation.nb_a_juger == 2 and banc.faux.requetes == []
     entrees = sum(tiers._preparer(d).tokens_estimes for d in lot)
     assert estimation.cout_estime_eur == pytest.approx((entrees + 2 * 150) / 1e6)
-    assert estimation.cout_pire_cas_eur == pytest.approx((entrees + 2 * 500) / 1e6)
+    assert estimation.cout_pire_cas_eur == pytest.approx(
+        # 2 appels par item (ECHECS_MAX) ; le second reprend la réponse (500) et la correction
+        # (300) en entrée ; 500 tokens de sortie par appel
+        (2 * entrees + 2 * (500 + 300) + 2 * 2 * 500) / 1e6
+    )
     tiers.juger(lot[:1])
     assert tiers.estimer(lot).nb_en_cache == 1
 
@@ -234,3 +238,102 @@ def test_estimer_usage_de_budget_inconnu(
     banc.cache = CacheVerdicts(tmp_path / "v.sqlite")
     with pytest.raises(ConfigurationInvalide):
         juge(banc, grille).estimer(demandes(items, doublures, "CR-001"))
+
+
+@pytest.mark.parametrize("garder", [0, 1])
+def test_references_manquantes_corrigees_par_un_second_tour(
+    banc: Any, grille: Grille, items: dict[str, Item], doublures: SimpleNamespace, garder: int
+) -> None:
+    """Échec observé en story C7 : `presence_elements` vide ou réduit à une entrée."""
+
+    def texte(corps: dict[str, Any]) -> str:
+        schema = corps["response_format"]["json_schema"]["schema"]
+        verdict = doublures.verdict_conforme(schema)
+        if len(corps["messages"]) == 1:  # premier tour : liste tronquée
+            elements = verdict["criteres"]["presence_elements"]
+            verdict["criteres"]["presence_elements"] = elements[:garder]
+        return json.dumps(verdict, ensure_ascii=False)
+
+    banc.faux.texte_defaut = texte
+    (resultat,) = juge(banc, grille).juger(demandes(items, doublures, "CR-001")).resultats
+    assert resultat.statut == "juge"
+    premier, second = banc.faux.corps()
+    assert len(premier["messages"]) == 1
+    assert [m["role"] for m in second["messages"]] == ["user", "assistant", "user"]
+    correction = second["messages"][-1]["content"]
+    assert "manquantes" in correction
+    refs = premier["response_format"]["json_schema"]["schema"]["properties"]["criteres"][
+        "properties"
+    ]["presence_elements"]["items"]["properties"]["ref"]["enum"]
+    assert all(ref in correction for ref in refs)
+
+
+def test_verdict_invalide_en_cache_rejoue_sur_demande(
+    banc: Any, grille: Grille, items: dict[str, Item], doublures: SimpleNamespace
+) -> None:
+    lot = demandes(items, doublures, "CR-001")
+    banc.faux.reponses.extend([{"texte": "{}"}, {"texte": "{}"}])
+    (invalide,) = juge(banc, grille).juger(lot).resultats
+    assert invalide.statut == "invalide"
+    (fige,) = juge(banc, grille).juger(lot).resultats  # sans option : le cache fait foi
+    assert fige.statut == "invalide" and fige.depuis_cache
+    avant = len(banc.faux.corps())
+    rejoueur = JugeTiers(
+        "factice", _config(), banc.client(), banc.cache, grille, rejouer_invalides=True
+    )
+    assert rejoueur.estimer(lot).nb_a_juger == 1
+    (rejoue,) = rejoueur.juger(lot).resultats
+    assert rejoue.statut == "juge" and not rejoue.depuis_cache
+    assert len(banc.faux.corps()) == avant + 1
+    assert banc.cache.echecs(invalide.cle) == 0
+
+
+def _invalider(banc: Any, grille: Grille, lot: list[Any]) -> str:
+    banc.faux.reponses.extend([{"texte": "{}"}, {"texte": "{}"}])
+    (invalide,) = juge(banc, grille).juger(lot).resultats
+    assert invalide.statut == "invalide"
+    return invalide.cle
+
+
+def test_rejeu_sans_appel_possible_laisse_le_cache_intact(
+    banc: Any, grille: Grille, items: dict[str, Item], doublures: SimpleNamespace
+) -> None:
+    """401 sur le premier item, ou budget épuisé : l'invalide n'est pas archivé."""
+    lot = demandes(items, doublures, "CR-001")
+    cle = _invalider(banc, grille, lot)
+    banc.faux.reponses.append(401)
+    rejoueur = JugeTiers(
+        "factice", _config(), banc.client(), banc.cache, grille, rejouer_invalides=True
+    )
+    (resultat,) = rejoueur.juger(lot).resultats
+    assert resultat.statut == "non-juge"
+    en_cache = banc.cache.lire(cle)
+    assert en_cache is not None and en_cache.verdict.invalide
+    assert banc.cache.echecs(cle) == 2
+
+
+def test_rejeu_budget_epuise_laisse_le_cache_intact(
+    tmp_path: Path, grille: Grille, items: dict[str, Item], doublures: SimpleNamespace
+) -> None:
+    lot = demandes(items, doublures, "CR-001")
+    banc = F.banc(tmp_path / "petit", plafond=0.0001)
+    banc.cache = CacheVerdicts(tmp_path / "v.sqlite")
+    prep = juge(banc, grille)._preparer(lot[0])
+    from slmsp.core.schemas.verdict import Verdict
+
+    banc.cache.ecrire(
+        prep.cle,
+        Verdict.invalide_pour("CR-001"),
+        modele=F.MODELE,
+        effort="x",
+        mode=None,
+        cout_eur=0.0,
+        usage=None,
+    )
+    rejoueur = JugeTiers(
+        "factice", _config(), banc.client(), banc.cache, grille, rejouer_invalides=True
+    )
+    (resultat,) = rejoueur.juger(lot).resultats
+    assert resultat.motif == "budget"
+    en_cache = banc.cache.lire(prep.cle)
+    assert en_cache is not None and en_cache.verdict.invalide
