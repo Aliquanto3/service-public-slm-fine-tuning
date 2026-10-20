@@ -29,3 +29,4 @@
 {"id": "CR-518", "verdict": "accepte", "detail": "O4d, après contre-vérification croisée (consigne 3) : date du prochain comité (2 avril 2027) ajoutée aux décisions ; pièges réécrits sur les dates remplacées en séance (8 décembre, 26 mars) (DeepSeek)", "verifie_le": "2026-10-20"}
 {"id": "CR-512", "verdict": "rejete", "motif": "autre", "detail": "O4e : rejeté deux fois par la contre-vérification croisée, remplacé par CR-521", "verifie_le": "2026-10-20"}
 {"id": "CR-521", "verdict": "accepte", "detail": "O4e, second passage : décisions, actions et pièges relus dans les notes (vote, correction en séance, action reprise) ; jours et dates vérifiés", "verifie_le": "2026-10-20"}
+{"id": "CR-521", "verdict": "accepte", "detail": "O4f : année explicite dans les notes pour chaque échéance (22 janvier, 1er février, 6 février, 6/13/20 mars 2027), alignée sur la référence ; dates et jours relus", "verifie_le": "2026-10-20"}
