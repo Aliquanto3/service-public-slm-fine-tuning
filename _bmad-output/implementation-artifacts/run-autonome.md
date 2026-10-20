@@ -125,3 +125,5 @@ Au plus 3 stories en développement à la fois.
 | Qwen3.5-0.8B M1 | v11 | 0,0 | 67,9 | 14,2 | 0,0 | 69,3 | 21,4 | 10,0 | 16,7 | 24,9 | 27,5 |
 | **Qwen3.5-0.8B M1** | **v14** | 0,0 | 65,3 | 14,0 | 4,0 | 73,3 | 28,1 | 46,7 | 10,0 | **30,2** | 27,5 |
 Dépenses de la nuit (campagne nuit-2026-10-19, en plus de 11,23 € anthropic et 2,75 € mistral sur la campagne v9) : voir `slmsp budget etat`.
+- 2026-10-20 06:26 · run · suite complète de fin : 5 573 passés, 4 échecs (tests figés sur la config d'origine : poste openrouter, marge 9000, délais 600 s) → story C1 du plan · —
+- 2026-10-20 06:26 · run · fin du run ; méthodologie v2 proposée : `plan-methodo-2026-10-20.md` · —
