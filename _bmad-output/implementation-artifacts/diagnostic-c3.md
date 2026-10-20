@@ -1,0 +1,11 @@
+# Diagnostic C3 : export M3 DoRA Qwen3.5-0.8B
+
+- Adaptateur 1f18 sain : 558 tenseurs, aucun NaN/Inf (bf16), PEFT 0.21.2, torch 2.14.1. Magnitudes de `in_proj_qkv` : min 0,0015, max 3,2.
+- Fusion déjà en fp32 (`torch_dtype=float32`) : le dtype n'est pas en cause. Norme DoRA calculée sur `dim=1` d'un poids (sortie, entrée) : bon axe.
+- Cause : la base bf16 `layers.0.linear_attn.in_proj_qkv.weight` (6144x1024) a 14 lignes exactement nulles (canaux morts, ex. 397, 423, 438). Pour DoRA, `W' = m * (W + sBA) / ||W + sBA||` : la norme de ces lignes vaut 0, donc `m/0 = inf`, puis `inf * 0 = NaN`.
+- Les M1 QLoRA ne divisent pas par cette norme : ils s'exportent.
+- Correctif : `norme_dora_sure()` (export.py) ramène à 1 les normes nulles pendant `merge_and_unload` ; la ligne reste nulle, comme dans la base. Test unitaire sur couche factice (`tests/train/test_export_dora.py`), qui reproduit aussi le NaN sans garde.
+- Export réel du run 1f18 réussi : run d'export `20261020-075847-ft-qwen3.5-0.8b-e69a` (sondes outils et vision valides).
+- Mesure de revue (base quantifiée comme à l'entraînement : `bitsandbytes.functional.quantize_4bit`, nf4, blocs de 64, double quantification, GPU, puis dé-quantification) : les 14 lignes mortes ne restent pas nulles en nf4. Bloc à absmax nul et absmax double-quantifié décalé : `‖Q(W_i)‖` vaut de 0,0015 à 0,031, contre 0,46 en médiane pour les lignes vivantes. Ce sont les seules lignes nulles parmi les modules ciblés.
+- Sur ces 14 lignes, l'adaptateur n'a rien appris : `lora_B` est exactement nul et la magnitude vaut exactement `‖Q(W_i)‖` (écart relatif 0, contre 0,12 % en médiane sur les lignes vivantes). Gradient nul : ces canaux ne servent pas en aval. À l'entraînement, la sortie de ces canaux valait donc `Q(W_i)·x`, c'est-à-dire le seul bruit de quantification de la base. Pas de NaN : la norme était non nulle.
+- Conclusion : la fusion à 0 est correcte et ne change pas. Elle rend la ligne de la vraie base bf16, comme la fusion QLoRA standard sur la base non quantifiée le fait pour toutes les lignes. L'écart avec l'entraînement est l'erreur de quantification ordinaire (norme ≤ 0,031), pas un apprentissage perdu. Reproduire `Q(W_i)` dans le modèle exporté injecterait du bruit nf4 sur 14 lignes seulement. Export 1f18 conservé (`20261020-075847-ft-qwen3.5-0.8b-e69a`).

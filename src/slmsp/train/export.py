@@ -26,10 +26,11 @@ chaîne, les précisions réelles (`f16`, `q4_k_m`) et le résultat des contrôl
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import shutil
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
@@ -370,6 +371,32 @@ def controler_vision_inchangee(base: Path, fusionne: Path) -> dict[str, Any]:
     }
 
 
+@contextlib.contextmanager
+def norme_dora_sure() -> Iterator[None]:
+    """Fusion DoRA sûre : une ligne de poids fusionnée de norme nulle (canal mort de la base, ex.
+    `in_proj_qkv` de Qwen3.5) donnerait `magnitude / 0 = inf` puis NaN dans PEFT. La norme y est
+    ramenée à 1 : la ligne reste nulle (0 × échelle finie). Sans effet ailleurs.
+
+    Couvre `DoraLinearLayer` et `DoraEmbeddingLayer` (méthode héritée), pas les convolutions DoRA
+    (non ciblées). Remplace une méthode de classe : à n'utiliser que pour un export séquentiel."""
+    from peft.tuners.lora.dora import DoraLinearLayer  # noqa: PLC0415
+
+    originale = DoraLinearLayer.get_weight_norm
+    interne = getattr(originale, "__wrapped__", originale)
+
+    def sure(
+        self: Any, weight: Any, lora_weight: Any, scaling: Any, adapter_name: Any = None
+    ) -> Any:
+        norme = interne(self, weight, lora_weight, scaling, adapter_name)
+        return norme.masked_fill(norme == 0, 1.0)
+
+    DoraLinearLayer.get_weight_norm = sure  # type: ignore[method-assign]
+    try:
+        yield
+    finally:
+        DoraLinearLayer.get_weight_norm = originale  # type: ignore[method-assign]
+
+
 def fusionner(
     pile: environnement.Pile,
     dossier_base: Path,
@@ -395,7 +422,8 @@ def fusionner(
         charge = pile.peft.PeftModel.from_pretrained(modele, str(adaptateur))
         if multimodal is not None:
             controler_modules_lora(charge)
-        modele = charge.merge_and_unload()
+        with norme_dora_sure():
+            modele = charge.merge_and_unload()
     plage = controler_plage(torch, modele)
     modele = modele.to(torch.float16)
     modele.save_pretrained(str(sortie), safe_serialization=True)
