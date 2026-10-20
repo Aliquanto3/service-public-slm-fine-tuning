@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from slmsp.cli import main
-from slmsp.compare.chargement import JeuMelange, charger
+from slmsp.compare.chargement import JeuDeveloppement, JeuMelange, charger
 from slmsp.compare.comparatif import charger_config, evaluer_sm1, rendre_comparatif
 
 from .conftest import (
@@ -202,6 +202,28 @@ def test_deux_versions_du_jeu_jamais_melangees(campagne_complete: Path) -> None:
     donnees = charger(campagne_complete, "camp-test", jeu="v1.1")
     assert donnees.jeu_version == "v1.1"
     assert donnees.baselines[("base:granite", "q4_k_m")].taches["Q"].score == 40.0
+
+
+def test_notation_relu_llm_refusee_au_comparatif(campagne_complete: Path) -> None:
+    ecrire_notation(
+        campagne_complete, run_id("20261004-090000", "base-granite", "7777"), "base:granite",
+        {"Q": 55.0}, jeu="dev1", jeu_statut="relu-llm",
+    )  # fmt: skip
+    with pytest.raises(JeuDeveloppement, match="relu-llm"):
+        charger(campagne_complete, "camp-test")
+    with pytest.raises(JeuDeveloppement, match="dev1"):
+        charger(campagne_complete, "camp-test", jeu="dev1")
+    # le jeu final reste lisible : la notation de dev n'est retenue nulle part
+    assert charger(campagne_complete, "camp-test", jeu="v1.1").jeu_version == "v1.1"
+
+
+def test_notation_v10_provisoire_toujours_acceptee(campagne_complete: Path) -> None:
+    ecrire_notation(
+        campagne_complete, run_id("20261004-090000", "base-granite", "6666"), "base:granite",
+        {"Q": 65.0}, jeu="v1.0", jeu_statut="provisoire",
+    )  # fmt: skip
+    donnees = charger(campagne_complete, "camp-test", jeu="v1.0")
+    assert donnees.jeu_statuts == ("provisoire",)
 
 
 def test_cli_ecrit_le_rapport_et_regenere_a_l_octet_pres(

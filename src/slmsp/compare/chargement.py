@@ -30,10 +30,15 @@ TYPE_TRAIN = "train"
 TYPE_EXPORT = "export"
 
 QUANTIFICATIONS = ("f16", "q4_k_m")
+STATUT_RELU_LLM = "relu-llm"
 
 
 class JeuMelange(SlmspError):
     """Les notations retenues portent plusieurs versions du jeu d'évaluation."""
+
+
+class JeuDeveloppement(SlmspError):
+    """Une notation retenue porte un jeu de développement (`relu-llm`), jamais une mesure finale."""
 
 
 class _Tolerant(BaseModel):
@@ -223,6 +228,10 @@ def _plus_recent[T](courant: tuple[Run, T] | None, run: Run, valeur: T) -> tuple
     return courant
 
 
+def _est_dev(scores: Scores) -> bool:
+    return scores.jeu_statut == STATUT_RELU_LLM
+
+
 def charger(racine: Path, campagne: str, *, jeu: str | None = None) -> Donnees:
     """Charge les artefacts de `racine/runs` utiles à la `campagne`.
 
@@ -264,6 +273,12 @@ def charger(racine: Path, campagne: str, *, jeu: str | None = None) -> Donnees:
     if jeu is not None:
         pertinentes = [(r, s) for r, s in pertinentes if s.jeu_version == jeu]
         versions = [jeu] if pertinentes else []
+    en_dev = sorted({f"{s.jeu_version} ({s.jeu_statut})" for _, s in pertinentes if _est_dev(s)})
+    if en_dev:
+        raise JeuDeveloppement(
+            f"notation(s) d'un jeu de développement, non admise(s) au Comparatif : "
+            f"{', '.join(en_dev)} ; le Comparatif ne porte que des mesures finales (v1.1 relu)"
+        )
     if len(versions) > 1:
         raise JeuMelange(
             "plusieurs versions du jeu parmi les notations : "

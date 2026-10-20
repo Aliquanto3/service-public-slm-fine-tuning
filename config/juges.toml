@@ -87,3 +87,11 @@ effort_raisonnement = "low"
 format_reponse = "json_schema"
 sortie_estimee = 1500
 marge_raisonnement = 2000
+
+# Juge par jeu (spec O4) : le jeu de développement `dev1` n'est jamais noté par le juge de
+# test (Claude) ni par le juge de sélection des données (DeepSeek, O1) ; GLM-5.3 retenu par
+# décision d'Anaël du 2026-10-20 (réversible : changer `juge_principal`). Le second juge Mistral
+# est désactivé pour ce jeu. Les scores dev ne se comparent qu'entre eux, à juge égal.
+[jeux.dev1]
+juge_principal = "glm"
+second_juge = false

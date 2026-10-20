@@ -56,8 +56,8 @@ class ManifesteJeu(SchemaBase):
     """Contenu de `eval/jeu/<version>/MANIFEST.json`."""
 
     schema_version: Literal[1] = 1
-    version: Annotated[str, StringConstraints(pattern=r"^v[0-9]+(?:\.[0-9]+)?$")]
-    statut: Literal["provisoire", "relu"]
+    version: Annotated[str, StringConstraints(pattern=r"^(?:v[0-9]+(?:\.[0-9]+)?|dev[0-9]+)$")]
+    statut: Literal["provisoire", "relu", "relu-llm"]
     cree_le: AwareDatetime
     regle_empreinte: Literal[REGLE_EMPREINTE] = REGLE_EMPREINTE  # type: ignore[valid-type]
     fichiers: list[FichierManifeste] = Field(min_length=1)

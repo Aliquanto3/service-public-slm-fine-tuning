@@ -75,6 +75,7 @@ def ecrire_notation(
     jeu: str = "v1.1",
     generation: str | None = None,
     statut: str = "complet",
+    jeu_statut: str = "relu",
 ) -> None:
     dossier = ecrire_run(racine, "eval-notation", identifiant, statut=statut, modele_ref=modele_ref)
     contenu = Scores(
@@ -82,7 +83,7 @@ def ecrire_notation(
         modele_ref=modele_ref,  # type: ignore[arg-type]
         quantification=quantification,  # type: ignore[arg-type]
         jeu_version=jeu,
-        jeu_statut="relu",
+        jeu_statut=jeu_statut,
         version_texte=1,
         taches={t: tache(t, s) for t, s in scores.items()},
         cout_juge_total_eur=0.0,

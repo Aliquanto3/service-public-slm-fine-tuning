@@ -470,7 +470,7 @@ def test_imports_des_juges_reels_confines() -> None:
 def juges_cli(monkeypatch: pytest.MonkeyPatch, cache: CacheVerdicts) -> list[Any]:
     ouverts: list[Any] = []
 
-    def ouvrir(racine: Any = None, mode_appel: Any = None) -> Juges:
+    def ouvrir(racine: Any = None, mode_appel: Any = None, jeu: Any = None) -> Juges:
         ouverts.append((racine, mode_appel))
         return juges_factices(cache)
 
@@ -508,7 +508,9 @@ def test_cli_notation_erreur_api_code_1(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     juges = juges_factices(cache, non_juges={"NR-001": "erreur-api"})
-    monkeypatch.setattr(notation, "ouvrir_juges", lambda racine=None, mode_appel=None: juges)
+    monkeypatch.setattr(
+        notation, "ouvrir_juges", lambda racine=None, mode_appel=None, jeu=None: juges
+    )
     parent = fabriquer_generation(depot_eval, ["NR-001", "NR-002"])
     commande = ["eval", "run", "--phase", "notation", "--depuis", parent.run_id]
     assert main([*commande, "--racine", str(depot_eval)]) == CodeSortie.ERREUR
@@ -708,7 +710,9 @@ def test_cli_plafond_depasse_code_1(
 ) -> None:
     juge = JugeAvecEstimation(3.0)
     juges = juges_avec_estimation(cache, juge)
-    monkeypatch.setattr(notation, "ouvrir_juges", lambda racine=None, mode_appel=None: juges)
+    monkeypatch.setattr(
+        notation, "ouvrir_juges", lambda racine=None, mode_appel=None, jeu=None: juges
+    )
     parent = fabriquer_generation(depot_eval)
     commande = ["eval", "run", "--phase", "notation", "--depuis", parent.run_id]
     code = main([*commande, "--plafond-estime", "2", "--racine", str(depot_eval)])
@@ -740,3 +744,19 @@ def test_cli_plafond_sans_objet_generation(depot_eval: Path, juges_cli: list[Any
         ]
     )
     assert code == CodeSortie.USAGE
+
+
+def test_scores_portent_le_juge_principal(depot_eval: Path, cache: CacheVerdicts) -> None:
+    """Juge Claude par défaut ; le nom d'un juge tiers quand `Juges.nom_principal` le dit."""
+    parent = fabriquer_generation(depot_eval, ["Q-001"])
+    rapport = noter(parent.run_id, juges=juges_factices(cache), racine=depot_eval)
+    assert rapport.scores.juge_principal == "claude"
+    ecrit = json.loads((rapport.run.dossier / FICHIER_SCORES).read_text(encoding="utf-8"))
+    assert ecrit["juge_principal"] == "claude"
+
+    juges = juges_factices(cache)
+    juges.nom_principal = "glm"
+    juges.second = None
+    autre = noter(parent.run_id, juges=juges, racine=depot_eval)
+    assert autre.scores.juge_principal == "glm"
+    assert charger_scores(autre.run.dossier).juge_principal == "glm"

@@ -452,6 +452,7 @@ def calculer_scores(
     modele_ref: str | None = None,
     quantification: str | None = None,
     couts: Mapping[str, float] | None = None,
+    juge_principal: str = "claude",
 ) -> Scores:
     """Scores de chaque Tâche présente parmi `items` (ordre des codes de SPEC §2).
 
@@ -482,6 +483,7 @@ def calculer_scores(
         quantification=quantification,  # type: ignore[arg-type]
         jeu_version=jeu_version,
         jeu_statut=jeu_statut,
+        juge_principal=juge_principal,
         manifeste_sha256=manifeste_sha256,
         version_texte=VERSION_TEXTE,
         taches=taches,

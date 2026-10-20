@@ -249,13 +249,44 @@ def _avertissements(runs: Sequence[RunCharge], communs: Mapping[str, list[str]])
     for run in runs:
         if run.scores.jeu_version != runs[0].scores.jeu_version:
             alertes.append(f"jeux différents : {run.run_id} en {run.scores.jeu_version}")
+        if run.scores.juge_principal != runs[0].scores.juge_principal:
+            alertes.append(
+                f"juges principaux différents : {run.run_id} noté par {run.scores.juge_principal}"
+            )
+    if any(run.scores.jeu_statut == cfg.STATUT_RELU_LLM for run in runs):
+        alertes.append(
+            "jeu de développement (relu-llm) : comparaison pour décider, jamais une mesure finale"
+        )
     return alertes
 
 
-def comparer(runs: Sequence[RunCharge], *, tirages: int = 2000, graine: int = 7) -> Resultat:
-    """Bootstrap apparié : le premier run est la référence A, les suivants sont les B."""
+def _controler_homogenes(runs: Sequence[RunCharge]) -> None:
+    """Refuse des runs notés sur des jeux ou par des juges principaux différents."""
+    jeux = sorted({run.scores.jeu_version for run in runs})
+    juges = sorted({run.scores.juge_principal for run in runs})
+    if len(jeux) > 1 or len(juges) > 1:
+        raise ValueError(
+            f"runs non comparables : jeux {', '.join(jeux)} ; juges principaux "
+            f"{', '.join(juges)} (--autoriser-jeux-differents pour passer outre)"
+        )
+
+
+def comparer(
+    runs: Sequence[RunCharge],
+    *,
+    tirages: int = 2000,
+    graine: int = 7,
+    autoriser_jeux_differents: bool = False,
+) -> Resultat:
+    """Bootstrap apparié : le premier run est la référence A, les suivants sont les B.
+
+    Lève `ValueError` si les runs portent des jeux ou des juges principaux différents, sauf
+    `autoriser_jeux_differents` (l'écart est alors un avertissement).
+    """
     if not runs:
         raise ValueError("au moins un run requis")
+    if not autoriser_jeux_differents:
+        _controler_homogenes(runs)
     if tirages < 1:
         raise ValueError("--bootstrap doit être au moins 1")
     for run in runs:
@@ -383,11 +414,17 @@ def comparer_runs(
     racine: str | Path | None = None,
     tirages: int = 2000,
     graine: int = 7,
+    autoriser_jeux_differents: bool = False,
 ) -> Resultat:
     """Recharge les runs de notation `ids` (lecture seule) et lance `comparer`."""
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
     seuils = cfg.charger_evaluation().seuils
-    return comparer([charger_run(i, base, seuils) for i in ids], tirages=tirages, graine=graine)
+    return comparer(
+        [charger_run(i, base, seuils) for i in ids],
+        tirages=tirages,
+        graine=graine,
+        autoriser_jeux_differents=autoriser_jeux_differents,
+    )
 
 
 __all__ = [

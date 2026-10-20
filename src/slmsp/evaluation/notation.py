@@ -63,6 +63,7 @@ FICHIER_RELECTURE: Final = NOM_RELECTURE
 STATUTS_PARENT: Final = ("complet", "partiel-erreur")
 JUGE_PRINCIPAL: Final = "principal"
 JUGE_SECOND: Final = "second"
+JUGE_CLAUDE: Final = "claude"
 MOTIF_BUDGET: Final = "budget"
 MOTIF_NON_JUGEABLE: Final = "non-jugeable"
 
@@ -106,46 +107,86 @@ class Juges:
     cache: CacheVerdicts
     description: dict[str, Any] = field(default_factory=dict)
     """Modèles et réglages des juges, inscrits dans la config du run (jamais dans les scores)."""
+    nom_principal: str = JUGE_CLAUDE
+    """Juge principal : `claude` ou le nom d'un juge tiers ; inscrit dans `scores.json`."""
 
 
-def ouvrir_juges(racine: str | Path | None = None, mode_appel: str | None = None) -> Juges:
+def jeu_du_run(depuis: str, racine: str | Path | None = None) -> str:
+    """Version du jeu du run de génération `depuis` (pour choisir les juges avant la notation)."""
+    return ouvrir_run(depuis, racine=_racine(racine)).manifeste.jeu_version or ""
+
+
+def ouvrir_juges(
+    racine: str | Path | None = None, mode_appel: str | None = None, jeu: str | None = None
+) -> Juges:
     """Assemble les juges réels : Juge Claude, second juge Mistral, registre et cache réels.
 
     `mode_appel` (`batch` ou `direct`) surcharge celui de `juges.toml` (hors clé de cache).
+    `jeu` : version du jeu noté ; si `juges.toml` donne `[jeux.<jeu>] juge_principal`, ce juge
+    tiers (OpenRouter, même grille et même prompt) remplace Claude, et `second_juge = false`
+    désactive le second juge (spec O4). Sans entrée pour `jeu`, Claude et Mistral comme avant.
     Lève `SecretManquant` si une clé d'API manque, `ConfigurationInvalide` pour une config.
     """
     from slmsp.budget.registre import RegistreBudget
     from slmsp.judge.claude import JugeClaude, fabriquer_client
-    from slmsp.judge.config import charger_juges
+    from slmsp.judge.config import ConfigJeuJuge, charger_juges
     from slmsp.judge.grille import charger_grille
     from slmsp.judge.second import JugeMistral
     from slmsp.mistral.client import ClientMistral, fabriquer_sdk
     from slmsp.mistral.config import charger_mistral
 
     config = charger_juges()
-    principal = config.principal
-    if mode_appel is not None:
-        if mode_appel not in ("batch", "direct"):
-            raise ValueError(f"mode d'appel inconnu : {mode_appel!r} (attendu : batch, direct)")
-        principal = principal.model_copy(update={"mode_appel": mode_appel})
-    base = Path(racine) if racine is not None else None
-    grille = charger_grille(principal.chemin_grille(base))
+    if mode_appel is not None and mode_appel not in ("batch", "direct"):
+        raise ValueError(f"mode d'appel inconnu : {mode_appel!r} (attendu : batch, direct)")
+    cfg_jeu = config.jeux.get(jeu) if jeu is not None else None
+    cfg_jeu = cfg_jeu or ConfigJeuJuge()
     registre = RegistreBudget()
-    cache = CacheVerdicts()
-    config_mistral = charger_mistral()
-    client_mistral = ClientMistral(config_mistral, registre, fabriquer_sdk(config_mistral))
-    return Juges(
-        principal=JugeClaude(principal, registre, cache, fabriquer_client(principal), grille),
-        second=JugeMistral(config.second, client_mistral, cache, grille),
-        cache=cache,
-        description={
+    if cfg_jeu.juge_principal is not None:
+        from slmsp.evaluation.juges_tiers import ouvrir_juge_tiers
+
+        if mode_appel is not None:
+            raise ValueError(
+                f"--mode-juge sans objet pour le jeu {jeu} : juge principal tiers "
+                f"{cfg_jeu.juge_principal!r} (appels directs OpenRouter)"
+            )
+
+        tiers = ouvrir_juge_tiers(cfg_jeu.juge_principal, racine)
+        principal_juge: Any = tiers
+        cache = tiers.cache
+        grille = tiers.grille
+        nom_principal = cfg_jeu.juge_principal
+        description: dict[str, Any] = {JUGE_PRINCIPAL: tiers.description()}
+    else:
+        principal = config.principal
+        if mode_appel is not None:
+            principal = principal.model_copy(update={"mode_appel": mode_appel})
+        base = Path(racine) if racine is not None else None
+        grille = charger_grille(principal.chemin_grille(base))
+        cache = CacheVerdicts()
+        principal_juge = JugeClaude(principal, registre, cache, fabriquer_client(principal), grille)
+        nom_principal = JUGE_CLAUDE
+        description = {
             JUGE_PRINCIPAL: {
                 "modele": principal.modele,
                 "effort": principal.effort,
                 "mode_appel": principal.mode_appel,
-            },
-            JUGE_SECOND: {"modele": config.second.modele, "effort": config.second.effort_cle},
-        },
+            }
+        }
+    second: SecondJuge | None = None
+    if cfg_jeu.second_juge:
+        config_mistral = charger_mistral()
+        client_mistral = ClientMistral(config_mistral, registre, fabriquer_sdk(config_mistral))
+        second = JugeMistral(config.second, client_mistral, cache, grille)
+        description[JUGE_SECOND] = {
+            "modele": config.second.modele,
+            "effort": config.second.effort_cle,
+        }
+    return Juges(
+        principal=principal_juge,
+        second=second,
+        cache=cache,
+        description=description,
+        nom_principal=nom_principal,
     )
 
 
@@ -528,6 +569,7 @@ def _noter_dans(
         modele_ref=manifeste_run.modele_ref,
         quantification=manifeste_run.quantification,
         couts=_couts(juges.cache, selection, (principal, second)),
+        juge_principal=juges.nom_principal,
     )
     run.ecrire(FICHIER_SCORES, json_canonique(scores.model_dump(mode="json")) + b"\n")
 
@@ -572,5 +614,6 @@ __all__ = [
     "Juges",
     "RapportNotation",
     "noter",
+    "jeu_du_run",
     "ouvrir_juges",
 ]

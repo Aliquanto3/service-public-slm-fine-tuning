@@ -107,6 +107,7 @@ FACTEUR_DEFAUT: Final = 3
 
 VERSIONS_OBLIGATOIRES: Final = ("v1.0", "v1.1")
 VERSION_CALIBRAGE: Final = "calibrage"
+_MOTIF_JEU_DEV: Final = re.compile(r"^dev[0-9]+$")
 
 MOTIFS_EXCLUSION: Final = (
     "amorce_usager",
@@ -229,10 +230,18 @@ def session_courrier(sujet: Amorce) -> str:
 
 
 def versions_protegees(racine: str | Path) -> tuple[str, ...]:
-    """`("v1.0", "v1.1")`, plus `"calibrage"` si son échantillon existe sous `racine`."""
+    """`("v1.0", "v1.1")`, plus `"calibrage"` et chaque jeu de développement `devN` dont les
+    fichiers existent sous `racine` (spec O4 : `seed` et `filter` excluent leurs sources)."""
     versions = VERSIONS_OBLIGATOIRES
     if chemins_jeu(VERSION_CALIBRAGE, racine)[1].is_file():
         versions = (*versions, VERSION_CALIBRAGE)
+    dossier = Path(racine) / "eval" / "jeu"
+    if dossier.is_dir():
+        dev = sorted(
+            (d.name for d in dossier.iterdir() if _MOTIF_JEU_DEV.fullmatch(d.name)),
+            key=lambda nom: int(nom[3:]),
+        )
+        versions = (*versions, *(v for v in dev if chemins_jeu(v, racine)[1].is_file()))
     return versions
 
 

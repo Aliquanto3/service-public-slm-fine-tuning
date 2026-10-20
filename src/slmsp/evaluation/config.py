@@ -10,7 +10,9 @@ de décodage de la phase génération (section `[generation]`, report W2).
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
+from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
 from typing import Annotated, Any, Final, Literal
@@ -68,8 +70,72 @@ PART_RELECTURE: Final = Fraction(1, 5)
 MIN_RELECTURE: Final = 1
 """Relecture humaine : par strate Tâche × difficulté, `min(n, max(1, ceil(n / 5)))`."""
 
-STATUTS_GEL: Final[tuple[str, ...]] = ("provisoire", "relu")
-"""`provisoire` : écarts de composition inscrits, non bloquants ; `relu` : bloquants."""
+STATUTS_GEL: Final[tuple[str, ...]] = ("provisoire", "relu", "relu-llm")
+"""`provisoire` : écarts de composition inscrits, non bloquants ; `relu` et `relu-llm` :
+bloquants (`relu-llm` : jeu de développement relu par contre-vérification croisée de LLM,
+jamais une mesure finale)."""
+
+STATUT_RELU_LLM: Final = "relu-llm"
+STATUTS_BLOQUANTS: Final[tuple[str, ...]] = ("relu", STATUT_RELU_LLM)
+"""Statuts de gel qui rendent les écarts de composition bloquants."""
+
+MOTIF_JEU_DEV: Final = re.compile(r"^dev[0-9]+$")
+
+
+def est_jeu_dev(version: str) -> bool:
+    """Vrai pour une version de jeu de développement (`dev1`, `dev2`…)."""
+    return isinstance(version, str) and MOTIF_JEU_DEV.fullmatch(version) is not None
+
+
+CIBLES_DEV: Final[Mapping[str, tuple[int, int, int]]] = {
+    code: (7, 7, 6) for code in ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "NR")
+}
+"""Jeu de développement (spec O4) : 20 items par Tâche, 160 en tout, difficultés (7, 7, 6)."""
+
+
+@dataclass(frozen=True)
+class CiblesJeu:
+    """Cibles de composition d'une version : (facile, moyen, difficile) par Tâche et
+    contraintes secondaires. `exactes` : les contraintes secondaires (hors producteurs et
+    amorces, toujours des minimums) sont des égalités (v1.1) ou des minimums (dev)."""
+
+    taches: Mapping[str, tuple[int, int, int]]
+    q_sans_reponse: int
+    q_part_amorces: Fraction
+    rd_valeurs: int
+    rd_repli: int
+    rd_producteurs: int
+    cr_longues: int
+    exactes: bool
+
+
+CIBLES_V1: Final = CiblesJeu(
+    CIBLES,
+    CIBLE_Q_SANS_REPONSE,
+    CIBLE_Q_PART_AMORCES,
+    CIBLE_RD_VALEURS,
+    CIBLE_RD_REPLI,
+    CIBLE_RD_PRODUCTEURS,
+    CIBLE_CR_LONGUES,
+    exactes=True,
+)
+CIBLES_JEU_DEV: Final = CiblesJeu(
+    CIBLES_DEV,
+    q_sans_reponse=3,
+    q_part_amorces=CIBLE_Q_PART_AMORCES,
+    rd_valeurs=3,
+    rd_repli=2,
+    rd_producteurs=3,
+    cr_longues=4,
+    exactes=False,
+)
+"""Contraintes secondaires au prorata de v1.1, arrondies au supérieur (spec O4, règle 5)."""
+
+
+def cibles_jeu(version: str) -> CiblesJeu:
+    """Cibles de composition de `version` : `dev*` → `CIBLES_JEU_DEV`, sinon celles de v1.1."""
+    return CIBLES_JEU_DEV if est_jeu_dev(version) else CIBLES_V1
+
 
 NOM_MANIFESTE: Final = "MANIFEST.json"
 NOM_ITEMS: Final = "items.jsonl"

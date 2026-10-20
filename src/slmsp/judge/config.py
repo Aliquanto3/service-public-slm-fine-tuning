@@ -9,9 +9,9 @@ sont en secondes.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Final, Literal
+from typing import Annotated, Final, Literal, Self
 
-from pydantic import Field, StringConstraints
+from pydantic import Field, StringConstraints, model_validator
 
 from slmsp.core.config import ModeleConfig, charger_toml, racine_projet
 
@@ -104,6 +104,22 @@ class ConfigJugeTiers(ModeleConfig):
         return min(self.max_tokens, self.sortie_estimee + self.marge_raisonnement)
 
 
+NomJeu = Annotated[str, StringConstraints(pattern=r"^dev[0-9]+$")]
+"""Nom d'un jeu configurable (section `[jeux.<nom>]`) : un jeu de développement."""
+
+
+class ConfigJeuJuge(ModeleConfig):
+    """Juges d'un jeu de développement (section `[jeux.<nom>]`, spec O4).
+
+    `juge_principal` nomme un juge de `[juges_tiers]` qui remplace le principal Claude pour
+    ce jeu (même grille, même prompt, usage de budget du juge tiers) ; absent, le principal
+    reste Claude. `second_juge = false` désactive le second juge Mistral.
+    """
+
+    juge_principal: NomJugeTiers | None = None
+    second_juge: bool = True
+
+
 class ConfigJuges(ModeleConfig):
     """Contenu de `config/juges.toml`."""
 
@@ -112,6 +128,19 @@ class ConfigJuges(ModeleConfig):
     second: ConfigSecondJuge
     juges_tiers: dict[NomJugeTiers, ConfigJugeTiers] = Field(default_factory=dict)
     """Juges tiers facultatifs (story S3), sans effet sur le principal ni le second."""
+    jeux: dict[NomJeu, ConfigJeuJuge] = Field(default_factory=dict)
+    """Juges par jeu de développement ; un jeu absent garde Claude et le second juge."""
+
+    @model_validator(mode="after")
+    def _juge_principal_connu(self) -> Self:
+        for jeu, cfg_jeu in self.jeux.items():
+            nom = cfg_jeu.juge_principal
+            if nom is not None and nom not in self.juges_tiers:
+                raise ValueError(
+                    f"jeux.{jeu}.juge_principal : juge tiers inconnu {nom!r} "
+                    f"(connus : {', '.join(sorted(self.juges_tiers)) or 'aucun'})"
+                )
+        return self
 
 
 def charger_juges(chemin: str | Path | None = None) -> ConfigJuges:

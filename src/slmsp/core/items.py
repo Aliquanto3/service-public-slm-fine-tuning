@@ -118,7 +118,7 @@ OUTILS_RD: Final[tuple[str, ...]] = (
 """Outils MCP admis dans `appels_attendus` (copie de `slmsp.mcp.outils.OUTILS_AUTORISES`,
 que `core` ne peut pas importer ; un test vérifie l'égalité)."""
 
-MOTIF_VERSION: Final = r"^v[0-9]+(?:\.[0-9]+)?$"
+MOTIF_VERSION: Final = r"^(?:v[0-9]+(?:\.[0-9]+)?|dev[0-9]+)$"
 VERSION_CALIBRAGE: Final = "calibrage"
 
 _MOTIF_ID = re.compile(r"^(?P<code>[A-Z]+)-(?P<numero>[0-9]{3,})$")
@@ -677,15 +677,17 @@ class Jeu:
 def chemins_jeu(version: str, racine: str | Path | None = None) -> tuple[Path, Path, bool]:
     """(dossier du jeu, fichier d'items, mode strict) de la version `version`.
 
-    `calibrage` → `eval/calibrage/echantillon-calibrage.jsonl` (souple) ; `vN` ou `vN.M`
-    → `eval/jeu/<version>/items.jsonl` (strict). Lève `ValueError` pour une autre version.
+    `calibrage` → `eval/calibrage/echantillon-calibrage.jsonl` (souple) ; `vN`, `vN.M` ou
+    `devN` → `eval/jeu/<version>/items.jsonl` (strict). Lève `ValueError` pour une autre version.
     """
     base = Path(racine) if racine is not None else racine_projet()
     if version == VERSION_CALIBRAGE:
         dossier = base / "eval" / "calibrage"
         return dossier, dossier / "echantillon-calibrage.jsonl", False
     if not isinstance(version, str) or not re.fullmatch(MOTIF_VERSION, version):
-        raise ValueError(f"version de jeu invalide : {version!r} (attendu : vN, vN.M ou calibrage)")
+        raise ValueError(
+            f"version de jeu invalide : {version!r} (attendu : vN, vN.M, devN ou calibrage)"
+        )
     dossier = base / "eval" / "jeu" / version
     return dossier, dossier / "items.jsonl", True
 

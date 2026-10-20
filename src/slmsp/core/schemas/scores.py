@@ -41,7 +41,7 @@ class StatutsTache(SousSchema):
     """Statuts qui qualifient un Score de Tâche."""
 
     jeu_statut: str
-    """`provisoire`, `relu` (manifeste) ou `calibrage`."""
+    """`provisoire`, `relu`, `relu-llm` (manifeste) ou `calibrage`."""
     verdicts_relus: bool = False
     fragile: bool = False
     """Kappa de Tâche calculable et sous le seuil `kappa_fragile`."""
@@ -82,6 +82,9 @@ class Scores(SchemaBase):
     quantification: Literal["f16", "q4_k_m"] | None = None
     jeu_version: str
     jeu_statut: str
+    juge_principal: str = "claude"
+    """Juge principal de la notation : `claude` (défaut, anciens scores) ou le nom d'un juge
+    tiers (jeu de développement). Les scores ne se comparent qu'à juge égal."""
     manifeste_sha256: Sha256 | None = None
     version_texte: int
     taches: dict[str, ScoreTache]

@@ -43,3 +43,21 @@ Relecture du 2026-10-20 (reviewer, avant code), contre `evaluation/{config,gel,n
 | 6 | medium | Juge principal par jeu : `ouvrir_juges` ne construit que Claude et Mistral ; nouvelle imputation inutile (le juge tiers a déjà l'usage `juge-tiers-openrouter`) ; second juge non précisé. | `JugeTiers` en principal par config, usage existant, second juge désactivé, champ `juge_principal` dans les scores. |
 | 7 | medium | Jeu dev noté par DeepSeek, aussi juge de sélection des données : biais de sélection. | Recommandation GLM-5.3, config par jeu ; **décision d'Anaël**. |
 | 8 | low | Contre-vérification croisée sans outil désigné. | `eval/outils/verifier_jeu_croise.py`. |
+
+## Auto Run Result (O4a, code)
+
+Statut : review. Livré : `MOTIF_VERSION` `dev[0-9]+` (items, manifeste), statut `relu-llm` (config, schéma, CLI, message), `CIBLES_DEV` / `CiblesJeu` et composition selon la version (`ecarts_composition(items, version)`), refus `relu-llm` au Comparatif (`JeuDeveloppement`), juge principal par jeu (`[jeux.dev1]`, `ouvrir_juges(jeu=…)`, `jeu_du_run`), `juge_principal` dans `Scores` (défaut `claude`), `dev*` dans `versions_protegees`, outil `eval/outils/verifier_jeu_croise.py` (`disjonction`, `verifier`).
+
+Décisions prises seul :
+- Les contraintes secondaires de `CIBLES_DEV` sont des **minimums** (spec : « ≥ »), alors que v1.1 garde des égalités ; RD demandes de valeurs : 3 (prorata arrondi au supérieur, non listé par la spec).
+- `relu` et `relu-llm` sont tous deux bloquants ; les cibles dépendent de la version, pas du statut (`gel dev1 --statut relu` jugerait donc aussi contre `CIBLES_DEV`). Réservation de `relu` à Anaël : règle de procédure, non codée.
+- `[jeux.<nom>]` n'accepte que `dev[0-9]+`. `second_juge = true` avec un juge tiers reconstruit le second juge Mistral ; jamais construit quand `false`.
+- Le Comparatif refuse toute notation `relu-llm` retenue, même avec `--jeu dev1`.
+- Disjonction : URL canonique, texte identique (valeurs ≥ 40 caractères), inclusion de n-grammes aux seuils de `[anti_fuite]`, identifiants ; **cosinus d'embeddings non recalculé** par l'outil (porté par `seed` / `filter` via les versions protégées).
+- Vérification croisée : un juge sans verdict valide laisse l'item `incomplet` (rejouable, non retenu) ; verdicts en ajout seul dans `eval/construction/dev1/verdicts-croises.jsonl`, rapport de rejet dans `rapport-verification-croisee.json`.
+- Juge du jeu dev : `glm` par défaut provisoire (**à confirmer par Anaël**).
+
+Reports pour O4b : intégration du rapport de vérification croisée au MANIFEST (`gel` n'a pas de champ pour lui), option `--ecart-admis RD` du gel, `eval/construction/dev1/`, cassettes `RD-5xx`.
+
+## Revue
+Revue du 2026-10-20 (détail : `revue-o4a.md`) : 5 medium corrigés (`sources_attendues` et amorces seed dans la disjonction, `--jeu` cohérent avec le run repris, `eval comparer` refuse jeux ou juges différents sauf option, verdicts croisés indexés par SHA d'item), 2 low corrigés (textes courts identiques, `--mode-juge` refusé avec juge tiers), 2 low rejetés (extras présents dans le venv ; clé de cache déjà propre au modèle). Juge du jeu dev : GLM-5.3, décision d'Anaël confirmée.

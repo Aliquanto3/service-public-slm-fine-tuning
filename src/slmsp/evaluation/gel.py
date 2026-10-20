@@ -248,20 +248,30 @@ def _mots_hors_consigne(valeur: object) -> int:
     return 0
 
 
-def ecarts_composition(items: Sequence[Item]) -> list[str]:
-    """Écarts de `items` avec la composition de SPEC §2 (liste vide si conforme)."""
+def ecarts_composition(items: Sequence[Item], version: str = "v1.1") -> list[str]:
+    """Écarts de `items` avec la composition visée de `version` (liste vide si conforme).
+
+    SPEC §2 pour `vN`, `CIBLES_DEV` (spec O4) pour `devN`.
+    """
+    cibles = cfg.cibles_jeu(version)
     ecarts: list[str | None] = []
     comptes = Counter((item.code, item.difficulte) for item in items)
     for code in CODES:
-        for difficulte, cible in zip(DIFFICULTES, cfg.CIBLES[code], strict=True):
+        for difficulte, cible in zip(DIFFICULTES, cibles.taches[code], strict=True):
             ecarts.append(_ecart(f"{code} {difficulte}", comptes[(code, difficulte)], cible))
     q = [item for item in items if isinstance(item, ItemQ)]
     rd = [item for item in items if isinstance(item, ItemRD)]
     cr = [item for item in items if isinstance(item, ItemCR)]
+    minimum = not cibles.exactes
     ecarts.append(
-        _ecart("Q sans réponse", sum(item.sans_reponse for item in q), cfg.CIBLE_Q_SANS_REPONSE)
+        _ecart(
+            "Q sans réponse",
+            sum(item.sans_reponse for item in q),
+            cibles.q_sans_reponse,
+            minimum=minimum,
+        )
     )
-    cible_amorces = math.ceil(cfg.CIBLE_Q_PART_AMORCES * sum(cfg.CIBLES["Q"]))
+    cible_amorces = math.ceil(cibles.q_part_amorces * sum(cibles.taches["Q"]))
     ecarts.append(
         _ecart(
             "Q issus d'amorces réelles",
@@ -274,21 +284,32 @@ def ecarts_composition(items: Sequence[Item]) -> list[str]:
         _ecart(
             "RD demandes de valeurs",
             sum(bool(item.valeurs_attendues) for item in rd),
-            cfg.CIBLE_RD_VALEURS,
+            cibles.rd_valeurs,
+            minimum=minimum,
         )
     )
     ecarts.append(
-        _ecart("RD cas de repli", sum(item.mode == "repli" for item in rd), cfg.CIBLE_RD_REPLI)
+        _ecart(
+            "RD cas de repli",
+            sum(item.mode == "repli" for item in rd),
+            cibles.rd_repli,
+            minimum=minimum,
+        )
     )
     producteurs = {p for item in rd for p in producteurs_rd(item)}
     ecarts.append(
-        _ecart("RD producteurs distincts", len(producteurs), cfg.CIBLE_RD_PRODUCTEURS, minimum=True)
+        _ecart("RD producteurs distincts", len(producteurs), cibles.rd_producteurs, minimum=True)
     )
     longues = sum(_mots_hors_consigne(item.entree) > cfg.SEUIL_CR_LONGUE_MOTS for item in cr)
     ecarts.append(
-        _ecart(f"CR de plus de {cfg.SEUIL_CR_LONGUE_MOTS} mots", longues, cfg.CIBLE_CR_LONGUES)
+        _ecart(
+            f"CR de plus de {cfg.SEUIL_CR_LONGUE_MOTS} mots",
+            longues,
+            cibles.cr_longues,
+            minimum=minimum,
+        )
     )
-    total_cible = sum(sum(cfg.CIBLES[c]) for c in cfg.TACHES_THEMATIQUES)
+    total_cible = sum(sum(cibles.taches[c]) for c in cfg.TACHES_THEMATIQUES)
     themes = Counter(item.theme for item in items if item.code in cfg.TACHES_THEMATIQUES)
     for theme, part in cfg.PARTS_THEMES.items():
         cible = round(part * total_cible)
@@ -300,7 +321,7 @@ def ecarts_composition(items: Sequence[Item]) -> list[str]:
 
 def _version_gelable(version: str) -> None:
     if not isinstance(version, str) or not re.fullmatch(MOTIF_VERSION, version):
-        raise ValueError(f"version de jeu invalide : {version!r} (attendu : vN ou vN.M)")
+        raise ValueError(f"version de jeu invalide : {version!r} (attendu : vN, vN.M ou devN)")
 
 
 def verifier_jeu(version: str, racine: str | Path | None = None) -> RapportVerification:
@@ -318,7 +339,7 @@ def verifier_jeu(version: str, racine: str | Path | None = None) -> RapportVerif
         rapport.erreurs.extend(exc.erreurs or [str(exc)])
         return rapport
     _verifier_rd(rapport, rapport.jeu, base)
-    rapport.ecarts = ecarts_composition(rapport.items)
+    rapport.ecarts = ecarts_composition(rapport.items, version)
     return rapport
 
 
@@ -427,7 +448,9 @@ def gel(
     `JeuNonConforme` sur une erreur bloquante (ou un écart de composition en statut `relu`).
     """
     if statut not in cfg.STATUTS_GEL:
-        raise ValueError(f"statut de gel inconnu : {statut!r} (attendu : provisoire ou relu)")
+        raise ValueError(
+            f"statut de gel inconnu : {statut!r} (attendu : {', '.join(cfg.STATUTS_GEL)})"
+        )
     if isinstance(graine, bool) or not isinstance(graine, int):
         raise ValueError(f"graine entière attendue (reçu {graine!r})")
     cree_le = maintenant or datetime.now().astimezone()
@@ -449,8 +472,8 @@ def gel(
 
     rapport = verifier_jeu(version, base)
     bloquants = list(rapport.erreurs)
-    if statut == "relu":
-        bloquants += [f"écart de composition (statut relu) : {e}" for e in rapport.ecarts]
+    if statut in cfg.STATUTS_BLOQUANTS:
+        bloquants += [f"écart de composition (statut {statut}) : {e}" for e in rapport.ecarts]
     grille = cfg.chemin_grille(base)
     if not grille.is_file():
         bloquants.append(f"grille du Juge absente : {grille}")

@@ -139,9 +139,19 @@ class _Item:
 class _RunFactice(bootstrap.RunCharge):
     """Run sans fichiers : score d'une Tâche = part d'items dont l'id est pair, ou None."""
 
-    def __init__(self, nom: str, items: list[_Item], sans_score: tuple[str, ...] = ()) -> None:
+    def __init__(
+        self,
+        nom: str,
+        items: list[_Item],
+        sans_score: tuple[str, ...] = (),
+        *,
+        jeu: str = "v1",
+        juge: str = "claude",
+        statut: str = "relu",
+    ) -> None:
         self.run_id, self.items, self._sans = nom, items, sans_score  # type: ignore[assignment]
-        self.scores = type("S", (), {"taches": {}, "jeu_version": "v1"})()  # type: ignore[assignment]
+        attributs = {"taches": {}, "jeu_version": jeu, "juge_principal": juge, "jeu_statut": statut}
+        self.scores = type("S", (), attributs)()  # type: ignore[assignment]
 
     def score(self, tache: str, items: Any, *, avec_second: bool) -> float | None:
         if tache in self._sans or not items:
@@ -175,3 +185,30 @@ def test_qualite_sur_taches_definies_partout(monkeypatch: pytest.MonkeyPatch) ->
     assert qualite.score_a == q.score_a  # Qualité d'A sur Q seul, comme B
     assert qualite.ecart == q.ecart
     assert qualite.n_valides == 30
+
+
+@pytest.mark.parametrize(
+    ("options", "motif"),
+    [({"jeu": "dev1"}, "jeux dev1, v1"), ({"juge": "glm"}, "juges principaux claude, glm")],
+)
+def test_jeux_ou_juges_differents_refuses(
+    monkeypatch: pytest.MonkeyPatch, options: dict[str, str], motif: str
+) -> None:
+    """Revue O4a : un écart de jeu ou de juge principal est refusé, sauf option explicite."""
+    monkeypatch.setattr(bootstrap, "verifier_recalcul", lambda run: None)
+    a = _RunFactice("a", _items({"Q": 4}))
+    b = _RunFactice("b", _items({"Q": 4}), **options)
+    with pytest.raises(ValueError, match=motif):
+        bootstrap.comparer([a, b], tirages=5, graine=1)
+    resultat = bootstrap.comparer([a, b], tirages=5, graine=1, autoriser_jeux_differents=True)
+    assert any("différents" in w for w in resultat.avertissements)
+
+
+def test_jeu_relu_llm_signale(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(bootstrap, "verifier_recalcul", lambda run: None)
+    runs = [
+        _RunFactice(n, _items({"Q": 4}), jeu="dev1", juge="glm", statut="relu-llm")
+        for n in ("a", "b")
+    ]
+    resultat = bootstrap.comparer(runs, tirages=5, graine=1)
+    assert any("relu-llm" in w for w in resultat.avertissements)
