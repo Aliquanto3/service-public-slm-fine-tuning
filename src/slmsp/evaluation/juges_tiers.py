@@ -121,6 +121,8 @@ def preparer(depuis: str, taches: Sequence[str], base: Path) -> _Preparation:
             f"run de notation {depuis} au statut {statut!r} : refusé "
             f"(attendu : {', '.join(STATUTS_NOTATION)})"
         )
+    if run.manifeste.config.get("phase") == "composition":  # générations par Tâche (15.1)
+        raise SlmspError(f"run de notation {depuis} composé (eval composer) : refusé")
     inconnues = [t for t in taches if t not in CRITERES_KAPPA]
     if inconnues or not taches:
         raise ValueError(

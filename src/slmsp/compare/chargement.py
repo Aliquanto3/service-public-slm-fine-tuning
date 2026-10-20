@@ -28,6 +28,8 @@ TYPE_NOTATION = "eval-notation"
 TYPE_BENCH = "bench"
 TYPE_TRAIN = "train"
 TYPE_EXPORT = "export"
+PHASE_COMPOSITION = "composition"
+"""Phase d'un run `eval-notation` composé (`slmsp.evaluation.composition.PHASE`)."""
 
 QUANTIFICATIONS = ("f16", "q4_k_m")
 STATUT_RELU_LLM = "relu-llm"
@@ -211,6 +213,11 @@ def _notations(racine: Path, exclus: list[Exclu]) -> list[tuple[Run, Scores]]:
     exclus.extend(ecartes)
     par_generation: dict[str, tuple[Run, Scores]] = {}
     for run in _complets(runs, exclus):
+        if run.manifeste.config.get("phase") == PHASE_COMPOSITION:
+            # Run composé (story 15.1) : même run_generation que sa source par défaut, il
+            # remplacerait la vraie notation du modèle ; il ne se lit qu'avec `eval comparer`.
+            exclus.append(Exclu(run.type, run.run_id, "run composé (eval composer)"))
+            continue
         try:
             scores = Scores.model_validate(_lire_json(run.dossier / "scores.json"))
         except ValidationError:

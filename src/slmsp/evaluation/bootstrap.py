@@ -100,6 +100,18 @@ def _jugements(run: Any) -> tuple[dict[str, Jugement], dict[str, Jugement]]:
     return par_juge[notation.JUGE_PRINCIPAL], par_juge[notation.JUGE_SECOND]
 
 
+def _generations_du_run(run: Any, generation: str, base: Path) -> dict[str, Generation]:
+    """Générations du run ; un run composé les prend, par Tâche, dans le run de sa source."""
+    par_tache = run.manifeste.config.get("generations_par_tache")
+    if not isinstance(par_tache, dict):
+        return notation._generations(ouvrir_run(generation, racine=base))
+    generations: dict[str, Generation] = {}
+    for tache, run_generation in par_tache.items():
+        source = notation._generations(ouvrir_run(run_generation, racine=base))
+        generations.update({i: g for i, g in source.items() if g.tache == tache})
+    return generations
+
+
 def charger_run(run_id: str, base: Path, seuils: Seuils) -> RunCharge:
     """Recharge un run `eval-notation` (verdicts, contrôles, générations, items, scores)."""
     run = ouvrir_run(run_id, racine=base)
@@ -109,8 +121,7 @@ def charger_run(run_id: str, base: Path, seuils: Seuils) -> RunCharge:
     jeu_version = run.manifeste.jeu_version
     if not isinstance(generation, str) or jeu_version is None:
         raise ManifesteInvalide(f"run {run_id} : run.json sans run_generation ou jeu_version")
-    parent = ouvrir_run(generation, racine=base)
-    generations = notation._generations(parent)
+    generations = _generations_du_run(run, generation, base)
     jeu = lire_jeu(jeu_version, base)
     ids = run.manifeste.config.get("items")
     retenus = set(ids) if isinstance(ids, list) else set(generations)

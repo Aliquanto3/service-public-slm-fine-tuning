@@ -15,6 +15,8 @@
         [--plafond-estime EUR] [--racine DIR]
     slmsp eval comparer --runs NOTATION_A NOTATION_B [...] [--bootstrap 2000] [--graine 7]
         [--sortie FICHIER.md] [--racine DIR]
+    slmsp eval composer --route TACHE=NOTATION_RUN [--route …] --defaut NOTATION_RUN
+        [--marque deja-consulte] [--racine DIR]
     slmsp eval sonde-outils --modele base:<slug> [--jeu calibrage] [--items RD-001,RD-002]
         [--variante cpu|cuda] [--racine DIR]
 
@@ -55,6 +57,14 @@ prix (`GET /models`, gratuit), sans génération ; code 0, 1 si la liste est ina
 `comparer` (story E1b) : bootstrap apparié des scores de runs `eval-notation` (lecture seule,
 aucun appel au juge) ; le premier run est la référence A. Tableau Markdown par Tâche et
 Qualité : écart B − A, IC 95 %, P(écart > 0), et bruit items de la Qualité de chaque run.
+
+`composer` (story 15.1) : run `eval-notation` composé, lisible tel quel par `comparer` : chaque
+Tâche reprend les verdicts et le Score de Tâche du run routé (`--route CR=RUN`), sinon du run
+`--defaut`. Lecture seule des sources, aucun appel. Sources `complet` ou `partiel-erreur` (le
+run composé prend le moins bon statut et liste les sources partielles). Refus (code 2, rien
+d'écrit) pour un autre statut, ou si les sources diffèrent par le jeu et ses items, la grille,
+le juge principal ou les prompts de Tâche. `--marque deja-consulte` consigne que la
+composition a été choisie en ayant vu ses scores. Le Comparatif ignore les runs composés.
 
 Code 0 si le dernier run est `complet`, 1 s'il est `partiel-erreur` ou `partiel-budget`, 2
 pour une erreur d'usage, 4 si le jeu est altéré ou si le run repris diffère de la demande.
@@ -527,6 +537,34 @@ def executer_comparer(args: argparse.Namespace) -> int:
     return int(CodeSortie.SUCCES)
 
 
+def _route(valeur: str) -> tuple[str, str]:
+    tache, separateur, run_id = valeur.partition("=")
+    if not separateur or not tache or not run_id:
+        raise argparse.ArgumentTypeError(f"{valeur!r} : forme attendue TACHE=NOTATION_RUN_ID")
+    return tache, run_id
+
+
+def executer_composer(args: argparse.Namespace) -> int:
+    """`slmsp eval composer` : run de notation composé par routage de Tâche."""
+    from slmsp.core.erreurs import SlmspError
+    from slmsp.evaluation import composition
+
+    route = dict(args.route)
+    if len(route) != len(args.route):
+        print("slmsp : eval composer : une Tâche est routée deux fois", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    try:
+        run = composition.composer(route, args.defaut, marque=args.marque, racine=args.racine)
+    except composition.ErreurComposition as exc:
+        print(f"slmsp : eval composer : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    except SlmspError as exc:
+        print(f"slmsp : eval composer : {exc}", file=sys.stderr)
+        return int(exc.code_sortie)
+    print(f"Run composé : {run.run_id} ({run.dossier}), statut {run.statut_courant()}")
+    return int(CodeSortie.SUCCES)
+
+
 def _usage_tiers(message: str) -> int:
     print(f"slmsp : eval juges-tiers : {message}", file=sys.stderr)
     return int(CodeSortie.USAGE)
@@ -713,6 +751,33 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     comparer.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     comparer.set_defaults(func=executer_comparer)
+
+    composer = actions.add_parser(
+        "composer",
+        help="composer un run de notation par routage de Tâche (lecture seule, aucun appel)",
+        description=(
+            "Crée un run eval-notation où chaque Tâche reprend les verdicts et le Score de "
+            "Tâche du run routé, sinon du run par défaut ; lisible par `eval comparer`."
+        ),
+    )
+    composer.add_argument(
+        "--route",
+        action="append",
+        type=_route,
+        default=[],
+        metavar="TACHE=RUN_NOTATION",
+        help="Tâche routée vers un run de notation (répétable)",
+    )
+    composer.add_argument(
+        "--defaut", required=True, metavar="RUN_NOTATION", help="run des autres Tâches"
+    )
+    composer.add_argument(
+        "--marque",
+        choices=("deja-consulte",),
+        help="consigne que la composition a été choisie après consultation des scores",
+    )
+    composer.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
+    composer.set_defaults(func=executer_composer)
 
     sonde = actions.add_parser(
         "sonde-outils",
