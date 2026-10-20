@@ -49,3 +49,8 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-20 23:15 · 15.4 · second-avis · 1 medium (cause du constat dev1 non reproduite, à consigner), 3 low (manifeste écrit avant le retrait du juge ; échantillon et kappa affichés pour dev* ; composition sans comparer le second juge) ; review lancée (Sonnet, story mécanique) · —
 - 2026-10-20 23:25 · 15.4 · review · 1 medium et 3 low traités (cause dev1 non reproduite consignée ; règle appliquée avant le manifeste ; pas d'échantillon second juge aux gels dev* futurs, MANIFEST dev1 intact ; composition compare le second juge) · 148dd41
 - 2026-10-20 23:25 · 15.4 · fusion · squash dans main ; tests jeu_dev, composition, gel : 138 passés · f67117f
+- 2026-10-20 23:27 · 15.2 · review · 1 high, 4 medium, 3 low corrigés (appels OpenRouter écrits au fil et non repayés à la reprise, `cible_apprise` = nettoyage commun, Kimi limité aux candidats DeepSeek, reprise contrôlée, seul `stop` accepté, Kimi k2.6) ; preuve : cible Mistral nettoyée = cible v18 sur les 103 lignes CR, LC, RE ; v18 n'a que **5 lignes LC** · daefb7c
+- 2026-10-20 23:27 · 15.2 · fusion · squash dans main · 8d47b28
+- 2026-10-20 23:27 · témoin · génération dev1 complète (`20261020-230047-ft-minicpm5-2b-c13a`), notation GLM en cours (`20261020-232214-ft-minicpm5-2b-5203`) · —
+- 2026-10-20 23:27 · E2/E4 · candidats lancés sur GPU (CR, LC ; base minicpm5-2b à 0,3 et 0,7 ; DeepSeek sur LC ; plafond 2 €) · —
+- 2026-10-20 23:27 · 15.3 · relecture de la spec amendée lancée (second-avis, avant code) · —

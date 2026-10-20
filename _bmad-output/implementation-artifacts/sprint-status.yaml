@@ -169,7 +169,7 @@ development_status:
   14-18-routage-par-tache-sur-jeu-dev: backlog  # E5
   epic-15: in-progress
   15-1-eval-composer-routage-par-tache: done  # N1
-  15-2-candidats-multiples-base-et-deepseek: ready-for-dev  # N2 (O2)
+  15-2-candidats-multiples-base-et-deepseek: done  # N2 (O2)
   15-3-selection-des-cibles: backlog  # N3 (O3)
   15-4-second-juge-desactive-pour-dev: done  # N4
   15-5-dev2-vingt-items-par-tache: ready-for-dev  # N5
