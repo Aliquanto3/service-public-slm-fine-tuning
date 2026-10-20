@@ -39,3 +39,4 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-20 23:04 · 15.1 · review · 1 high et 2 medium corrigés (Comparatif et juges tiers ignorent ou refusent un composé ; source partielle admise, statut propagé), juge comparé sur modèle, fournisseur, effort et mode · 6b0dae6
 - 2026-10-20 23:04 · 15.1 · fusion · squash dans main ; tests composition et bootstrap : 26 passés · 91045ea
 - 2026-10-20 23:04 · E5 · composition dev1 `20261020-230351-compose-0d5a` (base partout, M1 v18 sur CO) : Qualité 54,5 → **55,8** (+1,3, IC95 [+0,6 ; +2,0]) ; pas de composition v1.1 (M1 v18 n'a pas de notation v1.1, la créer serait une mesure payante hors règle). Reste le test de déploiement LoRA (15.6) · —
+- 2026-10-20 23:04 · 15.4 · dev · lancé · —
