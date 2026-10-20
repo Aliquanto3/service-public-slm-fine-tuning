@@ -66,3 +66,8 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-20 07:16 · 14.9 (C9) · fusion · squash dans main · e0af7e2
 - 2026-10-20 07:16 · 14.11 (O4a) · décision · Anaël : GLM-5.3 juge du jeu de développement (confirmé) · —
 - 2026-10-20 07:16 · run · décision · suivi aligné sur avancement-run : stories du run numérotées en epic 14 dans sprint-status.yaml · —
+- 2026-10-20 07:17 · 14.10 (O1) · second-avis · 3 medium (fusion superficielle des seuils, couverture 1,0 si le juge omet tout, injection possible sans délimiteurs), 5 low ; review lancée (Opus) · —
+- 2026-10-20 07:17 · 14.11 (O4a) · second-avis · 5 medium (URL des Q et amorces seed absentes de la disjonction, --jeu incohérent à la reprise, eval comparer entre juges différents, verdicts sans empreinte d'item), 4 low ; review lancée (Opus) · —
+- 2026-10-20 07:20 · 14.7 (C7) · dev · fini : causes = références d'éléments manquantes (schéma sans minItems ; GLM 105 listes vides) et sorties DeepSeek coupées à 8000 tokens (raisonnement 7 500-8 000 même en effort low) ; relance corrective, max_tokens deepseek 16000, `--rejouer-invalides` ; rejeu estimé ~2 € ; second-avis lancé · bfba6e5
+- 2026-10-20 07:20 · run · décision · Anaël : amélioration continue ; branche `feat/avancement-run-ids-hors-epics` ouverte sur agent-cost-kit (clone `~/dev/agent-cost-kit`, rien poussé) · —
+- 2026-10-20 07:22 · 14.7 (C7) · second-avis · 2 medium (archivage d'un invalide avant le test d'arrêt ou de budget ; estimation à un appel par item malgré la relance corrective), 2 low ; review lancée (Sonnet) · —
