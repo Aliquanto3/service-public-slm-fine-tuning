@@ -481,7 +481,8 @@ class VerificationConfig(ModeleConfig):
     non_bloquants: list[str] = Field(
         default_factory=lambda: ["nom_absent", "lc_gain_lisibilite", "lc_modalite_perdue"]
     )
-    """Codes rendus non bloquants (transmis au juge et au rapport sans refuser la cible)."""
+    """Codes non bloquants : consignés (verification.jsonl, rapport) sans refuser la cible ;
+    ni transmis au juge ni à la régénération."""
     exceptions_noms: list[Texte] = Field(default_factory=_exceptions_noms_defaut)
     """Mots capitalisés jamais tenus pour des noms propres (casse et accents ignorés)."""
     lc_marqueurs: dict[str, list[Texte]] = Field(default_factory=_lc_marqueurs_defaut)

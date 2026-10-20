@@ -237,11 +237,11 @@ graine = 42
 echantillon = 5
 # Refus des contrôles tirés dans calibrage.md, relus avant le run payant.
 calibrage = 20
-# Codes non bloquants (transmis au juge et au rapport). nom_absent le reste jusqu'au calibrage ;
+# Codes non bloquants (consignés dans verification.jsonl et le rapport, sans refuser la cible ; ni transmis au juge ni à la régénération). nom_absent le reste jusqu'au calibrage ;
 # un code dont plus de 20 % des refus relus sont des faux positifs y est ajouté.
 # 2026-10-20 (run autonome) : lc_gain_lisibilite et lc_modalite_perdue passent non bloquants. La grille ne
 # plafonne LC (à plafond_lc) que si le gain moyen de la Tâche est sous gain_km_min, jamais par item ; la
-# fidélité (modalités comprises) est jugée par DeepSeek. Le gain moyen des LC retenues est contrôlé au build.
+# fidélité (modalités comprises) est jugée par DeepSeek. Le gain moyen des LC retenues est contrôlé après génération par l'orchestrateur (aucun contrôle au build).
 non_bloquants = [
   'nom_absent',
   'lc_gain_lisibilite',

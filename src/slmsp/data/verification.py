@@ -7,7 +7,7 @@ Fonctions pures, sans lecture ni écriture. Deux usages :
   son comportement est inchangé, la règle n'existe qu'ici ;
 - **`verifier_cible`** rend la liste des `Motif` d'une cible (génération vérifiée,
   `slmsp.data.generation_verifiee`). Un motif **bloquant** refuse la cible ; un motif non
-  bloquant est transmis au juge et au rapport. Les codes partagés avec `validate`
+  bloquant est seulement consigné (verification.jsonl, rapport). Les codes partagés avec `validate`
   (`CODES_VALIDATE`) sont toujours bloquants : une cible acceptée ici n'est jamais rejetée
   ensuite par `validate`.
 
