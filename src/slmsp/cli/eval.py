@@ -12,6 +12,8 @@
     slmsp eval juges-tiers --verifier
     slmsp eval juges-tiers --depuis RUN_NOTATION --juge NOM [--taches CR,LC,CT,RE]
         [--plafond-estime EUR] [--racine DIR]
+    slmsp eval comparer --runs NOTATION_A NOTATION_B [...] [--bootstrap 2000] [--graine 7]
+        [--sortie FICHIER.md] [--racine DIR]
     slmsp eval sonde-outils --modele base:<slug> [--jeu calibrage] [--items RD-001,RD-002]
         [--variante cpu|cuda] [--racine DIR]
 
@@ -48,6 +50,10 @@ de `juges.toml`) sur un run `eval-notation`, sans toucher au score officiel ni a
 nouveau run `eval-juges-tiers` (`verdicts.jsonl`, `accords.json`), puis tableau des accords.
 `--verifier` affiche la présence de la clé et les modèles des familles retenues avec leur
 prix (`GET /models`, gratuit), sans génération ; code 0, 1 si la liste est inaccessible.
+
+`comparer` (story E1b) : bootstrap apparié des scores de runs `eval-notation` (lecture seule,
+aucun appel au juge) ; le premier run est la référence A. Tableau Markdown par Tâche et
+Qualité : écart B − A, IC 95 %, P(écart > 0), et bruit items de la Qualité de chaque run.
 
 Code 0 si le dernier run est `complet`, 1 s'il est `partiel-erreur` ou `partiel-budget`, 2
 pour une erreur d'usage, 4 si le jeu est altéré ou si le run repris diffère de la demande.
@@ -479,6 +485,30 @@ def executer_sonde(args: argparse.Namespace) -> int:
     return int(CodeSortie.ERREUR)
 
 
+def _entier_positif(valeur: str) -> int:
+    try:
+        nombre = int(valeur)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{valeur!r} n'est pas un entier") from None
+    if nombre < 1:
+        raise argparse.ArgumentTypeError("doit être un entier au moins égal à 1")
+    return nombre
+
+
+def executer_comparer(args: argparse.Namespace) -> int:
+    """`slmsp eval comparer` : bootstrap apparié des scores de runs de notation."""
+    from slmsp.evaluation import bootstrap
+
+    resultat = bootstrap.comparer_runs(
+        args.runs, racine=args.racine, tirages=args.bootstrap, graine=args.graine
+    )
+    tableau = bootstrap.tableau_markdown(resultat)
+    print(tableau)
+    if args.sortie is not None:
+        Path(args.sortie).write_text(tableau, encoding="utf-8", newline="\n")
+    return int(CodeSortie.SUCCES)
+
+
 def _usage_tiers(message: str) -> int:
     print(f"slmsp : eval juges-tiers : {message}", file=sys.stderr)
     return int(CodeSortie.USAGE)
@@ -631,6 +661,24 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     tiers.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     tiers.set_defaults(func=executer_juges_tiers)
+
+    comparer = actions.add_parser(
+        "comparer",
+        help="bootstrap apparié des scores de runs de notation (bruit d'items, lecture seule)",
+        description=(
+            "Rééchantillonne les items de chaque Tâche (mêmes items pour tous les runs) et "
+            "donne l'écart B − A, son IC 95 % et le bruit items de la Qualité. Aucun appel "
+            "au juge."
+        ),
+    )
+    comparer.add_argument(
+        "--runs", nargs="+", required=True, metavar="RUN_NOTATION", help="A (référence), puis B…"
+    )
+    comparer.add_argument("--bootstrap", type=_entier_positif, default=2000, help="tirages")
+    comparer.add_argument("--graine", type=int, default=7, help="graine du rééchantillonnage")
+    comparer.add_argument("--sortie", metavar="FICHIER", help="écrire aussi le tableau Markdown")
+    comparer.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
+    comparer.set_defaults(func=executer_comparer)
 
     sonde = actions.add_parser(
         "sonde-outils",
