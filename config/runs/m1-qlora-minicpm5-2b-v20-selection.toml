@@ -1,0 +1,23 @@
+# Run de nuit 20-21/10 (plan §4, E2/E4) : M1 sur v20 = v18 où CR et LC sont les gagnants de la sélection (base
+# minicpm5-2b ou Mistral, juge de données DeepSeek), RE retirée ; usage recherche. Mêmes hyperparamètres que v18.
+
+
+campagne = "minicpm5-2b-v20-selection"
+modele = "minicpm5-2b"
+methode = "qlora"
+jeu_version = "v20"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
