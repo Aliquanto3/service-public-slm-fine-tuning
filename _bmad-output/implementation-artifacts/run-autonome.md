@@ -40,3 +40,6 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-20 23:04 · 15.1 · fusion · squash dans main ; tests composition et bootstrap : 26 passés · 91045ea
 - 2026-10-20 23:04 · E5 · composition dev1 `20261020-230351-compose-0d5a` (base partout, M1 v18 sur CO) : Qualité 54,5 → **55,8** (+1,3, IC95 [+0,6 ; +2,0]) ; pas de composition v1.1 (M1 v18 n'a pas de notation v1.1, la créer serait une mesure payante hors règle). Reste le test de déploiement LoRA (15.6) · —
 - 2026-10-20 23:04 · 15.4 · dev · lancé · —
+- 2026-10-20 23:07 · 15.6 · dev · fini (`export lora`, `lora:<id>@<échelle>` dans la référence du modèle, contournement du `:` de `--lora-scaled` par le dossier courant ; essai à blanc de conversion de l'adaptateur v18 OK, 588 tenseurs, 50 Mo ; DoRA, rsLoRA, PiSSA refusés) ; second-avis lancé · 2ce2fdb
+- 2026-10-20 23:07 · 15.2 · dev · fini (15 tests ; contrat O2 respecté) ; second-avis lancé · 7fe729a
+- 2026-10-20 23:07 · 15.2 · **décision** : juge croisé = `moonshotai/kimi-k2.6` (OpenRouter, sorties structurées, 0,65 / 3,41 $/Mtok relevés le 20/10 ; kimi-k3 écarté : raisonnement, sortie 11,9 $/Mtok). **RE n'a pas de grille de jugement de données** (CR, LC, CT seulement) : pas de candidats RE ; v20 = v18 avec CR et LC sélectionnés et **RE retiré** (D0 : les cibles RE Mistral inventent, la base fait mieux) · —
