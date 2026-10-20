@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 07:28
-last_updated: 10-12-2026 07:28
+last_updated: 2026-10-20 07:20
 project: service-public-slm-fine-tuning
 project_key: NOKEY
 tracking_system: file-system
@@ -149,3 +149,21 @@ development_status:
   13-7-dossier-de-publication-et-fiche-modele-fr-37: done
   13-8-reinstallateur-j5-et-recette-des-taches-secondaires: backlog
   epic-13-retrospective: optional
+  epic-14: in-progress
+  14-1-tests-figes-sur-la-config: done  # C1
+  14-2-jamais-de-reponse-tronquee-reutilisee: done  # C2
+  14-3-export-dora-qwen3-5: backlog  # C3
+  14-4-orpo-qwen3-5-cuda-device-not-ready: backlog  # C4
+  14-6-cout-par-run: done  # C6
+  14-7-juges-tiers-items-cr-en-echec: in-progress  # C7
+  14-8-purge-des-intermediaires-et-controle-disque: done  # C8
+  14-9-conditions-mistral-verification-quotidienne: done  # C9
+  14-10-juge-de-donnees-deepseek: review  # O1
+  14-11-jeu-de-developpement-code: review  # O4a
+  14-12-jeu-de-developpement-construction: backlog  # O4b
+  14-13-alignement-entrainement-evaluation: done  # O5
+  14-14-generation-verifiee-verification: backlog  # O6a
+  14-15-generation-verifiee-regeneration: backlog  # O6b
+  14-16-variance-bootstrap-et-graine: in-progress  # E1
+  14-17-jeu-v17-verifie-et-m1-minicpm5-2b: backlog  # V17
+  14-18-routage-par-tache-sur-jeu-dev: backlog  # E5
