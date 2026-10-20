@@ -93,9 +93,12 @@ def est_jeu_dev(version: str) -> bool:
 
 
 CIBLES_DEV: Final[Mapping[str, tuple[int, int, int]]] = {
-    code: (7, 7, 6) for code in ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "NR")
+    **{code: (7, 7, 6) for code in ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "NR")},
+    # 2026-10-20 (run autonome) : CR-521 (moyen) rejeté par DeepSeek sur un grief de grille
+    # (« points abordés » sans clé de référence, commun à v1.1) ; exclu, non remplacé.
+    "CR": (7, 6, 6),
 }
-"""Jeu de développement (spec O4) : 20 items par Tâche, 160 en tout, difficultés (7, 7, 6)."""
+"""Jeu de développement (spec O4) : 20 items par Tâche (19 pour CR), 159 en tout."""
 
 
 @dataclass(frozen=True)
