@@ -22,7 +22,7 @@ import pytest
 
 from slmsp.cli import export as cli_export
 from slmsp.cli import main
-from slmsp.core.artefacts import nouveau_run, ouvrir_run
+from slmsp.core.artefacts import EspaceInsuffisant, nouveau_run, ouvrir_run
 from slmsp.core.erreurs import (
     CodeSortie,
     ConfigurationInvalide,
@@ -34,6 +34,7 @@ from slmsp.evaluation import modele_ref, sonde_outils
 from slmsp.inference import serveur
 from slmsp.train import environnement
 from slmsp.train import export as module_export
+from slmsp.train.config import ConfigExport
 
 SLUG = "granite-4.0-1b"
 SLUG_MM = "qwen3.5-0.8b"
@@ -297,7 +298,32 @@ def test_espace_disque_verifie_au_dela_de_1_gio(projet, monkeypatch) -> None:
         module_export, "verifier_espace", lambda _c, octets: demandes.append(octets)
     )
     exporter(projet, module_export.source_temoin(SLUG), Outils(), PileExport())
-    assert demandes == [240]
+    assert demandes == [300]  # facteur par défaut 3
+
+
+def test_refus_espace_suggere_la_purge(projet, monkeypatch) -> None:
+    (projet.modeles / "granite-4.0-1b" / "hf" / "model.safetensors").write_bytes(b"x" * 100)
+    monkeypatch.setattr(module_export, "SEUIL_VERIFICATION_ESPACE", 10)
+
+    def refuser(*_a, **_k):
+        raise EspaceInsuffisant("0 octets libres")
+
+    monkeypatch.setattr(module_export, "verifier_espace", refuser)
+    with pytest.raises(EspaceInsuffisant, match="export purger --tous-notes --dry-run"):
+        exporter(projet, module_export.source_temoin("granite-4.0-1b"), Outils(), PileExport())
+    assert not (projet.racine / "runs" / "export").exists()
+
+
+def test_espace_fixe_en_go_remplace_l_estimation(projet, monkeypatch) -> None:
+    demandes: list[int] = []
+    monkeypatch.setattr(
+        module_export, "charger_config_export", lambda: ConfigExport(espace_libre_go=2)
+    )
+    monkeypatch.setattr(
+        module_export, "verifier_espace", lambda _c, octets: demandes.append(octets)
+    )
+    exporter(projet, module_export.source_temoin("granite-4.0-1b"), Outils(), PileExport())
+    assert demandes == [2 * 1024**3]
 
 
 def test_gpu_occupe(projet) -> None:

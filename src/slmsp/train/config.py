@@ -28,16 +28,35 @@ class ConfigCouts(ModeleConfig):
     indice_gpu: int = Field(ge=0)
 
 
+class ConfigExport(ModeleConfig):
+    """Contrôle d'espace libre avant un export (`[export]`, story C8)."""
+
+    facteur_espace: float = Field(default=3.0, gt=0)
+    """Espace libre exigé = poids de la base × ce facteur (HF F16, GGUF F16, Q4_K_M, marge)."""
+    espace_libre_go: float | None = Field(default=None, gt=0)
+    """Valeur fixe en Gio, qui remplace l'estimation (`None` : estimation par le facteur)."""
+
+
 class ConfigEntrainement(ModeleConfig):
     """Contenu de `config/entrainement.toml`."""
 
     couts: ConfigCouts
+    export: ConfigExport = ConfigExport()
 
 
 def charger_config_couts(dossier: str | Path | None = None) -> ConfigCouts:
     """Section `[couts]` de `<dossier>/entrainement.toml` (défaut : `<racine>/config`)."""
     base = Path(dossier) if dossier is not None else racine_projet() / "config"
     return charger_toml(base / "entrainement.toml", ConfigEntrainement).couts
+
+
+def charger_config_export(dossier: str | Path | None = None) -> ConfigExport:
+    """Section `[export]` de `<dossier>/entrainement.toml` (absente : valeurs par défaut)."""
+    base = Path(dossier) if dossier is not None else racine_projet() / "config"
+    chemin = base / "entrainement.toml"
+    if not chemin.is_file():
+        return ConfigExport()  # config absente (installation minimale) : défauts
+    return charger_toml(chemin, ConfigEntrainement).export
 
 
 # --- Run d'entraînement (story 10.4) -------------------------------------------------------

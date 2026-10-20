@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any, Final
 
 from slmsp.core.artefacts import (
+    EspaceInsuffisant,
     Run,
     chemin_autorise,
     lire,
@@ -48,6 +49,7 @@ from slmsp.core.erreurs import ConfigurationInvalide, LectureInterdite, Manifest
 from slmsp.core.var import verrou_gpu
 from slmsp.inference import serveur
 from slmsp.train import chargement, environnement
+from slmsp.train.config import charger_config_export
 
 TYPE_RUN: Final = "export"
 TYPE_RUN_TRAIN: Final = "train"
@@ -83,8 +85,9 @@ OCTETS_MMPROJ: Final = int(0.34 * 1024**3)
 """Écriture ajoutée par le mmproj F16 (168 M paramètres de vision pour Qwen3.5-2B)."""
 MAX_F16: Final = 65504.0
 SEUIL_VERIFICATION_ESPACE: Final = 1024**3
-FACTEUR_ESPACE: Final = 2.4
-"""Écriture prévue ≈ 2,4 × les poids bf16 : HF F16 (1), GGUF F16 (1), Q4_K_M (~0,3)."""
+FACTEUR_ESPACE: Final = 3.0
+"""Facteur par défaut (`[export].facteur_espace`) : HF F16 (1), GGUF F16 (1), Q4_K_M (~0,3),
+marge. Écriture réelle ≈ 2,4 × les poids bf16."""
 DELAI_MIN_OUTIL: Final = 1800.0
 """Délai minimal (s) de la conversion et de la quantification, chacune (CPU)."""
 DEBIT_MIN_OUTIL: Final = 2 * 1024**2
@@ -242,9 +245,11 @@ def octets_poids(dossier_base: Path) -> int:
     return sum(f.stat().st_size for f in dossier_base.glob("*.safetensors") if f.is_file())
 
 
-def octets_prevus(dossier_base: Path, *, multimodal: str | None = None) -> int:
+def octets_prevus(
+    dossier_base: Path, *, multimodal: str | None = None, facteur: float = FACTEUR_ESPACE
+) -> int:
     """Écriture prévue de l'export, d'après la taille des poids de la base (+ mmproj)."""
-    prevus = int(octets_poids(dossier_base) * FACTEUR_ESPACE)
+    prevus = int(octets_poids(dossier_base) * facteur)
     return prevus + (OCTETS_MMPROJ if multimodal is not None else 0)
 
 
@@ -434,14 +439,26 @@ def exporter(
     details_adaptateurs = [controler_adaptateur(a, racine=base) for a in source.adaptateurs]
     config_llamacpp = serveur.charger_config_llamacpp()
     multimodal = serveur.charger_config_modele(source.slug).multimodal
-    prevus = octets_prevus(dossier_base, multimodal=multimodal)
+    config_espace = charger_config_export()
+    prevus = octets_prevus(
+        dossier_base, multimodal=multimodal, facteur=config_espace.facteur_espace
+    )
+    if config_espace.espace_libre_go is not None:
+        prevus = int(config_espace.espace_libre_go * 1024**3)
     if delai is None:
         delai = delai_outils(octets_poids(dossier_base))
     if delai <= 0:
         raise ConfigurationInvalide(f"export : délai des outils invalide ({delai} s)")
     dossier_export = base / "runs" / TYPE_RUN
-    if prevus > SEUIL_VERIFICATION_ESPACE:
-        verifier_espace(dossier_export, prevus)
+    if prevus > SEUIL_VERIFICATION_ESPACE or config_espace.espace_libre_go is not None:
+        try:
+            verifier_espace(dossier_export, prevus)
+        except EspaceInsuffisant as exc:
+            raise EspaceInsuffisant(
+                f"export refusé : {exc}. Libérer de l'espace : `slmsp export purger "
+                "--tous-notes --dry-run` liste les exports notés dont `hf-f16/` et "
+                "`modele-f16.gguf` peuvent être supprimés (puis sans --dry-run)"
+            ) from None
     if pile is None:
         try:
             pile = environnement.charger_pile()

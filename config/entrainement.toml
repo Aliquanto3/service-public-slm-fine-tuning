@@ -6,3 +6,7 @@
 pas_chauffe = 10 # pas d'optimisation exclus du débit (tokens/s hors padding)
 periode_echantillonnage = 0.2 # secondes entre deux relevés NVML (puissance, VRAM)
 indice_gpu = 0 # carte NVML interrogée
+
+[export] # contrôle d'espace libre avant `slmsp export` (story C8)
+facteur_espace = 3.0 # espace libre exigé = poids de la base × facteur
+# espace_libre_go = 40 # valeur fixe en Gio, remplace l'estimation

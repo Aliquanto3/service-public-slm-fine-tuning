@@ -46,6 +46,7 @@ from slmsp.fetch.verifications import GgufInvalide, lire_metadonnees_gguf
 from slmsp.inference.serveur import VARIANTES, ServeurLlama, charger_config_modele
 from slmsp.net.client import client_local
 from slmsp.train import export as train_export
+from slmsp.train import purge
 
 CLE_TEMPLATE: Final = "tokenizer.chat_template"
 CLE_ARCHITECTURE: Final = "general.architecture"
@@ -70,9 +71,25 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "GGUF F16 puis quantifie en Q4_K_M (outils du tag de config/llamacpp.toml), contrôle "
         "le chat template embarqué et re-teste le tool calling sur le Q4_K_M.",
     )
-    source = p.add_mutually_exclusive_group(required=True)
+    p.add_argument(
+        "action",
+        nargs="?",
+        choices=["purger"],
+        help="`purger` : supprime hf-f16/ et modele-f16.gguf d'un export noté "
+        "(--depuis EXPORT_RUN_ID, ou --tous-notes)",
+    )
+    source = p.add_mutually_exclusive_group()
     source.add_argument("--depuis", metavar="TRAIN_RUN_ID", help="run d'entraînement complet")
     source.add_argument("--base", metavar="SLUG", help="export témoin de la base, sans adaptateur")
+    p.add_argument(
+        "--tous-notes", action="store_true", help="avec `purger` : tous les exports notés"
+    )
+    p.add_argument(
+        "--forcer-non-note",
+        action="store_true",
+        help="avec `purger --depuis` : purge même sans notation référençant l'export",
+    )
+    p.add_argument("--dry-run", action="store_true", help="avec `purger` : liste sans supprimer")
     p.add_argument(
         "--variante",
         choices=VARIANTES,
@@ -195,6 +212,14 @@ def _exporter(args: argparse.Namespace) -> int:
     from slmsp.evaluation import modele_ref  # noqa: PLC0415
 
     racine = _racine(args)
+    if args.action == "purger":
+        return _purger(args, racine)
+    if args.tous_notes or args.forcer_non_note or args.dry_run:
+        print("slmsp : export : --tous-notes, --forcer-non-note et --dry-run vont avec `purger`")
+        return int(CodeSortie.USAGE)
+    if args.depuis is None and args.base is None:
+        print("slmsp : export : --depuis ou --base requis (ou `export purger`)")
+        return int(CodeSortie.USAGE)
     if args.depuis is not None:
         source = train_export.source_depuis_run(args.depuis, racine=racine)
     else:
@@ -217,11 +242,54 @@ def _exporter(args: argparse.Namespace) -> int:
         resolu = modele_ref.resoudre(ref, quantification, racine=racine)
         print(f"{ref} {quantification} : {resolu.gguf.name} (précision {resolu.precision})")
     if args.sans_sonde:
-        return int(CodeSortie.SUCCES)
-    code = _sonder(run, ref, args.variante, racine)
-    if code == int(CodeSortie.SUCCES) and charger_config_modele(source.slug).multimodal:
-        return _sonder_vision(run, source.slug)
+        code = int(CodeSortie.SUCCES)
+    else:
+        code = _sonder(run, ref, args.variante, racine)
+        if code == int(CodeSortie.SUCCES) and charger_config_modele(source.slug).multimodal:
+            code = _sonder_vision(run, source.slug)
+    if code == int(CodeSortie.SUCCES):
+        print(
+            "intermédiaires (hf-f16/, modele-f16.gguf) gardés : après notation, "
+            "`slmsp export purger --tous-notes` les supprime"
+        )
     return code
+
+
+def _go(octets: int) -> str:
+    return f"{octets / 1024**3:.2f} Gio"
+
+
+def _purger(args: argparse.Namespace, racine: Path) -> int:
+    if args.base is not None or args.tous_notes == (args.depuis is not None):
+        print("slmsp : export purger : exactement un de --depuis ou --tous-notes")
+        return int(CodeSortie.USAGE)
+    suffixe = " (dry-run)" if args.dry_run else ""
+    try:
+        if args.depuis is not None:
+            liberes = purge.purger_depuis(
+                args.depuis,
+                racine=racine,
+                forcer_non_note=args.forcer_non_note,
+                dry_run=args.dry_run,
+            )
+            print(f"purge{suffixe} : {args.depuis} : {_go(liberes)} libérés")
+            return int(CodeSortie.SUCCES)
+    except (purge.PurgeRefusee, purge.PurgePartielle) as exc:
+        print(f"slmsp : {exc}")
+        return int(CodeSortie.ERREUR)
+    total = 0
+    echecs = 0
+    for export_id, _octets in purge.exports_a_purger(racine):
+        try:
+            octets = purge.purger_depuis(export_id, racine=racine, dry_run=args.dry_run)
+        except (purge.PurgeRefusee, purge.PurgePartielle) as exc:
+            echecs += 1
+            print(f"slmsp : {exc}")
+            continue
+        total += octets
+        print(f"purge{suffixe} : {export_id} : {_go(octets)}")
+    print(f"purge{suffixe} : total {_go(total)} libérés")
+    return int(CodeSortie.ERREUR if echecs else CodeSortie.SUCCES)
 
 
 def png_uni(
