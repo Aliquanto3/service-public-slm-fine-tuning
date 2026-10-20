@@ -614,8 +614,14 @@ def preparer_preferences(
     paires: Sequence[_Paire],
     *,
     config_modele: ConfigModele,
+    longueur_max: int | None = None,
 ) -> tuple[list[dict[str, str]], dict[str, int]]:
     """Paires `{prompt, chosen, rejected}` en texte, rendues par le chat template du Modèle.
+
+    Avec `longueur_max`, une paire dont prompt + plus longue réponse dépasse la limite
+    (marge `MARGE_ORPO`) est écartée (`exclus_trop_longues`) : la troncature d'`ORPOTrainer`
+    ne borne pas les séquences (prompt jamais coupé, découpe de la réponse fausse), et le
+    lot concaténé chosen + rejected à logits de tout le vocabulaire sature le GPU (story C4).
 
     Le rendu est fait ici (`train.rendu`, `tools` en `natif` et `balises-tool-call`,
     `chat_template_kwargs` du Modèle) : `ORPOTrainer` ne transmet ni l'un ni l'autre au
@@ -624,6 +630,7 @@ def preparer_preferences(
     """
     outils = _avec_tools(config_modele)
     exemples: list[dict[str, str]] = []
+    exclus = 0
     for numero, paire in enumerate(paires, start=1):
         options: dict[str, Any] = {
             "tools": _tools_rendus(paire) if outils else None,
@@ -645,8 +652,29 @@ def preparer_preferences(
                     f"paire {numero} : le rendu de « {cle} » ne prolonge pas celui du prompt"
                 )
             exemple[cle] = complet[len(prompt) :]
+        if longueur_max is not None and _longueur_paire(tokenizer, exemple) > longueur_max:
+            exclus += 1
+            continue
         exemples.append(exemple)
-    return exemples, {"lignes": len(paires), "retenus": len(exemples)}
+    return exemples, {
+        "lignes": len(paires),
+        "retenus": len(exemples),
+        "exclus_trop_longues": exclus,
+    }
+
+
+MARGE_ORPO: Final = 2
+"""Jetons ajoutés par `ORPOTrainer` (BOS éventuel, EOS) : comptés dans la limite."""
+
+
+def _longueur_paire(tokenizer: Any, exemple: Mapping[str, str]) -> int:
+    """Jetons du prompt + de la plus longue réponse (plus la marge `MARGE_ORPO`)."""
+
+    def taille(texte: str) -> int:
+        return len(tokenizer(texte, add_special_tokens=False)["input_ids"])
+
+    reponse = max(taille(exemple["chosen"]), taille(exemple["rejected"]))
+    return taille(exemple["prompt"]) + reponse + MARGE_ORPO
 
 
 def _corps_par_tour(

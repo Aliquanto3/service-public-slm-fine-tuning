@@ -224,3 +224,60 @@ def test_preferences_balises_reecrit_les_appels(factices) -> None:
     )
     assert exemple["chosen"].startswith("<tool_call>\n")
     assert all(tools is not None for tools in tokenizer.appels_tools)
+
+
+def test_preferences_ecarte_les_paires_trop_longues(factices) -> None:
+    tokenizer = factices.Tokenizer()
+    config = charger_config_modele("smollm3-3b")
+    courte = chargement._Paire.model_validate(factices.paire(1))
+    longue = factices.paire(2)
+    longue["chosen"] = [{"role": "assistant", "content": " ".join(["<mot-factice>"] * 200)}]
+    paires = [courte, chargement._Paire.model_validate(longue)]
+    sans, stats_sans = chargement.preparer_preferences(tokenizer, paires, config_modele=config)
+    assert len(sans) == 2 and stats_sans["exclus_trop_longues"] == 0
+    limite = chargement._longueur_paire(tokenizer, sans[0]) + 5
+    avec, stats = chargement.preparer_preferences(
+        tokenizer, paires, config_modele=config, longueur_max=limite
+    )
+    assert len(avec) == 1 and avec[0] == sans[0]
+    assert stats == {"lignes": 2, "retenus": 1, "exclus_trop_longues": 1}
+
+
+@pytest.mark.parametrize(("ecart", "retenue"), [(-1, False), (0, True), (1, True)])
+def test_preferences_frontiere_de_longueur(factices, ecart: int, retenue: bool) -> None:
+    """Retenue si prompt + plus longue réponse + marge <= `longueur_max` (limite incluse)."""
+    tokenizer = factices.Tokenizer()
+    config = charger_config_modele("smollm3-3b")
+    paires = [chargement._Paire.model_validate(factices.paire(1))]
+    exemple = chargement.preparer_preferences(tokenizer, paires, config_modele=config)[0][0]
+    limite = chargement._longueur_paire(tokenizer, exemple) + ecart
+    avec, stats = chargement.preparer_preferences(
+        tokenizer, paires, config_modele=config, longueur_max=limite
+    )
+    assert (len(avec) == 1) is retenue
+    assert stats["exclus_trop_longues"] == (0 if retenue else 1)
+
+
+def test_longueur_paire_avec_le_vrai_tokenizer(factices) -> None:
+    """Tokenizer Qwen3.5 local (sans réseau) ; ignoré s'il n'est pas téléchargé."""
+    from pathlib import Path
+
+    tokenizers = pytest.importorskip("tokenizers")
+    import os
+
+    racine = Path(os.environ.get("SLMSP_MODELS_DIR", "models")) / "qwen3.5-0.8b" / "hf"
+    fichier = racine / "tokenizer.json"
+    if not fichier.is_file():
+        pytest.skip("tokenizer.json de qwen3.5-0.8b absent")
+    brut = tokenizers.Tokenizer.from_file(str(fichier))
+
+    def tokenizer(texte: str, add_special_tokens: bool = False) -> dict[str, list[int]]:
+        return {"input_ids": brut.encode(texte, add_special_tokens=add_special_tokens).ids}
+
+    exemple = {"prompt": "<prompt-factice>", "chosen": "<a> <b>", "rejected": "<a>"}
+    attendu = (
+        len(brut.encode("<prompt-factice>", add_special_tokens=False).ids)
+        + len(brut.encode("<a> <b>", add_special_tokens=False).ids)
+        + chargement.MARGE_ORPO
+    )
+    assert chargement._longueur_paire(tokenizer, exemple) == attendu > chargement.MARGE_ORPO

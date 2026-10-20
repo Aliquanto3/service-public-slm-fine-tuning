@@ -369,7 +369,7 @@ def executer(
     exemples: list[dict[str, Any]]
     if plan.entraineur == "orpo":
         exemples, stats = chargement.preparer_preferences(
-            tokenizer, jeu.lignes, config_modele=config_modele
+            tokenizer, jeu.lignes, config_modele=config_modele, longueur_max=config.longueur_max
         )
     else:
         exemples, stats = chargement.pretokeniser(
@@ -410,6 +410,13 @@ def executer(
         "appel_ids_verifies": appels,
         "derogation": DEROGATION_ORPO if plan.entraineur == "orpo" else None,
     }
+    if plan.entraineur == "orpo":  # une reprise d'un run d'avant le filtre (505 paires) est refusée
+        resolue["filtre_longueur"] = {
+            "longueur_max": config.longueur_max,
+            "marge": chargement.MARGE_ORPO,
+            "retenus": stats["retenus"],
+            "exclus_trop_longues": stats["exclus_trop_longues"],
+        }
     if (decoupage := empreinte_decoupage(config_modele)) is not None:  # absente au défaut
         resolue["modele"]["decoupage_masque"] = decoupage
     if reprendre_run is None:

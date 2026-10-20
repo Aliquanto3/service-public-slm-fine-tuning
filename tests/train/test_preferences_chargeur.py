@@ -102,7 +102,7 @@ def test_paires_produites_lues_par_le_chargeur(projet, factices) -> None:
     exemples, stats = chargement.preparer_preferences(
         factices.Tokenizer(), jeu.lignes, config_modele=charger_config_modele(SLUG)
     )
-    assert stats == {"lignes": 3, "retenus": 3}
+    assert stats == {"lignes": 3, "retenus": 3, "exclus_trop_longues": 0}
     for i, exemple in enumerate(exemples, start=1):
         assert exemple["chosen"].startswith(f"<reponse-factice-{i}>")
         assert exemple["rejected"].startswith(f"<rejetee-factice-{i}>")

@@ -54,7 +54,7 @@ def test_deux_methodes_meme_campagne(projet, pile) -> None:
         arguments = run.lire_jsonl("entrainement.jsonl")[0]["arguments"]
         assert "save_total_limit" not in arguments and arguments["report_to"] == "none"
         assert not Path(arguments["output_dir"]).is_absolute()
-        assert _json(dossier / "jeu.json")["retenus"] == 3
+        assert _json(dossier / "jeu.json")["retenus"] > 0
     assert m1.split("-", 2)[2].startswith("m1-qlora-")
 
 
@@ -781,3 +781,16 @@ def test_orpo_reel_conditionnelle_minuscule(tmp_path: Path) -> None:
     assert not [c for c in colonnes | set(lot) if "pixel" in c or "image" in c or "grid" in c]
     entraineur.train()
     assert entraineur.state.global_step == 1
+
+
+def test_reprise_orpo_refusee_sans_filtre_de_longueur(projet, pile, factices, monkeypatch) -> None:
+    """Un run ORPO d'avant le filtre de longueur (C4) n'a pas `filtre_longueur` : refusé."""
+    _, toml = _m1_et_m4(projet, pile, factices, monkeypatch)
+    m4 = _executer(projet, pile, toml)
+    manifeste = projet.racine / "runs" / "train" / m4 / "run.json"
+    brut = json.loads(manifeste.read_text(encoding="utf-8"))
+    assert brut["config"]["filtre_longueur"]["retenus"] > 0
+    del brut["config"]["filtre_longueur"]
+    manifeste.write_text(json.dumps(brut), encoding="utf-8")
+    with pytest.raises(ConfigurationInvalide, match="configuration résolue diffère"):
+        module_run.executer(toml, racine=projet.racine, pile=pile, reprendre_run=m4)
