@@ -152,7 +152,7 @@ development_status:
   epic-14: in-progress
   14-1-tests-figes-sur-la-config: done  # C1
   14-2-jamais-de-reponse-tronquee-reutilisee: done  # C2
-  14-3-export-dora-qwen3-5: review  # C3
+  14-3-export-dora-qwen3-5: done  # C3
   14-4-orpo-qwen3-5-cuda-device-not-ready: done  # C4
   14-6-cout-par-run: done  # C6
   14-7-juges-tiers-items-cr-en-echec: done  # C7
