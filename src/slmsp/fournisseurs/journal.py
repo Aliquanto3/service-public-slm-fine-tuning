@@ -25,6 +25,8 @@ from slmsp.core.canonique import json_canonique, sha256_hex
 from slmsp.core.var import ouvrir_sqlite
 
 NOM_JOURNAL_JUGES_TIERS: Final = "appels-juges-tiers.sqlite"
+NOM_JOURNAL_JUGE_DONNEES: Final = "appels-juge-donnees.sqlite"
+"""Journal du juge de données (story O1), distinct de celui des juges tiers."""
 STATUTS: Final = ("ok", "erreur")
 
 StatutAppel = Literal["ok", "erreur"]

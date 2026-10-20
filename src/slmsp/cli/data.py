@@ -28,6 +28,10 @@ sessions closes des autres Tâches d'un run du même seed (story S5).
 sur le Bac à sable et vérifie URL et valeurs de chaque exemple contre ses sources
 (`slmsp.data.validate`) ; `--controle-mistral` ajoute un contrôle de fidélité des Tâches CR, LC
 et RE par Mistral (`usage = validation`, appels payants, jamais le Juge Claude).
+`juger (--depuis GENERATE_RUN_ID | --reprendre RUN_ID) [--taches CR,LC,CT] [--limite N]
+[--plafond-estime EUR]` note les cibles candidates par le juge de données DeepSeek via OpenRouter
+(`slmsp.data.juge_donnees`, story O1, appels payants, usage `juge-donnees-openrouter`) et écrit
+`runs/data-juger/<run_id>/` ; jamais le Juge Claude, rien n'est lu sous `eval/`.
 `filter --depuis VALIDATE_RUN_ID [--racine DIR]` retire doublons et fuites du Jeu d'évaluation
 (v1.0, v1.1, calibrage) par n-grammes hachés et cosinus BGE-M3 (`slmsp.data.filter`). Chacune
 imprime exemples et taux de rejet par motif et par Tâche (FR-30).
@@ -139,6 +143,27 @@ def _fraction(valeur: str) -> float:
         raise argparse.ArgumentTypeError(f"nombre attendu (reçu {valeur!r})") from None
     if not 0 <= nombre <= 1:
         raise argparse.ArgumentTypeError("nombre dans [0, 1] attendu")
+    return nombre
+
+
+def _taches_jugees(valeur: str) -> list[str]:
+    from slmsp.data.juge_donnees import TACHES_JUGEES
+
+    taches = [t.strip() for t in valeur.split(",") if t.strip()]
+    if not taches or any(t not in TACHES_JUGEES for t in taches):
+        raise argparse.ArgumentTypeError(
+            f"Tâches attendues parmi {', '.join(TACHES_JUGEES)} : {valeur!r}"
+        )
+    return taches
+
+
+def _euros(valeur: str) -> float:
+    try:
+        nombre = float(valeur)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"nombre attendu (reçu {valeur!r})") from None
+    if not nombre > 0 or nombre == float("inf"):
+        raise argparse.ArgumentTypeError("montant strictement positif attendu")
     return nombre
 
 
@@ -263,6 +288,38 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     f.add_argument("--depuis", required=True, metavar="VALIDATE_RUN_ID", help="run data-validate")
     f.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
     f.set_defaults(func=_filter)
+
+    j = actions.add_parser(
+        "juger",
+        help="noter les cibles candidates par le juge de données DeepSeek (OpenRouter)",
+        description="Juge de données (story O1) : notes, extraits vérifiés, verdict par seuils.",
+    )
+    origine_j = j.add_mutually_exclusive_group(required=True)
+    origine_j.add_argument("--depuis", metavar="GENERATE_RUN_ID", help="run data-generate")
+    origine_j.add_argument("--reprendre", metavar="RUN_ID", help="run data-juger à reprendre")
+    j.add_argument(
+        "--taches",
+        type=_taches_jugees,
+        default=None,
+        metavar="CR,LC,CT",
+        help="Tâches jugées (défaut : CR, LC, CT)",
+    )
+    j.add_argument(
+        "--limite",
+        type=_entier_positif,
+        default=None,
+        metavar="N",
+        help="au plus N candidats par Tâche (calibrage)",
+    )
+    j.add_argument(
+        "--plafond-estime",
+        type=_euros,
+        default=None,
+        metavar="EUR",
+        help="refus avant tout appel si le coût pire cas estimé dépasse ce montant",
+    )
+    j.add_argument("--racine", type=Path, default=None, help="racine de data/, eval/ et runs/")
+    j.set_defaults(func=_juger)
 
     b = actions.add_parser(
         "build",
@@ -766,6 +823,74 @@ def _validate(args: argparse.Namespace) -> int:
     return _afficher_rapport(
         resultat.rapport, resultat.run.run_id, resultat.statut, resultat.run.dossier
     )
+
+
+def _juger(args: argparse.Namespace) -> int:
+    from slmsp.budget.registre import RegistreBudget
+    from slmsp.core.var import dossier_var
+    from slmsp.data.juge_donnees import (
+        TACHES_JUGEES,
+        JugeDonnees,
+        candidats_depuis_generation,
+        charger_grilles,
+        config_du_run,
+        indexer_cache,
+        lancer_jugement,
+    )
+    from slmsp.data.validate import LecteurGeneration, ouvrir_generation
+    from slmsp.fournisseurs.client import (
+        OPENROUTER,
+        ClientCompatibleOpenAI,
+        fabriquer_http,
+        lire_cle,
+    )
+    from slmsp.fournisseurs.journal import NOM_JOURNAL_JUGE_DONNEES, JournalAppels
+
+    racine = _racine(args)
+    depuis, taches, limite = args.depuis, args.taches, args.limite
+    if args.reprendre is not None:
+        config_run = config_du_run(args.reprendre, racine)
+        depuis = config_run["depuis"]
+        taches = taches or config_run.get("taches")
+        limite = limite if limite is not None else config_run.get("limite")
+    taches = list(taches or TACHES_JUGEES)
+    config = charger_config_donnees().juge_donnees
+    lecteur = LecteurGeneration(ouvrir_generation(depuis, racine), _journal_lecture(), racine)
+    candidats, ecartees = candidats_depuis_generation(lecteur, taches)
+    if ecartees:
+        print(f"{ecartees} session(s) écartée(s) : source ou réponse introuvable")
+    client = ClientCompatibleOpenAI(
+        OPENROUTER,
+        RegistreBudget(),
+        fabriquer_http(OPENROUTER),
+        lire_cle(OPENROUTER),
+        journal=JournalAppels(dossier_var() / NOM_JOURNAL_JUGE_DONNEES),
+    )
+    juge = JugeDonnees(config, client, charger_grilles(taches), indexer_cache(racine))
+    resultat = lancer_jugement(
+        racine=racine,
+        juge=juge,
+        candidats=candidats,
+        depuis_run_id=depuis,
+        taches=taches,
+        limite=limite,
+        plafond_estime_eur=args.plafond_estime,
+        reprendre_run_id=args.reprendre,
+        consigner=_consigner,
+    )
+    rapport = resultat.rapport
+    for tache, ligne in rapport["taches"].items():
+        criteres = ", ".join(f"{c} {t:.0%}" for c, t in ligne["taux_par_critere"].items())
+        print(
+            f"{tache} : {ligne['acceptes']}/{ligne['juges']} acceptés "
+            f"({ligne['taux_acceptation']:.0%}), {ligne['invalides']} invalide(s), "
+            f"{ligne['extraits_invalides']} extrait(s) invalide(s) ; {criteres}"
+        )
+    print(f"coût {rapport['cout_invocation_eur']:.4f} € (invocation)")
+    print(f"run {resultat.run.run_id} ({resultat.statut}) : {resultat.run.dossier}")
+    if resultat.statut == "partiel-budget":
+        return int(CodeSortie.BUDGET_EPUISE)
+    return int(CodeSortie.SUCCES if resultat.statut == "complet" else CodeSortie.ERREUR)
 
 
 def _filter(args: argparse.Namespace) -> int:

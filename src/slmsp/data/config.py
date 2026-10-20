@@ -15,6 +15,9 @@
 - `[generateur.plafonds_mots]` : plafond de mots de la réponse cible par Tâche, consigne de
   longueur des gabarits (story 9.10 ; optionnelle, vide par défaut). Le Générateur relit
   la même table (`slmsp.mistral.generateur.charger_plafonds_mots`) ;
+- `[juge_donnees]` : juge de données DeepSeek via OpenRouter (story O1, `slmsp data juger`),
+  réglages d'appel et seuils d'acceptation par Tâche (`[juge_donnees.seuils.<TACHE>]`, note
+  `>=` seuil ; optionnelle, valeurs par défaut ci-dessous).
 - `[alignement]` : alignement entraînement / évaluation (story O5) : formulations génériques
   de consigne d'Agent rendues dans le message user (`consignes_agent`, par Tâche, tirées par
   graine) et longueur visée des textes sources LC (`longueur_sources_lc`). Optionnelle, vide
@@ -39,12 +42,14 @@ from slmsp.core.erreurs import ConfigurationInvalide
 from slmsp.core.items import N_DEFAUT
 
 __all__ = [
+    "CRITERES_JUGE_DONNEES",
     "TACHES_A_CONSIGNE",
     "TACHES_PLAFONNABLES",
     "PART_GENERIQUE_MAX",
     "PART_GENERIQUE_MIN",
     "AlignementDonnees",
     "ConfigDonnees",
+    "JugeDonneesConfig",
     "LongueurSourcesLC",
     "charger_config_donnees",
 ]
@@ -56,6 +61,14 @@ TACHES_PLAFONNABLES: Final = ("Q", "RD", "CR", "LC", "CT", "generique")
 """Tâches admises dans `[generateur.plafonds_mots]` : CO suit la longueur de son texte, RE a
 son propre plafond (`longueur_demandee`)."""
 
+CRITERES_JUGE_DONNEES: Final[dict[str, dict[str, int]]] = {
+    "CR": {"invention": 1, "structure": 1},
+    "LC": {"fidelite": 2, "termes": 1},
+    "CT": {"conformite": 2, "invention": 1},
+}
+"""Critères notés par le juge de données (story O1), par Tâche : note maximale (0 à max).
+CR a en plus `couverture` (rappel calculé par le code, dans [0, 1])."""
+CRITERES_CALCULES: Final[dict[str, frozenset[str]]] = {"CR": frozenset({"couverture"})}
 TACHES_A_CONSIGNE: Final = ("CR", "LC", "CT", "RE", "CO")
 """Tâches dont le prompt déclare l'emplacement `consigne` et dont l'évaluation en porte une."""
 
@@ -208,6 +221,74 @@ class GenerateurDonnees(ModeleConfig):
         return valeurs
 
 
+def _seuils_defaut() -> dict[str, dict[str, float]]:
+    return {
+        "CR": {"invention": 1, "structure": 1, "couverture": 0.8},
+        "LC": {"fidelite": 2, "termes": 1},
+        "CT": {"conformite": 2, "invention": 1},
+    }
+
+
+class JugeDonneesConfig(ModeleConfig):
+    """Table `[juge_donnees]` : juge de données DeepSeek via OpenRouter (story O1).
+
+    La réservation au registre compte toujours `max_tokens` ; l'estimation affichée compte
+    `sortie_estimee + marge_raisonnement` tokens de sortie (bornés par `max_tokens`).
+    """
+
+    modele: Texte = "deepseek/deepseek-v4-pro"
+    temperature: float | None = Field(default=0.0, ge=0, le=0, allow_inf_nan=False)
+    max_tokens: Annotated[StrictInt, Field(ge=1)] = 16000
+    effort_raisonnement: Literal["minimal", "low", "medium", "high"] | None = "low"
+    format_reponse: Literal["json_schema", "json_object"] = "json_schema"
+    sortie_estimee: Annotated[StrictInt, Field(ge=1)] = 1500
+    marge_raisonnement: Annotated[StrictInt, Field(ge=0)] = 8000
+    usage_budget: Texte = "juge-donnees-openrouter"
+    seuils: dict[str, dict[str, Annotated[float, Field(ge=0, allow_inf_nan=False)]]] = Field(
+        default_factory=_seuils_defaut
+    )
+
+    @field_validator("seuils")
+    @classmethod
+    def _seuils_connus(cls, valeurs: dict[str, dict[str, float]]) -> dict[str, dict[str, float]]:
+        for tache, seuils in valeurs.items():
+            criteres = CRITERES_JUGE_DONNEES.get(tache)
+            if criteres is None:
+                raise ValueError(
+                    f"tâche inconnue (attendu parmi : {', '.join(CRITERES_JUGE_DONNEES)})"
+                )
+            calcules = CRITERES_CALCULES.get(tache, frozenset())
+            for critere, seuil in seuils.items():
+                if critere in calcules:
+                    if seuil > 1:
+                        raise ValueError(f"seuil {tache}.{critere} hors de [0, 1]")
+                elif critere not in criteres:
+                    raise ValueError(f"critère inconnu pour {tache}")
+                elif seuil > criteres[critere]:
+                    raise ValueError(f"seuil {tache}.{critere} au-delà de la note maximale")
+        # Fusion par critère : une Tâche absente, ou un critère absent d'une Tâche surchargée,
+        # garde son seuil par défaut (une table partielle ne retire aucun seuil).
+        fusion = _seuils_defaut()
+        for tache, seuils in valeurs.items():
+            fusion[tache].update(seuils)
+        for tache, seuils in fusion.items():
+            if not any(seuil > 0 for seuil in seuils.values()):
+                raise ValueError(f"seuils {tache} tous nuls : la Tâche accepterait tout")
+        return fusion
+
+    @property
+    def sortie_estimation(self) -> int:
+        """Tokens de sortie comptés par candidat dans l'estimation (raisonnement compris)."""
+        return min(self.max_tokens, self.sortie_estimee + self.marge_raisonnement)
+
+    @property
+    def effort_cle(self) -> str:
+        """Part « effort » de la clé du cache : température, effort et format de réponse."""
+        temperature = "sans" if self.temperature is None else f"{self.temperature:g}"
+        effort = self.effort_raisonnement or "aucun"
+        return f"temperature-{temperature}+effort-{effort}+{self.format_reponse}"
+
+
 class LongueurSourcesLC(ModeleConfig):
     """Longueur visée des textes sources LC : médiane d'évaluation ± `tolerance`."""
 
@@ -257,6 +338,7 @@ class ConfigDonnees(ModeleConfig):
     preferences: PreferencesDonnees = Field(default_factory=PreferencesDonnees)
     seed: SeedDonnees = Field(default_factory=SeedDonnees)
     generateur: GenerateurDonnees = Field(default_factory=GenerateurDonnees)
+    juge_donnees: JugeDonneesConfig = Field(default_factory=JugeDonneesConfig)
     alignement: AlignementDonnees = Field(default_factory=AlignementDonnees)
 
     @property

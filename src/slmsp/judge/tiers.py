@@ -21,7 +21,6 @@ les items restants sont
 
 from __future__ import annotations
 
-import json
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final
@@ -36,6 +35,7 @@ from slmsp.fournisseurs.client import (
     ErreurApiFournisseur,
     nouvelle_session,
 )
+from slmsp.fournisseurs.lecture import extraire_json
 from slmsp.judge.cache import CacheVerdicts, cle_verdict
 from slmsp.judge.claude import (
     ECHECS_MAX,
@@ -100,54 +100,6 @@ class _Etat:
         if usage is not None:
             precedent = self.usages.get(cle)
             self.usages[cle] = usage if precedent is None else precedent + usage
-
-
-def _objet_equilibre(texte: str, debut: int) -> str | None:
-    """Objet JSON `{…}` commençant à `debut` (accolades équilibrées, chaînes comprises)."""
-    profondeur, dans_chaine, echappe = 0, False, False
-    for position in range(debut, len(texte)):
-        car = texte[position]
-        if dans_chaine:
-            if echappe:
-                echappe = False
-            elif car == "\\":
-                echappe = True
-            elif car == '"':
-                dans_chaine = False
-        elif car == '"':
-            dans_chaine = True
-        elif car == "{":
-            profondeur += 1
-        elif car == "}":
-            profondeur -= 1
-            if profondeur == 0:
-                return texte[debut : position + 1]
-    return None
-
-
-def extraire_json(texte: str) -> str | None:
-    """Texte JSON d'un verdict, toléré dans un bloc de code ou entouré de texte.
-
-    Sortie entière si elle se lit telle quelle ; sinon premier objet `{…}` lisible ; `None`
-    si aucun. Propre au juge tiers : le Juge principal garde sa lecture stricte.
-    """
-    brut = texte.strip()
-    try:
-        json.loads(brut)
-        return brut
-    except ValueError:
-        pass
-    debut = brut.find("{")
-    while debut != -1:
-        candidat = _objet_equilibre(brut, debut)
-        if candidat is not None:
-            try:
-                json.loads(candidat)
-                return candidat
-            except ValueError:
-                pass
-        debut = brut.find("{", debut + 1)
-    return None
 
 
 class JugeTiers:

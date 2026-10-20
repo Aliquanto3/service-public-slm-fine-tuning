@@ -69,3 +69,5 @@ juge-second = "mistral.juge"
 juge-principal = "anthropic"
 juge-tiers-openrouter = "openrouter"
 generateur-openrouter = "openrouter"
+# Juge de données DeepSeek (story O1, `slmsp data juger`) : poste openrouter existant.
+juge-donnees-openrouter = "openrouter"

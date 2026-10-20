@@ -109,6 +109,54 @@ CT = 250
 # Idem (generique, sans référence mesurable).
 generique = 200
 
+# Juge de données (story O1, `slmsp data juger`) : DeepSeek via OpenRouter note les candidats
+# d'entraînement selon `config/prompts/juge-donnees/<tache>.md`. Même modèle que
+# `[juges_tiers.deepseek]` de `config/juges.toml` (vérifié par un test). Sortie structurée
+# seulement : le juge ne produit jamais de cible (D1).
+[juge_donnees]
+# Modèle OpenRouter du juge (même valeur que [juges_tiers.deepseek].modele de juges.toml).
+modele = "deepseek/deepseek-v4-pro"
+# Température d'échantillonnage (0 : notation reproductible).
+temperature = 0.0
+# Tokens de sortie maximum, raisonnement compris ; réservés au registre à chaque appel (pire cas).
+# DeepSeek V4 Pro raisonne 7 500 à 8 000 tokens même en effort low : à 8 000, un quart des CR
+# étaient coupés (constat C7, juges tiers portés à 16 000).
+max_tokens = 16000
+# Effort de raisonnement envoyé en `reasoning.effort`.
+effort_raisonnement = "low"
+# Format de réponse : schéma JSON strict par Tâche.
+format_reponse = "json_schema"
+# Tokens de sortie estimés par candidat (estimation affichée avant lancement).
+sortie_estimee = 1500
+# Tokens de raisonnement ajoutés à l'estimation (7 500 à 8 000 observés en effort low, C7).
+marge_raisonnement = 8000
+# Usage de budget (imputé au poste openrouter, config/budgets.toml).
+usage_budget = "juge-donnees-openrouter"
+
+# Seuils d'acceptation (note >= seuil pour chaque critère), alignés sur les scores du test.
+# Fusion par critère avec les défauts du code : un critère omis garde son seuil par défaut ;
+# une Tâche dont tous les seuils sont nuls est refusée au chargement.
+# CR : `couverture` est le rappel des décisions et actions (partielle = 1/2), calculé par le code.
+[juge_donnees.seuils.CR]
+# Aucune invention (0/1).
+invention = 1
+# Sections Participants, Points abordés, Décisions et Actions présentes (0/1).
+structure = 1
+# Rappel minimal des décisions et actions de la transcription, dans [0, 1].
+couverture = 0.8
+
+[juge_donnees.seuils.LC]
+# Fidélité complète (0/1/2).
+fidelite = 2
+# Termes juridiques gardés ou expliqués (0/1).
+termes = 1
+
+[juge_donnees.seuils.CT]
+# Format administratif complet (0/1/2).
+conformite = 2
+# Aucune invention (0/1).
+invention = 1
+
 # Alignement entraînement / évaluation (story O5). À l'évaluation, chaque item des Tâches CR, LC,
 # CT, RE et CO porte une consigne d'Agent rendue par `harness.prompts` (« Consigne : … ») ; à
 # l'entraînement ce message n'avait que le texte. Les formulations ci-dessous sont des consignes
