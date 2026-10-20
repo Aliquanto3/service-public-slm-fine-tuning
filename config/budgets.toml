@@ -31,7 +31,11 @@ schema_version = 1
 # à l'échelle du projet ; nouveau fournisseur OpenRouter (juges tiers, générateurs alternatifs).
 # Campagne de nuit : anthropic reporte son reste (18,77 € → 18,5) ; mistral 10 € (génération 8, juge 2) ;
 # openrouter 10 €.
-campagne_id = "nuit-2026-10-19"
+# Campagne nuit-2026-10-19 close le 2026-10-20 avec : anthropic 13,99 €, mistral 4,75 € (génération 3,69 €,
+# juge 1,06 €) et openrouter 6,43 € dépensés. Anaël a approuvé le 2026-10-20 (méthodologie v2, plan §7 bis) :
+# anthropic rechargé de 36 € (reste 4,50 € reporté, soit 40,5 €), openrouter + 10 € (reste 3,57 € reporté,
+# soit 13,5 €), mistral 10 € dans l'enveloppe de 30 € par API.
+campagne_id = "methodo-v2-2026-10-20"
 
 # Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
 # réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
@@ -44,10 +48,10 @@ majoration_entree = 1.25
 [postes.anthropic]
 # PRD : 10 €. Relevé par Anaël le 2026-10-16 et le 2026-10-17 (10 $ ≈ 8,6 € + 5 € + 5 €), Baseline
 # complète et trois nouveaux Modèles de base candidats.
-plafond_eur = 18.5  # reste de la campagne v9 reporté (2026-10-19, nuit)
+plafond_eur = 40.5  # reste de la nuit reporté + 36 € (2026-10-20, méthodologie v2)
 
 [postes.mistral]
-plafond_eur = 10.0  # run de nuit, approuvé par Anaël le 2026-10-19
+plafond_eur = 10.0  # méthodologie v2, dans l'enveloppe de 30 € (2026-10-20)
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
@@ -55,7 +59,7 @@ generation = 8.0
 juge = 2.0
 
 [postes.openrouter]
-plafond_eur = 10.0  # juges tiers et générateurs alternatifs, approuvé par Anaël le 2026-10-19
+plafond_eur = 13.5  # juge de données DeepSeek, juges tiers, générateurs ; reste + 10 € (2026-10-20)
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]
