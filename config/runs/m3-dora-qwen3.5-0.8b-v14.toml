@@ -1,0 +1,27 @@
+# Run M3 DoRA sur v14 (même campagne que M1 v14, qui dépasse sa Baseline : 30,2 contre 27,5). Run autonome du 2026-10-20.
+# Run M3, DoRA, qwen3.5-0.8b (campagne qwen3.5-0.8b-v11, jeu v11 : cibles courtes régénérées par Mistral (stories 9.10, 9.11, 9.12) puis nettoyées (règle v2)).
+# Mêmes hyperparamètres que la campagne minicpm5-2b-v11 ; seul le modèle change. Jeu v11 : cibles
+# plafonnées en mots par tâche, sans titre ni préambule en tête ; CR de retour.
+# Garde mémoire (décision d'Anaël du 2026-10-19) : PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# et surveillance de la RAM du PC (arrêt propre au-delà de 28 Go).
+# Lancement : uv run --no-sync slmsp train run --config config/runs/m3-dora-qwen3.5-0.8b-v11.toml
+
+campagne = "qwen3.5-0.8b-v14"
+modele = "qwen3.5-0.8b"
+methode = "dora"
+jeu_version = "v14"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
