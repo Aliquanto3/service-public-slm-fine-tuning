@@ -43,11 +43,13 @@ motifs_interdits = ["labs", "preview", "beta", "-rc", "experimental"]
 # Échéance totale d'une tentative. 180 s couvrent une génération de 2 048 tokens ; à
 # surveiller pour le second juge (max_tokens jusqu'à 6 000) : une tentative coupée est comptée
 # au pire cas.
-delai_appel = 180
+# Porté à 600 s le 2026-10-20 : Mistral Large 4 (raisonnement, jusqu'à ~10 000 tokens) dépassait
+# 180 s (ReadTimeout, run 20261020-005203-generate-4f52).
+delai_appel = 600
 # Établissement de la connexion.
 delai_connexion = 10
 # Chaque lecture (et écriture), ramenée au temps restant avant l'échéance.
-delai_lecture = 180
+delai_lecture = 600
 
 # Relances sur 429 (limite de débit), 500, 502, 503, 504 et erreur de transport. Chaque
 # tentative a sa réservation, réglée avant la suivante : une réponse d'erreur HTTP (429, 5xx)
