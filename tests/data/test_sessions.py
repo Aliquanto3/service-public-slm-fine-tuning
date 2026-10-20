@@ -287,3 +287,102 @@ def test_contenu_en_blocs_garde_le_texte_seul(monde: Any) -> None:
     resultat = monde.lancer(GENERIQUE, seed=seed)
     assert resultat.statut == "complet"
     assert "<raisonnement-factice>" not in json.dumps(monde.lignes(resultat, "brut.jsonl"))
+
+
+# --- Réutilisation du journal (story C2) -----------------------------------------------------
+
+
+def test_reponse_tronquee_journalisee_jamais_reutilisee(monde: Any) -> None:
+    seed = monde.ecrire_seed([monde.amorce("generique", "demande", ligne=1)])
+    monde.faux.reponses = [{"finish_reason": "length"}]
+    premier = monde.lancer(GENERIQUE, seed=seed)
+    assert _abandon(monde, premier)["motif"] == "reponse_tronquee"
+
+    reprise = monde.lancer(GENERIQUE, seed=seed)  # nouveau run, mêmes sessions
+    assert len(monde.faux.corps) == 2  # la réponse tronquée est rejouée, pas relue
+    assert reprise.statut == "complet"
+    (brut,) = monde.lignes(reprise, "brut.jsonl")
+    assert brut["appels_reutilises"] == 0 and brut["appels_nouveaux"] == 1
+
+
+def test_changement_de_max_tokens_invalide_la_reutilisation(monde: Any, monkeypatch: Any) -> None:
+    from slmsp.mistral.generateur import Generateur
+
+    seed = monde.ecrire_seed([monde.amorce("generique", "demande", ligne=1)])
+    assert monde.lancer(GENERIQUE, seed=seed).statut == "complet"
+    assert len(monde.faux.corps) == 1
+    # Marge de raisonnement changée : même gabarit, même modèle, autre `max_tokens`.
+    monkeypatch.setattr(Generateur, "_marge_raisonnement", lambda _self: 512)
+    reprise = monde.lancer(GENERIQUE, seed=seed)
+    assert len(monde.faux.corps) == 2  # nouvel appel, la réponse journalisée n'est pas relue
+    assert monde.faux.corps[1]["max_tokens"] == monde.faux.corps[0]["max_tokens"] + 512
+    (brut,) = monde.lignes(reprise, "brut.jsonl")
+    assert brut["appels_reutilises"] == 0 and brut["appels_nouveaux"] == 1
+    # Même `max_tokens` : réutilisée sans appel.
+    encore = monde.lancer(GENERIQUE, seed=seed)
+    assert len(monde.faux.corps) == 2
+    (brut,) = monde.lignes(encore, "brut.jsonl")
+    assert brut["appels_reutilises"] == 1 and brut["appels_nouveaux"] == 0
+
+
+@pytest.mark.parametrize("fin", ["model_length", None])
+def test_fin_anormale_journalisee_jamais_reutilisee(monde: Any, fin: str | None) -> None:
+    seed = monde.ecrire_seed([monde.amorce("generique", "demande", ligne=1)])
+    monde.faux.reponses = [{"finish_reason": fin}]
+    monde.lancer(GENERIQUE, seed=seed)
+    reprise = monde.lancer(GENERIQUE, seed=seed)
+    assert len(monde.faux.corps) == 2
+    (brut,) = monde.lignes(reprise, "brut.jsonl")
+    assert brut["appels_reutilises"] == 0 and brut["appels_nouveaux"] == 1
+
+
+def test_model_length_frais_abandonne(monde: Any) -> None:
+    seed = monde.ecrire_seed([monde.amorce("generique", "demande", ligne=1)])
+    monde.faux.reponses = [{"finish_reason": "model_length"}]
+    resultat = monde.lancer(GENERIQUE, seed=seed)
+    assert _abandon(monde, resultat)["motif"] == "reponse_tronquee"
+
+
+def test_regle_de_reutilisation() -> None:
+    from slmsp.mistral.generateur import reponse_reutilisable
+
+    def brut(fin: str | None) -> str:
+        return json.dumps({"choices": [{"finish_reason": fin}]})
+
+    avec, ancien = json.dumps({"max_tokens": 100}), json.dumps({"messages": []})
+    assert reponse_reutilisable(avec, brut("stop"), 100)
+    assert reponse_reutilisable(avec, brut("tool_calls"), 100)
+    assert not reponse_reutilisable(avec, brut("stop"), 200)
+    for fin in ("length", "model_length", "error", None):
+        assert not reponse_reutilisable(avec, brut(fin), 100)
+        assert not reponse_reutilisable(ancien, brut(fin), 100)
+    assert reponse_reutilisable(ancien, brut("stop"), 100)  # ancien journal : arrêt normal
+
+
+def test_appels_journalises_suit_la_regle_de_reprise(monde: Any) -> None:
+    from slmsp.data.generate import appels_journalises
+    from slmsp.mistral.journal import USAGE_GENERATION, journal_pour
+
+    seed = monde.ecrire_seed(
+        [
+            monde.amorce("generique", "demande", ligne=1),
+            monde.amorce("generique", "demande", ligne=2),
+        ]
+    )
+    monde.faux.reponses = [{"finish_reason": "model_length"}, {}]
+    monde.lancer({"generique": 2}, seed=seed)
+    lignes = monde.journal_lignes()
+    assert len(lignes) == 2
+    generateur = monde.generateur(seed, None)
+    journal = journal_pour(
+        USAGE_GENERATION,
+        generateur.client.config,
+        generateur.client.dossier_journaux,
+        lecteur="data",
+    )
+    comptes = {
+        ligne["session_id"]: appels_journalises(journal, ligne["session_id"]) for ligne in lignes
+    }
+    assert sorted(comptes.values()) == [0, 1]
+    session_ok = next(s for s, n in comptes.items() if n == 1)
+    assert appels_journalises(journal, session_ok, max_tokens=lambda _g: 10**6) == 0

@@ -57,7 +57,7 @@ from slmsp.core.erreurs import (
     ProvenanceInvalide,
     TarifInconnu,
 )
-from slmsp.core.gabarits import GabaritValide
+from slmsp.core.gabarits import GabaritInvalide, GabaritValide
 from slmsp.core.items import IdentifiantsProteges
 from slmsp.core.ports import Passage
 from slmsp.core.schemas.amorce import Amorce
@@ -93,6 +93,7 @@ from slmsp.mistral.generateur import (
     TACHES_OUTILLEES,
     Generateur,
     PrealableNonSatisfait,
+    reponse_reutilisable,
 )
 from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, journal_pour
 
@@ -466,9 +467,16 @@ def _clore(
     return bilan
 
 
-def appels_journalises(journal: JournalMistral, session_id: str, modele: str | None = None) -> int:
+def appels_journalises(
+    journal: JournalMistral,
+    session_id: str,
+    modele: str | None = None,
+    max_tokens: Callable[[str], int | None] | None = None,
+) -> int:
     """Appels `ok` avec réponse déjà journalisés pour `session_id` (réutilisés à la reprise) ;
-    avec `modele`, ceux qui l'ont demandé seulement (story S5)."""
+    avec `modele`, ceux qui l'ont demandé seulement (story S5). Même règle que la reprise
+    (story C2) : arrêt `stop` ou `tool_calls` seulement et, avec `max_tokens` (gabarit_id →
+    max_tokens courant), même `max_tokens` journalisé."""
     if not journal.chemin.is_file():
         return 0
     return sum(
@@ -476,8 +484,27 @@ def appels_journalises(journal: JournalMistral, session_id: str, modele: str | N
         for ligne in journal.appels_session(session_id)
         if ligne.statut == "ok"
         and ligne.reponse_brute is not None
+        and reponse_reutilisable(
+            ligne.requete,
+            ligne.reponse_brute,
+            max_tokens(ligne.gabarit_id) if max_tokens and ligne.gabarit_id else None,
+        )
         and (modele is None or ligne.modele_demande == modele)
     )
+
+
+def _max_tokens_session(generateur: Generateur, tache: str) -> Callable[[str], int | None]:
+    """`max_tokens` courant d'un gabarit pour `tache` (`None` si le gabarit est illisible :
+    la ligne journalisée n'est alors pas comparée, `reponse_reutilisable` garde le filtre
+    sur la raison de fin)."""
+
+    def lire(gabarit_id: str) -> int | None:
+        try:
+            return generateur.max_tokens(gabarit_id, tache)
+        except GabaritInvalide:  # estimation seulement : la reprise recontrôle
+            return None
+
+    return lire
 
 
 def estimer_plan(
@@ -751,13 +778,16 @@ def lancer_generation(
         generateur.client.dossier_journaux,
         lecteur="data",
     )
+    taches = {session.session_id: session.tache for session in plan}
     estimation = estimer_plan(
         plan,
         generateur,
         deja=deja,
         textes_amorces={a.amorce_id: a.texte for a in _amorces(seed, racine)},
         tours_outils_max=tours_outils_max,
-        journalises=lambda session_id: appels_journalises(journal, session_id, modele),
+        journalises=lambda session_id: appels_journalises(
+            journal, session_id, modele, _max_tokens_session(generateur, taches[session_id])
+        ),
     )
     _afficher_estimation(estimation, consigner)  # avant le premier appel
     executeur = ExecuteurSessions(

@@ -55,10 +55,11 @@ from slmsp.mcp.enregistrement import SessionMcp, chemin_cassette, enregistrer
 from slmsp.mcp.erreurs import ErreurTransportMcp
 from slmsp.mcp.outils import valider_appel
 from slmsp.mistral.generateur import (
+    FINS_TRONQUEES,
     TACHES_OUTILLEES,
     Generateur,
     message_assistant,
-    raison_de_fin,
+    reponse_reutilisable,
 )
 from slmsp.mistral.journal import USAGE_GENERATION, JournalMistral, LigneAppel
 
@@ -292,8 +293,14 @@ class ExecuteurSessions:
         amorce_ids: Sequence[str],
         precedents: Sequence[Mapping[str, Any]],
     ) -> tuple[LigneAppel, dict[str, Any]] | None:
-        """Première ligne du journal de la session qui répond déjà à cet appel."""
+        """Première ligne du journal de la session qui répond déjà à cet appel.
+
+        Jamais réutilisée : une réponse tronquée (`finish_reason` `length`) ; une réponse dont
+        le `max_tokens` journalisé diffère de celui de l'appel courant (story C2). Sans
+        `max_tokens` journalisé (ancien format), seule une réponse `stop` ou `tool_calls`
+        est réutilisée."""
         prealables = self.ctx.generateur.prealables
+        max_tokens = self.ctx.generateur.max_tokens(gabarit.id, session.tache)
         ids = json_canonique(list(amorce_ids)).decode("utf-8")
         cible = _projection(precedents)
         if not self.ctx.journal.chemin.is_file():  # aucun appel encore journalisé
@@ -314,6 +321,8 @@ class ExecuteurSessions:
                 message = message_assistant(ligne.reponse_brute)
             except (ValueError, KeyError, TypeError, ProvenanceInvalide):
                 continue
+            if not reponse_reutilisable(ligne.requete, ligne.reponse_brute, max_tokens):
+                continue
             if not isinstance(messages, list) or len(messages) != 1 + len(precedents):
                 continue
             if _projection(messages[1:]) == cible:
@@ -331,7 +340,7 @@ class ExecuteurSessions:
         trouve = self._reutilisable(session, gabarit, amorce_ids, precedents)
         if trouve is not None:
             ligne, message = trouve
-            appel_id, fin = ligne.appel_id, raison_de_fin(ligne.reponse_brute)
+            appel_id = ligne.appel_id
             compteur.reutilises += 1
         else:
             actuel = self.ctx.generateur.gabarit(gabarit.id, session.tache)
@@ -343,13 +352,11 @@ class ExecuteurSessions:
             compteur.nouveaux += 1
             compteur.cout_eur += generation.reponse.cout_eur
             appel_id, fin = generation.appel_id, generation.reponse.finish_reason
-            if fin == "length":  # avant l'extraction : un raisonnement tronqué n'a pas de texte
+            if fin in FINS_TRONQUEES:  # avant l'extraction : raisonnement tronqué sans texte
                 compteur.appel_ids.append(appel_id)
-                raise Abandon("reponse_tronquee", f"appel {appel_id} : réponse tronquée (length)")
+                raise Abandon("reponse_tronquee", f"appel {appel_id} : réponse tronquée ({fin})")
             message = message_assistant(generation.reponse_brute)
         compteur.appel_ids.append(appel_id)
-        if fin == "length":
-            raise Abandon("reponse_tronquee", f"appel {appel_id} : réponse tronquée (length)")
         return message
 
     # --- RD : tours d'outils ---------------------------------------------------------------

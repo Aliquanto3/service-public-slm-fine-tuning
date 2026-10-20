@@ -1090,6 +1090,27 @@ def test_reponse_journalisee_reutilisee_par_session(monde: Monde) -> None:
     assert generateur.reponse_journalisee("ct", ["ct.sujet.1"], "seed-ct-1", "CT") is None
 
 
+@pytest.mark.parametrize("fin", ["length", "model_length", None])
+def test_reponse_journalisee_tronquee_jamais_reprise(monde: Monde, fin: str | None) -> None:
+    """Story C2 : une réponse tronquée (ou sans raison de fin) n'est jamais reprise."""
+    monde.ecrire_seed([amorce("ct.sujet.1", "CT", "sujet")])
+    generateur = monde.generateur()
+    monde.banc.faux.reponses = [{"texte": factice(), "finish_reason": fin}]
+    generateur.generer("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT")
+    assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT") is None
+
+
+def test_reponse_journalisee_autre_max_tokens_non_reprise(
+    monde: Monde, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monde.ecrire_seed([amorce("ct.sujet.1", "CT", "sujet")])
+    generateur = monde.generateur()
+    generateur.generer("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT")
+    assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT")
+    monkeypatch.setattr(Generateur, "_marge_raisonnement", lambda _self: 512)
+    assert generateur.reponse_journalisee("amorces-ct", ["ct.sujet.1"], "seed-ct-1", "CT") is None
+
+
 def test_fabrique_courriers_relance_sans_second_appel(monde: Monde) -> None:
     """Fabrique du CLI sur le vrai Générateur : un nouveau run `seed` réutilise la réponse
     journalisée de la même session (aucune seconde requête, aucune seconde réservation)."""

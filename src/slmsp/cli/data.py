@@ -355,13 +355,13 @@ def _fabrique_depuis(creer_generateur: Callable[[str], Any]) -> FabriqueScenario
     journalisée, celui que `Generateur` revérifie ensuite. Une réponse tronquée lève
     `ReponseTronquee` : `seed` écarte alors le scénario et le compte.
     """
-    from slmsp.mistral.generateur import message_assistant, raison_de_fin
+    from slmsp.mistral.generateur import FINS_TRONQUEES, message_assistant, raison_de_fin
 
     def fabrique(seed_run_id: str, theme_id: str, session_id: str) -> tuple[str, str]:
         generation = creer_generateur(seed_run_id).generer(
             GABARIT_SCENARIO, [theme_id], session_id, "CR"
         )
-        if raison_de_fin(generation.reponse_brute) == "length":
+        if raison_de_fin(generation.reponse_brute) in FINS_TRONQUEES:
             raise ReponseTronquee(f"appel {generation.appel_id} : réponse tronquée (length)")
         contenu = message_assistant(generation.reponse_brute).get("content")
         if not isinstance(contenu, str) or not contenu:
@@ -378,7 +378,7 @@ def _fabrique_courriers_depuis(creer_generateur: Callable[[str], Any]) -> Fabriq
     la réponse n'a pas de texte : `seed` la compte en `schema_invalide` et poursuit). Une
     réponse tronquée, même déjà journalisée, lève `ReponseTronquee` : `seed` la compte en
     `tronques`."""
-    from slmsp.mistral.generateur import message_assistant, raison_de_fin
+    from slmsp.mistral.generateur import FINS_TRONQUEES, message_assistant, raison_de_fin
 
     def fabrique(seed_run_id: str, sujet_id: str, session_id: str) -> tuple[str, str]:
         generateur = creer_generateur(seed_run_id)
@@ -388,7 +388,7 @@ def _fabrique_courriers_depuis(creer_generateur: Callable[[str], Any]) -> Fabriq
         else:
             generation = generateur.generer(GABARIT_AMORCES_CT, [sujet_id], session_id, "CT")
             appel_id, brut = generation.appel_id, generation.reponse_brute
-        if raison_de_fin(brut) == "length":
+        if raison_de_fin(brut) in FINS_TRONQUEES:
             raise ReponseTronquee(f"appel {appel_id} : réponse tronquée (length)")
         try:
             contenu = message_assistant(brut).get("content")

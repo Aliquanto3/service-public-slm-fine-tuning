@@ -326,6 +326,33 @@ def raison_de_fin(brut: bytes | str | None) -> str | None:
     return raison if isinstance(raison, str) else None
 
 
+FINS_REUTILISABLES: Final = frozenset({"stop", "tool_calls"})
+"""Seules raisons de fin d'une réponse journalisée rejouable sans nouvel appel (story C2)."""
+
+FINS_TRONQUEES: Final = frozenset({"length", "model_length"})
+"""Raisons de fin d'une réponse coupée (sortie ou contexte épuisés)."""
+
+
+def reponse_reutilisable(
+    requete: str | None, brut: bytes | str | None, max_tokens: int | None
+) -> bool:
+    """Une réponse journalisée est rejouable (story C2) : arrêt normal (`stop` ou
+    `tool_calls`, jamais `length`, `model_length` ni raison absente) et `max_tokens` de la
+    requête journalisée égal à `max_tokens` (marge de raisonnement incluse). Un ancien
+    journal sans `max_tokens` est rejoué sur le seul arrêt normal ; `max_tokens` `None` :
+    pas de comparaison."""
+    if raison_de_fin(brut) not in FINS_REUTILISABLES:
+        return False
+    if max_tokens is None:
+        return True
+    try:
+        corps = json.loads(requete) if requete is not None else {}
+    except ValueError:
+        return False
+    journalise = corps.get("max_tokens") if isinstance(corps, dict) else None
+    return journalise is None or journalise == max_tokens
+
+
 @dataclass(frozen=True)
 class Generation:
     """Résultat d'un appel du Générateur, tel que journalisé."""
@@ -611,8 +638,11 @@ class Generateur:
         """Première ligne admise du journal de `session_id` pour ce gabarit (identifiant,
         version, SHA) et ces amorces, sans message précédent, demandée au modèle du client
         (story S5 : un autre modèle du Générateur ne réutilise pas les réponses d'un autre) :
-        la reprise la réutilise au lieu d'appeler Mistral. `None` s'il n'y en a pas."""
+        la reprise la réutilise au lieu d'appeler Mistral. Une réponse tronquée ou d'un autre
+        `max_tokens` n'est jamais reprise (`reponse_reutilisable`, story C2). `None` s'il n'y
+        en a pas."""
         gabarit = self._gabarit(gabarit_id, tache)[0]
+        max_tokens = self.max_tokens(gabarit_id, tache)
         journal = self._journal()
         if not journal.chemin.is_file():
             return None
@@ -625,6 +655,7 @@ class Generateur:
                 and ligne.amorce_ids == ids
                 and ligne.reponse_brute is not None
                 and ligne.modele_demande == self.client.config.modele
+                and reponse_reutilisable(ligne.requete, ligne.reponse_brute, max_tokens)
             ):
                 return ligne
         return None
