@@ -1,9 +1,9 @@
 {
   "global": {
-    "incomplets": 54,
-    "rejetes": 30,
-    "retenus": 76,
-    "taux_rejet": 0.1875,
+    "incomplets": 0,
+    "rejetes": 37,
+    "retenus": 123,
+    "taux_rejet": 0.2313,
     "total": 160
   },
   "juges": [
@@ -12,31 +12,31 @@
   ],
   "par_tache": {
     "Compte rendu": {
-      "incomplets": 4,
-      "rejetes": 4,
+      "incomplets": 0,
+      "rejetes": 8,
       "retenus": 12,
-      "taux_rejet": 0.2,
+      "taux_rejet": 0.4,
       "total": 20
     },
     "Correction": {
-      "incomplets": 11,
-      "rejetes": 1,
-      "retenus": 8,
-      "taux_rejet": 0.05,
+      "incomplets": 0,
+      "rejetes": 2,
+      "retenus": 18,
+      "taux_rejet": 0.1,
       "total": 20
     },
     "Courrier type": {
-      "incomplets": 4,
+      "incomplets": 0,
       "rejetes": 3,
-      "retenus": 13,
+      "retenus": 17,
       "taux_rejet": 0.15,
       "total": 20
     },
     "Langage clair": {
-      "incomplets": 7,
-      "rejetes": 3,
-      "retenus": 10,
-      "taux_rejet": 0.15,
+      "incomplets": 0,
+      "rejetes": 2,
+      "retenus": 18,
+      "taux_rejet": 0.1,
       "total": 20
     },
     "Non-régression": {
@@ -47,23 +47,23 @@
       "total": 20
     },
     "Question": {
-      "incomplets": 7,
+      "incomplets": 0,
       "rejetes": 5,
-      "retenus": 8,
+      "retenus": 15,
       "taux_rejet": 0.25,
       "total": 20
     },
     "Recherche de données": {
-      "incomplets": 16,
-      "rejetes": 0,
-      "retenus": 4,
-      "taux_rejet": 0.0,
+      "incomplets": 0,
+      "rejetes": 3,
+      "retenus": 17,
+      "taux_rejet": 0.15,
       "total": 20
     },
     "Résumé": {
-      "incomplets": 5,
+      "incomplets": 0,
       "rejetes": 6,
-      "retenus": 9,
+      "retenus": 14,
       "taux_rejet": 0.3,
       "total": 20
     }
