@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:10Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "subventions aux associations Grand Paris Seine Ouest",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'subventions aux associations Grand Paris Seine Ouest'\nPage 1 of results:\n\n1. Subventions aux associations\n   ID: 69e9634ab0ed80502ca21d80\n   Organization: Grand Paris Seine Ouest\n   Tags: administration-finances-publiques, associations, scdl, subventions\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/subventions-aux-associations-6\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'subventions aux associations Grand Paris Seine Ouest'\nPage 1 of results:\n\n1. Subventions aux associations\n   ID: 69e9634ab0ed80502ca21d80\n   Organization: Grand Paris Seine Ouest\n   Tags: administration-finances-publiques, associations, scdl, subventions\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/subventions-aux-associations-6\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "69e9634ab0ed80502ca21d80"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Subventions aux associations\nDataset ID: 69e9634ab0ed80502ca21d80\nTotal resources: 2\n\n1. subventions-aux-associations.csv\n   Resource ID: 2fc3cfb9-5f4b-496d-8955-377b7727aaa0\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/subventions-aux-associations/exports/csv?use_labels=true\n\n2. subventions-aux-associations.json\n   Resource ID: 96822959-f12e-4036-b49d-ceaaf4171dac\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/subventions-aux-associations/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Subventions aux associations\nDataset ID: 69e9634ab0ed80502ca21d80\nTotal resources: 2\n\n1. subventions-aux-associations.csv\n   Resource ID: 2fc3cfb9-5f4b-496d-8955-377b7727aaa0\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/subventions-aux-associations/exports/csv?use_labels=true\n\n2. subventions-aux-associations.json\n   Resource ID: 96822959-f12e-4036-b49d-ceaaf4171dac\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/subventions-aux-associations/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,8 +1,9 @@
-"""Contrôles du jeu de développement dev1 (spec O4, story O4b ; revue).
+"""Contrôles des jeux de développement dev1 et dev2 (spec O4, stories O4b et 15.5 ; revue).
 
 Les contrôles des jeux v1.x (`test_items_*.py`) portent des constantes propres à v1.x
-(identifiants, dates, composition, verbatim strict) : dev1 a ses propres contrôles ici.
-Les textes réels de dev1 ont l'espacement et la ponctuation normalisés (README de
+(identifiants, dates, composition, verbatim strict) : les jeux dev ont leurs propres contrôles
+ici, sur les brouillons des deux versions (identifiants 5xx pour dev1, 6xx pour dev2).
+Les textes réels des jeux dev ont l'espacement et la ponctuation normalisés (README de
 construction) : le verbatim est jugé après normalisation des blancs. Les contrôles contre les
 sources lisent les instantanés parquet locaux (`SLMSP_EVAL_SOURCES`, sinon
 `<racine>/data/raw/eval-sources`) et sont sautés sans eux.
@@ -20,17 +21,25 @@ from pathlib import Path
 import pytest
 
 RACINE = Path(__file__).resolve().parents[2]
-CONSTRUCTION = RACINE / "eval" / "construction" / "dev1"
+VERSIONS = {"dev1": range(501, 522), "dev2": range(601, 621)}
+"""Version → identifiants RD attendus (une cassette `RD-<n>` par item)."""
+CONSTRUCTIONS = {v: RACINE / "eval" / "construction" / v for v in VERSIONS}
 CASSETTES = RACINE / "eval" / "cassettes"
 
-pytestmark = pytest.mark.skipif(not CONSTRUCTION.is_dir(), reason="jeu dev1 absent")
+pytestmark = pytest.mark.skipif(
+    not any(c.is_dir() for c in CONSTRUCTIONS.values()), reason="jeux dev absents"
+)
 
 
-def _items(code: str) -> list[dict]:
-    chemin = CONSTRUCTION / f"{code}.jsonl"
+def _items_version(version: str, code: str) -> list[dict]:
+    chemin = CONSTRUCTIONS[version] / f"{code}.jsonl"
     if not chemin.is_file():
         return []
     return [json.loads(x) for x in chemin.read_text(encoding="utf-8").splitlines() if x.strip()]
+
+
+def _items(code: str) -> list[dict]:
+    return [it for version in VERSIONS for it in _items_version(version, code)]
 
 
 def _ids(items: list[dict]) -> list[str]:
@@ -80,16 +89,25 @@ def test_lc_termes_presents_dans_le_texte(it):
     assert absents == [], f"{it['id']} : termes absents de entree.texte : {absents}"
 
 
-def test_rd_cassettes_501_a_521_toutes_citees():
-    """Chaque dossier `RD-5xx` est cité par un item RD de dev1, et chaque cassette citée existe."""
+@pytest.mark.parametrize("version", list(VERSIONS))
+def test_rd_cassettes_toutes_citees(version):
+    """Chaque dossier `RD-<n>` de la plage de la version (dev1 : 501 à 521, dev2 : 601 à 620)
+    est cité par un item RD de cette version, et chaque cassette citée existe."""
+    rd = _items_version(version, "RD")
+    if not rd:
+        pytest.skip(f"{version} absent")
+    plage = VERSIONS[version]
     cites = set()
-    for it in RD:
+    for it in rd:
         for relatif in it["cassettes"]:
-            chemin = (RACINE / "eval" / "jeu" / "dev1" / relatif).resolve()
+            chemin = (RACINE / "eval" / "jeu" / version / relatif).resolve()
             assert chemin.is_file(), (it["id"], relatif)
             cites.add(chemin)
-    dossiers = {d.name for d in CASSETTES.glob("RD-*") if int(d.name.split("-")[1]) >= 501}
-    assert dossiers == {it["id"] for it in RD} == {f"RD-{n}" for n in range(501, 522)}
+    centaine = plage.start // 100
+    dossiers = {
+        d.name for d in CASSETTES.glob("RD-*") if int(d.name.split("-")[1]) // 100 == centaine
+    }
+    assert dossiers == {it["id"] for it in rd} == {f"RD-{n}" for n in plage}
     fichiers = {f.resolve() for d in dossiers for f in (CASSETTES / d).rglob("*") if f.is_file()}
     assert fichiers == cites
 
@@ -132,7 +150,7 @@ def _doc(p: dict) -> str:
 
 EXTRAITS_Q = [
     (f"{it['id']}#{n}", p)
-    for it in Q
+    for it in [*Q, *_items_version("dev2", "NR")]  # NR « question » de dev2 : extraits de fiche
     for n, p in enumerate(it["provenance"])
     if "chunks" in p and "extrait" in p
 ]

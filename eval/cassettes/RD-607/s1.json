@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:47Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "titres de séjour publication juin 2024",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'titres de séjour publication juin 2024'\nPage 1 of results:\n\n1. Titres de séjour, publication du 27 juin 2024\n   ID: 66a8cc809b4750710f18920c\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/titres-de-sejour-publication-du-27-juin-2024\n\n2. Les titres de séjour, publication du 22 juin 2023\n   ID: 64ba96bde5b7ba2977b8d87a\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-22-juin-2023\n\n3. Les titres de séjour, publication du 25 janvier 2024\n   ID: 66a0c275b4f7df2474efdb0a\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-25-janvier-2024\n\n4. Les titres de séjour, publication du 12 juin 2020\n   ID: 63455a13238d39a32bb12d6f\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-12-juin-2020\n\n5. Les titres de séjour, publication du 20 juin 2022\n   ID: 634e7ca88a0cb8f79ca52501\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-20-juin-2022\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'titres de séjour publication juin 2024'\nPage 1 of results:\n\n1. Titres de séjour, publication du 27 juin 2024\n   ID: 66a8cc809b4750710f18920c\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/titres-de-sejour-publication-du-27-juin-2024\n\n2. Les titres de séjour, publication du 22 juin 2023\n   ID: 64ba96bde5b7ba2977b8d87a\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-22-juin-2023\n\n3. Les titres de séjour, publication du 25 janvier 2024\n   ID: 66a0c275b4f7df2474efdb0a\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-25-janvier-2024\n\n4. Les titres de séjour, publication du 12 juin 2020\n   ID: 63455a13238d39a32bb12d6f\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 16\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-12-juin-2020\n\n5. Les titres de séjour, publication du 20 juin 2022\n   ID: 634e7ca88a0cb8f79ca52501\n   Organization: Ministère de l'intérieur\n   Tags: carte-de-sejour, chiffres-cles-de-limmigration, immigration, immigration-familiale, immigration-professionnelle\n   Resources: 14\n   URL: https://www.data.gouv.fr/datasets/les-titres-de-sejour-publication-du-20-juin-2022\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

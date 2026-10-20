@@ -1,0 +1,123 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:54Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "prénoms nouveau-nés Nancy",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'prénoms nouveau-nés Nancy'\nPage 1 of results:\n\n1. La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy\n   ID: 5d2c2919634f41429aae86ce\n   Organization: Ville de Nancy\n   Tags: bebes, etat-civil, naissances, prenoms, scdl\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'prénoms nouveau-nés Nancy'\nPage 1 of results:\n\n1. La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy\n   ID: 5d2c2919634f41429aae86ce\n   Organization: Ville de Nancy\n   Tags: bebes, etat-civil, naissances, prenoms, scdl\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5d2c2919634f41429aae86ce"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy\nDataset ID: 5d2c2919634f41429aae86ce\nTotal resources: 3\n\n1. 20190715-215403957-donnees-liste-prenoms-feminins-nancy-2016-2018.csv\n   Resource ID: 6947f8a2-ab1e-40b6-b73a-4ebb47647ab6\n   Format: csv\n   Size: 9.7 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy/20200106-150357/20190715-215403957-donnees-liste-prenoms-feminins-nancy-2016-2018.csv\n\n2. 20190715-215403957-donnees-liste-prenoms-masculins-nancy-2016-2018.csv\n   Resource ID: e2cf58f2-d304-4f03-9956-3bcdacfc8408\n   Format: csv\n   Size: 10.9 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy/20200106-150338/20190715-215403957-donnees-liste-prenoms-masculins-nancy-2016-2018.csv\n\n3. 20190715-215403957-donnees-liste-prenoms-nancy-2016-2018.csv\n   Resource ID: b26a8044-d5bd-40cc-8189-a5d32841e841\n   Format: csv\n   Size: 20.5 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy/20200106-150301/20190715-215403957-donnees-liste-prenoms-nancy-2016-2018.csv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy\nDataset ID: 5d2c2919634f41429aae86ce\nTotal resources: 3\n\n1. 20190715-215403957-donnees-liste-prenoms-feminins-nancy-2016-2018.csv\n   Resource ID: 6947f8a2-ab1e-40b6-b73a-4ebb47647ab6\n   Format: csv\n   Size: 9.7 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy/20200106-150357/20190715-215403957-donnees-liste-prenoms-feminins-nancy-2016-2018.csv\n\n2. 20190715-215403957-donnees-liste-prenoms-masculins-nancy-2016-2018.csv\n   Resource ID: e2cf58f2-d304-4f03-9956-3bcdacfc8408\n   Format: csv\n   Size: 10.9 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy/20200106-150338/20190715-215403957-donnees-liste-prenoms-masculins-nancy-2016-2018.csv\n\n3. 20190715-215403957-donnees-liste-prenoms-nancy-2016-2018.csv\n   Resource ID: b26a8044-d5bd-40cc-8189-a5d32841e841\n   Format: csv\n   Size: 20.5 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/la-liste-annuelle-des-prenoms-des-nouveaux-nes-ville-de-nancy/20200106-150301/20190715-215403957-donnees-liste-prenoms-nancy-2016-2018.csv\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "b26a8044-d5bd-40cc-8189-a5d32841e841",
+      "filter_column": "ENFANT_PRENOM",
+      "filter_value": "Jules",
+      "page_size": 20
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: 20190715-215403957-donnees-liste-prenoms-nancy-2016-2018.csv\nResource ID: b26a8044-d5bd-40cc-8189-a5d32841e841\nDataset: La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy (ID: 5d2c2919634f41429aae86ce)\n\nFilter: ENFANT_PRENOM exact Jules\n\nTotal rows (Tabular API): 3\nTotal pages: 1 (page size: 20)\nRetrieved: 3 row(s) from page 1\nColumns: __id, NOM_COM, COLL_INSEE, ENFANT_SEXE, ENFANT_PRENOM, NOMBRE_OCCURENCE, ANNEE\n\nData (3 rows):\n  Row 1:\n    __id: 1\n    NOM_COM: Nancy\n    COLL_INSEE: 54395\n    ENFANT_SEXE: M\n    ENFANT_PRENOM: Jules\n    NOMBRE_OCCURENCE: 48\n    ANNEE: 2016\n  Row 2:\n    __id: 22\n    NOM_COM: Nancy\n    COLL_INSEE: 54395\n    ENFANT_SEXE: M\n    ENFANT_PRENOM: Jules\n    NOMBRE_OCCURENCE: 34\n    ANNEE: 2017\n  Row 3:\n    __id: 24\n    NOM_COM: Nancy\n    COLL_INSEE: 54395\n    ENFANT_SEXE: M\n    ENFANT_PRENOM: Jules\n    NOMBRE_OCCURENCE: 33\n    ANNEE: 2018"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: 20190715-215403957-donnees-liste-prenoms-nancy-2016-2018.csv\nResource ID: b26a8044-d5bd-40cc-8189-a5d32841e841\nDataset: La liste annuelle des prénoms des nouveaux-nés  - ville de Nancy (ID: 5d2c2919634f41429aae86ce)\n\nFilter: ENFANT_PRENOM exact Jules\n\nTotal rows (Tabular API): 3\nTotal pages: 1 (page size: 20)\nRetrieved: 3 row(s) from page 1\nColumns: __id, NOM_COM, COLL_INSEE, ENFANT_SEXE, ENFANT_PRENOM, NOMBRE_OCCURENCE, ANNEE\n\nData (3 rows):\n  Row 1:\n    __id: 1\n    NOM_COM: Nancy\n    COLL_INSEE: 54395\n    ENFANT_SEXE: M\n    ENFANT_PRENOM: Jules\n    NOMBRE_OCCURENCE: 48\n    ANNEE: 2016\n  Row 2:\n    __id: 22\n    NOM_COM: Nancy\n    COLL_INSEE: 54395\n    ENFANT_SEXE: M\n    ENFANT_PRENOM: Jules\n    NOMBRE_OCCURENCE: 34\n    ANNEE: 2017\n  Row 3:\n    __id: 24\n    NOM_COM: Nancy\n    COLL_INSEE: 54395\n    ENFANT_SEXE: M\n    ENFANT_PRENOM: Jules\n    NOMBRE_OCCURENCE: 33\n    ANNEE: 2018"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

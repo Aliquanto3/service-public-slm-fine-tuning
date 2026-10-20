@@ -1,0 +1,123 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:39Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "résidences seniors Grand Paris Seine Ouest",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'résidences seniors Grand Paris Seine Ouest'\nPage 1 of results:\n\n1. Résidences seniors\n   ID: 66aad0f14f0ba6c876d5fbe3\n   Organization: Grand Paris Seine Ouest\n   Tags: autonomie, ehpad, habitat, logements, residences-autonomie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/residences-seniors\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'résidences seniors Grand Paris Seine Ouest'\nPage 1 of results:\n\n1. Résidences seniors\n   ID: 66aad0f14f0ba6c876d5fbe3\n   Organization: Grand Paris Seine Ouest\n   Tags: autonomie, ehpad, habitat, logements, residences-autonomie\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/residences-seniors\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "66aad0f14f0ba6c876d5fbe3"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Résidences seniors\nDataset ID: 66aad0f14f0ba6c876d5fbe3\nTotal resources: 4\n\n1. residences-seniors.csv\n   Resource ID: 3868e48b-64ca-4f8b-a607-f43d67e5e8e6\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/csv?use_labels=true\n\n2. residences-seniors.json\n   Resource ID: 1a84e028-ebd5-45d0-bebd-584470df5a07\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/json\n\n3. residences-seniors.geojson\n   Resource ID: f34b3f12-a369-44d9-b9a4-22eb309f833c\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/geojson\n\n4. residences-seniors.zip\n   Resource ID: 5541ae22-6f75-4134-aea3-e4855c522f58\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/shp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Résidences seniors\nDataset ID: 66aad0f14f0ba6c876d5fbe3\nTotal resources: 4\n\n1. residences-seniors.csv\n   Resource ID: 3868e48b-64ca-4f8b-a607-f43d67e5e8e6\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/csv?use_labels=true\n\n2. residences-seniors.json\n   Resource ID: 1a84e028-ebd5-45d0-bebd-584470df5a07\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/json\n\n3. residences-seniors.geojson\n   Resource ID: f34b3f12-a369-44d9-b9a4-22eb309f833c\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/geojson\n\n4. residences-seniors.zip\n   Resource ID: 5541ae22-6f75-4134-aea3-e4855c522f58\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.seineouest.fr/api/explore/v2.1/catalog/datasets/residences-seniors/exports/shp\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "3868e48b-64ca-4f8b-a607-f43d67e5e8e6",
+      "filter_column": "Nom de la résidence",
+      "filter_value": "Les Abondances",
+      "page_size": 20
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: residences-seniors.csv\nResource ID: 3868e48b-64ca-4f8b-a607-f43d67e5e8e6\nDataset: Résidences seniors (ID: 66aad0f14f0ba6c876d5fbe3)\n\nFilter: Nom de la résidence exact Les Abondances\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 20)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Identifiant, Nom de la résidence, Commune, Code INSEE, Adresse, Catégorie, Conventionné à l'APL, Téléphone, Géolocalisation\n\nData (1 row):\n  Row 1:\n    __id: 2\n    Identifiant: HEBS04\n    Nom de la résidence: Les Abondances\n    Commune: BOULOGNE-BILLANCOURT\n    Code INSEE: 92012\n    Adresse: 49  RUE SAINT DENIS\n    Catégorie: EHPAD\n    Conventionné à l'APL: False\n    Téléphone: 01 41 22 56 56\n    Géolocalisation: 48.846666608365425, 2.232640442050939"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: residences-seniors.csv\nResource ID: 3868e48b-64ca-4f8b-a607-f43d67e5e8e6\nDataset: Résidences seniors (ID: 66aad0f14f0ba6c876d5fbe3)\n\nFilter: Nom de la résidence exact Les Abondances\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 20)\nRetrieved: 1 row(s) from page 1\nColumns: __id, Identifiant, Nom de la résidence, Commune, Code INSEE, Adresse, Catégorie, Conventionné à l'APL, Téléphone, Géolocalisation\n\nData (1 row):\n  Row 1:\n    __id: 2\n    Identifiant: HEBS04\n    Nom de la résidence: Les Abondances\n    Commune: BOULOGNE-BILLANCOURT\n    Code INSEE: 92012\n    Adresse: 49  RUE SAINT DENIS\n    Catégorie: EHPAD\n    Conventionné à l'APL: False\n    Téléphone: 01 41 22 56 56\n    Géolocalisation: 48.846666608365425, 2.232640442050939"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:50Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "statistiques état civil Digne-les-Bains",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'statistiques état civil Digne-les-Bains'\nPage 1 of results:\n\n1. Statistiques d'état civil à Digne-les-Bains\n   ID: 5ce66e0c06e3e76b9e62521d\n   Organization: Ville de Digne-les-Bains\n   Tags: acte, adoption, deces, etat-civil, mariage\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/statistiques-detat-civil-a-digne-les-bains\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'statistiques état civil Digne-les-Bains'\nPage 1 of results:\n\n1. Statistiques d'état civil à Digne-les-Bains\n   ID: 5ce66e0c06e3e76b9e62521d\n   Organization: Ville de Digne-les-Bains\n   Tags: acte, adoption, deces, etat-civil, mariage\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/statistiques-detat-civil-a-digne-les-bains\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5ce66e0c06e3e76b9e62521d"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Statistiques d'état civil à Digne-les-Bains\nDataset ID: 5ce66e0c06e3e76b9e62521d\nTotal resources: 1\n\n1. DIGNE-ECIVIL-STAT 2008-2018.zip\n   Resource ID: 6efa3b0d-8c6b-4529-ac2c-dfc3fa275ff3\n   Format: zip\n   MIME type: application/x-zip-compressed\n   Type: main\n   URL: https://trouver.datasud.fr/dataset/082b1f0c-e0a8-4cba-85e3-556077e35ff9/resource/6efa3b0d-8c6b-4529-ac2c-dfc3fa275ff3/download/digne-ecivil-stat-2008-2018.zip\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Statistiques d'état civil à Digne-les-Bains\nDataset ID: 5ce66e0c06e3e76b9e62521d\nTotal resources: 1\n\n1. DIGNE-ECIVIL-STAT 2008-2018.zip\n   Resource ID: 6efa3b0d-8c6b-4529-ac2c-dfc3fa275ff3\n   Format: zip\n   MIME type: application/x-zip-compressed\n   Type: main\n   URL: https://trouver.datasud.fr/dataset/082b1f0c-e0a8-4cba-85e3-556077e35ff9/resource/6efa3b0d-8c6b-4529-ac2c-dfc3fa275ff3/download/digne-ecivil-stat-2008-2018.zip\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

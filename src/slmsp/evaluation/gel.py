@@ -251,7 +251,7 @@ def _mots_hors_consigne(valeur: object) -> int:
 def ecarts_composition(items: Sequence[Item], version: str = "v1.1") -> list[str]:
     """Écarts de `items` avec la composition visée de `version` (liste vide si conforme).
 
-    SPEC §2 pour `vN`, `CIBLES_DEV` (spec O4) pour `devN`.
+    SPEC §2 pour `vN`, `cfg.cibles_jeu` (spec O4) pour `devN` (dev1 : CR à 19).
     """
     cibles = cfg.cibles_jeu(version)
     ecarts: list[str | None] = []

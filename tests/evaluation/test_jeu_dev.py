@@ -135,6 +135,23 @@ def test_jeu_dev_compare_a_v11_donne_des_ecarts() -> None:
     assert ecarts_composition(jeu_dev_valides(), "v1.1")  # TOTAL_DEV items contre 225 visés
 
 
+def test_cibles_dev2_completes() -> None:
+    """Story 15.5 : dev2 (et les suivants) visent 20 items par Tâche, CR compris ; dev1 garde
+    ses 19 CR. Mêmes contraintes secondaires."""
+    complet = cfg.cibles_jeu("dev2")
+    assert complet is cfg.CIBLES_JEU_DEV_COMPLET and cfg.cibles_jeu("dev12") is complet
+    assert all(c == (7, 7, 6) for c in complet.taches.values()) and set(complet.taches) == set(
+        CODES
+    )
+    assert sum(sum(c) for c in complet.taches.values()) == 160
+    assert cfg.CIBLES_DEV["CR"] == (7, 6, 6)
+    secondaires = ("q_sans_reponse", "q_part_amorces", "rd_valeurs", "rd_repli", "rd_producteurs")
+    assert all(getattr(complet, a) == getattr(cfg.CIBLES_JEU_DEV, a) for a in secondaires)
+    items = jeu_dev_valides()  # 159 items (CR à 19) : un CR moyen manque pour dev2
+    assert ecarts_composition(items, "dev1") == []
+    assert [e for e in ecarts_composition(items, "dev2") if "CR moyen" in e]
+
+
 # --- Gel `relu-llm` --------------------------------------------------------------------------
 
 

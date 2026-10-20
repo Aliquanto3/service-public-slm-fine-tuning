@@ -1,0 +1,120 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:43Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "épiceries solidaires Mulhouse",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'épiceries solidaires Mulhouse'\nPage 1 of results:\n\n1. Epiceries Solidaires sur Mulhouse\n   ID: 6a17887e7b794750b487da81\n   Organization: Mulhouse Alsace Agglomération\n   Tags: aide, alimentaire, social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/epiceries-solidaires-sur-mulhouse\n\n2. Secteurs d'épicerie solidaire sur Mulhouse\n   ID: 5be560d606e3e70c7277c6ff\n   Organization: Mulhouse Alsace Agglomération\n   Tags: epicerie, social, solidaire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/secteurs-depicerie-solidaire-sur-mulhouse\n\n3. Points d'aide alimentaire sur Mulhouse\n   ID: 6a18d86ea4b70fbc9287da97\n   Organization: Mulhouse Alsace Agglomération\n   Tags: aide, alimentaire, social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/points-daide-alimentaire-sur-mulhouse-1\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'épiceries solidaires Mulhouse'\nPage 1 of results:\n\n1. Epiceries Solidaires sur Mulhouse\n   ID: 6a17887e7b794750b487da81\n   Organization: Mulhouse Alsace Agglomération\n   Tags: aide, alimentaire, social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/epiceries-solidaires-sur-mulhouse\n\n2. Secteurs d'épicerie solidaire sur Mulhouse\n   ID: 5be560d606e3e70c7277c6ff\n   Organization: Mulhouse Alsace Agglomération\n   Tags: epicerie, social, solidaire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/secteurs-depicerie-solidaire-sur-mulhouse\n\n3. Points d'aide alimentaire sur Mulhouse\n   ID: 6a18d86ea4b70fbc9287da97\n   Organization: Mulhouse Alsace Agglomération\n   Tags: aide, alimentaire, social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/points-daide-alimentaire-sur-mulhouse-1\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "6a17887e7b794750b487da81"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Epiceries Solidaires sur Mulhouse\nDataset ID: 6a17887e7b794750b487da81\nTotal resources: 4\n\n1. 68224_localisation_caracteristiques_epicerie_solidaire.csv\n   Resource ID: ae3d165b-8420-4eba-9f6f-0a05b9463be9\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/csv?use_labels=true\n\n2. 68224_localisation_caracteristiques_epicerie_solidaire.json\n   Resource ID: ab3ae874-e6f5-4800-920f-24af2d1bc9b6\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/json\n\n3. 68224_localisation_caracteristiques_epicerie_solidaire.geojson\n   Resource ID: 654323dc-0f8c-41bd-9b63-d8292087b89f\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/geojson\n\n4. 68224_localisation_caracteristiques_epicerie_solidaire.zip\n   Resource ID: f5232c4a-9385-421e-8e2b-f3943246fe6b\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/shp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Epiceries Solidaires sur Mulhouse\nDataset ID: 6a17887e7b794750b487da81\nTotal resources: 4\n\n1. 68224_localisation_caracteristiques_epicerie_solidaire.csv\n   Resource ID: ae3d165b-8420-4eba-9f6f-0a05b9463be9\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/csv?use_labels=true\n\n2. 68224_localisation_caracteristiques_epicerie_solidaire.json\n   Resource ID: ab3ae874-e6f5-4800-920f-24af2d1bc9b6\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/json\n\n3. 68224_localisation_caracteristiques_epicerie_solidaire.geojson\n   Resource ID: 654323dc-0f8c-41bd-9b63-d8292087b89f\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/geojson\n\n4. 68224_localisation_caracteristiques_epicerie_solidaire.zip\n   Resource ID: f5232c4a-9385-421e-8e2b-f3943246fe6b\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/shp\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "get_resource_info",
+     "arguments": {
+      "resource_id": "ae3d165b-8420-4eba-9f6f-0a05b9463be9"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resource Information: 68224_localisation_caracteristiques_epicerie_solidaire.csv\n\nResource ID: ae3d165b-8420-4eba-9f6f-0a05b9463be9\nFormat: csv\nMIME type: text/csv\nType: main\n\nURL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/csv?use_labels=true\n\nDescription: Epiceries Solidaires sur Mulhouse (csv)\n\nDataset ID: 6a17887e7b794750b487da81\nDataset: Epiceries Solidaires sur Mulhouse\n\nTabular API availability:\n✅ Available via Tabular API (can be queried)"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resource Information: 68224_localisation_caracteristiques_epicerie_solidaire.csv\n\nResource ID: ae3d165b-8420-4eba-9f6f-0a05b9463be9\nFormat: csv\nMIME type: text/csv\nType: main\n\nURL: https://data.mulhouse-alsace.fr/api/explore/v2.1/catalog/datasets/68224_localisation_caracteristiques_epicerie_solidaire/exports/csv?use_labels=true\n\nDescription: Epiceries Solidaires sur Mulhouse (csv)\n\nDataset ID: 6a17887e7b794750b487da81\nDataset: Epiceries Solidaires sur Mulhouse\n\nTabular API availability:\n✅ Available via Tabular API (can be queried)"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

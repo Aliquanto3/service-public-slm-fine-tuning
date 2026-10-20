@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:58Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "conventions collectives par entreprise SIRET",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 6 dataset(s) for query: 'conventions collectives par entreprise SIRET'\nPage 1 of results:\n\n1. Liste des conventions collectives par entreprise (SIRET)\n   ID: 5e7201d522f2a43e9f736a9a\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: conventions-collectives, idcc, siret\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/liste-des-conventions-collectives-par-entreprise-siret\n\n2. Données des entreprises utilisées dans l'Annuaire des Entreprises\n   ID: 667ebdd4547ab9bd6e4682d3\n   Organization: data.gouv.fr\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/donnees-des-entreprises-utilisees-dans-lannuaire-des-entreprises\n\n3. Résultats des élections professionnelles - période 2017-2020 \n   ID: 62e3a5a637aefbe95687580f\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: comite-dentreprise, delegues-du-personnel, elections-professionnelles\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-professionnelles-periode-2017-2020\n\n4. Résultats des élections professionnelles - période 2013-2016\n   ID: 5b06878fc751df7d56f2501b\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: comites-dentreprise, delegues-du-personnel, elections-profesionnelles\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-professionnelles-periode-2013-2016\n\n5. Résultats des élections professionnelles - période 2021-2024\n   ID: 6a1572b88734ae3507143258\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-professionnelles-periode-2021-2024\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 6 dataset(s) for query: 'conventions collectives par entreprise SIRET'\nPage 1 of results:\n\n1. Liste des conventions collectives par entreprise (SIRET)\n   ID: 5e7201d522f2a43e9f736a9a\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: conventions-collectives, idcc, siret\n   Resources: 1\n   URL: https://www.data.gouv.fr/datasets/liste-des-conventions-collectives-par-entreprise-siret\n\n2. Données des entreprises utilisées dans l'Annuaire des Entreprises\n   ID: 667ebdd4547ab9bd6e4682d3\n   Organization: data.gouv.fr\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/donnees-des-entreprises-utilisees-dans-lannuaire-des-entreprises\n\n3. Résultats des élections professionnelles - période 2017-2020 \n   ID: 62e3a5a637aefbe95687580f\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: comite-dentreprise, delegues-du-personnel, elections-professionnelles\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-professionnelles-periode-2017-2020\n\n4. Résultats des élections professionnelles - période 2013-2016\n   ID: 5b06878fc751df7d56f2501b\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Tags: comites-dentreprise, delegues-du-personnel, elections-profesionnelles\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-professionnelles-periode-2013-2016\n\n5. Résultats des élections professionnelles - période 2021-2024\n   ID: 6a1572b88734ae3507143258\n   Organization: Ministère du Travail du Plein emploi et de l'Insertion\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/resultats-des-elections-professionnelles-periode-2021-2024\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

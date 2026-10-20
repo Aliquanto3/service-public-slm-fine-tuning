@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:36Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "accessibilité établissements hébergement personnes âgées dépendantes 2011",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'accessibilité établissements hébergement personnes âgées dépendantes 2011'\nPage 1 of results:\n\n1. Accessibilité et accès aux établissements d’hébergement pour personnes âgées dépendantes en 2011\n   ID: 54451092c751df3eaeef488f\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: accessibilite, ehpad, etablissement, personnes-agees, personnes-agees-dependantes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/accessibilite-et-acces-aux-etablissements-dhebergement-pour-personnes-agees-dependantes-en-2011\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'accessibilité établissements hébergement personnes âgées dépendantes 2011'\nPage 1 of results:\n\n1. Accessibilité et accès aux établissements d’hébergement pour personnes âgées dépendantes en 2011\n   ID: 54451092c751df3eaeef488f\n   Organization: Ministère des Solidarités et de la Santé\n   Tags: accessibilite, ehpad, etablissement, personnes-agees, personnes-agees-dependantes\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/accessibilite-et-acces-aux-etablissements-dhebergement-pour-personnes-agees-dependantes-en-2011\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "54451092c751df3eaeef488f"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Accessibilité et accès aux établissements d’hébergement pour personnes âgées dépendantes en 2011\n\nID: 54451092c751df3eaeef488f\nSlug: accessibilite-et-acces-aux-etablissements-dhebergement-pour-personnes-agees-dependantes-en-2011\nURL: https://www.data.gouv.fr/datasets/accessibilite-et-acces-aux-etablissements-dhebergement-pour-personnes-agees-dependantes-en-2011/\n\nFull description: *Source : DREES, Études et résultats N° 891*\r\n\r\n*Auteurs : Mélina Ramos-Gorand et Sabrina Volant*\r\n\r\nÀ la fin 2011, les 7 752 établissements d’hébergement pour personnes âgées dépendantes (EHPAD) offrent en moyenne 101 places pour 1 000 personnes âgées de 75 ans ou plus. Le taux d’équipement varie selon les départements de 22 à 185 places. Le sud de la France et la petite couronne parisienne sont les régions les moins bien équipées. À l’inverse, les Pays de la Loire et l’Auvergne affichent les t...\n\nOrganization: Ministère des Solidarités et de la Santé\n  Organization ID: 534fff94a3a7292c64a77fc1\n\nTags: accessibilite, ehpad, etablissement, personnes-agees, personnes-agees-dependantes\n\nResources: 2 file(s)\n\nCreated: 2014-10-20T15:39:29.877000+00:00\nLast updated: 2014-10-20T15:42:17.156000+00:00\n\nLicense: fr-lo\nUpdate frequency: punctual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Accessibilité et accès aux établissements d’hébergement pour personnes âgées dépendantes en 2011\n\nID: 54451092c751df3eaeef488f\nSlug: accessibilite-et-acces-aux-etablissements-dhebergement-pour-personnes-agees-dependantes-en-2011\nURL: https://www.data.gouv.fr/datasets/accessibilite-et-acces-aux-etablissements-dhebergement-pour-personnes-agees-dependantes-en-2011/\n\nFull description: *Source : DREES, Études et résultats N° 891*\r\n\r\n*Auteurs : Mélina Ramos-Gorand et Sabrina Volant*\r\n\r\nÀ la fin 2011, les 7 752 établissements d’hébergement pour personnes âgées dépendantes (EHPAD) offrent en moyenne 101 places pour 1 000 personnes âgées de 75 ans ou plus. Le taux d’équipement varie selon les départements de 22 à 185 places. Le sud de la France et la petite couronne parisienne sont les régions les moins bien équipées. À l’inverse, les Pays de la Loire et l’Auvergne affichent les t...\n\nOrganization: Ministère des Solidarités et de la Santé\n  Organization ID: 534fff94a3a7292c64a77fc1\n\nTags: accessibilite, ehpad, etablissement, personnes-agees, personnes-agees-dependantes\n\nResources: 2 file(s)\n\nCreated: 2014-10-20T15:39:29.877000+00:00\nLast updated: 2014-10-20T15:42:17.156000+00:00\n\nLicense: fr-lo\nUpdate frequency: punctual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

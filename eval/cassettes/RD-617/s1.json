@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:21Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "assistants maternels agréés Loire-Atlantique EPCI",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'assistants maternels agréés Loire-Atlantique EPCI'\nPage 1 of results:\n\n1. Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par EPCI\n   ID: 5b6068559ce2e73b3fa40d82\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travailleur-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-epci-2\n\n2. Places chez les assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par EPCI\n   ID: 5b6067919ce2e73b3fa40d5d\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travail-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/places-chez-les-assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-epci-2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'assistants maternels agréés Loire-Atlantique EPCI'\nPage 1 of results:\n\n1. Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par EPCI\n   ID: 5b6068559ce2e73b3fa40d82\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travailleur-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-epci-2\n\n2. Places chez les assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par EPCI\n   ID: 5b6067919ce2e73b3fa40d5d\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travail-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/places-chez-les-assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-epci-2\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5b6068559ce2e73b3fa40d82"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par EPCI\nDataset ID: 5b6068559ce2e73b3fa40d82\nTotal resources: 4\n\n1. 224400028_nb-assistantes-maternelles-agreees-par-epci.csv\n   Resource ID: fccc4492-1a50-4d41-a3f2-ef3190a3a06d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/csv?use_labels=true\n\n2. 224400028_nb-assistantes-maternelles-agreees-par-epci.json\n   Resource ID: f7dc1725-6055-480b-a187-79ee896c50fc\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/json\n\n3. 224400028_nb-assistantes-maternelles-agreees-par-epci.geojson\n   Resource ID: 18d93a5a-8e8f-49e5-9695-f82638b5781a\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/geojson\n\n4. 224400028_nb-assistantes-maternelles-agreees-par-epci.zip\n   Resource ID: fd06b7c5-59e0-4077-9615-4c9374225d53\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/shp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par EPCI\nDataset ID: 5b6068559ce2e73b3fa40d82\nTotal resources: 4\n\n1. 224400028_nb-assistantes-maternelles-agreees-par-epci.csv\n   Resource ID: fccc4492-1a50-4d41-a3f2-ef3190a3a06d\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/csv?use_labels=true\n\n2. 224400028_nb-assistantes-maternelles-agreees-par-epci.json\n   Resource ID: f7dc1725-6055-480b-a187-79ee896c50fc\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/json\n\n3. 224400028_nb-assistantes-maternelles-agreees-par-epci.geojson\n   Resource ID: 18d93a5a-8e8f-49e5-9695-f82638b5781a\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/geojson\n\n4. 224400028_nb-assistantes-maternelles-agreees-par-epci.zip\n   Resource ID: fd06b7c5-59e0-4077-9615-4c9374225d53\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-epci/exports/shp\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

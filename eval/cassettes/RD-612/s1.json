@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:04Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "missions locales Île-de-France",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 22 dataset(s) for query: 'missions locales Île-de-France'\nPage 1 of results:\n\n1. Les missions locales\n   ID: 595918f4a3a7291dd09c80bc\n   Organization: Région Île-de-France\n   Tags: emploi, geolocalisation, jeune, jeunesse, job\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/les-missions-locales\n\n2. Carte des missions locales\n   ID: 5369902ca3a729239d20392e\n   Organization: Région Île-de-France\n   Tags: acces-aux-droits, formation-professionnelle, geolocalisation, insertion-professionnelle, orientation-scolaire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/carte-des-missions-locales-idf\n\n3. Carte des missions locales\n   ID: 59591dc2a3a7291dd09c814c\n   Organization: Région Île-de-France\n   Tags: acces-aux-droits, emploi, formation-professionnelle, geolocalisation, insertion-professionnelle\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/carte-des-missions-locales\n\n4. Annuaire et localisation des professionnels de santé en Île-de-France\n   ID: 5d8997d09ce2e73674fe15f2\n   Organization: Région Île-de-France\n   Tags: logement-sante-social, medecin, medecine, sante\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/annuaire-et-localisation-des-professionnels-de-sante-en-ile-de-france\n\n5. Structures d'accueil d'information et d'orientation (AIO) en Île-de-France\n   ID: 653893f6c48d39f4e86e33b0\n   Organization: Région Île-de-France\n   Tags: collegien, demandeur-demploi, emploi, enseignement-formation-recherche, etudiant\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/structures-daccueil-dinformation-et-dorientation-aio-en-ile-de-france\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 22 dataset(s) for query: 'missions locales Île-de-France'\nPage 1 of results:\n\n1. Les missions locales\n   ID: 595918f4a3a7291dd09c80bc\n   Organization: Région Île-de-France\n   Tags: emploi, geolocalisation, jeune, jeunesse, job\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/les-missions-locales\n\n2. Carte des missions locales\n   ID: 5369902ca3a729239d20392e\n   Organization: Région Île-de-France\n   Tags: acces-aux-droits, formation-professionnelle, geolocalisation, insertion-professionnelle, orientation-scolaire\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/carte-des-missions-locales-idf\n\n3. Carte des missions locales\n   ID: 59591dc2a3a7291dd09c814c\n   Organization: Région Île-de-France\n   Tags: acces-aux-droits, emploi, formation-professionnelle, geolocalisation, insertion-professionnelle\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/carte-des-missions-locales\n\n4. Annuaire et localisation des professionnels de santé en Île-de-France\n   ID: 5d8997d09ce2e73674fe15f2\n   Organization: Région Île-de-France\n   Tags: logement-sante-social, medecin, medecine, sante\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/annuaire-et-localisation-des-professionnels-de-sante-en-ile-de-france\n\n5. Structures d'accueil d'information et d'orientation (AIO) en Île-de-France\n   ID: 653893f6c48d39f4e86e33b0\n   Organization: Région Île-de-France\n   Tags: collegien, demandeur-demploi, emploi, enseignement-formation-recherche, etudiant\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/structures-daccueil-dinformation-et-dorientation-aio-en-ile-de-france\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "595918f4a3a7291dd09c80bc"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Les missions locales\nDataset ID: 595918f4a3a7291dd09c80bc\nTotal resources: 5\n\n1. missions-locales.csv\n   Resource ID: ac3e1cc9-cab2-4d57-b823-58cf181ffed0\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/csv?use_labels=true\n\n2. missions-locales.json\n   Resource ID: cbe47ff4-8b3e-4e95-ac31-80f5968d6da9\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/json\n\n3. missions-locales.geojson\n   Resource ID: bc2642ef-9d45-47b9-bec8-32029fe6b601\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/geojson\n\n4. missions-locales.zip\n   Resource ID: d98f6ede-79bb-4fc2-b4db-8bdffdf5bd2a\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/shp\n\n5. Territoires.csv\n   Resource ID: b063b236-ad47-43c2-adea-358618c251df\n   Format: octet-stream\n   Type: other\n   URL: https://data.iledefrance.fr/api/v2/catalog/datasets/missions-locales/attachments/territoires_csv\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Les missions locales\nDataset ID: 595918f4a3a7291dd09c80bc\nTotal resources: 5\n\n1. missions-locales.csv\n   Resource ID: ac3e1cc9-cab2-4d57-b823-58cf181ffed0\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/csv?use_labels=true\n\n2. missions-locales.json\n   Resource ID: cbe47ff4-8b3e-4e95-ac31-80f5968d6da9\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/json\n\n3. missions-locales.geojson\n   Resource ID: bc2642ef-9d45-47b9-bec8-32029fe6b601\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/geojson\n\n4. missions-locales.zip\n   Resource ID: d98f6ede-79bb-4fc2-b4db-8bdffdf5bd2a\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets/missions-locales/exports/shp\n\n5. Territoires.csv\n   Resource ID: b063b236-ad47-43c2-adea-358618c251df\n   Format: octet-stream\n   Type: other\n   URL: https://data.iledefrance.fr/api/v2/catalog/datasets/missions-locales/attachments/territoires_csv\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "ac3e1cc9-cab2-4d57-b823-58cf181ffed0",
+      "filter_column": "Nom de l'organisation",
+      "filter_value": "Chellois",
+      "page_size": 20,
+      "filter_operator": "contains"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: missions-locales.csv\nResource ID: ac3e1cc9-cab2-4d57-b823-58cf181ffed0\nDataset: Les missions locales (ID: 595918f4a3a7291dd09c80bc)\n\nFilter: Nom de l'organisation contains Chellois\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 20)\nRetrieved: 1 row(s) from page 1\nColumns: __id, ID CRM Organisation, ID P3 Organisation, Type Organisation, ID CRM Siège, Nom de l'organisation, Adresse, Complément d'adresse 1, Complément d'adresse 2, Code postal, Ville, Département, Téléphone, wgs84\n\nData (1 row):\n  Row 1:\n    __id: 1\n    ID CRM Organisation: 19499\n    ID P3 Organisation: 77108\n    Type Organisation: ['Siège']\n    ID CRM Siège: \n    Nom de l'organisation: Mission Locale du Bassin Chellois\n    Adresse: 3 rue du Révérend Père Chaillet\n    Complément d'adresse 1: \n    Complément d'adresse 2: \n    Code postal: ['77500']\n    Ville: ['CHELLES']\n    Département: ['77']\n    Téléphone: 01 60 20 58 58\n    wgs84: 48.8733265, 2.5883718"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: missions-locales.csv\nResource ID: ac3e1cc9-cab2-4d57-b823-58cf181ffed0\nDataset: Les missions locales (ID: 595918f4a3a7291dd09c80bc)\n\nFilter: Nom de l'organisation contains Chellois\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 20)\nRetrieved: 1 row(s) from page 1\nColumns: __id, ID CRM Organisation, ID P3 Organisation, Type Organisation, ID CRM Siège, Nom de l'organisation, Adresse, Complément d'adresse 1, Complément d'adresse 2, Code postal, Ville, Département, Téléphone, wgs84\n\nData (1 row):\n  Row 1:\n    __id: 1\n    ID CRM Organisation: 19499\n    ID P3 Organisation: 77108\n    Type Organisation: ['Siège']\n    ID CRM Siège: \n    Nom de l'organisation: Mission Locale du Bassin Chellois\n    Adresse: 3 rue du Révérend Père Chaillet\n    Complément d'adresse 1: \n    Complément d'adresse 2: \n    Code postal: ['77500']\n    Ville: ['CHELLES']\n    Département: ['77']\n    Téléphone: 01 60 20 58 58\n    wgs84: 48.8733265, 2.5883718"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

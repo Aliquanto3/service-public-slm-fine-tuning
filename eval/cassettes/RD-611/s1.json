@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:01Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "KALI conventions collectives nationales",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'KALI conventions collectives nationales'\nPage 1 of results:\n\n1. KALI : Conventions collectives nationales\n   ID: 53ba5033a3a729219b7bead9\n   Organization: Premier ministre\n   Tags: accord-collectif, accords-collectifs, bulletin-officiel, convention-collective, dila\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/kali-conventions-collectives-nationales\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'KALI conventions collectives nationales'\nPage 1 of results:\n\n1. KALI : Conventions collectives nationales\n   ID: 53ba5033a3a729219b7bead9\n   Organization: Premier ministre\n   Tags: accord-collectif, accords-collectifs, bulletin-officiel, convention-collective, dila\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/kali-conventions-collectives-nationales\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "53ba5033a3a729219b7bead9"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: KALI : Conventions collectives nationales\n\nID: 53ba5033a3a729219b7bead9\nSlug: kali-conventions-collectives-nationales\nURL: https://www.data.gouv.fr/datasets/kali-conventions-collectives-nationales/\n\nFull description: Toutes les conventions collectives et textes associés. La base donne également accès à certaines conventions collectives nationales non étendues ainsi qu'à des conventions collectives régionales, départementales étendues ou non. Les textes associés comprennent les accords se rattachant à une convention collective, les salaires et les arrêtés d’extension.\nLes données sont mises à jour à partir du Bulletin officiel « Conventions collectives » édité sous la responsabilité du Ministère du travail, d...\n\nOrganization: Premier ministre\n  Organization ID: 534fffa5a3a7292c64a7809e\n\nTags: accord-collectif, accords-collectifs, bulletin-officiel, convention-collective, dila, droit-du-travail, salaires, syndicats\n\nResources: 4 file(s)\n\nCreated: 2014-06-24T14:44:08.264000+00:00\nLast updated: 2026-10-20T03:47:20.890000+00:00\n\nLicense: fr-lo\nUpdate frequency: daily"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: KALI : Conventions collectives nationales\n\nID: 53ba5033a3a729219b7bead9\nSlug: kali-conventions-collectives-nationales\nURL: https://www.data.gouv.fr/datasets/kali-conventions-collectives-nationales/\n\nFull description: Toutes les conventions collectives et textes associés. La base donne également accès à certaines conventions collectives nationales non étendues ainsi qu'à des conventions collectives régionales, départementales étendues ou non. Les textes associés comprennent les accords se rattachant à une convention collective, les salaires et les arrêtés d’extension.\nLes données sont mises à jour à partir du Bulletin officiel « Conventions collectives » édité sous la responsabilité du Ministère du travail, d...\n\nOrganization: Premier ministre\n  Organization ID: 534fffa5a3a7292c64a7809e\n\nTags: accord-collectif, accords-collectifs, bulletin-officiel, convention-collective, dila, droit-du-travail, salaires, syndicats\n\nResources: 4 file(s)\n\nCreated: 2014-06-24T14:44:08.264000+00:00\nLast updated: 2026-10-20T03:47:20.890000+00:00\n\nLicense: fr-lo\nUpdate frequency: daily"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

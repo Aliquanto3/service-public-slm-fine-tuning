@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:17Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "menus cantines scolaires Orvault",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 1 dataset(s) for query: 'menus cantines scolaires Orvault'\nPage 1 of results:\n\n1. Menus des cantines scolaires à Orvault\n   ID: 67f70b0ec7f49c50e69ac77e\n   Organization: Nantes Métropole\n   Tags: education-formation-jeunesse, enseignement, restauration-scolaire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/menus-des-cantines-scolaires-a-orvault\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 1 dataset(s) for query: 'menus cantines scolaires Orvault'\nPage 1 of results:\n\n1. Menus des cantines scolaires à Orvault\n   ID: 67f70b0ec7f49c50e69ac77e\n   Organization: Nantes Métropole\n   Tags: education-formation-jeunesse, enseignement, restauration-scolaire\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/menus-des-cantines-scolaires-a-orvault\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

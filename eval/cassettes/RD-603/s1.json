@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:08:33Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "APA à domicile par commune Maine-et-Loire",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 3 dataset(s) for query: 'APA à domicile par commune Maine-et-Loire'\nPage 1 of results:\n\n1. Allocation Personnalisée à l'Autonomie (APA) à domicile par commune en Maine-et-Loire\n   ID: 5e66dbcb06e3e7695a7168cd\n   Organization: Département de Maine-et-Loire\n   Tags: abs, aide-sociale, personne-agee, prestation, sante-social\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocation-personnalisee-a-lautonomie-apa-a-domicile-par-commune-en-maine-et-loire\n\n2. Allocation Personnalisée à l'Autonomie (APA) à domicile en Maine-et-Loire\n   ID: 5e66dbca06e3e7695a7168cc\n   Organization: Département de Maine-et-Loire\n   Tags: aide-sociale, personne-agee, prestation, sante-social, senior\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocation-personnalisee-a-lautonomie-apa-a-domicile-en-maine-et-loire\n\n3. Allocation Personnalisée à l'Autonomie (APA) à domicile par EPCI en Maine-et-Loire\n   ID: 5e66dbc506e3e7695a7168cb\n   Organization: Département de Maine-et-Loire\n   Tags: aide-sociale, personne-agee, prestation, sante-social, senior\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocation-personnalisee-a-lautonomie-apa-a-domicile-par-epci-en-maine-et-loire\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 3 dataset(s) for query: 'APA à domicile par commune Maine-et-Loire'\nPage 1 of results:\n\n1. Allocation Personnalisée à l'Autonomie (APA) à domicile par commune en Maine-et-Loire\n   ID: 5e66dbcb06e3e7695a7168cd\n   Organization: Département de Maine-et-Loire\n   Tags: abs, aide-sociale, personne-agee, prestation, sante-social\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocation-personnalisee-a-lautonomie-apa-a-domicile-par-commune-en-maine-et-loire\n\n2. Allocation Personnalisée à l'Autonomie (APA) à domicile en Maine-et-Loire\n   ID: 5e66dbca06e3e7695a7168cc\n   Organization: Département de Maine-et-Loire\n   Tags: aide-sociale, personne-agee, prestation, sante-social, senior\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocation-personnalisee-a-lautonomie-apa-a-domicile-en-maine-et-loire\n\n3. Allocation Personnalisée à l'Autonomie (APA) à domicile par EPCI en Maine-et-Loire\n   ID: 5e66dbc506e3e7695a7168cb\n   Organization: Département de Maine-et-Loire\n   Tags: aide-sociale, personne-agee, prestation, sante-social, senior\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/allocation-personnalisee-a-lautonomie-apa-a-domicile-par-epci-en-maine-et-loire\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5e66dbcb06e3e7695a7168cd"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Allocation Personnalisée à l'Autonomie (APA) à domicile par commune en Maine-et-Loire\nDataset ID: 5e66dbcb06e3e7695a7168cd\nTotal resources: 2\n\n1. 224900019_apa-par-commune-en-maine-et-loire.csv\n   Resource ID: cf0be36e-bcdf-4a9b-b52c-6af99da31bc3\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.maine-et-loire.fr/api/explore/v2.1/catalog/datasets/224900019_apa-par-commune-en-maine-et-loire/exports/csv?use_labels=true\n\n2. 224900019_apa-par-commune-en-maine-et-loire.json\n   Resource ID: 6a055761-84c0-48eb-b37b-ecb46e654961\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.maine-et-loire.fr/api/explore/v2.1/catalog/datasets/224900019_apa-par-commune-en-maine-et-loire/exports/json\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Allocation Personnalisée à l'Autonomie (APA) à domicile par commune en Maine-et-Loire\nDataset ID: 5e66dbcb06e3e7695a7168cd\nTotal resources: 2\n\n1. 224900019_apa-par-commune-en-maine-et-loire.csv\n   Resource ID: cf0be36e-bcdf-4a9b-b52c-6af99da31bc3\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.maine-et-loire.fr/api/explore/v2.1/catalog/datasets/224900019_apa-par-commune-en-maine-et-loire/exports/csv?use_labels=true\n\n2. 224900019_apa-par-commune-en-maine-et-loire.json\n   Resource ID: 6a055761-84c0-48eb-b37b-ecb46e654961\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.maine-et-loire.fr/api/explore/v2.1/catalog/datasets/224900019_apa-par-commune-en-maine-et-loire/exports/json\n"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

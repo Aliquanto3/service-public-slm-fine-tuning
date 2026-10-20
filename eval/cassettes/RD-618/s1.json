@@ -1,0 +1,123 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:24Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "assistants maternels agréés Loire-Atlantique par commune",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 2 dataset(s) for query: 'assistants maternels agréés Loire-Atlantique par commune'\nPage 1 of results:\n\n1. Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune\n   ID: 5b6064a606e3e73216e1d930\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travailleur-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-commune-2\n\n2. Places chez les assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune\n   ID: 5b60643f06e3e73216e1d91a\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travail-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/places-chez-les-assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-commune-2\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 2 dataset(s) for query: 'assistants maternels agréés Loire-Atlantique par commune'\nPage 1 of results:\n\n1. Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune\n   ID: 5b6064a606e3e73216e1d930\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travailleur-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-commune-2\n\n2. Places chez les assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune\n   ID: 5b60643f06e3e73216e1d91a\n   Organization: Département de Loire-Atlantique\n   Tags: relais-assistantes-maternelles, sante-social, travail-social\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/places-chez-les-assistant-e-s-maternel-le-s-agree-e-s-en-loire-atlantique-par-commune-2\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "5b6064a606e3e73216e1d930"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune\nDataset ID: 5b6064a606e3e73216e1d930\nTotal resources: 4\n\n1. 224400028_nb-assistantes-maternelles-agreees-par-commune.csv\n   Resource ID: fd642f55-0f75-4a0b-ac6a-4f1328da0071\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/csv?use_labels=true\n\n2. 224400028_nb-assistantes-maternelles-agreees-par-commune.json\n   Resource ID: c0495f54-87db-4e19-981b-65def15d02c6\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/json\n\n3. 224400028_nb-assistantes-maternelles-agreees-par-commune.geojson\n   Resource ID: 8be77c91-e972-4dbc-9f99-986c76f78041\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/geojson\n\n4. 224400028_nb-assistantes-maternelles-agreees-par-commune.zip\n   Resource ID: ab1c8ae9-7f38-48c3-bb74-d19da93875af\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/shp\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune\nDataset ID: 5b6064a606e3e73216e1d930\nTotal resources: 4\n\n1. 224400028_nb-assistantes-maternelles-agreees-par-commune.csv\n   Resource ID: fd642f55-0f75-4a0b-ac6a-4f1328da0071\n   Format: csv\n   MIME type: text/csv\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/csv?use_labels=true\n\n2. 224400028_nb-assistantes-maternelles-agreees-par-commune.json\n   Resource ID: c0495f54-87db-4e19-981b-65def15d02c6\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/json\n\n3. 224400028_nb-assistantes-maternelles-agreees-par-commune.geojson\n   Resource ID: 8be77c91-e972-4dbc-9f99-986c76f78041\n   Format: json\n   MIME type: application/json\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/geojson\n\n4. 224400028_nb-assistantes-maternelles-agreees-par-commune.zip\n   Resource ID: ab1c8ae9-7f38-48c3-bb74-d19da93875af\n   Format: zip\n   MIME type: application/zip\n   Type: main\n   URL: https://data.loire-atlantique.fr/api/explore/v2.1/catalog/datasets/224400028_nb-assistantes-maternelles-agreees-par-commune/exports/shp\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "fd642f55-0f75-4a0b-ac6a-4f1328da0071",
+      "filter_column": "Commune",
+      "filter_value": "Abbaretz",
+      "page_size": 20
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: 224400028_nb-assistantes-maternelles-agreees-par-commune.csv\nResource ID: fd642f55-0f75-4a0b-ac6a-4f1328da0071\nDataset: Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune (ID: 5b6064a606e3e73216e1d930)\n\nFilter: Commune exact Abbaretz\n\nTotal rows (Tabular API): 11\nTotal pages: 1 (page size: 20)\nRetrieved: 11 row(s) from page 1\nColumns: __id, Année, Commune maj, Commune, Code commune, Nombre total d'assistants maternels, Nombre d'assistants maternels de moins de 25 ans, Nombre d'assistants maternels entre 25 et 34 ans, Nombre d'assistants maternels entre 35 et 49 ans, Nombre d'assistants maternels entre 50 et 59 ans, Nombre d'assistants maternels de plus de 60 ans, Localisation\n\nData (11 rows):\n  Row 1:\n    __id: 1\n    Année: 2008\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 21\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: \n    Nombre d'assistants maternels entre 35 et 49 ans: \n    Nombre d'assistants maternels entre 50 et 59 ans: \n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 2:\n    __id: 2\n    Année: 2015\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 34\n    Nombre d'assistants maternels de moins de 25 ans: 0\n    Nombre d'assistants maternels entre 25 et 34 ans: 4\n    Nombre d'assistants maternels entre 35 et 49 ans: 19\n    Nombre d'assistants maternels entre 50 et 59 ans: 11\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 3:\n    __id: 264\n    Année: 2016\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 31\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: 4\n    Nombre d'assistants maternels entre 35 et 49 ans: 14\n    Nombre d'assistants maternels entre 50 et 59 ans: 13\n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 4:\n    __id: 295\n    Année: 2017\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 31\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: 3\n    Nombre d'assistants maternels entre 35 et 49 ans: 14\n    Nombre d'assistants maternels entre 50 et 59 ans: 14\n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 5:\n    __id: 918\n    Année: 2010\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 28\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 8\n    Nombre d'assistants maternels entre 35 et 49 ans: 16\n    Nombre d'assistants maternels entre 50 et 59 ans: 3\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 6:\n    __id: 1223\n    Année: 2009\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 28\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 8\n    Nombre d'assistants maternels entre 35 et 49 ans: 17\n    Nombre d'assistants maternels entre 50 et 59 ans: 2\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 7:\n    __id: 1807\n    Année: 2011\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 31\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 7\n    Nombre d'assistants maternels entre 35 et 49 ans: 18\n    Nombre d'assistants maternels entre 50 et 59 ans: 5\n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 8:\n    __id: 1808\n    Année: 2012\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 32\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 7\n    Nombre d'assistants maternels entre 35 et 49 ans: 18\n    Nombre d'assistants maternels entre 50 et 59 ans: 6\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 9:\n    __id: 1809\n    Année: 2013\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 35\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 8\n    Nombre d'assistants maternels entre 35 et 49 ans: 19\n    Nombre d'assistants maternels entre 50 et 59 ans: 7\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 10:\n    __id: 2117\n    Année: 2007\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 26\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: \n    Nombre d'assistants maternels entre 35 et 49 ans: \n    Nombre d'assistants maternels entre 50 et 59 ans: \n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 11:\n    __id: 2118\n    Année: 2014\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 34\n    Nombre d'assistants maternels de moins de 25 ans: 0\n    Nombre d'assistants maternels entre 25 et 34 ans: 6\n    Nombre d'assistants maternels entre 35 et 49 ans: 20\n    Nombre d'assistants maternels entre 50 et 59 ans: 8\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: 224400028_nb-assistantes-maternelles-agreees-par-commune.csv\nResource ID: fd642f55-0f75-4a0b-ac6a-4f1328da0071\nDataset: Assistant-e-s maternel-le-s agréé-e-s en Loire-Atlantique par commune (ID: 5b6064a606e3e73216e1d930)\n\nFilter: Commune exact Abbaretz\n\nTotal rows (Tabular API): 11\nTotal pages: 1 (page size: 20)\nRetrieved: 11 row(s) from page 1\nColumns: __id, Année, Commune maj, Commune, Code commune, Nombre total d'assistants maternels, Nombre d'assistants maternels de moins de 25 ans, Nombre d'assistants maternels entre 25 et 34 ans, Nombre d'assistants maternels entre 35 et 49 ans, Nombre d'assistants maternels entre 50 et 59 ans, Nombre d'assistants maternels de plus de 60 ans, Localisation\n\nData (11 rows):\n  Row 1:\n    __id: 1\n    Année: 2008\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 21\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: \n    Nombre d'assistants maternels entre 35 et 49 ans: \n    Nombre d'assistants maternels entre 50 et 59 ans: \n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 2:\n    __id: 2\n    Année: 2015\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 34\n    Nombre d'assistants maternels de moins de 25 ans: 0\n    Nombre d'assistants maternels entre 25 et 34 ans: 4\n    Nombre d'assistants maternels entre 35 et 49 ans: 19\n    Nombre d'assistants maternels entre 50 et 59 ans: 11\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 3:\n    __id: 264\n    Année: 2016\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 31\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: 4\n    Nombre d'assistants maternels entre 35 et 49 ans: 14\n    Nombre d'assistants maternels entre 50 et 59 ans: 13\n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 4:\n    __id: 295\n    Année: 2017\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 31\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: 3\n    Nombre d'assistants maternels entre 35 et 49 ans: 14\n    Nombre d'assistants maternels entre 50 et 59 ans: 14\n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 5:\n    __id: 918\n    Année: 2010\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 28\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 8\n    Nombre d'assistants maternels entre 35 et 49 ans: 16\n    Nombre d'assistants maternels entre 50 et 59 ans: 3\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 6:\n    __id: 1223\n    Année: 2009\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 28\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 8\n    Nombre d'assistants maternels entre 35 et 49 ans: 17\n    Nombre d'assistants maternels entre 50 et 59 ans: 2\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 7:\n    __id: 1807\n    Année: 2011\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 31\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 7\n    Nombre d'assistants maternels entre 35 et 49 ans: 18\n    Nombre d'assistants maternels entre 50 et 59 ans: 5\n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 8:\n    __id: 1808\n    Année: 2012\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 32\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 7\n    Nombre d'assistants maternels entre 35 et 49 ans: 18\n    Nombre d'assistants maternels entre 50 et 59 ans: 6\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 9:\n    __id: 1809\n    Année: 2013\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 35\n    Nombre d'assistants maternels de moins de 25 ans: 1\n    Nombre d'assistants maternels entre 25 et 34 ans: 8\n    Nombre d'assistants maternels entre 35 et 49 ans: 19\n    Nombre d'assistants maternels entre 50 et 59 ans: 7\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821\n  Row 10:\n    __id: 2117\n    Année: 2007\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 26\n    Nombre d'assistants maternels de moins de 25 ans: \n    Nombre d'assistants maternels entre 25 et 34 ans: \n    Nombre d'assistants maternels entre 35 et 49 ans: \n    Nombre d'assistants maternels entre 50 et 59 ans: \n    Nombre d'assistants maternels de plus de 60 ans: \n    Localisation: 47.5559053978, -1.49321993821\n  Row 11:\n    __id: 2118\n    Année: 2014\n    Commune maj: ABBARETZ\n    Commune: Abbaretz\n    Code commune: 44001\n    Nombre total d'assistants maternels: 34\n    Nombre d'assistants maternels de moins de 25 ans: 0\n    Nombre d'assistants maternels entre 25 et 34 ans: 6\n    Nombre d'assistants maternels entre 35 et 49 ans: 20\n    Nombre d'assistants maternels entre 50 et 59 ans: 8\n    Nombre d'assistants maternels de plus de 60 ans: 0\n    Localisation: 47.5559053978, -1.49321993821"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

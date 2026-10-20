@@ -1,0 +1,123 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:13Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "structures labellisées France services",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 10 dataset(s) for query: 'structures labellisées France services'\nPage 1 of results:\n\n1. Liste des structures labellisées France services\n   ID: 62503e25bc0f6370f4a651ce\n   Organization: Agence nationale de la cohésion des territoires\n   Tags: cnam, cnav, dgfip, france-services, maison-de-services-au-public\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/liste-des-structures-labellisees-france-services\n\n2. Liste des structures labellisées France services FS dans le Pas-de-Calais\n   ID: 6a1f9f9a092c5d59f2777f1c\n   Organization: DDTM Pas-de-Calais\n   Tags: donnee-generique-action-publique, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/liste-des-structures-labellisees-france-services-fs-dans-le-pas-de-calais-3\n\n3. Liste des structures labellisées France services FS dans le Pas-de-Calais\n   ID: 6a1f9f99092c5d59f2777f1b\n   Organization: DDTM Pas-de-Calais\n   Tags: donnee-generique-action-publique, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/liste-des-structures-labellisees-france-services-fs-dans-le-pas-de-calais-2\n\n4. Structures labellisées France services dans le Calvados\n   ID: 698d21ea6a559314426b70fb\n   Organization: Direction Départementale des Territoires et de la Mer du Calvados\n   Tags: donnees-ouvertes, france-services, inspire, points-info14, unites-administratives\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/structures-labellisees-france-services-dans-le-calvados-1\n\n5. Etat des lieux des structures labellisées \"France Service\" dans les Bouches-du-Rhône\n   ID: 67373c6c495f49af65c40a86\n   Organization: Direction Départementale des Territoires et de la Mer des Bouches-du-Rhône\n   Tags: bouches-du-rhone, culture-societe-service-erp-autre, donnees-ouvertes, erp-autre, france-services\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/etat-des-lieux-des-structures-labellisees-france-service-dans-les-bouches-du-rhone\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 10 dataset(s) for query: 'structures labellisées France services'\nPage 1 of results:\n\n1. Liste des structures labellisées France services\n   ID: 62503e25bc0f6370f4a651ce\n   Organization: Agence nationale de la cohésion des territoires\n   Tags: cnam, cnav, dgfip, france-services, maison-de-services-au-public\n   Resources: 3\n   URL: https://www.data.gouv.fr/datasets/liste-des-structures-labellisees-france-services\n\n2. Liste des structures labellisées France services FS dans le Pas-de-Calais\n   ID: 6a1f9f9a092c5d59f2777f1c\n   Organization: DDTM Pas-de-Calais\n   Tags: donnee-generique-action-publique, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/liste-des-structures-labellisees-france-services-fs-dans-le-pas-de-calais-3\n\n3. Liste des structures labellisées France services FS dans le Pas-de-Calais\n   ID: 6a1f9f99092c5d59f2777f1b\n   Organization: DDTM Pas-de-Calais\n   Tags: donnee-generique-action-publique, donnees-ouvertes\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/liste-des-structures-labellisees-france-services-fs-dans-le-pas-de-calais-2\n\n4. Structures labellisées France services dans le Calvados\n   ID: 698d21ea6a559314426b70fb\n   Organization: Direction Départementale des Territoires et de la Mer du Calvados\n   Tags: donnees-ouvertes, france-services, inspire, points-info14, unites-administratives\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/structures-labellisees-france-services-dans-le-calvados-1\n\n5. Etat des lieux des structures labellisées \"France Service\" dans les Bouches-du-Rhône\n   ID: 67373c6c495f49af65c40a86\n   Organization: Direction Départementale des Territoires et de la Mer des Bouches-du-Rhône\n   Tags: bouches-du-rhone, culture-societe-service-erp-autre, donnees-ouvertes, erp-autre, france-services\n   Resources: 6\n   URL: https://www.data.gouv.fr/datasets/etat-des-lieux-des-structures-labellisees-france-service-dans-les-bouches-du-rhone\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "list_dataset_resources",
+     "arguments": {
+      "dataset_id": "62503e25bc0f6370f4a651ce"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Resources in dataset: Liste des structures labellisées France services\nDataset ID: 62503e25bc0f6370f4a651ce\nTotal resources: 3\n\n1. Liste des communes bénéficiaires (COG 2025)\t\n   Resource ID: f49fe9e1-f9bb-4dbd-8dfe-b9fad31899ef\n   Format: csv\n   Size: 194.3 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/liste-des-structures-labellisees-france-services/20260413-094603/liste-fs-com2025-20260413.csv\n\n2. Liste des structures France services \n   Resource ID: 31576dff-fd61-4de9-819f-32c2f880b142\n   Format: csv\n   Size: 1.2 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/liste-des-structures-labellisees-france-services/20261020-190003/liste-fs-20261020.csv\n\n3. Métadonnées (2025)\n   Resource ID: 41772e1c-fb45-41e6-8925-5f3eaf7f7259\n   Format: pdf\n   Size: 89.8 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/liste-des-structures-labellisees-france-services/20250407-134045/liste-fs-metadata.pdf\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Resources in dataset: Liste des structures labellisées France services\nDataset ID: 62503e25bc0f6370f4a651ce\nTotal resources: 3\n\n1. Liste des communes bénéficiaires (COG 2025)\t\n   Resource ID: f49fe9e1-f9bb-4dbd-8dfe-b9fad31899ef\n   Format: csv\n   Size: 194.3 KB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/liste-des-structures-labellisees-france-services/20260413-094603/liste-fs-com2025-20260413.csv\n\n2. Liste des structures France services \n   Resource ID: 31576dff-fd61-4de9-819f-32c2f880b142\n   Format: csv\n   Size: 1.2 MB\n   MIME type: text/csv\n   Type: main\n   URL: https://static.data.gouv.fr/resources/liste-des-structures-labellisees-france-services/20261020-190003/liste-fs-20261020.csv\n\n3. Métadonnées (2025)\n   Resource ID: 41772e1c-fb45-41e6-8925-5f3eaf7f7259\n   Format: pdf\n   Size: 89.8 KB\n   MIME type: application/pdf\n   Type: documentation\n   URL: https://static.data.gouv.fr/resources/liste-des-structures-labellisees-france-services/20250407-134045/liste-fs-metadata.pdf\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "query_resource_data",
+     "arguments": {
+      "resource_id": "31576dff-fd61-4de9-819f-32c2f880b142",
+      "filter_column": "lib_com",
+      "filter_value": "Pontivy",
+      "page_size": 20
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Querying resource: Liste des structures France services \nResource ID: 31576dff-fd61-4de9-819f-32c2f880b142\nDataset: Liste des structures labellisées France services (ID: 62503e25bc0f6370f4a651ce)\n\nFilter: lib_com exact Pontivy\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 20)\nRetrieved: 1 row(s) from page 1\nColumns: __id, id_fs, insee_dep, lib_fs, adresse, complement_adresse, insee_com, code_postal, lib_com, latitude, longitude, mail, telephone, h_lundi, h_mardi, h_mercredi, h_jeudi, h_vendredi, h_samedi, prise_rdv, commentaire, type_fs, format_fs, groupe_fs, labellisation_fs\n\nData (1 row):\n  Row 1:\n    __id: 1794\n    id_fs: 2216\n    insee_dep: 56\n    lib_fs: France services Pontivy\n    adresse: 8 Rue François Mitterrand\n    complement_adresse: \n    insee_com: 56178\n    code_postal: 56300\n    lib_com: Pontivy\n    latitude: 48.064501\n    longitude: -2.967741\n    mail: pontivy@france-services.gouv.fr\n    telephone: 02 97 84 40 80\n    h_lundi: 09:00 - 12:00 / 13:30 - 16:30\n    h_mardi: 09:00 - 12:00 / 13:30 - 16:30\n    h_mercredi: 08:00 - 12:00\n    h_jeudi: 09:00 - 12:00 / 13:30 - 16:30\n    h_vendredi: 08:30 - 12:00 / 13:30 - 16:00\n    h_samedi: \n    prise_rdv: True\n    commentaire: Accueil uniquement sur rendez-vous le lundi et mardi\n    type_fs: Principal\n    format_fs: Fixe\n    groupe_fs: \n    labellisation_fs: Espace labellisé 01/10/2021"
+      }
+     ],
+     "structuredContent": {
+      "result": "Querying resource: Liste des structures France services \nResource ID: 31576dff-fd61-4de9-819f-32c2f880b142\nDataset: Liste des structures labellisées France services (ID: 62503e25bc0f6370f4a651ce)\n\nFilter: lib_com exact Pontivy\n\nTotal rows (Tabular API): 1\nTotal pages: 1 (page size: 20)\nRetrieved: 1 row(s) from page 1\nColumns: __id, id_fs, insee_dep, lib_fs, adresse, complement_adresse, insee_com, code_postal, lib_com, latitude, longitude, mail, telephone, h_lundi, h_mardi, h_mercredi, h_jeudi, h_vendredi, h_samedi, prise_rdv, commentaire, type_fs, format_fs, groupe_fs, labellisation_fs\n\nData (1 row):\n  Row 1:\n    __id: 1794\n    id_fs: 2216\n    insee_dep: 56\n    lib_fs: France services Pontivy\n    adresse: 8 Rue François Mitterrand\n    complement_adresse: \n    insee_com: 56178\n    code_postal: 56300\n    lib_com: Pontivy\n    latitude: 48.064501\n    longitude: -2.967741\n    mail: pontivy@france-services.gouv.fr\n    telephone: 02 97 84 40 80\n    h_lundi: 09:00 - 12:00 / 13:30 - 16:30\n    h_mardi: 09:00 - 12:00 / 13:30 - 16:30\n    h_mercredi: 08:00 - 12:00\n    h_jeudi: 09:00 - 12:00 / 13:30 - 16:30\n    h_vendredi: 08:30 - 12:00 / 13:30 - 16:00\n    h_samedi: \n    prise_rdv: True\n    commentaire: Accueil uniquement sur rendez-vous le lundi et mardi\n    type_fs: Principal\n    format_fs: Fixe\n    groupe_fs: \n    labellisation_fs: Espace labellisé 01/10/2021"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

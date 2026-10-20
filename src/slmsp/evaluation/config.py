@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from fractions import Fraction
 from pathlib import Path
 from typing import Annotated, Any, Final, Literal
@@ -92,13 +92,18 @@ def est_jeu_dev(version: str) -> bool:
     return isinstance(version, str) and MOTIF_JEU_DEV.fullmatch(version) is not None
 
 
+CIBLES_DEV_COMPLET: Final[Mapping[str, tuple[int, int, int]]] = {
+    code: (7, 7, 6) for code in ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "NR")
+}
+"""Jeu de développement (spec O4, règle 5) : 20 items par Tâche, 160 en tout (dev2 et suivants)."""
+
 CIBLES_DEV: Final[Mapping[str, tuple[int, int, int]]] = {
-    **{code: (7, 7, 6) for code in ("Q", "RD", "CR", "LC", "CO", "RE", "CT", "NR")},
+    **CIBLES_DEV_COMPLET,
     # 2026-10-20 (run autonome) : CR-521 (moyen) rejeté par DeepSeek sur un grief de grille
     # (« points abordés » sans clé de référence, commun à v1.1) ; exclu, non remplacé.
     "CR": (7, 6, 6),
 }
-"""Jeu de développement (spec O4) : 20 items par Tâche (19 pour CR), 159 en tout."""
+"""Cibles de dev1 : 20 items par Tâche (19 pour CR), 159 en tout."""
 
 
 @dataclass(frozen=True)
@@ -137,12 +142,18 @@ CIBLES_JEU_DEV: Final = CiblesJeu(
     cr_longues=4,
     exactes=False,
 )
-"""Contraintes secondaires au prorata de v1.1, arrondies au supérieur (spec O4, règle 5)."""
+"""Contraintes secondaires au prorata de v1.1, arrondies au supérieur (spec O4, règle 5) ;
+Tâches de dev1 (`CIBLES_DEV`)."""
+CIBLES_JEU_DEV_COMPLET: Final = replace(CIBLES_JEU_DEV, taches=CIBLES_DEV_COMPLET)
+"""Mêmes contraintes secondaires, 20 items par Tâche (dev2 et suivants, story 15.5)."""
 
 
 def cibles_jeu(version: str) -> CiblesJeu:
-    """Cibles de composition de `version` : `dev*` → `CIBLES_JEU_DEV`, sinon celles de v1.1."""
-    return CIBLES_JEU_DEV if est_jeu_dev(version) else CIBLES_V1
+    """Cibles de composition de `version` : `dev1` → `CIBLES_JEU_DEV` (CR à 19), autre `devN` →
+    `CIBLES_JEU_DEV_COMPLET`, sinon celles de v1.1."""
+    if not est_jeu_dev(version):
+        return CIBLES_V1
+    return CIBLES_JEU_DEV if version == "dev1" else CIBLES_JEU_DEV_COMPLET
 
 
 NOM_MANIFESTE: Final = "MANIFEST.json"

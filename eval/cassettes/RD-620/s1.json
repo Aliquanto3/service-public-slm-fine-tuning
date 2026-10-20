@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "server": "https://mcp.data.gouv.fr/mcp",
+ "recorded_at": "2026-10-20T21:09:31Z",
+ "initialize": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+   "protocolVersion": "2025-11-25",
+   "capabilities": {
+    "experimental": {},
+    "prompts": {
+     "listChanged": false
+    },
+    "resources": {
+     "subscribe": false,
+     "listChanged": false
+    },
+    "tools": {
+     "listChanged": false
+    }
+   },
+   "serverInfo": {
+    "name": "data.gouv.fr MCP server",
+    "version": "1.28.1"
+   }
+  }
+ },
+ "tools_list_sha256": "38bdeb31324b97789d0a11899aec4d560435d112a79c8da7364992576e3d5b15",
+ "interactions": [
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "search_datasets",
+     "arguments": {
+      "query": "majoration taxe d'habitation résidences secondaires",
+      "page_size": 5
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Found 5 dataset(s) for query: 'majoration taxe d'habitation résidences secondaires'\nPage 1 of results:\n\n1. Liste des communes selon le zonage TLV\n   ID: 657c88da2947e13be0597058\n   Organization: Ministère de la Transition écologique\n   Tags: logement, logements-vacants, tension, zonage\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-selon-le-zonage-tlv-1\n\n2. Fiscalité locale des particuliers\n   ID: 66512b67b8c9abb821e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers\n\n3. Liste des communes franciliennes selon le zonage TLV\n   ID: 6a34bf96a2c3822723467387\n   Organization: Région Île-de-France\n   Tags: logement, logement-sante-social, taxe\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-franciliennes-selon-le-zonage-tlv\n\n4. Fiscalité locale des particuliers - Géo\n   ID: 66512be37d2d55cbd2e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers-geo\n\n5. Majoration de taxe d'habitation sur les résidences secondaires : taux voté et montant prélevé, par commune\n   ID: 6ac1638d5d19a7f39f111480\n   Organization: Emet Expertise\n   Tags: communes, dgfip, fiscalite-locale, impots-locaux, logement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/majoration-de-taxe-dhabitation-sur-les-residences-secondaires-taux-vote-et-montant-preleve-par-commune\n"
+      }
+     ],
+     "structuredContent": {
+      "result": "Found 5 dataset(s) for query: 'majoration taxe d'habitation résidences secondaires'\nPage 1 of results:\n\n1. Liste des communes selon le zonage TLV\n   ID: 657c88da2947e13be0597058\n   Organization: Ministère de la Transition écologique\n   Tags: logement, logements-vacants, tension, zonage\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-selon-le-zonage-tlv-1\n\n2. Fiscalité locale des particuliers\n   ID: 66512b67b8c9abb821e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers\n\n3. Liste des communes franciliennes selon le zonage TLV\n   ID: 6a34bf96a2c3822723467387\n   Organization: Région Île-de-France\n   Tags: logement, logement-sante-social, taxe\n   Resources: 5\n   URL: https://www.data.gouv.fr/datasets/liste-des-communes-franciliennes-selon-le-zonage-tlv\n\n4. Fiscalité locale des particuliers - Géo\n   ID: 66512be37d2d55cbd2e5a98b\n   Organization: Ministères économiques et financiers\n   Tags: cadastre, collectivites-locales, comptes-publics, fiscalite, impots-locaux\n   Resources: 4\n   URL: https://www.data.gouv.fr/datasets/fiscalite-locale-des-particuliers-geo\n\n5. Majoration de taxe d'habitation sur les résidences secondaires : taux voté et montant prélevé, par commune\n   ID: 6ac1638d5d19a7f39f111480\n   Organization: Emet Expertise\n   Tags: communes, dgfip, fiscalite-locale, impots-locaux, logement\n   Resources: 2\n   URL: https://www.data.gouv.fr/datasets/majoration-de-taxe-dhabitation-sur-les-residences-secondaires-taux-vote-et-montant-preleve-par-commune\n"
+     },
+     "isError": false
+    }
+   }
+  },
+  {
+   "request": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "get_dataset_info",
+     "arguments": {
+      "dataset_id": "6ac1638d5d19a7f39f111480"
+     }
+    }
+   },
+   "response": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+     "content": [
+      {
+       "type": "text",
+       "text": "Dataset Information: Majoration de taxe d'habitation sur les résidences secondaires : taux voté et montant prélevé, par commune\n\nID: 6ac1638d5d19a7f39f111480\nSlug: majoration-de-taxe-dhabitation-sur-les-residences-secondaires-taux-vote-et-montant-preleve-par-commune\nURL: https://www.data.gouv.fr/datasets/majoration-de-taxe-dhabitation-sur-les-residences-secondaires-taux-vote-et-montant-preleve-par-commune/\n\nFull description: Les 1 629 communes, réparties dans 61 départements, pour lesquelles le fichier REI 2025 de la DGFiP renseigne un taux de majoration de la taxe d'habitation sur les résidences secondaires. Une ligne par commune : code INSEE, nom, département, codes postaux, population, EPCI, taux voté (en %), nombre de locaux taxés susceptibles de majoration, base nette de ces locaux, montant réel de la majoration et nombre d'articles ayant un prélèvement supplémentaire.\n\n**Source** : fichier de recensement des é...\n\nOrganization: Emet Expertise\n  Organization ID: 6a85fd9087ee16a223a628c8\n\nTags: communes, dgfip, fiscalite-locale, impots-locaux, logement, majoration, rei, residences-secondaires, taxe-dhabitation\n\nResources: 2 file(s)\n\nCreated: 2026-10-03T20:20:29.903000+00:00\nLast updated: 2026-10-15T11:47:27+00:00\n\nLicense: lov2\nUpdate frequency: annual"
+      }
+     ],
+     "structuredContent": {
+      "result": "Dataset Information: Majoration de taxe d'habitation sur les résidences secondaires : taux voté et montant prélevé, par commune\n\nID: 6ac1638d5d19a7f39f111480\nSlug: majoration-de-taxe-dhabitation-sur-les-residences-secondaires-taux-vote-et-montant-preleve-par-commune\nURL: https://www.data.gouv.fr/datasets/majoration-de-taxe-dhabitation-sur-les-residences-secondaires-taux-vote-et-montant-preleve-par-commune/\n\nFull description: Les 1 629 communes, réparties dans 61 départements, pour lesquelles le fichier REI 2025 de la DGFiP renseigne un taux de majoration de la taxe d'habitation sur les résidences secondaires. Une ligne par commune : code INSEE, nom, département, codes postaux, population, EPCI, taux voté (en %), nombre de locaux taxés susceptibles de majoration, base nette de ces locaux, montant réel de la majoration et nombre d'articles ayant un prélèvement supplémentaire.\n\n**Source** : fichier de recensement des é...\n\nOrganization: Emet Expertise\n  Organization ID: 6a85fd9087ee16a223a628c8\n\nTags: communes, dgfip, fiscalite-locale, impots-locaux, logement, majoration, rei, residences-secondaires, taxe-dhabitation\n\nResources: 2 file(s)\n\nCreated: 2026-10-03T20:20:29.903000+00:00\nLast updated: 2026-10-15T11:47:27+00:00\n\nLicense: lov2\nUpdate frequency: annual"
+     },
+     "isError": false
+    }
+   }
+  }
+ ]
+}

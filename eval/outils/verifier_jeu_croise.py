@@ -243,12 +243,26 @@ class _Reference:
         return meilleur, nom
 
 
-def construire_reference(racine: Path, n: int) -> tuple[_Reference, list[str]]:
-    """Index de v1.0, v1.1, `data/train/v*/{train,preferences}.jsonl` et des amorces des runs seed
+def versions_reference(racine: Path, exclure: str | None = None) -> list[str]:
+    """v1.0, v1.1, puis chaque jeu de développement `devN` assemblé (`eval/jeu/devN/items.jsonl`)
+    autre que `exclure` (story 15.5 : dev2 doit être disjoint de dev1)."""
+    dossier = racine / "eval" / "jeu"
+    dev = sorted(
+        (d.name for d in dossier.glob("dev*") if MOTIF_DEV.fullmatch(d.name) and d.name != exclure),
+        key=lambda nom: int(nom[3:]),
+    )
+    return [*VERSIONS_REFERENCE, *dev]
+
+
+def construire_reference(
+    racine: Path, n: int, exclure: str | None = None
+) -> tuple[_Reference, list[str]]:
+    """Index de v1.0, v1.1, des autres jeux `devN` que `exclure`,
+    `data/train/v*/{train,preferences}.jsonl` et des amorces des runs seed
     (`runs/data-seed/*/amorces.jsonl`) ; liste des jeux lus."""
     reference = _Reference(n)
     lus: list[str] = []
-    for version in VERSIONS_REFERENCE:
+    for version in versions_reference(racine, exclure):
         chemin = racine / "eval" / "jeu" / version / "items.jsonl"
         if not chemin.is_file():
             continue
@@ -256,6 +270,14 @@ def construire_reference(racine: Path, n: int) -> tuple[_Reference, list[str]]:
         for item in lire_jsonl(chemin):
             nom = f"{version}/{item.get('id', '?')}"
             reference.ids.setdefault(str(item.get("id")), nom)
+            reference.ajouter(nom, textes_item(item), urls_item(item))
+            for source in sources_item(item):
+                reference.sources.setdefault(source, nom)
+    calibrage = racine / "eval" / "calibrage" / "echantillon-calibrage.jsonl"
+    if calibrage.is_file():
+        lus.append("calibrage")
+        for item in lire_jsonl(calibrage):
+            nom = f"calibrage/{item.get('id', '?')}"
             reference.ajouter(nom, textes_item(item), urls_item(item))
             for source in sources_item(item):
                 reference.sources.setdefault(source, nom)
@@ -293,12 +315,14 @@ def controler_disjonction(
     *,
     n: int | None = None,
     seuil: float | None = None,
+    version: str | None = None,
 ) -> list[str]:
-    """Conflits des `items` avec les jeux existants (liste vide : disjoints)."""
+    """Conflits des `items` avec les jeux existants (liste vide : disjoints) ; `version` : jeu
+    contrôlé, exclu de la référence (les autres jeux `devN` en font partie)."""
     n_cfg, seuil_cfg = seuils(racine)
     n = n or n_cfg
     seuil = seuil if seuil is not None else seuil_cfg
-    reference, _ = construire_reference(racine, n)
+    reference, _ = construire_reference(racine, n, exclure=version)
     conflits: list[str] = []
     vus: dict[str, str] = {}
     for item in items:
@@ -583,13 +607,22 @@ def charger_items(racine: Path, version: str) -> list[dict[str, Any]]:
     return [item for fichier in fichiers for item in lire_jsonl(fichier)]
 
 
-def cmd_disjonction(racine: Path, version: str) -> int:
+def cmd_disjonction(racine: Path, version: str, reference: Path | None = None) -> int:
+    """Disjonction des items de `racine` contre les jeux de `reference` (défaut : `racine` ;
+    un worktree sans `data/` ni `runs/` se contrôle contre le dépôt principal)."""
     items = charger_items(racine, _version(version))
-    _, lus = construire_reference(racine, seuils(racine)[0])
-    conflits = controler_disjonction(items, racine)
+    reference = reference or racine
+    _, lus = construire_reference(reference, seuils(reference)[0], exclure=version)
+    conflits = controler_disjonction(items, reference, version=version)
     print(f"{len(items)} item(s) de {version} contre : {', '.join(lus) or 'aucun jeu'}")
     for conflit in conflits:
         print(f"CONFLIT {conflit}")
+    if not any(nom.startswith(("data/train/", "runs/data-seed/")) for nom in lus):
+        print(
+            "INCOMPLET : ni data/train ni runs/data-seed lus dans la référence "
+            f"({reference}) ; relancer avec --reference <dépôt principal>"
+        )
+        return 1
     if not conflits:
         print("disjoint")
     return 1 if conflits else 0
@@ -656,10 +689,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         p.add_argument("--racine", type=Path, default=Path(__file__).resolve().parents[2])
         if nom == "verifier":
             p.add_argument("--juges", default=",".join(DEFAUT_JUGES), help="noms de juges tiers")
+        else:
+            p.add_argument(
+                "--reference",
+                type=Path,
+                default=None,
+                help="racine des jeux de référence (eval/jeu, data/train, runs/data-seed) ; "
+                "défaut : --racine",
+            )
     args = parseur.parse_args(argv)
     try:
         if args.commande == "disjonction":
-            return cmd_disjonction(args.racine, args.version)
+            return cmd_disjonction(args.racine, args.version, args.reference)
         juges = [j for j in args.juges.split(",") if j]
         if len(juges) < 2:
             raise ErreurOutil("la contre-vérification croisée exige au moins deux juges")

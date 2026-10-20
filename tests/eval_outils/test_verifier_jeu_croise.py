@@ -407,6 +407,41 @@ def test_preferences_dans_la_disjonction(depot: Path) -> None:
     assert any("data/train/v9/preferences#1" in c for c in conflits), conflits
 
 
+# --- Story 15.5 (dev2) ------------------------------------------------------------------------
+
+
+def test_dev2_disjoint_de_dev1_mais_pas_de_lui_meme(depot: Path) -> None:
+    """Les autres jeux `devN` assemblés entrent dans la référence ; le jeu contrôlé en est exclu."""
+    ecrire(
+        depot / "eval/jeu/dev1/items.jsonl",
+        [item("Q-501", mots("g", 30), "https://exemple.invalide/dev1")],
+    )
+    copie = item("Q-601", mots("g", 30), "https://exemple.invalide/dev1")
+    sortie = vjc.controler_disjonction([copie], depot, version="dev2")
+    assert any("dev1/Q-501" in c and "URL" in c for c in sortie), sortie
+    assert any("dev1/Q-501" in c and "texte identique" in c for c in sortie), sortie
+    neuf = item("Q-602", mots("h", 30), "https://exemple.invalide/dev2")
+    ecrire(depot / "eval/jeu/dev2/items.jsonl", [neuf])
+    assert vjc.controler_disjonction([neuf], depot, version="dev2") == []
+    assert vjc.versions_reference(depot, exclure="dev2") == ["v1.0", "v1.1", "dev1"]
+
+
+def test_disjonction_contre_une_autre_racine(
+    depot: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`--reference` : items lus dans le worktree, jeux de référence lus dans le dépôt principal."""
+    worktree = tmp_path / "wt"
+    ecrire(
+        worktree / "eval/construction/dev2/Q.jsonl",
+        [item("Q-601", mots("b", 30), "https://exemple.invalide/autre")],
+    )
+    code = vjc.main(
+        ["disjonction", "--version", "dev2", "--racine", str(worktree), "--reference", str(depot)]
+    )
+    assert code == 1
+    assert "v1.1/Q-002" in capsys.readouterr().out
+
+
 # --- Story O4c ---------------------------------------------------------------------------------
 
 
@@ -561,3 +596,27 @@ def test_consigne_neutre_sans_incitation_a_retenir() -> None:
     assert "points_cles_reference" in prompt and "fictif" in prompt
     for incitation in ("ne rendent pas", "n'est pas un défaut", "parmi d'autres"):
         assert incitation not in prompt
+
+
+def test_disjonction_incomplete_sans_train_ni_seed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Un worktree sans `data/train` ni `runs/data-seed` ne se déclare pas « disjoint »."""
+    ecrire(tmp_path / "eval/jeu/v1.0/items.jsonl", [item("Q-001", mots("a", 30))])
+    ecrire(tmp_path / "eval/jeu/dev2/items.jsonl", [item("Q-601", mots("z", 30))])
+    assert vjc.main(["disjonction", "--version", "dev2", "--racine", str(tmp_path)]) == 1
+    sortie = capsys.readouterr().out
+    assert "INCOMPLET" in sortie
+    assert "disjoint" not in sortie.replace("INCOMPLET", "")
+
+
+def test_calibrage_dans_la_reference(depot: Path) -> None:
+    ecrire(
+        depot / "eval/calibrage/echantillon-calibrage.jsonl",
+        [item("Q-301", mots("k", 30), "https://exemple.invalide/calib")],
+    )
+    reference, lus = vjc.construire_reference(depot, 5)
+    assert "calibrage" in lus
+    copie = item("Q-701", mots("k", 30), "https://exemple.invalide/calib")
+    sortie = vjc.controler_disjonction([copie], depot, version="dev2")
+    assert any("calibrage/Q-301" in c for c in sortie), sortie
