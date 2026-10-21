@@ -96,3 +96,22 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-21 03:37 · 15.5c · fusion · squash dans main ; revérification : **dev2 155/155 retenus** (DeepSeek + GLM) ; gel relu-llm en attente de la décision d'Anaël sur CO-609, CO-615, CT-602, CT-612, CT-614 (exclus, écarts de composition CO et CT) · 7acb22f
 - 2026-10-21 03:39 · mesure finale v1.1 · **routage CO** (seule configuration qui passe sa règle sur dev1 et le test de déploiement) : LoRA v18 à l'échelle 1 sur base Q4_K_M, **items CO de v1.1 seulement** (`--items`, 15 items ; les autres tâches de v1.1 ne sont pas consultées), CO noté par contrôles déterministes (0 €) ; génération `runs/eval-generation/20261021-033754-lora-minicpm5-2b-ce8b`, notation `20261021-033910-lora-minicpm5-2b-36d9`. CO **58,9 → 78,7** (+19,8, IC95 [+10,4 ; +30,5], bootstrap apparié, `e5/v11-co-lora.md`) contre la Baseline v1.1 `20261018-112201-minicpm5-2b-e6f2`. Qualité v1.1 composée (base sur 7 tâches, LoRA sur CO) = **43,6** contre 41,1 (+2,5, IC95 ≈ [+1,3 ; +3,8]). `eval composer` refuse un routé partiel (liste d'items différente) : composition calculée à la main, report noté · —
 - 2026-10-21 03:39 · run · suite complète de fin lancée · —
+- 2026-10-21 04:03 · run · suite complète de fin : **6 203 passés**, 13 ignorés, 0 échec ; bloqueur de veille arrêté ; worktrees de l'epic 15 supprimés · —
+
+## Bilan du run (pour Anaël)
+Qualité = moyenne des 8 Scores de Tâche. dev1 : 159 items, juge GLM ; v1.1 : juge Claude (mesure finale). Bruit d'un run seul : ±4,5 à ±4,9 (dev1).
+| Modèle (MiniCPM5-2B) | Jeu | Q | RD | CR | LC | CO | RE | CT | NR | Qualité | Écart Baseline (IC95) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Baseline** | dev1 | 15,0 | 74,8 | 75,3 | 50,0 | 72,1 | 58,5 | 45,0 | 45,0 | **54,5** | — |
+| **Routage CO** (base + LoRA v18 sur CO) | dev1 | 15,0 | 74,8 | 75,3 | 50,0 | 82,5 | 58,5 | 45,0 | 45,0 | **55,8** | +1,3 [+0,6 ; +2,0] |
+| LoRA v18 à 0,25 (modèle unique) | dev1 | 20,0 | 82,3 | 64,8 | 40,0 | 75,1 | 60,8 | 42,5 | 55,0 | 55,1 | +0,6 [−3,5 ; +5,4] |
+| LoRA v18 à 0,5 | dev1 | 15,0 | 79,7 | 59,0 | 30,0 | 77,0 | 43,6 | 42,5 | 45,0 | 49,0 | −5,5 [−9,7 ; +0,0] |
+| LoRA v18 à 1 (sur Q4) | dev1 | 20,0 | 82,3 | 52,3 | 25,0 | 81,2 | 43,1 | 35,0 | 40,0 | 47,4 | −7,1 [−11,6 ; −1,5] |
+| M1 v18 fusionné (rappel) | dev1 | 15,0 | 84,8 | 40,4 | 30,0 | 82,5 | 40,7 | 45,0 | 40,0 | 47,3 | −7,2 [−11,8 ; −1,4] |
+| Témoin v19 (sans CR, LC, RE) | dev1 | 10,0 | 81,0 | 49,4 | 35,0 | 84,2 | 46,9 | 51,2 | 45,0 | 50,4 | −4,1 [−8,5 ; +1,1] |
+| M1 v20 (sélection CR, LC ; RE retirée) | dev1 | 20,0 | 74,6 | 49,7 | 15,0 | 81,9 | 36,9 | 47,5 | 45,0 | 46,3 | −8,1 [−12,4 ; −2,7] |
+| **Baseline** | v1.1 | 5,0 | 75,1 | 50,1 | 24,0 | 58,9 | 35,5 | 50,0 | 30,0 | **41,1** | — |
+| **Routage CO** (mesure finale, CO seul consulté) | v1.1 | 5,0 | 75,1 | 50,1 | 24,0 | **78,7** | 35,5 | 50,0 | 30,0 | **43,6** | +2,5 (CO +19,8 [+10,4 ; +30,5]) |
+
+Charge CPU (q4_k_m, 4 threads, avec bge-m3, machine de dev) : base 4,12 Go, 12,1 t/s ; base + LoRA 4,13 Go, 10,8 t/s (−11 %) ; qwen-4b 8,47 Go, 5,6 t/s, tous les NFR non conformes.
+Dépenses de la nuit : openrouter 4,31 € (plafond 20), anthropic 0 € (plafond 50), mistral 0 €.
