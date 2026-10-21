@@ -357,7 +357,9 @@ def test_config_seuil_inconnu_refuse(tmp_path: Path) -> None:
 def test_imputation_openrouter_sans_nouveau_poste() -> None:
     registre = RegistreBudget()
     assert registre.imputer("juge-donnees-openrouter") == ("openrouter", None)
-    assert set(registre.config.postes) == {"anthropic", "mistral", "openrouter"}
+    # Le juge de données ne crée pas de poste ; ovh a été approuvé par Anaël le 2026-10-21
+    # (campagne demo-2026-10-21) pour les modèles distants.
+    assert set(registre.config.postes) == {"anthropic", "mistral", "openrouter", "ovh"}
 
 
 def test_journal_distinct_de_celui_des_juges_tiers() -> None:
