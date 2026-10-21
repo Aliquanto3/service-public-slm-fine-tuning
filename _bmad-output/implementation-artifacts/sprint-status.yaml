@@ -174,3 +174,14 @@ development_status:
   15-4-second-juge-desactive-pour-dev: done  # N4
   15-5-dev2-vingt-items-par-tache: review  # 155 items fusionnés, revérification ciblée, 5 items et gel en attente d Anaël  # N5
   15-6-lora-gguf-et-lora-scaled: done  # N6
+
+  epic-16: backlog  # leviers à 0 €, essais contre la dérive (stories rédigées le 21/10)
+  epic-17: in-progress
+  17-1-modele-distant-eval-run: done
+  17-1b-fournisseurs-mistral-ovh: done
+  17-2-mesures-qualite-modeles-distants: in-progress  # Qwen3.6-27B et Mistral Small mesurés ; OVH en attente (clé 401)
+  17-3-fiche-demonstration: backlog
+  17-4-mode-hybride-app: done
+  17-5a-donnees-comparatif-modeles: done
+  17-5b-onglet-modeles: done
+  17-6-observabilite-cout-impact-plafond: in-progress

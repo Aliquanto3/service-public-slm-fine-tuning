@@ -1,122 +1,46 @@
-# Run autonome de nuit du 20-21 octobre 2026 : routage, interpolation, sélection de candidats
+# Run autonome du 21 octobre 2026 : modèle distant, mode hybride, comparatif et observabilité (epic 17)
 
-Plan : `plan-nuit-2026-10-20.md` (version 2, réponses d'Anaël au §9 : Kimi juge croisé, usage recherche pour la sélection, mesure CPU de qwen-4b). Stories : `../planning-artifacts/stories-epic-15-nuit-2026-10-20.md`. Consignes des sous-agents : `consignes-sous-agents-2026-10-20.md`. Run précédent : `archive/run-autonome-2026-10-20.md`.
-Garde-fous : D1 ; v1.1 = mesure finale seulement ; aucun push ; appels payants lancés par l'orchestrateur ; qualité sur GPU, charge sur CPU (machine au calme) ; bloqueur de veille pendant le GPU.
-Budget : campagne `nuit-2026-10-20` (plafonds durs du registre) — openrouter 20 €, anthropic 50 € (relevé de 10 à 50 € par Anaël le 20/10 au soir), mistral 7,85 € (reste, non prévu).
+Stories : `../planning-artifacts/stories-epic-17-modele-distant.md` ; specs `spec-17-1-modele-distant.md`, `spec-17-1b-mistral-ovh.md` (dans la branche fusionnée), `spec-17-4-mode-hybride-app.md`, `spec-17-5-onglet-comparatif-modeles.md`, `spec-17-6-observabilite-app.md`. Consignes des sous-agents : `consignes-sous-agents-2026-10-20.md`. Run précédent (nuit du 20-21/10, epic 15) : `archive/run-autonome-2026-10-20-21-nuit.md`.
+Demande d'Anaël (21/10 matin) : release v0.3.0 sur GitHub avec un installateur testable sur le PC cible (modèle externe réglable dans l'application) ; débordement en fin de journée accepté.
+Budget : campagne `demo-2026-10-21` depuis 11 h 45 (anthropic 50 €, mistral 7,78 €, openrouter 14,22 €, ovh 2 €), avant : `nuit-2026-10-20`.
 
 ## Périmètre
 | Périmètre | Epics | Note |
 |---|---|---|
-| Dans le run | Epics 15 à 15 | 15.1 N1 `eval composer`, 15.2 N2 candidats, 15.3 N3 sélection, 15.4 N4 second juge dev*, 15.5 N5 dev2, 15.6 N6 LoRA GGUF ; expériences D0, E5, E7, témoin, test de déploiement, qwen-4b CPU, E2/E4 |
-| Hors run | C5, E3, E6 (non numérotées) | paires notées seulement après une recette SFT gagnante |
+| Dans le run | Epics 17 à 17 | 17.1 modèle distant (eval), 17.1b Mistral et OVH, 17.4 mode hybride, 17.5a et 17.5b onglet Modèles, 17.6 observabilité ; mesures 17.2 (Qwen3.6-27B, Mistral Small) ; release v0.3.0 |
+| Hors run | Epics 16 à 16 | leviers à 0 €, essais contre la dérive (stories rédigées le 21/10, non lancées) |
 
-Au plus 4 stories en développement à la fois.
+Au plus 3 stories en développement à la fois.
 
-## Sprint 1 — nuit du 20-21/10
+## Sprint 1 — journée du 21/10
 | Vague | Stories en parallèle | Après |
 |---|---|---|
-| V0 | 15.1 · 15.2 · 15.6 · 15.5 | |
-| V1 | 15.4 · 15.3 ★ | 15.3 ← 15.2 (amendements de spec relus avant code) |
-
-## Règles de décision (écrites avant tout calcul)
-- **E5, routage** : un adaptateur est routé sur la tâche t seulement si la borne basse de l'IC95 apparié (bootstrap, `eval comparer`) sur dev1 est > 0 pour t contre la Baseline, et jamais sur une tâche où NR baisse significativement (borne haute < 0). Candidats : M1 v14 et v18 de MiniCPM5-2B, puis le témoin sous-ensemble. Composition v1.1 marquée `deja-consulte` ; confirmation sur dev2. Le routage n'est retenu que si le test de déploiement LoRA le valide.
-- **E7, interpolation** : échelle s retenue si, sur dev1 contre la Baseline, aucune tâche n'a une borne basse < −10 (non-infériorité par tâche) et Qualité ≥ Baseline − 2.
-- **v20 (sélection, = « v19 » du plan)** : retenue si sa Qualité dev1 ≥ meilleure composition routée − 2 ; décision définitive après dev2.
-- **Mesure finale v1.1 (Claude)** : seulement pour une configuration qui passe sa règle sur dev1 ; 3 au plus (défaut annoncé à Anaël).
+| V0 | 17.1 ★ | |
+| V1 | 17.4 · 17.5a | 17.4 ← 17.1 |
+| V2 | 17.5b · 17.1b | 17.5b ← 17.4 ; 17.1b ← 17.4 |
+| V3 | 17.6 | 17.6 ← 17.4 |
 
 ## Journal
-- 2026-10-20 22:41 · run · décision · campagne de budget `nuit-2026-10-20` ouverte (méthodo-v2-2026-10-20b close : mistral 1,63 €, openrouter 8,18 €) ; ancien run archivé (`archive/run-autonome-2026-10-20.md`) · —
-- 2026-10-20 · run · décision · Anaël relève le plafond de nuit Anthropic à 50 € ; questions laissées avant son départ (3 mesures v1.1 au plus, `export purger --tous-notes` sous 25 Go libres, dev2 rédigé par agent) avec choix par défaut « oui » · —
-- 2026-10-20 22:43 · témoin · décision · jeu **v19** = v18 sans CR, LC, RE (365 lignes ; NR absent de v18), `runs/data-build/20261020-224334-sous-ensemble-6d33` ; le jeu de sélection du plan (« v19 ») s'appellera **v20** · —
-- 2026-10-20 22:44 · témoin · M1 MiniCPM5-2B v19 lancé (bloqueur de veille actif ; train + export cuda puis génération dev1 cuda + GLM, plafond 3 €), `config/runs/m1-qlora-minicpm5-2b-v19-sous-ensemble.toml` · —
-- 2026-10-20 22:46 · 15.1, 15.2, 15.6, 15.5 · dev · lancés (Sonnet ; 15.5 sur Opus, qualité des items) · —
-- 2026-10-20 22:46 · D0 · diagnostics lancés (agent Sonnet, lecture seule : pertes CR et RE par critère, troncatures CT, passages Q) · —
-- 2026-10-20 22:46 · E5 · décision (règle ci-dessus, bootstrap 2 000 tirages, `e5/e5-minicpm.md`, `e5/e5-qwen.md`) : MiniCPM5-2B, seul **CO** est routé, vers M1 v18 (+10,4, IC95 [+4,9 ; +16,3] ; v14 +6,4 [+2,6 ; +10,7]) ; NR sans baisse significative (−5, [−25 ; +15]). Qualité attendue de la composition ≈ 54,5 + 10,4/8 ≈ 55,8 (+1,3, dans le bruit de ±4,5). Qwen3.5-0.8B : aucune tâche routée (CT v14 borne basse +0,0, pas > 0) · —
-- 2026-10-20 22:47 · run · décision · Anaël valide les trois choix par défaut : 3 mesures finales v1.1 au plus (chacune après sa règle sur dev1), `export purger --tous-notes` sous 25 Go libres, dev2 rédigé par agent et non gelé cette nuit · —
-- 2026-10-20 22:49 · 15.1 · dev · fini (10 tests verts ; « ok » = `complet` ; `modele_ref` du composé = celui du run par défaut, routage dans `config.route`) ; second-avis lancé · be32164
-- 2026-10-20 22:54 · 15.1 · second-avis · 1 high (le Comparatif prendrait le composé pour la notation du run par défaut), 2 low (effort et mode du juge non comparés ; clés absentes). **Décision** : la Baseline dev1 `afd3` est `partiel-erreur` → source partielle acceptée, statut le moins bon propagé et consigné ; review lancée (Opus) · —
-- 2026-10-20 22:58 · D0 · fini (`diagnostic-d0.md`) : (a) les pertes CR et RE de v18 viennent de l'**invention** (CR sans_invention 66,7 → 10,5, ~80 % de la perte ; RE fidèles 13/20 → 3/20, couverture RE en hausse) : argument direct pour la sélection (critère invention du juge de données) ; (b) CT : 13/20 sorties v18 en **boucle** dans l'en-tête (1 024 tokens, 4-grammes répétés à 0,85-0,97), cibles de 282-482 tokens ; cause probable : la consigne « exactement ces libellés » des items dev1 est absente des 30 prompts CT d'entraînement ; conformité CT à 0/20 pour la base aussi (mesure saturée) ; (c) Q : éléments clés présents dans les passages 49/69 (page entière 59/69), 5 passages occupés par 1 à 3 pages ; k=8 + dédoublonnage du préfixe des passages : 49 → 57/69 (0 €) ; les 3 items sans réponse échouent (scores hors corpus 0,55-0,67 au-dessus du seuil 0,5). Leviers Q et CT = changement de harnais ou de données : **proposés à Anaël**, hors du plan de nuit · —
-- 2026-10-20 23:04 · 15.1 · review · 1 high et 2 medium corrigés (Comparatif et juges tiers ignorent ou refusent un composé ; source partielle admise, statut propagé), juge comparé sur modèle, fournisseur, effort et mode · 6b0dae6
-- 2026-10-20 23:04 · 15.1 · fusion · squash dans main ; tests composition et bootstrap : 26 passés · 91045ea
-- 2026-10-20 23:04 · E5 · composition dev1 `20261020-230351-compose-0d5a` (base partout, M1 v18 sur CO) : Qualité 54,5 → **55,8** (+1,3, IC95 [+0,6 ; +2,0]) ; pas de composition v1.1 (M1 v18 n'a pas de notation v1.1, la créer serait une mesure payante hors règle). Reste le test de déploiement LoRA (15.6) · —
-- 2026-10-20 23:04 · 15.4 · dev · lancé · —
-- 2026-10-20 23:07 · 15.6 · dev · fini (`export lora`, `lora:<id>@<échelle>` dans la référence du modèle, contournement du `:` de `--lora-scaled` par le dossier courant ; essai à blanc de conversion de l'adaptateur v18 OK, 588 tenseurs, 50 Mo ; DoRA, rsLoRA, PiSSA refusés) ; second-avis lancé · 2ce2fdb
-- 2026-10-20 23:07 · 15.2 · dev · fini (15 tests ; contrat O2 respecté) ; second-avis lancé · 7fe729a
-- 2026-10-20 23:07 · 15.2 · **décision** : juge croisé = `moonshotai/kimi-k2.6` (OpenRouter, sorties structurées, 0,65 / 3,41 $/Mtok relevés le 20/10 ; kimi-k3 écarté : raisonnement, sortie 11,9 $/Mtok). **RE n'a pas de grille de jugement de données** (CR, LC, CT seulement) : pas de candidats RE ; v20 = v18 avec CR et LC sélectionnés et **RE retiré** (D0 : les cibles RE Mistral inventent, la base fait mieux) · —
-- 2026-10-20 23:09 · 15.4 · dev · fini : aucun verdict ni appel Mistral sur les 7 notations dev1 (le constat du plan venait sans doute d'avant `[jeux.dev1]`) ; défaut réel : un jeu `dev*` sans section (dev2) gardait le second juge ; règle par préfixe, aussi en reprise ; second-avis lancé · 627adb4
-- 2026-10-20 23:10 · 15.2 · second-avis · 1 high (appels OpenRouter en file payés puis repayés à la reprise si la boucle lève), 3 medium (texte jugé ≠ texte appris nettoyé ; pas de garde de famille ; reprise sans relire la config), 4 low. **Décisions** : nettoyage commun appliqué à tous les candidats avant jugement ; `--juge kimi` ne note que les candidats DeepSeek ; seul `stop` = fin normale ; RE refusé ; review lancée (Opus) · —
-- 2026-10-20 23:12 · 15.6 · second-avis · 2 medium (`alpha_pattern` non refusé : échelle fausse ; CLI export, measure et `--echelle-lora` sans tests), 6 low (format de l'échelle, gabarit et tokenizer non comparés, sonde absente silencieuse) ; review lancée (Opus) · —
-- 2026-10-20 23:15 · 15.4 · second-avis · 1 medium (cause du constat dev1 non reproduite, à consigner), 3 low (manifeste écrit avant le retrait du juge ; échantillon et kappa affichés pour dev* ; composition sans comparer le second juge) ; review lancée (Sonnet, story mécanique) · —
-- 2026-10-20 23:25 · 15.4 · review · 1 medium et 3 low traités (cause dev1 non reproduite consignée ; règle appliquée avant le manifeste ; pas d'échantillon second juge aux gels dev* futurs, MANIFEST dev1 intact ; composition compare le second juge) · 148dd41
-- 2026-10-20 23:25 · 15.4 · fusion · squash dans main ; tests jeu_dev, composition, gel : 138 passés · f67117f
-- 2026-10-20 23:27 · 15.2 · review · 1 high, 4 medium, 3 low corrigés (appels OpenRouter écrits au fil et non repayés à la reprise, `cible_apprise` = nettoyage commun, Kimi limité aux candidats DeepSeek, reprise contrôlée, seul `stop` accepté, Kimi k2.6) ; preuve : cible Mistral nettoyée = cible v18 sur les 103 lignes CR, LC, RE ; v18 n'a que **5 lignes LC** · daefb7c
-- 2026-10-20 23:27 · 15.2 · fusion · squash dans main · 8d47b28
-- 2026-10-20 23:27 · témoin · génération dev1 complète (`20261020-230047-ft-minicpm5-2b-c13a`), notation GLM en cours (`20261020-232214-ft-minicpm5-2b-5203`) · —
-- 2026-10-20 23:27 · E2/E4 · candidats lancés sur GPU (CR, LC ; base minicpm5-2b à 0,3 et 0,7 ; DeepSeek sur LC ; plafond 2 €) · —
-- 2026-10-20 23:27 · 15.3 · relecture de la spec amendée lancée (second-avis, avant code) · —
-- 2026-10-20 23:31 · 15.3 · spec relue (second-avis) : 4 high (Registre sans format pour une sortie de modèle local ; lecteur `train` sans journal OpenRouter ; RE contradictoire ; ligne sans candidat accepté), 6 medium, 2 low. **Décision** : pas de cible DeepSeek cette nuit (5 lignes LC), sources = Mistral et base ; 9 amendements écrits dans la section 15.3 des stories · 1506f48
-- 2026-10-20 23:31 · 15.6 · review · 1 medium et 3 low corrigés (`alpha_pattern` refusé, échelle bornée 0 < s ≤ 4, écart de gabarit signalé, sonde absente consignée), 1 medium et 2 low rejetés avec raison · 5b65d88
-- 2026-10-20 23:31 · 15.6 · fusion · squash dans main · 3cae049
-- 2026-10-20 23:31 · 15.3 · dev · lancé (Opus, story pivot) · —
-- 2026-10-20 23:33 · 15.6 · essai réel : `export lora` de l'adaptateur v18 → `runs/export-lora/20261020-233144-lora-minicpm5-2b-d9f3`, sonde de chargement valide · —
-- 2026-10-20 23:33 · témoin · résultat dev1 (notation `20261020-232214-ft-minicpm5-2b-5203`, GLM 0,32 €, `e5/temoin-v19.md`) : Qualité **50,4** contre 54,5 (−4,1, IC95 [−8,5 ; +1,1], dans le bruit ; v18 complet −7,2) ; CO +12,1 [+5,5 ; +19,2] ; CT +6,2 [+0,0 ; +13,8] ; **CR −25,9 [−41,0 ; −10,4] sans aucune ligne CR à l'entraînement** : la perte CR n'est pas due aux seules cibles CR (dérive générale de l'adaptateur) ; LC −15, RE −11,6 dans le bruit. Règle E5 : le témoin passerait aussi sur CO seulement ; on garde v18 pour le routage (LoRA déjà exporté, écart CO de 1,7 dans le bruit) · —
-- 2026-10-20 23:33 · 15.4 · **cause du constat du plan trouvée** : la ligne de statut affichait « second juge : 23 » (taille de l'échantillon prévu) alors qu'aucun appel Mistral n'a lieu (0 € dépensé, 0 verdict `second`) ; affichage corrigé par 15.4 (`demandes_second` = 0 sans second juge) · —
-- 2026-10-20 23:51 · 15.3 · dev · fini (18 tests ; Registre `openbmb/MiniCPM5-2B` Apache-2.0 d'après la fiche du 17/10, usage recherche ; `auteur_contenu = "modele-base"` ajouté : élargit D1.1, **à confirmer par Anaël**) ; second-avis lancé · d684245
-- 2026-10-20 23:58 · 15.3 · second-avis · D1 vérifié sans défaut sur données réelles (117 candidats locaux relus, conversation = celle de v18) ; 2 medium (runs `partiel-erreur` acceptés ; pas de garde `selection` dans preferences et candidats), 6 low. **Décisions** : run source non `complet` refusé sauf `--accepter-partiel` consigné ; `--retirer` obligatoire ; cible.source comparée à la base au `train run` ; review lancée (Opus) · —
-- 2026-10-21 00:02 · E2/E4 · candidats complets (`runs/data-candidats/20261020-232707-candidats-a5fd`) : 209 écrits (CR : Mistral 64, base 125 ; LC : Mistral 5, base 10, DeepSeek 5), 3 tronqués écartés ; OpenRouter 0,02 € · —
-- 2026-10-21 00:02 · E2/E4 · jugement DeepSeek des candidats CR et LC lancé (plafond 6 €) ; Kimi non lancé (aucune cible DeepSeek cette nuit) · —
-- 2026-10-21 00:02 · E7 + déploiement · chaîne GPU lancée : LoRA v18 sur base Q4_K_M, échelles 1 (test de déploiement contre la fusion v18), 0,5 et 0,25, dev1 cuda + GLM (plafond 3 € chacune) · —
-- 2026-10-21 00:11 · 15.3 · review · 2 medium et 5 low corrigés (run source `complet` exigé sauf `--accepter-partiel` consigné ; preferences et candidats refusent un jeu sélectionné ; `--retirer` obligatoire ; base vérifiée par `train run` ; erreurs propres) ; 1 low laissé à Anaël (source `mistral/reponses-generateur` gardée sur les lignes LC v2, prudent) ; 755 tests ciblés · 3c58e3e
-- 2026-10-21 00:11 · 15.3 · fusion · squash dans main · 01d7571
-- 2026-10-21 00:17 · 15.5 · dev · fini : 160 items (601-620), `eval gel --verifier-seulement` 0 erreur, disjoint de v1.0, v1.1, dev1, data/train/v* et des seeds ; aucun run de modèle lu ; hors zone : `evaluation/config.py` (cibles devN), `verifier_jeu_croise.py` ; second-avis lancé · a790620
-- 2026-10-21 00:25 · 15.5 · second-avis · aucun high ni medium (D1, disjonction avec `--reference` contre v1.0, v1.1, dev1, v1 à v19 et 5 seeds, 24 items relus) ; 4 low (« disjoint » affiché sans référence complète, calibrage hors référence, attribution ambiguë CR-601, dates du corps sans année) ; review lancée (Sonnet) · —
-- 2026-10-21 00:27 · 15.5 · review · 4 low traités (disjonction « INCOMPLET » sans référence complète, calibrage dans la référence, CR-601 désambiguïsé, dates du corps laissées) · eb97cc7
-- 2026-10-21 00:27 · 15.5 · fusion · squash dans main ; tests jeu_dev et verifier_jeu_croise : 86 passés (venv principal) · 45f2fb2
-- 2026-10-21 00:27 · 15.5 · vérification croisée de dev2 lancée (DeepSeek + GLM, 320 appels, ~1,7 $, pire cas ~4 $) ; pas de gel cette nuit · —
-- 2026-10-21 00:42 · E2/E4 · jugement DeepSeek (`runs/data-juger/20261021-000207-juger-6e70`, 1,17 €) : CR 100/189 acceptés (53 % ; invention 66 %), LC 5/19 (26 %) ; `partiel-erreur` (1 candidat DeepSeek « sortie-interrompue », sans effet : pas de cible DeepSeek) ; reprise lancée pour obtenir un run `complet` · —
-- 2026-10-21 00:42 · déploiement · **test LoRA validé en qualité** : LoRA v18 à l'échelle 1 sur base Q4_K_M (`runs/eval-notation/20261021-002259-lora-minicpm5-2b-456f`, GLM 0,33 €) contre la fusion f16→Q4 v18 : Qualité 47,4 contre 47,3 (+0,1, IC95 [−4,2 ; +4,1]) ; CO 81,2 contre 82,5 (−1,3, [−4,4 ; +1,8]) ; contre la Baseline CO +9,1 [+4,0 ; +14,6] (`e5/deploiement-lora1.md`). Reste la mesure CPU (RAM, latence) · —
-- 2026-10-21 00:49 · E2/E4 · jeu **v20** (`runs/data-build/20261021-004859-selection-0193`, recherche, 433 lignes, sha256 31115c42…) : CR 64 retenues (Mistral 45, base 19), LC 4 (Mistral 4 ; 1 sans candidat accepté), RE retirée (34 lignes), autres tâches copiées ; 100 candidats refusés, 5 DeepSeek ignorés ; `--accepter-partiel` consigné (le seul élément en erreur du jugement est un candidat DeepSeek, ignoré). Entraîné sans relecture d'Anaël (§7 bis) ; ligne v2 relue : provenance `slm:minicpm5-2b`, licences Mistral + Apache-2.0 · —
-- 2026-10-21 01:29 · E7 · résultats (dev1, GLM ~0,33 € chacune, `e5/e7-*.md`) : échelle **0,5** Qualité 49,0 (−5,5, IC95 [−9,7 ; +0,0]), CR −16,3 [−28,5 ; −5,5], RE −14,9, CO +4,9 [+1,2 ; +9,3] ; échelle **0,25** Qualité **55,1** (+0,6, [−3,5 ; +5,4]), CO +3,0 [−1,1 ; +7,6], NR +10 [+0 ; +25], CR −10,5 [−22,8 ; +1,0], LC −10 [−25 ; +10], RE +2,3 [−11,9 ; +16,5]. **Décision (règle écrite avant calcul)** : aucune échelle retenue — 0,5 échoue sur la Qualité et la non-infériorité ; 0,25 passe la Qualité mais pas la non-infériorité par tâche (bornes basses CR, LC, RE < −10). Constat : à 20 items par tâche, la borne basse d'une tâche est rarement au-dessus de −10 même sans effet réel (demi-largeurs ±10 à ±17) ; la règle est sous-puissante ; 0,25 est le seul modèle unique au niveau de la Baseline et le candidat de la confirmation sur dev2 (dev1 + dev2 = 40 items par tâche). Pas de mesure v1.1 · —
-- 2026-10-21 01:29 · E2/E4 · M1 MiniCPM5-2B v20 lancé (train + export cuda puis dev1 cuda + GLM, plafond 3 €), `config/runs/m1-qlora-minicpm5-2b-v20-selection.toml` · —
-- 2026-10-21 02:23 · 15.5 · vérification croisée dev2 (consigne v3, OpenRouter ~3,5 €) : **130 retenus, 26 rejetés, 4 incomplets** (erreurs de transport) · 6734851
-- 2026-10-21 02:23 · 15.5b · story de correction des 26 rejets lancée (Opus, procédé O4c-O4e) ; revérification ciblée ensuite ; gel au matin si prêt · —
-- 2026-10-21 02:38 · E2/E4 · **M1 v20 non retenu** (notation `20261021-023039-ft-minicpm5-2b-e7d9`, export `20261021-020131-ft-minicpm5-2b-ca91`, `e5/v20.md`) : Qualité 46,3 contre 54,5 (−8,1, IC95 [−12,4 ; −2,7]), sous la composition routée 55,8 − 2 (règle) ; CR −25,6 [−39,0 ; −12,1] malgré 19 cibles de la base ; **RE −21,6 [−36,4 ; −7,0] alors que RE est absente de v20** ; LC −35 ; CO +9,8 [+4,4 ; +15,5]. Avec le témoin (CR −25,9 sans ligne CR), conclusion : les pertes CR, LC, RE viennent d'une **dérive générale de l'adaptateur** (force de l'adaptation), pas des cibles de ces tâches ; corriger les cibles ne suffit pas ; seule l'atténuation (E7 à 0,25 : Qualité 55,1) ramène au niveau de la base · —
-- 2026-10-21 02:38 · charge · mesures CPU lancées (`measure run`, q4_k_m) : base minicpm5-2b (référence), LoRA v18 à 0,25 (déploiement du modèle atténué ou du routage), base qwen-4b (décision d'Anaël sur la taille) ; agent 15.5b actif en parallèle (charge faible, à noter dans la lecture des latences) · —
-- 2026-10-21 02:42 · 15.5b · dev · partiel : 19 corrigés, 3 remplacés (CO-606/613/615 → CO-621/622/623), cause commune RD = extraits sans `search_datasets` ; **4 laissés pour Anaël** (CO-609, CT-602, CT-612, CT-614 : griefs sur des conventions communes ; relancer en l'état, exclure en abaissant les cibles, ou remplacer) ; CR-619 grief « points abordés » sur la grille commune signalé ; second-avis lancé · 8a85bfb
-- 2026-10-21 02:50 · 15.5b · second-avis · 2 medium (CR-619 grief de grille non traité ; RE-609 consigne hors source), 4 low (RD-606 trace incomplète ; CO-615 réel remplacé par un fictif sur un grief inexact ; RE-619 nuance perdue). **Décisions** : CR-619 laissé (consigne CR commune, comme dev1) ; CO-615 d'origine restauré et ajouté aux items pour Anaël ; review lancée (Sonnet) · —
-- 2026-10-21 02:55 · charge · CPU (`measure run`, q4_k_m, 4 threads, avec bge-m3 ; machine de dev, agent de revue actif) : base minicpm5-2b (`runs/measure/20261021-023836-h-ram-f89e`) RAM max **4,12 Go**, débit 12,1 t/s (min 10,4), premier token 0,71 s (p95 65,6 s) ; base + LoRA v18 à 0,25 (`20261021-024545-h-ram-31af`) RAM max **4,13 Go** (+0,05 Go installés), débit **10,8 t/s** (−11 %), premier token 0,72 s (p95 63,1 s). **Déploiement LoRA validé** : même RAM, débit −11 % (l'adaptateur non fusionné coûte du calcul), qualité = fusion. NFR-1 cible et NFR-3 non conformes pour les deux (p95 du premier token, déjà le cas de la base) · —
-- 2026-10-21 02:55 · disque · 5,5 Go libres (99 %) : `export purger --tous-notes` (choix par défaut validé) : 28,2 Gio libérés (exports 5606, 3479, ca91), 34 Go libres · —
-- 2026-10-21 02:55 · qwen-4b · GGUF absent (supprimé lors d'une libération antérieure) : `fetch modeles qwen-4b` (venv de fetch séparé, ~10,5 Go avec les poids) puis mesure CPU lancés · —
-- 2026-10-21 03:00 · 15.5b · review · 2 high et 2 medium corrigés (RE-609 aligné sur F11892, CO-615 réel rétabli, RD-606 trace complète, RE-619 nuances rétablies) ; CR-619 laissé (grille commune) ; dev2 réassemblé à 155 items (5 en attente d'Anaël : CO-609, CO-615, CT-602, CT-612, CT-614) · af7fd9d
-- 2026-10-21 03:00 · 15.5b · fusion dans main (88d1958) puis revérification des 21 items modifiés + 4 LC incomplets lancée (~0,3 $) · —
-- 2026-10-21 03:19 · 15.5b · revérification ciblée (25 items) : **152 retenus, 3 rejetés** (LC, anciens incomplets), CR-619 retenu ; story 15.5c lancée (3 LC) · c2d09ec
-- 2026-10-21 03:26 · qwen-4b · fetch (10,6 Go, run `20261021-025451-modeles-b8f0`) puis mesure CPU (`runs/measure/20261021-030201-h-ram-4e18`, mêmes réglages) : RAM max **8,47 Go** (minicpm5-2b : 4,12), débit **5,6 t/s** (12,1), premier token 0,95 s (p95 104 s), taille 4,5 Go ; NFR-1, 1-cible, 2, 3 et 6 **non conformes**. Le chiffre de 8,45 Go du plan n'était donc pas un artefact d'avant le correctif d'embedding : il est confirmé. Disque : 24 Go libres · —
-- 2026-10-21 03:33 · 15.5c · dev · fini : LC-615, 616, 619 corrigés (`informations_a_conserver` au plus près des articles), aucun remplacement ; second-avis lancé · ff82b15
-- 2026-10-21 03:37 · 15.5c · second-avis · aucun medium ni high sur le contenu (2 low de paraphrase LC-616, LC-615) ; pas de review supplémentaire (3 items de données, constats mineurs) · —
-- 2026-10-21 03:37 · 15.5c · fusion · squash dans main ; revérification : **dev2 155/155 retenus** (DeepSeek + GLM) ; gel relu-llm en attente de la décision d'Anaël sur CO-609, CO-615, CT-602, CT-612, CT-614 (exclus, écarts de composition CO et CT) · 7acb22f
-- 2026-10-21 03:39 · mesure finale v1.1 · **routage CO** (seule configuration qui passe sa règle sur dev1 et le test de déploiement) : LoRA v18 à l'échelle 1 sur base Q4_K_M, **items CO de v1.1 seulement** (`--items`, 15 items ; les autres tâches de v1.1 ne sont pas consultées), CO noté par contrôles déterministes (0 €) ; génération `runs/eval-generation/20261021-033754-lora-minicpm5-2b-ce8b`, notation `20261021-033910-lora-minicpm5-2b-36d9`. CO **58,9 → 78,7** (+19,8, IC95 [+10,4 ; +30,5], bootstrap apparié, `e5/v11-co-lora.md`) contre la Baseline v1.1 `20261018-112201-minicpm5-2b-e6f2`. Qualité v1.1 composée (base sur 7 tâches, LoRA sur CO) = **43,6** contre 41,1 (+2,5, IC95 ≈ [+1,3 ; +3,8]). `eval composer` refuse un routé partiel (liste d'items différente) : composition calculée à la main, report noté · —
-- 2026-10-21 03:39 · run · suite complète de fin lancée · —
-- 2026-10-21 04:03 · run · suite complète de fin : **6 203 passés**, 13 ignorés, 0 échec ; bloqueur de veille arrêté ; worktrees de l'epic 15 supprimés · —
-
-## Bilan du run (pour Anaël)
-Qualité = moyenne des 8 Scores de Tâche. dev1 : 159 items, juge GLM ; v1.1 : juge Claude (mesure finale). Bruit d'un run seul : ±4,5 à ±4,9 (dev1).
-| Modèle (MiniCPM5-2B) | Jeu | Q | RD | CR | LC | CO | RE | CT | NR | Qualité | Écart Baseline (IC95) |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Baseline** | dev1 | 15,0 | 74,8 | 75,3 | 50,0 | 72,1 | 58,5 | 45,0 | 45,0 | **54,5** | — |
-| **Routage CO** (base + LoRA v18 sur CO) | dev1 | 15,0 | 74,8 | 75,3 | 50,0 | 82,5 | 58,5 | 45,0 | 45,0 | **55,8** | +1,3 [+0,6 ; +2,0] |
-| LoRA v18 à 0,25 (modèle unique) | dev1 | 20,0 | 82,3 | 64,8 | 40,0 | 75,1 | 60,8 | 42,5 | 55,0 | 55,1 | +0,6 [−3,5 ; +5,4] |
-| LoRA v18 à 0,5 | dev1 | 15,0 | 79,7 | 59,0 | 30,0 | 77,0 | 43,6 | 42,5 | 45,0 | 49,0 | −5,5 [−9,7 ; +0,0] |
-| LoRA v18 à 1 (sur Q4) | dev1 | 20,0 | 82,3 | 52,3 | 25,0 | 81,2 | 43,1 | 35,0 | 40,0 | 47,4 | −7,1 [−11,6 ; −1,5] |
-| M1 v18 fusionné (rappel) | dev1 | 15,0 | 84,8 | 40,4 | 30,0 | 82,5 | 40,7 | 45,0 | 40,0 | 47,3 | −7,2 [−11,8 ; −1,4] |
-| Témoin v19 (sans CR, LC, RE) | dev1 | 10,0 | 81,0 | 49,4 | 35,0 | 84,2 | 46,9 | 51,2 | 45,0 | 50,4 | −4,1 [−8,5 ; +1,1] |
-| M1 v20 (sélection CR, LC ; RE retirée) | dev1 | 20,0 | 74,6 | 49,7 | 15,0 | 81,9 | 36,9 | 47,5 | 45,0 | 46,3 | −8,1 [−12,4 ; −2,7] |
-| **Baseline** | v1.1 | 5,0 | 75,1 | 50,1 | 24,0 | 58,9 | 35,5 | 50,0 | 30,0 | **41,1** | — |
-| **Routage CO** (mesure finale, CO seul consulté) | v1.1 | 5,0 | 75,1 | 50,1 | 24,0 | **78,7** | 35,5 | 50,0 | 30,0 | **43,6** | +2,5 (CO +19,8 [+10,4 ; +30,5]) |
-
-Charge CPU (q4_k_m, 4 threads, avec bge-m3, machine de dev) : base 4,12 Go, 12,1 t/s ; base + LoRA 4,13 Go, 10,8 t/s (−11 %) ; qwen-4b 8,47 Go, 5,6 t/s, tous les NFR non conformes.
-Dépenses de la nuit : openrouter 4,31 € (plafond 20), anthropic 0 € (plafond 50), mistral 0 €.
-- 2026-10-21 05:36 · run · décision · Anaël valide le test des leviers à 0 € (Q : 8 passages + dédoublonnage du préfixe ; CT : prompts d'entraînement alignés sur « exactement ces libellés » + garde-fou anti-boucle) et les confirmations de méthode (atténuation de la dérive : taux, rang, pas ; échelle 0,25 confirmée sur dev1 + dev2) ; routage CO et 5 items de dev2 : en attente de sa décision · —
-- 2026-10-21 05:41 · run · **décisions d'Anaël** (propositions de l'orchestrateur acceptées) : (1) **routage CO retenu** (base partout, LoRA v18 sur CO), à confirmer sur dev2 gelé ; (2) dev2 : CO-609, CO-615, CT-602, CT-612, CT-614 **relancés une fois en l'état** (griefs inexacts ou de convention, consigné), puis **exclus avec cibles abaissées** s'ils restent rejetés (règle de CR-521 en dev1), puis gel relu-llm ; (3) Registre : `auteur_contenu = "modele-base"` validé ; source `mistral/reponses-generateur` gardée sur les lignes LC v2 ; (4) complément de données CR (sorties de la base sans invention) **après** les essais contre la dérive, pas avant ; (5) leviers à 0 € (Q, CT) et confirmations de méthode validés. Suite : `bmad-correct-course` (epic 16) après `/clear` · —
+- 2026-10-21 · 17.1 · dev · lancé · —
+- 2026-10-21 · 17.1 · dev · fini · 29e5069
+- 2026-10-21 · 17.1 · second-avis · 1 medium, 4 low · —
+- 2026-10-21 · 17.1 · review · Opus, corrigé · 3b19984
+- 2026-10-21 · 17.4 · dev · lancé · —
+- 2026-10-21 · 17.4 · dev · fini (partiel, puis amendement 14) · 5bc85a1
+- 2026-10-21 · 17.4 · second-avis · 1 medium, 2 low · —
+- 2026-10-21 · 17.4 · review · Opus, corrigé · 3af4339
+- 2026-10-21 · 17.5a · dev · fini · 7727332
+- 2026-10-21 · 17.5a · second-avis · 2 medium · —
+- 2026-10-21 · 17.5a · review · Opus, corrigé · 66b1e5c
+- 2026-10-21 · 17.5b · dev · fini · aa28609
+- 2026-10-21 · 17.5b · second-avis · 6 low · —
+- 2026-10-21 · 17.5b · review · Sonnet, corrigé · 8883753
+- 2026-10-21 · 17.5b · fusion · squash dans main · 50317d1
+- 2026-10-21 · 17.1b · dev · fini · d7dce2b
+- 2026-10-21 · 17.1b · second-avis · 7 low · —
+- 2026-10-21 · 17.1b · review · Sonnet, corrigé · 4787e11
+- 2026-10-21 · 17.1b · fusion · squash dans main · f9d97ba
+- 2026-10-21 · 17.6 · dev · lancé · —
 - 2026-10-21 07:31 · disque · purge validée par Anaël : 13 exports antérieurs à v18 retirés de `runs/export` (1752, d543, 3425, ad30, 1581, 0462, 3934, a5ad, 5883, b7bd, f4f4, 5606, e69a ; adaptateurs gardés dans `runs/train`, réexport possible), intermédiaires f16 de 4d47 et fb99 retirés (q4_k_m gardés), `models/qwen-4b` retiré (Qwen3-4B, tokenizer incompatible ; fiche gardée), WSL Ubuntu, ancienne installation llama.cpp b10537 et llama-env, doublons Ollama (qwen3.5 0.8b/2b/4b, minicpm5) et Qwen3.6-35B-A3B de D:. C: 20 → 101 Go libres, D: 60 → 87 Go · —
 - 2026-10-21 07:31 · qwen3.5-4b · fetch (`20261021-055429-modeles-18cb`, même tokenizer que 0.8B et 2B) puis dev1 en cuda : génération `20261021-064322-qwen3.5-4b-b0bc`, notation `20261021-072300-qwen3.5-4b-d113` (0,32 €). **Qualité 54,6** (Q 25,0 ; RD 84,7 ; CR 69,2 ; LC 25,0 ; CO 92,7 ; RE 60,5 ; CT 20,0 ; NR 60,0), au niveau de MiniCPM5-2B (54,5) et +17,8 [+11,1 ; +24,6] sur Qwen3.5-0.8B (36,8). Run Qwen3-4B `20261021-055157-qwen-4b-42e7` annulé en génération (0 €), à ignorer · —
 - 2026-10-21 07:51 · qwen3.5-2b · dev1 en cuda : génération `20261021-073330-qwen3.5-2b-8b5f` (12 tronquées), notation `20261021-075050-qwen3.5-2b-9ed5` (relancée pour 1 item CT, 0,36 € au total). **Qualité 42,7** (Q 5,0 ; RD 68,3 ; CR 48,1 ; LC 30,0 ; CO 88,1 ; RE 47,3 ; CT 25,0 ; NR 30,0) : −11,7 [−17,3 ; −5,1] sous MiniCPM5-2B, −11,9 [−18,5 ; −5,3] sous Qwen3.5-4B ; CO +16,0 sur MiniCPM · —
@@ -133,3 +57,4 @@ Dépenses de la nuit : openrouter 4,31 € (plafond 20), anthropic 0 € (plafon
 - 2026-10-21 11:37 · budget · campagne nuit-2026-10-20 close (anthropic 0 €, mistral 0,07 €, openrouter 5,78 €) ; campagne demo-2026-10-21 ouverte avec les restes et le poste ovh 2 € (accord d'Anaël) · —
 - 2026-10-21 11:37 · OVH · essai `distant:qwen3.6-27b-ovh` : HTTP 401 « Your token is not allowed to perform the required actions on any tenant » sur les 2 items, 0 € : clé à vérifier par Anaël · —
 - 2026-10-21 11:37 · 17.6 · dev lancé (Opus) après second avis de la spec (6 high intégrés en amendements) · —
+- 2026-10-21 19:16 · run · décision · journal de la journée séparé du run de nuit (archivé) ; périmètre epic 17 et sprint status mis à jour après un rapport d'avancement trompeur (périmètre resté sur l'epic 15) · —
