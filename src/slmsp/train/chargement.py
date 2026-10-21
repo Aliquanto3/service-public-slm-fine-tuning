@@ -32,6 +32,7 @@ from typing import Any, Final
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from slmsp.core.alignement_ct import verifier_alignement
 from slmsp.core.artefacts import (
     NOM_JOURNAL_LOCAL,
     NOM_JOURNAL_MISTRAL,
@@ -46,6 +47,7 @@ from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, SlmspEr
 from slmsp.core.nettoyage import VERSIONS_NETTOYAGE, nettoyer_cible, verifier_nettoyage
 from slmsp.core.schemas.config_modele import ConfigModele
 from slmsp.core.schemas.entrainement import (
+    AlignementCt,
     EnteteManifesteJeu,
     EntetePaire,
     Nettoyage,
@@ -171,6 +173,8 @@ def charger_jeu(version: str, *, racine: str | Path | None = None, fichier: str 
         controler_sous_ensemble(
             brut_manifeste["sous_ensemble"], brut, racine=racine, manifeste=brut_manifeste
         )
+    if fichier == NOM_TRAIN and brut_manifeste.get("alignement_ct") is not None:
+        controler_alignement_ct(brut_manifeste["alignement_ct"], brut, racine=racine)
     if fichier == NOM_TRAIN and brut_manifeste.get("selection") is not None:
         controler_selection(
             brut_manifeste["selection"], brut, racine=racine, manifeste=brut_manifeste
@@ -218,6 +222,36 @@ def controler_nettoyage(nettoyage: Any, octets: bytes, *, racine: str | Path | N
     if hashlib.sha256(source).hexdigest() != bloc.sha256_train_source:
         raise ManifesteInvalide(f"{chemin} : SHA-256 différent de « sha256_train_source »")
     verifier_nettoyage(octets, source, [e.rang for e in bloc.ecartes], bloc.version)
+
+
+def controler_alignement_ct(
+    alignement: Any, octets: bytes, *, racine: str | Path | None = None
+) -> None:
+    """Revérifie un jeu aux prompts CT alignés (story 16.3) contre son jeu source.
+
+    Le `train.jsonl` du jeu `depuis_version` doit avoir le SHA `sha256_train_source` (et sa
+    chaîne de nettoyage éventuelle tenir), et `octets` doit en être l'alignement exact par
+    `formulation` (`core.alignement_ct.verifier_alignement`). Lève `ManifesteInvalide` (bloc
+    illisible, source absente ou altérée, comptes) ou `ProvenanceInvalide`.
+    """
+    try:
+        bloc = AlignementCt.model_validate(alignement)
+    except ValidationError as exc:
+        raise ManifesteInvalide(f"bloc « alignement_ct » du MANIFEST invalide ({exc})") from None
+    chemin = dossier_jeu(bloc.depuis_version, racine=racine) / NOM_TRAIN
+    try:
+        source = lire(chemin, "train", racine=racine)
+    except FileNotFoundError:
+        raise ManifesteInvalide(f"jeu source de l'alignement CT absent : {chemin}") from None
+    if hashlib.sha256(source).hexdigest() != bloc.sha256_train_source:
+        raise ManifesteInvalide(f"{chemin} : SHA-256 différent de « sha256_train_source »")
+    if bloc.nettoyage_source is not None:
+        controler_nettoyage(bloc.nettoyage_source.model_dump(mode="json"), source, racine=racine)
+    if _comptes_taches(source) != bloc.comptes_source:
+        raise ManifesteInvalide(
+            "bloc « alignement_ct » : « comptes_source » ne recoupe pas la source"
+        )
+    verifier_alignement(octets, source, bloc.formulation, bloc.lignes_modifiees)
 
 
 def controler_sous_ensemble(

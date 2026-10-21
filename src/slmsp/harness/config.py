@@ -10,9 +10,9 @@ source unique (story 2.3). Q demande toutefois son propre nombre de passages, `q
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final, Literal
+from typing import Final, Literal, Self
 
-from pydantic import ConfigDict, Field, PositiveInt
+from pydantic import ConfigDict, Field, PositiveInt, model_validator
 
 from slmsp.core.config import ModeleConfig, charger_toml, racine_projet
 from slmsp.index.config import ConfigIndex, charger_config_index
@@ -81,6 +81,29 @@ class ConfigVerification(_Fige):
     max_tokens: int = Field(default=400, gt=0)
 
 
+class ConfigAntiBoucle(_Fige):
+    """Garde-fou anti-boucle du décodage (story 16.3, `harness.anti_boucle`).
+
+    Section facultative de `config/harnais.toml` : absente, le garde-fou est inactif
+    (comportement antérieur). La sortie est coupée quand une même ligne non vide revient plus
+    de `repetitions_ligne_max` fois, ou quand la part de `taille_ngramme`-grammes de mots
+    répétés sur les `fenetre_mots` derniers mots dépasse `part_ngrammes_max`. Aucune pénalité
+    de répétition : une sortie qui ne boucle pas reste identique octet pour octet.
+    """
+
+    actif: bool = False
+    repetitions_ligne_max: int = Field(default=12, gt=0)
+    fenetre_mots: int = Field(default=300, gt=0)
+    taille_ngramme: int = Field(default=4, gt=0)
+    part_ngrammes_max: float = Field(default=0.8, gt=0, le=1)
+
+    @model_validator(mode="after")
+    def _fenetre(self) -> Self:
+        if self.fenetre_mots <= self.taille_ngramme:
+            raise ValueError("fenetre_mots doit dépasser taille_ngramme")
+        return self
+
+
 class ConfigRecherche(_Fige):
     """Recherche dans l'Index local : copie de `config/index.toml` (source unique)."""
 
@@ -109,6 +132,7 @@ class _FichierHarnais(_Fige):
     generation: ConfigGeneration = Field(default_factory=ConfigGeneration)
     dedoublonnage: ConfigDedoublonnage = Field(default_factory=ConfigDedoublonnage)
     question: ConfigQuestion = Field(default_factory=ConfigQuestion)
+    anti_boucle: ConfigAntiBoucle = Field(default_factory=ConfigAntiBoucle)
 
 
 class ConfigHarnais(_Fige):
@@ -122,6 +146,7 @@ class ConfigHarnais(_Fige):
     generation: ConfigGeneration = Field(default_factory=ConfigGeneration)
     dedoublonnage: ConfigDedoublonnage = Field(default_factory=ConfigDedoublonnage)
     question: ConfigQuestion = Field(default_factory=ConfigQuestion)
+    anti_boucle: ConfigAntiBoucle = Field(default_factory=ConfigAntiBoucle)
 
 
 def chemin_config_harnais() -> Path:
@@ -149,12 +174,14 @@ def charger_config_harnais(
         generation=fichier.generation,
         dedoublonnage=fichier.dedoublonnage,
         question=fichier.question,
+        anti_boucle=fichier.anti_boucle,
         recherche=ConfigRecherche(k=index.k, seuil_pertinence=index.seuil_pertinence),
     )
 
 
 __all__ = [
     "VERSION_HARNAIS",
+    "ConfigAntiBoucle",
     "ConfigCompteRendu",
     "ConfigDedoublonnage",
     "ConfigGeneration",

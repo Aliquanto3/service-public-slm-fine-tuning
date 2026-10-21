@@ -178,6 +178,27 @@ class SousEnsemble(SousSchema):
         return self
 
 
+class AlignementCt(SousSchema):
+    """Provenance d'un jeu dont les prompts CT sont alignés sur leur cible (story 16.3).
+
+    Le jeu est l'alignement exact (`core.alignement_ct.verifier_alignement`) du jeu
+    `depuis_version` (run `depuis_build`, SHA `sha256_train_source`) : chaque ligne CT dont la
+    cible porte des emplacements reçoit `formulation`, `{libelles}` remplacé par ces
+    emplacements ; les autres lignes sont copiées à l'octet près. `origine_formulation` dit d'où
+    vient le texte de `formulation` (jamais un texte rédigé par Claude, D1). Comme pour
+    `sous_ensemble`, le bloc `nettoyage` du jeu source est repris dans `nettoyage_source`.
+    """
+
+    depuis_build: RunId
+    depuis_version: VersionJeu
+    sha256_train_source: Sha256
+    formulation: str = Field(min_length=1)
+    origine_formulation: str = Field(min_length=1)
+    lignes_modifiees: int = Field(ge=0)
+    comptes_source: dict[str, int]
+    nettoyage_source: Nettoyage | None = Field(default=None, exclude_if=lambda v: v is None)
+
+
 class BilanSelection(SousSchema):
     """Bilan d'une Tâche sélectionnée : lignes source, retenues, gagnants par source, écarts."""
 
@@ -283,6 +304,8 @@ class ManifesteJeuEntrainement(EnteteManifesteJeu, SchemaBase):
     """Présent sur un jeu nettoyé (story 9.9) : `train.chargement` revérifie la chaîne."""
     sous_ensemble: SousEnsemble | None = Field(default=None, exclude_if=lambda v: v is None)
     """Présent sur un jeu restreint à certaines Tâches : `train.chargement` revérifie la chaîne."""
+    alignement_ct: AlignementCt | None = Field(default=None, exclude_if=lambda v: v is None)
+    """Présent sur un jeu aux prompts CT alignés (story 16.3) : `train.chargement` revérifie."""
     selection: Selection | None = Field(default=None, exclude_if=lambda v: v is None)
     """Présent sur un jeu à cibles sélectionnées (v2) : `train.chargement` revérifie la chaîne
     et `train run` les cibles locales."""

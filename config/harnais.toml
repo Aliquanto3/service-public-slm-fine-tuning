@@ -64,3 +64,23 @@ prefixe_min_caracteres = 80
 # config/index.toml (5).
 [question]
 passages = 8
+
+# Garde-fou anti-boucle du décodage (story 16.3, harnais v2 ; levier 5 du diagnostic D0).
+# Arrêt déterministe, sans pénalité de répétition : une sortie qui ne boucle pas reste
+# identique octet pour octet. La sortie coupée finit par `Fin(raison="boucle")`.
+[anti_boucle]
+actif = true
+# Une même ligne non vide (alphanumérique) admise au plus ce nombre de fois ; à la suivante,
+# la sortie est coupée au début de cette ligne. 12 : les emplacements répétés d'un courrier ou
+# d'un formulaire (12 × « Nom : ........ ») passent.
+repetitions_ligne_max = 12
+# Part maximale de n-grammes de mots déjà vus sur les derniers `fenetre_mots` mots (les mots
+# sans caractère alphanumérique, `|`, `---`, pointillés, ne comptent pas).
+# Calage (revue 16.3, rejeu dev1, `outils/rejouer_anti_boucle.py`) : coupe les 13 boucles CT
+# de v18 (CT-511 et CT-518, lignes vues 12 fois, par les n-grammes : 0,90 et 0,88 sur 300 mots)
+# et aucune sortie de la Baseline MiniCPM5-2B ni des runs distants Qwen3.6-27B et Mistral Small.
+# La fenêtre large écarte CR-515 de la Baseline (boucle de 2 lignes répétées 8 et 7 fois :
+# 0,72 sur 300 mots, mais 0,74 sur 120 mots, au-dessus de CT-518 à 0,68).
+fenetre_mots = 300
+taille_ngramme = 4
+part_ngrammes_max = 0.8

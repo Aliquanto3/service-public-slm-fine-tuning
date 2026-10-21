@@ -26,7 +26,9 @@ les Tâches de réécriture (`generation.reecriture`, calculé par `redaction`),
 `config.generation.max_tokens` sinon (`max_tokens_par_defaut`). Le flux se termine
 toujours par un `Fin` ou un `Erreur`. Le délai au premier token (`delai_premier_token_ms`
 de `Fin.usage`) est mesuré depuis le début de l'itération : il compte la recherche et les
-mesures du budget de prompt (`harness.budget`).
+mesures du budget de prompt (`harness.budget`). Le garde-fou anti-boucle (story 16.3,
+`harness.anti_boucle`, section `[anti_boucle]`) coupe une sortie qui boucle et la termine par
+`Fin(raison="boucle")` ; les autres sorties sont relayées inchangées.
 
 Mode hybride (story 17.4) : si le `LlmPort` expose `echange(forcer_local=...)`
 (`inference.hybride.ClientHybride`), chaque réponse utilise son propre échange. Un secours
@@ -70,6 +72,7 @@ from slmsp.core.messages import (
     vers_dicts,
 )
 from slmsp.core.ports import EmbedderPort, LlmPort, ModePort, ToolPort, VectorStore
+from slmsp.harness.anti_boucle import borner_boucles
 from slmsp.harness.citations import chaines
 from slmsp.harness.config import ConfigHarnais, charger_config_harnais
 from slmsp.harness.prompts import CLES_CONTENU, EntreeInvalide, construire_messages
@@ -346,7 +349,7 @@ class AssistantService:
         signale = False
         try:
             flux = traiter(ctx)
-            for evenement in flux:
+            for evenement in borner_boucles(flux, self.config.anti_boucle):
                 if not isinstance(evenement, _TYPES_EVENEMENTS):
                     raise TypeError(f"évènement hors core.evenements : {type(evenement).__name__}")
                 motif = getattr(echange, "motif_secours", None)

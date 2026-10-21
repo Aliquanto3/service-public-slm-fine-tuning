@@ -9,8 +9,8 @@ le verrou GPU en `cuda`, monte le Harnais d'évaluation (`fabrique`, par défaut
 section `[generation]` de `config/evaluation.toml` (glouton, graine fixe). Une erreur d'item
 laisse un évènement `Erreur` en fin de trace et le run continue ; le statut final est
 `complet`, `partiel-erreur` (au moins une ligne en erreur) ou `interrompu` (exception hors
-item, relancée). Une sortie coupée au plafond `max_tokens` reste `ok` et porte
-`tronquee = true`.
+item, relancée). Une sortie coupée au plafond `max_tokens` ou par le garde-fou
+anti-boucle du Harnais (`Fin(raison="boucle")`) reste `ok` et porte `tronquee = true`.
 
 `reprendre_generation` complète le même dossier en ajout seul : les items déjà présents
 dans `generations.jsonl` (en erreur compris) sont sautés. Elle refuse un run dont les
@@ -150,12 +150,17 @@ def options_llm(config: cfg.ConfigEvaluation | None = None) -> dict[str, Any]:
     return (config if config is not None else cfg.charger_evaluation()).generation.options_llm()
 
 
+RAISONS_TRONQUEES: Final = frozenset({"longueur", "boucle"})
+"""Raisons de `Fin` d'une sortie coupée : plafond de tokens ou garde-fou anti-boucle."""
+
+
 def tronquee(trace: Sequence[Evenement]) -> bool | None:
-    """`True` si un `Fin` de la trace a la raison `longueur` ; `None` sans aucun `Fin`."""
+    """`True` si un `Fin` de la trace a la raison `longueur` ou `boucle` (coupure du garde-fou
+    anti-boucle, story 16.3) ; `None` sans aucun `Fin`."""
     fins = [e for e in trace if isinstance(e, Fin)]
     if not fins:
         return None
-    return any(fin.raison == "longueur" for fin in fins)
+    return any(fin.raison in RAISONS_TRONQUEES for fin in fins)
 
 
 def generer_item(

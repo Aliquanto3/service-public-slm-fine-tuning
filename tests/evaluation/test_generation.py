@@ -785,6 +785,7 @@ def test_reprise_refusee_si_decodage_different(
 
 def test_tronquee() -> None:
     assert tronquee([Jeton(texte="a"), Fin(raison="longueur")]) is True
+    assert tronquee([Jeton(texte="a"), Fin(raison="boucle")]) is True
     assert tronquee([Fin(raison="terminee")]) is False
     assert tronquee([Fin(raison="interrompue")]) is False
     assert tronquee([Jeton(texte="a"), Erreur(code="x", message="y")]) is None

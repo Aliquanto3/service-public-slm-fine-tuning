@@ -227,6 +227,10 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
     if (fin?.raison === "longueur") {
       notes.append(el("p", "avertissement", "Le résultat a été coupé : la longueur maximale est atteinte."));
     }
+    // Garde-fou anti-boucle du Harnais (story 16.3) : même traitement que `longueur`.
+    if (fin?.raison === "boucle") {
+      notes.append(el("p", "avertissement", "Réponse coupée : répétitions détectées"));
+    }
     copier.hidden = !aCopier;
     rafraichir();
     // On n'annonce pas le texte entier (long) : l'état et le nombre de passages signalés.

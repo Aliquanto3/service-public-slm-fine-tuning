@@ -123,10 +123,11 @@ class Fin(_Fige):
 
     `urls_inventees` liste les URL du texte généré absentes des passages, des résultats
     d'outils et des textes saisis (`harness.citations`) ; le texte n'est jamais réécrit.
+    `boucle` : sortie coupée par le garde-fou anti-boucle du Harnais (story 16.3).
     """
 
     type: Literal["fin"] = "fin"
-    raison: Literal["terminee", "longueur", "interrompue"]
+    raison: Literal["terminee", "longueur", "boucle", "interrompue"]
     usage: dict[str, int] | None = None
     urls_inventees: list[str] = Field(default_factory=list)
 

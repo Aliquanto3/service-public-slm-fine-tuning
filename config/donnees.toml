@@ -253,6 +253,11 @@ CO = [
 # Longueur des textes sources LC : médiane de l'entrée LC du Jeu d'évaluation (278 mots,
 # statistique de `outils/comparer_entrainement_evaluation.py`), contre 108 mots à l'entraînement
 # en v14. Le seed ne garde que les textes entiers dans médiane ± tolerance (aucune troncature).
+[alignement_ct]
+# Origines admises de la formulation de `data build --aligner-ct` (story 16.3, D1) : liste
+# fermée tenue par Anaël, vide par défaut ; tant qu'elle est vide, la commande refuse.
+origines_admises = []
+
 [alignement.longueur_sources_lc]
 # Médiane (mots) de l'entrée LC du Jeu d'évaluation.
 mediane_mots = 278

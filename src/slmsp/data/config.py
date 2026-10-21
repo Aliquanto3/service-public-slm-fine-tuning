@@ -614,6 +614,16 @@ class AlignementDonnees(ModeleConfig):
         return valeurs
 
 
+class AlignementCtDonnees(ModeleConfig):
+    """Table `[alignement_ct]` : origines admises de la formulation de `data build --aligner-ct`.
+
+    Liste fermée tenue par Anaël (D1) : la commande refuse toute origine absente de la liste,
+    donc tout alignement tant qu'elle est vide (défaut).
+    """
+
+    origines_admises: list[Texte] = Field(default_factory=list)
+
+
 class ConfigDonnees(ModeleConfig):
     """Contenu de `config/donnees.toml`."""
 
@@ -629,6 +639,7 @@ class ConfigDonnees(ModeleConfig):
     generateur: GenerateurDonnees = Field(default_factory=GenerateurDonnees)
     juge_donnees: JugeDonneesConfig = Field(default_factory=JugeDonneesConfig)
     alignement: AlignementDonnees = Field(default_factory=AlignementDonnees)
+    alignement_ct: AlignementCtDonnees = Field(default_factory=AlignementCtDonnees)
     verification: VerificationConfig = Field(default_factory=VerificationConfig)
 
     @property

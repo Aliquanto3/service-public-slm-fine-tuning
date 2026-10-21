@@ -62,6 +62,10 @@ dans `generations-locales.sqlite`) dans une nouvelle version `data/train/vN/pref
 `build --sous-ensemble --depuis BUILD_RUN_ID --taches T1,T2,...` garde, dans une nouvelle version
 `data/train/vN/`, les seules lignes des Tâches demandées, copiées à l'identique
 (`slmsp.data.sous_ensemble`, test M1 partiel).
+`build --aligner-ct --depuis BUILD_RUN_ID --formulation-fichier F --origine-formulation TEXTE`
+ajoute à chaque prompt CT la consigne de libellés de `F` (une ligne, `{libelles}` remplacé par
+les libellés de la cible de la ligne) dans une nouvelle version (`slmsp.data.alignement_ct`,
+story 16.3) ; la formulation n'est jamais rédigée par Claude (D1), son origine va au MANIFEST.
 `build --selection --candidats RUN --verdicts RUN[,RUN] --variante V --retirer RE|""
 [--taches-selection CR,LC] [--accepter-partiel]` remplace les cibles des Tâches sélectionnées
 par le meilleur candidat accepté
@@ -529,6 +533,22 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         "--sous-ensemble",
         action="store_true",
         help="restreindre le jeu SFT aux Tâches de --taches (lignes copiées à l'identique)",
+    )
+    b.add_argument(
+        "--aligner-ct",
+        action="store_true",
+        help="aligner les prompts CT sur les libellés de leur cible (story 16.3)",
+    )
+    b.add_argument(
+        "--formulation-fichier",
+        type=Path,
+        metavar="FICHIER",
+        help="--aligner-ct : fichier UTF-8 d'une ligne portant {libelles} (origine non-Claude)",
+    )
+    b.add_argument(
+        "--origine-formulation",
+        metavar="TEXTE",
+        help="--aligner-ct : origine vérifiable de la formulation, consignée au MANIFEST",
     )
     b.add_argument(
         "--taches",
@@ -1456,6 +1476,48 @@ def _sous_ensemble(args: argparse.Namespace, racine: Path) -> int:
     return int(CodeSortie.SUCCES)
 
 
+def _aligner_ct(args: argparse.Namespace, racine: Path) -> int:
+    from slmsp.core.erreurs import ConfigurationInvalide, ManifesteInvalide, ProvenanceInvalide
+    from slmsp.data.alignement_ct import lancer_alignement_ct
+
+    if (
+        args.formulation_fichier is None
+        or not (args.origine_formulation or "").strip()
+        or args.modele
+        or args.variante
+        or args.taches is not None
+        or args.preferences
+        or args.nettoyage
+        or args.sous_ensemble
+    ):
+        print(
+            "slmsp : --aligner-ct exige --formulation-fichier et --origine-formulation, et "
+            "exclut --modele, --variante, --taches, --preferences, --nettoyage et --sous-ensemble",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
+    try:
+        formulation = args.formulation_fichier.read_text(encoding="utf-8").rstrip("\r\n")
+        resultat = lancer_alignement_ct(
+            racine=racine,
+            build_run_id=args.depuis,
+            formulation=formulation,
+            origine_formulation=args.origine_formulation.strip(),
+            consigner=_consigner,
+        )
+    except OSError as exc:
+        print(f"slmsp : formulation illisible ({exc})", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    except (ManifesteInvalide, ProvenanceInvalide, ConfigurationInvalide) as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    rapport = resultat.rapport
+    print(f"lignes CT alignées : {rapport['lignes_modifiees']}/{rapport['lignes_ct']}")
+    print(f"jeu {resultat.version} ({rapport['nb_lignes']} lignes) : {resultat.dossier}")
+    print(f"run {resultat.run.run_id} (complet) : {resultat.run.dossier}")
+    return int(CodeSortie.SUCCES)
+
+
 def _liste(texte: str | None) -> list[str]:
     return [t.strip() for t in (texte or "").split(",") if t.strip()]
 
@@ -1533,6 +1595,14 @@ def _build(args: argparse.Namespace) -> int:
         return int(CodeSortie.USAGE)
     if args.sous_ensemble:
         return _sous_ensemble(args, racine)
+    if args.aligner_ct:
+        return _aligner_ct(args, racine)
+    if args.formulation_fichier is not None or args.origine_formulation is not None:
+        print(
+            "slmsp : --formulation-fichier et --origine-formulation exigent --aligner-ct",
+            file=sys.stderr,
+        )
+        return int(CodeSortie.USAGE)
     if args.taches is not None:
         print("slmsp : --taches exige --sous-ensemble", file=sys.stderr)
         return int(CodeSortie.USAGE)

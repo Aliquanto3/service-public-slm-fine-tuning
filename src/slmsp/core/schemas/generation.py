@@ -47,8 +47,9 @@ class Generation(SchemaBase):
     """Évènements du flux en dicts (`vers_dict`), jetons consécutifs fusionnés."""
     duree_ms: int = Field(ge=0)
     tronquee: bool | None = None
-    """Sortie coupée au plafond de tokens : le `Fin` du flux a la raison `longueur`
-    (`finish_reason` `length` de llama-server, sur au moins un appel pour un CR découpé).
+    """Sortie coupée : le `Fin` du flux a la raison `longueur` (`finish_reason` `length` de
+    llama-server, sur au moins un appel pour un CR découpé) ou `boucle` (garde-fou anti-boucle
+    du Harnais, story 16.3).
     `None` pour une ligne écrite avant ce champ (report W2) ; une sortie tronquée garde le
     statut `ok`. Hors de `sortie_canonique`, il n'entre pas dans la clé du cache des verdicts."""
 

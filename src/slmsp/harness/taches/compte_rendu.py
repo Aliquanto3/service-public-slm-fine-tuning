@@ -56,7 +56,7 @@ ETAPE_FUSION: Final = "Fusion des parties"
 CLES_USAGE_NON_CUMULEES: Final[frozenset[str]] = frozenset({"delai_premier_token_ms"})
 """Clés d'usage propres à un appel, jamais additionnées."""
 GRAVITE_RAISON: Final[Mapping[str, int]] = MappingProxyType(
-    {"terminee": 0, "longueur": 1, "interrompue": 2}
+    {"terminee": 0, "longueur": 1, "boucle": 1, "interrompue": 2}
 )
 """Gravité des raisons de `Fin` : la plus grave de tous les appels l'emporte."""
 

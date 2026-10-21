@@ -180,6 +180,8 @@ export function creerReponse(opts) {
     rendreTexteAvecCitations(texte, r.brut, r.sources, (n) => opts.surPuce(r, n));
     if (fin.raison === "interrompue") mention.hidden = false;
     if (fin.raison === "longueur") r.avertir("La réponse a été coupée : la longueur maximale est atteinte.");
+    // Garde-fou anti-boucle du Harnais (story 16.3) : même traitement que `longueur`.
+    if (fin.raison === "boucle") r.avertir("Réponse coupée : répétitions détectées");
     if (opts.juridique) {
       const avis = el("p", "legal-notice", "Ne vaut pas avis juridique");
       racine.insertBefore(avis, actions);
