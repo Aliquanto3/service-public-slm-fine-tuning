@@ -8,7 +8,7 @@ Budget : campagne `demo-2026-10-21` depuis 11 h 45 (anthropic 50 €, mistral 7,
 | Périmètre | Epics | Note |
 |---|---|---|
 | Dans le run | Epics 17 à 17 | 17.1 modèle distant (eval), 17.1b Mistral et OVH, 17.4 mode hybride, 17.5a et 17.5b onglet Modèles, 17.6 observabilité ; mesures 17.2 (Qwen3.6-27B, Mistral Small) ; release v0.3.0 |
-| Hors run | Epics 16 à 16 | leviers à 0 €, essais contre la dérive (stories rédigées le 21/10, non lancées) |
+| Dans le run (nuit) | Epics 16 à 16 | stories de code seulement : 16.2, 16.3, 16.4, 16.5, 16.8, 16.6a ; **hors** 16.1 (vérification payante de dev2), 16.6 (entraînements : protocole à relire par Anaël), 16.7 |
 
 Au plus 3 stories en développement à la fois.
 
@@ -19,6 +19,14 @@ Au plus 3 stories en développement à la fois.
 | V1 | 17.4 · 17.5a | 17.4 ← 17.1 |
 | V2 | 17.5b · 17.1b | 17.5b ← 17.4 ; 17.1b ← 17.4 |
 | V3 | 17.6 | 17.6 ← 17.4 |
+
+## Sprint 2 — nuit du 21-22/10 (Anaël absent, « je te laisse avancer sur ces sujets toute la nuit »)
+| Vague | Stories en parallèle | Après |
+|---|---|---|
+| V0 | 17.3 · 16.4 · 16.2 | 17.2 (Qwen3.8-27B, vitesses CPU) en parallèle, machine au calme pour les mesures CPU |
+| V1 | 16.5 · 16.3 · 16.6a | 16.5 ← 16.4 |
+| V2 | 16.8 | 16.8 ← 16.2 (même zone du Harnais Q) |
+Règles de la nuit : aucune release, aucun push hors fusion locale dans main, aucun entraînement, aucun appel payant sauf les mesures 17.2 (≤ 1 € de génération + 1 € de notation par modèle) ; bloqueur de veille actif.
 
 ## Journal
 - 2026-10-21 · 17.1 · dev · lancé · —
@@ -67,3 +75,5 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-21 22:21 · 17.4b · fusion · squash dans main après second avis (1 high : hôte non vérifié en accès gratuit) et revue Sonnet (8e84c85) · a4f9c58
 - 2026-10-21 22:21 · main · suite complète : 6 385 passés, 1 échec (liste des postes sans ovh) corrigé · b2124d8
 - 2026-10-21 22:21 · release · version 0.3.0 (39441c5) ; application construite (3 070 Mo) ; installateur (2,68 Go) ; installation silencieuse et démarrage vérifiés sur ce PC ; mesure Qwen3.8-27B interrompue à 120/159 pour la construction (reprise possible) · 39441c5
+- 2026-10-21 22:28 · release · v0.3.0 publiée (https://github.com/Aliquanto3/service-public-slm-fine-tuning/releases/tag/v0.3.0), 4 fichiers vérifiés (tailles), main et tag poussés · 39441c5
+- 2026-10-21 22:28 · 17.2 · reprise de la mesure Qwen3.8-27B (`--reprendre`) · —
