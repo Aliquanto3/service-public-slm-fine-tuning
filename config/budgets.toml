@@ -41,7 +41,10 @@ schema_version = 1
 # Campagne methodo-v2-2026-10-20b close le 2026-10-20 vers 22 h 40 avec : anthropic 0 €, mistral 1,63 € (génération)
 # et openrouter 8,18 € dépensés. Run de nuit du 20-21/10 : plafonds de nuit fixés par Anaël (openrouter 20 €, anthropic 50 €, relevé de 10 à 50 € par Anaël),
 # dans l'enveloppe restante ; mistral reporte son reste.
-campagne_id = "nuit-2026-10-20"
+# Campagne nuit-2026-10-20 close le 2026-10-21 vers 11 h 45 avec : anthropic 0 €, mistral 0,07 € (génération),
+# openrouter 5,78 €. Campagne demo-2026-10-21 (epic 17, démonstration) : plafonds = restes de la précédente,
+# plus le poste ovh à 2 € approuvé par Anaël le 2026-10-21 (« OK pour 2 € OVH »).
+campagne_id = "demo-2026-10-21"
 
 # Marge de sécurité (EUR) ajoutée à chaque contrôle, au poste comme au sous-poste : une
 # réservation est refusée si dépensé + réservé + coût pire cas + marge > plafond.
@@ -54,18 +57,21 @@ majoration_entree = 1.25
 [postes.anthropic]
 # PRD : 10 €. Relevé par Anaël le 2026-10-16 et le 2026-10-17 (10 $ ≈ 8,6 € + 5 € + 5 €), Baseline
 # complète et trois nouveaux Modèles de base candidats.
-plafond_eur = 50.0  # plafond de nuit 20-21/10 relevé à 50 € par Anaël le 20/10 au soir (enveloppe restante : 57 €)
+plafond_eur = 50.0  # reste de nuit-2026-10-20 (plafond relevé à 50 € par Anaël le 20/10 au soir, 0 € dépensé)
 
 [postes.mistral]
-plafond_eur = 7.85  # reste de la campagne methodo-v2-2026-10-20b
+plafond_eur = 7.78  # reste de nuit-2026-10-20
 
 # Sous-plafonds de Mistral : la génération ne peut pas affamer le second juge.
 [postes.mistral.sous_postes]
-generation = 6.15
+generation = 6.08
 juge = 1.7
 
 [postes.openrouter]
-plafond_eur = 20.0  # plafond de nuit 20-21/10 (reste de l'enveloppe : 36,3 €)
+plafond_eur = 14.22  # reste de nuit-2026-10-20 (plafond de nuit 20 €)
+
+[postes.ovh]
+plafond_eur = 2.0  # approuvé par Anaël le 2026-10-21 (« OK pour 2 € OVH ») : mesures OVH AI Endpoints
 
 # Imputation des usages : "poste" ou "poste.sous_poste".
 [imputations]
@@ -84,3 +90,5 @@ eval-distant = "openrouter"
 # sous-poste génération (aucun plafond changé). Aucun usage `eval-distant-ovh` : poste ovh
 # à approuver par Anaël (refus avant tout appel).
 eval-distant-mistral = "mistral.generation"
+# OVH AI Endpoints : poste ovh approuvé par Anaël le 2026-10-21 (2 €).
+eval-distant-ovh = "ovh"
