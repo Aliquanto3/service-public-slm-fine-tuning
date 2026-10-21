@@ -3,7 +3,8 @@
 `ConfigHarnais` est figée. La story 4.2 la crée ; les stories 4.3 et 4.4 la lisent sans la
 modifier. `recherche.k` et `recherche.seuil_pertinence` ne sont pas dans
 `config/harnais.toml` : ils viennent de `config/index.toml` par `slmsp.index.config`, leur
-source unique (story 2.3).
+source unique (story 2.3). Q demande toutefois son propre nombre de passages, `question.passages`
+(story 16.2).
 """
 
 from __future__ import annotations
@@ -17,6 +18,11 @@ from slmsp.core.config import ModeleConfig, charger_toml, racine_projet
 from slmsp.index.config import ConfigIndex, charger_config_index
 
 NOM_CONFIG: Final = "harnais.toml"
+
+VERSION_HARNAIS: Final = 2
+"""Version du harnais d'évaluation (epic 16). 2 : Q à 8 passages et préfixe dédoublonné
+(story 16.2) ; 16.3 et 16.8 ajoutent leurs sections sans réincrémenter. Un run de génération
+sans version est lu comme version 1."""
 
 
 class _Fige(ModeleConfig):
@@ -82,6 +88,18 @@ class ConfigRecherche(_Fige):
     seuil_pertinence: float = Field(ge=-1.0, le=1.0)
 
 
+class ConfigDedoublonnage(_Fige):
+    """Dédoublonnage du préfixe commun des passages d'une même page (story 16.2)."""
+
+    prefixe_min_caracteres: int = Field(default=80, ge=1)
+
+
+class ConfigQuestion(_Fige):
+    """Question (story 16.2) : nombre de passages propre à Q, distinct de `recherche.k`."""
+
+    passages: int = Field(default=8, gt=0)
+
+
 class _FichierHarnais(_Fige):
     schema_version: Literal[1]
     outils: ConfigOutils
@@ -89,6 +107,8 @@ class _FichierHarnais(_Fige):
     compte_rendu: ConfigCompteRendu
     verification: ConfigVerification = Field(default_factory=ConfigVerification)
     generation: ConfigGeneration = Field(default_factory=ConfigGeneration)
+    dedoublonnage: ConfigDedoublonnage = Field(default_factory=ConfigDedoublonnage)
+    question: ConfigQuestion = Field(default_factory=ConfigQuestion)
 
 
 class ConfigHarnais(_Fige):
@@ -100,6 +120,8 @@ class ConfigHarnais(_Fige):
     recherche: ConfigRecherche
     verification: ConfigVerification = Field(default_factory=ConfigVerification)
     generation: ConfigGeneration = Field(default_factory=ConfigGeneration)
+    dedoublonnage: ConfigDedoublonnage = Field(default_factory=ConfigDedoublonnage)
+    question: ConfigQuestion = Field(default_factory=ConfigQuestion)
 
 
 def chemin_config_harnais() -> Path:
@@ -125,16 +147,21 @@ def charger_config_harnais(
         compte_rendu=fichier.compte_rendu,
         verification=fichier.verification,
         generation=fichier.generation,
+        dedoublonnage=fichier.dedoublonnage,
+        question=fichier.question,
         recherche=ConfigRecherche(k=index.k, seuil_pertinence=index.seuil_pertinence),
     )
 
 
 __all__ = [
+    "VERSION_HARNAIS",
     "ConfigCompteRendu",
+    "ConfigDedoublonnage",
     "ConfigGeneration",
     "ConfigHarnais",
     "ConfigModes",
     "ConfigOutils",
+    "ConfigQuestion",
     "ConfigRecherche",
     "ConfigVerification",
     "chemin_config_harnais",

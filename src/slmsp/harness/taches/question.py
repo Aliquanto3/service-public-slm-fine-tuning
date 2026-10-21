@@ -14,6 +14,7 @@ from collections.abc import Iterator
 from slmsp.core.evenements import Evenement, Sources
 from slmsp.harness.budget import borner_passages
 from slmsp.harness.citations import sources_citees, urls_inventees
+from slmsp.harness.dedoublonnage import dedoublonner_prefixes
 from slmsp.harness.prompts import construire_messages
 from slmsp.harness.taches import ContexteTache, avertissement, diffuser
 
@@ -27,7 +28,10 @@ def traiter(ctx: ContexteTache) -> Iterator[Evenement]:
         raise TypeError("Question : entrée texte attendue")
     passages = borner_passages(
         ctx,
-        ctx.recherche.rechercher(question),
+        dedoublonner_prefixes(
+            ctx.recherche.rechercher(question, k=ctx.config.question.passages),
+            ctx.config.dedoublonnage.prefixe_min_caracteres,
+        ),
         lambda liste: ctx.messages_pour(construire_messages(ctx.tache, question, liste)),
     )
     messages = ctx.messages_pour(construire_messages(ctx.tache, question, passages))

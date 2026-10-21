@@ -73,7 +73,14 @@ def _empreintes(run: Run, base: Path) -> dict[str, Any]:
         "juge_principal": _principal(run),
         "second_juge": _second_present(run),
         "taches_sha256": generation.manifeste.entrees.get("taches"),
+        "version_harnais": _version_harnais(generation),
     }
+
+
+def _version_harnais(generation: Run) -> int:
+    """Version du harnais du run de génération (1 sans mention, story 16.2)."""
+    valeur = _config(generation).get("version_harnais", 1)
+    return valeur if isinstance(valeur, int) and not isinstance(valeur, bool) else 1
 
 
 def _ouvrir_source(run_id: str, base: Path) -> Run:

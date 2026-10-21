@@ -21,6 +21,18 @@ def test_seuil_inclusif_et_k() -> None:
     assert RechercheIndex(embedder, store, 2, 0.5).rechercher(requete) == trouves[:2]
 
 
+def test_k_de_l_appel_remplace_celui_de_l_instance() -> None:
+    # Q demande son propre k (story 16.2) sans changer celui de l'instance.
+    store = FakeVectorStore([passage(i, 0.9) for i in range(1, 10)])
+    recherche = RechercheIndex(FakeEmbedder(), store, 5, 0.5)
+    assert len(recherche.rechercher("requete", k=8)) == 8
+    assert len(recherche.rechercher("requete")) == 5
+    assert store.appels == [8, 5]
+    for invalide in (0, True, 2.0):
+        with pytest.raises(ValueError, match="k doit"):
+            recherche.rechercher("requete", k=invalide)
+
+
 def test_requete_vide() -> None:
     with pytest.raises(RequeteVide):
         RechercheIndex(FakeEmbedder(), FakeVectorStore(), 3, 0.5).rechercher("  ")

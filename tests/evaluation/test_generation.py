@@ -126,6 +126,7 @@ def test_run_json(depot_eval: Path, modeles: Path, fabrique: Fabrique) -> None:
     assert config["serveur"] == {"generation": {"factice": True}, "embedding": {"factice": True}}
     assert config["chat_template_force"] is False
     assert config["profil_reseau"] == PROFIL_RESEAU == "aucun"
+    assert config["version_harnais"] == 2
     assert set(brut["entrees"]) == {"manifeste_jeu", "outils_mcp", "taches", "harnais", "modele"}
 
 

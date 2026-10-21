@@ -55,6 +55,8 @@ class RunCharge:
     seuils: Seuils
     jeu_statut: str
     scores: Scores
+    version_harnais: int = 1
+    """Version du harnais de génération (1 si le run n'en consigne pas, story 16.2)."""
 
     def par_tache(self) -> dict[str, list[ItemBase]]:
         return {
@@ -112,6 +114,17 @@ def _generations_du_run(run: Any, generation: str, base: Path) -> dict[str, Gene
     return generations
 
 
+def _version_harnais(run: Any, generation: str, base: Path) -> int:
+    """Version du harnais des générations du run (1 sans mention) ; la plus haute si composé."""
+    par_tache = run.manifeste.config.get("generations_par_tache")
+    ids = list(par_tache.values()) if isinstance(par_tache, dict) else [generation]
+    versions = []
+    for id_run in ids:
+        valeur = ouvrir_run(id_run, racine=base).manifeste.config.get("version_harnais", 1)
+        versions.append(valeur if isinstance(valeur, int) and not isinstance(valeur, bool) else 1)
+    return max(versions, default=1)
+
+
 def charger_run(run_id: str, base: Path, seuils: Seuils) -> RunCharge:
     """Recharge un run `eval-notation` (verdicts, contrôles, générations, items, scores)."""
     run = ouvrir_run(run_id, racine=base)
@@ -143,6 +156,7 @@ def charger_run(run_id: str, base: Path, seuils: Seuils) -> RunCharge:
         seuils=seuils,
         jeu_statut=scores.jeu_statut,
         scores=scores,
+        version_harnais=_version_harnais(run, generation, base),
     )
 
 
@@ -275,6 +289,8 @@ def _avertissements(runs: Sequence[RunCharge], communs: Mapping[str, list[str]])
         elif any(x != n for x in nombres):
             alertes.append(f"tâche {code} : {n} items communs sur {nombres} par run")
     for run in runs:
+        if run.version_harnais != runs[0].version_harnais:
+            alertes.append(f"harnais différents : {run.run_id} en v{run.version_harnais}")
         if run.scores.jeu_version != runs[0].scores.jeu_version:
             alertes.append(f"jeux différents : {run.run_id} en {run.scores.jeu_version}")
         if run.scores.juge_principal != runs[0].scores.juge_principal:
@@ -292,6 +308,12 @@ def _controler_homogenes(runs: Sequence[RunCharge]) -> None:
     """Refuse des runs notés sur des jeux ou par des juges principaux différents."""
     jeux = sorted({run.scores.jeu_version for run in runs})
     juges = sorted({run.scores.juge_principal for run in runs})
+    harnais = sorted({run.version_harnais for run in runs})
+    if len(harnais) > 1:
+        raise ValueError(
+            f"runs non comparables : versions de harnais {', '.join(map(str, harnais))} "
+            "(--autoriser-jeux-differents pour passer outre)"
+        )
     if len(jeux) > 1 or len(juges) > 1:
         raise ValueError(
             f"runs non comparables : jeux {', '.join(jeux)} ; juges principaux "

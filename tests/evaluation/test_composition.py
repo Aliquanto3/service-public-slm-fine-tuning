@@ -152,6 +152,16 @@ def test_refus_prompts_de_tache_differents(notations: tuple[Path, str, str]) -> 
         composition.composer({"CR": b}, a, racine=depot)
 
 
+def test_refus_versions_de_harnais_differentes(notations: tuple[Path, str, str]) -> None:
+    depot, a, b = notations
+    generation = ouvrir_run(b, racine=depot).manifeste.config["run_generation"]
+    _modifier_manifeste(generation, depot, lambda d: d["config"].update(version_harnais=3))
+    avant = sorted((depot / "runs" / "eval-notation").iterdir())
+    with pytest.raises(composition.ErreurComposition, match="version_harnais de"):
+        composition.composer({"CR": b}, a, racine=depot)
+    assert sorted((depot / "runs" / "eval-notation").iterdir()) == avant
+
+
 def test_refus_statut_non_ok_et_source_composee(notations: tuple[Path, str, str]) -> None:
     depot, a, b = notations
     for statut in ("partiel-budget", "interrompu"):

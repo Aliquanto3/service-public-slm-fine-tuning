@@ -148,7 +148,9 @@ class _RunFactice(bootstrap.RunCharge):
         jeu: str = "v1",
         juge: str = "claude",
         statut: str = "relu",
+        version_harnais: int = 1,
     ) -> None:
+        self.version_harnais = version_harnais
         self.run_id, self.items, self._sans = nom, items, sans_score  # type: ignore[assignment]
         attributs = {"taches": {}, "jeu_version": jeu, "juge_principal": juge, "jeu_statut": statut}
         self.scores = type("S", (), attributs)()  # type: ignore[assignment]
@@ -189,7 +191,11 @@ def test_qualite_sur_taches_definies_partout(monkeypatch: pytest.MonkeyPatch) ->
 
 @pytest.mark.parametrize(
     ("options", "motif"),
-    [({"jeu": "dev1"}, "jeux dev1, v1"), ({"juge": "glm"}, "juges principaux claude, glm")],
+    [
+        ({"jeu": "dev1"}, "jeux dev1, v1"),
+        ({"juge": "glm"}, "juges principaux claude, glm"),
+        ({"version_harnais": 2}, "versions de harnais 1, 2"),
+    ],
 )
 def test_jeux_ou_juges_differents_refuses(
     monkeypatch: pytest.MonkeyPatch, options: dict[str, str], motif: str

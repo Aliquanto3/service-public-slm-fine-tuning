@@ -69,7 +69,7 @@ def test_question_avec_passages(table, config_harnais) -> None:
     assert fin.raison == "terminee" and fin.urls_inventees == []
 
     assert embedder.textes == [question]
-    assert store.appels == [config_harnais.recherche.k]
+    assert store.appels == [config_harnais.question.passages]  # k propre à Q (16.2)
     appel = llm.appels[0]
     assert appel["tools"] is None
     assert appel["messages"] == construire_messages(table.tache("Q"), question, passages)

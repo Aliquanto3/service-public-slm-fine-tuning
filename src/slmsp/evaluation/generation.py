@@ -69,6 +69,7 @@ from slmsp.evaluation.modele_distant import (
     sha256_fichier,
 )
 from slmsp.evaluation.modele_ref import ModeleResolu, resoudre
+from slmsp.harness.config import VERSION_HARNAIS
 from slmsp.harness.prompts import construire_messages, entree_de_requete
 from slmsp.inference.serveur import VARIANTES
 
@@ -423,6 +424,7 @@ def _nouveau_run(
         "chat_template_force": modele.config.chat_template_force,
         "precision_gguf": modele.precision,
         "profil_reseau": harnais.profil_reseau,
+        "version_harnais": VERSION_HARNAIS,
     }
     if modele.lora is not None:
         config["lora"] = {"echelle": modele.echelle_lora, "gguf": modele.lora.name}
@@ -457,6 +459,7 @@ def _nouveau_run_distant(
         "items": [item.id for item in selection],
         "serveur": harnais.description,
         "profil_reseau": harnais.profil_reseau,
+        "version_harnais": VERSION_HARNAIS,
         "modele_distant": {
             "slug": modele.slug,
             "sha256": modele.sha256,

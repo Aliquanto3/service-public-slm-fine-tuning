@@ -50,8 +50,13 @@ class RechercheIndex:
         self.requetes_tronquees = 0
         """Requêtes tronquées par l'embedder (contexte) depuis la création."""
 
-    def rechercher(self, requete: str) -> list[Passage]:
-        """Passages de score `>= seuil` parmi les `k` plus proches, par score décroissant."""
+    def rechercher(self, requete: str, k: int | None = None) -> list[Passage]:
+        """Passages de score `>= seuil` parmi les `k` plus proches, par score décroissant.
+
+        `k` remplace pour cet appel celui de l'instance (Q, story 16.2).
+        """
+        if k is not None and (isinstance(k, bool) or not isinstance(k, int) or k <= 0):
+            raise ValueError(f"k doit être un entier > 0 (reçu {k!r})")
         if not requete.strip():
             raise RequeteVide("requête de recherche vide")
         # La troncature (à micro-lot - 16 tokens) est faite par l'embedder, qui la compte dans
@@ -63,7 +68,7 @@ class RechercheIndex:
             LOGGER.warning(
                 "recherche : requête de %d caractères tronquée par l'embedder", len(requete)
             )
-        passages = self.vector_store.rechercher(matrice[0], self.k)
+        passages = self.vector_store.rechercher(matrice[0], self.k if k is None else k)
         return [passage for passage in passages if passage.score >= self.seuil]
 
 

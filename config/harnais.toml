@@ -52,3 +52,15 @@ taille_max_octets = 2000000
 caracteres_max_page = 8000
 # Tokens maximaux de la réponse du Modèle embarqué.
 max_tokens = 400
+
+# Dédoublonnage du préfixe commun (titre + introduction) des passages d'une même page
+# (story 16.2, harnais v2) : retiré des passages suivants, gardé dans le premier.
+[dedoublonnage]
+# Longueur minimale (caractères) du préfixe commun pour qu'il soit retiré.
+prefixe_min_caracteres = 80
+
+# Question sur une démarche (story 16.2, harnais v2) : nombre de passages demandés à l'Index,
+# propre à Q (le `k` de Q). La Recherche de données et la génération de données gardent `k` de
+# config/index.toml (5).
+[question]
+passages = 8
