@@ -11,10 +11,13 @@ Constat de départ : les pertes CR, LC et RE viennent d'une **dérive générale
 | 16.3 | CT : prompts d'entraînement alignés et garde-fou anti-boucle | code |
 | 16.4 | `eval composer` accepte un run routé partiel (report du 21/10) | code |
 | 16.5 | `eval comparer` sur jeux regroupés (dev1 + dev2) | code |
-| 16.6 ★ | Essais contre la dérive : taux, rang, pas | runs GPU (protocole relu par Anaël) |
+| 16.6a | Régularisation KL vers la base (auto-distillation) dans l'entraîneur | code |
+| 16.6 ★ | Essais contre la dérive : taux, rang, pas, KL vers la base | runs GPU (protocole relu par Anaël) |
 | 16.7 | Confirmation de l'échelle 0,25 et du routage CO sur dev1 + dev2 | runs |
 
 Hors epic : complément de données CR (sorties de la base sans invention), **après** 16.6 (décision 4 du 21/10) ; abstention Q (levier 4 de D0) ; paires C5, E3, E6 ; toute mesure finale v1.1 (v1.1 n'est pas consulté dans cet epic).
+
+Distillation (échange du 21/10) : CGU relues le 21/10. Mistral (texte) et DeepSeek (distillation citée, §4.2) l'autorisent ; **Z.ai (GLM) interdit d'entraîner sur ses sorties, et Kimi interdit tout modèle « potentiellement concurrent »** : GLM reste juge des seuls jeux `dev*`, aucun verdict ni texte GLM ou Kimi n'entre dans un jeu d'entraînement ni dans une sélection de cibles. La distillation des logits d'un 4B vers Qwen 0.8B est hors epic, à décider d'après la mesure de qwen-4b sur dev1 (lancée le 21/10). Attention : `qwen-4b` est Qwen3-4B (vocabulaire de 151 643 entrées) et Qwen3.5-0.8B/2B ont un autre tokeniseur (248 044 entrées) ; une distillation des logits demanderait Qwen3.5-4B.
 
 ## Règles de décision (écrites avant tout calcul)
 Mêmes conventions que l'epic 15 : bootstrap apparié par `eval comparer`, IC95, juge GLM sur `dev*`, second juge désactivé (15.4), génération sur GPU, charge sur CPU.
@@ -59,11 +62,19 @@ Le 21/10, `eval composer` a refusé la composition v1.1 du routage CO (run rout�
 - Fini quand : tests sur fixtures (stratification, union, refus si juges ou grilles diffèrent entre paires, une seule paire = comportement actuel inchangé).
 - Même zone de code que 16.4 (CLI `eval`) : pas dans la même vague.
 
-## 16.6 ★ — Essais contre la dérive : taux, rang, pas
+## 16.6a — Régularisation KL vers la base (auto-distillation)
+Validé par Anaël le 21/10 : la base sert de professeur pour retenir l'adaptateur près d'elle pendant l'apprentissage (l'échelle 0,25 le fait après coup). 0 € : même poids, aucune donnée nouvelle, aucun texte rédigé (D1 inchangé).
+- Hyperparamètre `kl_base` (défaut 0 = comportement actuel inchangé, octet pour octet) dans `[hyperparametres]` des configs d'entraînement SFT : perte = entropie croisée + `kl_base` × KL(élève ‖ base) par token, moyennée sur les tokens de la réponse (même masque de perte que le SFT). La distribution de la base est calculée dans le même pas, adaptateur désactivé (`disable_adapter` de PEFT), sans gradient : aucune copie des poids, aucune mémoire GPU de poids en plus.
+- Option `kl_temperature` (défaut 1). Le terme KL et l'entropie croisée sont journalisés séparément dans `metriques.jsonl`.
+- QLoRA seulement (le chemin Unsloth et ORPO refusent `kl_base > 0` avec un message clair, plutôt qu'un comportement silencieux).
+- Invariants du run : `kl_base` et `kl_temperature` consignés dans la config et dans le manifeste ; `compare comparatif` les affiche.
+- Fini quand : tests (KL nulle quand l'adaptateur est nul, `kl_base = 0` identique au chemin actuel, masque respecté, refus hors QLoRA, journalisation) ; un entraînement réel de 5 pas sur v18 (orchestrateur) mesure le surcoût en temps et en VRAM (attendu : +30 à 50 % de temps, VRAM des activations seulement).
+
+## 16.6 ★ — Essais contre la dérive : taux, rang, pas, KL vers la base
 Hypothèse : l'adaptateur v18 (QLoRA, rang 16, alpha 32, taux 2e-4, 1 époque, 468 exemples, accumulation 8, soit ~58 pas, cosinus) déplace trop la base ; l'échelle 0,25 le confirme sans entraînement. Les essais cherchent un adaptateur **entraîné** qui garde CO et RD sans perdre CR, LC et RE.
 **Protocole relu par Anaël avant le premier entraînement** (mémoire « relecture avant entraînement ») : grille, jeu v21, règle de décision.
 - Jeu : **v21** (16.3). Graine 1234, autres hyperparamètres de v18 inchangés.
-- Grille (6 entraînements MiniCPM5-2B, rapport alpha/rang constant à 2 pour isoler la capacité du rang) :
+- Grille (7 entraînements MiniCPM5-2B, rapport alpha/rang constant à 2 pour isoler la capacité du rang) :
 
   | Essai | Rang | Alpha | Taux | Époques | Ce qu'il teste |
   |---|---|---|---|---|---|
@@ -73,11 +84,12 @@ Hypothèse : l'adaptateur v18 (QLoRA, rang 16, alpha 32, taux 2e-4, 1 époque, 4
   | T3 | 4 | 8 | 2e-4 | 1 | rang |
   | T4 | 8 | 16 | 1e-4 | 1 | rang et taux |
   | T5 | 16 | 32 | 2e-4 | 0,5 | pas (planificateur calé sur la demi-époque) |
+  | T6 | 16 | 32 | 2e-4 | 1 | KL vers la base (16.6a), `kl_base` choisi sur l'essai de 5 pas de 16.6a pour que le terme KL pèse environ le quart de l'entropie croisée en début d'entraînement |
 
-- Chaque essai : export LoRA GGUF (15.6), génération dev1 à l'échelle 1 sur base Q4_K_M (harnais v2, GPU), notation GLM, `eval comparer` contre la Baseline v2. Coût : ~0,3 € de notation par essai, ~2 € au total (OpenRouter).
+- Chaque essai : export LoRA GGUF (15.6), génération dev1 à l'échelle 1 sur base Q4_K_M (harnais v2, GPU), notation GLM, `eval comparer` contre la Baseline v2. Coût : ~0,3 € de notation par essai, ~2,1 € au total (OpenRouter).
 - Le meilleur essai qui passe est aussi rapporté à l'échelle 0,5 (une génération de plus) pour situer l'optimum.
 - Indicateurs en plus de la Qualité : boucles CT (16.3), inventions CR et RE par item (grille D0), sorties tronquées par tâche.
-- Fini quand : 6 runs entraînés, tableau dev1 dans `run-autonome.md` avec IC95 par tâche, configuration retenue (ou aucune) selon la règle écrite ; la configuration retenue entre dans 16.7.
+- Fini quand : 7 runs entraînés, tableau dev1 dans `run-autonome.md` avec IC95 par tâche, configuration retenue (ou aucune) selon la règle écrite ; la configuration retenue entre dans 16.7.
 
 ## 16.7 — Confirmation de l'échelle 0,25 et du routage CO sur dev1 + dev2
 Après 16.1 (dev2 gelé), 16.2 à 16.5 fusionnés, et 16.6 pour son candidat.
@@ -91,8 +103,8 @@ Après 16.1 (dev2 gelé), 16.2 à 16.5 fusionnés, et 16.6 pour son candidat.
 | Vague | Stories en parallèle | Après |
 |---|---|---|
 | V0 | 16.1 (orchestrateur) · 16.2 · 16.3 · 16.4 | 16.3 : spec relue avant code (D1) |
-| V1 | 16.5 · Baseline dev1 en harnais v2 · build v21 et relecture par Anaël (humaine) | 16.5 ← 16.4 ; Baseline v2 ← 16.2, 16.3 |
-| V2 | 16.6 ★ (entraînements séquentiels sur GPU) | 16.6 ← protocole et v21 relus par Anaël |
+| V1 | 16.5 · 16.6a · Baseline dev1 en harnais v2 · build v21 et relecture par Anaël (humaine) | 16.5 ← 16.4 ; Baseline v2 ← 16.2, 16.3 |
+| V2 | 16.6 ★ (entraînements séquentiels sur GPU) | 16.6 ← 16.6a, protocole et v21 relus par Anaël |
 | V3 | 16.7 | 16.7 ← 16.1, 16.5, 16.6 |
 
 Budget estimé : OpenRouter ~5 € (vérification dev2, notations GLM), Anthropic 0 €, Mistral 0 €.
