@@ -32,6 +32,15 @@ Même schéma et même procédé que dev1 (`eval/construction/dev1/README.md`) :
 
 Contrôles automatiques sur les 160 items (`tests/eval_outils/test_items_dev1.py`, étendu à dev2) et relecture contre les sources : 160 verdicts `accepte` dans `verification/`.
 
+## Contre-vérification croisée et corrections 15.5b
+
+DeepSeek + GLM, consigne 3 : 130 retenus, 26 rejetés, 4 incomplets (LC-615 à LC-618, erreurs de transport, non modifiés). Sur les 26 rejets, sans plaidoyer :
+- 19 corrigés (`version_item` 2, verdict de construction 15.5b dans `verification/`) : 6 RD dont l'extrait de provenance ne citait que le dernier appel (il cite désormais aussi `search_datasets`), Q-609, Q-612, Q-613, NR-606, LC-619, CO-618, CR-619 et 6 RE (points clés alignés sur la consigne et le document).
+- 2 remplacés par des textes fictifs neufs de même Tâche, difficulté et thème : CO-606 → CO-621, CO-613 → CO-622 (textes déjà fictifs, griefs factuellement inexacts) ; les remplacés gardent un verdict `rejete` dans `verification/`.
+- 5 laissés tels quels pour la décision d'Anaël (signalés à l'orchestrateur) : CO-615 (texte réel, Licence Ouverte, convention G4 : grief inexact, « prévoire » est bien corrigé) ; CO-609 (`fictif` vrai pour un texte réel à fautes injectées, arbitrage G4) ; CT-602, CT-612 et CT-614 (formules d'appel et de politesse, rédaction ouverte, communes aux 20 CT).
+
+Détail : `_bmad-output/implementation-artifacts/spec-15-5b-dev2-corrections.md`.
+
 ## Reste à faire (orchestrateur)
 
 Contre-vérification croisée DeepSeek + GLM (`verifier_jeu_croise.py verifier --version dev2 --juges deepseek,glm`, 320 appels), réassemblage, puis gel `relu-llm` (hors story 15.5).
