@@ -212,3 +212,14 @@ def test_jeu_relu_llm_signale(monkeypatch: pytest.MonkeyPatch) -> None:
     ]
     resultat = bootstrap.comparer(runs, tirages=5, graine=1)
     assert any("relu-llm" in w for w in resultat.avertissements)
+
+
+def test_items_exclus_retires_avant_tirage(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Revue 17.5a : un item non noté d'un côté sort de l'ensemble commun des deux runs."""
+    monkeypatch.setattr(bootstrap, "verifier_recalcul", lambda run: None)
+    a = _RunFactice("a", _items({"Q": 6}))
+    b = _RunFactice("b", _items({"Q": 6}))
+    resultat = bootstrap.comparer([a, b], tirages=20, graine=1, exclus={"Q-000", "Q-002"})
+    assert resultat.items_communs == {"Q": 4}
+    assert any("4 items communs" in w for w in resultat.avertissements)
+    assert resultat.observes[0]["Q"] == 25.0  # Q-001, Q-003, Q-004, Q-005 : un seul pair

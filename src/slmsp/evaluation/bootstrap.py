@@ -14,7 +14,7 @@ décodage d'évaluation étant glouton, ce bruit est celui de l'échantillonnage
 from __future__ import annotations
 
 import random
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
@@ -219,6 +219,23 @@ class Resultat:
     items_communs: dict[str, int]
     avertissements: list[str] = field(default_factory=list)
     tirages_partiels: int = 0
+    observes: list[dict[str, float]] = field(default_factory=list)
+    """Scores observés (sans rééchantillonnage) de chaque run, sur les items communs."""
+
+
+def items_non_notes(run: RunCharge) -> set[str]:
+    """Items exclus du score du run : génération en échec, ou verdict principal absent,
+    `non-juge` ou invalide là où la Tâche en exige un (ni CO, ni RD, notés par contrôles)."""
+    exclus: set[str] = set()
+    for item in run.items:
+        generation = run.generations.get(item.id)
+        if generation is None or generation.statut != "ok":
+            exclus.add(item.id)
+        elif item.code not in ("CO", "RD"):
+            jugement = run.principal.get(item.id)
+            if jugement is None or not jugement.valide:
+                exclus.add(item.id)
+    return exclus
 
 
 def _scores_taches(run: RunCharge, ids: Mapping[str, list[str]]) -> dict[str, float]:
@@ -288,11 +305,13 @@ def comparer(
     tirages: int = 2000,
     graine: int = 7,
     autoriser_jeux_differents: bool = False,
+    exclus: Collection[str] = (),
 ) -> Resultat:
     """Bootstrap apparié : le premier run est la référence A, les suivants sont les B.
 
     Lève `ValueError` si les runs portent des jeux ou des juges principaux différents, sauf
-    `autoriser_jeux_differents` (l'écart est alors un avertissement).
+    `autoriser_jeux_differents` (l'écart est alors un avertissement). `exclus` : items retirés
+    de l'ensemble commun avant tirage (par exemple non notés dans l'un des runs).
     """
     if not runs:
         raise ValueError("au moins un run requis")
@@ -304,7 +323,9 @@ def comparer(
         verifier_recalcul(run)
     communs: dict[str, list[str]] = {}
     for code in CODES:
-        listes = [{i.id for i in run.items if i.code == code} for run in runs]
+        listes = [
+            {i.id for i in run.items if i.code == code and i.id not in exclus} for run in runs
+        ]
         commun = sorted(set.intersection(*listes))
         if commun:
             communs[code] = commun
@@ -353,6 +374,7 @@ def comparer(
         items_communs={code: len(liste) for code, liste in communs.items()},
         avertissements=avertissements,
         tirages_partiels=partiels,
+        observes=observes,
     )
 
 

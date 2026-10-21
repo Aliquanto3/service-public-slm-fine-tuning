@@ -1,0 +1,51 @@
+# Sélection du comparatif « Modèles » de l'application (story 17.5a).
+# Lue par `slmsp compare fiche-app` : lecture seule de runs/, JSON figé embarqué dans l'application.
+# Tous les modèles sont notés sur le même jeu (dev1) par le même juge que la référence.
+# `run_mesure` : mesure H-RAM du poste (CPU, 4 threads, q4_k_m) ; absent = vitesse non mesurée.
+
+schema_version = 1
+reference = "minicpm5-2b"
+
+[[modeles]]
+id = "minicpm5-2b"
+libelle = "MiniCPM5-2B (base)"
+emplacement = "poste"
+run_notation = "20261021-095813-minicpm5-2b-47d5"
+run_mesure = "20261021-023836-h-ram-f89e"
+licence = "Apache 2.0"
+hebergement = "Poste de l'Agent"
+note = "Modèle de référence du comparatif."
+
+[[modeles]]
+id = "qwen3.5-0.8b"
+libelle = "Qwen3.5-0.8B (base)"
+emplacement = "poste"
+run_notation = "20261020-183739-qwen3.5-0.8b-6be5"
+licence = "Apache 2.0"
+hebergement = "Poste de l'Agent"
+
+[[modeles]]
+id = "qwen3.5-2b"
+libelle = "Qwen3.5-2B (base)"
+emplacement = "poste"
+run_notation = "20261021-075050-qwen3.5-2b-9ed5"
+licence = "Apache 2.0"
+hebergement = "Poste de l'Agent"
+
+[[modeles]]
+id = "qwen3.5-4b"
+libelle = "Qwen3.5-4B (base)"
+emplacement = "poste"
+run_notation = "20261021-072300-qwen3.5-4b-d113"
+licence = "Apache 2.0"
+hebergement = "Poste de l'Agent"
+
+[[modeles]]
+id = "qwen3.6-27b"
+libelle = "Qwen3.6-27B (cloud)"
+emplacement = "cloud"
+run_notation = "20261021-094134-distant-qwen3.6-27b-fc13"
+run_generation = "20261021-092032-distant-qwen3.6-27b-3ae2"
+licence = "Apache 2.0"
+hebergement = "OpenRouter → DeepInfra (États-Unis)"
+note = "Hébergeur épinglé, quantification fp8 ; sorties pour la mesure seulement."

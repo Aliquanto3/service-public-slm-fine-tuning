@@ -2,7 +2,7 @@
 title: 'Story 17.5 — Onglet « Modèles » : comparatif qualité, coût, vitesse pour les équipes techniques'
 type: 'feature'
 created: '2026-10-21'
-status: ready-for-dev
+status: review
 context:
   - '{project-root}/_bmad-output/planning-artifacts/stories-epic-17-modele-distant.md'
   - '{project-root}/_bmad-output/implementation-artifacts/consignes-sous-agents-2026-10-20.md'
@@ -35,3 +35,20 @@ Découpage : **17.5a** (données : commande de génération du JSON, parallélis
 
 ## Hors story
 Mesures elles-mêmes (l'orchestrateur lance les mesures CPU manquantes et choisit les runs du TOML) ; graphiques élaborés ; mise à jour en ligne des données.
+
+## Auto Run Result — 17.5a (2026-10-21)
+- Livré : `src/slmsp/evaluation/fiche_app.py` (et non `src/slmsp/compare/` comme prévu : `tests/test_architecture.py` interdit l'import entre paquets de même couche, or `compare` et `evaluation` sont tous deux en couche 4 et le module réutilise `evaluation.bootstrap`), sous-commande `slmsp compare fiche-app`, `config/comparatif-app.toml`, `tests/compare/test_fiche_app.py` (11 tests), JSON réel `src/slmsp/app/ui/donnees/comparatif-modeles.json`. Qualité vérifiée : 54,5 / 36,8 / 42,7 / 54,6 / 71,6 ; bootstrap apparié (2000 tirages, graine 7) via `bootstrap.comparer`.
+- Décisions : (1) ~~une notation `partiel-erreur` est acceptée~~ annulée en revue : la spec est maintenue (notation `complet` seulement), la référence a été re-notée complète (`20261021-095813-minicpm5-2b-47d5`) ; (2) `run_mesure` de MiniCPM5-2B = `20261021-023836-h-ram-f89e` (base, CPU 4 threads, la plus récente) ; la mesure `…030201-h-ram-4e18` est celle de Qwen3-4B, pas retenue ; Qwen3.5-0.8B/2B/4B sans mesure (les mesures de 18/10 existent mais sous une charge différente : 16,7 contre 12,1 tokens/s pour MiniCPM5-2B), à confirmer par Anaël ; (3) ~~cloud : coût = moyenne du `cout_eur` par item sur les appels réussis~~ corrigé en revue : somme des `cout_eur` de tous les appels facturés ÷ items notés × 1000, génération seule (juge exclu) ; (4) commit de l'en-tête = HEAD du dépôt qui contient le TOML.
+- Report : la vue (17.5b).
+
+## Revue — 17.5a (2026-10-21, reviewer, avec le second avis)
+- MEDIUM corrigé — coût cloud sous-estimé (dernier appel réussi par item, rejeux ignorés) : coût = somme des `cout_eur` de tous les appels facturés ÷ items notés × 1000 (1,16 €/1 000 au lieu de 1,0), libellé « coût réel par demande, relances et appels d'outils compris » ; prix par Mtok conservé.
+- MEDIUM corrigé — appariement biaisé par des items non notés d'un seul côté : `bootstrap.comparer(..., exclus=)` et `bootstrap.items_non_notes` ; la fiche compare chaque modèle à la référence par paire en retirant avant tirage les items non notés dans l'un des deux runs, signalé en avertissement ; tests `test_items_exclus_retires_avant_tirage`, `test_appariement_retire_les_items_non_notes`.
+- MEDIUM corrigé — run de notation `partiel-erreur` accepté : spec maintenue (`complet` seul), référence remplacée par `20261021-095813-minicpm5-2b-47d5` ; test `test_run_notation_partiel_refuse`.
+- LOW corrigé — vitesse cloud : médianes sur tous les appels réussis, champ `vitesse.mention` explicite.
+- LOW corrigé — erreurs de forme (journal vide ou non-objet, `cout_eur` nul, `modele_id` absent ou multiple, valeurs de mesure `None`, environnement non-objet, plage de bruit vide) : `ErreurFicheApp` ; tests paramétrés.
+- LOW corrigé — note d'emplacement erronée dans « Auto Run Result » ; la règle de couches existe (`tests/test_architecture.py`, `compare` et `evaluation` en couche 4).
+- MEDIUM corrigé (chasse aux cas limites) — un `run_mesure` d'un autre modèle était accepté (la mesure de Qwen3-4B a failli être retenue) : refus si `parametres.modele` ne correspond pas à l'`id` ; test.
+- LOW corrigé — même run de notation cité pour deux modèles (clé du bruit écrasée) : refus à la validation ; test.
+- LOW corrigé — avertissements de paire écrits avec l'identifiant de run : remplacés par le libellé du modèle.
+- LOW rejeté — le `commit` de l'en-tête ne signale pas un arbre de travail modifié : le JSON est régénéré après le commit du code, dans un commit séparé, pour que `commit` désigne le code et le TOML qui l'ont produit.
