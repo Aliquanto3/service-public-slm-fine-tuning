@@ -9,13 +9,14 @@ Constat de départ : les pertes CR, LC et RE viennent d'une **dérive générale
 | 16.1 | dev2 : relance unique des 5 items rejetés, puis exclusion et gel | orchestrateur (mixte) |
 | 16.2 | Q : 8 passages et dédoublonnage du préfixe des chunks (harnais v2) | code |
 | 16.3 | CT : prompts d'entraînement alignés et garde-fou anti-boucle | code |
+| 16.8 | Q : abstention quand aucun passage ne répond (harnais v2) | code |
 | 16.4 | `eval composer` accepte un run routé partiel (report du 21/10) | code |
 | 16.5 | `eval comparer` sur jeux regroupés (dev1 + dev2) | code |
 | 16.6a | Régularisation KL vers la base (auto-distillation) dans l'entraîneur | code |
 | 16.6 ★ | Essais contre la dérive : taux, rang, pas, KL vers la base | runs GPU (protocole relu par Anaël) |
 | 16.7 | Confirmation de l'échelle 0,25 et du routage CO sur dev1 + dev2 | runs |
 
-Hors epic : complément de données CR (sorties de la base sans invention), **après** 16.6 (décision 4 du 21/10) ; abstention Q (levier 4 de D0) ; paires C5, E3, E6 ; toute mesure finale v1.1 (v1.1 n'est pas consulté dans cet epic).
+Hors epic : complément de données CR (sorties de la base sans invention), **après** 16.6 (décision 4 du 21/10) ; exemples d'abstention dans les données d'entraînement Q (suite éventuelle de 16.8) ; paires C5, E3, E6 ; toute mesure finale v1.1 (v1.1 n'est pas consulté dans cet epic).
 
 Distillation (échange du 21/10) : CGU relues le 21/10. Mistral (texte) et DeepSeek (distillation citée, §4.2) l'autorisent ; **Z.ai (GLM) interdit d'entraîner sur ses sorties, et Kimi interdit tout modèle « potentiellement concurrent »** : GLM reste juge des seuls jeux `dev*`, aucun verdict ni texte GLM ou Kimi n'entre dans un jeu d'entraînement ni dans une sélection de cibles. La distillation des logits d'un 4B vers Qwen 0.8B est hors epic, à décider d'après la mesure de qwen-4b sur dev1 (lancée le 21/10). Attention : `qwen-4b` est Qwen3-4B (vocabulaire de 151 643 entrées) et Qwen3.5-0.8B/2B ont un autre tokeniseur (248 044 entrées) ; une distillation des logits demanderait Qwen3.5-4B.
 
@@ -24,7 +25,8 @@ Mêmes conventions que l'epic 15 : bootstrap apparié par `eval comparer`, IC95,
 - **Non-infériorité (règle E7)** : aucune tâche avec une borne basse < −10 contre la Baseline, et Qualité ≥ Baseline − 2.
 - **16.6, configuration retenue** : passe la non-infériorité sur dev1 **et** garde le gain CO (borne basse CO > 0 contre la Baseline) ; parmi celles qui passent, la meilleure Qualité. Elle remplace le routage CO comme recommandation seulement si sa Qualité dev1 ≥ celle du routage CO − 1 (un modèle unique évite la bascule d'adaptateur par tâche) ; sinon elle est rapportée sans changer la recommandation. Décision définitive après dev2 (16.7). *Seuil « − 1 » à valider par Anaël à la relecture du protocole.*
 - **16.7, routage CO confirmé** si, sur dev2 seul, la borne basse CO > 0 contre la Baseline et aucune autre tâche ne bouge (le routage n'y touche pas : contrôle de cohérence). **Échelle 0,25 confirmée** si la non-infériorité tient sur dev2 seul. dev2 tranche (jamais consulté pour choisir) ; le regroupement dev1 + dev2 est rapporté pour la précision, il ne tranche pas.
-- Contrat partagé : la version du harnais passe à **2** (16.2 porte l'incrément, 16.3 ajoute sa section sans réincrémenter). Toute comparaison de 16.6 et 16.7 se fait entre runs du harnais v2 ; aucun run v1 n'est mélangé à un run v2.
+- **16.8, abstention retenue** si, sur dev1 + dev2, les items `sans_reponse` passent de 0 à au moins la moitié en abstention correcte, **et** au plus 1 fausse abstention sur les items Q à réponse, **et** l'exactitude Q des items à réponse ne baisse pas de plus de 5 points (Baseline MiniCPM5-2B, harnais v2 sans puis avec 16.8).
+- Contrat partagé : la version du harnais passe à **2** (16.2 porte l'incrément, 16.3 et 16.8 ajoutent leur section sans réincrémenter). Toute comparaison de 16.6 et 16.7 se fait entre runs du harnais v2 ; aucun run v1 n'est mélangé à un run v2.
 
 ## 16.1 — dev2 : relance unique, puis exclusion et gel (décision d'Anaël, 21/10)
 Items : CO-609, CO-615, CT-602, CT-612, CT-614 (état et griefs : `../implementation-artifacts/spec-15-5b-dev2-corrections.md`).
@@ -49,6 +51,14 @@ Levier 5 de D0 : 13/20 sorties CT de v18 bouclent dans le bloc d'en-tête ; 20/2
 - **Décodage (harnais v2, section `[anti_boucle]`)** : arrêt déterministe quand une même ligne non vide revient au-delà d'un seuil, ou quand la part de 4-grammes répétés sur une fenêtre dépasse un seuil (seuils en configuration). La sortie est coupée avant la répétition et marquée `raison=boucle` ; aucune pénalité de répétition (les sorties qui ne bouclent pas restent identiques octet pour octet, d'où une Baseline comparable). S'applique à tous les modèles.
 - La mesure CT reste rapportée **saturée** (conformité 0/20 y compris pour la base) : elle ne sert pas à trancher ; le nombre de boucles en est l'indicateur.
 - Fini quand : tests (extraction des libellés, prompt v21 attendu, lignes non CT inchangées, MANIFEST) ; le garde-fou rejoué sur les sorties réelles de dev1 coupe les 13 boucles de v18 et aucune des 20 sorties CT de la Baseline (ni aucune autre sortie de la Baseline dev1) ; build v21 produit et relu par Anaël avant tout entraînement (16.6).
+
+## 16.8 — Q : abstention quand aucun passage ne répond (harnais v2)
+Levier 4 de D0, demandé par Anaël le 21/10 (préalable au pilote MiniCPM5-2B : une réponse inventée à un Agent est le premier risque). Constat : la consigne Q demande déjà de dire qu'aucun passage ne répond, mais les 3 items `sans_reponse` de dev1 sont à 0 pour tous les modèles ; le seuil 0,5 ne déclenche jamais `AUCUN_PASSAGE` (scores hors corpus 0,55-0,67, en corpus 0,60-0,79 : un seuil seul ne sépare pas).
+- **Vérification d'abord** : le Harnais fait précéder la réponse d'un court appel au même modèle, « les passages répondent-ils à la question ? » (sortie contrainte `oui` / `non` par grammaire llama-server, `max_tokens` minimal). Sur `non`, la réponse est la phrase fixe d'abstention, suivie de l'orientation vers la source officielle (texte fixe du Harnais, pas généré) ; sur `oui`, le flux actuel est inchangé. Activable par `[q_abstention]` dans `config/harnais.toml` (défaut : actif en harnais v2) ; le verdict est consigné dans la trace et dans la génération d'évaluation.
+- Textes fixes (question de vérification, phrase d'abstention) : textes de produit dans `config/prompts/` (version du prompt Q à 2), relus par Anaël avant fusion ; ils n'entrent dans aucune donnée d'entraînement.
+- Latence : un appel de plus, de quelques tokens ; mesurée sur CPU (`measure run`), cible ≤ 0,5 s ajoutée au premier token.
+- Le seuil de pertinence reste à 0,5 ; un rejeu des scores bge-m3 de dev1 + dev2 (0 €) est joint pour documenter qu'il ne sépare pas.
+- Fini quand : tests (verdict `non` → abstention fixe, verdict `oui` → flux inchangé octet pour octet, grammaire, désactivation par config, trace) ; mesure par l'orchestrateur selon la règle écrite plus haut.
 
 ## 16.4 — `eval composer` : run routé partiel (report du 21/10)
 Le 21/10, `eval composer` a refusé la composition v1.1 du routage CO (run routé généré avec `--items` sur les 15 items CO seulement) ; la Qualité 43,6 a été calculée à la main.
@@ -103,7 +113,8 @@ Après 16.1 (dev2 gelé), 16.2 à 16.5 fusionnés, et 16.6 pour son candidat.
 | Vague | Stories en parallèle | Après |
 |---|---|---|
 | V0 | 16.1 (orchestrateur) · 16.2 · 16.3 · 16.4 | 16.3 : spec relue avant code (D1) |
-| V1 | 16.5 · 16.6a · Baseline dev1 en harnais v2 · build v21 et relecture par Anaël (humaine) | 16.5 ← 16.4 ; Baseline v2 ← 16.2, 16.3 |
+| V1 | 16.5 · 16.6a · 16.8 · build v21 et relecture par Anaël (humaine) | 16.5 ← 16.4 ; 16.8 ← 16.2 (même zone du Harnais Q) |
+| V1b | Baseline dev1 en harnais v2 (sans puis avec abstention) | ← 16.2, 16.3, 16.8 |
 | V2 | 16.6 ★ (entraînements séquentiels sur GPU) | 16.6 ← 16.6a, protocole et v21 relus par Anaël |
 | V3 | 16.7 | 16.7 ← 16.1, 16.5, 16.6 |
 
