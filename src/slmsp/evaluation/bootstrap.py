@@ -57,6 +57,8 @@ class RunCharge:
     scores: Scores
     version_harnais: int = 1
     """Version du harnais de génération (1 si le run n'en consigne pas, story 16.2)."""
+    grille_sha256: str | None = None
+    """Empreinte de la grille du juge consignée dans `run.json` (None si absente, story 16.5)."""
 
     def par_tache(self) -> dict[str, list[ItemBase]]:
         return {
@@ -157,6 +159,7 @@ def charger_run(run_id: str, base: Path, seuils: Seuils) -> RunCharge:
         jeu_statut=scores.jeu_statut,
         scores=scores,
         version_harnais=_version_harnais(run, generation, base),
+        grille_sha256=run.manifeste.entrees.get("grille"),
     )
 
 
@@ -297,7 +300,7 @@ def _avertissements(runs: Sequence[RunCharge], communs: Mapping[str, list[str]])
             alertes.append(
                 f"juges principaux différents : {run.run_id} noté par {run.scores.juge_principal}"
             )
-    if any(run.scores.jeu_statut == cfg.STATUT_RELU_LLM for run in runs):
+    if any(run.jeu_statut == cfg.STATUT_RELU_LLM for run in runs):
         alertes.append(
             "jeu de développement (relu-llm) : comparaison pour décider, jamais une mesure finale"
         )
@@ -321,6 +324,16 @@ def _controler_homogenes(runs: Sequence[RunCharge]) -> None:
         )
 
 
+def _tirer_par_strate(
+    rng: random.Random, liste: Sequence[str], strates: Mapping[str, str]
+) -> list[str]:
+    """Rééchantillonne `liste` avec remise, chaque item restant dans sa strate."""
+    groupes: dict[str, list[str]] = {}
+    for identifiant in liste:
+        groupes.setdefault(strates[identifiant], []).append(identifiant)
+    return [i for groupe in groupes.values() for i in rng.choices(groupe, k=len(groupe))]
+
+
 def comparer(
     runs: Sequence[RunCharge],
     *,
@@ -328,8 +341,13 @@ def comparer(
     graine: int = 7,
     autoriser_jeux_differents: bool = False,
     exclus: Collection[str] = (),
+    strates: Mapping[str, str] | None = None,
 ) -> Resultat:
     """Bootstrap apparié : le premier run est la référence A, les suivants sont les B.
+
+    Avec `strates` (item_id vers jeu), les items de chaque Tâche sont rééchantillonnés dans
+    leur strate seulement ; les contrôles de cohérence et de recalcul, faits par l'appelant
+    sur les runs d'origine (story 16.5), sont alors omis.
 
     Lève `ValueError` si les runs portent des jeux ou des juges principaux différents, sauf
     `autoriser_jeux_differents` (l'écart est alors un avertissement). `exclus` : items retirés
@@ -337,12 +355,13 @@ def comparer(
     """
     if not runs:
         raise ValueError("au moins un run requis")
-    if not autoriser_jeux_differents:
+    if not autoriser_jeux_differents and strates is None:
         _controler_homogenes(runs)
     if tirages < 1:
         raise ValueError("--bootstrap doit être au moins 1")
-    for run in runs:
-        verifier_recalcul(run)
+    if strates is None:
+        for run in runs:
+            verifier_recalcul(run)
     communs: dict[str, list[str]] = {}
     for code in CODES:
         listes = [
@@ -356,7 +375,10 @@ def comparer(
     tires: list[list[dict[str, float]]] = [[] for _ in runs]
     partiels = 0
     for _ in range(tirages):
-        tirage = {code: rng.choices(liste, k=len(liste)) for code, liste in communs.items()}
+        if strates is None:
+            tirage = {code: rng.choices(liste, k=len(liste)) for code, liste in communs.items()}
+        else:
+            tirage = {c: _tirer_par_strate(rng, liste, strates) for c, liste in communs.items()}
         du_tirage = [_scores_taches(run, tirage) for run in runs]  # mêmes items pour tous
         partiels += _ajouter_qualite(du_tirage)
         for rang, scores in enumerate(du_tirage):
@@ -370,7 +392,7 @@ def comparer(
             "(Tâche sans score dans un des runs)"
         )
     for run, obs in zip(runs, observes, strict=True):
-        for code, valeur in obs.items():
+        for code, valeur in obs.items() if strates is None else ():
             attendu = run.scores.taches[code].score if code in run.scores.taches else None
             if code != QUALITE and attendu is not None and abs(valeur - attendu) > 0.05:
                 avertissements.append(
@@ -482,13 +504,203 @@ def comparer_runs(
     )
 
 
+@dataclass(frozen=True)
+class ResultatGroupe:
+    """Comparaison de plusieurs paires (A, B) sur des jeux distincts (story 16.5)."""
+
+    jeux: list[str]
+    """Jeu de chaque paire, dans l'ordre des paires."""
+    paires: list[Resultat]
+    regroupe: Resultat
+
+
+def _controler_paires(paires: Sequence[tuple[RunCharge, RunCharge]], autoriser: bool) -> None:
+    """Contrôles actuels par paire, puis, même avec `autoriser` : même juge principal, même
+    grille et même version de harnais entre paires, et chaque jeu dans une seule paire."""
+    if not autoriser:
+        for paire in paires:
+            _controler_homogenes(paire)
+    vus: dict[str, int] = {}
+    for rang, paire in enumerate(paires, 1):
+        for jeu in sorted({run.scores.jeu_version for run in paire}):
+            if jeu in vus:
+                raise ValueError(
+                    f"paires non regroupables : jeu {jeu} dans les paires {vus[jeu]} et {rang} "
+                    "(un item compté deux fois réduirait l'IC)"
+                )
+            vus[jeu] = rang
+    runs = [run for paire in paires for run in paire]
+    juges = sorted({run.scores.juge_principal for run in runs})
+    grilles = sorted({run.grille_sha256 or "absente" for run in runs})
+    harnais = sorted({run.version_harnais for run in runs})
+    if len(harnais) > 1:
+        raise ValueError(
+            f"paires non regroupables : versions de harnais {', '.join(map(str, harnais))}"
+        )
+    if len(juges) > 1:
+        raise ValueError(f"paires non regroupables : juges principaux {', '.join(juges)}")
+    if len(grilles) > 1:
+        raise ValueError(
+            "paires non regroupables : grilles du juge différentes "
+            f"({', '.join(g[:12] for g in grilles)})"
+        )
+
+
+def _fusionner(runs: Sequence[RunCharge], prefixes: Sequence[str]) -> RunCharge:
+    """Run unique sur l'union des items des `runs` ; ids préfixés pour éviter les collisions."""
+    items: list[ItemBase] = []
+    fusion: dict[str, dict[str, Any]] = {"g": {}, "c": {}, "p": {}, "s": {}}
+    for run, pref in zip(runs, prefixes, strict=True):
+        items += [i.model_copy(update={"id": pref + i.id}) for i in run.items]
+        for cle, source in (
+            ("g", run.generations),
+            ("c", run.controles),
+            ("p", run.principal),
+            ("s", run.second),
+        ):
+            fusion[cle].update({pref + k: v for k, v in source.items()})
+    return RunCharge(
+        run_id=" + ".join(r.run_id for r in runs),
+        items=items,
+        generations=fusion["g"],
+        controles=fusion["c"],
+        principal=fusion["p"],
+        second=fusion["s"],
+        seuils=runs[0].seuils,
+        jeu_statut=(
+            cfg.STATUT_RELU_LLM
+            if any(r.jeu_statut == cfg.STATUT_RELU_LLM for r in runs)
+            else runs[0].jeu_statut
+        ),
+        scores=runs[0].scores,
+        version_harnais=runs[0].version_harnais,
+        grille_sha256=runs[0].grille_sha256,
+    )
+
+
+def comparer_paires(
+    paires: Sequence[tuple[RunCharge, RunCharge]],
+    *,
+    tirages: int = 2000,
+    graine: int = 7,
+    autoriser_jeux_differents: bool = False,
+) -> ResultatGroupe:
+    """Bootstrap apparié stratifié par jeu et par Tâche sur plusieurs paires (A, B).
+
+    Chaque paire passe les contrôles de `comparer` (même jeu, même juge principal, même
+    version de harnais) ; les paires partagent juge principal, grille et version de harnais, et
+    un jeu n'apparaît que dans une paire (refus sinon, même avec `autoriser_jeux_differents`).
+    Le regroupé est `relu-llm` si l'un des jeux l'est. Les items non notés d'un côté sont
+    retirés des deux côtés.
+    Le regroupement recalcule chaque score de Tâche sur l'union des items des jeux (Qualité =
+    moyenne des Scores de Tâche) ; chaque tirage rééchantillonne les items dans leur jeu.
+    Lève `ValueError` si les paires sont incohérentes.
+    """
+    if len(paires) < 2:
+        raise ValueError("au moins deux paires requises pour un regroupement")
+    _controler_paires(paires, autoriser_jeux_differents)
+    for paire in paires:
+        for run in paire:
+            verifier_recalcul(run)
+    exclusions = [items_non_notes(a) | items_non_notes(b) for a, b in paires]
+    individuels = [
+        comparer(
+            list(paire),
+            tirages=tirages,
+            graine=graine,
+            autoriser_jeux_differents=autoriser_jeux_differents,
+            exclus=exclus,
+        )
+        for paire, exclus in zip(paires, exclusions, strict=True)
+    ]
+    prefixes = [f"{rang}/" for rang in range(len(paires))]
+    strates = {
+        f"{pref}{item.id}": pref
+        for pref, paire in zip(prefixes, paires, strict=True)
+        for run in paire
+        for item in run.items
+    }
+    exclus_prefixes = {
+        pref + identifiant
+        for pref, exclus in zip(prefixes, exclusions, strict=True)
+        for identifiant in exclus
+    }
+    regroupe = comparer(
+        [
+            _fusionner([paire[0] for paire in paires], prefixes),
+            _fusionner([paire[1] for paire in paires], prefixes),
+        ],
+        tirages=tirages,
+        graine=graine,
+        exclus=exclus_prefixes,
+        strates=strates,
+    )
+    return ResultatGroupe(
+        jeux=[a.scores.jeu_version for a, _b in paires], paires=individuels, regroupe=regroupe
+    )
+
+
+def comparer_paires_runs(
+    paires: Sequence[tuple[str, str]],
+    *,
+    racine: str | Path | None = None,
+    tirages: int = 2000,
+    graine: int = 7,
+    autoriser_jeux_differents: bool = False,
+) -> ResultatGroupe:
+    """Recharge les paires de runs de notation (lecture seule) et lance `comparer_paires`."""
+    base = (Path(racine) if racine is not None else racine_projet()).resolve()
+    seuils = cfg.charger_evaluation().seuils
+    return comparer_paires(
+        [(charger_run(a, base, seuils), charger_run(b, base, seuils)) for a, b in paires],
+        tirages=tirages,
+        graine=graine,
+        autoriser_jeux_differents=autoriser_jeux_differents,
+    )
+
+
+def tableau_markdown_groupe(groupe: ResultatGroupe) -> str:
+    """Écart B − A par Tâche, jeu par jeu et regroupé côte à côte, puis le détail de chacun."""
+    ensembles = [
+        (f"{jeu} (paire {rang + 1})", res)
+        for rang, (jeu, res) in enumerate(zip(groupe.jeux, groupe.paires, strict=True))
+    ]
+    ensembles.append(("Regroupé", groupe.regroupe))
+    par_nom = [{x.nom: x for x in res.comparaisons[0].lignes} for _nom, res in ensembles]
+    sortie = [
+        "## Comparaison sur jeux regroupés",
+        "",
+        "Écart B − A et IC 95 % (bootstrap stratifié par jeu et par Tâche) :",
+        "",
+        "| Tâche | " + " | ".join(nom for nom, _ in ensembles) + " |",
+        "|" + "---|" * (len(ensembles) + 1),
+    ]
+    for nom in [*groupe.regroupe.items_communs, QUALITE]:
+        cases = []
+        for lignes in par_nom:
+            ligne = lignes.get(nom)
+            if ligne is None or ligne.ic is None:
+                cases.append("—")
+            else:
+                ic = f"[{_f(ligne.ic.bas, True)} ; {_f(ligne.ic.haut, True)}]"
+                cases.append(f"{_f(ligne.ecart, True)} {ic}")
+        sortie.append(f"| {nom} | " + " | ".join(cases) + " |")
+    for nom, res in ensembles:
+        sortie += ["", f"## {nom}", "", tableau_markdown(res).rstrip("\n")]
+    return "\n".join(sortie) + "\n"
+
+
 __all__ = [
     "ErreurRecalcul",
     "Resultat",
+    "ResultatGroupe",
     "RunCharge",
     "charger_run",
     "comparer",
+    "comparer_paires",
+    "comparer_paires_runs",
     "comparer_runs",
     "tableau_markdown",
+    "tableau_markdown_groupe",
     "verifier_recalcul",
 ]

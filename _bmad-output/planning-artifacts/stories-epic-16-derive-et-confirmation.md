@@ -72,6 +72,14 @@ Le 21/10, `eval composer` a refusé la composition v1.1 du routage CO (run rout�
 - Fini quand : tests sur fixtures (stratification, union, refus si juges ou grilles diffèrent entre paires, une seule paire = comportement actuel inchangé).
 - Même zone de code que 16.4 (CLI `eval`) : pas dans la même vague.
 
+### Revue (16.5, 21/10)
+- medium, corrigé : versions de harnais différentes entre paires acceptées ; refus désormais, même avec `--autoriser-jeux-differents` (comme juge et grille), test.
+- medium, corrigé : un même jeu dans deux paires (doublons qui gonflent n et rétrécissent l'IC) ; refus, le test de paire répétée devient un test de refus.
+- medium, corrigé : statut du regroupé pris sur la première paire (`relu-llm` de dev2 perdu derrière un jeu gelé) ; statut agrégé (`relu-llm` si l'un l'est), avertissement lu sur `RunCharge.jeu_statut`, test.
+- medium, corrigé : fusion, exclusion et stratification testées seulement sur factices monkeypatchés ; test réel sur fixtures dev1 et dev2 (un item CR en erreur retiré des deux côtés, effectif de chaque strate conservé à chaque tirage, union = somme des paires).
+- low, rejeté : les colonnes par jeu du rapport regroupé retirent les items non notés d'un côté, alors que `--runs A B` ne le fait pas ; choix plus juste pour l'appariement (même convention que la fiche d'application), sans effet sur le mode à une paire.
+- low, rejeté : le run fusionné garde `scores` de la première paire ; seuls `jeu_version` et le juge en sont lus, et le recalcul comme le contrôle contre `scores.json` sont faits sur les runs d'origine.
+
 ## 16.6a — Régularisation KL vers la base (auto-distillation)
 Validé par Anaël le 21/10 : la base sert de professeur pour retenir l'adaptateur près d'elle pendant l'apprentissage (l'échelle 0,25 le fait après coup). 0 € : même poids, aucune donnée nouvelle, aucun texte rédigé (D1 inchangé).
 - Hyperparamètre `kl_base` (défaut 0 = comportement actuel inchangé, octet pour octet) dans `[hyperparametres]` des configs d'entraînement SFT : perte = entropie croisée + `kl_base` × KL(élève ‖ base) par token, moyennée sur les tokens de la réponse (même masque de perte que le SFT). La distribution de la base est calculée dans le même pas, adaptateur désactivé (`disable_adapter` de PEFT), sans gradient : aucune copie des poids, aucune mémoire GPU de poids en plus.

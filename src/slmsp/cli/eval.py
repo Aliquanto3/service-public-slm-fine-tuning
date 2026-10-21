@@ -15,7 +15,8 @@
     slmsp eval juges-tiers --depuis RUN_NOTATION --juge NOM [--taches CR,LC,CT,RE]
         [--rejouer-invalides]
         [--plafond-estime EUR] [--racine DIR]
-    slmsp eval comparer --runs NOTATION_A NOTATION_B [...] [--bootstrap 2000] [--graine 7]
+    slmsp eval comparer (--runs NOTATION_A NOTATION_B [...] | --paire A B [--paire A2 B2])
+        [--bootstrap 2000] [--graine 7]
         [--sortie FICHIER.md] [--racine DIR]
     slmsp eval composer --route TACHE=NOTATION_RUN [--route …] --defaut NOTATION_RUN
         [--marque deja-consulte] [--racine DIR]
@@ -538,18 +539,32 @@ def executer_comparer(args: argparse.Namespace) -> int:
     """`slmsp eval comparer` : bootstrap apparié des scores de runs de notation."""
     from slmsp.evaluation import bootstrap
 
+    paires = [tuple(p) for p in args.paire or []]
+    if bool(args.runs) == bool(paires):
+        print("slmsp : eval comparer : --runs ou --paire (l'un des deux)", file=sys.stderr)
+        return int(CodeSortie.USAGE)
     try:
-        resultat = bootstrap.comparer_runs(
-            args.runs,
-            racine=args.racine,
-            tirages=args.bootstrap,
-            graine=args.graine,
-            autoriser_jeux_differents=args.autoriser_jeux_differents,
-        )
+        if len(paires) > 1:
+            groupe = bootstrap.comparer_paires_runs(
+                paires,
+                racine=args.racine,
+                tirages=args.bootstrap,
+                graine=args.graine,
+                autoriser_jeux_differents=args.autoriser_jeux_differents,
+            )
+            tableau = bootstrap.tableau_markdown_groupe(groupe)
+        else:
+            resultat = bootstrap.comparer_runs(
+                args.runs or paires[0],
+                racine=args.racine,
+                tirages=args.bootstrap,
+                graine=args.graine,
+                autoriser_jeux_differents=args.autoriser_jeux_differents,
+            )
+            tableau = bootstrap.tableau_markdown(resultat)
     except ValueError as exc:
         print(f"slmsp : eval comparer : {exc}", file=sys.stderr)
         return int(CodeSortie.USAGE)
-    tableau = bootstrap.tableau_markdown(resultat)
     print(tableau)
     if args.sortie is not None:
         Path(args.sortie).write_text(tableau, encoding="utf-8", newline="\n")
@@ -776,7 +791,15 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         ),
     )
     comparer.add_argument(
-        "--runs", nargs="+", required=True, metavar="RUN_NOTATION", help="A (référence), puis B…"
+        "--runs", nargs="+", metavar="RUN_NOTATION", help="A (référence), puis B…"
+    )
+    comparer.add_argument(
+        "--paire",
+        nargs=2,
+        action="append",
+        metavar=("A", "B"),
+        help="paire de runs d'un jeu ; répétée (une par jeu) : bootstrap stratifié par jeu et "
+        "par Tâche, Qualité regroupée (alternative à --runs)",
     )
     comparer.add_argument("--bootstrap", type=_entier_positif, default=2000, help="tirages")
     comparer.add_argument("--graine", type=int, default=7, help="graine du rééchantillonnage")
