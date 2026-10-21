@@ -84,3 +84,8 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 22:36 · 16.2 · dev · fini · 24b4489
 - 2026-10-21 22:36 · 16.2 · second-avis · lancé · —
 - 2026-10-21 22:36 · 16.1a · dev · lancé (option --forcer de la vérification, sans quoi la relance « en l'état » de 16.1 ne rappelle aucun juge) · —
+- 2026-10-21 22:47 · 16.1a · fusion · squash dans main après second avis (1 medium : un échec forcé réintégrait un item rejeté) et revue Sonnet ; correctif de l'orchestrateur : items forcés repris des brouillons · 0c8abc8
+- 2026-10-21 22:47 · 16.1 · relance forcée DeepSeek + GLM de CO-609, CO-615, CT-602, CT-612, CT-614 (~0,05 €) : **5 retenus** ; aucun item exclu ; dev2 assemblé 160 items, composition conforme, gelé `relu-llm` (graine 42) · fa1e3e6
+- 2026-10-21 22:47 · 16.3 · dev · partiel (1f8d73f) : anti-boucle livré (13 boucles v18 coupées, 0 sortie Baseline coupée) ; **build v21 bloqué par D1** : aucune formulation d'origine non-Claude pour la consigne de libellés → **attente humaine** (Anaël doit fournir une ligne contenant {libelles} et son origine) · 1f8d73f
+- 2026-10-21 22:47 · 16.6 · décision · essais de la nuit sur **v18** (v21 bloqué) : T1 à T6 de la grille, T0 = M1 v18 existant · —
+- 2026-10-21 22:47 · 16.6a · second-avis · 1 high (mémoire : logits pleins élève et base) · — 
