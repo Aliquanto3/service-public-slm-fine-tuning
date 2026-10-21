@@ -95,3 +95,6 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 22:50 · 16.3 · review · lancée (Opus) · —
 - 2026-10-21 22:50 · 16.6 · T1 · entraînement lancé (chaîne T1 à T5, train puis export LoRA) · —
 - 2026-10-21 22:50 · 16.4 · dev · lancé · —
+- 2026-10-21 22:56 · 16.6a · review · Opus, KL par tranches (pic estimé < 1 Go en plus, au lieu de 9 à 25 Go) · 93fd972
+- 2026-10-21 22:56 · 16.6a · fusion · squash dans main · cd86314
+- 2026-10-21 22:56 · 16.6 · décision · après T1-T5 : essai KL de 5 pas (VRAM, rapport KL / entropie croisée), puis T6 avec kl_base tel que kl_base × KL ≈ entropie croisée / 4 (script `chaine-kl.sh` du scratchpad) · —
