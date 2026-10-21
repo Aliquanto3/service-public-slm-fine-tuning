@@ -127,3 +127,16 @@ source = "openrouter.ai/mistralai/mistral-small-2603, prix relevé par l'orchest
 [modeles."mistralai/mistral-small-2603".modes.direct]
 entree = 0.15
 sortie = 0.6
+
+# Modèle distant servi par l'API Mistral directe (story 17.1b, `distant:mistral-small-mistral`).
+# Mistral ne renvoie pas de coût : règlement au tarif × tokens de l'usage. Aucun tarif OVH
+# (aucun poste budgétaire ovh : refus avant tout appel).
+[modeles."mistral-small-2603"]
+devise = "USD"
+date = 2026-10-21
+source = "prix de l'endpoint Mistral sur OpenRouter (mistralai/mistral-small-2603), relevé le 2026-10-21"
+note = "à reconfirmer sur la page de prix de Mistral (mistral.ai/pricing)"
+
+[modeles."mistral-small-2603".modes.direct]
+entree = 0.15
+sortie = 0.6

@@ -42,7 +42,7 @@ from slmsp.core.erreurs import HoteBloque
 from slmsp.core.evenements import Evenement
 from slmsp.core.items import ItemBase, ItemRD, Jeu, resoudre_cassettes
 from slmsp.core.ports import EmbedderPort, JournalRequetes, LlmPort, VectorStore
-from slmsp.evaluation.client_distant import MODE_TARIF, USAGE_BUDGET, ClientDistant
+from slmsp.evaluation.client_distant import MODE_TARIF, ClientDistant, verifier_usage_distant
 from slmsp.evaluation.modele_distant import ModeleDistant
 from slmsp.evaluation.modele_ref import ModeleResolu
 from slmsp.fournisseurs.client import lire_cle
@@ -247,7 +247,7 @@ def ouvrir_harnais_distant(
                 "generation": {
                     "fournisseur": fiche.fournisseur,
                     "modele_id": fiche.modele_id,
-                    "hebergeur": fiche.hebergeur,
+                    "hebergeur": fiche.hebergeur_consigne,
                     "quantification": fiche.quantification,
                     "reasoning": fiche.reasoning,
                 },
@@ -274,9 +274,10 @@ def client_distant(
 ) -> ClientDistant:
     """`ClientDistant` du profil `eval-distant`, clé, usage et tarif vérifiés d'abord."""
     fournisseur = modele.fournisseur
-    cle = lire_cle(fournisseur, fichier_env)
     registre = registre if registre is not None else RegistreBudget()
-    registre.verifier_usage(USAGE_BUDGET)
+    # Poste du fournisseur d'abord : un fournisseur sans poste (ovh) est refusé avant la clé.
+    verifier_usage_distant(registre, modele.fiche.fournisseur)
+    cle = lire_cle(fournisseur, fichier_env)
     tarif(registre.tarifs, modele.fiche.modele_id, MODE_TARIF)
     http = client_reseau(
         PROFIL_RESEAU_DISTANT,

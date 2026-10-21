@@ -1,0 +1,10 @@
+# Modèle distant évalué par `slmsp eval run --modele distant:mistral-small-mistral`
+# (story 17.1b) : API Mistral directe, alias daté épinglé (jamais `-latest`).
+# Sorties pour la mesure seulement : jamais dans un jeu d'entraînement (D1, CGU).
+schema_version = 1
+fournisseur = "mistral"
+modele_id = "mistral-small-2603"
+# Aucun hébergeur épinglé : l'hébergeur est Mistral lui-même.
+protocole_outils = "natif"
+reasoning = "off"
+contexte = 262144

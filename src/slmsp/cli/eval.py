@@ -690,7 +690,7 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     run.add_argument(
         "--modele",
         help="modèle évalué : base:<slug>, ft:<export_run_id>, lora:<export_lora_run_id> "
-        "ou distant:<slug> (config/modeles-distants/<slug>.toml, API OpenRouter)",
+        "ou distant:<slug> (config/modeles-distants/<slug>.toml, API OpenRouter, Mistral ou OVH)",
     )
     run.add_argument(
         "--echelle-lora",

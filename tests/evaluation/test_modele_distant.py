@@ -50,7 +50,7 @@ from slmsp.evaluation.modele_distant import FicheDistante, resoudre_distant
 from slmsp.evaluation.modele_ref import resoudre
 from slmsp.net.config import charger_config_reseau, charger_liste_blanche
 from slmsp.net.journal import JournalMemoire
-from slmsp.net.profils import evaluer
+from slmsp.net.profils import evaluer, hote_de
 
 REF = "distant:qwen3.6-27b"
 MODELE_ID = "qwen/qwen3.6-27b"
@@ -454,7 +454,6 @@ def test_profil_eval_distant() -> None:
 
     assert verdict("eval-distant", "POST", URL)
     assert not verdict("eval-distant", "GET", "https://openrouter.ai/api/v1/models")
-    assert not verdict("eval-distant", "POST", "https://api.mistral.ai/v1/chat/completions")
     assert not verdict("aucun", "POST", URL)
 
 
@@ -641,3 +640,189 @@ def test_bench_refuse_distant(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigurationInvalide, match="distant"):
         lancer_bench(REF, [], racine=tmp_path)
+
+
+# --- Fournisseurs mistral et ovh (story 17.1b) ---------------------------------------------------
+
+MISTRAL_ID = "mistral-small-2603"
+OVH_ID = "Qwen3.6-27B"
+URL_MISTRAL = "https://api.mistral.ai/v1/chat/completions"
+URL_OVH = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions"
+
+BUDGETS_MULTI = """
+schema_version = 1
+campagne_id = "campagne-test-fournisseurs"
+marge_eur = 0.0
+majoration_entree = 1.25
+
+[postes.openrouter]
+plafond_eur = 10.0
+
+[postes.mistral]
+plafond_eur = 10.0
+
+[postes.mistral.sous_postes]
+generation = 8.0
+juge = 2.0
+"""
+
+
+def registre_multi(dossier: Path, *, ovh: bool = False) -> RegistreBudget:
+    """Postes openrouter, mistral (sous-postes) et, si `ovh`, un poste ovh de test."""
+    dossier.mkdir(parents=True, exist_ok=True)
+    budgets = BUDGETS_MULTI
+    if ovh:
+        budgets += "\n[postes.ovh]\nplafond_eur = 10.0\n"
+    budgets += '\n[imputations]\neval-distant = "openrouter"\n'
+    budgets += 'eval-distant-mistral = "mistral.generation"\n'
+    if ovh:
+        budgets += 'eval-distant-ovh = "ovh"\n'
+    tarifs = TARIFS
+    for modele in (MISTRAL_ID, OVH_ID):
+        tarifs += (
+            f'\n[modeles."{modele}"]\ndevise = "USD"\ndate = 2026-10-21\nsource = "test"\n'
+            f'\n[modeles."{modele}".modes.direct]\nentree = 0.15\nsortie = 0.6\n'
+        )
+    (dossier / "budgets.toml").write_text(budgets, encoding="utf-8")
+    (dossier / "tarifs.toml").write_text(tarifs, encoding="utf-8")
+    return RegistreBudget(
+        charger_budgets(dossier / "budgets.toml"),
+        charger_tarifs(dossier / "tarifs.toml"),
+        dossier / "budget.sqlite",
+    )
+
+
+def client_ref(ref: str, reg: RegistreBudget, faux: FauxOpenRouter) -> ClientDistant:
+    from slmsp.net import client as client_reseau
+
+    http = client_reseau(
+        "eval-distant", transport_interne=httpx2.MockTransport(faux), journal=JournalMemoire()
+    )
+    return ClientDistant(resoudre_distant(ref), reg, http, SecretStr(CLE), plafond_eur=5.0)
+
+
+def consommer_options(llm: ClientDistant) -> list[Any]:
+    options = {"temperature": 0.0, "seed": 42, "max_tokens": 64, "top_k": 20}
+    messages = [{"role": "user", "content": "<question-factice>"}]
+    return list(llm.generer(messages, tools=[OUTIL], options=options))
+
+
+def test_fiches_mistral_et_ovh() -> None:
+    mistral = resoudre_distant("distant:mistral-small-mistral")
+    assert (mistral.fiche.fournisseur, mistral.fiche.modele_id) == ("mistral", MISTRAL_ID)
+    assert "latest" not in mistral.fiche.modele_id and mistral.fiche.hebergeur is None
+    assert mistral.fiche.hebergeur_consigne == "mistral" and not mistral.fiche.epingle
+    assert mistral.fournisseur.url("chat/completions") == URL_MISTRAL
+    assert mistral.fournisseur.nom_secret == "MISTRAL_API_KEY"
+    ovh = resoudre_distant("distant:qwen3.6-27b-ovh")
+    assert (ovh.fiche.fournisseur, ovh.fiche.modele_id) == ("ovh", OVH_ID)
+    assert ovh.fournisseur.url("chat/completions") == URL_OVH
+    assert ovh.fournisseur.nom_secret == "OVH_AI_ENDPOINTS_ACCESS_TOKEN"
+    assert resoudre_distant(REF).fiche.epingle
+
+
+@pytest.mark.parametrize(
+    "valeurs",
+    [
+        {"fournisseur": '"mistral"', "modele_id": f'"{MISTRAL_ID}"', "hebergeur": '"Mistral"'},
+        {"fournisseur": '"mistral"', "modele_id": '"mistral-small-latest"'},
+        {"fournisseur": '"ovh"', "modele_id": '"Qwen3.6-27B-latest"'},
+        {"fournisseur": '"openrouter"', "modele_id": f'"{MODELE_ID}"'},
+        {
+            "fournisseur": '"openrouter"',
+            "modele_id": f'"{MISTRAL_ID}"',
+            "hebergeur": '"Mistral"',
+            "quantification": '"fp8"',
+        },
+    ],
+)
+def test_fiche_selon_fournisseur_refusee(tmp_path: Path, valeurs: dict[str, str]) -> None:
+    lignes = {"schema_version": "1", "contexte": "1000", **valeurs}
+    fiche = tmp_path / "fiche.toml"
+    fiche.write_text("\n".join(f"{k} = {v}" for k, v in lignes.items()), encoding="utf-8")
+    with pytest.raises(ConfigurationInvalide):
+        charger_toml(fiche, FicheDistante)
+
+
+def test_corps_mistral_et_imputation(tmp_path: Path) -> None:
+    reg = registre_multi(tmp_path / "budget")
+    faux = FauxOpenRouter(sse(provider=None, model=MISTRAL_ID))
+    llm = client_ref("distant:mistral-small-mistral", reg, faux)
+    evenements = consommer_options(llm)
+    (corps,) = faux.corps()
+    assert str(faux.requetes[0].url) == URL_MISTRAL
+    assert corps["model"] == MISTRAL_ID and corps["random_seed"] == 42
+    assert (corps["temperature"], corps["max_tokens"], corps["tools"]) == (0.0, 64, [OUTIL])
+    for absent in ("seed", "top_k", "provider", "reasoning", "usage", "stream_options"):
+        assert absent not in corps
+    assert isinstance(evenements[-1], Fin)
+    (releve,), code = llm.vider()
+    assert code is None and releve["hebergeur_effectif"] == "mistral"
+    assert releve["hebergeur_epingle"] is None
+    assert releve["cout_eur"] == pytest.approx((100 * 0.15 + 20 * 0.6) / 1e6)
+    (reservation,) = reservations(reg)
+    assert (reservation["poste"], reservation["sous_poste"]) == ("mistral", "generation")
+
+
+def test_mistral_modele_renvoye_controle(tmp_path: Path) -> None:
+    reg = registre_multi(tmp_path / "budget")
+    faux = FauxOpenRouter(sse(provider=None, model="mistral-small-autre"))
+    llm = client_ref("distant:mistral-small-mistral", reg, faux)
+    with pytest.raises(ErreurDistante, match="modele_inattendu"):
+        consommer_options(llm)
+
+
+def test_corps_ovh(tmp_path: Path) -> None:
+    reg = registre_multi(tmp_path / "budget", ovh=True)
+    faux = FauxOpenRouter(sse(provider=None, model=OVH_ID))
+    llm = client_ref("distant:qwen3.6-27b-ovh", reg, faux)
+    consommer_options(llm)
+    (corps,) = faux.corps()
+    assert str(faux.requetes[0].url) == URL_OVH and corps["model"] == OVH_ID
+    assert corps["stream_options"] == {"include_usage": True}
+    for absent in ("seed", "random_seed", "top_k", "provider", "reasoning", "usage"):
+        assert absent not in corps
+    (reservation,) = reservations(reg)
+    assert reservation["poste"] == "ovh"
+
+
+def test_ovh_sans_poste_refuse_avant_tout(tmp_path: Path) -> None:
+    reg = registre_multi(tmp_path / "budget")
+    ovh = resoudre_distant("distant:qwen3.6-27b-ovh")
+    with pytest.raises(ConfigurationInvalide, match="poste budgétaire ovh absent"):
+        assemblage.client_distant(ovh, 1.0, registre=reg, fichier_env=tmp_path / "absent.env")
+    faux = FauxOpenRouter()
+    with pytest.raises(ConfigurationInvalide, match="à approuver par Anaël"):
+        client_ref("distant:qwen3.6-27b-ovh", reg, faux)
+    assert not faux.requetes and not reservations(reg)
+
+
+def test_budgets_du_depot_imputent_par_fournisseur() -> None:
+    imputations = charger_budgets().imputations
+    assert imputations["eval-distant"] == "openrouter"
+    assert imputations["eval-distant-mistral"].partition(".")[0] == "mistral"
+    assert "eval-distant-ovh" not in imputations
+    assert MISTRAL_ID in charger_tarifs().modeles
+
+
+def test_profil_eval_distant_par_fournisseur() -> None:
+    config, liste = charger_config_reseau(), charger_liste_blanche()
+
+    def verdict(methode: str, url: str) -> bool:
+        return evaluer(
+            "eval-distant", methode, url, mode=None, config=config, liste_blanche=liste
+        ).autorise
+
+    assert verdict("POST", URL_MISTRAL) and verdict("POST", URL_OVH)
+    assert not verdict("GET", "https://api.mistral.ai/v1/models")
+    assert not verdict("POST", "https://api.mistral.ai/v1/agents/completions")
+    assert not verdict("POST", "https://api.anthropic.com/v1/messages")
+    hotes = {
+        ref: hote_de(resoudre_distant(ref).fournisseur.base_url)
+        for ref in (REF, "distant:mistral-small-mistral", "distant:qwen3.6-27b-ovh")
+    }
+    assert hotes == {
+        REF: "openrouter.ai",
+        "distant:mistral-small-mistral": "api.mistral.ai",
+        "distant:qwen3.6-27b-ovh": "oai.endpoints.kepler.ai.cloud.ovh.net",
+    }

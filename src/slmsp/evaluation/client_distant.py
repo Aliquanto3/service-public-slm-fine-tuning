@@ -5,18 +5,21 @@
 ne change pas. Par appel :
 
 1. contrôle du plafond du run (`plafond_eur` : coût réel cumulé + coût pire cas de l'appel)
-   puis réservation au registre (usage `eval-distant`, poste `openrouter`), tokens d'entrée
+   puis réservation au registre (usage `eval-distant` pour OpenRouter, `eval-distant-<nom>`
+   pour un autre fournisseur, story 17.1b : poste de ce fournisseur), tokens d'entrée
    estimés à `caractères de la requête ÷ 3` bornés par le `contexte` de la fiche (le
    registre applique sa majoration), sortie au pire cas = `max_tokens` ;
-2. `POST /chat/completions` en flux par la passerelle (profil `eval-distant`), corps
-   complété de `provider` (hébergeur épinglé, sans repli, collecte refusée, quantification),
-   `reasoning` désactivé et `usage.include` ;
+2. `POST /chat/completions` en flux par la passerelle (profil `eval-distant`) ; corps
+   OpenRouter complété de `provider` (hébergeur épinglé, sans repli, collecte refusée,
+   quantification), `reasoning` désactivé et `usage.include` ; corps Mistral et OVH réduits
+   aux options de leur preset (`inference.fournisseurs`, graine `random_seed` chez Mistral,
+   aucune chez OVH) ;
 3. relances (au plus `RELANCES_MAX`, `Retry-After` respecté) sur 429/5xx **avant le premier
    octet** seulement ; chaque relance libère sa réservation puis en refait une ;
 4. lecture du flux : commentaires SSE (`: OPENROUTER PROCESSING`) ignorés, `tool_calls`
-   fragmentés réassemblés par `index`, hébergeur (`provider`) et modèle (`model`) renvoyés
-   contrôlés contre la fiche ;
-5. règlement au coût réel (`usage` renvoyé), au pire cas réservé sans usage connu.
+   fragmentés réassemblés par `index`, hébergeur (`provider`, OpenRouter seulement) et
+   modèle (`model`, s'il est renvoyé) contrôlés contre la fiche ;
+5. règlement au coût réel (`usage` renvoyé × tarif), au pire cas réservé sans usage connu.
 
 Une erreur d'item (`ErreurDistante`, avec son `code`) laisse l'item en erreur ; une erreur
 fatale (`BudgetEpuise`, `PlafondGenerationAtteint`, `SecretManquant`,
@@ -60,6 +63,8 @@ from slmsp.inference.client_openai import (
     lire_flux,
 )
 from slmsp.inference.client_openai import entier as _entier
+from slmsp.inference.fournisseurs import PRESETS, ajouts_requete
+from slmsp.net.profils import hote_de
 from slmsp.net.relances import attente_exponentielle, lire_retry_after, statut_transitoire
 
 USAGE_BUDGET: Final = "eval-distant"
@@ -80,6 +85,25 @@ FATALES: Final = (
 )
 
 Evenement = Jeton | AppelOutil | AppelNonConforme | Fin
+
+
+def usage_budget(fournisseur: str) -> str:
+    """Usage de budget d'un fournisseur : `eval-distant` (OpenRouter), `eval-distant-<nom>`."""
+    return USAGE_BUDGET if fournisseur == "openrouter" else f"{USAGE_BUDGET}-{fournisseur}"
+
+
+def verifier_usage_distant(registre: RegistreBudget, fournisseur: str) -> tuple[str, str | None]:
+    """Poste (et sous-poste) du fournisseur ; `ConfigurationInvalide` sans imputation.
+
+    Aucun poste n'est créé ici : un fournisseur sans imputation est refusé avant tout appel.
+    """
+    usage = usage_budget(fournisseur)
+    if usage not in registre.config.imputations:
+        raise ConfigurationInvalide(
+            f"poste budgétaire {fournisseur} absent : à approuver par Anaël "
+            f"(usage {usage} non imputé dans config/budgets.toml)"
+        )
+    return registre.verifier_usage(usage)
 
 
 class PlafondGenerationAtteint(BudgetEpuise):
@@ -129,7 +153,7 @@ class ClientDistant:
         self.erreur_fatale: BaseException | None = None
         self.code_erreur: str | None = None
         self._releves: list[dict[str, Any]] = []
-        self.poste, self.sous_poste = registre.verifier_usage(USAGE_BUDGET)
+        self.poste, self.sous_poste = verifier_usage_distant(registre, self.fiche.fournisseur)
 
     # -- Suivi par item --
 
@@ -174,8 +198,10 @@ class ClientDistant:
             "model": self.fiche.modele_id,
             "messages": [dict(m) for m in messages],
             "stream": True,
-            "stream_options": {"include_usage": True},
         }
+        if not self.fiche.epingle:
+            return self._corps_preset(corps, tools, options)
+        corps["stream_options"] = {"include_usage": True}
         corps.update({cle: v for cle, v in options.items() if cle in OPTIONS_TRANSMISES})
         corps.setdefault("max_tokens", MAX_TOKENS_DEFAUT)
         if tools:
@@ -189,6 +215,27 @@ class ClientDistant:
         }
         corps["reasoning"] = corps_reasoning()
         corps["usage"] = {"include": True}
+        return corps
+
+    def _corps_preset(
+        self,
+        corps: dict[str, Any],
+        tools: Sequence[Mapping[str, Any]] | None,
+        options: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Corps Mistral ou OVH : options et graine du preset, aucun champ d'OpenRouter.
+
+        OVH reçoit `stream_options.include_usage` (champ standard d'OpenAI) pour renvoyer
+        l'usage en flux ; Mistral (schéma strict) le renvoie sans le demander.
+        """
+        fournisseur = self.fiche.fournisseur
+        if fournisseur == "ovh":
+            corps["stream_options"] = {"include_usage": True}
+        hote = hote_de(self.modele.fournisseur.base_url)
+        corps.update(ajouts_requete(PRESETS[fournisseur], hote, options))
+        corps.setdefault("max_tokens", MAX_TOKENS_DEFAUT)
+        if tools:
+            corps["tools"] = list(tools)
         return corps
 
     def tokens_entree_estimes(self, corps: Mapping[str, Any]) -> int:
@@ -296,7 +343,7 @@ class ClientDistant:
 
     def _controle(self, champ: str, valeur: str) -> tuple[str, str] | None:
         """Hébergeur et modèle renvoyés contrôlés contre la fiche (`lire_flux`)."""
-        if champ == "provider" and valeur != self.fiche.hebergeur:
+        if champ == "provider" and self.fiche.epingle and valeur != self.fiche.hebergeur:
             return (
                 "hebergeur_inattendu",
                 f"hébergeur {valeur!r} au lieu de {self.fiche.hebergeur!r}",
@@ -329,6 +376,8 @@ class ClientDistant:
         termine, coupe, usage = etat.termine, etat.coupe, etat.usage
         hebergeur, modele, erreur = etat.hebergeur, etat.modele, etat.erreur
         fin = self._horloge()
+        if not self.fiche.epingle:
+            hebergeur = self.fiche.hebergeur_consigne  # le fournisseur lui-même
 
         if erreur is None:
             if raison_finale == "error":
@@ -422,4 +471,6 @@ __all__ = [
     "ErreurDistante",
     "PlafondGenerationAtteint",
     "corps_reasoning",
+    "usage_budget",
+    "verifier_usage_distant",
 ]

@@ -95,7 +95,10 @@ chemins = ["/api/v1/models"]
 # Tout est refusé : ni règle, ni lecture de la Liste blanche.
 
 # Génération d'un modèle distant par `slmsp eval run --modele distant:<slug>` (story 17.1) :
-# Chat Completions d'OpenRouter seulement (POST, chemin exact). Aucun autre hôte.
+# Chat Completions des fournisseurs des fiches (POST, chemin exact) : OpenRouter, Mistral et
+# OVH AI Endpoints (story 17.1b). Aucun autre hôte ; pendant la boucle, `sans_reseau`
+# n'admet en plus que l'hôte du fournisseur de la fiche du run. Ce profil autorise donc les
+# trois hôtes ; le cloisonnement par hôte est fait par `sans_reseau` pendant le run.
 [profils.eval-distant]
 
 [[profils.eval-distant.regles]]
@@ -103,3 +106,15 @@ nom = "openrouter-eval"
 methodes = ["POST"]
 hotes = ["openrouter.ai"]
 chemins = ["/api/v1/chat/completions"]
+
+[[profils.eval-distant.regles]]
+nom = "mistral-eval"
+methodes = ["POST"]
+hotes = ["api.mistral.ai"]
+chemins = ["/v1/chat/completions"]
+
+[[profils.eval-distant.regles]]
+nom = "ovh-eval"
+methodes = ["POST"]
+hotes = ["oai.endpoints.kepler.ai.cloud.ovh.net"]
+chemins = ["/v1/chat/completions"]

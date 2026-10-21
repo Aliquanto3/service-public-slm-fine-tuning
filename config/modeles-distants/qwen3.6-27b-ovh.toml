@@ -1,0 +1,10 @@
+# Modèle distant évalué par `slmsp eval run --modele distant:qwen3.6-27b-ovh` (story 17.1b) :
+# OVHcloud AI Endpoints. Refusé tant qu'aucun poste budgétaire ovh n'est approuvé par Anaël.
+# Sorties pour la mesure seulement : jamais dans un jeu d'entraînement (D1, CGU).
+schema_version = 1
+fournisseur = "ovh"
+modele_id = "Qwen3.6-27B"
+# Aucun hébergeur épinglé : l'hébergeur est OVHcloud lui-même.
+protocole_outils = "natif"
+reasoning = "off"
+contexte = 262144
