@@ -1,6 +1,6 @@
 // Vue « Modèles » (story 17.5b) : comparatif en lecture seule des modèles, lu par le pont
 // (`modeles.comparatif_modeles`, JSON embarqué, aucun réseau). Toutes les valeurs du JSON
-// passent par `textContent`, jamais par `innerHTML`.
+// passent par `textContent`, jamais par affectation de HTML brut.
 import { annoncer } from "../socle/annonces.js";
 
 const TACHES = [
