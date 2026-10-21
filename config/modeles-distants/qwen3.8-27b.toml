@@ -1,0 +1,11 @@
+# Modèle distant évalué par `slmsp eval run --modele distant:qwen3.8-27b` (story 17.1).
+# Sorties pour la mesure seulement : jamais dans un jeu d'entraînement (D1, CGU).
+schema_version = 1
+fournisseur = "openrouter"
+modele_id = "qwen/qwen3.8-27b"
+# Hébergeur épinglé (nom renvoyé par OpenRouter dans `provider`) : pas de repli.
+hebergeur = "DeepInfra"
+quantification = "bf16"
+protocole_outils = "natif"
+reasoning = "off"
+contexte = 262144

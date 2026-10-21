@@ -162,3 +162,12 @@ source = "ovhcloud.com/fr/public-cloud/prices/ (AI Endpoints), relevé par l'orc
 [modeles."Mistral-Small-3.2-24B-Instruct-2506".modes.direct]
 entree = 0.09
 sortie = 0.28
+
+[modeles."qwen/qwen3.8-27b"]
+devise = "USD"
+date = 2026-10-21
+source = "openrouter.ai/qwen/qwen3.8-27b, endpoint DeepInfra (bf16), prix relevé par l'orchestrateur le 2026-10-21"
+
+[modeles."qwen/qwen3.8-27b".modes.direct]
+entree = 0.15
+sortie = 1.875
