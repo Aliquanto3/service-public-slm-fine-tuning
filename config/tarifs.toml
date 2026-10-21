@@ -140,3 +140,25 @@ note = "à reconfirmer sur la page de prix de Mistral (mistral.ai/pricing)"
 [modeles."mistral-small-2603".modes.direct]
 entree = 0.15
 sortie = 0.6
+
+# OVHcloud AI Endpoints (story 17.1b, `distant:qwen3.6-27b-ovh`) : prix en euros par million
+# de tokens, relevés sur la page Tarifs Public Cloud d'OVHcloud le 2026-10-21. Le schéma
+# n'admet que l'USD : montants en euros saisis tels quels, convertis au taux du pair (1 USD = 1 EUR)
+# de [taux_usd_eur], donc coût en euros exact.
+[modeles."Qwen3.6-27B"]
+devise = "USD"
+date = 2026-10-21
+source = "ovhcloud.com/fr/public-cloud/prices/ (AI Endpoints), relevé par l'orchestrateur le 2026-10-21"
+
+[modeles."Qwen3.6-27B".modes.direct]
+entree = 0.40
+sortie = 2.70
+
+[modeles."Mistral-Small-3.2-24B-Instruct-2506"]
+devise = "USD"
+date = 2026-10-21
+source = "ovhcloud.com/fr/public-cloud/prices/ (AI Endpoints), relevé par l'orchestrateur le 2026-10-21"
+
+[modeles."Mistral-Small-3.2-24B-Instruct-2506".modes.direct]
+entree = 0.09
+sortie = 0.28
