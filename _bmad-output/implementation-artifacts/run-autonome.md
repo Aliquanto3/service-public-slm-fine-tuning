@@ -98,3 +98,4 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 22:56 · 16.6a · review · Opus, KL par tranches (pic estimé < 1 Go en plus, au lieu de 9 à 25 Go) · 93fd972
 - 2026-10-21 22:56 · 16.6a · fusion · squash dans main · cd86314
 - 2026-10-21 22:56 · 16.6 · décision · après T1-T5 : essai KL de 5 pas (VRAM, rapport KL / entropie croisée), puis T6 avec kl_base tel que kl_base × KL ≈ entropie croisée / 4 (script `chaine-kl.sh` du scratchpad) · —
+- 2026-10-21 22:58 · 17.2 · qwen3.8-27b dev1 (OpenRouter, DeepInfra bf16) : génération `20261021-191924-distant-qwen3.8-27b-4ab7` (veille du PC puis reprise, 0,16 €), notation `20261021-224856-distant-qwen3.8-27b-1834` (0,31 €). **Qualité 74,1** (+19,9 [+15,0 ; +25,6] sur MiniCPM5-2B) : Q 40,0 ; RD 88,6 ; CR 88,3 ; LC 50,0 ; CO 98,9 ; RE 78,5 ; CT 58,8 ; NR 90,0 ; ajouté au comparatif de l'application · c3e7600
