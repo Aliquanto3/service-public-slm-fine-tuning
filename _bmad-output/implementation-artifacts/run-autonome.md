@@ -114,3 +114,4 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 23:43 · main · suite complète lancée (toutes les stories de code de l'epic 16 fusionnées) · —
 - 2026-10-21 23:59 · main · suite complète après les fusions de l'epic 16 : **6 528 passés**, 13 ignorés, 0 échec · 97b6ef7
 - 2026-10-21 23:59 · 16.6 · T2 entraîné (`20261021-232323-…-derive-t2-5df9`), export `20261021-235706-lora-minicpm5-2b-b10a` ; T3 en cours · —
+- 2026-10-22 01:22 · 16.6 · T3 (`…-t3-e20f`, export `20261022-003038-lora-minicpm5-2b-6315`), T4 (`…-t4-ff60`, export `20261022-010509-lora-minicpm5-2b-3840`), T5 (`…-t5-f1e8`, demi-époque, export `20261022-012215-lora-minicpm5-2b-2968`) entraînés et exportés sans erreur ; essai KL de 5 pas puis T6 en cours · —
