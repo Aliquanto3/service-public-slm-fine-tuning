@@ -1,0 +1,22 @@
+# Essai t2 contre la dérive de l'adaptateur (story 16.6, nuit du 21-22/10, entraînements autorisés par Anaël).
+# v18 et hyperparamètres de m1-qlora-minicpm5-2b-v18.toml, sauf : taux 1e-4, rang 16, alpha 32, époques 1.0.
+
+campagne = "minicpm5-2b-v18-derive"
+modele = "minicpm5-2b"
+methode = "qlora"
+jeu_version = "v18"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 1e-4
+epoques = 1.0
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
