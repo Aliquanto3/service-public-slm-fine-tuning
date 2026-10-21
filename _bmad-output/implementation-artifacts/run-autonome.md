@@ -89,3 +89,4 @@ Au plus 4 stories en développement à la fois.
 - 2026-10-21 02:55 · qwen-4b · GGUF absent (supprimé lors d'une libération antérieure) : `fetch modeles qwen-4b` (venv de fetch séparé, ~10,5 Go avec les poids) puis mesure CPU lancés · —
 - 2026-10-21 03:00 · 15.5b · review · 2 high et 2 medium corrigés (RE-609 aligné sur F11892, CO-615 réel rétabli, RD-606 trace complète, RE-619 nuances rétablies) ; CR-619 laissé (grille commune) ; dev2 réassemblé à 155 items (5 en attente d'Anaël : CO-609, CO-615, CT-602, CT-612, CT-614) · af7fd9d
 - 2026-10-21 03:00 · 15.5b · fusion dans main (88d1958) puis revérification des 21 items modifiés + 4 LC incomplets lancée (~0,3 $) · —
+- 2026-10-21 03:19 · 15.5b · revérification ciblée (25 items) : **152 retenus, 3 rejetés** (LC, anciens incomplets), CR-619 retenu ; story 15.5c lancée (3 LC) · c2d09ec
