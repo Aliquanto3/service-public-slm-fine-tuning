@@ -52,3 +52,17 @@ Mesures elles-mêmes (l'orchestrateur lance les mesures CPU manquantes et choisi
 - LOW corrigé — même run de notation cité pour deux modèles (clé du bruit écrasée) : refus à la validation ; test.
 - LOW corrigé — avertissements de paire écrits avec l'identifiant de run : remplacés par le libellé du modèle.
 - LOW rejeté — le `commit` de l'en-tête ne signale pas un arbre de travail modifié : le JSON est régénéré après le commit du code, dans un commit séparé, pour que `commit` désigne le code et le TOML qui l'ont produit.
+
+## Auto Run Result — 17.5b (2026-10-21)
+- Livré : `src/slmsp/app/pont/modeles.py` (domaine `modeles`, `comparatif_modeles()` lit `ui/donnees/comparatif-modeles.json`, refus `comparatif-indisponible` si absent, illisible ou `schema_version` inattendu), vue `ui/js/vues/modeles.js`, `css/modeles.css`, icône `modeles.svg`, entrée de navigation `MO` « Modèles » (rubrique « Plus » de la colonne, sans zone de saisie). Tests : `tests/app/test_pont_modeles.py` (8), `tests/app/ui/test_vue_modeles.py` (7, marqueur `ui`).
+- Décisions : (1) onglet placé dans « Plus » (8 Tâches prioritaires inchangées, pas de raccourci Ctrl+n) ; (2) badges : modèle local actif = `reglages.modeles().actif` égal à l'`id` du JSON ; fournisseur externe = entrée `actif` de `reglages.fournisseurs_externes()` dont le `modele` égale `cout.prix_mtok.modele_id` ; une erreur de ces appels n'empêche pas le tableau ; (3) l'empaquetage embarque déjà tout `app/ui/` (hors `pont-factice.js`), donc `donnees/*.json` sans changement de `assistantsp.spec` ; (4) « Non-régression » (NR) libellé comme dans `config/taches.toml`.
+- Report : aucun.
+
+## Revue 17.5b (2026-10-21)
+- MEDIUM corrigé — `ecart`, `ic_bas` ou `ic_haut` nuls affichés « 0,0 » ou « NaN » : « non calculé » (idem bruit, vitesse, RAM, coût) ; test `test_valeurs_nulles_jamais_zero_ni_nan`.
+- MEDIUM corrigé — une erreur de rendu laissait la vue vide : message `role="alert"` « Comparatif illisible », sans détail ; test `test_rendu_impossible_donne_une_alerte`.
+- LOW corrigé — encadré « Comment lire ce tableau » rouvert à chaque rendu : état conservé (variable de fermeture).
+- LOW corrigé — sélecteur construit avec l'id du modèle : références d'éléments (`Map`) ; test `test_identifiant_avec_guillemet_garde_le_focus`.
+- LOW corrigé — origine de la vitesse non visible : suffixe « (via réseau) » ou « (poste de développement) » et forme longue en `title`.
+- LOW corrigé — statut du jeu absent de l'intro : « relu par deux LLM, pas encore par un humain » pour `relu-llm`.
+- Chasse aux cas limites : `signe` et `nombre` protégés contre null/NaN ; `jeu_statut` inconnu affiché tel quel ; rien d'autre retenu.

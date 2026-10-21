@@ -10,6 +10,7 @@ import * as correction from "../vues/correction.js";
 import * as courrier from "../vues/courrier.js";
 import * as historique from "../vues/historique.js";
 import * as mode from "../vues/mode.js";
+import * as modeles from "../vues/modeles.js";
 import * as parametres from "../vues/parametres.js";
 import * as question from "../vues/question.js";
 import * as recherche from "../vues/recherche.js";
@@ -29,6 +30,8 @@ export const TACHES = [
   { id: "RE", libelle: "Résumé", icone: "resume", vue: resume },
   { id: "CT", libelle: "Courrier type", icone: "courrier", vue: courrier },
   { id: "TR", libelle: "Traduction", icone: "traduction", vue: traduction },
+  // Vue de consultation (story 17.5b), pas une Tâche de config/taches.toml : sans saisie.
+  { id: "MO", libelle: "Modèles", icone: "modeles", vue: modeles },
 ];
 
 const etat = { tache: "Q", pret: false, generation: false, sources: false, bienvenue: false };

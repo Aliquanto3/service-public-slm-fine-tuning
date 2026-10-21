@@ -1,0 +1,140 @@
+/* Vue « Modèles » : comparatif en lecture seule (story 17.5b). Jetons de jetons.css seulement. */
+.modeles,
+.modeles-corps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.modeles-intro,
+.modeles-etat,
+.modeles-note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--t-small);
+}
+.modeles-guide {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+  color: var(--ink);
+  font-size: var(--t-small);
+}
+.modeles-guide summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+.modeles-guide ul {
+  margin: var(--sp-2) 0 0;
+  padding-left: var(--sp-5);
+}
+.modeles-defilement {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.modeles-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+}
+.modeles-table th,
+.modeles-table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.modeles-tri,
+.modeles-bascule {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.modeles-tri:hover,
+.modeles-bascule:hover {
+  color: var(--primary);
+}
+.modeles-table th[aria-sort="ascending"] .modeles-tri::after {
+  content: "\00a0\25B2";
+}
+.modeles-table th[aria-sort="descending"] .modeles-tri::after {
+  content: "\00a0\25BC";
+}
+.modeles-bascule::before {
+  content: "\25B8\00a0";
+}
+.modeles-bascule[aria-expanded="true"]::before {
+  content: "\25BE\00a0";
+}
+.modeles-badge {
+  display: block;
+  width: fit-content;
+  margin-top: var(--sp-1);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: var(--t-label);
+  font-weight: 600;
+}
+.modeles-sous td {
+  background: var(--surface-alt);
+}
+.modeles-detail h3 {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--t-body);
+}
+.modeles-barres {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+.modeles-barre {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr 5rem;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.modeles-barre-piste {
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--line);
+  overflow: hidden;
+}
+.modeles-barre-valeur {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+.modeles-barre-chiffre {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.modeles-runs {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  font-size: var(--t-small);
+}
+.modeles-runs dt {
+  color: var(--ink-soft);
+}
+.modeles-runs dd {
+  margin: 0;
+  font-family: var(--police-mono);
+  overflow-wrap: anywhere;
+}

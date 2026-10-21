@@ -9,7 +9,7 @@ Contrat JSON, valable pour toutes les méthodes :
   au format `core.evenements.vers_dict`, plus `{"type": "pret"}` (`signaler_pret`) ;
 - `appeler(nom, *args)` : appel générique ; `nom` est `envoyer`, `arreter`, `regenerer`,
   `nouvelle_conversation`, `ouvrir_lien`, ou `<domaine>.<methode>` (domaines : `mode`,
-  `reglages`, `historique`, `retours`, `verification`, `redaction_outils`).
+  `reglages`, `historique`, `retours`, `verification`, `redaction_outils`, `modeles`).
 
 L'interface pywebview n'est vue qu'à travers le port `Fenetre`.
 """
@@ -27,6 +27,7 @@ from slmsp.app.pont.conversation import Conversation, reponse_erreur
 from slmsp.app.pont.erreurs import NonImplementee
 from slmsp.app.pont.historique import PontHistorique
 from slmsp.app.pont.mode import PontMode
+from slmsp.app.pont.modeles import PontModeles
 from slmsp.app.pont.redaction_outils import PontRedactionOutils
 from slmsp.app.pont.reglages import PontReglages
 from slmsp.app.pont.retours import PontRetours
@@ -105,6 +106,7 @@ class Pont:
                 verificateur, occupe=self._conversation.generation_en_cours
             ),
             "redaction_outils": PontRedactionOutils(),
+            "modeles": PontModeles(),
         }
 
     def _pousser(self, lot: list[dict[str, Any]]) -> None:
