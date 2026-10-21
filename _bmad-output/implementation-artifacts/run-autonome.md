@@ -89,3 +89,9 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 22:47 · 16.3 · dev · partiel (1f8d73f) : anti-boucle livré (13 boucles v18 coupées, 0 sortie Baseline coupée) ; **build v21 bloqué par D1** : aucune formulation d'origine non-Claude pour la consigne de libellés → **attente humaine** (Anaël doit fournir une ligne contenant {libelles} et son origine) · 1f8d73f
 - 2026-10-21 22:47 · 16.6 · décision · essais de la nuit sur **v18** (v21 bloqué) : T1 à T6 de la grille, T0 = M1 v18 existant · —
 - 2026-10-21 22:47 · 16.6a · second-avis · 1 high (mémoire : logits pleins élève et base) · — 
+- 2026-10-21 22:50 · 16.2 · review · Opus, corrigé (Q seule à 8 passages, refus des versions mélangées à la composition, coupe au mot) · 62794ca
+- 2026-10-21 22:50 · 16.2 · fusion · squash dans main · 1428794
+- 2026-10-21 22:50 · 16.3 · second-avis · 5 medium (faux positifs, interface, tronquee, conflit 16.2), 3 low · —
+- 2026-10-21 22:50 · 16.3 · review · lancée (Opus) · —
+- 2026-10-21 22:50 · 16.6 · T1 · entraînement lancé (chaîne T1 à T5, train puis export LoRA) · —
+- 2026-10-21 22:50 · 16.4 · dev · lancé · —
