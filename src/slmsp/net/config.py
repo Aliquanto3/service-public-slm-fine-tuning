@@ -114,12 +114,21 @@ class Profils(ModeleConfig):
 
     outillage: ConfigProfil
     aucun: ConfigProfil = Field(default_factory=ConfigProfil)
+    eval_distant: ConfigProfil = Field(default_factory=ConfigProfil, alias="eval-distant")
+    """Génération d'un modèle distant (story 17.1) : règles seules, sans Liste blanche."""
 
     @field_validator("aucun")
     @classmethod
     def _aucun_vide(cls, valeur: ConfigProfil) -> ConfigProfil:
         if valeur.regles or valeur.liste_blanche_en_lecture:
             raise ValueError("le profil aucun n'admet ni règle ni lecture de la Liste blanche")
+        return valeur
+
+    @field_validator("eval_distant")
+    @classmethod
+    def _eval_distant_sans_liste(cls, valeur: ConfigProfil) -> ConfigProfil:
+        if valeur.liste_blanche_en_lecture:
+            raise ValueError("le profil eval-distant n'admet pas la lecture de la Liste blanche")
         return valeur
 
 

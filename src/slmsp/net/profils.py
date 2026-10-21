@@ -7,7 +7,8 @@
 2. la forme de l'URL : HTTPS seulement, port par défaut (443), ni adresse IP, ni
    identifiants dans l'URL ;
 3. le profil : `assistant` (Liste blanche, correspondance exacte du nom d'hôte),
-   `outillage` (règles de `config/reseau.toml`), `aucun` (tout refusé).
+   `outillage` (règles de `config/reseau.toml`), `aucun` (tout refusé), `eval-distant`
+   (règles de `config/reseau.toml`, sans Liste blanche : génération distante, story 17.1).
 
 Un nom d'hôte est normalisé (minuscules, point final retiré) avant toute comparaison.
 """
@@ -226,7 +227,7 @@ def evaluer(
             return AUTORISE
         return _bloque_liste("hôte hors Liste blanche")
 
-    regles = config.profils.outillage
+    regles = config.profils.outillage if profil == "outillage" else config.profils.eval_distant
     if (
         regles.liste_blanche_en_lecture
         and methode in METHODES_LECTURE
@@ -244,4 +245,4 @@ def evaluer(
         if regle.chemins and cible.chemin not in regle.chemins:
             continue
         return AUTORISE
-    return _bloque_liste("aucune règle du profil outillage ne permet cette requête")
+    return _bloque_liste(f"aucune règle du profil {profil} ne permet cette requête")

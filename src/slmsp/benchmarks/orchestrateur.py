@@ -220,6 +220,10 @@ def lancer(
         ) from None
     if modele_ref.startswith("lora:"):
         raise ConfigurationInvalide(f"{modele_ref} : le banc ne prend pas encore de LoRA GGUF")
+    if modele_ref.startswith("distant:"):
+        raise ConfigurationInvalide(
+            f"{modele_ref} : modèle distant, sans GGUF : les benchmarks ne le prennent pas"
+        )
     if parallele < 1:
         raise ConfigurationInvalide(f"parallele doit être >= 1 : {parallele}")
     racine = Path(racine).resolve()

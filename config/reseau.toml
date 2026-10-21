@@ -93,3 +93,13 @@ chemins = ["/api/v1/models"]
 
 [profils.aucun]
 # Tout est refusé : ni règle, ni lecture de la Liste blanche.
+
+# Génération d'un modèle distant par `slmsp eval run --modele distant:<slug>` (story 17.1) :
+# Chat Completions d'OpenRouter seulement (POST, chemin exact). Aucun autre hôte.
+[profils.eval-distant]
+
+[[profils.eval-distant.regles]]
+nom = "openrouter-eval"
+methodes = ["POST"]
+hotes = ["openrouter.ai"]
+chemins = ["/api/v1/chat/completions"]

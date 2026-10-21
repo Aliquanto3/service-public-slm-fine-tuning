@@ -15,6 +15,17 @@ item, relancée). Une sortie coupée au plafond `max_tokens` reste `ok` et porte
 `reprendre_generation` complète le même dossier en ajout seul : les items déjà présents
 dans `generations.jsonl` (en erreur compris) sont sautés. Elle refuse un run dont les
 options de décodage inscrites diffèrent de la configuration courante.
+
+Modèle distant (`distant:<slug>`, story 17.1) : aucun verrou GPU ni `llama-server` de
+génération (`assemblage.ouvrir_harnais_distant`) ; `plafond_generation_eur` est obligatoire
+(refusé pour les autres références) ; la boucle tourne sous `sans_reseau` avec le seul hôte
+du fournisseur. Chaque appel laisse un relevé dans `appels-distants.jsonl` (modèle,
+hébergeur effectif, quantification, `finish_reason`, usage, coût, délais). Une erreur
+fatale (budget, plafond du run, clé, configuration) interrompt le run (reprenable). La
+reprise rejoue les items dont la dernière ligne n'est pas `ok` ; la dernière ligne d'un
+item fait foi. Le manifeste porte `quantification`, `variante_llamacpp`, template et tag
+llama.cpp à `null`, la fiche distante (SHA dans `entrees.modele`) et `profil_reseau =
+eval-distant`.
 """
 
 from __future__ import annotations
@@ -30,18 +41,33 @@ from typing import Any, Final
 from slmsp.core.artefacts import Run, nouveau_run, ouvrir_run, reprendre
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import ManifesteInvalide, SlmspError
-from slmsp.core.evenements import AppelOutil, Erreur, Evenement, Fin, Jeton, Sources, vers_dict
+from slmsp.core.evenements import (
+    AppelOutil,
+    Erreur,
+    Evenement,
+    Fin,
+    Jeton,
+    Sources,
+    depuis_dict,
+    vers_dict,
+)
 from slmsp.core.items import VERSION_CALIBRAGE, ItemBase, Jeu, lire_jeu, vers_requete
 from slmsp.core.schemas.generation import AppelCanonique, Generation, SortieCanonique
 from slmsp.core.var import verrou_gpu
 from slmsp.evaluation import config as cfg
 from slmsp.evaluation.assemblage import (
-    PROFIL_RESEAU,
     HarnaisEvaluation,
     ouvrir_harnais,
+    ouvrir_harnais_distant,
     sans_reseau,
 )
 from slmsp.evaluation.gel import verifier_manifeste
+from slmsp.evaluation.modele_distant import (
+    ModeleDistant,
+    est_distant,
+    resoudre_distant,
+    sha256_fichier,
+)
 from slmsp.evaluation.modele_ref import ModeleResolu, resoudre
 from slmsp.harness.prompts import construire_messages, entree_de_requete
 from slmsp.inference.serveur import VARIANTES
@@ -50,11 +76,16 @@ LOGGER: Final = logging.getLogger("slmsp.evaluation")
 
 TYPE_RUN: Final = "eval-generation"
 FICHIER_GENERATIONS: Final = "generations.jsonl"
+FICHIER_APPELS_DISTANTS: Final = "appels-distants.jsonl"
 
 CODE_ERREUR_EVALUATION: Final = "erreur-evaluation"
 """Code de l'`Erreur` d'un item dont le traitement échoue hors du flux du Harnais."""
 
 Fabrique = Callable[[ModeleResolu, str, Path], AbstractContextManager[HarnaisEvaluation]]
+FabriqueDistante = Callable[
+    [ModeleDistant, Path, float, float], AbstractContextManager[HarnaisEvaluation]
+]
+"""`(modele, racine, plafond_eur, cout_deja_eur)` → Harnais d'un modèle distant."""
 Rapporteur = Callable[[Generation, int, int], None]
 """`rapporter(generation, rang, total)` après l'écriture de chaque ligne (rang à partir de 1)."""
 
@@ -192,7 +223,7 @@ def _selection(jeu: Jeu, items: Iterable[str] | None) -> list[ItemBase]:
     return [item for item in jeu.items if item.id in retenus]
 
 
-def _entrees(jeu: Jeu, modele: ModeleResolu, racine: Path) -> dict[str, Path]:
+def _entrees(jeu: Jeu, modele: ModeleResolu | ModeleDistant, racine: Path) -> dict[str, Path]:
     projet = racine_projet()
     config = projet / "config"
     entrees: dict[str, Path] = {}
@@ -204,7 +235,11 @@ def _entrees(jeu: Jeu, modele: ModeleResolu, racine: Path) -> dict[str, Path]:
         outils_mcp=config / "outils-mcp.toml",
         taches=config / "taches.toml",
         harnais=config / "harnais.toml",
-        modele=config / "modeles" / f"{modele.slug}.toml",
+        modele=(
+            modele.chemin
+            if isinstance(modele, ModeleDistant)
+            else config / "modeles" / f"{modele.slug}.toml"
+        ),
     )
     return entrees
 
@@ -225,13 +260,17 @@ def _boucle(
 ) -> RapportGeneration:
     """Traite les items absents de `deja`, puis inscrit le statut final."""
     rapport = RapportGeneration(run=run)
+    courant: str | None = None
     try:
-        with sans_reseau() as bloquees:
+        with sans_reseau(harnais.hotes_autorises, harnais.profil_reseau) as bloquees:
             for rang, item in enumerate(selection, start=1):
                 if item.id in deja:
                     rapport.sautes += 1
                     continue
+                courant = item.id
                 generation = generer_item(harnais, jeu, item, options)
+                if harnais.distant is not None:
+                    generation = _suivi_distant(run, harnais.distant, generation)
                 run.ajouter_jsonl(FICHIER_GENERATIONS, generation)
                 if generation.statut == "ok":
                     rapport.ok += 1
@@ -244,16 +283,17 @@ def _boucle(
                     rapporter(generation, rang, len(selection))
         rapport.connexions_bloquees = list(bloquees)
         retenus = {item.id for item in selection}
-        en_erreur = {
-            ligne.get("item_id")
-            for ligne in run.lire_jsonl(FICHIER_GENERATIONS)
-            if isinstance(ligne, dict)
-            and ligne.get("item_id") in retenus
-            and ligne.get("statut") != "ok"
-        }
+        derniers = _derniers_statuts(run)
+        en_erreur = {i for i, statut in derniers.items() if i in retenus and statut != "ok"}
         rapport.statut = "partiel-erreur" if en_erreur else "complet"
         run.terminer(rapport.statut)
     except BaseException as exc:
+        if harnais.distant is not None and courant is not None:
+            # Interruption en cours d'item : les appels déjà réglés restent comptés à la
+            # reprise (`_cout_deja`).
+            releves, _ = harnais.distant.vider()
+            for releve in releves:
+                run.ajouter_jsonl(FICHIER_APPELS_DISTANTS, {"item_id": courant, **releve})
         if rapport.statut == "en_cours":
             rapport.statut = "interrompu"
             run.terminer("interrompu", motif=f"{type(exc).__name__} : {exc}"[:500])
@@ -261,32 +301,103 @@ def _boucle(
     return rapport
 
 
+def _derniers_statuts(run: Run) -> dict[str, Any]:
+    """Statut de la dernière ligne de chaque item de `generations.jsonl` (elle fait foi)."""
+    derniers: dict[str, Any] = {}
+    for ligne in run.lire_jsonl(FICHIER_GENERATIONS):
+        if isinstance(ligne, dict) and isinstance(ligne.get("item_id"), str):
+            derniers[ligne["item_id"]] = ligne.get("statut")
+    return derniers
+
+
+def _suivi_distant(run: Run, distant: Any, generation: Generation) -> Generation:
+    """Relevés des appels de l'item, erreur fatale relevée, code d'erreur d'item reporté."""
+    releves, code = distant.vider()
+    for releve in releves:
+        run.ajouter_jsonl(FICHIER_APPELS_DISTANTS, {"item_id": generation.item_id, **releve})
+    if distant.erreur_fatale is not None:
+        raise distant.erreur_fatale
+    if code is None or generation.statut == "ok":
+        return generation
+    trace = list(generation.trace)
+    for rang in range(len(trace) - 1, -1, -1):
+        if isinstance(depuis_dict(trace[rang]), Erreur):
+            message = depuis_dict(trace[rang]).message  # type: ignore[union-attr]
+            trace[rang] = vers_dict(Erreur(code=code, message=message))
+            break
+    return generation.model_copy(update={"trace": trace})
+
+
+def _cout_deja(run: Run) -> float:
+    """Coût réel déjà réglé des appels distants du run (`appels-distants.jsonl`)."""
+    return sum(
+        float(ligne["cout_eur"])
+        for ligne in run.lire_jsonl(FICHIER_APPELS_DISTANTS)
+        if isinstance(ligne, dict) and isinstance(ligne.get("cout_eur"), int | float)
+    )
+
+
+def _verifier_plafond(plafond: float) -> None:
+    if not plafond > 0:
+        raise ValueError(f"plafond de génération invalide : {plafond!r} (EUR > 0)")
+
+
+def _verifier_distant(
+    quantification: str | None, variante: str | None, plafond: float | None
+) -> float:
+    if quantification is not None:
+        raise ValueError("--quantification sans objet pour un modèle distant:")
+    if variante is not None:
+        raise ValueError("--variante sans objet pour un modèle distant:")
+    if plafond is None:
+        raise ValueError("--plafond-generation EUR requis pour un modèle distant:")
+    _verifier_plafond(plafond)
+    return plafond
+
+
 def lancer_generation(
     modele_ref: str,
-    quantification: str,
+    quantification: str | None,
     jeu: str,
     *,
-    variante: str = "cpu",
+    variante: str | None = None,
     items: Iterable[str] | None = None,
     racine: str | Path | None = None,
     fabrique: Fabrique = ouvrir_harnais,
     rapporter: Rapporteur | None = None,
     config: cfg.ConfigEvaluation | None = None,
+    plafond_generation_eur: float | None = None,
+    fabrique_distante: FabriqueDistante = ouvrir_harnais_distant,
 ) -> RapportGeneration:
     """Phase génération de `modele_ref` × `quantification` sur le jeu `jeu` (voir le module).
 
     `config` : réglages de `config/evaluation.toml` (défaut : lus dans le projet).
-    Lève `ManifesteInvalide` (jeu altéré, code 4) avant toute autre action, `ValueError`
-    (usage : variante, référence, quantification ou item inconnus), `ConfigurationInvalide`
-    (modèle, `evaluation.toml`), `RessourceOccupee` (GPU).
+    `variante` : `cpu` par défaut (local). `plafond_generation_eur` : obligatoire pour
+    `distant:`, refusé sinon. Lève `ManifesteInvalide` (jeu altéré, code 4) avant toute
+    autre action, `ValueError` (usage : variante, référence, quantification, plafond ou item
+    inconnus), `ConfigurationInvalide` (modèle, `evaluation.toml`), `RessourceOccupee` (GPU).
     """
     base = _racine(racine)
-    if variante not in VARIANTES:
-        raise ValueError(f"variante inconnue : {variante!r} (attendu : {', '.join(VARIANTES)})")
+    distant = est_distant(modele_ref)
+    if distant:
+        plafond = _verifier_distant(quantification, variante, plafond_generation_eur)
+    else:
+        if plafond_generation_eur is not None:
+            raise ValueError("--plafond-generation réservé à un modèle distant:")
+        variante = variante or "cpu"
+        if variante not in VARIANTES:
+            raise ValueError(f"variante inconnue : {variante!r} (attendu : {', '.join(VARIANTES)})")
     _verifier_jeu(jeu, base)
     reglages = (config if config is not None else cfg.charger_evaluation()).generation
     jeu_lu = lire_jeu(jeu, base)
     selection = _selection(jeu_lu, items)
+    if distant:
+        distant_resolu = resoudre_distant(modele_ref)
+        with fabrique_distante(distant_resolu, base, plafond, 0.0) as harnais:
+            run = _nouveau_run_distant(harnais, jeu_lu, selection, distant_resolu, base, reglages)
+            run_options = reglages.options_llm()
+            return _boucle(run, harnais, jeu_lu, selection, set(), rapporter, run_options)
+    assert variante is not None and quantification is not None
     modele = resoudre(modele_ref, quantification, racine=base)
     with ExitStack() as pile:
         _verrou(variante, pile, modele)
@@ -311,7 +422,7 @@ def _nouveau_run(
         "serveur": harnais.description,
         "chat_template_force": modele.config.chat_template_force,
         "precision_gguf": modele.precision,
-        "profil_reseau": PROFIL_RESEAU,
+        "profil_reseau": harnais.profil_reseau,
     }
     if modele.lora is not None:
         config["lora"] = {"echelle": modele.echelle_lora, "gguf": modele.lora.name}
@@ -332,6 +443,39 @@ def _nouveau_run(
     )
 
 
+def _nouveau_run_distant(
+    harnais: HarnaisEvaluation,
+    jeu: Jeu,
+    selection: Sequence[ItemBase],
+    modele: ModeleDistant,
+    racine: Path,
+    reglages: cfg.ConfigGeneration,
+) -> Run:
+    config = {
+        "phase": "generation",
+        "options_llm": reglages.options_llm(),
+        "items": [item.id for item in selection],
+        "serveur": harnais.description,
+        "profil_reseau": harnais.profil_reseau,
+        "modele_distant": {
+            "slug": modele.slug,
+            "sha256": modele.sha256,
+            **modele.fiche.model_dump(mode="json"),
+        },
+    }
+    return nouveau_run(
+        TYPE_RUN,
+        modele.slug_run,
+        config,
+        entrees=_entrees(jeu, modele, racine),
+        graine=reglages.graine,
+        racine=racine,
+        modele_ref=modele.ref,
+        jeu_version=jeu.version,
+        index_version=harnais.index_version,
+    )
+
+
 def reprendre_generation(
     run_id: str,
     *,
@@ -343,6 +487,8 @@ def reprendre_generation(
     jeu: str | None = None,
     variante: str | None = None,
     config: cfg.ConfigEvaluation | None = None,
+    plafond_generation_eur: float | None = None,
+    fabrique_distante: FabriqueDistante = ouvrir_harnais_distant,
 ) -> RapportGeneration:
     """Reprend le run `run_id` en ajout seul (items déjà présents sautés).
 
@@ -353,6 +499,8 @@ def reprendre_generation(
     llama.cpp différents de ceux du run. Lève `SlmspError` pour un run `complet`,
     `ManifesteInvalide` pour un run introuvable, d'un autre type, d'un autre modèle, d'un
     autre décodage, d'un autre template, d'un autre Index ou d'un autre llama.cpp.
+    Modèle distant : `plafond_generation_eur` obligatoire (`ValueError`), fiche distante
+    inchangée (`ManifesteInvalide`), items dont la dernière ligne n'est pas `ok` rejoués.
     """
     base = _racine(racine)
     run = ouvrir_run(run_id, racine=base)
@@ -374,11 +522,16 @@ def reprendre_generation(
     ]
     if ecarts:
         raise ManifesteInvalide(f"run {run_id} différent de la demande : " + " ; ".join(ecarts))
+    distant = est_distant(manifeste.modele_ref)
+    if distant and plafond_generation_eur is None:
+        raise ValueError("--plafond-generation EUR requis pour reprendre un modèle distant:")
+    if not distant and plafond_generation_eur is not None:
+        raise ValueError("--plafond-generation réservé à un modèle distant:")
     if (
         manifeste.modele_ref is None
-        or manifeste.quantification is None
+        or (not distant and manifeste.quantification is None)
         or manifeste.jeu_version is None
-        or manifeste.variante_llamacpp is None
+        or (not distant and manifeste.variante_llamacpp is None)
         or not isinstance(manifeste.config.get("items"), list)
     ):
         raise ManifesteInvalide(f"run {run_id} : run.json incomplet pour une reprise")
@@ -395,10 +548,25 @@ def reprendre_generation(
         selection = _selection(jeu_lu, manifeste.config["items"])
     except ValueError as exc:
         raise ManifesteInvalide(f"run {run_id} : {exc}") from None
-    modele = resoudre(manifeste.modele_ref, manifeste.quantification, racine=base)
     with ExitStack() as pile:
-        _verrou(manifeste.variante_llamacpp, pile, modele)
-        harnais = pile.enter_context(fabrique(modele, manifeste.variante_llamacpp, base))
+        if distant:
+            assert plafond_generation_eur is not None
+            modele_distant = resoudre_distant(manifeste.modele_ref)
+            inscrit = manifeste.entrees.get("modele")
+            if sha256_fichier(modele_distant.chemin) != inscrit:
+                raise ManifesteInvalide(
+                    f"run {run_id} : fiche {modele_distant.chemin.name} modifiée depuis le run"
+                )
+            _verifier_plafond(plafond_generation_eur)
+            harnais = pile.enter_context(
+                fabrique_distante(modele_distant, base, plafond_generation_eur, _cout_deja(run))
+            )
+        else:
+            assert manifeste.quantification is not None
+            assert manifeste.variante_llamacpp is not None
+            modele = resoudre(manifeste.modele_ref, manifeste.quantification, racine=base)
+            _verrou(manifeste.variante_llamacpp, pile, modele)
+            harnais = pile.enter_context(fabrique(modele, manifeste.variante_llamacpp, base))
         for libelle, servi, inscrit in (
             ("chat template servi", harnais.chat_template_sha256, manifeste.chat_template_sha256),
             ("index_version", harnais.index_version, manifeste.index_version),
@@ -409,11 +577,14 @@ def reprendre_generation(
                     f"run {run_id} : {libelle} différent ({servi}, inscrit {inscrit})"
                 )
         run, deja = reprendre(run_id, fichier=FICHIER_GENERATIONS, cle="item_id", racine=base)
+        if distant:
+            deja = {i for i, statut in _derniers_statuts(run).items() if statut == "ok"}
         return _boucle(run, harnais, jeu_lu, selection, deja, rapporter, options)
 
 
 __all__ = [
     "CODE_ERREUR_EVALUATION",
+    "FICHIER_APPELS_DISTANTS",
     "FICHIER_GENERATIONS",
     "TYPE_RUN",
     "RapportGeneration",

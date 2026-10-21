@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
@@ -62,6 +62,10 @@ class EvaluationIntermediaire(_Tolerant):
     tokens_vus: int
     duree_s: float
     scores: dict[str, float | None]
+
+
+MOTIF_DISTANT: Final = "modele-distant"
+"""Motif d'exclusion d'un run `distant:` (story 17.1) : hors du Comparatif de campagne."""
 
 
 @dataclass(frozen=True)
@@ -274,6 +278,8 @@ def charger(racine: Path, campagne: str, *, jeu: str | None = None) -> Donnees:
         ref = scores.modele_ref
         if ref is None:
             exclus.append(Exclu(run.type, run.run_id, "modèle non renseigné"))
+        elif ref.startswith("distant:"):
+            exclus.append(Exclu(run.type, run.run_id, MOTIF_DISTANT))
         elif ref.startswith("base:") or _train_de(ref, table) is not None:
             pertinentes.append((run, scores))
     versions = sorted({s.jeu_version for _, s in pertinentes})
@@ -354,6 +360,9 @@ def _benchmarks(
                 exclus.append(Exclu(run.type, run.run_id, f"{chemin.name} absent ou invalide"))
                 continue
             ref = resultat.modele_ref
+            if ref.startswith("distant:"):
+                exclus.append(Exclu(run.type, run.run_id, MOTIF_DISTANT))
+                continue
             if not (ref.startswith("base:") or _train_de(ref, table) is not None):
                 continue
             if resultat.statut != "ok":

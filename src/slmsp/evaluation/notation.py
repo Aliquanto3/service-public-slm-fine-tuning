@@ -265,7 +265,9 @@ def _generations(parent: Run) -> dict[str, Generation]:
                 f"run {parent.run_id} : ligne {rang} de "
                 f"{phase_generation.FICHIER_GENERATIONS} invalide"
             ) from None
-        generations.setdefault(generation.item_id, generation)
+        # La dernière ligne d'un item fait foi : une reprise distante (story 17.1) rejoue
+        # en ajout seul un item en erreur ; ailleurs, chaque item n'a qu'une ligne.
+        generations[generation.item_id] = generation
     return generations
 
 

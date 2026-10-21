@@ -287,3 +287,16 @@ def test_sens_cible_compare_la_distance_a_l_ideal() -> None:
         MetriqueBenchmark(metrique="b.pct", sens="cible")
     with pytest.raises(ValidationError):
         MetriqueBenchmark(metrique="b.pct", sens="haut", cible=50.0)
+
+
+def test_notation_distante_exclue_avec_motif(campagne_complete: Path) -> None:
+    """Story 17.1 : un run `distant:` est écarté explicitement, pas en silence."""
+    identifiant = run_id("20261004-090000", "distant-qwen", "9997")
+    ecrire_notation(
+        campagne_complete, identifiant, "distant:qwen3.6-27b", {"Q": 50.0}, generation="g-d",
+    )  # fmt: skip
+    donnees = charger(campagne_complete, "camp-test")
+    assert ("eval-notation", identifiant, "modele-distant") in {
+        (e.type, e.run_id, e.motif) for e in donnees.exclus
+    }
+    assert all(ref != "distant:qwen3.6-27b" for ref, _ in donnees.baselines)

@@ -21,6 +21,10 @@
   (défaut 1.0) fait partie de la référence normalisée `lora:<id>@<échelle>`, donc du
   `modele_ref` des runs d'évaluation (reprise et comparaison sans ambiguïté). `f16` refusé.
 
+- `distant:<slug>` (story 17.1) : modèle servi par une API, sans GGUF ; refusé ici
+  (`ValueError`), seule la phase génération de `slmsp eval run` l'accepte
+  (`evaluation.modele_distant`). Le refus précède tout repli sur `ft:`.
+
 Toute incohérence lève `ConfigurationInvalide` ; une référence ou une quantification mal
 formée lève `ValueError` (erreur d'usage).
 """
@@ -55,6 +59,7 @@ NOM_TEMPLATE: Final = "chat_template.jinja"
 
 _MOTIF_REF: Final = re.compile(get_args(ModeleRef)[1].pattern)
 """Motif de `core.schemas.run.ModeleRef` (une seule définition)."""
+MOTIF_REF: Final = _MOTIF_REF
 
 
 @dataclass(frozen=True)
@@ -249,6 +254,11 @@ def resoudre(
             f"référence de modèle invalide : {ref!r} "
             "(base:<slug> ou ft:<run_id> ; lora:<run_id>[@<échelle>])"
         )
+    if ref.startswith("distant:"):
+        raise ValueError(
+            f"{ref} : modèle distant, sans GGUF : seule la génération de `slmsp eval run` "
+            "l'accepte (ni bench, ni measure, ni export, ni sonde d'outils)"
+        )
     if quantification not in QUANTIFICATIONS:
         raise ValueError(
             f"quantification invalide : {quantification!r} (attendu : {', '.join(QUANTIFICATIONS)})"
@@ -265,6 +275,7 @@ def resoudre(
 
 __all__ = [
     "ECHELLE_LORA_DEFAUT",
+    "MOTIF_REF",
     "QUANTIFICATIONS",
     "ModeleResolu",
     "Quantification",

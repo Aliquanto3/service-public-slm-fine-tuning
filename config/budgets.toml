@@ -77,3 +77,6 @@ juge-tiers-openrouter = "openrouter"
 generateur-openrouter = "openrouter"
 # Juge de données DeepSeek (story O1, `slmsp data juger`) : poste openrouter existant.
 juge-donnees-openrouter = "openrouter"
+# Génération d'un modèle distant par `slmsp eval run --modele distant:<slug>` (story 17.1) :
+# poste openrouter existant, borné par run par `--plafond-generation`.
+eval-distant = "openrouter"

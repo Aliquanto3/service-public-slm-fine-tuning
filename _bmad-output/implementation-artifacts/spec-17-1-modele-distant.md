@@ -2,7 +2,7 @@
 title: 'Story 17.1 — Modèle distant dans `eval run` (OpenRouter d''abord)'
 type: 'feature'
 created: '2026-10-21'
-status: ready-for-dev
+status: review
 context:
   - '{project-root}/_bmad-output/planning-artifacts/stories-epic-17-modele-distant.md'
   - '{project-root}/_bmad-output/implementation-artifacts/consignes-sous-agents-2026-10-20.md'
@@ -53,3 +53,29 @@ Ils priment sur les exigences ci-dessus en cas d'écart.
 11. **Estimation des tokens d'entrée** : caractères de la requête sérialisée ÷ 3, multipliés par la majoration d'entrée du registre, bornés par le `contexte` de la fiche ; la sortie au pire cas = `max_tokens`.
 12. **Corps OpenRouter** : `provider.require_parameters = true` en plus de `order`, `allow_fallbacks = false`, `data_collection = "deny"`, `quantizations`.
 13. **Flux** : `tool_calls` fragmentés réassemblés par index (comme `inference/client.py:579`) ; le modèle renvoyé est contrôlé contre `modele_id` (item en erreur sinon, tarif du `modele_id`).
+
+## Auto Run Result (2026-10-21, dev-story)
+Livré : `distant:<slug>` (`ModeleRef`), fiches `config/modeles-distants/` (`FicheDistante`), `evaluation/client_distant.py` (SSE, budget, relances, contrôles), `assemblage.ouvrir_harnais_distant` / `client_distant`, `sans_reseau(hotes_autorises, profil)`, branches distantes de `generation.py` (manifeste à `null`, `appels-distants.jsonl`, fatales, reprise des items non `ok`), CLI `--plafond-generation`, profil `eval-distant`, usage `eval-distant` → `openrouter`, tarifs du 21/10, refus `bench`/`measure`/`resoudre`, `Exclu` `modele-distant` au comparatif. Tests : `tests/evaluation/test_modele_distant.py` (35), `tests/compare/test_comparatif.py` (+1) ; non-régression ciblée verte (evaluation, net, fournisseurs, budget, core, inference, benchmarks, cli, measure, architecture).
+
+Décisions prises seul (simples, réversibles) :
+- Erreurs fatales : le Harnais avale toute exception en `Erreur` ; le client mémorise l'erreur fatale (`erreur_fatale`) et la boucle la relève après l'item (ligne non écrite, run `interrompu`, exception propagée). Liste : `BudgetEpuise` (dont `PlafondGenerationAtteint`), `SecretManquant`, `ConfigurationInvalide`, `TarifInconnu`, `HoteBloque`. Le chemin local n'est pas touché.
+- Code d'erreur d'item (`hebergeur_inattendu`, `modele_inattendu`, `erreur_flux`, `flux_coupe`, `http-<n>`, `transport`) reporté dans l'`Erreur` finale de la trace ; relevé complet par appel dans `appels-distants.jsonl` (pas dans `Generation`, pour ne pas toucher la clé du cache des verdicts).
+- Reprise : la dernière ligne d'un item fait foi (`_boucle` et `notation._generations`, ex-`setdefault`) ; sans effet en local (une ligne par item). Le coût déjà réglé (somme de `appels-distants.jsonl`) compte dans le plafond du run repris ; `--plafond-generation` est redemandé à la reprise (peut être relevé) ; fiche modifiée depuis le run → refus.
+- `provider` absent du flux → `hebergeur_inattendu` (prudence) ; modèle renvoyé comparé à `modele_id` à l'égalité stricte.
+- `taille_contexte = None` pour le client distant (passages sans découpage) ; `compter_tokens` = caractères ÷ 3 (plafond des réécritures CO/TR). Estimation réservée : `min(ceil(caractères ÷ 3), contexte)`, la majoration du registre s'applique ensuite.
+- Pas de `JournalAppels` (corps et réponses bruts) pour le flux : le relevé du run suffit à la mesure.
+- `chat_template_kwargs` ignoré pour l'API ; `max_tokens` absent → 1024.
+- Fiche `mistral-small-4` : `quantification = "unknown"` et contextes (262144, 131072) posés sans relevé : **à vérifier sur l'essai réel**.
+
+Points à vérifier sur l'essai réel (orchestrateur) : nom du paramètre `reasoning` (`corps_reasoning`, `{"enabled": false}`) ; présence de `provider` et forme exacte de `model` dans les morceaux SSE ; valeur `quantizations` pour l'hébergeur Mistral ; refus éventuel de `require_parameters` avec `seed`.
+
+## Revue
+Revue du 2026-10-21 (Opus, avec la liste du second avis), branche rebasée sur main 7e8f564.
+- MEDIUM, corrigé : morceau SSE mal formé (`delta`, fragment `tool_calls`, `function` non objet, `index` non entier) levait `AttributeError` hors d'`ErreurDistante`, réservation ouverte et coût absent du relevé. Lecture du flux protégée, contrôles `isinstance`, item en erreur `flux_invalide` réglé au coût réel ou au pire cas ; test `test_morceau_sse_mal_forme`.
+- MEDIUM, corrigé (passe propre) : lecture abandonnée (générateur fermé par le consommateur, interruption) laissait la réservation ouverte ; réglée au pire cas, relevé `abandon` ; test `test_lecture_abandonnee_reglee_au_pire_cas`.
+- LOW, corrigé : `Retry-After` non plafonné, désormais `min(attente, 60 s)` ; test `test_retry_after_plafonne`.
+- LOW, corrigé : `BaseException` à l'ouverture du flux sans relevé ; relevé écrit avant de relancer, et `_boucle` écrit dans `appels-distants.jsonl` les relevés de l'item en cours quand le run s'interrompt (coût repris par `_cout_deja`).
+- LOW, corrigé (passe propre) : échec de lecture du corps d'une réponse non 200 laissait la réservation ouverte ; réglée avant la lecture, lecture protégée.
+- LOW, rejeté : `reasoning: {"enabled": false}` non vérifié ; isolé dans `corps_reasoning`, à confirmer par l'orchestrateur sur l'essai réel.
+- LOW, rejeté : fiche lue sous `racine_projet()` et non sous `--racine` ; même convention que les fiches locales (`config/modeles`) et que `_entrees` : la configuration vient du projet, `--racine` porte les données et les runs.
+- Passe propre sans autre constat : garde réseau (`sans_reseau` admet le seul hôte du fournisseur et ses adresses résolues ; profil `eval-distant` POST sur le chemin exact), budget et reprise, chemin local inchangé, `notation.py` (dernière ligne fait foi, sans effet en local), clé jamais journalisée, D1 respecté (textes factices seulement).

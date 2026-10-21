@@ -17,8 +17,8 @@ from slmsp.core.schemas import SchemaBase
 StatutRequete = Literal["envoyee", "echouee", "bloquee-liste", "bloquee-mode"]
 """Issue d'une requête : partie, partie en erreur, refusée par profil ou par Mode."""
 
-ProfilReseau = Literal["assistant", "outillage", "aucun"]
-"""Profils de la passerelle (AD-4)."""
+ProfilReseau = Literal["assistant", "outillage", "aucun", "eval-distant"]
+"""Profils de la passerelle (AD-4) ; `eval-distant` : génération d'un modèle distant (17.1)."""
 
 
 class EntreeJournalRequetes(SchemaBase):

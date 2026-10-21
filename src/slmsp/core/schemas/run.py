@@ -31,11 +31,13 @@ ModeleRef = Annotated[
     str,
     StringConstraints(
         pattern=r"^(base:[a-z0-9.-]+|ft:\d{8}-\d{6}-[a-z0-9.-]+-[0-9a-f]{4}"
-        r"|lora:\d{8}-\d{6}-[a-z0-9.-]+-[0-9a-f]{4}(@\d+(\.\d+)?)?)$"
+        r"|lora:\d{8}-\d{6}-[a-z0-9.-]+-[0-9a-f]{4}(@\d+(\.\d+)?)?"
+        r"|distant:[a-z0-9.-]+)$"
     ),
 ]
 """Modèle évalué : `base:<slug>`, `ft:<run_id du Run d'export>` ou `lora:<run_id du Run
-d'export LoRA>[@<échelle>]` (base Q4_K_M + `--lora-scaled`, story 15.6)."""
+d'export LoRA>[@<échelle>]` (base Q4_K_M + `--lora-scaled`, story 15.6) ou `distant:<slug>` (fiche
+`config/modeles-distants/<slug>.toml`, génération par API compatible OpenAI, story 17.1)."""
 
 
 class Gpu(SousSchema):

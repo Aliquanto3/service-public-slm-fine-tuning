@@ -7,6 +7,8 @@
         [--phase generation|toutes] [--variante cpu|cuda] [--items ID,ID…] [--racine DIR]
         [--mode-juge batch|direct] [--plafond-estime EUR]
     slmsp eval run --phase generation --reprendre RUN_ID [--racine DIR]
+    slmsp eval run --modele distant:<slug> --jeu dev1 --plafond-generation EUR
+        [--phase generation|toutes] [--items …] [--plafond-estime EUR]  (story 17.1)
     slmsp eval run --phase notation --depuis RUN_ID [--mode-juge batch|direct]
         [--plafond-estime EUR] [--racine DIR]
     slmsp eval juges-tiers --verifier
@@ -208,11 +210,12 @@ def _rapporter(generation: Any, rang: int, total: int) -> None:
 
 
 def _manquants(args: argparse.Namespace) -> list[str]:
+    distant = isinstance(args.modele, str) and args.modele.startswith("distant:")
     return [
         option
         for option, valeur in (
             ("--modele", args.modele),
-            ("--quantification", args.quantification),
+            ("--quantification", "sans objet" if distant else args.quantification),
             ("--jeu", args.jeu),
         )
         if valeur is None
@@ -237,6 +240,7 @@ def _generation(args: argparse.Namespace, racine: Path | None) -> Any:
                 quantification=args.quantification,
                 jeu=args.jeu,
                 variante=args.variante,
+                plafond_generation_eur=args.plafond_generation,
             )
         manquants = _manquants(args)
         if manquants:
@@ -245,11 +249,12 @@ def _generation(args: argparse.Namespace, racine: Path | None) -> Any:
             args.modele,
             args.quantification,
             args.jeu,
-            variante=args.variante or "cpu",
+            variante=args.variante,
             items=_items(args.items),
             racine=racine,
             fabrique=assemblage.ouvrir_harnais,
             rapporter=_rapporter,
+            plafond_generation_eur=args.plafond_generation,
         )
     except ValueError as exc:
         return _usage_run(str(exc))
@@ -361,6 +366,7 @@ def _phase_notation(args: argparse.Namespace, racine: Path | None) -> int:
             ("--jeu", args.jeu),
             ("--variante", args.variante),
             ("--items", args.items),
+            ("--plafond-generation", args.plafond_generation),
         )
         if valeur is not None
     ]
@@ -683,7 +689,8 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     run.add_argument(
         "--modele",
-        help="modèle évalué : base:<slug>, ft:<export_run_id> ou lora:<export_lora_run_id>",
+        help="modèle évalué : base:<slug>, ft:<export_run_id>, lora:<export_lora_run_id> "
+        "ou distant:<slug> (config/modeles-distants/<slug>.toml, API OpenRouter)",
     )
     run.add_argument(
         "--echelle-lora",
@@ -716,6 +723,13 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         type=_reel_positif,
         metavar="EUR",
         help="refuser la notation si le coût estimé du Juge principal dépasse ce plafond (EUR)",
+    )
+    run.add_argument(
+        "--plafond-generation",
+        type=_reel_positif,
+        metavar="EUR",
+        help="distant:<slug> seulement, obligatoire : interrompre la génération (reprenable) "
+        "avant que son coût réel cumulé dépasse ce plafond (EUR)",
     )
     run.add_argument("--racine", help="racine du dépôt (défaut : racine du projet)")
     run.set_defaults(func=executer_run)

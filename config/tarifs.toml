@@ -107,3 +107,23 @@ source = "API des modèles d'OpenRouter (relevé de l'orchestrateur, 20/10)"
 [modeles."moonshotai/kimi-k2.6".modes.direct]
 entree = 0.65
 sortie = 3.41
+
+# Modèles distants évalués par `slmsp eval run --modele distant:<slug>` (story 17.1), servis
+# par OpenRouter avec un hébergeur épinglé (config/modeles-distants/). Mesure seulement.
+[modeles."qwen/qwen3.6-27b"]
+devise = "USD"
+date = 2026-10-21
+source = "openrouter.ai/qwen/qwen3.6-27b, prix relevé par l'orchestrateur le 2026-10-21"
+
+[modeles."qwen/qwen3.6-27b".modes.direct]
+entree = 0.25
+sortie = 2.0
+
+[modeles."mistralai/mistral-small-2603"]
+devise = "USD"
+date = 2026-10-21
+source = "openrouter.ai/mistralai/mistral-small-2603, prix relevé par l'orchestrateur le 2026-10-21"
+
+[modeles."mistralai/mistral-small-2603".modes.direct]
+entree = 0.15
+sortie = 0.6

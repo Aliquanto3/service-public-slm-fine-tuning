@@ -16,6 +16,12 @@ et un `ModeFixe` selon son mode (`MODES_RD`) ; les autres Tâches n'ont ni outil
 connexion, `ConnectEx` de la boucle asyncio Proactor, extensions C, processus enfants
 comme `llama-server`) ne sont pas couvertes : aucun port du Harnais d'évaluation ne les
 emprunte.
+
+Modèle distant (`distant:<slug>`, story 17.1) : `ouvrir_harnais_distant` ne démarre aucun
+`llama-server` de génération ; le serveur d'embedding et l'Index restent locaux, le LLM est
+un `ClientDistant` (profil réseau `eval-distant`). `sans_reseau(hotes_autorises=...)`
+admet alors le seul hôte du fournisseur (liste fermée, vide par défaut) : son nom par
+`getaddrinfo`, puis les seules adresses que cette résolution a rendues.
 """
 
 from __future__ import annotations
@@ -23,18 +29,23 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import socket
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
 
+from slmsp.budget.registre import RegistreBudget
+from slmsp.budget.tarifs import tarif
 from slmsp.core.config import racine_projet
 from slmsp.core.erreurs import HoteBloque
 from slmsp.core.evenements import Evenement
 from slmsp.core.items import ItemBase, ItemRD, Jeu, resoudre_cassettes
-from slmsp.core.ports import EmbedderPort, LlmPort, VectorStore
+from slmsp.core.ports import EmbedderPort, JournalRequetes, LlmPort, VectorStore
+from slmsp.evaluation.client_distant import MODE_TARIF, USAGE_BUDGET, ClientDistant
+from slmsp.evaluation.modele_distant import ModeleDistant
 from slmsp.evaluation.modele_ref import ModeleResolu
+from slmsp.fournisseurs.client import lire_cle
 from slmsp.harness.config import ConfigHarnais, charger_config_harnais
 from slmsp.harness.modes import ModeFixe
 from slmsp.harness.service import AssistantService
@@ -50,7 +61,9 @@ from slmsp.inference.serveur import (
     config_llamacpp_modele,
 )
 from slmsp.mcp.bac_a_sable import BacASable
+from slmsp.net import client as client_reseau
 from slmsp.net import client_local
+from slmsp.net.profils import hote_de
 
 MODES_RD: Final[Mapping[str, str]] = {
     "connecte": "connecte",
@@ -61,6 +74,7 @@ MODES_RD: Final[Mapping[str, str]] = {
 
 SLUG_EMBEDDING: Final = "bge-m3"
 PROFIL_RESEAU: Final = "aucun"
+PROFIL_RESEAU_DISTANT: Final = "eval-distant"
 DELAI_PROPS: Final = 30.0
 """Délai de `GET /props` (secondes)."""
 
@@ -77,11 +91,18 @@ class HarnaisEvaluation:
     config: ConfigHarnais
     taches: TableTaches
     description: dict[str, Any]
-    chat_template_sha256: str
+    chat_template_sha256: str | None
+    """`None` pour un modèle distant (aucun template servi localement)."""
     index_version: str
-    llamacpp_tag: str
+    llamacpp_tag: str | None
+    """Tag llama.cpp de la génération ; `None` pour un modèle distant."""
     chemin_outils: Path | None = field(default=None)
     """Remplace `config/outils-mcp.toml` pour le Bac à sable (tests)."""
+    profil_reseau: str = PROFIL_RESEAU
+    hotes_autorises: tuple[str, ...] = ()
+    """Hôtes admis par `sans_reseau` pendant la boucle (modèle distant seulement)."""
+    distant: Any = None
+    """`ClientDistant` d'un modèle distant (relevés, erreur fatale), `None` en local."""
 
     def service(
         self, item: ItemBase, jeu: Jeu, signaler: Callable[[Evenement], None] | None = None
@@ -145,7 +166,6 @@ def ouvrir_harnais(
     # Bonsai) ; l'embedding reste sur la version commune.
     config_llamacpp = config_llamacpp_modele(modele.config)
     config_llamacpp_embedding = charger_config_llamacpp()
-    config_embedding = charger_config_modele(SLUG_EMBEDDING)
     with ExitStack() as pile:
         generation = pile.enter_context(
             ServeurLlama(
@@ -158,18 +178,7 @@ def ouvrir_harnais(
                 lora=None if modele.lora is None else Lora(modele.lora, modele.echelle_lora or 1.0),
             )
         )
-        embedding = pile.enter_context(
-            ServeurLlama(
-                config_embedding,
-                "cpu",
-                slug=SLUG_EMBEDDING,
-                config_llamacpp=config_llamacpp_embedding,
-                prendre_verrou_gpu=False,
-            )
-        )
-        index = pile.enter_context(
-            ouvrir_index(base if racine_index is None else Path(racine_index))
-        )
+        embedding, index = _embedding_et_index(pile, base, racine_index, config_llamacpp_embedding)
         template = lire_props(generation.port).get("chat_template")
         if not isinstance(template, str) or not template:
             raise ErreurInference("/props : chat_template absent du serveur de génération")
@@ -187,6 +196,97 @@ def ouvrir_harnais(
             index_version=index.version,
             llamacpp_tag=config_llamacpp.tag,
         )
+
+
+def _embedding_et_index(
+    pile: ExitStack, base: Path, racine_index: str | Path | None, config_llamacpp: Any = None
+) -> tuple[ServeurLlama, Any]:
+    """Serveur d'embedding (`bge-m3`, `cpu`, sans verrou GPU) et Index de `racine_index`."""
+    embedding = pile.enter_context(
+        ServeurLlama(
+            charger_config_modele(SLUG_EMBEDDING),
+            "cpu",
+            slug=SLUG_EMBEDDING,
+            config_llamacpp=config_llamacpp or charger_config_llamacpp(),
+            prendre_verrou_gpu=False,
+        )
+    )
+    index = pile.enter_context(ouvrir_index(base if racine_index is None else Path(racine_index)))
+    return embedding, index
+
+
+@contextmanager
+def ouvrir_harnais_distant(
+    modele: ModeleDistant,
+    racine: str | Path | None,
+    plafond_eur: float,
+    cout_deja_eur: float = 0.0,
+    *,
+    racine_index: str | Path | None = None,
+) -> Iterator[HarnaisEvaluation]:
+    """Harnais d'un modèle distant (voir le module), arrêté à la sortie du bloc.
+
+    Clé, usage de budget et tarif sont vérifiés avant tout serveur et toute requête
+    (`SecretManquant`, `ConfigurationInvalide`, `TarifInconnu`).
+    """
+    base = (Path(racine) if racine is not None else racine_projet()).resolve()
+    llm = client_distant(modele, plafond_eur, cout_deja_eur)
+    config = charger_config_harnais()
+    taches = charger_taches()
+    with ExitStack() as pile:
+        pile.callback(llm.http.close)
+        embedding, index = _embedding_et_index(pile, base, racine_index)
+        fiche = modele.fiche
+        yield HarnaisEvaluation(
+            llm=llm,
+            embedder=embedding.embedder(),
+            vector_store=index,
+            config=config,
+            taches=taches,
+            description={
+                "generation": {
+                    "fournisseur": fiche.fournisseur,
+                    "modele_id": fiche.modele_id,
+                    "hebergeur": fiche.hebergeur,
+                    "quantification": fiche.quantification,
+                    "reasoning": fiche.reasoning,
+                },
+                "embedding": embedding.description(),
+            },
+            chat_template_sha256=None,
+            index_version=index.version,
+            llamacpp_tag=None,
+            profil_reseau=PROFIL_RESEAU_DISTANT,
+            hotes_autorises=(hote_de(modele.fournisseur.base_url),),
+            distant=llm,
+        )
+
+
+def client_distant(
+    modele: ModeleDistant,
+    plafond_eur: float,
+    cout_deja_eur: float = 0.0,
+    *,
+    registre: RegistreBudget | None = None,
+    fichier_env: str | Path | None = None,
+    transport_interne: Any = None,
+    journal: JournalRequetes | None = None,
+) -> ClientDistant:
+    """`ClientDistant` du profil `eval-distant`, clé, usage et tarif vérifiés d'abord."""
+    fournisseur = modele.fournisseur
+    cle = lire_cle(fournisseur, fichier_env)
+    registre = registre if registre is not None else RegistreBudget()
+    registre.verifier_usage(USAGE_BUDGET)
+    tarif(registre.tarifs, modele.fiche.modele_id, MODE_TARIF)
+    http = client_reseau(
+        PROFIL_RESEAU_DISTANT,
+        transport_interne=transport_interne,
+        journal=journal,
+        delais_appel=fournisseur.delais(),
+    )
+    return ClientDistant(
+        modele, registre, http, cle, plafond_eur=plafond_eur, cout_deja_eur=cout_deja_eur
+    )
 
 
 # --- Profil réseau `aucun` --------------------------------------------------------------------
@@ -228,36 +328,52 @@ def hote_local(hote: Any) -> bool:
 
 
 @contextmanager
-def sans_reseau() -> Iterator[list[str]]:
+def sans_reseau(
+    hotes_autorises: Iterable[str] = (), profil: str = PROFIL_RESEAU
+) -> Iterator[list[str]]:
     """Profil réseau `aucun` pour tout le processus, le temps du bloc.
 
     Remplace `socket.socket.connect`, `socket.socket.connect_ex` et `socket.getaddrinfo` :
     toute cible hors boucle locale lève `HoteBloque` avant tout envoi. Rend la liste des
     cibles refusées. Les fonctions d'origine sont restaurées à la sortie.
+
+    `hotes_autorises` (liste fermée, vide par défaut ; modèle distant seulement) : ces noms
+    passent `getaddrinfo`, et `connect` admet les seules adresses ainsi résolues.
     """
     bloquees: list[str] = []
+    admis = frozenset(_hote(h) for h in hotes_autorises)
+    adresses: set[str] = set()
     connect = socket.socket.connect
     connect_ex = socket.socket.connect_ex
     getaddrinfo = socket.getaddrinfo
 
     def refuser(cible: Any) -> HoteBloque:
         bloquees.append(repr(cible))
-        return HoteBloque(f"connexion refusée, profil réseau {PROFIL_RESEAU} : {cible!r}")
+        return HoteBloque(f"connexion refusée, profil réseau {profil} : {cible!r}")
+
+    def permise(adresse: Any) -> bool:
+        if adresse_locale(adresse):
+            return True
+        return isinstance(adresse, tuple) and bool(adresse) and _hote(adresse[0]) in adresses
 
     def garde_connect(self: socket.socket, adresse: Any, *args: Any, **kwargs: Any) -> Any:
-        if not adresse_locale(adresse):
+        if not permise(adresse):
             raise refuser(adresse)
         return connect(self, adresse, *args, **kwargs)
 
     def garde_connect_ex(self: socket.socket, adresse: Any, *args: Any, **kwargs: Any) -> Any:
-        if not adresse_locale(adresse):
+        if not permise(adresse):
             raise refuser(adresse)
         return connect_ex(self, adresse, *args, **kwargs)
 
     def garde_getaddrinfo(hote: Any, *args: Any, **kwargs: Any) -> Any:
-        if not hote_local(hote):
+        if hote_local(hote):
+            return getaddrinfo(hote, *args, **kwargs)
+        if _hote(hote) not in admis:
             raise refuser(hote)
-        return getaddrinfo(hote, *args, **kwargs)
+        resultats = getaddrinfo(hote, *args, **kwargs)
+        adresses.update(_hote(r[4][0]) for r in resultats if r[4])
+        return resultats
 
     socket.socket.connect = garde_connect  # type: ignore[method-assign]
     socket.socket.connect_ex = garde_connect_ex  # type: ignore[method-assign]
@@ -273,11 +389,14 @@ def sans_reseau() -> Iterator[list[str]]:
 __all__ = [
     "MODES_RD",
     "PROFIL_RESEAU",
+    "PROFIL_RESEAU_DISTANT",
     "SLUG_EMBEDDING",
     "HarnaisEvaluation",
+    "client_distant",
     "adresse_locale",
     "hote_local",
     "lire_props",
     "ouvrir_harnais",
+    "ouvrir_harnais_distant",
     "sans_reseau",
 ]

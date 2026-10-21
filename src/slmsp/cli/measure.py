@@ -156,6 +156,8 @@ def _modele_et_lora(args: argparse.Namespace, racine: Path) -> tuple[str, str, A
     from slmsp.inference.serveur import Lora
 
     ref = modele_ref.composer_lora(args.modele, args.echelle_lora)
+    if ref.startswith("distant:"):
+        raise ValueError(f"{ref} : modèle distant, sans GGUF : measure ne le prend pas")
     if not ref.startswith("lora:"):
         return ref, ref, None
     resolu = modele_ref.resoudre(ref, "q4_k_m", racine=racine)
