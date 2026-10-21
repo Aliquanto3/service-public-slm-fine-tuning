@@ -9,7 +9,8 @@ Valeurs vérifiées le 21/10 :
 - `mistral` : schéma strict (HTTP 422 `extra_forbidden` sur tout champ inconnu) : `seed`
   devient `random_seed`, `top_k` n'est pas transmis ;
 - `ovh` (AI Endpoints) : aucun champ additionnel (refus de `chat_template_kwargs`), pas de
-  graine ; le raisonnement renvoyé à part est ignoré à l'affichage (`client_openai.lire_flux`) ;
+  graine ; `acces_gratuit` : accès anonyme sans `Authorization`, 2 requêtes par minute (story
+  17.4b) ; le raisonnement renvoyé à part est ignoré à l'affichage (`client_openai.lire_flux`) ;
 - `generique` : URL et modèle libres, aucun champ additionnel, pas de graine ; seul preset à
   admettre `parametres_supplementaires` (amendement 13).
 
@@ -56,6 +57,8 @@ class Preset:
     parametres_libres: bool = False
     usage: str | None = None
     """Champ qui demande l'usage en fin de flux : `usage` (OpenRouter), `stream_options`."""
+    acces_gratuit: bool = False
+    """Offre un accès anonyme sans clé (`ovh` : endpoints gratuits, 2 requêtes par minute)."""
 
     def vue(self) -> dict[str, Any]:
         """Description pour l'interface (préremplissage)."""
@@ -65,6 +68,7 @@ class Preset:
             "url_base": self.url_base,
             "modeles": list(self.modeles),
             "parametres_libres": self.parametres_libres,
+            "acces_gratuit": self.acces_gratuit,
         }
 
 
@@ -95,6 +99,7 @@ PRESETS: Final[dict[str, Preset]] = {
             ("Qwen3.6-27B", "Mistral-Small-3.2-24B-Instruct-2506"),
             OPTIONS_COMMUNES,
             usage="stream_options",
+            acces_gratuit=True,
         ),
         Preset(
             "generique",

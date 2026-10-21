@@ -9,6 +9,7 @@ const connu = (v) => v != null && Number.isFinite(Number(v));
 /** Coût en euros : « 0 € » en local, « inconnu » sans tarif. */
 export function texteCout(d) {
   if (d.local) return "0 € (modèle local : pas de coût d'API)";
+  if (d.mention_cout === "accès gratuit OVH" || String(d.fournisseur ?? "").endsWith("-gratuit")) return "0 € (accès gratuit OVH)";
   if (!connu(d.cout_eur)) return "inconnu (tarif absent)";
   const v = Number(d.cout_eur);
   return v > 0 && v < 0.0001 ? "< 0,0001 €" : `${nf(v, 4, 4)} €`;

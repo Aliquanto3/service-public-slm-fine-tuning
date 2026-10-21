@@ -69,7 +69,7 @@ function plafonds(liste) {
     const barre = el("progress", { max: String(p.plafond_eur || 1), value: String(Math.min(p.cumul_eur, p.plafond_eur || 1)), "aria-labelledby": id });
     li.append(etiquette, barre);
     if (p.plafond_eur === 0) li.append(el("span", { class: "observabilite-alerte" }, " fournisseur désactivé (plafond 0 €)"));
-    if (p.sauts) li.append(el("span", { class: "observabilite-alerte" }, ` ${p.sauts} appel${p.sauts > 1 ? "s" : ""} sauté${p.sauts > 1 ? "s" : ""} ce mois-ci (plafond ou tarif)`));
+    if (p.sauts) li.append(el("span", { class: "observabilite-alerte" }, ` ${p.sauts} appel${p.sauts > 1 ? "s" : ""} sauté${p.sauts > 1 ? "s" : ""} ce mois-ci (plafond, tarif ou débit)`));
     ul.append(li);
   }
   return ul;

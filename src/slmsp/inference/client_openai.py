@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import logging
 import random
+import ssl
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -94,9 +95,34 @@ MOTIFS: Final = frozenset(
         "reponse-invalide",
         "plafond-atteint",
         "tarif-inconnu",
+        "debit-limite",
     }
 )
-"""Codes d'échec courts, plus `http-<statut>`."""
+"""Codes d'échec courts, plus `http-<statut>`. `debit-limite` : accès gratuit OVH (story 17.4b),
+2 requêtes par minute : entrée sautée sans appel, HTTP 429 ou coupure avant le premier jeton."""
+SUFFIXE_GRATUIT: Final = "-gratuit"
+"""Suffixe du fournisseur d'une mesure en accès gratuit (`ovh-gratuit`)."""
+
+
+def verifier_hote_gratuit(url_base: str, preset_nom: str) -> None:
+    """Accès gratuit (sans clé) : l'hôte doit être exactement celui du preset ; `ValueError`."""
+    modele = preset(preset_nom)
+    if not modele.acces_gratuit or modele.url_base is None:
+        raise ValueError("accès gratuit : preset ovh seulement")
+    if analyser_url(url_base).hote != analyser_url(modele.url_base).hote:
+        raise ValueError("accès gratuit : hôte du preset seulement")
+
+
+def _entete_entier(entetes: Any, nom: str) -> int | None:
+    """Entier d'un en-tête (sans casse) ou `None` ; jamais de levée."""
+    try:
+        for cle in (nom, nom.title()):
+            valeur = entetes.get(cle)
+            if valeur is not None:
+                return int(float(str(valeur).strip()))
+    except Exception:
+        return None
+    return None
 
 
 def entier(valeur: Any) -> int | None:
@@ -271,6 +297,21 @@ def motif_exception(exc: BaseException) -> str:
     return "connexion"
 
 
+def _coupure_tls(exc: BaseException) -> bool:
+    """Vrai pour une coupure TLS ou EOF (cause comprise) ; refus, DNS et délai : faux."""
+    vus = 0
+    courant: BaseException | None = exc
+    while courant is not None and vus < 5:
+        if isinstance(courant, (ssl.SSLError, EOFError)):
+            return True
+        noms = {classe.__name__ for classe in type(courant).__mro__}
+        if noms & {"ReadError", "RemoteProtocolError"} or "EOF" in str(courant):
+            return True
+        courant = courant.__cause__ or courant.__context__
+        vus += 1
+    return False
+
+
 def valider_url_base(url_base: Any) -> str:
     """`url_base` HTTPS (port 443), nom d'hôte sans identifiants, ni requête ni fragment.
 
@@ -346,6 +387,7 @@ class ClientOpenAI:
         plafond: PlafondPort | None = None,
         tarif: Tarif | None = None,
         usage_flux: bool = False,
+        acces_gratuit: bool = False,
     ) -> None:
         self.http = http
         self.url_base = valider_url_base(url_base)
@@ -365,9 +407,44 @@ class ClientOpenAI:
         self._horloge = horloge
         self.derniere_duree_ms: int | None = None
         self.observateur = observateur
-        self.plafond = plafond
-        self.tarif = tarif
+        self.acces_gratuit = acces_gratuit
+        if acces_gratuit:
+            verifier_hote_gratuit(self.url_base, self.preset.nom)
+        # Accès gratuit : coût 0, aucune réservation sur le plafond (pire cas 0).
+        self.plafond = None if acces_gratuit else plafond
+        self.tarif = Tarif(0.0, 0.0) if acces_gratuit else tarif
         self.usage_flux = usage_flux
+        self.debit_restant: int | None = None
+        """Dernier `ratelimit-remaining` reçu (accès gratuit), sinon `None`."""
+        self._debit_reprise: float | None = None
+        """Instant (horloge du client) où le débit se renouvelle, si connu."""
+
+    @property
+    def fournisseur_mesure(self) -> str:
+        return self.preset.nom + (SUFFIXE_GRATUIT if self.acces_gratuit else "")
+
+    def _noter_debit(self, entetes: Any) -> None:
+        """Mémorise `ratelimit-remaining` et `ratelimit-reset` (secondes) d'une réponse."""
+        restant = _entete_entier(entetes, "ratelimit-remaining")
+        if restant is None:
+            return
+        self.debit_restant = restant
+        reset = _entete_entier(entetes, "ratelimit-reset")
+        self._debit_reprise = self._horloge() + max(0, reset) if reset is not None else None
+
+    def _noter_429(self, entetes: Any) -> None:
+        """429 : débit épuisé jusqu'à `ratelimit-reset` (60 s si absent)."""
+        reset = _entete_entier(entetes, "ratelimit-reset")
+        self.debit_restant = 0
+        self._debit_reprise = self._horloge() + (60 if reset is None else max(0, reset))
+
+    def _debit_epuise(self) -> bool:
+        """Vrai si le dernier `remaining` vaut 0 et que le `reset` n'est pas écoulé."""
+        return (
+            self.debit_restant == 0
+            and self._debit_reprise is not None
+            and self._horloge() < self._debit_reprise
+        )
 
     @property
     def identifiant(self) -> str:
@@ -422,15 +499,22 @@ class ClientOpenAI:
         return self._appel(corps)
 
     def _appel(self, corps: dict[str, Any]) -> Iterator[Evenement]:
-        if self._cle is None or not self._cle.get_secret_value():
+        if self.acces_gratuit:
+            entetes: dict[str, str] = {}  # accès anonyme : jamais d'`Authorization`
+        elif self._cle is None or not self._cle.get_secret_value():
             raise EchecAppel("cle-absente")
-        entetes = {"Authorization": f"Bearer {self._cle.get_secret_value()}"}
+        else:
+            entetes = {"Authorization": f"Bearer {self._cle.get_secret_value()}"}
         url = self.url_base + "/chat/completions"
         suivi = _Suivi(caracteres_entree(corps))
         max_tokens = entier(corps.get("max_tokens")) or MAX_TOKENS_DEFAUT
         debut = self._horloge()
         relances = 0
         try:
+            if self.acces_gratuit and self._debit_epuise():
+                self._mesurer(debut)
+                suivi.motif = "debit-limite"  # sauté sans appel : le reset n'est pas écoulé
+                raise EchecAppel(suivi.motif)
             while True:
                 if self.plafond is not None:
                     self._reserver(max_tokens, relances, suivi)
@@ -440,10 +524,19 @@ class ClientOpenAI:
                 except Exception as exc:
                     self._mesurer(debut)
                     suivi.motif = motif_exception(exc)
+                    if self.acces_gratuit and _coupure_tls(exc):
+                        suivi.motif = "debit-limite"  # coupure TLS/EOF : limite de débit d'OVH
                     raise EchecAppel(suivi.motif) from None
                 try:
+                    if self.acces_gratuit:
+                        self._noter_debit(reponse.headers)
                     if reponse.status_code != 200:
                         statut = int(reponse.status_code)
+                        if self.acces_gratuit and statut == 429:
+                            self._mesurer(debut)  # pas de relance ni d'attente
+                            self._noter_429(reponse.headers)
+                            suivi.motif = "debit-limite"
+                            raise EchecAppel(suivi.motif)
                         valeur = reponse.headers.get("Retry-After")
                         if statut_transitoire(statut) and relances < self.relances_max:
                             relances += 1
@@ -523,7 +616,7 @@ class ClientOpenAI:
         notifier(
             self.observateur,
             MesureAppel(
-                fournisseur=self.preset.nom,
+                fournisseur=self.fournisseur_mesure,
                 hote=self.hote,
                 modele=self.modele,
                 tokens_entree=tokens[0],
@@ -559,6 +652,8 @@ class ClientOpenAI:
             raise EchecAppel(suivi.motif)
         if etat.coupe or (etat.raison_finale is None and not etat.termine):
             suivi.motif = "connexion"
+            if self.acces_gratuit and etat.premier is None:
+                suivi.motif = "debit-limite"  # coupé avant le premier jeton
             raise EchecAppel(suivi.motif)
         yield from etat.appels_natifs()
         usage: dict[str, int] = {}

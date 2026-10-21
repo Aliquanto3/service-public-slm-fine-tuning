@@ -306,8 +306,10 @@ class PontReglages:
             entree = valider_entree({**valeurs, "actif": True})
         except ValueError as exc:
             return self._refus(f"Fournisseur externe : {exc}.")
-        if isinstance(saisie, str) and saisie.strip():
-            cle: SecretStr | None = SecretStr(saisie.strip())
+        if entree.get("acces_gratuit"):
+            cle: SecretStr | None = None  # accès gratuit : aucune clé lue ni envoyée
+        elif isinstance(saisie, str) and saisie.strip():
+            cle = SecretStr(saisie.strip())
         elif self._coffre is None:
             cle = None
         else:

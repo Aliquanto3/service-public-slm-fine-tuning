@@ -44,12 +44,14 @@ PONT_SIMULE = """
       if (nom === 'reglages.fournisseurs_externes') return { ok: true, max: 3, en_cours: null, fournisseurs: [], presets: [
         { nom: 'openrouter', libelle: 'OpenRouter', url_base: 'https://openrouter.ai/api/v1', modeles: ['qwen/qwen3.6-27b'], parametres_libres: false },
         { nom: 'mistral', libelle: 'Mistral AI', url_base: 'https://api.mistral.ai/v1', modeles: ['mistral-small-latest'], parametres_libres: false },
+        { nom: 'ovh', libelle: 'OVHcloud', url_base: 'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1', modeles: ['<modele-factice>'], parametres_libres: false, acces_gratuit: true },
         { nom: 'generique', libelle: 'Autre', url_base: null, modeles: [], parametres_libres: true },
       ] };
       if (nom === 'reglages.ecrire' && args[0] === 'fournisseurs_externes') {
         return { ok: true, fournisseurs: args[1].map((e) => ({ ...e, cle_enregistree: false })) };
       }
       if (nom === 'reglages.enregistrer_cle') return { ok: true, cle_enregistree: true };
+      if (nom === 'reglages.tester_modele_externe' && args[0].acces_gratuit) return { ok: true, reussi: true, latence_ms: 5, debit_restant: 1, hote: 'h.example' };
       if (nom === 'reglages.tester_modele_externe') return { ok: true, reussi: false, motif: 'http-401', hote: 'h.example' };
       if (nom === 'reglages.modeles') return { ok: true, actif: 'm-1', choisi: 'm-1', modeles: [{ slug: 'm-1', nom: 'm-1' }, { slug: 'm-2', nom: 'm-2' }] };
       return { ok: true };
@@ -272,6 +274,28 @@ def test_fournisseurs_externes_liste_ordonnee_cle_et_test(page) -> None:
     assert appel[1:3] == [liste[1]["id"], "<cle-factice>"]
     # revue 17.4 : la clé est liée à l'hôte et au preset de l'entrée
     assert appel[3]["preset"] == "mistral" and appel[3]["url_base"] == "https://api.mistral.ai/v1"
+
+
+def test_ovh_acces_gratuit_masque_la_cle_et_teste_sans_cle(page) -> None:
+    """Story 17.4b : option réservée au preset ovh, champ clé masqué, mention, test sans clé."""
+    _ouvrir(page)
+    page.get_by_text("Le texte de vos demandes est envoyé à ces hôtes").wait_for()
+    page.locator("#parametres-externe-ajouter").click()
+    entree = page.locator(".parametres-fournisseur").nth(0)
+    case = entree.locator("input[type=checkbox][id$='-gratuit']")
+    assert not case.is_visible() and entree.locator("input[type=password]").is_visible()
+    entree.locator("select").select_option("ovh")
+    assert case.is_visible()
+    case.check()
+    assert not entree.locator("input[type=password]").is_visible()
+    mention = "Accès gratuit OVH, limité à 2 requêtes par minute"
+    assert entree.get_by_text(mention).is_visible()
+    entree.get_by_role("button", name="Tester la connexion").click()
+    entree.get_by_text("Débit restant : 1 requête(s).").wait_for()
+    test = _appels(page, "reglages.tester_modele_externe")[0][1]
+    assert test["acces_gratuit"] is True and "cle" not in test
+    entree.locator("select").select_option("mistral")
+    assert not case.is_visible() and entree.locator("input[type=password]").is_visible()
 
 
 def test_cle_saisie_conservee_au_deplacement(page) -> None:

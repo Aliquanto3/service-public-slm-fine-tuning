@@ -202,6 +202,15 @@ def test_agregats_et_details() -> None:
     assert local is not None and local["local"] and local["cout_eur"] == 0.0
     assert "pas de coût d'API" in local["mention_cout"]
     assert details_echange([]) is None
+    # Story 17.4b : accès gratuit OVH, 0 € mentionné ; un saut `debit-limite` n'est pas un appel
+    gratuit = details_echange(
+        [
+            {**mesure(fournisseur="ovh-gratuit", cout_eur=0.0).__dict__},
+            {**mesure(fournisseur="ovh-gratuit", cout_eur=0.0, motif="debit-limite").__dict__},
+        ]
+    )
+    assert gratuit is not None and gratuit["cout_eur"] == 0.0 and not gratuit["local"]
+    assert gratuit["mention_cout"] == "accès gratuit OVH" and gratuit["sauts"] == 1
 
 
 def test_export_csv_protege_et_sans_contenu() -> None:

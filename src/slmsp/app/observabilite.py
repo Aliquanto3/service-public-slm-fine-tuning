@@ -62,7 +62,9 @@ PLAFOND_DEFAUT: Final = 2.0
 PLAFOND_MAX: Final = 10_000.0
 PUISSANCE_MIN_W: Final = 1.0
 PUISSANCE_MAX_W: Final = 500.0
-MOTIFS_SAUT: Final = frozenset({"plafond-atteint", "tarif-inconnu"})
+MOTIFS_SAUT: Final = frozenset({"plafond-atteint", "tarif-inconnu", "debit-limite"})
+MENTION_GRATUIT: Final = "accès gratuit OVH"
+SUFFIXE_GRATUIT: Final = "-gratuit"
 TAILLE_DERNIERS: Final = 20
 CARACTERES_FORMULE: Final = ("=", "+", "-", "@", "\t", "\r")
 MENTION_LOCAL: Final = "pas de coût d'API ; matériel et énergie du poste non facturés"
@@ -297,7 +299,11 @@ class ObservateurApplication:
         if mesure.local:
             return impact_local(self.impacts, self.puissance_cpu(), mesure.duree_ms)
         return impact_externe(
-            self.impacts, mesure.fournisseur, mesure.modele, mesure.tokens_sortie, mesure.duree_ms
+            self.impacts,
+            mesure.fournisseur.removesuffix(SUFFIXE_GRATUIT),
+            mesure.modele,
+            mesure.tokens_sortie,
+            mesure.duree_ms,
         )
 
     def mesurer(self, mesure: MesureAppel) -> None:
@@ -438,6 +444,8 @@ def details_echange(mesures: Sequence[Mapping[str, Any]]) -> dict[str, Any] | No
     resume["motifs"] = sorted({m["motif"] for m in ordre if m.get("motif")})
     if resume["local"]:
         resume["mention_cout"] = MENTION_LOCAL
+    elif any(m["fournisseur"].endswith(SUFFIXE_GRATUIT) for m in ordre) and not resume["cout_eur"]:
+        resume["mention_cout"] = MENTION_GRATUIT
     return resume
 
 

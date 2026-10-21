@@ -34,6 +34,7 @@ from slmsp.inference.client_openai import (
     motif_exception,
     valider_parametres,
     valider_url_base,
+    verifier_hote_gratuit,
 )
 from slmsp.inference.fournisseurs import PRESETS, preset
 from slmsp.inference.hybride import ClientHybride
@@ -50,7 +51,7 @@ PROFIL: Final = "modele-externe"
 MESSAGE_TEST: Final = "Test de connexion."
 CHAMPS: Final = frozenset(
     {"id", "preset", "url_base", "modele", "actif", "parametres_supplementaires", "tarif"}
-    | {"usage_flux"}
+    | {"usage_flux", "acces_gratuit"}
 )
 TARIF_MAX: Final = 1000.0
 """Tarif saisi au plus (euros par million de tokens) : garde-fou contre une faute de frappe."""
@@ -66,8 +67,11 @@ def liaison(entree: dict[str, Any]) -> dict[str, str]:
 
 
 def lecteur_cles(coffre: Any) -> LecteurCle:
-    """`LecteurCle` sur un `CoffreCles` : jamais une clé liée à un autre hôte ou preset."""
-    return lambda entree: coffre.lire(entree["id"], **liaison(entree))
+    """`LecteurCle` sur un `CoffreCles` : jamais une clé liée à un autre hôte ou preset, et
+    aucune clé lue pour une entrée en accès gratuit (story 17.4b)."""
+    return lambda entree: (
+        None if entree.get("acces_gratuit") else coffre.lire(entree["id"], **liaison(entree))
+    )
 
 
 def valider_entree(valeur: Any) -> dict[str, Any]:
@@ -106,6 +110,11 @@ def valider_entree(valeur: Any) -> dict[str, Any]:
     usage_flux = valeur.get("usage_flux", False)
     if not isinstance(usage_flux, bool):
         raise ValueError("usage_flux : booléen attendu")
+    acces_gratuit = valeur.get("acces_gratuit", False)
+    if not isinstance(acces_gratuit, bool):
+        raise ValueError("acces_gratuit : booléen attendu")
+    if acces_gratuit:
+        verifier_hote_gratuit(url_base, choisi.nom)
     return {
         "id": valeur["id"],
         "preset": choisi.nom,
@@ -115,6 +124,7 @@ def valider_entree(valeur: Any) -> dict[str, Any]:
         "parametres_supplementaires": parametres,
         "tarif": tarif,
         "usage_flux": usage_flux and choisi.parametres_libres,
+        "acces_gratuit": acces_gratuit,
     }
 
 
@@ -219,7 +229,12 @@ def client_externe(
 ) -> ClientOpenAI:
     """`ClientOpenAI` de l'entrée, dont le client HTTP passe par la passerelle `dediee`."""
     http = dediee.client(PROFIL, transport_interne=transport_interne, delais_appel=DELAIS_EXTERNE)
-    if observabilite is not None and observabilite.plafond is not None:
+    if entree.get("acces_gratuit"):
+        # Accès gratuit : coût 0, pas de réservation (tarif nul posé par le client).
+        options.setdefault("observateur", getattr(observabilite, "observateur", None))
+        options["plafond"] = None
+        options["tarif"] = None
+    elif observabilite is not None and observabilite.plafond is not None:
         options.setdefault("observateur", observabilite.observateur)
         options.setdefault("plafond", observabilite.plafond)
         options.setdefault("tarif", observabilite.tarif(entree))
@@ -236,6 +251,7 @@ def client_externe(
         preset_nom=entree["preset"],
         parametres_supplementaires=entree["parametres_supplementaires"],
         usage_flux=bool(entree.get("usage_flux")),
+        acces_gratuit=bool(entree.get("acces_gratuit")),
         **options,
     )
 
@@ -295,6 +311,7 @@ def tester_connexion(
     plafond ; il est refusé (`plafond-atteint`, `tarif-inconnu`) comme un autre appel.
     """
     debut = horloge()
+    client: ClientOpenAI | None = None
     try:
         dediee = passerelle_dediee(passerelle, [entree["url_base"]])
         client = client_externe(
@@ -319,9 +336,20 @@ def tester_connexion(
     else:
         latence = round((horloge() - debut) * 1000)
         LOGGER.info("test du fournisseur %s : réussi (%d ms)", entree["preset"], latence)
-        return {"reussi": True, "latence_ms": latence, "hote": hote_de(entree["url_base"])}
+        return {
+            "reussi": True,
+            "latence_ms": latence,
+            "hote": hote_de(entree["url_base"]),
+            **_debit(client),
+        }
     LOGGER.info("test du fournisseur %s : échec (%s)", entree["preset"], motif)
-    return {"reussi": False, "motif": motif, "hote": hote_de(entree["url_base"])}
+    return {"reussi": False, "motif": motif, "hote": hote_de(entree["url_base"]), **_debit(client)}
+
+
+def _debit(client: ClientOpenAI | None) -> dict[str, Any]:
+    """`{debit_restant}` si l'entrée est en accès gratuit et que le débit est connu."""
+    restant = client.debit_restant if client is not None else None
+    return {} if restant is None else {"debit_restant": restant}
 
 
 def presets_vue() -> list[dict[str, Any]]:

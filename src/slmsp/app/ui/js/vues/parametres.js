@@ -255,6 +255,7 @@ export function monter(conteneur, pont, contexte = {}) {
   // plus ; chaque entrée a son preset (qui préremplit URL et modèle), sa clé masquée (jamais
   // relue : seul « clé enregistrée : oui/non » revient du pont) et son test de connexion.
   // Enregistrée par « Enregistrer les fournisseurs » ; appliquée au démarrage suivant.
+  const MENTION_GRATUIT = "Accès gratuit OVH, limité à 2 requêtes par minute";
   const RAPPEL_EXTERNE =
     "Le texte de vos demandes est envoyé à ces hôtes ; l'Index et l'historique restent sur le poste.";
   const blocExterne = el("div", { class: "parametres-externes" });
@@ -411,6 +412,36 @@ export function monter(conteneur, pont, contexte = {}) {
         const rangCle = el("div", { class: "parametres-rang" });
         rangCle.append(enregistrerCle, effacerCle, etatCle);
 
+        // Accès gratuit OVH (story 17.4b) : sans clé, 2 requêtes par minute ; le champ clé est
+        // masqué et remplacé par la mention.
+        const gratuit = el("input", { type: "checkbox", id: `${pref}-gratuit` });
+        gratuit.checked = Boolean(entree.acces_gratuit);
+        const rangGratuit = el("div", { class: "parametres-rang" });
+        rangGratuit.append(gratuit, el("label", { for: `${pref}-gratuit` }, "Utiliser l'accès gratuit (sans clé)"));
+        rangGratuit.hidden = !presetDe(choixPreset.value).acces_gratuit;
+        const mentionGratuit = el("p", { class: "parametres-aide", id: `${pref}-mention-gratuit` }, MENTION_GRATUIT);
+        const champCle = champ("Clé d'accès", cle, `${pref}-cle`);
+        const majGratuit = () => {
+          const g = Boolean(entree.acces_gratuit) && Boolean(presetDe(choixPreset.value).acces_gratuit);
+          champCle.hidden = g;
+          rangCle.hidden = g;
+          mentionGratuit.hidden = !g;
+        };
+        gratuit.addEventListener("change", () => {
+          entree.acces_gratuit = gratuit.checked;
+          majGratuit();
+        });
+        choixPreset.addEventListener("change", () => {
+          const p = presetDe(choixPreset.value);
+          if (!p.acces_gratuit) {
+            entree.acces_gratuit = false;
+            gratuit.checked = false;
+          }
+          rangGratuit.hidden = !p.acces_gratuit;
+          majGratuit();
+        });
+        majGratuit();
+
         const tester = el("button", { type: "button", class: "bouton-secondaire" }, "Tester la connexion");
         const resultat = el("output", { class: "parametres-aide", id: `${pref}-test`, "aria-live": "polite" });
         tester.addEventListener("click", async () => {
@@ -418,12 +449,12 @@ export function monter(conteneur, pont, contexte = {}) {
           tester.disabled = true;
           try {
             const valeurs = valeursEntree(entree);
-            if (cle.value) valeurs.cle = cle.value;
+            if (cle.value && !entree.acces_gratuit) valeurs.cle = cle.value;
             const r = await pont.appeler("reglages.tester_modele_externe", valeurs);
             if (!r || r.ok === false) throw new Error(r?.erreur?.message ?? "Test impossible.");
             resultat.textContent = r.reussi
-              ? `Connexion réussie (${r.latence_ms} ms).`
-              : `Échec de la connexion (${r.motif}).`;
+              ? `Connexion réussie (${r.latence_ms} ms).${r.debit_restant != null ? ` Débit restant : ${r.debit_restant} requête(s).` : ""}`
+              : `Échec de la connexion (${r.motif}).${r.debit_restant != null ? ` Débit restant : ${r.debit_restant} requête(s).` : ""}`;
           } catch (e) {
             if (e instanceof SyntaxError) resultat.textContent = "Paramètres supplémentaires : JSON invalide.";
             else resultat.textContent = e instanceof Error && e.message !== "refus" ? e.message : "Test impossible.";
@@ -466,7 +497,9 @@ export function monter(conteneur, pont, contexte = {}) {
           listeModeles,
           rangParametres,
           rangTarif,
-          champ("Clé d'accès", cle, `${pref}-cle`),
+          rangGratuit,
+          mentionGratuit,
+          champCle,
           rangCle,
           rangTest,
           rangOrdre,
@@ -489,6 +522,7 @@ export function monter(conteneur, pont, contexte = {}) {
     if (entree._parametres === undefined) valeurs.parametres_supplementaires = entree.parametres_supplementaires ?? {};
     else if (texte) valeurs.parametres_supplementaires = JSON.parse(texte);
     else valeurs.parametres_supplementaires = {};
+    if (presetDe(entree.preset).acces_gratuit) valeurs.acces_gratuit = Boolean(entree.acces_gratuit);
     if (presetDe(entree.preset).parametres_libres) {
       const lire = (saisie, enregistre) => (saisie === undefined ? enregistre : saisie === "" ? null : Number(saisie));
       const e = lire(entree._tarifEntree, entree.tarif?.entree ?? null);
