@@ -109,3 +109,4 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 23:37 · 16.5 · fusion · squash dans main après second avis (3 medium) et revue Opus (a3b5bc1) · 53e184f
 - 2026-10-21 23:37 · 16.8 · second-avis · 4 low (désactivée : sorties, cache et comparabilité inchangés) ; revue Sonnet lancée · —
 - 2026-10-21 23:37 · 16.6 · T1 entraîné (`20261021-224834-…-derive-t1-4ac0`, 34 min), export LoRA `20261021-232233-lora-minicpm5-2b-5e04` valide ; T2 en cours · —
+- 2026-10-21 23:40 · 17.3 · dev · fini, relue par l'orchestrateur (chiffres conformes au comparatif), à relire par Anaël · 365030a
