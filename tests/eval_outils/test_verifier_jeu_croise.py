@@ -654,6 +654,20 @@ def test_forcer_rappelle_et_le_plus_recent_fait_foi(depot: Path) -> None:
     assert vjc.verdicts_courants(chemin)[cible]["decision"] == "retenu"
 
 
+def test_forcer_reprend_un_item_retire_du_jeu_assemble(depot: Path) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    ecrire(depot / "eval/jeu/dev1/items.jsonl", ITEMS[:1])  # ITEMS[1] retiré à l'assemblage
+    cible = ITEMS[1]["id"]
+    appels: list[tuple[str, str]] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append((juge, identifiant_du(prompt)))
+        return verdict()
+
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler, forcer=[cible]) == 0
+    assert ("deepseek", cible) in appels and ("glm", cible) in appels
+
+
 def test_forcer_identifiant_inconnu_refuse_avant_appel(
     depot: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

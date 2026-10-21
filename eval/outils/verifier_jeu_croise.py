@@ -650,6 +650,18 @@ def cmd_verifier(
     dernière ligne `force` est à jour n'est pas rappelé, sauf `forcer_encore`."""
     items = charger_items(racine, _version(version))
     forces = {f.strip() for f in forcer if f.strip()}
+    # Un item rejeté a été retiré du jeu assemblé (`eval/jeu/`) : un item forcé absent de
+    # celui-ci est repris des brouillons de `eval/construction/` (story 16.1).
+    presents = {str(i.get("id")) for i in items}
+    if forces - presents:
+        brouillons = racine / "eval" / "construction" / _version(version)
+        for fichier in sorted(brouillons.glob("*.jsonl")):
+            if re.fullmatch(r"[A-Z]{1,2}", fichier.stem):
+                items += [
+                    i
+                    for i in lire_jsonl(fichier)
+                    if str(i.get("id")) in forces and str(i.get("id")) not in presents
+                ]
     inconnus = sorted(forces - {str(i.get("id")) for i in items})
     if inconnus:
         raise ErreurOutil(
