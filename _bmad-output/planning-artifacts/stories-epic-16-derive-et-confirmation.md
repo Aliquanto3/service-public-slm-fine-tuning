@@ -119,3 +119,9 @@ Après 16.1 (dev2 gelé), 16.2 à 16.5 fusionnés, et 16.6 pour son candidat.
 | V3 | 16.7 | 16.7 ← 16.1, 16.5, 16.6 |
 
 Budget estimé : OpenRouter ~5 € (vérification dev2, notations GLM), Anthropic 0 €, Mistral 0 €.
+
+## Revue 16.4
+- MEDIUM, corrigé : `composer` composait avec un run par défaut ne couvrant pas toutes les Tâches du jeu (un composé « complet » pouvait omettre une Tâche) ; refus désormais, test `test_run_par_defaut_partiel_refuse`. Les items d'une Tâche couverte restent libres (les jeux de test et les sous-échantillons `--items` du défaut sont admis).
+- LOW, rejeté : `partiel` par Tâche (items de la Tâche routée vs ceux du défaut) vaudrait toujours faux, l'égalité étant imposée ; l'indicateur reste au niveau du run source (couvre-t-il tout le run par défaut), seul sens informatif.
+- LOW, corrigé : assertion `items` du test de provenance réduite à `sorted(...) == sorted(ITEMS_8)`.
+- Recette : composition v1.1 (CO LoRA v18 sur Baseline, `deja-consulte`) rejouée sur une copie : Qualité 43,54, 0 appel.

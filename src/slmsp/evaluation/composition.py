@@ -11,10 +11,15 @@ Statuts des sources : `complet` ou `partiel-erreur` (items en erreur déjà comp
 scores, comme les lit `eval comparer`) ; le run composé prend le moins bon et consigne les
 sources partielles (`config.sources_partielles`). Le Comparatif ignore les runs composés.
 
-Refus (`ErreurComposition`, aucun run écrit) : autre statut, source déjà composée, jeu ou
-version différents, liste d'items absente ou différente, SHA de grille absent ou différent,
-juge principal (modèle, fournisseur, effort, mode d'appel) différent, SHA des prompts de
-Tâche (entrée `taches` du run de génération) différents.
+Un run routé peut être partiel (story 16.4) : il ne couvre que les Tâches qu'il route ; pour
+chacune, sa liste d'items doit égaler celle du run par défaut (provenance par Tâche dans
+`config.provenance_par_tache`, avec l'indicateur `partiel`).
+
+Refus (`ErreurComposition`, aucun run écrit) : autre statut, run par défaut ne couvrant pas
+toutes les Tâches du jeu, source déjà composée, jeu ou
+version différents, liste d'items absente ou, pour une Tâche routée, différente, SHA de grille
+absent ou différent, juge principal (modèle, fournisseur, effort, mode d'appel) différent,
+SHA des prompts de Tâche (entrée `taches` du run de génération) différents.
 """
 
 from __future__ import annotations
@@ -119,8 +124,11 @@ def composer(
     base = (Path(racine) if racine is not None else racine_projet()).resolve()
     sources = {rid: _ouvrir_source(rid, base) for rid in {defaut, *route.values()}}
     ref = _empreintes(sources[defaut], base)
+    items_sources: dict[str, list[str]] = {}
     for rid, source in sources.items():
-        for champ, valeur in _empreintes(source, base).items():
+        empreintes = _empreintes(source, base)
+        items_sources[rid] = empreintes.pop("items")
+        for champ, valeur in empreintes.items():
             if valeur != ref[champ]:
                 raise ErreurComposition(
                     f"runs non composables : {champ} de {rid} diffère de celui de {defaut}"
@@ -133,6 +141,16 @@ def composer(
     jeu = lire_jeu(str(ref["jeu_version"]), base)
     code_de = {i.id: i.code for i in jeu.items}
     presentes = {code_de[i] for i in ref["items"] if i in code_de}
+    manquantes = sorted(set(code_de.values()) - presentes)
+    if manquantes:
+        raise ErreurComposition(
+            f"run par défaut {defaut} partiel : tâches du jeu absentes ({', '.join(manquantes)}), "
+            "composition refusée"
+        )
+
+    def items_de(rid: str, tache: str) -> list[str]:
+        return [i for i in items_sources[rid] if code_de.get(i) == tache]
+
     for tache, rid in route.items():
         if tache not in CODES:
             raise ErreurComposition(f"tâche inconnue : {tache!r}")
@@ -142,9 +160,18 @@ def composer(
             or tache not in presentes
         ):
             raise ErreurComposition(f"tâche {tache} absente des runs à composer")
+        if items_de(rid, tache) != items_de(defaut, tache):
+            raise ErreurComposition(
+                f"runs non composables : items de la tâche {tache} de {rid} "
+                f"diffèrent de ceux de {defaut}"
+            )
     choix = {t: route.get(t, defaut) for t in scores_defaut.taches}
     generations = {t: str(_config(sources[rid])["run_generation"]) for t, rid in choix.items()}
     run_defaut = sources[defaut]
+    provenance = {
+        t: {"run": rid, "partiel": items_sources[rid] != items_sources[defaut]}
+        for t, rid in choix.items()
+    }
     statuts = {rid: s.statut_courant() for rid, s in sources.items()}
     statut = max(statuts.values(), key=STATUTS_SOURCES.index)
     run = nouveau_run(
@@ -154,10 +181,11 @@ def composer(
             "phase": PHASE,
             "run_generation": str(_config(run_defaut)["run_generation"]),
             "generations_par_tache": generations,
-            "items": ref["items"],
+            "items": items_sources[defaut],
             "juges": _config(run_defaut).get("juges"),
             "echantillons": _config(run_defaut).get("echantillons"),
             "route": dict(sorted(route.items())),
+            "provenance_par_tache": provenance,
             "defaut": defaut,
             "sources": sorted(sources),
             "sources_partielles": sorted(r for r, s in statuts.items() if s != "complet"),

@@ -63,8 +63,10 @@ Qualité : écart B − A, IC 95 %, P(écart > 0), et bruit items de la Qualité
 `composer` (story 15.1) : run `eval-notation` composé, lisible tel quel par `comparer` : chaque
 Tâche reprend les verdicts et le Score de Tâche du run routé (`--route CR=RUN`), sinon du run
 `--defaut`. Lecture seule des sources, aucun appel. Sources `complet` ou `partiel-erreur` (le
-run composé prend le moins bon statut et liste les sources partielles). Refus (code 2, rien
-d'écrit) pour un autre statut, ou si les sources diffèrent par le jeu et ses items, la grille,
+run composé prend le moins bon statut et liste les sources partielles). Un run routé peut ne
+couvrir que les Tâches qu'il route (story 16.4) : leur liste d'items doit égaler celle du run
+par défaut, la provenance par Tâche indique `partiel`. Refus (code 2, rien d'écrit) pour un
+autre statut, ou si les sources diffèrent par le jeu et ses items (Tâches routées), la grille,
 le juge principal ou les prompts de Tâche. `--marque deja-consulte` consigne que la
 composition a été choisie en ayant vu ses scores. Le Comparatif ignore les runs composés.
 

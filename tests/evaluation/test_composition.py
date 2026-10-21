@@ -113,7 +113,10 @@ def test_sans_route_le_run_compose_egale_le_defaut(notations: tuple[Path, str, s
 @pytest.mark.parametrize(
     ("edition", "motif"),
     [
-        (lambda d: d["config"].update(items=d["config"]["items"][:-1]), "items"),
+        (
+            lambda d: d["config"].update(items=[i for i in d["config"]["items"] if i != "CR-001"]),
+            "items",
+        ),
         (lambda d: d.update(jeu_version="v9.9"), "jeu_version"),
         (lambda d: d["entrees"].update(grille="0" * 64), "grille_sha256"),
         (
@@ -231,3 +234,51 @@ def test_refus_si_la_presence_du_second_juge_differe(notations: tuple[Path, str,
     _modifier_manifeste(b, depot, lambda d: d["config"]["juges"].update(second={"modele": "x"}))
     with pytest.raises(composition.ErreurComposition, match="second_juge"):
         composition.composer({"CR": b}, a, racine=depot)
+
+
+def _restreindre(run_id: str, depot: Path, gardees: set[str]) -> None:
+    """Simule un run routé partiel : items et lignes réduits aux items gardés."""
+    run = ouvrir_run(run_id, racine=depot)
+    _modifier_manifeste(
+        run_id,
+        depot,
+        lambda d: d["config"].update(items=[i for i in d["config"]["items"] if i in gardees]),
+    )
+    taches = {i.split("-")[0] for i in gardees}
+    for nom in ("controles.jsonl", "verdicts.jsonl"):
+        chemin = run.dossier / nom
+        lignes = [ligne for ligne in chemin.read_text(encoding="utf-8").splitlines() if ligne]
+        gardes = [ligne for ligne in lignes if json.loads(ligne)["item_id"] in gardees]
+        chemin.write_text("\n".join(gardes) + "\n", encoding="utf-8")
+    chemin = run.dossier / "scores.json"
+    donnees = json.loads(chemin.read_text(encoding="utf-8"))
+    donnees["taches"] = {t: v for t, v in donnees["taches"].items() if t in taches}
+    chemin.write_text(json.dumps(donnees), encoding="utf-8")
+
+
+def test_run_route_partiel_accepte_et_provenance(notations: tuple[Path, str, str]) -> None:
+    depot, a, b = notations
+    _restreindre(b, depot, {"CR-001"})
+    run = composition.composer({"CR": b}, a, racine=depot)
+    assert _score(run.run_id, depot).taches["CR"] == _score(b, depot).taches["CR"]
+    assert _score(run.run_id, depot).taches["Q"] == _score(a, depot).taches["Q"]
+    provenance = run.manifeste.config["provenance_par_tache"]
+    assert provenance["CR"] == {"run": b, "partiel": True}
+    assert provenance["Q"] == {"run": a, "partiel": False}
+    assert sorted(run.manifeste.config["items"]) == sorted(ITEMS_8)
+
+
+def test_run_par_defaut_partiel_refuse(notations: tuple[Path, str, str]) -> None:
+    depot, a, b = notations
+    _restreindre(a, depot, {"CR-001"})
+    with pytest.raises(composition.ErreurComposition, match="par défaut"):
+        composition.composer({"CR": b}, a, racine=depot)
+
+
+def test_run_route_partiel_tache_non_couverte_refusee(
+    notations: tuple[Path, str, str],
+) -> None:
+    depot, a, b = notations
+    _restreindre(b, depot, {"CR-001"})
+    with pytest.raises(composition.ErreurComposition, match="tâche Q absente"):
+        composition.composer({"Q": b}, a, racine=depot)
