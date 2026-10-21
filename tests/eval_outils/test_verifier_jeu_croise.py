@@ -620,3 +620,122 @@ def test_calibrage_dans_la_reference(depot: Path) -> None:
     copie = item("Q-701", mots("k", 30), "https://exemple.invalide/calib")
     sortie = vjc.controler_disjonction([copie], depot, version="dev2")
     assert any("calibrage/Q-301" in c for c in sortie), sortie
+
+
+# --- Story 16.1a : revérification forcée -----------------------------------------------------
+
+
+def test_forcer_rappelle_et_le_plus_recent_fait_foi(depot: Path) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    cible = ITEMS[1]["id"]
+    rejet = {("glm", cible): verdict(coherent=False)}
+    appels: list[tuple[str, str]] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append((juge, identifiant_du(prompt)))
+        return appelant(rejet)(juge, prompt)
+
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    chemin = depot / "eval/construction/dev1/verdicts-croises.jsonl"
+    assert vjc.verdicts_courants(chemin)[cible]["decision"] == "rejete"
+
+    appels.clear()  # sans --forcer : reprise, aucun appel
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler) == 0
+    assert appels == []
+
+    rejet.clear()  # forcé : les deux juges sont rappelés pour cet item seul
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler, forcer=[cible]) == 0
+    assert sorted(appels) == [("deepseek", cible), ("glm", cible)]
+    lignes = [json.loads(x) for x in chemin.read_text(encoding="utf-8").splitlines()]
+    assert len(lignes) == 3  # ancien verdict conservé
+    assert lignes[1]["decision"] == "rejete" and "force" not in lignes[1]
+    assert lignes[2]["decision"] == "retenu" and lignes[2]["force"] is True
+    assert lignes[2]["horodatage"]
+    assert vjc.verdicts_courants(chemin)[cible]["decision"] == "retenu"
+
+
+def test_forcer_identifiant_inconnu_refuse_avant_appel(
+    depot: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    appels: list[str] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append(juge)
+        return verdict()
+
+    argv = ["verifier", "--version", "dev1", "--racine", str(depot), "--forcer", "Q-999"]
+    with pytest.raises(vjc.ErreurOutil, match="Q-999"):
+        vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler, forcer=["Q-999"])
+    assert appels == []
+    assert vjc.main(argv) == 2
+    assert "Q-999" in capsys.readouterr().err
+
+
+def test_forcer_echec_ne_remplace_pas_un_rejet(
+    depot: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    cible = ITEMS[1]["id"]
+    assert (
+        vjc.cmd_verifier(
+            depot, "dev1", ["deepseek", "glm"], appelant({("glm", cible): verdict(coherent=False)})
+        )
+        == 0
+    )
+    chemin = depot / "eval/construction/dev1/verdicts-croises.jsonl"
+    avant = chemin.read_text(encoding="utf-8")
+
+    panne = appelant({("glm", cible): RuntimeError("panne")})
+    assert vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], panne, forcer=[cible]) == 1
+    assert chemin.read_text(encoding="utf-8") == avant  # rien d'écrit
+    assert vjc.verdicts_courants(chemin)[cible]["decision"] == "rejete"
+    assert cible in capsys.readouterr().err
+
+
+def test_forcer_deja_fait_pas_de_rappel_sauf_forcer_encore(depot: Path) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    cible = ITEMS[1]["id"]
+    appels: list[str] = []
+
+    def appeler(juge: str, prompt: str) -> str:
+        appels.append(juge)
+        return verdict()
+
+    vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler)
+    appels.clear()
+    vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler, forcer=[cible])
+    assert len(appels) == 2
+    appels.clear()
+    vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler, forcer=[cible])
+    assert appels == []  # relance après succès : 0 appel
+    vjc.cmd_verifier(
+        depot, "dev1", ["deepseek", "glm"], appeler, forcer=[cible], forcer_encore=True
+    )
+    assert len(appels) == 2
+
+
+def test_forcer_ecrit_au_fil_de_l_eau_et_strip(depot: Path) -> None:
+    ecrire(depot / "eval/construction/dev1/Q.jsonl", ITEMS[:2])
+    chemin = depot / "eval/construction/dev1/verdicts-croises.jsonl"
+
+    def appeler(juge: str, prompt: str) -> str:
+        if identifiant_du(prompt) == ITEMS[1]["id"]:
+            raise KeyboardInterrupt  # interruption pendant le 2e item
+        return verdict()
+
+    with pytest.raises(KeyboardInterrupt):
+        vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], appeler)
+    assert [json.loads(x)["item_id"] for x in chemin.read_text(encoding="utf-8").splitlines()] == [
+        ITEMS[0]["id"]
+    ]
+    appels: list[str] = []
+
+    def ok(juge: str, prompt: str) -> str:
+        appels.append(identifiant_du(prompt))
+        return verdict()
+
+    vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], ok)
+    appels.clear()
+    vjc.cmd_verifier(depot, "dev1", ["deepseek", "glm"], ok, forcer=[f" {ITEMS[0]['id']} "])
+    assert appels == [ITEMS[0]["id"]] * 2

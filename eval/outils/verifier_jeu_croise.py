@@ -39,6 +39,7 @@ import sys
 import tomllib
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
@@ -465,8 +466,12 @@ def verifier_items(
     juges: Sequence[str],
     appeler: Appelant,
     acquis: Mapping[str, Mapping[str, dict[str, Any] | None]] | None = None,
+    sur_ligne: Callable[[dict[str, Any]], None] | None = None,
 ) -> list[dict[str, Any]]:
     """Une ligne de verdict par item : verdict de chaque juge, décision et motifs.
+
+    `sur_ligne` : appelée dès qu'un item est jugé (écriture au fil de l'eau, pour qu'une
+    interruption ne perde pas les appels déjà payés).
 
     `acquis` : verdicts valides déjà obtenus pour un item inchangé resté `incomplet` ; seuls
     les juges sans verdict valide sont rappelés (story O4c)."""
@@ -483,17 +488,18 @@ def verifier_items(
                 else _juger(item.get("id"), juge, prompt, appeler)
             )
         etat, motifs = decision(verdicts)
-        lignes.append(
-            {
-                "item_id": item.get("id"),
-                "item_sha256": empreinte_item(item),
-                "tache": item.get("tache"),
-                "juges": verdicts,
-                "decision": etat,
-                "motifs": motifs,
-                "version_prompt": VERSION_PROMPT,
-            }
-        )
+        ligne = {
+            "item_id": item.get("id"),
+            "item_sha256": empreinte_item(item),
+            "tache": item.get("tache"),
+            "juges": verdicts,
+            "decision": etat,
+            "motifs": motifs,
+            "version_prompt": VERSION_PROMPT,
+        }
+        lignes.append(ligne)
+        if sur_ligne is not None:
+            sur_ligne(ligne)
     return lignes
 
 
@@ -629,9 +635,26 @@ def cmd_disjonction(racine: Path, version: str, reference: Path | None = None) -
 
 
 def cmd_verifier(
-    racine: Path, version: str, juges: Sequence[str], appeler: Appelant | None = None
+    racine: Path,
+    version: str,
+    juges: Sequence[str],
+    appeler: Appelant | None = None,
+    forcer: Sequence[str] = (),
+    forcer_encore: bool = False,
 ) -> int:
+    """`forcer` : identifiants d'items dont tous les juges sont rappelés même si un verdict à
+    empreinte égale existe (story 16.1a). Le nouveau verdict s'ajoute au journal (ligne
+    `force` horodatée) et, étant le dernier, fait foi ; les précédents restent consignés.
+    Une relance forcée `incomplet` n'est jamais écrite (elle écraserait un `rejete` ou un
+    `retenu`) : l'item est signalé sur stderr et la commande sort en erreur. Un item dont la
+    dernière ligne `force` est à jour n'est pas rappelé, sauf `forcer_encore`."""
     items = charger_items(racine, _version(version))
+    forces = {f.strip() for f in forcer if f.strip()}
+    inconnus = sorted(forces - {str(i.get("id")) for i in items})
+    if inconnus:
+        raise ErreurOutil(
+            f"--forcer : identifiant(s) inconnu(s) de {version} : {', '.join(inconnus)}"
+        )
     construction = racine / "eval" / "construction" / version
     chemin = construction / NOM_VERDICTS
     deja = verdicts_courants(chemin)
@@ -646,21 +669,40 @@ def cmd_verifier(
 
     def _a_refaire(item: Mapping[str, Any]) -> bool:
         ligne = deja.get(str(item.get("id")))
+        if str(item.get("id")) in forces:
+            deja_force = ligne is not None and ligne.get("force") is True and _a_jour(item, ligne)
+            return forcer_encore or not deja_force
         return ligne is None or not _a_jour(item, ligne) or ligne.get("decision") == "incomplet"
 
     a_faire = [i for i in items if _a_refaire(i)]
     acquis = {
         str(i.get("id")): deja[str(i.get("id"))].get("juges", {})
         for i in a_faire
-        if _a_jour(i, deja.get(str(i.get("id"))))
+        if str(i.get("id")) not in forces and _a_jour(i, deja.get(str(i.get("id"))))
     }
     if appeler is None:
         appeler = ouvrir_appelant(juges, racine)
-    lignes = verifier_items(a_faire, juges, appeler, acquis)
     construction.mkdir(parents=True, exist_ok=True)
+    echecs_forces: list[str] = []
     with chemin.open("a", encoding="utf-8", newline="\n") as sortie:
-        for ligne in lignes:
+
+        def _ecrire(ligne: dict[str, Any]) -> None:
+            if str(ligne["item_id"]) in forces:
+                if ligne["decision"] == "incomplet":
+                    echecs_forces.append(str(ligne["item_id"]))
+                    return
+                ligne["force"] = True
+                ligne["horodatage"] = datetime.now(UTC).isoformat(timespec="seconds")
             sortie.write(json.dumps(ligne, ensure_ascii=False, sort_keys=True) + "\n")
+            sortie.flush()
+
+        lignes = verifier_items(a_faire, juges, appeler, acquis, _ecrire)
+    if echecs_forces:
+        print(
+            "verifier_jeu_croise : relance forcée sans verdict valide (verdict précédent "
+            f"conservé) : {', '.join(echecs_forces)}",
+            file=sys.stderr,
+        )
     courants = verdicts_courants(chemin)
     rapport = rapport_rejets(
         [courants[str(i.get("id"))] for i in items if _a_jour(i, courants.get(str(i.get("id"))))]
@@ -677,7 +719,7 @@ def cmd_verifier(
         f"{bilan['rejetes']}, incomplets {bilan['incomplets']} "
         f"(taux de rejet {bilan['taux_rejet']})"
     )
-    return 1 if bilan["incomplets"] else 0
+    return 1 if bilan["incomplets"] or echecs_forces else 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -689,6 +731,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         p.add_argument("--racine", type=Path, default=Path(__file__).resolve().parents[2])
         if nom == "verifier":
             p.add_argument("--juges", default=",".join(DEFAUT_JUGES), help="noms de juges tiers")
+            p.add_argument(
+                "--forcer-encore",
+                action="store_true",
+                help="avec --forcer : rappelle aussi les items déjà forcés à l'empreinte courante",
+            )
+            p.add_argument(
+                "--forcer",
+                default="",
+                help="ITEM_ID[,ITEM_ID...] : rappelle les juges même à empreinte égale ; le "
+                "nouveau verdict s'ajoute au journal et fait foi",
+            )
         else:
             p.add_argument(
                 "--reference",
@@ -704,7 +757,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         juges = [j for j in args.juges.split(",") if j]
         if len(juges) < 2:
             raise ErreurOutil("la contre-vérification croisée exige au moins deux juges")
-        return cmd_verifier(args.racine, args.version, juges)
+        return cmd_verifier(
+            args.racine,
+            args.version,
+            juges,
+            forcer=[f.strip() for f in args.forcer.split(",") if f.strip()],
+            forcer_encore=args.forcer_encore,
+        )
     except ErreurOutil as exc:
         print(f"verifier_jeu_croise : {exc}", file=sys.stderr)
         return 2
