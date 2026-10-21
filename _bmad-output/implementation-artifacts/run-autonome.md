@@ -64,3 +64,6 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-21 19:47 · 17.6 · fusion · squash dans main · f4e58ff
 - 2026-10-21 19:47 · main · décision · test_aucun_innerhtml (commentaire de vues/modeles.js) et test d'imputation OVH corrigés · 1dacc17
 - 2026-10-21 19:47 · 17.4b · dev · lancé (OVH sans clé, demande d'Anaël) · —
+- 2026-10-21 22:21 · 17.4b · fusion · squash dans main après second avis (1 high : hôte non vérifié en accès gratuit) et revue Sonnet (8e84c85) · a4f9c58
+- 2026-10-21 22:21 · main · suite complète : 6 385 passés, 1 échec (liste des postes sans ovh) corrigé · b2124d8
+- 2026-10-21 22:21 · release · version 0.3.0 (39441c5) ; application construite (3 070 Mo) ; installateur (2,68 Go) ; installation silencieuse et démarrage vérifiés sur ce PC ; mesure Qwen3.8-27B interrompue à 120/159 pour la construction (reprise possible) · 39441c5
