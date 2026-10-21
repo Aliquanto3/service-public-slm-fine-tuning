@@ -71,3 +71,4 @@ Démontrer la résilience et la souveraineté par plusieurs fournisseurs. Prime 
 - **Interface** : la section Paramètres liste les entrées (ajouter, retirer, monter, descendre, activer), chaque entrée a son preset (qui remplit URL et modèle, modifiables), sa clé masquée et son bouton « Tester la connexion ». Indicateur de Mode et À propos : le fournisseur de tête et le nombre de fournisseurs de secours.
 - **Historique** : `modele_repondant = "externe:<preset>/<modele>"` ou `"local:<slug>"`.
 - Tests : un test de corps par preset (dont `random_seed` pour `mistral`, absence de `seed` pour `ovh` et `generique`), cascade (1er en 401, 2e OK ; tous en échec → local), 403 `plan-requis`, 404 `modele-indisponible`.
+- **Décision d'Anaël (21/10)** : OpenRouter reste sur le plan par défaut ; le preset `openrouter-eu` est **retiré** de la story (la souveraineté se montre avec Mistral et OVH). Presets livrés : `openrouter`, `mistral`, `ovh`, `generique`.
