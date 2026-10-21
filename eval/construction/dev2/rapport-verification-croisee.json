@@ -1,9 +1,9 @@
 {
   "global": {
     "incomplets": 0,
-    "rejetes": 3,
-    "retenus": 152,
-    "taux_rejet": 0.0194,
+    "rejetes": 0,
+    "retenus": 155,
+    "taux_rejet": 0.0,
     "total": 155
   },
   "juges": [
@@ -34,9 +34,9 @@
     },
     "Langage clair": {
       "incomplets": 0,
-      "rejetes": 3,
-      "retenus": 17,
-      "taux_rejet": 0.15,
+      "rejetes": 0,
+      "retenus": 20,
+      "taux_rejet": 0.0,
       "total": 20
     },
     "Non-régression": {
