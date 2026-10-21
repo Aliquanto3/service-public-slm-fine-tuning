@@ -2,9 +2,9 @@
   "global": {
     "incomplets": 0,
     "rejetes": 0,
-    "retenus": 155,
+    "retenus": 160,
     "taux_rejet": 0.0,
-    "total": 155
+    "total": 160
   },
   "juges": [
     "deepseek",
@@ -21,16 +21,16 @@
     "Correction": {
       "incomplets": 0,
       "rejetes": 0,
-      "retenus": 18,
+      "retenus": 20,
       "taux_rejet": 0.0,
-      "total": 18
+      "total": 20
     },
     "Courrier type": {
       "incomplets": 0,
       "rejetes": 0,
-      "retenus": 17,
+      "retenus": 20,
       "taux_rejet": 0.0,
-      "total": 17
+      "total": 20
     },
     "Langage clair": {
       "incomplets": 0,
