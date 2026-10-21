@@ -105,3 +105,4 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 23:08 · 16.8 · dev · lancé · —
 - 2026-10-21 23:10 · 16.3 · review · Opus : seuils recalés (12 lignes, 300 mots, 0,8), interface et tronquee, origines admises en liste fermée (vide), coupure exacte · c929198
 - 2026-10-21 23:10 · 16.3 · fusion · squash dans main (anti-boucle ; v21 toujours en attente d'Anaël) · 81c9c72
+- 2026-10-21 23:11 · 16.6/16.7 · décision · chaîne d'évaluation planifiée après les entraînements (`chaine-eval.sh`) : générations GPU harnais v2 (Baseline dev1 et dev2, LoRA v18 à 0,25 dev1 et dev2, routage CO dev1 et dev2, T1 à T6 dev1), puis notations GLM (~3 € OpenRouter) ; **aucune fusion touchant le harnais pendant les générations** (16.8 attendra) · —
