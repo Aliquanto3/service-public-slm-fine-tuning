@@ -115,3 +115,4 @@ Qualité = moyenne des 8 Scores de Tâche. dev1 : 159 items, juge GLM ; v1.1 : j
 
 Charge CPU (q4_k_m, 4 threads, avec bge-m3, machine de dev) : base 4,12 Go, 12,1 t/s ; base + LoRA 4,13 Go, 10,8 t/s (−11 %) ; qwen-4b 8,47 Go, 5,6 t/s, tous les NFR non conformes.
 Dépenses de la nuit : openrouter 4,31 € (plafond 20), anthropic 0 € (plafond 50), mistral 0 €.
+- 2026-10-21 05:36 · run · décision · Anaël valide le test des leviers à 0 € (Q : 8 passages + dédoublonnage du préfixe ; CT : prompts d'entraînement alignés sur « exactement ces libellés » + garde-fou anti-boucle) et les confirmations de méthode (atténuation de la dérive : taux, rang, pas ; échelle 0,25 confirmée sur dev1 + dev2) ; routage CO et 5 items de dev2 : en attente de sa décision · —
