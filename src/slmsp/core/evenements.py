@@ -118,6 +118,20 @@ class Verification(_Fige):
     extrait: str | None = None
 
 
+class VerificationPassages(_Fige):
+    """Verdict de la vérification des passages avant une Question (story 16.8).
+
+    `verdict` : `oui` (les passages répondent, flux de Q inchangé), `non` (abstention fixe),
+    `illisible` (sortie d'un modèle externe hors `oui`/`non` : traitée comme `oui`, jamais
+    d'abstention à tort). `sortie` est la sortie brute du modèle, tronquée.
+    """
+
+    type: Literal["verification-passages"] = "verification-passages"
+    verdict: Literal["oui", "non", "illisible"]
+    abstention: bool
+    sortie: str
+
+
 class Fin(_Fige):
     """Fin du flux, avec la raison et l'usage en tokens s'il est connu.
 
@@ -150,6 +164,7 @@ Evenement = Annotated[
     | Progression
     | Repli
     | Verification
+    | VerificationPassages
     | Fin
     | Erreur,
     Field(discriminator="type"),

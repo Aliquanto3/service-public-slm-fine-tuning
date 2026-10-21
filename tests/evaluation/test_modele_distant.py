@@ -827,3 +827,21 @@ def test_profil_eval_distant_par_fournisseur() -> None:
         "distant:mistral-small-mistral": "api.mistral.ai",
         "distant:qwen3.6-27b-ovh": "oai.endpoints.kepler.ai.cloud.ovh.net",
     }
+
+
+def test_grammaire_de_q_ignoree_par_un_modele_distant(tmp_path: Path) -> None:
+    """Vérification de Q (story 16.8) : grammaire omise, `max_tokens` court transmis."""
+    messages = [{"role": "user", "content": "<question-factice>"}]
+    for ref, reg in (
+        (None, registre(tmp_path / "a")),
+        ("distant:mistral-small-mistral", registre_multi(tmp_path / "b")),
+    ):
+        faux = (
+            FauxOpenRouter()
+            if ref is None
+            else FauxOpenRouter(sse(provider=None, model=MISTRAL_ID))
+        )
+        llm = client(reg, faux) if ref is None else client_ref(ref, reg, faux)
+        list(llm.generer(messages, options={"max_tokens": 4, "grammar": "<g>"}))
+        (corps,) = faux.corps()
+        assert "grammar" not in corps and corps["max_tokens"] == 4

@@ -12,7 +12,13 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import Field, ValidationError, field_validator
+from pydantic import (
+    Field,
+    SerializerFunctionWrapHandler,
+    ValidationError,
+    field_validator,
+    model_serializer,
+)
 
 from slmsp.core.evenements import Source, depuis_dict
 from slmsp.core.schemas import SchemaBase, SousSchema
@@ -52,6 +58,20 @@ class Generation(SchemaBase):
     du Harnais, story 16.3).
     `None` pour une ligne écrite avant ce champ (report W2) ; une sortie tronquée garde le
     statut `ok`. Hors de `sortie_canonique`, il n'entre pas dans la clé du cache des verdicts."""
+
+    verdict_passages: Literal["oui", "non", "illisible"] | None = None
+    """Verdict de la vérification des passages de Q (story 16.8), recopié de l'évènement
+    `verification-passages` de la trace ; `None` sans vérification (abstention désactivée,
+    autre Tâche, ligne antérieure). Hors de `sortie_canonique`, hors de la clé du cache."""
+
+    @model_serializer(mode="wrap")
+    def _omettre_verdict_absent(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        """`verdict_passages` absent de la ligne quand il vaut `None` : abstention désactivée,
+        lignes identiques à celles d'avant la story 16.8."""
+        donnees = handler(self)
+        if donnees.get("verdict_passages") is None:
+            donnees.pop("verdict_passages", None)
+        return donnees
 
     @field_validator("trace")
     @classmethod

@@ -813,3 +813,32 @@ def test_cr_tronque_sur_un_seul_appel(depot_eval: Path, modeles: Path) -> None:
     (generation,) = lignes(rapport.run)
     assert generation.statut == "ok" and generation.tronquee is True
     assert rapport.tronquees == 1
+
+
+def test_verdict_des_passages_consigne(depot_eval: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Story 16.8 : le verdict de la vérification est recopié dans la génération ; absent sinon."""
+    from slmsp.harness.config import ConfigQAbstention
+
+    jeu = lire_jeu("v1.0", depot_eval)
+    item = next(i for i in jeu.items if i.code == "Q")
+    sans = generer_item(harnais_factice(), jeu, item)
+    assert sans.verdict_passages is None
+    assert not any(e["type"] == "verification-passages" for e in sans.trace)
+
+    harnais = harnais_factice()
+    config = harnais.config.model_copy(update={"q_abstention": ConfigQAbstention(actif=True)})
+    monkeypatch.setattr(harnais, "config", config)
+    avec = generer_item(harnais, jeu, item)
+    assert avec.statut == "ok" and avec.verdict_passages in ("oui", "non", "illisible")
+    assert avec.trace[0]["type"] == "verification-passages"
+    assert avec.trace[0]["verdict"] == avec.verdict_passages
+
+
+def test_verdict_absent_de_la_ligne_ecrite_quand_none(depot_eval: Path) -> None:
+    """Story 16.8 : sans vérification, la clé `verdict_passages` n'est pas sérialisée."""
+    jeu = lire_jeu("v1.0", depot_eval)
+    item = next(i for i in jeu.items if i.code == "Q")
+    generation = generer_item(harnais_factice(), jeu, item)
+    assert "verdict_passages" not in generation.model_dump(mode="json")
+    avec = generation.model_copy(update={"verdict_passages": "non"})
+    assert avec.model_dump(mode="json")["verdict_passages"] == "non"

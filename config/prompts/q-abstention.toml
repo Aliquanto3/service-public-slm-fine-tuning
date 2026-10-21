@@ -1,0 +1,20 @@
+# Textes fixes de l'abstention de Q (story 16.8). Textes de produit, à relire par Anaël.
+# Ils n'entrent dans aucune donnée d'entraînement (D1). Version propre, distincte de celle
+# du prompt principal de Q (config/prompts/taches/Q.md).
+schema_version = 1
+version = 1
+
+# Consigne (message système) de l'appel de vérification ; le message utilisateur porte les
+# passages et la question, rendus comme pour Q.
+verification = """
+Tu vérifies si les passages de l'Index local fournis dans le message permettent de répondre à la question d'un Agent du service public.
+
+- Réponds oui si au moins un passage contient une information qui répond à la question, même en partie.
+- Réponds non si aucun passage ne traite de la question posée.
+- N'utilise aucune connaissance extérieure aux passages.
+- Écris un seul mot, en minuscules, sans ponctuation : oui ou non.
+"""
+
+# Réponse rendue à l'Agent quand la vérification répond `non` (texte fixe, jamais généré).
+phrase = "Les passages de l'Index local ne permettent pas de répondre à cette question."
+orientation = "Consultez la page officielle de la démarche ou adressez-vous au service compétent."

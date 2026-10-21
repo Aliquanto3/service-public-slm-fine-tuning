@@ -48,6 +48,7 @@ from slmsp.core.evenements import (
     Fin,
     Jeton,
     Sources,
+    VerificationPassages,
     depuis_dict,
     vers_dict,
 )
@@ -198,6 +199,9 @@ def generer_item(
         trace=[vers_dict(e) for e in _fusionner_jetons(trace)],
         duree_ms=duree_ms,
         tronquee=tronquee(trace),
+        verdict_passages=next(
+            (e.verdict for e in trace if isinstance(e, VerificationPassages)), None
+        ),
     )
 
 

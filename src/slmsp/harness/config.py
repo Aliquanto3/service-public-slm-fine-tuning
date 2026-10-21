@@ -123,6 +123,16 @@ class ConfigQuestion(_Fige):
     passages: int = Field(default=8, gt=0)
 
 
+class ConfigQAbstention(_Fige):
+    """Abstention de Q (story 16.8) : vérification `oui`/`non` avant la réponse.
+
+    Section facultative ; désactivée par défaut (comportement de Q inchangé).
+    """
+
+    actif: bool = False
+    max_tokens: int = Field(default=4, gt=0)
+
+
 class _FichierHarnais(_Fige):
     schema_version: Literal[1]
     outils: ConfigOutils
@@ -133,6 +143,7 @@ class _FichierHarnais(_Fige):
     dedoublonnage: ConfigDedoublonnage = Field(default_factory=ConfigDedoublonnage)
     question: ConfigQuestion = Field(default_factory=ConfigQuestion)
     anti_boucle: ConfigAntiBoucle = Field(default_factory=ConfigAntiBoucle)
+    q_abstention: ConfigQAbstention = Field(default_factory=ConfigQAbstention)
 
 
 class ConfigHarnais(_Fige):
@@ -147,6 +158,7 @@ class ConfigHarnais(_Fige):
     dedoublonnage: ConfigDedoublonnage = Field(default_factory=ConfigDedoublonnage)
     question: ConfigQuestion = Field(default_factory=ConfigQuestion)
     anti_boucle: ConfigAntiBoucle = Field(default_factory=ConfigAntiBoucle)
+    q_abstention: ConfigQAbstention = Field(default_factory=ConfigQAbstention)
 
 
 def chemin_config_harnais() -> Path:
@@ -175,6 +187,7 @@ def charger_config_harnais(
         dedoublonnage=fichier.dedoublonnage,
         question=fichier.question,
         anti_boucle=fichier.anti_boucle,
+        q_abstention=fichier.q_abstention,
         recherche=ConfigRecherche(k=index.k, seuil_pertinence=index.seuil_pertinence),
     )
 
@@ -188,6 +201,7 @@ __all__ = [
     "ConfigHarnais",
     "ConfigModes",
     "ConfigOutils",
+    "ConfigQAbstention",
     "ConfigQuestion",
     "ConfigRecherche",
     "ConfigVerification",

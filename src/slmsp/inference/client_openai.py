@@ -66,8 +66,9 @@ TAILLE_EXTRAIT: Final = 300
 OPTIONS_TRANSMISES: Final = frozenset(
     {"temperature", "seed", "max_tokens", "top_p", "top_k", "stop"}
 )
-OPTIONS_IGNOREES: Final = frozenset({"chat_template_kwargs"})
-"""Options du chat template local, sans objet pour une API (jamais transmises : OVH refuse)."""
+OPTIONS_IGNOREES: Final = frozenset({"chat_template_kwargs", "grammar"})
+"""Options du modèle local (chat template, grammaire GBNF de llama-server, story 16.8), sans
+objet pour une API : jamais transmises (OVH refuse)."""
 MAX_TOKENS_DEFAUT: Final = 1024
 DELAIS_EXTERNE: Final = DelaisAppel(connexion=10.0, lecture=60.0, total=300.0)
 CLES_INTERDITES: Final = frozenset(

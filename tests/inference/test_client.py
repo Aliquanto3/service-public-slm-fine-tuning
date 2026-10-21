@@ -605,3 +605,12 @@ def test_http_400_sans_type_de_contexte_reste_erreur_inference(
     with pytest.raises(ErreurInference) as info:
         list(client.generer(MESSAGES))
     assert not isinstance(info.value, ContexteServeurDepasse)
+
+
+def test_grammaire_transmise_au_serveur(client: ClientLlama) -> None:
+    """Vérification de Q (story 16.8) : `grammar` part telle quelle à llama-server."""
+    corps = client.corps_generation(
+        [{"role": "user", "content": "<question-factice>"}],
+        options={"max_tokens": 4, "grammar": 'root ::= "oui" | "non"'},
+    )
+    assert corps["grammar"] == 'root ::= "oui" | "non"' and corps["max_tokens"] == 4

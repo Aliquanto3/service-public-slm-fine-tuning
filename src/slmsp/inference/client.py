@@ -56,8 +56,18 @@ from slmsp.inference.processus import ErreurInference
 from slmsp.net import client_local
 
 OPTIONS_AUTORISEES: Final = frozenset(
-    {"temperature", "seed", "max_tokens", "top_p", "top_k", "stop", "chat_template_kwargs"}
+    {
+        "temperature",
+        "seed",
+        "max_tokens",
+        "top_p",
+        "top_k",
+        "stop",
+        "chat_template_kwargs",
+        "grammar",
+    }
 )
+"""`grammar` : grammaire GBNF de llama-server (vérification `oui`/`non` de Q, story 16.8)."""
 PROTOCOLES: Final = ("natif", "json-generique", PROTOCOLE_BALISES)
 CLES_USAGE: Final = ("prompt_tokens", "completion_tokens", "total_tokens")
 CLES_TIMINGS_SPECULATIF: Final = ("draft_n", "draft_n_accepted")

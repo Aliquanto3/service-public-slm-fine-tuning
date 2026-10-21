@@ -63,6 +63,7 @@ from slmsp.core.evenements import (
     Repli,
     ResultatOutil,
     Sources,
+    VerificationPassages,
 )
 from slmsp.core.messages import (
     ConversationInvalide,
@@ -155,6 +156,7 @@ _TYPES_EVENEMENTS: Final = (
     Avertissement,
     Progression,
     Repli,
+    VerificationPassages,
     Fin,
     Erreur,
 )

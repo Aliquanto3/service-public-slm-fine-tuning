@@ -329,3 +329,12 @@ def test_cascade_tous_en_echec_local() -> None:
         "Modèle externe indisponible (openrouter : http-401 ; mistral : connexion) :"
         " réponse du modèle local"
     )
+
+
+def test_grammaire_locale_ignoree_par_une_api() -> None:
+    """Vérification de Q (story 16.8) : la grammaire GBNF n'est jamais transmise à une API."""
+    for url in (OPENROUTER, OVH):
+        faux = Faux()
+        list(client(faux, url).generer(MESSAGES, options={"max_tokens": 4, "grammar": "<g>"}))
+        corps = faux.corps()[0]
+        assert "grammar" not in corps and corps["max_tokens"] == 4

@@ -84,3 +84,13 @@ repetitions_ligne_max = 12
 fenetre_mots = 300
 taille_ngramme = 4
 part_ngrammes_max = 0.8
+
+# Abstention de Q (story 16.8, harnais v2) : avant la réponse, un appel court au même modèle
+# demande si les passages répondent à la question (`oui`/`non`, grammaire llama-server en local,
+# lecture stricte pour un modèle externe). Sur `non`, la réponse est la phrase fixe d'abstention
+# et l'orientation de config/prompts/q-abstention.toml. Désactivée par défaut (décision du
+# 21/10 : Baseline v2 et essais de la nuit évalués sans abstention).
+[q_abstention]
+actif = false
+# Tokens maximaux de l'appel de vérification.
+max_tokens = 4
