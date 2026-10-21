@@ -110,3 +110,5 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 23:37 · 16.8 · second-avis · 4 low (désactivée : sorties, cache et comparabilité inchangés) ; revue Sonnet lancée · —
 - 2026-10-21 23:37 · 16.6 · T1 entraîné (`20261021-224834-…-derive-t1-4ac0`, 34 min), export LoRA `20261021-232233-lora-minicpm5-2b-5e04` valide ; T2 en cours · —
 - 2026-10-21 23:40 · 17.3 · dev · fini, relue par l'orchestrateur (chiffres conformes au comparatif), à relire par Anaël · 365030a
+- 2026-10-21 23:43 · 16.8 · fusion · squash dans main après second avis (4 low) et revue Sonnet (371ef7f), avant les évaluations de la nuit (abstention désactivée) · 0586a96
+- 2026-10-21 23:43 · main · suite complète lancée (toutes les stories de code de l'epic 16 fusionnées) · —
