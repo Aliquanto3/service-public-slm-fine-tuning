@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "genere_le": "2026-10-21T09:04:28+00:00",
-  "commit": "933cdcdbea030997b67d0d682b66e75d320a8bb6",
+  "genere_le": "2026-10-21T16:10:39+00:00",
+  "commit": "9172230b602cf9bcd4469ec910f744b2c9aa26a3",
   "jeu_version": "dev1",
   "jeu_statut": "relu-llm",
   "juge_principal": "glm",
@@ -24,7 +24,7 @@
   "avertissements": [
     "Jeu de développement : 159 items fictifs rédigés pour le projet (statut relu-llm), pas une mesure sur des demandes réelles.",
     "Notes attribuées par le juge glm ; elles ne se comparent qu'entre modèles notés sur le même jeu par le même juge.",
-    "Bruit d'items : ±4,5 à ±5,4 points sur la Qualité (IC 95 %) ; un écart plus petit que son IC n'est pas distinguable du bruit.",
+    "Bruit d'items : ±4,4 à ±5,4 points sur la Qualité (IC 95 %) ; un écart plus petit que son IC n'est pas distinguable du bruit.",
     "Vitesses du poste : mesurées sur la machine de développement, pas sur le PC cible.",
     "Vitesses du cloud : mesurées depuis le poste de développement, elles dépendent du réseau et de la charge de l'hébergeur.",
     "Coûts : API seulement ; coût matériel et énergie du poste non chiffrés.",
@@ -466,6 +466,114 @@
       "runs": {
         "notation": "20261021-094134-distant-qwen3.6-27b-fc13",
         "generation": "20261021-092032-distant-qwen3.6-27b-3ae2",
+        "mesure": null,
+        "date_notation": "2026-10-21"
+      }
+    },
+    {
+      "id": "mistral-small-2603",
+      "libelle": "Mistral Small 4 (cloud)",
+      "emplacement": "cloud",
+      "reference": false,
+      "licence": "Apache 2.0",
+      "hebergement": "API Mistral AI (France)",
+      "note": "",
+      "qualite": {
+        "score": 58.8,
+        "bruit_items": 4.4,
+        "taches": {
+          "Q": 15.0,
+          "RD": 88.6,
+          "CR": 79.9,
+          "LC": 10.0,
+          "CO": 90.5,
+          "RE": 68.5,
+          "CT": 32.5,
+          "NR": 85.0
+        }
+      },
+      "ecart_reference": {
+        "qualite": {
+          "ecart": 4.51,
+          "ic_bas": -0.45,
+          "ic_haut": 10.76,
+          "p_positif": 0.961
+        },
+        "taches": {
+          "Q": {
+            "ecart": 0.0,
+            "ic_bas": -15.0,
+            "ic_haut": 15.0,
+            "p_positif": 0.339
+          },
+          "RD": {
+            "ecart": 13.78,
+            "ic_bas": 5.0,
+            "ic_haut": 23.75,
+            "p_positif": 0.999
+          },
+          "CR": {
+            "ecart": 6.35,
+            "ic_bas": -5.69,
+            "ic_haut": 19.19,
+            "p_positif": 0.843
+          },
+          "LC": {
+            "ecart": -40.0,
+            "ic_bas": -50.0,
+            "ic_haut": -10.0,
+            "p_positif": 0.002
+          },
+          "CO": {
+            "ecart": 18.44,
+            "ic_bas": 3.87,
+            "ic_haut": 30.42,
+            "p_positif": 0.99
+          },
+          "RE": {
+            "ecart": 9.98,
+            "ic_bas": -5.13,
+            "ic_haut": 24.84,
+            "p_positif": 0.901
+          },
+          "CT": {
+            "ecart": -12.5,
+            "ic_bas": -30.0,
+            "ic_haut": 5.0,
+            "p_positif": 0.064
+          },
+          "NR": {
+            "ecart": 40.0,
+            "ic_bas": 20.0,
+            "ic_haut": 60.0,
+            "p_positif": 1.0
+          }
+        }
+      },
+      "cout": {
+        "cout_api_eur": null,
+        "eur_pour_1000_demandes": 0.43,
+        "prix_mtok": {
+          "modele_id": "mistral-small-2603",
+          "devise": "USD",
+          "entree": 0.15,
+          "sortie": 0.6,
+          "date_releve": "2026-10-21"
+        },
+        "mention": "coût réel par demande, relances et appels d'outils compris : 199 appels facturés pour 159 demandes notées ; génération seule, juge non compris"
+      },
+      "vitesse": {
+        "origine": "cloud",
+        "debit_tokens_s": 197.11,
+        "premier_token_ms": 566.0,
+        "ram_max_go": null,
+        "machine": "poste de développement, via le réseau",
+        "appels": 198,
+        "mention": "médianes sur les 198 appels réussis du run (relances et appels d'outils compris), mesurées depuis le poste de développement"
+      },
+      "runs": {
+        "notation": "20261021-113707-distant-mistral-small-mistral-938a",
+        "generation": "20261021-112139-distant-mistral-small-mistral-0b86",
         "mesure": null,
         "date_notation": "2026-10-21"
       }
