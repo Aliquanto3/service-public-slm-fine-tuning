@@ -58,3 +58,12 @@ run_notation = "20261021-113707-distant-mistral-small-mistral-938a"
 run_generation = "20261021-112139-distant-mistral-small-mistral-0b86"
 licence = "Apache 2.0"
 hebergement = "API Mistral AI (France)"
+
+[[modeles]]
+id = "qwen3.8-27b"
+libelle = "Qwen3.8-27B (cloud)"
+emplacement = "cloud"
+run_notation = "20261021-224856-distant-qwen3.8-27b-1834"
+run_generation = "20261021-191924-distant-qwen3.8-27b-4ab7"
+licence = "Apache 2.0"
+hebergement = "OpenRouter → DeepInfra (États-Unis)"

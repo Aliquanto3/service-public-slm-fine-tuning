@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "genere_le": "2026-10-21T16:10:39+00:00",
-  "commit": "9172230b602cf9bcd4469ec910f744b2c9aa26a3",
+  "genere_le": "2026-10-21T20:58:41+00:00",
+  "commit": "8d1bec25c2dfbd2b8a00b4c64e6a562cb9e920aa",
   "jeu_version": "dev1",
   "jeu_statut": "relu-llm",
   "juge_principal": "glm",
@@ -24,7 +24,7 @@
   "avertissements": [
     "Jeu de développement : 159 items fictifs rédigés pour le projet (statut relu-llm), pas une mesure sur des demandes réelles.",
     "Notes attribuées par le juge glm ; elles ne se comparent qu'entre modèles notés sur le même jeu par le même juge.",
-    "Bruit d'items : ±4,4 à ±5,4 points sur la Qualité (IC 95 %) ; un écart plus petit que son IC n'est pas distinguable du bruit.",
+    "Bruit d'items : ±4,3 à ±5,4 points sur la Qualité (IC 95 %) ; un écart plus petit que son IC n'est pas distinguable du bruit.",
     "Vitesses du poste : mesurées sur la machine de développement, pas sur le PC cible.",
     "Vitesses du cloud : mesurées depuis le poste de développement, elles dépendent du réseau et de la charge de l'hébergeur.",
     "Coûts : API seulement ; coût matériel et énergie du poste non chiffrés.",
@@ -574,6 +574,114 @@
       "runs": {
         "notation": "20261021-113707-distant-mistral-small-mistral-938a",
         "generation": "20261021-112139-distant-mistral-small-mistral-0b86",
+        "mesure": null,
+        "date_notation": "2026-10-21"
+      }
+    },
+    {
+      "id": "qwen3.8-27b",
+      "libelle": "Qwen3.8-27B (cloud)",
+      "emplacement": "cloud",
+      "reference": false,
+      "licence": "Apache 2.0",
+      "hebergement": "OpenRouter → DeepInfra (États-Unis)",
+      "note": "",
+      "qualite": {
+        "score": 74.1,
+        "bruit_items": 4.3,
+        "taches": {
+          "Q": 40.0,
+          "RD": 88.6,
+          "CR": 88.3,
+          "LC": 50.0,
+          "CO": 98.9,
+          "RE": 78.5,
+          "CT": 58.8,
+          "NR": 90.0
+        }
+      },
+      "ecart_reference": {
+        "qualite": {
+          "ecart": 19.87,
+          "ic_bas": 14.97,
+          "ic_haut": 25.57,
+          "p_positif": 1.0
+        },
+        "taches": {
+          "Q": {
+            "ecart": 25.0,
+            "ic_bas": 0.0,
+            "ic_haut": 50.0,
+            "p_positif": 0.971
+          },
+          "RD": {
+            "ecart": 13.78,
+            "ic_bas": 5.0,
+            "ic_haut": 23.75,
+            "p_positif": 0.999
+          },
+          "CR": {
+            "ecart": 14.67,
+            "ic_bas": 4.68,
+            "ic_haut": 26.44,
+            "p_positif": 1.0
+          },
+          "LC": {
+            "ecart": 0.0,
+            "ic_bas": -10.0,
+            "ic_haut": 15.12,
+            "p_positif": 0.325
+          },
+          "CO": {
+            "ecart": 26.76,
+            "ic_bas": 17.92,
+            "ic_haut": 35.98,
+            "p_positif": 1.0
+          },
+          "RE": {
+            "ecart": 19.99,
+            "ic_bas": 8.15,
+            "ic_haut": 32.7,
+            "p_positif": 1.0
+          },
+          "CT": {
+            "ecart": 13.75,
+            "ic_bas": -1.25,
+            "ic_haut": 27.5,
+            "p_positif": 0.947
+          },
+          "NR": {
+            "ecart": 45.0,
+            "ic_bas": 25.0,
+            "ic_haut": 65.0,
+            "p_positif": 1.0
+          }
+        }
+      },
+      "cout": {
+        "cout_api_eur": null,
+        "eur_pour_1000_demandes": 1.02,
+        "prix_mtok": {
+          "modele_id": "qwen/qwen3.8-27b",
+          "devise": "USD",
+          "entree": 0.15,
+          "sortie": 1.875,
+          "date_releve": "2026-10-21"
+        },
+        "mention": "coût réel par demande, relances et appels d'outils compris : 212 appels facturés pour 159 demandes notées ; génération seule, juge non compris"
+      },
+      "vitesse": {
+        "origine": "cloud",
+        "debit_tokens_s": 38.12,
+        "premier_token_ms": 716.0,
+        "ram_max_go": null,
+        "machine": "poste de développement, via le réseau",
+        "appels": 210,
+        "mention": "médianes sur les 210 appels réussis du run (relances et appels d'outils compris), mesurées depuis le poste de développement"
+      },
+      "runs": {
+        "notation": "20261021-224856-distant-qwen3.8-27b-1834",
+        "generation": "20261021-191924-distant-qwen3.8-27b-4ab7",
         "mesure": null,
         "date_notation": "2026-10-21"
       }
