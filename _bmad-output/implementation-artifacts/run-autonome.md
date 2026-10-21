@@ -77,3 +77,4 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 22:21 · release · version 0.3.0 (39441c5) ; application construite (3 070 Mo) ; installateur (2,68 Go) ; installation silencieuse et démarrage vérifiés sur ce PC ; mesure Qwen3.8-27B interrompue à 120/159 pour la construction (reprise possible) · 39441c5
 - 2026-10-21 22:28 · release · v0.3.0 publiée (https://github.com/Aliquanto3/service-public-slm-fine-tuning/releases/tag/v0.3.0), 4 fichiers vérifiés (tailles), main et tag poussés · 39441c5
 - 2026-10-21 22:28 · 17.2 · reprise de la mesure Qwen3.8-27B (`--reprendre`) · —
+- 2026-10-21 22:28 · run · décision · **Anaël autorise les entraînements de 16.6 cette nuit** (« Je t'autorise à relancer les entraînements si tu as du temps ») à la place de la relecture du protocole ; pas de clé OVH corrigée (OVH abandonné pour la nuit) ; 16.1 (relance unique de 5 items dev2, ~0,05 €) lancée selon sa décision du 21/10 05:41 · —
