@@ -103,3 +103,5 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 23:08 · 16.8 · décision · abstention Q développée **désactivée par défaut** cette nuit, pour que la Baseline v2 et les essais T1-T6 soient évalués avec le même harnais ; sa mesure se fera à part · —
 - 2026-10-21 23:08 · 16.5 · dev · lancé · —
 - 2026-10-21 23:08 · 16.8 · dev · lancé · —
+- 2026-10-21 23:10 · 16.3 · review · Opus : seuils recalés (12 lignes, 300 mots, 0,8), interface et tronquee, origines admises en liste fermée (vide), coupure exacte · c929198
+- 2026-10-21 23:10 · 16.3 · fusion · squash dans main (anti-boucle ; v21 toujours en attente d'Anaël) · 81c9c72
