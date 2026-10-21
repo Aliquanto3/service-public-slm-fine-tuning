@@ -31,12 +31,14 @@ from urllib.parse import urlsplit
 from slmsp.app.cle_externe import CoffreCles
 from slmsp.app.modele_actif import resoudre_modele_actif
 from slmsp.app.modele_externe import (
+    Observabilite,
     actifs,
     brancher_hybride,
     lecteur_cles,
     lire_reglage,
     tester_connexion,
 )
+from slmsp.app.observabilite import brancher_observabilite
 from slmsp.app.pont import Pont
 from slmsp.app.pont.conversation import reponse_erreur
 from slmsp.app.stockage import JournalApplication, Stockage, dossier_donnees
@@ -416,7 +418,8 @@ class Demarrage:
         ) as assemblage:
             self._assemble = True
             coffre = self._coffre_cle()
-            externe = self._brancher_externe(assemblage, modele, coffre)
+            suivi = brancher_observabilite(assemblage.service, modele, self._stockage)
+            externe = self._brancher_externe(assemblage, modele, coffre, suivi)
             passerelle = getattr(assemblage, "passerelle", None)
             pont = Pont(
                 assemblage.service,
@@ -428,8 +431,13 @@ class Demarrage:
                 coffre=coffre,
                 tester_externe=None
                 if passerelle is None
-                else (lambda entree, cle: tester_connexion(entree, cle, passerelle)),
+                else (
+                    lambda entree, cle: tester_connexion(
+                        entree, cle, passerelle, observabilite=suivi
+                    )
+                ),
                 modele_externe=externe,
+                observabilite=suivi,
             )
             self._differe.brancher(pont)
             if self._page_prete():
@@ -443,14 +451,20 @@ class Demarrage:
         return self._coffre
 
     def _brancher_externe(
-        self, assemblage: Any, modele: str, coffre: CoffreCles
+        self,
+        assemblage: Any,
+        modele: str,
+        coffre: CoffreCles,
+        observabilite: Observabilite | None = None,
     ) -> dict[str, Any] | None:
         """Mode hybride (story 17.4) si un fournisseur est actif ; sinon rien (aucun réseau)."""
         entrees = lire_reglage(self._stockage)
         if not actifs(entrees):
             return None
         try:
-            return brancher_hybride(assemblage, modele, entrees, lecteur_cles(coffre))
+            return brancher_hybride(
+                assemblage, modele, entrees, lecteur_cles(coffre), observabilite=observabilite
+            )
         except Exception as exc:
             LOGGER.error("démarrage : fournisseurs externes non branchés (%s)", type(exc).__name__)
             return None
@@ -533,7 +547,9 @@ def dialogue_enregistrer(fenetre: Any) -> Callable[[str], str | None]:
             type_dialogue,
             directory=str(Path.home() / "Documents"),
             save_filename=nom,
-            file_types=("Fichier JSON (*.json)",),
+            file_types=(
+                ("Fichier CSV (*.csv)",) if nom.endswith(".csv") else ("Fichier JSON (*.json)",)
+            ),
         )
         if isinstance(choix, (list, tuple)):
             choix = choix[0] if choix else None

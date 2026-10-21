@@ -64,6 +64,7 @@ textarea {
 .icone-courrier { --icone: url("../icones/courrier.svg"); }
 .icone-traduction { --icone: url("../icones/traduction.svg"); }
 .icone-modeles { --icone: url("../icones/modeles.svg"); }
+.icone-observabilite { --icone: url("../icones/observabilite.svg"); }
 .icone-parametres { --icone: url("../icones/parametres.svg"); }
 .icone-attention { --icone: url("../icones/attention.svg"); }
 .icone-fermer { --icone: url("../icones/fermer.svg"); }

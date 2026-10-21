@@ -4,6 +4,7 @@
 // jamais du poste (FR-38) : la Tâche n'a aucun outil. Tout contenu venant de l'Agent ou du
 // modèle entre dans le DOM par `textContent` (jamais de HTML construit).
 
+import { creerDetails } from "../composants/details-appel.js";
 import { annoncer } from "../socle/annonces.js";
 import { confirmer, copierTexte } from "../composants/copie.js";
 import { rendrePassagesSignales } from "../composants/passages-signales.js";
@@ -94,6 +95,7 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
   if (options.dir) zone.dir = options.dir;
   const attente = el("p", "resultat-vide", "Le résultat s'affichera ici.");
   const notes = el("div", "resultat-notes");
+  const details = el("div", "resultat-details"); // story 17.6
   const mention = el("p", "mention-interrompue", "Résultat interrompu");
   mention.hidden = true;
   const echec = el("p", "mention-echec", "Ce résultat n'a pas pu être produit.");
@@ -105,7 +107,7 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
   const regenerer = el("button", "bouton-secondaire", "Régénérer");
   regenerer.type = "button";
   actions.append(copier, regenerer);
-  sortie.append(titreResultat, avancement, zone, notes, mention, echec, actions);
+  sortie.append(titreResultat, avancement, zone, notes, mention, echec, details, actions);
 
   racine.append(entree, sortie);
   conteneur.replaceChildren(racine);
@@ -152,6 +154,7 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
     avisLong.hidden = true;
     etape.textContent = "";
     notes.replaceChildren();
+    details.replaceChildren();
     mention.hidden = true;
     echec.hidden = true;
     zone.replaceChildren(attente);
@@ -219,6 +222,8 @@ export function monterRedaction(conteneur, pont, { bus, tache, generationEnCours
       else zone.textContent = brut;
     }
     if (fin?.raison === "interrompue") mention.hidden = false;
+    const bloc = creerDetails(fin?.details);
+    details.replaceChildren(...(bloc ? [bloc] : []));
     if (fin?.raison === "longueur") {
       notes.append(el("p", "avertissement", "Le résultat a été coupé : la longueur maximale est atteinte."));
     }

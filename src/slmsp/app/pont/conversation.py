@@ -13,6 +13,10 @@ jamais journalisé (AD-23) : seuls la classe d'exception et la Tâche partent au
 Traçabilité (story 17.4) : l'évènement `fin` poussé porte `modele_repondant` (`local:<slug>` ou
 `externe:<hôte>/<modèle>`, lu sur le flux du mode hybride) quand il est connu ; l'interface le
 consigne dans le message enregistré à l'Historique.
+
+Observabilité (story 17.6) : le fil de travail rattache les mesures des appels LLM à un
+identifiant d'échange (`inference.mesures.contexte_mesure`) ; l'évènement `fin` porte alors
+`details` (tokens, durée, coût, énergie et CO2e estimés de la réponse, sans contenu).
 """
 
 from __future__ import annotations
@@ -21,12 +25,14 @@ import copy
 import logging
 import threading
 import time
+import uuid
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Final
 
 from slmsp.core.erreurs import SlmspError
 from slmsp.core.evenements import Erreur, Fin, Jeton, vers_dict
 from slmsp.harness.service import CODE_ERREUR, MESSAGE_ERREUR, AssistantService, masquer
+from slmsp.inference.mesures import contexte_mesure
 
 LOGGER: Final = logging.getLogger("slmsp.app.pont")
 JETONS_PAR_LOT: Final = 16
@@ -37,6 +43,8 @@ CODE_REFUS: Final = "requete-invalide"
 
 Pousser = Callable[[list[dict[str, Any]]], None]
 Envoi = tuple[str, list[dict[str, Any]], dict[str, Any]]
+Details = Callable[[str], dict[str, Any] | None]
+"""Identifiant d'échange -> ligne « Détails » de la réponse (ou `None`)."""
 
 
 def reponse_erreur(code: str, message: str) -> dict[str, Any]:
@@ -48,8 +56,14 @@ class Conversation:
     """État d'envoi du pont : dernier envoi (pour `regenerer`) et génération en cours."""
 
     def __init__(
-        self, service: AssistantService, pousser: Pousser, *, modele_local: str | None = None
+        self,
+        service: AssistantService,
+        pousser: Pousser,
+        *,
+        modele_local: str | None = None,
+        details: Details | None = None,
     ) -> None:
+        self._details = details
         self._modele_local = f"local:{modele_local}" if modele_local else None
         self._service = service
         self._pousser = pousser
@@ -156,6 +170,22 @@ class Conversation:
     # --- Fil de travail ------------------------------------------------------------------
 
     def _consommer(self, flux: Any, arret: threading.Event, tache: str) -> None:
+        echange = uuid.uuid4().hex
+        with contexte_mesure(echange=echange, tache=tache):
+            self._consommer_echange(flux, arret, tache, echange)
+
+    def _details_echange(self, echange: str) -> dict[str, Any] | None:
+        if self._details is None:
+            return None
+        try:
+            return self._details(echange)
+        except Exception as exc:
+            LOGGER.error("détails de la réponse indisponibles (%s)", type(exc).__name__)
+            return None
+
+    def _consommer_echange(
+        self, flux: Any, arret: threading.Event, tache: str, echange: str
+    ) -> None:
         lot: list[dict[str, Any]] = []
         debut_lot = time.monotonic()
 
@@ -175,6 +205,9 @@ class Conversation:
                     modele = getattr(flux, "modele_repondant", None) or self._modele_local
                     if modele:
                         donnees["modele_repondant"] = modele
+                    details = self._details_echange(echange)
+                    if details is not None:
+                        donnees["details"] = details
                 lot.append(donnees)
                 plein = len(lot) >= JETONS_PAR_LOT or time.monotonic() - debut_lot >= DELAI_LOT_S
                 if not isinstance(evenement, Jeton) or plein:

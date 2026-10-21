@@ -43,6 +43,15 @@ from slmsp.core.balises import (
 )
 from slmsp.core.erreurs import ContexteDepasse
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
+from slmsp.inference.mesures import (
+    FOURNISSEUR_LOCAL,
+    MesureAppel,
+    ObservateurAppels,
+    caracteres_entree,
+    estimer_tokens,
+    notifier,
+    usage_tokens,
+)
 from slmsp.inference.processus import ErreurInference
 from slmsp.net import client_local
 
@@ -382,6 +391,9 @@ class ClientLlama:
         self.protocole_outils = protocole_outils
         self.chat_template_kwargs = dict(chat_template_kwargs or {})
         self.taille_contexte = taille_contexte
+        # Mesure des appels (story 17.6) : branchée par l'application, absente ailleurs.
+        self.observateur: ObservateurAppels | None = None
+        self.modele_mesure = "local"
         self._http = client_local(port, transport_interne=transport_interne)
         self._base = f"http://127.0.0.1:{port}"
 
@@ -509,6 +521,64 @@ class ClientLlama:
             yield ligne
 
     def _flux(
+        self, corps: dict[str, Any], json_generique: bool, balises: LecteurBalises | None = None
+    ) -> Iterator[Evenement]:
+        """Flux du serveur ; avec un observateur, une `MesureAppel` par appel (story 17.6) :
+        écrite avant `Fin`, ou à la fermeture d'un flux interrompu (estimée, `interrompu`)."""
+        flux = self._flux_serveur(corps, json_generique, balises)
+        if self.observateur is None:
+            yield from flux
+            return
+        debut = time.perf_counter()
+        caracteres = 0
+        premier: int | None = None
+        clos = False
+        try:
+            for evenement in flux:
+                if isinstance(evenement, (Jeton, AppelOutil, AppelNonConforme)):
+                    if premier is None:
+                        premier = round((time.perf_counter() - debut) * 1000)
+                    caracteres += len(evenement.texte) if isinstance(evenement, Jeton) else 0
+                if isinstance(evenement, Fin):
+                    clos = True
+                    self._noter(corps, debut, caracteres, premier, evenement.usage, None)
+                yield evenement
+        finally:
+            flux.close()
+            if not clos:
+                self._noter(corps, debut, caracteres, premier, None, "interrompu")
+
+    def _noter(
+        self,
+        corps: Mapping[str, Any],
+        debut: float,
+        caracteres: int,
+        premier: int | None,
+        usage: Mapping[str, Any] | None,
+        motif: str | None,
+    ) -> None:
+        tokens = usage_tokens(usage)
+        estime = tokens is None
+        if tokens is None:
+            tokens = (estimer_tokens(caracteres_entree(corps)), estimer_tokens(caracteres))
+        notifier(
+            self.observateur,
+            MesureAppel(
+                fournisseur=FOURNISSEUR_LOCAL,
+                hote=None,
+                modele=self.modele_mesure,
+                tokens_entree=tokens[0],
+                tokens_sortie=tokens[1],
+                estime=estime,
+                interrompu=motif is not None,
+                duree_ms=round((time.perf_counter() - debut) * 1000),
+                premier_token_ms=premier,
+                cout_eur=0.0,
+                motif=motif,
+            ),
+        )
+
+    def _flux_serveur(
         self, corps: dict[str, Any], json_generique: bool, balises: LecteurBalises | None = None
     ) -> Iterator[Evenement]:
         debut = time.perf_counter()

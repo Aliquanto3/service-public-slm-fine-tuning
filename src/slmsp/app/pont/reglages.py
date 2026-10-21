@@ -221,6 +221,11 @@ class PontReglages:
             entrees = valider_reglage(valeur)
         except ValueError as exc:
             return self._refus(f"Fournisseurs externes : {exc}.")
+        if any(e["preset"] == "generique" and e["actif"] and not e["tarif"] for e in entrees):
+            # Story 17.6, amendement 8 : sans tarif, le plafond ne peut pas s'appliquer.
+            return self._refus(
+                "Fournisseurs externes : tarif obligatoire pour un hôte compatible OpenAI."
+            )
         self._stock().ecrire_reglage(CLE_REGLAGE, entrees)
         if self._coffre is not None:
             self._coffre.ne_garder_que(e["id"] for e in entrees)

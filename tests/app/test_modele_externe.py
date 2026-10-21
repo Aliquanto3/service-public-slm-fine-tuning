@@ -21,6 +21,7 @@ from slmsp.app.cle_externe import CoffreCle, CoffreCles
 from slmsp.app.export_retours import construire_export
 from slmsp.app.modele_externe import (
     MAX_FOURNISSEURS,
+    Observabilite,
     brancher_hybride,
     lecteur_cles,
     lire_reglage,
@@ -36,12 +37,26 @@ from slmsp.app.pont.reglages import PontReglages
 from slmsp.app.pont.retours import PontRetours
 from slmsp.app.stockage import Stockage
 from slmsp.core.evenements import Fin, Jeton
+from slmsp.inference.mesures import Tarif
 from slmsp.net.client import Passerelle
 from slmsp.net.config import avec_modele_externe, charger_config_reseau, charger_liste_blanche
 from slmsp.net.journal import JournalMemoire
 from slmsp.net.profils import evaluer
 
 CLE = "<cle-factice-secrete>"
+
+
+class _PlafondOuvert:
+    """Plafond factice qui accepte toute réservation (story 17.6)."""
+
+    def reserver(self, hote: str, modele: str, montant: float) -> Any:
+        return montant
+
+    def regulariser(self, jeton: Any, cout: float) -> None:
+        return None
+
+
+SUIVI = Observabilite(plafond=_PlafondOuvert(), tarif=lambda _e: Tarif(1.0, 2.0))
 OPENROUTER = {"id": "a1", "preset": "openrouter", "actif": True}
 MISTRAL = {"id": "b2", "preset": "mistral", "actif": True}
 OVH = {"id": "c3", "preset": "ovh", "actif": False}
@@ -252,11 +267,13 @@ def test_changement_d_hote_ou_de_preset_efface_la_cle(
     assert pont.appeler("enregistrer_cle", "b2", CLE)["cle_enregistree"] is True
     # même id, autre hôte : la clé est effacée, l'interface demande une nouvelle clé
     autre = {**OPENROUTER, "preset": "generique", "url_base": "https://h.example/v1", "modele": "m"}
+    autre["tarif"] = {"entree": 1, "sortie": 1}  # obligatoire (story 17.6)
     r = pont.appeler("ecrire", "fournisseurs_externes", [autre, MISTRAL])
     assert [e["cle_enregistree"] for e in r["fournisseurs"]] == [False, True]
     assert not coffre.presente("a1") and coffre.presente("b2")
     # même hôte, autre preset : effacée aussi
     meme_hote = {**MISTRAL, "preset": "generique", "url_base": "https://api.mistral.ai/v1"}
+    meme_hote["tarif"] = autre["tarif"]
     r = pont.appeler("ecrire", "fournisseurs_externes", [autre, {**meme_hote, "modele": "m"}])
     assert r["fournisseurs"][1]["cle_enregistree"] is False and not coffre.presente("b2")
 
@@ -424,10 +441,25 @@ def test_tester_connexion_reussite_et_echec() -> None:
 
     journal = JournalMemoire()
     r = connexion_testee(
-        entree, SecretStr(CLE), _passerelle(journal), transport_interne=httpx2.MockTransport(ok)
+        entree,
+        SecretStr(CLE),
+        _passerelle(journal),
+        transport_interne=httpx2.MockTransport(ok),
+        observabilite=SUIVI,
     )
     assert r["reussi"] is True and isinstance(r["latence_ms"], int)
     assert [e.profil for e in journal.lister()] == ["modele-externe"]
+    # Revue 17.6 : sans compteur de dépense, l'appel n'est pas envoyé (fail-closed).
+    for suivi in (None, Observabilite(tarif=lambda _e: Tarif(1.0, 2.0))):
+        r = connexion_testee(
+            entree,
+            SecretStr(CLE),
+            _passerelle(journal),
+            transport_interne=httpx2.MockTransport(ok),
+            observabilite=suivi,
+        )
+        assert r["reussi"] is False and r["motif"] == "tarif-inconnu"
+    assert len(journal.lister()) == 1
 
     def refus(requete: Any) -> Any:
         return httpx2.Response(401, json={"error": {"message": "<corps-erreur-factice>"}})
@@ -437,9 +469,10 @@ def test_tester_connexion_reussite_et_echec() -> None:
         SecretStr(CLE),
         _passerelle(journal),
         transport_interne=httpx2.MockTransport(refus),
+        observabilite=SUIVI,
     )
     assert r == {"reussi": False, "motif": "http-401", "hote": "api.mistral.ai"}
-    r = connexion_testee(entree, None, _passerelle(journal))
+    r = connexion_testee(entree, None, _passerelle(journal), observabilite=SUIVI)
     assert r["motif"] == "cle-absente"
 
 

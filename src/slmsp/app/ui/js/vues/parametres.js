@@ -323,6 +323,28 @@ export function monter(conteneur, pont, contexte = {}) {
         rangParametres.append(el("label", { for: `${pref}-parametres` }, "Paramètres supplémentaires (JSON)"), parametres);
         rangParametres.hidden = !presetDe(choixPreset.value).parametres_libres;
 
+        // Tarif (obligatoire pour un hôte générique, story 17.6) et usage en fin de flux.
+        const tarifEntree = el("input", { type: "number", id: `${pref}-tarif-entree`, min: "0", step: "0.01", inputmode: "decimal" });
+        const tarifSortie = el("input", { type: "number", id: `${pref}-tarif-sortie`, min: "0", step: "0.01", inputmode: "decimal" });
+        tarifEntree.value = entree._tarifEntree ?? (entree.tarif?.entree ?? "");
+        tarifSortie.value = entree._tarifSortie ?? (entree.tarif?.sortie ?? "");
+        tarifEntree.addEventListener("input", () => (entree._tarifEntree = tarifEntree.value));
+        tarifSortie.addEventListener("input", () => (entree._tarifSortie = tarifSortie.value));
+        const usageFlux = el("input", { type: "checkbox", id: `${pref}-usage` });
+        usageFlux.checked = Boolean(entree.usage_flux);
+        usageFlux.addEventListener("change", () => (entree.usage_flux = usageFlux.checked));
+        const rangTarif = el("div", { class: "parametres-champ parametres-tarif" });
+        const rangUsage = el("div", { class: "parametres-rang" });
+        rangUsage.append(usageFlux, el("label", { for: `${pref}-usage` }, "Demander l'usage en fin de flux (stream_options)"));
+        rangTarif.append(
+          el("label", { for: `${pref}-tarif-entree` }, "Tarif d'entrée (€ par million de tokens, obligatoire)"),
+          tarifEntree,
+          el("label", { for: `${pref}-tarif-sortie` }, "Tarif de sortie (€ par million de tokens, obligatoire)"),
+          tarifSortie,
+          rangUsage,
+        );
+        rangTarif.hidden = !presetDe(choixPreset.value).parametres_libres;
+
         choixPreset.addEventListener("change", () => {
           const p = presetDe(choixPreset.value);
           entree.preset = p.nom;
@@ -332,6 +354,7 @@ export function monter(conteneur, pont, contexte = {}) {
           entree.modele = modele.value;
           proposerModeles();
           rangParametres.hidden = !p.parametres_libres;
+          rangTarif.hidden = !p.parametres_libres;
           if (!p.parametres_libres) {
             // Paramètres libres : preset générique seulement (refusés sinon par le pont).
             parametres.value = "";
@@ -442,6 +465,7 @@ export function monter(conteneur, pont, contexte = {}) {
           champ("Modèle", modele, `${pref}-modele`),
           listeModeles,
           rangParametres,
+          rangTarif,
           champ("Clé d'accès", cle, `${pref}-cle`),
           rangCle,
           rangTest,
@@ -465,6 +489,13 @@ export function monter(conteneur, pont, contexte = {}) {
     if (entree._parametres === undefined) valeurs.parametres_supplementaires = entree.parametres_supplementaires ?? {};
     else if (texte) valeurs.parametres_supplementaires = JSON.parse(texte);
     else valeurs.parametres_supplementaires = {};
+    if (presetDe(entree.preset).parametres_libres) {
+      const lire = (saisie, enregistre) => (saisie === undefined ? enregistre : saisie === "" ? null : Number(saisie));
+      const e = lire(entree._tarifEntree, entree.tarif?.entree ?? null);
+      const so = lire(entree._tarifSortie, entree.tarif?.sortie ?? null);
+      if (e != null && so != null) valeurs.tarif = { entree: e, sortie: so };
+      valeurs.usage_flux = Boolean(entree.usage_flux);
+    }
     return valeurs;
   }
 
@@ -491,6 +522,7 @@ export function monter(conteneur, pont, contexte = {}) {
       const saisies = new Map(entrees.map((e) => [e.id, e._cle]));
       entrees = (r.fournisseurs ?? entrees).map((e) => ({ ...e, _cle: saisies.get(e.id) }));
       rendreExternes();
+      chargerDepense();
       etatExterne.textContent = `Fournisseurs enregistrés. ${MESSAGE_MODELE}`;
     } catch (e) {
       etatExterne.textContent = e instanceof Error && e.message !== "refus" ? e.message : "Les fournisseurs n'ont pas pu être enregistrés.";
@@ -516,10 +548,57 @@ export function monter(conteneur, pont, contexte = {}) {
   }
   chargerExternes();
 
+  // -- Dépense et impact (story 17.6) : plafond mensuel par fournisseur, puissance du poste ---
+  const listePlafonds = el("ul", { class: "parametres-plafonds" });
+  const puissance = el("input", { type: "number", id: "parametres-puissance", min: "1", max: "500", step: "1", inputmode: "numeric" });
+  const enregistrerPuissance = el("button", { type: "button", class: "bouton-secondaire" }, "Enregistrer la puissance");
+  const rangPuissance = el("div", { class: "parametres-champ" });
+  rangPuissance.append(el("label", { for: "parametres-puissance" }, "Puissance moyenne du processeur (W), pour l'impact du modèle local"), puissance, enregistrerPuissance);
+  const etatDepense = el("output", { class: "parametres-aide", "aria-live": "polite" });
+  const aideDepense = el(
+    "p",
+    { class: "parametres-aide" },
+    "Plafond mensuel en euros par fournisseur externe (2 € par défaut ; 0 désactive le fournisseur), pris en compte dès l'appel suivant. Une demande qui risquerait de le dépasser n'est pas envoyée : le fournisseur suivant, puis le modèle local, répond.",
+  );
+  const sectionDepense = section("Dépense et impact", aideDepense, listePlafonds, rangPuissance, etatDepense);
+
+  async function chargerDepense() {
+    try {
+      const r = await pont.appeler("observabilite.reglages");
+      if (!r || r.ok === false) throw new Error("refus");
+      puissance.value = r.puissance_cpu_w ?? "";
+      listePlafonds.replaceChildren(
+        ...(r.plafonds ?? []).map((f, i) => {
+          const li = el("li", { class: "parametres-rang" });
+          const champPlafond = el("input", { type: "number", id: `parametres-plafond-${i}`, min: "0", step: "0.5", inputmode: "decimal" });
+          champPlafond.value = f.plafond_eur;
+          const bouton = el("button", { type: "button", class: "bouton-secondaire" }, "Enregistrer");
+          bouton.addEventListener("click", async () => {
+            const rep = await pont.appeler("observabilite.ecrire_plafond", f.hote, Number(champPlafond.value));
+            etatDepense.textContent = rep?.ok ? `Plafond enregistré : ${f.libelle}.` : rep?.erreur?.message ?? "Plafond refusé.";
+            annoncer(etatDepense.textContent);
+          });
+          li.append(el("label", { for: `parametres-plafond-${i}` }, `${f.libelle} (€ par mois)`), champPlafond, bouton);
+          return li;
+        }),
+      );
+      if (!(r.plafonds ?? []).length) listePlafonds.replaceChildren(el("li", {}, "Aucun fournisseur externe."));
+    } catch {
+      sectionDepense.hidden = true;
+    }
+  }
+  enregistrerPuissance.addEventListener("click", async () => {
+    const rep = await pont.appeler("observabilite.ecrire_puissance", Number(puissance.value));
+    etatDepense.textContent = rep?.ok ? "Puissance enregistrée." : rep?.erreur?.message ?? "Puissance refusée.";
+    annoncer(etatDepense.textContent);
+  });
+  chargerDepense();
+
   general.append(
     section("Taille du texte", rangTaille, aideTaille),
     section("Modèle", rangModele, aideModele),
     sectionExterne,
+    sectionDepense,
     section("Connexion", rangHL, aideHL),
     section("Historique", effacer, confirmation, aideEff),
   );

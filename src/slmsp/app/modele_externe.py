@@ -8,6 +8,11 @@ démarrage suivant. Une entrée active au moins : le `LlmPort` du service devien
 passent par une passerelle au profil `modele-externe` (une règle par entrée active : `POST
 <url_base>/chat/completions`). Aucune entrée active : rien n'est construit, aucune requête
 nouvelle.
+
+Story 17.6 : `tarif` (`{entree, sortie}`, euros par million de tokens) et `usage_flux` (demander
+l'usage en fin de flux) ne valent que pour le preset `generique` ; les autres presets prennent
+leur tarif dans `config/tarifs.toml`. Chaque client externe reçoit l'observateur des appels, le
+compteur de dépense (plafond) et son tarif ; sans tarif, il est sauté (`tarif-inconnu`).
 """
 
 from __future__ import annotations
@@ -16,6 +21,7 @@ import copy
 import logging
 import time
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from typing import Any, Final
 
 from pydantic import SecretStr
@@ -31,6 +37,7 @@ from slmsp.inference.client_openai import (
 )
 from slmsp.inference.fournisseurs import PRESETS, preset
 from slmsp.inference.hybride import ClientHybride
+from slmsp.inference.mesures import ObservateurAppels, PlafondPort, Tarif, contexte_mesure
 from slmsp.net.client import Passerelle
 from slmsp.net.config import avec_modele_externe
 from slmsp.net.profils import hote_de
@@ -42,8 +49,12 @@ LONGUEUR_MAX_MODELE: Final = 200
 PROFIL: Final = "modele-externe"
 MESSAGE_TEST: Final = "Test de connexion."
 CHAMPS: Final = frozenset(
-    {"id", "preset", "url_base", "modele", "actif", "parametres_supplementaires"}
+    {"id", "preset", "url_base", "modele", "actif", "parametres_supplementaires", "tarif"}
+    | {"usage_flux"}
 )
+TARIF_MAX: Final = 1000.0
+"""Tarif saisi au plus (euros par million de tokens) : garde-fou contre une faute de frappe."""
+TACHE_TEST: Final = "test-connexion"
 
 LecteurCle = Callable[[dict[str, Any]], SecretStr | None]
 """Entrée -> sa clé déchiffrée si elle est liée à l'hôte et au preset de l'entrée, sinon `None`."""
@@ -89,6 +100,12 @@ def valider_entree(valeur: Any) -> dict[str, Any]:
     parametres = valider_parametres(valeur.get("parametres_supplementaires") or {})
     if parametres and not choisi.parametres_libres:
         raise ValueError("paramètres supplémentaires : preset generique seulement")
+    tarif = valider_tarif(valeur.get("tarif"))
+    if tarif is not None and not choisi.parametres_libres:
+        raise ValueError("tarif : preset generique seulement")
+    usage_flux = valeur.get("usage_flux", False)
+    if not isinstance(usage_flux, bool):
+        raise ValueError("usage_flux : booléen attendu")
     return {
         "id": valeur["id"],
         "preset": choisi.nom,
@@ -96,7 +113,34 @@ def valider_entree(valeur: Any) -> dict[str, Any]:
         "modele": modele.strip(),
         "actif": actif,
         "parametres_supplementaires": parametres,
+        "tarif": tarif,
+        "usage_flux": usage_flux and choisi.parametres_libres,
     }
+
+
+def valider_tarif(valeur: Any) -> dict[str, float] | None:
+    """`{entree, sortie}` en euros par million de tokens (0 à `TARIF_MAX`), ou `None`."""
+    if valeur is None:
+        return None
+    if not isinstance(valeur, dict) or set(valeur) != {"entree", "sortie"}:
+        raise ValueError("tarif : {entree, sortie} attendu")
+    tarif: dict[str, float] = {}
+    for cle in ("entree", "sortie"):
+        nombre = valeur[cle]
+        if (
+            isinstance(nombre, bool)
+            or not isinstance(nombre, (int, float))
+            or not 0 <= nombre <= TARIF_MAX
+        ):
+            raise ValueError(f"tarif : {cle} entre 0 et {TARIF_MAX:g} € par million de tokens")
+        tarif[cle] = float(nombre)
+    return tarif
+
+
+def tarif_saisi(entree: dict[str, Any]) -> Tarif | None:
+    """Tarif saisi dans les Paramètres (preset `generique`), sinon `None`."""
+    tarif = entree.get("tarif")
+    return Tarif(tarif["entree"], tarif["sortie"]) if isinstance(tarif, dict) else None
 
 
 def valider_reglage(valeur: Any) -> list[dict[str, Any]]:
@@ -141,16 +185,49 @@ def passerelle_dediee(passerelle: Passerelle, url_bases: Sequence[str]) -> Passe
     )
 
 
+@dataclass(frozen=True)
+class Observabilite:
+    """Ce que reçoit chaque client externe (story 17.6) : observateur des appels, plafond de
+    dépense et résolution du tarif d'une entrée (`None` : tarif inconnu)."""
+
+    observateur: ObservateurAppels | None = None
+    plafond: PlafondPort | None = None
+    tarif: Callable[[dict[str, Any]], Tarif | None] = tarif_saisi
+
+
+class _PlafondFerme:
+    """Plafond sans compteur : toute réservation est refusée (appel jamais envoyé)."""
+
+    def reserver(self, hote: str, modele: str, montant: float) -> None:
+        return None
+
+    def regulariser(self, jeton: Any, cout: float) -> None:
+        return None
+
+
+PLAFOND_FERME: Final = _PlafondFerme()
+
+
 def client_externe(
     entree: dict[str, Any],
     cle: SecretStr | None,
     dediee: Passerelle,
     *,
     transport_interne: Any = None,
+    observabilite: Observabilite | None = None,
     **options: Any,
 ) -> ClientOpenAI:
     """`ClientOpenAI` de l'entrée, dont le client HTTP passe par la passerelle `dediee`."""
     http = dediee.client(PROFIL, transport_interne=transport_interne, delais_appel=DELAIS_EXTERNE)
+    if observabilite is not None and observabilite.plafond is not None:
+        options.setdefault("observateur", observabilite.observateur)
+        options.setdefault("plafond", observabilite.plafond)
+        options.setdefault("tarif", observabilite.tarif(entree))
+    else:
+        # Fail-closed (revue 17.6) : sans compteur de dépense, aucun appel externe ne part.
+        options.setdefault("observateur", getattr(observabilite, "observateur", None))
+        options["plafond"] = PLAFOND_FERME
+        options["tarif"] = None
     return ClientOpenAI(
         http,
         entree["url_base"],
@@ -158,6 +235,7 @@ def client_externe(
         cle,
         preset_nom=entree["preset"],
         parametres_supplementaires=entree["parametres_supplementaires"],
+        usage_flux=bool(entree.get("usage_flux")),
         **options,
     )
 
@@ -169,6 +247,7 @@ def brancher_hybride(
     cles: LecteurCle,
     *,
     transport_interne: Any = None,
+    observabilite: Observabilite | None = None,
 ) -> dict[str, Any] | None:
     """Remplace le `LlmPort` du service par un `ClientHybride` si une entrée est active.
 
@@ -181,7 +260,10 @@ def brancher_hybride(
     service = assemblage.service
     dediee = passerelle_dediee(assemblage.passerelle, [e["url_base"] for e in retenues])
     externes = [
-        client_externe(e, cles(e), dediee, transport_interne=transport_interne) for e in retenues
+        client_externe(
+            e, cles(e), dediee, transport_interne=transport_interne, observabilite=observabilite
+        )
+        for e in retenues
     ]
     service.llm = ClientHybride(service.llm, externes, service.mode, slug_local=slug_local)
     tete = retenues[0]
@@ -204,20 +286,30 @@ def tester_connexion(
     *,
     transport_interne: Any = None,
     horloge: Callable[[], float] = time.perf_counter,
+    observabilite: Observabilite | None = None,
 ) -> dict[str, Any]:
     """Une requête de 1 token de sortie vers l'entrée : `{reussi: True, latence_ms}` ou
     `{reussi: False, motif}` (code court). Profil ponctuel limité à cette requête ; ne lève pas.
+
+    Story 17.6 (amendement 4) : l'appel est mesuré (Tâche `test-connexion`) et compté dans le
+    plafond ; il est refusé (`plafond-atteint`, `tarif-inconnu`) comme un autre appel.
     """
     debut = horloge()
     try:
         dediee = passerelle_dediee(passerelle, [entree["url_base"]])
         client = client_externe(
-            entree, cle, dediee, transport_interne=transport_interne, relances_max=0
+            entree,
+            cle,
+            dediee,
+            transport_interne=transport_interne,
+            observabilite=observabilite,
+            relances_max=0,
         )
-        for _ in client.generer(
-            [{"role": "user", "content": MESSAGE_TEST}], options={"max_tokens": 1}
-        ):
-            pass
+        with contexte_mesure(tache=TACHE_TEST):
+            for _ in client.generer(
+                [{"role": "user", "content": MESSAGE_TEST}], options={"max_tokens": 1}
+            ):
+                pass
     except EchecAppel as exc:
         motif = exc.code
     except ValueError:
@@ -239,6 +331,7 @@ def presets_vue() -> list[dict[str, Any]]:
 __all__ = [
     "CLE_REGLAGE",
     "MAX_FOURNISSEURS",
+    "Observabilite",
     "actifs",
     "brancher_hybride",
     "client_externe",
@@ -247,7 +340,9 @@ __all__ = [
     "libelle",
     "lire_reglage",
     "presets_vue",
+    "tarif_saisi",
     "tester_connexion",
     "valider_entree",
     "valider_reglage",
+    "valider_tarif",
 ]

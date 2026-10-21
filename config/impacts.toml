@@ -1,0 +1,117 @@
+# Impact environnemental estimé des appels LLM de l'application (story 17.6, amendement 7).
+#
+# Méthode : phase d'usage d'EcoLogits (GenAI Impact), page « Methodology > LLM inference »,
+# https://ecologits.ai/latest/methodology/llm_inference/ , relevée par l'orchestrateur le
+# 2026-10-21. Formules réimplémentées dans `slmsp/app/observabilite.py`, sans dépendance à la
+# bibliothèque `ecologits`. Seule la phase d'usage est estimée : les impacts de fabrication du
+# matériel (phase « embodied » d'EcoLogits) sont hors périmètre.
+schema_version = 1
+version_methode = "EcoLogits, phase d'usage (ecologits.ai/latest/methodology/llm_inference, relevé le 2026-10-21), réimplémentation slmsp"
+
+# Énergie GPU par token de sortie (Wh) : f_E(P, B) = alpha × exp(beta × B) × P + gamma,
+# P = paramètres actifs en milliards, B = taille de lot.
+# Latence par token de sortie (s), repli quand la durée de l'appel n'est pas mesurée :
+# f_L(P, B) = alpha_L × P + beta_L × B + gamma_L.
+[gpu]
+energie_alpha_wh = 1.17e-6
+energie_beta = -1.12e-2
+energie_gamma_wh = 4.05e-5
+latence_alpha_s = 6.78e-4
+latence_beta_s = 3.12e-4
+latence_gamma_s = 1.94e-2
+taille_lot = 64
+memoire_go = 80              # GPU de référence : NVIDIA H100 80 Go
+bits = 16                    # poids en 16 bits
+facteur_memoire = 1.2        # mémoire du modèle = 1,2 × paramètres totaux × bits / 8 (Go)
+puissance_serveur_kw = 1.2   # serveur hors GPU (8 GPU installés)
+gpus_par_serveur = 8
+
+# Intensité carbone de l'électricité, en g CO2e par kWh (moyennes annuelles).
+[zones.FRA]
+libelle = "France"
+intensite_g_kwh = 52
+source = "ADEME, Base Empreinte, mix électrique moyen France (consommation), 2022"
+
+[zones.USA]
+libelle = "États-Unis"
+intensite_g_kwh = 369
+source = "Ember, intensité carbone de la production électrique des États-Unis, 2023"
+
+[zones.WOR]
+libelle = "Monde (zone inconnue)"
+intensite_g_kwh = 481
+source = "Ember, Global Electricity Review, moyenne mondiale 2023"
+
+# Hébergeur de chaque preset : zone électrique et PUE (nominal d'EcoLogits, bas, haut).
+[hebergeurs.openrouter]
+zone = "USA"
+pue = 1.2
+pue_bas = 1.1
+pue_haut = 1.4
+note = "OpenRouter route vers des hébergeurs surtout américains (DeepInfra par exemple) ; PUE par défaut d'EcoLogits"
+
+[hebergeurs.mistral]
+zone = "FRA"
+pue = 1.16
+pue_bas = 1.1
+pue_haut = 1.4
+note = "API Mistral hébergée en Europe ; mix France retenu ; PUE de Mistral selon EcoLogits"
+
+[hebergeurs.ovh]
+zone = "FRA"
+pue = 1.2
+pue_bas = 1.1
+pue_haut = 1.4
+note = "OVHcloud AI Endpoints, centres de données en France ; PUE par défaut d'EcoLogits (aucun PUE OVH sourcé)"
+
+[hebergeurs.generique]
+zone = "WOR"
+pue = 1.2
+pue_bas = 1.1
+pue_haut = 1.5
+note = "hôte libre : zone inconnue, moyenne mondiale"
+
+# Paramètres des modèles (milliards) : totaux (mémoire, nombre de GPU) et actifs (énergie).
+# Dense : actifs = totaux. Actifs inconnus : valeur centrale et fourchette `actifs_bas` à
+# `actifs_haut`, reportée dans la fourchette d'impact. Modèle absent : impact « non estimé ».
+[modeles."qwen/qwen3.6-27b"]
+parametres_totaux = 27
+parametres_actifs = 27
+note = "dense supposé"
+
+[modeles."Qwen3.6-27B"]
+parametres_totaux = 27
+parametres_actifs = 27
+note = "dense supposé"
+
+[modeles."qwen/qwen3.8-27b"]
+parametres_totaux = 27
+parametres_actifs = 27
+note = "dense supposé"
+
+[modeles."Mistral-Small-3.2-24B-Instruct-2506"]
+parametres_totaux = 24
+parametres_actifs = 24
+note = "dense, 24 milliards de paramètres"
+
+[modeles."mistralai/mistral-small-2603"]
+parametres_totaux = 119
+parametres_actifs = 15
+parametres_actifs_bas = 6
+parametres_actifs_haut = 24
+note = "Mistral Small 4 : 119 Md au total (Cloud Temple) ; paramètres actifs à vérifier, fourchette 6 à 24 Md (centre 15)"
+
+[modeles."mistral-small-latest"]
+parametres_totaux = 119
+parametres_actifs = 15
+parametres_actifs_bas = 6
+parametres_actifs_haut = 24
+note = "alias de Mistral Small 4 (mistral-small-2603) : 119 Md au total ; paramètres actifs à vérifier, fourchette 6 à 24 Md (centre 15)"
+
+# Modèle local : puissance moyenne du processeur (réglable dans Paramètres) × durée de l'appel,
+# au mix électrique de la France. Poste non instrumenté : fourchette arbitraire ×0,5 à ×1,5.
+[local]
+puissance_cpu_w = 25
+zone = "FRA"
+facteur_bas = 0.5
+facteur_haut = 1.5

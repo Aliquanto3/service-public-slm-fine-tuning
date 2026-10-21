@@ -108,6 +108,11 @@ CODE_EXTERNE_INTERROMPU: Final = "modele-externe-interrompu"
 MESSAGE_EXTERNE_INTERROMPU: Final = (
     "La réponse du modèle externe a été interrompue. Votre texte est conservé."
 )
+MESSAGE_PLAFOND_ATTEINT: Final = (
+    "Plafond de dépense atteint pour ce fournisseur (plafond-atteint) : la réponse du modèle "
+    "externe s'est arrêtée. Votre texte est conservé."
+)
+"""Story 17.6 : plafond atteint en cours d'échange (boucle d'outils), même code d'erreur."""
 
 
 def message_secours(motif: str) -> str:
@@ -365,7 +370,12 @@ class AssistantService:
             yield Erreur(code=CODE_CONTEXTE, message=MESSAGE_CONTEXTE)
         except EchecAppel as exc:
             LOGGER.warning("Tâche %s : modèle externe interrompu (%s)", ctx.tache.code, exc.code)
-            yield Erreur(code=CODE_EXTERNE_INTERROMPU, message=MESSAGE_EXTERNE_INTERROMPU)
+            message = (
+                MESSAGE_PLAFOND_ATTEINT
+                if exc.code == "plafond-atteint"
+                else MESSAGE_EXTERNE_INTERROMPU
+            )
+            yield Erreur(code=CODE_EXTERNE_INTERROMPU, message=message)
         except Exception as exc:
             self._journaliser(exc, ctx)
             yield Erreur(code=CODE_ERREUR, message=MESSAGE_ERREUR)

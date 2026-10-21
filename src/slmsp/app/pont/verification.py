@@ -31,6 +31,7 @@ from slmsp.app.pont.conversation import reponse_erreur
 from slmsp.app.pont.erreurs import NonImplementee
 from slmsp.core.evenements import Evenement, vers_dict
 from slmsp.harness.verification import REPONSE_MAX_CARACTERES
+from slmsp.inference.mesures import contexte_mesure
 
 SOURCES_MAX = 100
 """Nombre maximal de sources reçues ; au-delà, `requete-invalide`."""
@@ -74,11 +75,14 @@ class PontVerification:
         if not self._une_a_la_fois.acquire(blocking=False):
             return reponse_erreur("verification-en-cours", "Une vérification est en cours.")
         try:
-            if len(args) == 3 and args[2] is not None:
-                # Même fournisseur que la réponse vérifiée (story 17.4, amendement 6).
-                evenements = self._verificateur(args[0], args[1], modele_repondant=args[2])
-            else:
-                evenements = self._verificateur(args[0], args[1])
+            # Mesure des appels de la vérification (story 17.6) : Tâche `verification`.
+            with contexte_mesure(tache="verification"):
+                if len(args) == 3 and args[2] is not None:
+                    # Même fournisseur que la réponse vérifiée (story 17.4, amendement 6).
+                    evenements = self._verificateur(args[0], args[1], modele_repondant=args[2])
+                else:
+                    evenements = self._verificateur(args[0], args[1])
+                rendus = [vers_dict(e) for e in evenements]
         finally:
             self._une_a_la_fois.release()
-        return {"ok": True, "evenements": [vers_dict(e) for e in evenements]}
+        return {"ok": True, "evenements": rendus}

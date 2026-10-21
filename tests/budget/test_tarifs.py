@@ -99,7 +99,7 @@ def test_budgets_de_depart() -> None:
 @pytest.mark.parametrize(
     ("modele", "mode"),
     [
-        ("mistral-small-latest", "direct"),
+        ("<modele-sans-tarif>", "direct"),  # mistral-small-latest a un tarif (17.6)
         ("claude-opus-5", "direct"),  # aucun alias : identifiant exact seulement
         ("claude-opus-5-5", "flex"),
         ("claude-opus-5-5", "ecriture_cache"),  # le cache est une composante, pas un mode

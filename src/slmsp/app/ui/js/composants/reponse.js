@@ -1,6 +1,7 @@
 // Réponse de l'Assistant : texte au fil de l'eau, puces de citation et actions à la fin (UX-DR5, UX-DR11).
 // Tout contenu venant du modèle entre dans le DOM par `textContent` (jamais de HTML construit).
 
+import { creerDetails } from "./details-appel.js";
 import { annoncer } from "../socle/annonces.js";
 import { rendreTexteAvecCitations } from "./citations.js";
 import { confirmer, copierTexte } from "./copie.js";
@@ -46,6 +47,9 @@ export function creerReponse(opts) {
   // Modèle qui a répondu (story 17.4), affiché sous la réponse terminée.
   const modele = el("p", "reponse-modele");
   modele.hidden = true;
+  // Ligne « Détails » (story 17.6) : tokens, durée, coût, impact estimés.
+  const details = el("div", "reponse-details");
+  details.hidden = true;
   // Coupure du modèle externe après son premier jeton (story 17.4).
   const reessayerLocal = el("button", "bouton-secondaire", "Réessayer avec le modèle local");
   reessayerLocal.type = "button";
@@ -58,7 +62,7 @@ export function creerReponse(opts) {
   const regenerer = el("button", "bouton-secondaire", "Régénérer");
   regenerer.type = "button";
   actions.append(copier, regenerer);
-  racine.append(repli, attente, texte, notes, pieces, mention, echec, reessayerLocal, modele, actions);
+  racine.append(repli, attente, texte, notes, pieces, mention, echec, reessayerLocal, modele, details, actions);
 
   const r = {
     el: racine,
@@ -79,7 +83,8 @@ export function creerReponse(opts) {
     notes.replaceChildren();
     pieces.replaceChildren();
     for (const e of racine.querySelectorAll(":scope > .legal-notice")) e.remove();
-    for (const e of [repli, mention, echec, actions, modele, reessayerLocal]) e.hidden = true;
+    for (const e of [repli, mention, echec, actions, modele, details, reessayerLocal]) e.hidden = true;
+    details.replaceChildren();
     r.modeleRepondant = null;
     reessayer.disabled = true;
     copier.hidden = false;
@@ -132,6 +137,13 @@ export function creerReponse(opts) {
     r.modeleRepondant = identifiant; // la vérification FR-12 part vers le même modèle
     modele.textContent = `Modèle : ${identifiant}`;
     modele.hidden = false;
+  };
+
+  /** `fin.details` du pont (story 17.6) : ligne repliable sous la réponse. */
+  r.fixerDetails = (d) => {
+    const bloc = creerDetails(d);
+    details.replaceChildren(...(bloc ? [bloc] : []));
+    details.hidden = !bloc;
   };
 
   r.proposerLocal = () => {

@@ -9,7 +9,8 @@ Contrat JSON, valable pour toutes les méthodes :
   au format `core.evenements.vers_dict`, plus `{"type": "pret"}` (`signaler_pret`) ;
 - `appeler(nom, *args)` : appel générique ; `nom` est `envoyer`, `arreter`, `regenerer`,
   `nouvelle_conversation`, `ouvrir_lien`, ou `<domaine>.<methode>` (domaines : `mode`,
-  `reglages`, `historique`, `retours`, `verification`, `redaction_outils`, `modeles`).
+  `reglages`, `historique`, `retours`, `verification`, `redaction_outils`, `modeles`,
+  `observabilite`).
 
 L'interface pywebview n'est vue qu'à travers le port `Fenetre`.
 """
@@ -28,6 +29,7 @@ from slmsp.app.pont.erreurs import NonImplementee
 from slmsp.app.pont.historique import PontHistorique
 from slmsp.app.pont.mode import PontMode
 from slmsp.app.pont.modeles import PontModeles
+from slmsp.app.pont.observabilite import PontObservabilite
 from slmsp.app.pont.redaction_outils import PontRedactionOutils
 from slmsp.app.pont.reglages import PontReglages
 from slmsp.app.pont.retours import PontRetours
@@ -47,6 +49,16 @@ CODE_LIEN_REFUSE: Final = "lien-refuse"
 METHODES_DIRECTES: Final = frozenset(
     {"envoyer", "arreter", "regenerer", "nouvelle_conversation", "ouvrir_lien"}
 )
+
+
+def _fournisseurs(stockage: Any) -> list[dict[str, Any]]:
+    """Hôtes des fournisseurs externes configurés (plafonds affichés et réglables)."""
+    if stockage is None:
+        return []
+    from slmsp.app.modele_externe import libelle, lire_reglage
+    from slmsp.net.profils import hote_de
+
+    return [{"hote": hote_de(e["url_base"]), "libelle": libelle(e)} for e in lire_reglage(stockage)]
 
 
 class Fenetre(Protocol):
@@ -72,6 +84,7 @@ class Pont:
         coffre: Any = None,
         tester_externe: Callable[..., dict[str, Any]] | None = None,
         modele_externe: Mapping[str, Any] | None = None,
+        observabilite: Any = None,
     ) -> None:
         # Attributs privés : pywebview n'expose pas les noms en `_`.
         self._fenetre = fenetre
@@ -80,7 +93,18 @@ class Pont:
         # (story 12.6) : la vue Mode (12.9) y lira le journal des Requêtes sortantes.
         self._stockage = stockage
         self._liste_blanche = liste_blanche  # lue dans `config/` au premier `ouvrir_lien`
-        self._conversation = Conversation(service, self._pousser, modele_local=modele_actif)
+        suivi = PontObservabilite(
+            stockage,
+            observabilite,
+            choisir_fichier,
+            fournisseurs=lambda: _fournisseurs(stockage),
+        )
+        self._conversation = Conversation(
+            service,
+            self._pousser,
+            modele_local=modele_actif,
+            details=suivi.details if stockage is not None else None,
+        )
         # Fournisseurs externes (story 17.4) : `{tete, preset, hote, modele, secours}` si l'un
         # d'eux est actif depuis le démarrage.
         externe = dict(modele_externe) if modele_externe else None
@@ -107,6 +131,7 @@ class Pont:
             ),
             "redaction_outils": PontRedactionOutils(),
             "modeles": PontModeles(),
+            "observabilite": suivi,
         }
 
     def _pousser(self, lot: list[dict[str, Any]]) -> None:

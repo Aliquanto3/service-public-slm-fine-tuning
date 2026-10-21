@@ -244,7 +244,7 @@ def test_fournisseurs_externes_liste_ordonnee_cle_et_test(page) -> None:
     premier.locator("select").select_option("mistral")
     assert premier.locator("input[type=url]").input_value() == "https://api.mistral.ai/v1"
     assert premier.locator("input[list]").input_value() == "mistral-small-latest"
-    premier.locator("input[type=checkbox]").check()
+    premier.locator("input[type=checkbox][id$='-actif']").check()
     ajouter.click()
     ajouter.click()
     assert ajouter.is_disabled()  # 3 au plus

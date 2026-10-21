@@ -2,7 +2,7 @@
 title: 'Story 17.6 — Observabilité dans l''application : tokens, coût, impact environnemental, plafond de dépense'
 type: 'feature'
 created: '2026-10-21'
-status: ready-for-dev
+status: review
 context:
   - '{project-root}/_bmad-output/implementation-artifacts/spec-17-4-mode-hybride-app.md'
   - '{project-root}/_bmad-output/implementation-artifacts/consignes-sous-agents-2026-10-20.md'
@@ -43,3 +43,34 @@ Ils priment sur les exigences ci-dessus.
 7. **Impact environnemental : pas de dépendance `ecologits`.** Réimplémentation documentée des formules d'EcoLogits (version et source citées dans le code et dans l'aide « Méthode »), paramètres par modèle (paramètres totaux et actifs, zone de l'hébergeur, PUE) dans `config/impacts.toml` embarqué ; fourchette basse-haute affichée. Local : puissance CPU moyenne réglable (défaut 25 W) × durée × mix électrique France (valeur et source consignées).
 8. **Défauts et lisibilité** : plafond par défaut 2 € par mois et par fournisseur, **lu à chaque appel** (un changement s'applique tout de suite) ; tout saut pour plafond est visible (bandeau, Observabilité). **Pas** de case « autoriser sans tarif » : un modèle sans tarif est sauté (`tarif-inconnu`) ; pour le preset `generique`, le tarif est un champ obligatoire.
 9. **Export CSV** : cellules commençant par `=`, `+`, `-`, `@` préfixées d'une apostrophe ; aucun champ de contenu ; le nom de modèle est conservé (préfixé si besoin).
+
+## Auto Run Result
+Implémentation du 2026-10-21 (sous-agent dev-story, Opus). Fichiers principaux : `inference/mesures.py` (mesure, observateur, plafond, contexte), `inference/client_openai.py` (mesure dans `_appel`, réservation avant chaque tentative, régularisation), `inference/client.py` (mesure du flux local), `inference/fournisseurs.py` (usage par preset), `app/observabilite.py` (impact, tarifs, compteur, agrégats, CSV, méthode), `app/stockage.py` (tables `mesures_appels`, `cumuls_depense`), `app/pont/observabilite.py`, `app/pont/conversation.py` (`fin.details`), `app/modele_externe.py` (tarif et `usage_flux` du preset generique, test de connexion compté), `config/impacts.toml`, `config/tarifs.toml` (`mistral-small-latest`), interface (`details-appel.js`, `vues/observabilite.js`, Paramètres).
+
+Décisions prises seul (solution la plus simple et la plus réversible) :
+- Plafond **par hôte** (réglage `plafonds_depense = {hote: €}`), comparé à la somme des cumuls (mois UTC, hôte, modèle) de l'hôte : renommer ou supprimer une entrée ne remet rien à zéro.
+- Réservation persistée dans le cumul (transaction `BEGIN IMMEDIATE` + verrou de processus) puis régularisée : un arrêt brutal entre les deux laisse le pire cas compté (prudent).
+- Pire cas réservé avant chaque tentative = unitaire × (1 + relances restantes) ; la réservation d'une tentative refusée (429/5xx) est rendue avant la suivante.
+- Coût d'un échec sans réponse (HTTP, connexion, refus) : 0 € ; une ligne de mesure est tout de même écrite (motif), ce qui rend les sauts visibles.
+- Mesures d'appels **conservées** par l'effacement de l'historique (sans contenu, comme le journal), purgées à 400 jours — **à confirmer par Anaël**.
+- Preset `generique` actif sans tarif : refusé à l'enregistrement ; une entrée ancienne sans tarif reste lisible et est sautée (`tarif-inconnu`).
+- Plafond atteint en cours d'échange : même code `modele-externe-interrompu` (bouton « Réessayer avec le modèle local » conservé), message dédié citant `plafond-atteint`.
+- Jour et mois de l'onglet en UTC (cohérent avec le plafond).
+- Impact : seule la phase d'usage ; fourchette basse = PUE bas et latence min(modélisée, mesurée), haute = PUE haut et latence max ; local ×0,5 à ×1,5 (arbitraire, documenté).
+
+Valeurs d'impact retenues, **à vérifier** contre la documentation EcoLogits (écrites de mémoire, sans réseau) : alpha_E 8,91e-5 Wh/token/Md, beta_E 1,43e-3 Wh/token, alpha_L 8,02e-4 s/token/Md, beta_L 2,23e-2 s/token, H100 80 Go, 16 bits, facteur mémoire 1,2, serveur 1,2 kW pour 8 GPU, PUE 1,2 (OVH 1,26) ; mix France 52 g/kWh (ADEME 2022), États-Unis 369 g/kWh (Ember 2023), monde 481 g/kWh (Ember 2023) ; paramètres Qwen3.6-27B 27 Md dense, Mistral Small 24 Md (2603 et `latest` supposés).
+
+Reports :
+- `tests/app/ui/test_socle_statique.py::test_aucun_innerhtml_dans_les_composants_et_vues` échoue déjà sur main (commentaire de `vues/modeles.js`, story 17.5b), hors zone.
+- Tokens de raisonnement non comptés dans l'estimation quand l'usage manque (texte de raisonnement non émis).
+- La restauration d'un résultat de rédaction (rejeu) ne restitue pas la ligne « Détails ».
+
+## Revue
+Détail : `revue-17-6.md`.
+- medium · corrigé · `max_completion_tokens`, `max_output_tokens` interdits dans `parametres_supplementaires`.
+- medium · corrigé · raisonnement et appels d'outils comptés dans l'estimation de sortie, même flux coupé.
+- medium · corrigé · impact réaligné sur EcoLogits (ecologits.ai/latest/methodology/llm_inference, relevé du 2026-10-21) ; Mistral Small 4 à 119 Md, actifs 6 à 24 Md à vérifier ; PUE Mistral 1,16, autres 1,20.
+- low · corrigé · estimation des tokens à ÷ 2,5 (majoration 1,25 du pire cas conservée).
+- low · corrigé · CSV : tabulation et retour chariot protégés.
+- low · corrigé · client externe sans compteur de dépense : fail-closed (`tarif-inconnu`).
+- info · rejeté · échec de `test_budgets_du_depot_imputent_par_fournisseur`, présent sur main.

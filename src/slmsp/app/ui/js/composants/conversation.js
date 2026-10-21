@@ -276,6 +276,7 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     if (!r) return;
     r.terminer(e);
     r.fixerModele(e?.modele_repondant);
+    r.fixerDetails(e?.details);
     tourDe(r).fin = e?.raison ?? "terminee";
     tourDe(r).modele = typeof e?.modele_repondant === "string" ? e.modele_repondant : null;
     enCours = false;

@@ -11,6 +11,7 @@ import * as courrier from "../vues/courrier.js";
 import * as historique from "../vues/historique.js";
 import * as mode from "../vues/mode.js";
 import * as modeles from "../vues/modeles.js";
+import * as observabilite from "../vues/observabilite.js";
 import * as parametres from "../vues/parametres.js";
 import * as question from "../vues/question.js";
 import * as recherche from "../vues/recherche.js";
@@ -32,6 +33,8 @@ export const TACHES = [
   { id: "TR", libelle: "Traduction", icone: "traduction", vue: traduction },
   // Vue de consultation (story 17.5b), pas une Tâche de config/taches.toml : sans saisie.
   { id: "MO", libelle: "Modèles", icone: "modeles", vue: modeles },
+  // Observabilité pour la DSI (story 17.6) : tokens, coût, impact, plafonds ; sans saisie.
+  { id: "OB", libelle: "Observabilité", icone: "observabilite", vue: observabilite },
 ];
 
 const etat = { tache: "Q", pret: false, generation: false, sources: false, bienvenue: false };

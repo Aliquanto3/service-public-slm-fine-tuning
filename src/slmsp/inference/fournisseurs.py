@@ -15,6 +15,10 @@ Valeurs vérifiées le 21/10 :
 
 Quel que soit le preset, une requête vers l'hôte `openrouter.ai` porte les ajouts
 d'OpenRouter : le refus de collecte ne se contourne pas en choisissant `generique`.
+
+Usage demandé en fin de flux (story 17.6, amendement 1) : `openrouter` -> `usage = {include:
+true}` ; `ovh` -> `stream_options = {include_usage: true}` ; `mistral` -> rien (l'API renvoie
+l'usage en fin de flux, schéma strict) ; `generique` -> `stream_options` si l'Agent le coche.
 """
 
 from __future__ import annotations
@@ -50,6 +54,8 @@ class Preset:
     champ_graine: str | None = None
     """Nom du champ qui reçoit l'option `seed` (`None` : graine omise)."""
     parametres_libres: bool = False
+    usage: str | None = None
+    """Champ qui demande l'usage en fin de flux : `usage` (OpenRouter), `stream_options`."""
 
     def vue(self) -> dict[str, Any]:
         """Description pour l'interface (préremplissage)."""
@@ -72,6 +78,7 @@ PRESETS: Final[dict[str, Preset]] = {
             ("qwen/qwen3.6-27b", "mistralai/mistral-small-2603"),
             OPTIONS_COMMUNES | {"top_k"},
             champ_graine="seed",
+            usage="usage",
         ),
         Preset(
             "mistral",
@@ -87,6 +94,7 @@ PRESETS: Final[dict[str, Preset]] = {
             "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
             ("Qwen3.6-27B", "Mistral-Small-3.2-24B-Instruct-2506"),
             OPTIONS_COMMUNES,
+            usage="stream_options",
         ),
         Preset(
             "generique",
@@ -109,13 +117,24 @@ def preset(nom: str) -> Preset:
         raise ValueError("preset inconnu") from None
 
 
-def ajouts_requete(choisi: Preset, hote: str, options: Mapping[str, Any]) -> dict[str, Any]:
-    """Champs du corps propres au preset : options transmises, graine, ajouts imposés."""
+def ajouts_requete(
+    choisi: Preset, hote: str, options: Mapping[str, Any], *, usage_flux: bool = False
+) -> dict[str, Any]:
+    """Champs du corps propres au preset : options transmises, graine, usage, ajouts imposés.
+
+    `usage_flux` : `stream_options` demandé pour un preset sans champ d'usage (`generique`).
+    """
     champs = {cle: v for cle, v in options.items() if cle in choisi.options}
     if choisi.champ_graine is not None and "seed" in options:
         champs[choisi.champ_graine] = options["seed"]
+    usage = choisi.usage or ("stream_options" if usage_flux else None)
     if choisi.nom == "openrouter" or hote == HOTE_OPENROUTER:
         champs.update(ajouts_openrouter())
+        usage = "usage"
+    if usage == "usage":
+        champs["usage"] = {"include": True}
+    elif usage == "stream_options":
+        champs["stream_options"] = {"include_usage": True}
     return champs
 
 

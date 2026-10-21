@@ -11,6 +11,10 @@ Deux usages :
 - `ClientOpenAI` : `LlmPort` de l'application (mode hybride, story 17.4), sans registre ni
   fiche. Relances sur 429/5xx **avant le premier octet** seulement. Tout échec lève
   `EchecAppel` avec un code court (`MOTIFS`) : jamais le corps de la réponse, jamais la clé.
+  Story 17.6 : chaque appel remet une `MesureAppel` à son observateur (écrite avant `Fin`, ou
+  dans un `finally` pour un appel en échec ou interrompu) ; avec un plafond, le coût pire cas
+  est réservé avant **chaque** tentative HTTP (`plafond-atteint` sinon ; `tarif-inconnu` sans
+  tarif) puis régularisé au coût mesuré ou estimé.
 
 Ce module n'importe ni `slmsp.budget` ni `slmsp.evaluation` (embarqué dans l'application).
 """
@@ -18,6 +22,7 @@ Ce module n'importe ni `slmsp.budget` ni `slmsp.evaluation` (embarqué dans l'ap
 from __future__ import annotations
 
 import json
+import logging
 import random
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -35,6 +40,16 @@ from slmsp.inference.fournisseurs import (
     corps_reasoning,
     preset,
 )
+from slmsp.inference.mesures import (
+    MesureAppel,
+    ObservateurAppels,
+    PlafondPort,
+    Tarif,
+    caracteres_entree,
+    estimer_tokens,
+    notifier,
+    usage_tokens,
+)
 from slmsp.net.profils import analyser_url, est_adresse_ip
 from slmsp.net.relances import (
     DelaisAppel,
@@ -44,6 +59,7 @@ from slmsp.net.relances import (
 )
 
 Evenement = Jeton | AppelOutil | AppelNonConforme | Fin
+LOGGER: Final = logging.getLogger("slmsp.inference.client_openai")
 
 TAILLE_EXTRAIT: Final = 300
 OPTIONS_TRANSMISES: Final = frozenset(
@@ -53,11 +69,33 @@ OPTIONS_IGNOREES: Final = frozenset({"chat_template_kwargs"})
 """Options du chat template local, sans objet pour une API (jamais transmises : OVH refuse)."""
 MAX_TOKENS_DEFAUT: Final = 1024
 DELAIS_EXTERNE: Final = DelaisAppel(connexion=10.0, lecture=60.0, total=300.0)
-CLES_INTERDITES: Final = frozenset({"model", "messages", "tools", "stream"})
-"""Clés que `parametres_supplementaires` ne peut pas remplacer."""
+CLES_INTERDITES: Final = frozenset(
+    {
+        "model",
+        "messages",
+        "tools",
+        "stream",
+        "n",
+        "max_tokens",
+        "max_completion_tokens",
+        "max_output_tokens",
+    }
+)
+"""Clés que `parametres_supplementaires` ne peut pas remplacer (longueur et nombre de réponses :
+le pire cas du plafond repose sur `max_tokens`)."""
 TAILLE_MAX_PARAMETRES: Final = 2048
 
-MOTIFS: Final = frozenset({"delai", "connexion", "cle-absente", "hors-ligne", "reponse-invalide"})
+MOTIFS: Final = frozenset(
+    {
+        "delai",
+        "connexion",
+        "cle-absente",
+        "hors-ligne",
+        "reponse-invalide",
+        "plafond-atteint",
+        "tarif-inconnu",
+    }
+)
 """Codes d'échec courts, plus `http-<statut>`."""
 
 
@@ -110,6 +148,8 @@ class EtatFlux:
     modele: str | None = None
     erreur: tuple[str, str] | None = None
     """`(code, message)` : `erreur_flux`, `flux_invalide`, ou celui d'un `controle`."""
+    caracteres_raisonnement: int = 0
+    """Taille du raisonnement reçu (jamais émis) : compté dans l'estimation sans usage."""
 
     def appels_natifs(self) -> list[AppelOutil | AppelNonConforme]:
         return [appel_natif(self.appels[i]) for i in sorted(self.appels)]
@@ -169,9 +209,10 @@ def lire_flux(
                 delta = choix.get("delta") or {}
                 if not isinstance(delta, dict):
                     raise TypeError("delta non objet")
-                if etat.premier is None and (
-                    delta.get("reasoning") or delta.get("reasoning_content")
-                ):
+                raisonnement = delta.get("reasoning") or delta.get("reasoning_content")
+                if isinstance(raisonnement, str):
+                    etat.caracteres_raisonnement += len(raisonnement)
+                if etat.premier is None and raisonnement:
                     etat.premier = horloge()  # raisonnement : compté, jamais émis
                 contenu = delta.get("content")
                 if isinstance(contenu, str) and contenu:
@@ -301,6 +342,10 @@ class ClientOpenAI:
         dormir: Callable[[float], None] = time.sleep,
         alea: Callable[[], float] = random.random,
         horloge: Callable[[], float] = time.perf_counter,
+        observateur: ObservateurAppels | None = None,
+        plafond: PlafondPort | None = None,
+        tarif: Tarif | None = None,
+        usage_flux: bool = False,
     ) -> None:
         self.http = http
         self.url_base = valider_url_base(url_base)
@@ -319,6 +364,10 @@ class ClientOpenAI:
         self._alea = alea
         self._horloge = horloge
         self.derniere_duree_ms: int | None = None
+        self.observateur = observateur
+        self.plafond = plafond
+        self.tarif = tarif
+        self.usage_flux = usage_flux
 
     @property
     def identifiant(self) -> str:
@@ -347,7 +396,7 @@ class ClientOpenAI:
         )
         # Options, graine et ajouts du preset ; imposés après les paramètres supplémentaires :
         # aucun ne lève le refus de collecte d'OpenRouter.
-        corps.update(ajouts_requete(self.preset, self.hote, options))
+        corps.update(ajouts_requete(self.preset, self.hote, options, usage_flux=self.usage_flux))
         corps.setdefault("max_tokens", MAX_TOKENS_DEFAUT)
         if tools:
             corps["tools"] = list(tools)
@@ -377,46 +426,140 @@ class ClientOpenAI:
             raise EchecAppel("cle-absente")
         entetes = {"Authorization": f"Bearer {self._cle.get_secret_value()}"}
         url = self.url_base + "/chat/completions"
+        suivi = _Suivi(caracteres_entree(corps))
+        max_tokens = entier(corps.get("max_tokens")) or MAX_TOKENS_DEFAUT
         debut = self._horloge()
         relances = 0
-        while True:
-            try:
-                contexte = self.http.stream("POST", url, json=corps, headers=entetes)
-                reponse = contexte.__enter__()
-            except Exception as exc:
-                self._mesurer(debut)
-                raise EchecAppel(motif_exception(exc)) from None
-            try:
-                if reponse.status_code != 200:
-                    statut = int(reponse.status_code)
-                    valeur = reponse.headers.get("Retry-After")
-                    if statut_transitoire(statut) and relances < self.relances_max:
-                        relances += 1
-                        attente = lire_retry_after(valeur if isinstance(valeur, str) else None)
-                        if attente is None:
-                            attente = attente_exponentielle(
-                                relances, 1.0, self.attente_plafond, self._alea
-                            )
-                        self._dormir(min(attente, self.attente_plafond))
-                        continue
+        try:
+            while True:
+                if self.plafond is not None:
+                    self._reserver(max_tokens, relances, suivi)
+                try:
+                    contexte = self.http.stream("POST", url, json=corps, headers=entetes)
+                    reponse = contexte.__enter__()
+                except Exception as exc:
                     self._mesurer(debut)
-                    raise EchecAppel(f"http-{statut}")
-                yield from self._lire(reponse, debut)
-                return
-            finally:
-                contexte.__exit__(None, None, None)
+                    suivi.motif = motif_exception(exc)
+                    raise EchecAppel(suivi.motif) from None
+                try:
+                    if reponse.status_code != 200:
+                        statut = int(reponse.status_code)
+                        valeur = reponse.headers.get("Retry-After")
+                        if statut_transitoire(statut) and relances < self.relances_max:
+                            relances += 1
+                            attente = lire_retry_after(valeur if isinstance(valeur, str) else None)
+                            if attente is None:
+                                attente = attente_exponentielle(
+                                    relances, 1.0, self.attente_plafond, self._alea
+                                )
+                            self._dormir(min(attente, self.attente_plafond))
+                            continue
+                        self._mesurer(debut)
+                        suivi.motif = f"http-{statut}"
+                        raise EchecAppel(suivi.motif)
+                    suivi.ouvert = True
+                    for evenement in self._lire(reponse, debut, suivi):
+                        if isinstance(evenement, Fin):
+                            self._clore(suivi, debut)  # mesure écrite avant que `Fin` sorte
+                        yield evenement
+                    return
+                finally:
+                    contexte.__exit__(None, None, None)
+        finally:
+            if not suivi.clos:
+                if suivi.ouvert and suivi.motif is None:
+                    suivi.motif = "interrompu"  # flux fermé par le consommateur (arrêt)
+                self._clore(suivi, debut)
+
+    def _reserver(self, max_tokens: int, relances: int, suivi: _Suivi) -> None:
+        """Réserve le pire cas de la tentative et des relances restantes ; lève sinon.
+
+        La réservation d'une tentative précédente (refusée avant tout token) est rendue.
+        """
+        assert self.plafond is not None
+        if suivi.reservation is not None:
+            jeton, suivi.reservation = suivi.reservation, None
+            self.plafond.regulariser(jeton, 0.0)
+        if self.tarif is None:
+            suivi.motif = "tarif-inconnu"
+            raise EchecAppel(suivi.motif)
+        montant = self.tarif.pire_cas(
+            suivi.caracteres_entree, max_tokens, 1 + self.relances_max - relances
+        )
+        suivi.reservation = self.plafond.reserver(self.hote, self.modele, montant)
+        if suivi.reservation is None:
+            suivi.motif = "plafond-atteint"
+            raise EchecAppel(suivi.motif)
+
+    def _clore(self, suivi: _Suivi, debut: float) -> None:
+        """Écrit la mesure (une seule fois) et régularise la réservation au coût retenu.
+
+        Réponse complète : usage renvoyé, sinon estimation (caractères ÷ 2,5). Flux ouvert puis
+        coupé, en erreur ou arrêté : estimation, `interrompu`. Aucune réponse (refus, HTTP,
+        connexion) : 0 token, 0 €.
+        """
+        if suivi.clos:
+            return
+        suivi.clos = True
+        self._mesurer(debut)
+        tokens: tuple[int, int] | None = (0, 0)
+        estime = False
+        if suivi.ouvert:
+            tokens = usage_tokens(suivi.usage) if suivi.motif is None else None
+            estime = tokens is None
+            if tokens is None:
+                tokens = (
+                    estimer_tokens(suivi.caracteres_entree),
+                    estimer_tokens(suivi.total_sortie()),
+                )
+        assert tokens is not None
+        cout = self.tarif.cout(*tokens) if self.tarif is not None else None
+        if suivi.reservation is not None and self.plafond is not None:
+            jeton, suivi.reservation = suivi.reservation, None
+            try:
+                self.plafond.regulariser(jeton, cout or 0.0)
+            except Exception as exc:
+                LOGGER.error("régularisation du plafond impossible (%s)", type(exc).__name__)
+        notifier(
+            self.observateur,
+            MesureAppel(
+                fournisseur=self.preset.nom,
+                hote=self.hote,
+                modele=self.modele,
+                tokens_entree=tokens[0],
+                tokens_sortie=tokens[1],
+                estime=estime,
+                interrompu=suivi.ouvert and suivi.motif is not None,
+                duree_ms=self.derniere_duree_ms or 0,
+                premier_token_ms=suivi.premier_ms,
+                cout_eur=cout,
+                motif=suivi.motif,
+            ),
+        )
 
     def _mesurer(self, debut: float) -> None:
         self.derniere_duree_ms = round((self._horloge() - debut) * 1000)
 
-    def _lire(self, reponse: Any, debut: float) -> Iterator[Evenement]:
+    def _lire(self, reponse: Any, debut: float, suivi: _Suivi) -> Iterator[Evenement]:
         etat = EtatFlux()
-        yield from lire_flux(reponse, etat, self._horloge)
+        suivi.etat = etat  # raisonnement et appels d'outils comptés même si le flux est coupé
+
+        def premier() -> None:
+            if suivi.premier_ms is None and etat.premier is not None:
+                suivi.premier_ms = round((etat.premier - debut) * 1000)
+
+        for jeton in lire_flux(reponse, etat, self._horloge):
+            suivi.caracteres_sortie += len(jeton.texte)
+            premier()
+            yield jeton
         self._mesurer(debut)
+        premier()
         if etat.erreur is not None or etat.raison_finale == "error":
-            raise EchecAppel("reponse-invalide")
+            suivi.motif = "reponse-invalide"
+            raise EchecAppel(suivi.motif)
         if etat.coupe or (etat.raison_finale is None and not etat.termine):
-            raise EchecAppel("connexion")
+            suivi.motif = "connexion"
+            raise EchecAppel(suivi.motif)
         yield from etat.appels_natifs()
         usage: dict[str, int] = {}
         if isinstance(etat.usage, dict):
@@ -424,8 +567,34 @@ class ClientOpenAI:
                 valeur = entier(etat.usage.get(cle))
                 if valeur is not None:
                     usage[cle] = valeur
+        suivi.usage = usage or None
         raison = "longueur" if etat.raison_finale == "length" else "terminee"
         yield Fin(raison=raison, usage=usage or None)
+
+
+@dataclass
+class _Suivi:
+    """Ce qu'un appel a relevé pour sa mesure : des tailles, jamais de texte."""
+
+    caracteres_entree: int
+    caracteres_sortie: int = 0
+    premier_ms: int | None = None
+    usage: dict[str, int] | None = None
+    ouvert: bool = False
+    """Statut 200 reçu : le fournisseur a commencé à répondre (et peut facturer)."""
+    motif: str | None = None
+    reservation: Any = None
+    clos: bool = False
+    etat: EtatFlux | None = None
+
+    def total_sortie(self) -> int:
+        """Caractères de sortie : texte émis, raisonnement (jamais émis) et appels d'outils."""
+        total = self.caracteres_sortie
+        if self.etat is not None:
+            total += self.etat.caracteres_raisonnement + sum(
+                len(a["nom"]) + len(a["arguments"]) for a in self.etat.appels.values()
+            )
+        return total
 
 
 __all__ = [

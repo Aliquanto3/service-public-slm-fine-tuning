@@ -171,3 +171,16 @@ source = "openrouter.ai/qwen/qwen3.8-27b, endpoint DeepInfra (bf16), prix relev�
 [modeles."qwen/qwen3.8-27b".modes.direct]
 entree = 0.15
 sortie = 1.875
+
+# Application, mode hybride (story 17.6) : modèles des presets des fournisseurs externes. Ceux
+# d'OpenRouter et d'OVH sont plus haut (même identifiant exact). `mistral-small-latest` est un
+# alias flottant de l'API Mistral : prix de `mistral-small-2603`, à reconfirmer s'il change.
+[modeles."mistral-small-latest"]
+devise = "USD"
+date = 2026-10-21
+source = "prix de mistral-small-2603 (endpoint Mistral sur OpenRouter), relevé le 2026-10-21"
+note = "alias flottant ; à reconfirmer sur mistral.ai/pricing"
+
+[modeles."mistral-small-latest".modes.direct]
+entree = 0.15
+sortie = 0.6
