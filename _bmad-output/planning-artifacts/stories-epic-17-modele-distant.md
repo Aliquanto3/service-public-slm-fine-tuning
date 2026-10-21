@@ -11,7 +11,10 @@ Constat du 21/10 : aucune API LLM n'est elle-même qualifiée SecNumCloud (catal
 | 17.1 ★ | `eval run --modele distant:<fournisseur>/<modèle>` : génération via une API compatible OpenAI | code (spec relue avant code : réseau, secrets, budget) |
 | 17.2 | Mesure de qualité : Qwen3.6-27B puis Mistral Small 4 sur dev1 (puis dev2 après gel) | runs |
 | 17.3 | Fiche de démonstration pour la collectivité (palier 1 local, palier 2 hybride, chiffres mesurés) | document |
-| 17.4 | Application : mode hybride (endpoint externe configurable, MiniCPM5-2B local en mode dégradé) | code, après accord de la collectivité |
+| 17.4 | Application : mode hybride (fournisseurs externes en cascade, MiniCPM5-2B local en secours) | code (avancée au 21/10 pour la release v0.3.0) |
+| 17.1b | Fournisseurs `mistral` (API directe) et `ovh` dans `eval run`, via les presets de 17.4 | code, après 17.4 |
+| 17.5a | Données du comparatif des modèles (`slmsp compare fiche-app`) | code |
+| 17.5b | Onglet « Modèles » de l'application (qualité, coût, vitesse) | code, après 17.4 |
 
 ## Règles
 - Les sorties d'un modèle distant **n'entrent dans aucun jeu d'entraînement** (CGU des fournisseurs, D1) ; elles ne servent qu'à la mesure.

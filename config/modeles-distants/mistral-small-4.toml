@@ -8,4 +8,4 @@ hebergeur = "Mistral"
 quantification = "unknown"
 protocole_outils = "natif"
 reasoning = "off"
-contexte = 131072
+contexte = 262144
