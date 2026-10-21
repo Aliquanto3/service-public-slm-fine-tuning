@@ -37,3 +37,19 @@ Parsing et schéma `distant:` ; fiche invalide refusée ; corps de requête (pro
 
 ## Hors story
 Appels réels (l'orchestrateur lance un essai sur 2 items puis la mesure dev1) ; autres fournisseurs (Cloud Temple, Albert) ; intégration à l'application (17.4).
+
+## Amendements après relecture de la spec (2026-10-21, second avis ; décisions de l'orchestrateur)
+Ils priment sur les exigences ci-dessus en cas d'écart.
+1. **Erreurs fatales** : `BudgetEpuise`, `SecretManquant`, `ConfigurationInvalide` et le dépassement du plafond de génération **interrompent** le run (statut interrompu, reprenable), au lieu d'être avalés en erreur d'item par `generer_item` (`generation.py:149`) et `_boucle` (l.229-236). Clé et budget sont vérifiés avant la première requête.
+2. **Reprise** : pour `distant:`, `--reprendre` rejoue les items dont le statut n'est pas `ok` (429/5xx épuisés, hébergeur ou modèle inattendu, flux coupé, erreur SSE) ; le chemin local garde son comportement actuel (`core/artefacts.py:456-460`, `generation.py:411`). Test de reprise exigé.
+3. **Manifeste distant** : `quantification`, `variante_llamacpp`, template GGUF et version llama.cpp de génération à `null` pour `distant:`, des deux côtés du contrôle de cohérence de reprise (`generation.py` ~370-400) ; la fiche distante (SHA du TOML) et `profil_reseau = "eval-distant"` y figurent.
+4. **CLI** : `--quantification` n'est plus requis pour `distant:` (branche distincte dans `cli/eval.py:215` et `resoudre`) ; nouvelle option `--plafond-generation EUR`, **obligatoire** pour `distant:` (refus sinon), refusée pour les autres références : le run s'interrompt dès que le coût réel cumulé plus la réservation de l'appel suivant la dépasserait. `--plafond-estime` garde son sens actuel (juge).
+5. **Poste budgétaire** : imputation `eval-distant` → poste `openrouter` existant de la campagne courante (plafond approuvé par Anaël, partagé avec juge-tiers et générateur ; aucun changement de plafond). Le plafond par run (point 4) borne la dépense.
+6. **Client SSE** : client de flux dédié réutilisant `reserver` / `regulariser` / `_regler_echec` du registre. Relances (au plus 3, `Retry-After` respecté) seulement sur 429/5xx **avant le premier octet du flux** ; chaque relance libère puis refait sa réservation. Flux coupé après le début, ou `finish_reason: error` en HTTP 200 : item en erreur, régularisé au coût réel si l'usage est connu, sinon au pire cas réservé.
+7. **Profil réseau** : `eval-distant` ajouté au `Literal` `ProfilReseau` (`core/schemas/journal_requetes.py:20`) et aux tests de `net/profils.py`.
+8. **Résolution** : `distant:` est traité avant le repli `_resoudre_ft` (`modele_ref.py:56`, l.262-263) ; `bench`, `measure` et `export` refusent une référence `distant:` avec un message clair (`benchmarks/orchestrateur.py:216` notamment).
+9. **Comparatif** : `compare/chargement.py` (l.277, 299, 367) ajoute un `Exclu` explicite (motif `modele-distant`) au lieu d'un écart silencieux.
+10. **Profil du run** : `PROFIL_RESEAU` (`assemblage.py:63`, l.245 ; `generation.py:314`) devient un paramètre (défaut `aucun`) ; `sans_reseau(hotes_autorises=...)` à liste fermée, vide par défaut.
+11. **Estimation des tokens d'entrée** : caractères de la requête sérialisée ÷ 3, multipliés par la majoration d'entrée du registre, bornés par le `contexte` de la fiche ; la sortie au pire cas = `max_tokens`.
+12. **Corps OpenRouter** : `provider.require_parameters = true` en plus de `order`, `allow_fallbacks = false`, `data_collection = "deny"`, `quantizations`.
+13. **Flux** : `tool_calls` fragmentés réassemblés par index (comme `inference/client.py:579`) ; le modèle renvoyé est contrôlé contre `modele_id` (item en erreur sinon, tarif du `modele_id`).
