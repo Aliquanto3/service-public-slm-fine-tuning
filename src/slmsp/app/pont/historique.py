@@ -11,7 +11,8 @@ Chaque méthode rend `{"ok": true, ...}` ou un refus `{"ok": false, "erreur": {"
 - `enregistrer(tache, messages, sources, id | null)` -> `{"ok": true, "id": str}` : crée la
   conversation au premier échange, la remplace aux suivants. `messages` : liste de
   `{role: "user"|"assistant", content: str}` ; un message de l'Assistant peut porter ses propres
-  `sources` (liste) et `interrompue: true`. `tache` : une Tâche connue (`core.items.CODES`). Un
+  `sources` (liste), `interrompue: true` et `modele_repondant` (`local:<slug>` ou
+  `externe:<hôte>/<modèle>`, story 17.4). `tache` : une Tâche connue (`core.items.CODES`). Un
   `id` inconnu (supprimée entre-temps) crée une
   nouvelle conversation. Refus : `conversation-invalide`.
 - `supprimer(id)` -> `{"ok": true, "supprimee": bool}` : sans confirmation, effacée tout de suite.
@@ -36,6 +37,7 @@ ROLES: Final = frozenset({"user", "assistant"})
 MAX_MESSAGES: Final = 400
 MAX_CONTENU: Final = 500_000
 MAX_SOURCES: Final = 200
+MAX_MODELE: Final = 300
 CODE_INTROUVABLE: Final = "conversation-introuvable"
 CODE_INVALIDE: Final = "conversation-invalide"
 CODE_INDISPONIBLE: Final = "stockage-indisponible"
@@ -61,6 +63,10 @@ def _message_valide(m: object) -> bool:
         and len(m["content"]) <= MAX_CONTENU
         and ("sources" not in m or _sources_valides(m["sources"]))
         and isinstance(m.get("interrompue", False), bool)
+        and (
+            "modele_repondant" not in m
+            or (isinstance(m["modele_repondant"], str) and len(m["modele_repondant"]) <= MAX_MODELE)
+        )
     )
 
 

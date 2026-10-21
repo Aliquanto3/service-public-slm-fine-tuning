@@ -40,6 +40,10 @@ REGLAGES_DEFAUT: Final[dict[str, Any]] = {
     "fenetre": None,
     "plus_deplie": False,
     "modele": None,  # slug choisi dans les Paramètres (story 12.15), appliqué au démarrage suivant
+    # Fournisseurs externes (story 17.4, amendement 14), dans l'ordre d'essai, 3 au plus :
+    # `{id, preset, url_base, modele, actif, parametres_supplementaires}`. Appliqués au
+    # démarrage suivant ; les clés ne sont jamais ici (`app/cle_externe.py`).
+    "fournisseurs_externes": [],
 }
 """Clés de réglage admises et leur valeur par défaut (valeurs stockées en JSON)."""
 
@@ -127,6 +131,10 @@ class Stockage:
                     f"(attendu {VERSION_SCHEMA}) ; la base n'a pas été modifiée"
                 )
             connexion.executescript(_CREATION)
+            colonnes = {c[1] for c in connexion.execute("PRAGMA table_info(retours)")}
+            if "modele_repondant" not in colonnes:
+                # Migration additive (story 17.4) : nulle pour les Retours existants.
+                connexion.execute("ALTER TABLE retours ADD COLUMN modele_repondant TEXT")
             if version == 0:
                 connexion.execute(f"PRAGMA user_version = {VERSION_SCHEMA}")
         JournalApplication(self).purger()
@@ -280,13 +288,14 @@ class Stockage:
         sources: list[dict[str, Any]],
         pouce: Literal["haut", "bas"],
         commentaire: str | None = None,
+        modele_repondant: str | None = None,
     ) -> int:
         if pouce not in ("haut", "bas"):
             raise ValueError("pouce doit valoir 'haut' ou 'bas'")
         with self._connexion() as connexion:
             curseur = connexion.execute(
                 "INSERT INTO retours (cree_le, tache, question, reponse, sources, pouce,"
-                " commentaire) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                " commentaire, modele_repondant) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     _iso(self._horloge()),
                     tache,
@@ -295,20 +304,26 @@ class Stockage:
                     json.dumps(sources, ensure_ascii=False),
                     pouce,
                     commentaire,
+                    modele_repondant,
                 ),
             )
             return int(curseur.lastrowid or 0)
 
     def lister_retours(self) -> list[dict[str, Any]]:
+        """Retours ; `modele_repondant` n'apparaît que s'il est connu (story 17.4)."""
         cles = ("id", "cree_le", "tache", "question", "reponse", "sources", "pouce", "commentaire")
         with self._connexion() as connexion:
             lignes = connexion.execute(
-                "SELECT id, cree_le, tache, question, reponse, sources, pouce, commentaire"
-                " FROM retours ORDER BY id"
+                "SELECT id, cree_le, tache, question, reponse, sources, pouce, commentaire,"
+                " modele_repondant FROM retours ORDER BY id"
             ).fetchall()
-        retours = [dict(zip(cles, ligne, strict=True)) for ligne in lignes]
-        for retour in retours:
+        retours = []
+        for ligne in lignes:
+            retour = dict(zip(cles, ligne[:-1], strict=True))
             retour["sources"] = json.loads(retour["sources"])
+            if ligne[-1] is not None:
+                retour["modele_repondant"] = ligne[-1]
+            retours.append(retour)
         return retours
 
     # -- réglages ------------------------------------------------------------------------

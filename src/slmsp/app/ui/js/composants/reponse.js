@@ -43,6 +43,14 @@ export function creerReponse(opts) {
   mention.hidden = true;
   const echec = el("p", "mention-echec", "Cette réponse n'a pas pu être produite.");
   echec.hidden = true;
+  // Modèle qui a répondu (story 17.4), affiché sous la réponse terminée.
+  const modele = el("p", "reponse-modele");
+  modele.hidden = true;
+  // Coupure du modèle externe après son premier jeton (story 17.4).
+  const reessayerLocal = el("button", "bouton-secondaire", "Réessayer avec le modèle local");
+  reessayerLocal.type = "button";
+  reessayerLocal.hidden = true;
+  reessayerLocal.addEventListener("click", () => opts.surReessayerLocal?.());
   const actions = el("div", "reponse-actions");
   actions.hidden = true;
   const copier = el("button", "bouton-secondaire", "Copier");
@@ -50,7 +58,7 @@ export function creerReponse(opts) {
   const regenerer = el("button", "bouton-secondaire", "Régénérer");
   regenerer.type = "button";
   actions.append(copier, regenerer);
-  racine.append(repli, attente, texte, notes, pieces, mention, echec, actions);
+  racine.append(repli, attente, texte, notes, pieces, mention, echec, reessayerLocal, modele, actions);
 
   const r = {
     el: racine,
@@ -71,7 +79,8 @@ export function creerReponse(opts) {
     notes.replaceChildren();
     pieces.replaceChildren();
     for (const e of racine.querySelectorAll(":scope > .legal-notice")) e.remove();
-    for (const e of [repli, mention, echec, actions]) e.hidden = true;
+    for (const e of [repli, mention, echec, actions, modele, reessayerLocal]) e.hidden = true;
+    r.modeleRepondant = null;
     reessayer.disabled = true;
     copier.hidden = false;
     attente.hidden = false;
@@ -115,6 +124,18 @@ export function creerReponse(opts) {
     const n = el("p", "avertissement", message);
     n.setAttribute("role", "note");
     notes.append(n);
+  };
+
+  /** `local:<slug>` ou `externe:<hôte>/<modèle>` (story 17.4). */
+  r.fixerModele = (identifiant) => {
+    if (typeof identifiant !== "string" || !identifiant) return;
+    r.modeleRepondant = identifiant; // la vérification FR-12 part vers le même modèle
+    modele.textContent = `Modèle : ${identifiant}`;
+    modele.hidden = false;
+  };
+
+  r.proposerLocal = () => {
+    reessayerLocal.hidden = false;
   };
 
   r.signalerRepli = () => {

@@ -110,6 +110,7 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
         // La page « Vérifiée en ligne » (13.6) reste dans le panneau, hors de l'Historique.
         sources: t.reponse.sources.filter((s) => s.origine !== "verification"),
         fin: t.fin,
+        modele: t.modele ?? null,
         element: t.reponse.el,
       })),
     });
@@ -162,6 +163,7 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       },
       surRegenerer: relancer,
       surReessayer: relancer,
+      surReessayerLocal: () => relancer({ forcer_local: true }),
     });
     element.append(reponse.el);
     const verif = options.verification
@@ -189,12 +191,12 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
    * envoi du pont, qui peut venir d'une autre Tâche. La réponse n'est vidée qu'au premier
    * évènement : un refus du pont la laisse intacte.
    */
-  function relancer() {
+  function relancer(optionsEnvoi = {}) {
     const tour = tours.at(-1);
     if (enCours || !tour || tour.question == null) return;
     remplacement = tour.reponse;
     Promise.resolve()
-      .then(() => pont.envoyer(tache, [{ role: "user", content: tour.question }], {}))
+      .then(() => pont.envoyer(tache, [{ role: "user", content: tour.question }], optionsEnvoi))
       .then(exigerOk)
       .catch(() => bus.emettre("generation:erreur", { tache }));
   }
@@ -273,16 +275,19 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
     const r = courante();
     if (!r) return;
     r.terminer(e);
+    r.fixerModele(e?.modele_repondant);
     tourDe(r).fin = e?.raison ?? "terminee";
+    tourDe(r).modele = typeof e?.modele_repondant === "string" ? e.modele_repondant : null;
     enCours = false;
     majBoutons();
     rafraichirPanneau();
     publierTours("fin");
   });
-  bus.abonner("evenement:erreur", () => {
+  bus.abonner("evenement:erreur", (e) => {
     const r = courante();
     if (!r) return;
     r.echec();
+    if (e?.code === "modele-externe-interrompu") r.proposerLocal();
     tourDe(r).fin = "echec";
     enCours = false;
     majBoutons();
@@ -343,7 +348,9 @@ export function monterConversation(conteneur, pont, { bus, tache }, options) {
       else if (i === dernierIndex) r.fixerSources(sources ?? []);
       const raison = m.interrompue ? "interrompue" : "terminee";
       r.terminer({ raison }, { annonce: false });
+      r.fixerModele(m.modele_repondant);
       tours.at(-1).fin = raison;
+      tours.at(-1).modele = typeof m.modele_repondant === "string" ? m.modele_repondant : null;
     }
     majBoutons();
     rafraichirPanneau();

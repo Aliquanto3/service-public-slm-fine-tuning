@@ -28,7 +28,15 @@ from pathlib import Path
 from typing import Any, Final, Literal, Protocol
 from urllib.parse import urlsplit
 
+from slmsp.app.cle_externe import CoffreCles
 from slmsp.app.modele_actif import resoudre_modele_actif
+from slmsp.app.modele_externe import (
+    actifs,
+    brancher_hybride,
+    lecteur_cles,
+    lire_reglage,
+    tester_connexion,
+)
 from slmsp.app.pont import Pont
 from slmsp.app.pont.conversation import reponse_erreur
 from slmsp.app.stockage import JournalApplication, Stockage, dossier_donnees
@@ -338,8 +346,10 @@ class Demarrage:
         delai_page_s: float = 15.0,
         pas_s: float = 0.1,
         chrono: Chrono | None = None,
+        coffre: CoffreCles | None = None,
     ) -> None:
         self._stockage = stockage
+        self._coffre = coffre
         self._fenetre = fenetre
         self._differe = differe
         self._assembler = fabrique_assemblage
@@ -405,6 +415,9 @@ class Demarrage:
             threads=config.threads,
         ) as assemblage:
             self._assemble = True
+            coffre = self._coffre_cle()
+            externe = self._brancher_externe(assemblage, modele, coffre)
+            passerelle = getattr(assemblage, "passerelle", None)
             pont = Pont(
                 assemblage.service,
                 self._fenetre,
@@ -412,12 +425,35 @@ class Demarrage:
                 choisir_fichier=dialogue_enregistrer(self._fenetre),
                 verificateur=construire_verificateur(assemblage),
                 modele_actif=modele,
+                coffre=coffre,
+                tester_externe=None
+                if passerelle is None
+                else (lambda entree, cle: tester_connexion(entree, cle, passerelle)),
+                modele_externe=externe,
             )
             self._differe.brancher(pont)
             if self._page_prete():
                 pont.signaler_pret()
                 self.chrono.pret()
             self._arret.wait()
+
+    def _coffre_cle(self) -> CoffreCles:
+        if self._coffre is None:
+            self._coffre = CoffreCles(self._stockage.chemin.parent)
+        return self._coffre
+
+    def _brancher_externe(
+        self, assemblage: Any, modele: str, coffre: CoffreCles
+    ) -> dict[str, Any] | None:
+        """Mode hybride (story 17.4) si un fournisseur est actif ; sinon rien (aucun réseau)."""
+        entrees = lire_reglage(self._stockage)
+        if not actifs(entrees):
+            return None
+        try:
+            return brancher_hybride(assemblage, modele, entrees, lecteur_cles(coffre))
+        except Exception as exc:
+            LOGGER.error("démarrage : fournisseurs externes non branchés (%s)", type(exc).__name__)
+            return None
 
     def _page_prete(self) -> bool:
         """Attend l'évènement `loaded` puis `pywebviewready` (API et `slmspRecevoir` définis)."""

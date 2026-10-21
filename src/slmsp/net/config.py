@@ -8,6 +8,7 @@ validés (ni adresse IP, ni joker) et normalisés à la lecture.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -116,6 +117,9 @@ class Profils(ModeleConfig):
     aucun: ConfigProfil = Field(default_factory=ConfigProfil)
     eval_distant: ConfigProfil = Field(default_factory=ConfigProfil, alias="eval-distant")
     """Génération d'un modèle distant (story 17.1) : règles seules, sans Liste blanche."""
+    modele_externe: ConfigProfil = Field(default_factory=ConfigProfil, alias="modele-externe")
+    """Fournisseurs externes de l'application (story 17.4) : vide dans `reseau.toml`, une règle
+    par fournisseur actif ajoutée au lancement par `avec_modele_externe`."""
 
     @field_validator("aucun")
     @classmethod
@@ -124,11 +128,11 @@ class Profils(ModeleConfig):
             raise ValueError("le profil aucun n'admet ni règle ni lecture de la Liste blanche")
         return valeur
 
-    @field_validator("eval_distant")
+    @field_validator("eval_distant", "modele_externe")
     @classmethod
-    def _eval_distant_sans_liste(cls, valeur: ConfigProfil) -> ConfigProfil:
+    def _sans_liste(cls, valeur: ConfigProfil) -> ConfigProfil:
         if valeur.liste_blanche_en_lecture:
-            raise ValueError("le profil eval-distant n'admet pas la lecture de la Liste blanche")
+            raise ValueError("ce profil n'admet pas la lecture de la Liste blanche")
         return valeur
 
 
@@ -144,6 +148,32 @@ class ConfigListeBlanche(ModeleConfig):
     """Contenu de `config/liste-blanche.toml` : hôtes du profil `assistant`."""
 
     hotes: list[Hote] = Field(min_length=1)
+
+
+def avec_modele_externe(config: ConfigReseau, url_bases: str | Sequence[str]) -> ConfigReseau:
+    """Copie de `config` dont le profil `modele-externe` a une règle par URL de base : `POST
+    <url_base>/chat/completions` vers son hôte (port 443 imposé par la forme). Story 17.4 :
+    une URL par fournisseur externe actif (amendement 14).
+
+    Les autres profils et la Liste blanche ne changent pas. Lève `ValueError` pour une URL
+    qui n'est pas HTTPS sur un nom d'hôte.
+    """
+    urls = [url_bases] if isinstance(url_bases, str) else list(url_bases)
+    regles = []
+    for numero, url_base in enumerate(urls, start=1):
+        cible = analyser_url(url_base.rstrip("/") + "/chat/completions")
+        if cible.schema != "https" or cible.port not in (None, 443) or cible.identifiants:
+            raise ValueError("URL HTTPS sur le port 443 attendue")
+        regles.append(
+            Regle(
+                nom=f"modele-externe-{numero}",
+                methodes=["POST"],
+                hotes=[_valider_hote(cible.hote)],
+                chemins=[_valider_chemin(cible.chemin)],
+            )
+        )
+    profils = config.profils.model_copy(update={"modele_externe": ConfigProfil(regles=regles)})
+    return config.model_copy(update={"profils": profils})
 
 
 def chemin_config(nom: str) -> Path:

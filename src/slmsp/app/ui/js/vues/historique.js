@@ -30,6 +30,7 @@ export function messagesDesTours(tours) {
     if (t.question != null) messages.push({ role: "user", content: t.question });
     const m = { role: "assistant", content: t.texte, sources: t.sources ?? [] };
     if (t.fin === "interrompue") m.interrompue = true;
+    if (typeof t.modele === "string" && t.modele) m.modele_repondant = t.modele;
     indices.push(messages.length);
     messages.push(m);
   }

@@ -67,6 +67,10 @@ class Pont:
         choisir_fichier: Callable[[str], str | None] | None = None,
         verificateur: Callable[..., Any] | None = None,
         modele_actif: str | None = None,
+        *,
+        coffre: Any = None,
+        tester_externe: Callable[..., dict[str, Any]] | None = None,
+        modele_externe: Mapping[str, Any] | None = None,
     ) -> None:
         # Attributs privés : pywebview n'expose pas les noms en `_`.
         self._fenetre = fenetre
@@ -75,13 +79,25 @@ class Pont:
         # (story 12.6) : la vue Mode (12.9) y lira le journal des Requêtes sortantes.
         self._stockage = stockage
         self._liste_blanche = liste_blanche  # lue dans `config/` au premier `ouvrir_lien`
-        self._conversation = Conversation(service, self._pousser)
+        self._conversation = Conversation(service, self._pousser, modele_local=modele_actif)
+        # Fournisseurs externes (story 17.4) : `{tete, preset, hote, modele, secours}` si l'un
+        # d'eux est actif depuis le démarrage.
+        externe = dict(modele_externe) if modele_externe else None
         self._domaines: dict[str, Any] = {
-            "mode": PontMode(service.mode, stockage, self._pousser),
+            "mode": PontMode(
+                service.mode,
+                stockage,
+                self._pousser,
+                modele_externe=externe["tete"] if externe else None,
+                secours_externes=int(externe.get("secours", 0)) if externe else 0,
+            ),
             "reglages": PontReglages(
                 stockage,
                 apres_effacement=self._conversation.oublier_dernier,
                 modele_actif=modele_actif,
+                coffre=coffre,
+                tester=tester_externe,
+                modele_externe=externe,
             ),
             "historique": PontHistorique(stockage),
             "retours": PontRetours(stockage, choisir_fichier),

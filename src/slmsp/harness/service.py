@@ -27,6 +27,14 @@ les Tâches de réécriture (`generation.reecriture`, calculé par `redaction`),
 toujours par un `Fin` ou un `Erreur`. Le délai au premier token (`delai_premier_token_ms`
 de `Fin.usage`) est mesuré depuis le début de l'itération : il compte la recherche et les
 mesures du budget de prompt (`harness.budget`).
+
+Mode hybride (story 17.4) : si le `LlmPort` expose `echange(forcer_local=...)`
+(`inference.hybride.ClientHybride`), chaque réponse utilise son propre échange. Un secours
+avant le premier jeton (fournisseur suivant de la cascade ou modèle local) ajoute un
+`Avertissement(modele-externe-indisponible)` portant le `bandeau` de l'échange ; un échec
+du modèle externe après son premier jeton donne `Erreur(modele-externe-interrompu)`. Le flux
+rendu expose alors `modele_repondant`. L'option `forcer_local` (retirée avant le `LlmPort`)
+fait répondre le modèle local (« Réessayer avec le modèle local »).
 """
 
 from __future__ import annotations
@@ -76,6 +84,7 @@ from slmsp.harness.taches import (
     charger_taches,
     traitement,
 )
+from slmsp.inference.client_openai import EchecAppel
 
 LOGGER: Final = logging.getLogger("slmsp.harness")
 
@@ -93,6 +102,41 @@ LONGUEUR_MIN_MASQUE: Final = 4
 """Les fragments saisis plus courts ne sont pas masqués (ils ne révèlent rien)."""
 
 CLE_ENTREE: Final = "entree"
+CLE_FORCER_LOCAL: Final = "forcer_local"
+CODE_EXTERNE_INDISPONIBLE: Final = "modele-externe-indisponible"
+CODE_EXTERNE_INTERROMPU: Final = "modele-externe-interrompu"
+MESSAGE_EXTERNE_INTERROMPU: Final = (
+    "La réponse du modèle externe a été interrompue. Votre texte est conservé."
+)
+
+
+def message_secours(motif: str) -> str:
+    """Bandeau du secours local (motif : code court, jamais un corps de réponse)."""
+    return f"Modèle externe indisponible ({motif}) : réponse du modèle local"
+
+
+class FluxReponse(Iterator[Evenement]):
+    """Flux d'une réponse en mode hybride : itérateur qui expose `modele_repondant`."""
+
+    def __init__(self, flux: Iterator[Evenement], echange: Any) -> None:
+        self._flux = flux
+        self._echange = echange
+
+    def __iter__(self) -> FluxReponse:
+        return self
+
+    def __next__(self) -> Evenement:
+        return next(self._flux)
+
+    def close(self) -> None:
+        fermer = getattr(self._flux, "close", None)
+        if callable(fermer):
+            fermer()
+
+    @property
+    def modele_repondant(self) -> str | None:
+        return getattr(self._echange, "modele_repondant", None)
+
 
 _TYPES_EVENEMENTS: Final = (
     Jeton,
@@ -248,6 +292,9 @@ class AssistantService:
         saisis = [m["content"] for m in conversation if m["role"] == "user"]
         saisis.extend(chaines(entree, cles=False))
         brutes.pop(CLE_ENTREE, None)
+        forcer_local = bool(brutes.pop(CLE_FORCER_LOCAL, False))
+        fabrique = getattr(self.llm, "echange", None)
+        echange = fabrique(forcer_local=forcer_local) if callable(fabrique) else None
         defaut = self.max_tokens_par_defaut(fiche)
         if defaut is not None:
             brutes.setdefault(CLE_MAX_TOKENS, defaut)
@@ -256,14 +303,16 @@ class AssistantService:
             entree=entree,
             historique=tuple(conversation[:-1]),
             textes_saisis=tuple(dict.fromkeys(saisis)),
-            llm=self.llm,
+            llm=self.llm if echange is None else echange,
             config=self.config,
             options_llm=MappingProxyType(brutes),
             recherche=self.recherche if avec_passages else None,
             outils=self.outils if avec_outils else None,
             mode=self.mode if avec_outils else None,
         )
-        return self._flux(traiter, ctx)
+        if echange is None:
+            return self._flux(traiter, ctx)
+        return FluxReponse(self._flux(traiter, ctx, echange), echange)
 
     def max_tokens_par_defaut(self, fiche: Tache) -> int | None:
         """`max_tokens` posé quand l'appelant n'en fixe pas.
@@ -283,15 +332,25 @@ class AssistantService:
 
     # --- Flux -----------------------------------------------------------------------------
 
-    def _flux(self, traiter: Traitement, ctx: ContexteTache) -> Iterator[Evenement]:
+    def _flux(
+        self, traiter: Traitement, ctx: ContexteTache, echange: Any = None
+    ) -> Iterator[Evenement]:
         debut = perf_counter()
         premier: float | None = None
         flux: Iterator[Evenement] | None = None
+        signale = False
         try:
             flux = traiter(ctx)
             for evenement in flux:
                 if not isinstance(evenement, _TYPES_EVENEMENTS):
                     raise TypeError(f"évènement hors core.evenements : {type(evenement).__name__}")
+                motif = getattr(echange, "motif_secours", None)
+                if motif and not signale:
+                    signale = True
+                    yield Avertissement(
+                        code=CODE_EXTERNE_INDISPONIBLE,
+                        message=getattr(echange, "bandeau", None) or message_secours(motif),
+                    )
                 if isinstance(evenement, Jeton) and premier is None:
                     premier = perf_counter()
                 if isinstance(evenement, Fin):
@@ -304,6 +363,9 @@ class AssistantService:
         except ContexteDepasse as exc:
             self._journaliser(exc, ctx, pile=False)
             yield Erreur(code=CODE_CONTEXTE, message=MESSAGE_CONTEXTE)
+        except EchecAppel as exc:
+            LOGGER.warning("Tâche %s : modèle externe interrompu (%s)", ctx.tache.code, exc.code)
+            yield Erreur(code=CODE_EXTERNE_INTERROMPU, message=MESSAGE_EXTERNE_INTERROMPU)
         except Exception as exc:
             self._journaliser(exc, ctx)
             yield Erreur(code=CODE_ERREUR, message=MESSAGE_ERREUR)
@@ -332,7 +394,11 @@ class AssistantService:
 
 
 __all__ = [
+    "CLE_FORCER_LOCAL",
     "CODE_CONTEXTE",
+    "CODE_EXTERNE_INDISPONIBLE",
+    "CODE_EXTERNE_INTERROMPU",
+    "FluxReponse",
     "CODE_ERREUR",
     "MESSAGE_CONTEXTE",
     "MESSAGE_ERREUR",

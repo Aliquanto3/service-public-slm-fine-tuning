@@ -16,6 +16,10 @@ Poussée : à chaque changement de Mode observé (lecture, forçage), `{"type": 
 "hors_ligne", "force"}` part vers l'interface (`window.slmspRecevoir`), qui émet sur le bus
 `evenement:mode`, puis `mode:change {hors_ligne}`. `rafraichir()` peut être appelé après une
 sonde pour pousser un changement.
+
+Fournisseur externe actif au démarrage (story 17.4) : `etat()` et la poussée portent en plus
+`"modele_externe": <preset>/<modèle>` du fournisseur de tête et `"secours_externes": <nombre>`
+des fournisseurs de secours (clés absentes sinon).
 """
 
 from __future__ import annotations
@@ -50,7 +54,11 @@ class PontMode:
         mode: ModePort | None = None,
         stockage: Stockage | None = None,
         pousser: Callable[[list[dict[str, Any]]], None] | None = None,
+        modele_externe: str | None = None,
+        secours_externes: int = 0,
     ) -> None:
+        self._modele_externe = modele_externe
+        self._secours_externes = secours_externes
         self._mode = mode
         self._stockage = stockage
         self._pousser = pousser
@@ -82,12 +90,16 @@ class PontMode:
     def _etat(self) -> dict[str, Any]:
         detail = self._detail()
         hors_ligne = detail != CONNECTE
-        return {
+        etat: dict[str, Any] = {
             "mode": HORS_LIGNE if hors_ligne else CONNECTE,
             "hors_ligne": hors_ligne,
             "force": detail == FORCE,
             "detail": detail,
         }
+        if self._modele_externe:
+            etat["modele_externe"] = self._modele_externe
+            etat["secours_externes"] = self._secours_externes
+        return etat
 
     def rafraichir(self) -> dict[str, Any]:
         """Lit le Mode et pousse `{"type": "mode", ...}` s'il a changé depuis la dernière fois."""
@@ -99,16 +111,16 @@ class PontMode:
             change = cle != self._dernier
             self._dernier = cle
             if change and self._pousser is not None:
-                self._pousser(
-                    [
-                        {
-                            "type": "mode",
-                            "mode": etat["mode"],
-                            "hors_ligne": etat["hors_ligne"],
-                            "force": etat["force"],
-                        }
-                    ]
-                )
+                charge = {
+                    "type": "mode",
+                    "mode": etat["mode"],
+                    "hors_ligne": etat["hors_ligne"],
+                    "force": etat["force"],
+                }
+                if self._modele_externe:
+                    charge["modele_externe"] = self._modele_externe
+                    charge["secours_externes"] = self._secours_externes
+                self._pousser([charge])
         return {"ok": True, **etat}
 
     def etat(self) -> dict[str, Any]:

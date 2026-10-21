@@ -8,7 +8,9 @@
    identifiants dans l'URL ;
 3. le profil : `assistant` (Liste blanche, correspondance exacte du nom d'hôte),
    `outillage` (règles de `config/reseau.toml`), `aucun` (tout refusé), `eval-distant`
-   (règles de `config/reseau.toml`, sans Liste blanche : génération distante, story 17.1).
+   (règles de `config/reseau.toml`, sans Liste blanche : génération distante, story 17.1),
+   `modele-externe` (une règle par fournisseur externe actif, calculée au lancement, sans
+   Liste blanche, story 17.4).
 
 Un nom d'hôte est normalisé (minuscules, point final retiré) avant toute comparaison.
 """
@@ -227,7 +229,11 @@ def evaluer(
             return AUTORISE
         return _bloque_liste("hôte hors Liste blanche")
 
-    regles = config.profils.outillage if profil == "outillage" else config.profils.eval_distant
+    regles = {
+        "outillage": config.profils.outillage,
+        "eval-distant": config.profils.eval_distant,
+        "modele-externe": config.profils.modele_externe,
+    }[profil]
     if (
         regles.liste_blanche_en_lecture
         and methode in METHODES_LECTURE

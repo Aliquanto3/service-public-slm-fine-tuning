@@ -49,6 +49,17 @@ from slmsp.core.erreurs import (
 )
 from slmsp.core.evenements import AppelNonConforme, AppelOutil, Fin, Jeton
 from slmsp.evaluation.modele_distant import ModeleDistant
+from slmsp.inference.client_openai import (
+    OPTIONS_IGNOREES,
+    OPTIONS_TRANSMISES,
+    TAILLE_EXTRAIT,
+    EtatFlux,
+    appel_natif,
+    corps_reasoning,
+    lignes_flux,
+    lire_flux,
+)
+from slmsp.inference.client_openai import entier as _entier
 from slmsp.net.relances import attente_exponentielle, lire_retry_after, statut_transitoire
 
 USAGE_BUDGET: Final = "eval-distant"
@@ -59,12 +70,6 @@ ATTENTE_PLAFOND: Final = 60.0
 CARACTERES_PAR_TOKEN: Final = 3
 MAX_TOKENS_DEFAUT: Final = 1024
 """`max_tokens` d'un appel sans cette option (le Harnais la fixe toujours)."""
-OPTIONS_TRANSMISES: Final = frozenset(
-    {"temperature", "seed", "max_tokens", "top_p", "top_k", "stop"}
-)
-OPTIONS_IGNOREES: Final = frozenset({"chat_template_kwargs"})
-"""Options du chat template local, sans objet pour une API (non transmises)."""
-TAILLE_EXTRAIT: Final = 300
 
 FATALES: Final = (
     BudgetEpuise,
@@ -87,36 +92,6 @@ class ErreurDistante(SlmspError):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(f"{code} : {message}")
         self.code = code
-
-
-def corps_reasoning() -> dict[str, Any]:
-    """Raisonnement désactivé (`reasoning = "off"` de la fiche).
-
-    Paramètre unifié `reasoning` d'OpenRouter : `{"enabled": false}`. À confirmer sur
-    l'essai réel (le nom exact est isolé ici, une seule fonction à corriger).
-    """
-    return {"enabled": False}
-
-
-def _entier(valeur: Any) -> int | None:
-    return valeur if isinstance(valeur, int) and not isinstance(valeur, bool) else None
-
-
-def _appel_natif(cumul: Mapping[str, Any]) -> AppelOutil | AppelNonConforme:
-    bruts = cumul["arguments"]
-    nom = cumul["nom"] or None
-    try:
-        arguments = json.loads(bruts) if bruts.strip() else {}
-    except json.JSONDecodeError:
-        return AppelNonConforme(nom=nom, arguments_bruts=bruts, motif="arguments : JSON illisible")
-    if nom is None:
-        return AppelNonConforme(nom=None, arguments_bruts=bruts, motif="nom d'outil absent")
-    if not isinstance(arguments, dict):
-        return AppelNonConforme(
-            nom=nom, arguments_bruts=bruts, motif="arguments : objet JSON attendu"
-        )
-    identifiant = cumul["id"] or f"appel-{cumul['index']}"
-    return AppelOutil(id=identifiant, nom=nom, arguments=arguments)
 
 
 class ClientDistant:
@@ -317,111 +292,42 @@ class ClientDistant:
 
     def _lignes(self, reponse: Any) -> Iterator[str | None]:
         """Lignes du flux ; `None` final si le transport coupe le flux."""
-        lignes = reponse.iter_lines()
-        while True:
-            try:
-                yield next(lignes)
-            except StopIteration:
-                return
-            except Exception:
-                yield None
-                return
+        return lignes_flux(reponse)
+
+    def _controle(self, champ: str, valeur: str) -> tuple[str, str] | None:
+        """Hébergeur et modèle renvoyés contrôlés contre la fiche (`lire_flux`)."""
+        if champ == "provider" and valeur != self.fiche.hebergeur:
+            return (
+                "hebergeur_inattendu",
+                f"hébergeur {valeur!r} au lieu de {self.fiche.hebergeur!r}",
+            )
+        if champ == "model" and valeur != self.fiche.modele_id:
+            return ("modele_inattendu", f"modèle {valeur!r} au lieu de {self.fiche.modele_id!r}")
+        return None
 
     def _lire(
         self, reponse: Any, reservation: int, debut: float, relances: int
     ) -> Iterator[Evenement]:
-        premier: float | None = None
-        appels: dict[int, dict[str, Any]] = {}
-        raison_finale: str | None = None
-        termine = coupe = False
-        usage: dict[str, Any] | None = None
-        hebergeur: str | None = None
-        modele: str | None = None
-        erreur: tuple[str, str] | None = None
+        etat = EtatFlux()
         try:
-            for ligne in self._lignes(reponse):
-                if ligne is None:
-                    coupe = True
-                    break
-                if not ligne.startswith("data:"):
-                    continue  # ligne vide ou commentaire SSE (`: OPENROUTER PROCESSING`)
-                donnees = ligne[5:].strip()
-                if donnees == "[DONE]":
-                    termine = True
-                    break
-                try:
-                    morceau = json.loads(donnees)
-                except json.JSONDecodeError:
-                    continue
-                if not isinstance(morceau, dict):
-                    continue
-                if isinstance(morceau.get("usage"), dict):
-                    usage = morceau["usage"]
-                if isinstance(morceau.get("provider"), str):
-                    hebergeur = morceau["provider"]
-                    if hebergeur != self.fiche.hebergeur:
-                        erreur = (
-                            "hebergeur_inattendu",
-                            f"hébergeur {hebergeur!r} au lieu de {self.fiche.hebergeur!r}",
-                        )
-                        break
-                if isinstance(morceau.get("model"), str):
-                    modele = morceau["model"]
-                    if modele != self.fiche.modele_id:
-                        erreur = (
-                            "modele_inattendu",
-                            f"modèle {modele!r} au lieu de {self.fiche.modele_id!r}",
-                        )
-                        break
-                if "error" in morceau:
-                    extrait = json.dumps(morceau["error"], ensure_ascii=False)[:TAILLE_EXTRAIT]
-                    erreur = ("erreur_flux", f"erreur en flux : {extrait}")
-                    break
-                for choix in morceau.get("choices") or []:
-                    if not isinstance(choix, dict):
-                        continue
-                    delta = choix.get("delta") or {}
-                    if not isinstance(delta, dict):
-                        raise TypeError("delta non objet")
-                    if premier is None and (
-                        delta.get("reasoning") or delta.get("reasoning_content")
-                    ):
-                        premier = self._horloge()  # raisonnement : compté, jamais émis
-                    contenu = delta.get("content")
-                    if isinstance(contenu, str) and contenu:
-                        if premier is None:
-                            premier = self._horloge()
-                        yield Jeton(texte=contenu)
-                    for fragment in delta.get("tool_calls") or []:
-                        if premier is None:
-                            premier = self._horloge()
-                        if not isinstance(fragment, dict):
-                            raise TypeError("fragment tool_calls non objet")
-                        index = _entier(fragment.get("index", 0))
-                        if index is None:
-                            raise TypeError("index tool_calls non entier")
-                        cumul = appels.setdefault(
-                            index, {"index": index, "id": None, "nom": "", "arguments": ""}
-                        )
-                        if isinstance(fragment.get("id"), str) and fragment["id"]:
-                            cumul["id"] = fragment["id"]
-                        fonction = fragment.get("function") or {}
-                        if not isinstance(fonction, dict):
-                            raise TypeError("function non objet")
-                        nom = fonction.get("name")
-                        if isinstance(nom, str) and nom and not cumul["nom"]:
-                            cumul["nom"] = nom
-                        if isinstance(fonction.get("arguments"), str):
-                            cumul["arguments"] += fonction["arguments"]
-                    if choix.get("finish_reason"):
-                        raison_finale = str(choix["finish_reason"])
-        except Exception as exc:
-            erreur = ("flux_invalide", f"morceau SSE illisible ({type(exc).__name__} : {exc})")
+            yield from lire_flux(reponse, etat, self._horloge, self._controle)
         except BaseException:
             # Lecture abandonnée (consommateur fermé, interruption) : réglée au pire cas.
             cout = self._regler(reservation, None)
-            self._releve(modele, hebergeur, raison_finale, usage, cout, None, relances, "abandon")
+            self._releve(
+                etat.modele,
+                etat.hebergeur,
+                etat.raison_finale,
+                etat.usage,
+                cout,
+                None,
+                relances,
+                "abandon",
+            )
             raise
+        premier, appels, raison_finale = etat.premier, etat.appels, etat.raison_finale
+        termine, coupe, usage = etat.termine, etat.coupe, etat.usage
+        hebergeur, modele, erreur = etat.hebergeur, etat.modele, etat.erreur
         fin = self._horloge()
 
         if erreur is None:
@@ -450,7 +356,7 @@ class ClientDistant:
         if erreur is not None:
             raise self._item(*erreur)
         for index in sorted(appels):
-            yield _appel_natif(appels[index])
+            yield appel_natif(appels[index])
         usage_fin: dict[str, int] = {}
         if tokens is not None:
             usage_fin = {

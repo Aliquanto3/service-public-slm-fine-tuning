@@ -9,6 +9,10 @@ bloqué dans `next(flux)`, ignore ses évènements tardifs (aucun push après l'
 l'itérateur à son réveil (jamais depuis un autre fil : un générateur en cours d'exécution ne se
 ferme pas). `llama-server` n'est pas touché. Le texte saisi n'est
 jamais journalisé (AD-23) : seuls la classe d'exception et la Tâche partent au logger.
+
+Traçabilité (story 17.4) : l'évènement `fin` poussé porte `modele_repondant` (`local:<slug>` ou
+`externe:<hôte>/<modèle>`, lu sur le flux du mode hybride) quand il est connu ; l'interface le
+consigne dans le message enregistré à l'Historique.
 """
 
 from __future__ import annotations
@@ -43,7 +47,10 @@ def reponse_erreur(code: str, message: str) -> dict[str, Any]:
 class Conversation:
     """État d'envoi du pont : dernier envoi (pour `regenerer`) et génération en cours."""
 
-    def __init__(self, service: AssistantService, pousser: Pousser) -> None:
+    def __init__(
+        self, service: AssistantService, pousser: Pousser, *, modele_local: str | None = None
+    ) -> None:
+        self._modele_local = f"local:{modele_local}" if modele_local else None
         self._service = service
         self._pousser = pousser
         self._verrou = threading.Lock()  # état (génération active, dernier envoi)
@@ -163,7 +170,12 @@ class Conversation:
             for evenement in flux:
                 if arret.is_set():
                     break
-                lot.append(vers_dict(evenement))
+                donnees = vers_dict(evenement)
+                if isinstance(evenement, Fin):
+                    modele = getattr(flux, "modele_repondant", None) or self._modele_local
+                    if modele:
+                        donnees["modele_repondant"] = modele
+                lot.append(donnees)
                 plein = len(lot) >= JETONS_PAR_LOT or time.monotonic() - debut_lot >= DELAI_LOT_S
                 if not isinstance(evenement, Jeton) or plein:
                     vider()

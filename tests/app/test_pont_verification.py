@@ -100,3 +100,20 @@ def test_refus_tant_qu_une_generation_est_en_cours() -> None:
     assert appels == []
     occupe["v"] = False
     assert domaine.appeler("verifier", "<r> [1]", [SOURCE])["ok"] is True
+
+
+def test_modele_repondant_transmis_au_verificateur() -> None:
+    """Story 17.4 (revue) : la vérification part vers le modèle qui a répondu."""
+    recus: list[Any] = []
+
+    def verificateur(reponse: str, sources: Any, *, modele_repondant: Any = None) -> list[Any]:
+        recus.append(modele_repondant)
+        return [_verdict()]
+
+    domaine = PontVerification(verificateur)
+    assert domaine.appeler("verifier", "<réponse-factice>", [SOURCE], "externe:m/x")["ok"] is True
+    assert domaine.appeler("verifier", "<réponse-factice>", [SOURCE], None)["ok"] is True
+    assert recus == ["externe:m/x", None]
+    for modele in (3, "", "x" * 400):
+        refus = domaine.appeler("verifier", "<réponse-factice>", [SOURCE], modele)
+        assert refus["erreur"]["code"] == "requete-invalide"

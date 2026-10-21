@@ -26,6 +26,7 @@ Chaque méthode rend `{"ok": true, ...}` ou un refus `{"ok": false, "erreur": {"
 from __future__ import annotations
 
 import dataclasses
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final
@@ -33,7 +34,7 @@ from typing import TYPE_CHECKING, Any, Final
 from slmsp.app.export_retours import Export, apercu, construire_export, ecrire
 from slmsp.app.pont.conversation import reponse_erreur
 from slmsp.app.pont.erreurs import NonImplementee
-from slmsp.app.pont.historique import identifiant_valide
+from slmsp.app.pont.historique import MAX_MODELE, identifiant_valide
 from slmsp.core.erreurs import SlmspError
 
 if TYPE_CHECKING:
@@ -42,8 +43,17 @@ if TYPE_CHECKING:
 METHODES: Final = frozenset({"noter", "lister", "apercu_export", "exporter"})
 JUGEMENTS: Final = {"pouce_haut": "haut", "pouce_bas": "bas"}
 MAX_COMMENTAIRE: Final = 2000
+MOTIF_MODELE: Final = re.compile(r"(local|externe):\S+")
+"""`modele_repondant` admis (story 17.4) ; toute autre valeur est ignorée."""
 # Port du dialogue « Enregistrer sous » : reçoit le nom proposé, rend le chemin choisi ou None.
 ChoisirFichier = Callable[[str], str | None]
+
+
+def modele_repondant_valide(valeur: Any) -> str | None:
+    """`local:<…>` ou `externe:<…>` (sans espace, `MAX_MODELE` caractères au plus), sinon `None`."""
+    if isinstance(valeur, str) and len(valeur) <= MAX_MODELE and MOTIF_MODELE.fullmatch(valeur):
+        return valeur
+    return None
 
 
 class PontRetours:
@@ -102,6 +112,7 @@ class PontRetours:
             sources=sources,
             pouce=pouce,  # type: ignore[arg-type]
             commentaire=texte if pouce == "bas" and texte else None,
+            modele_repondant=modele_repondant_valide(note.get("modele_repondant")),
         )
         self._export = None  # l'aperçu relu ne contient pas ce Retour
         return {"ok": True}

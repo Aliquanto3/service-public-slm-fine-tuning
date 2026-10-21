@@ -187,3 +187,15 @@ def test_echec_du_forcage_est_annonce_et_l_interrupteur_retabli(page) -> None:
     page.wait_for_function("() => document.body.textContent.includes('a échoué')")
     page.click("#mode-pastille")
     assert page.get_attribute("#mode-menu [role=menuitemcheckbox]", "aria-checked") == "false"
+
+
+def test_fournisseur_externe_de_tete_et_secours(page) -> None:
+    """Story 17.4 : le menu et l'infobulle de la pastille nomment le fournisseur de tête."""
+    _pousser(page, hors_ligne=False, force=False, modele_externe="mistral/m", secours_externes=2)
+    page.wait_for_function("() => !document.querySelector('.mode-externe').hidden")
+    attendu = "Modèle externe : mistral/m (+2 en secours)"
+    assert page.locator(".mode-externe").text_content() == attendu
+    assert page.get_attribute("#mode-pastille", "title") == attendu
+    _pousser(page, hors_ligne=False, force=False)
+    page.wait_for_function("() => document.querySelector('.mode-externe').hidden")
+    assert page.get_attribute("#mode-pastille", "title") is None

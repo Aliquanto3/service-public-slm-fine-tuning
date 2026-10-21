@@ -1,6 +1,7 @@
 // Vue « verification » (story 13.6, FR-12, UX-DR24) : bouton secondaire « Vérifier en ligne » sous
 // une réponse Question, en Mode connecté seulement, jamais lancé automatiquement.
-// Contrat du pont : `verification.verifier(reponse, sources)` (voir `app/pont/verification.py`).
+// Contrat du pont : `verification.verifier(reponse, sources[, modele_repondant])` (voir
+// `app/pont/verification.py`) ; le modèle qui a répondu vérifie (story 17.4).
 // Tout texte entre dans le DOM par `textContent`. Libellés d'interface : à confirmer par Anaël.
 
 import { annoncer } from "../socle/annonces.js";
@@ -121,7 +122,9 @@ export function creerVerification({ reponse, pont, horsLigne, eligible, surSourc
     resultat = { zone, brut };
     let charge = null;
     try {
-      charge = await pont.appeler("verification.verifier", brut, reponse.sources);
+      const args = ["verification.verifier", brut, reponse.sources];
+      if (typeof reponse.modeleRepondant === "string") args.push(reponse.modeleRepondant);
+      charge = await pont.appeler(...args);
     } catch {
       charge = null;
     }

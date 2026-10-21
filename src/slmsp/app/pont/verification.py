@@ -38,6 +38,12 @@ SOURCES_MAX = 100
 Verificateur = Callable[[str, Sequence[Mapping[str, Any]]], Sequence[Evenement]]
 
 
+def _modele_valide(valeur: Any) -> bool:
+    from slmsp.app.pont.historique import MAX_MODELE
+
+    return valeur is None or (isinstance(valeur, str) and 0 < len(valeur) <= MAX_MODELE)
+
+
 class PontVerification:
     """Délègue `verifier` au vérificateur injecté (`harness.verification.Verificateur`)."""
 
@@ -54,12 +60,13 @@ class PontVerification:
         if nom != "verifier" or self._verificateur is None:
             raise NonImplementee(f"verification.{nom} : non implémentée")
         if (
-            len(args) != 2
+            len(args) not in (2, 3)
             or not isinstance(args[0], str)
             or not isinstance(args[1], list)
             or not all(isinstance(s, Mapping) for s in args[1])
             or len(args[0]) > REPONSE_MAX_CARACTERES
             or len(args[1]) > SOURCES_MAX
+            or (len(args) == 3 and not _modele_valide(args[2]))
         ):
             return reponse_erreur("requete-invalide", "arguments invalides pour verifier")
         if self._occupe is not None and self._occupe():
@@ -67,7 +74,11 @@ class PontVerification:
         if not self._une_a_la_fois.acquire(blocking=False):
             return reponse_erreur("verification-en-cours", "Une vérification est en cours.")
         try:
-            evenements = self._verificateur(args[0], args[1])
+            if len(args) == 3 and args[2] is not None:
+                # Même fournisseur que la réponse vérifiée (story 17.4, amendement 6).
+                evenements = self._verificateur(args[0], args[1], modele_repondant=args[2])
+            else:
+                evenements = self._verificateur(args[0], args[1])
         finally:
             self._une_a_la_fois.release()
         return {"ok": True, "evenements": [vers_dict(e) for e in evenements]}

@@ -78,3 +78,40 @@
   margin: 0;
   padding-left: var(--sp-4);
 }
+/* Fournisseurs externes (story 17.4) : une carte par entrée, dans l'ordre d'essai. */
+.parametres-fournisseurs {
+  margin: var(--sp-3) 0;
+  padding: 0;
+  list-style: none;
+}
+.parametres-fournisseur {
+  display: grid;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.parametres-fournisseur h4 {
+  margin: 0;
+  font-size: var(--t-body);
+}
+.parametres-champ {
+  display: grid;
+  grid-template-columns: minmax(12ch, 1fr) 2fr;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.parametres-champ[hidden],
+.parametres-section[hidden] {
+  display: none;
+}
+.parametres-champ input,
+.parametres-champ select,
+.parametres-champ textarea {
+  font: inherit;
+  min-width: 0;
+}
+.parametres-rang {
+  flex-wrap: wrap;
+}

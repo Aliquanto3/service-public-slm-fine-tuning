@@ -550,13 +550,23 @@ class Verificateur:
     config: ConfigVerification | None = None
 
     def __call__(
-        self, reponse: str, sources: Sequence[Source | Mapping[str, Any]]
+        self,
+        reponse: str,
+        sources: Sequence[Source | Mapping[str, Any]],
+        *,
+        modele_repondant: str | None = None,
     ) -> list[Evenement]:
+        """`modele_repondant` (story 17.4) : en mode hybride, la comparaison part vers le
+        modèle qui a produit la réponse (`ClientHybride.pour`), pas vers une nouvelle cascade."""
+        llm = self.llm
+        pour = getattr(llm, "pour", None)
+        if modele_repondant is not None and callable(pour):
+            llm = pour(modele_repondant)
         return verifier(
             reponse,
             sources,
             self.passerelle,
-            self.llm,
+            llm,
             dans_index=self.dans_index,
             config=self.config,
         )

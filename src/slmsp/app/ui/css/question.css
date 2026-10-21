@@ -98,7 +98,8 @@
 }
 .reponse-notes .avertissement,
 .mention-interrompue,
-.mention-echec {
+.mention-echec,
+.reponse-modele {
   margin: 0;
   color: var(--ink-soft);
   font-size: var(--t-small);

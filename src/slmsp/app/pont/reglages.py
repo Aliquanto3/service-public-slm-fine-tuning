@@ -23,6 +23,26 @@ Chaque méthode rend `{"ok": true, ...}` ou lève ; le pont convertit l'exceptio
   vaut `null` (l'interface l'affiche proprement). Fichiers relus à chaque appel : une Liste blanche
   modifiée sans recompilation apparaît à la relance.
 
+Fournisseurs externes (story 17.4, amendement 14), appliqués au démarrage suivant :
+
+- `fournisseurs_externes()` -> `{"ok": true, "fournisseurs": [{id, preset, url_base, modele,
+  actif, parametres_supplementaires, cle_enregistree}], "presets": [{nom, libelle, url_base,
+  modeles, parametres_libres}], "max": 3, "en_cours": {tete, preset, hote, modele, secours} |
+  null}`. Les clés ne sont jamais renvoyées.
+- `ecrire("fournisseurs_externes", [entrées])` : 3 au plus, dans l'ordre d'essai, URL HTTPS
+  seulement, sans identifiants ; sinon `reglage-invalide` (message court). Les clés des entrées
+  retirées, et celles d'une entrée dont l'hôte ou le preset a changé, sont effacées. Rend
+  `{"ok": true, "fournisseurs": [...]}` (valeurs normalisées).
+- `enregistrer_cle(id, cle, valeurs?)` (chiffrée par DPAPI, un fichier par entrée, liée à
+  l'hôte et au preset de `valeurs`, à défaut de l'entrée enregistrée `id`) et
+  `effacer_cle(id)` -> `{"ok": true, "cle_enregistree": bool}`. `cle_enregistree` est vrai
+  seulement pour une clé liée à l'hôte et au preset de l'entrée.
+- `tester_modele_externe(valeurs)` -> `{"ok": true, "reussi": bool, "latence_ms" | "motif",
+  "hote"}` : une requête de 1 token avec les valeurs d'une entrée du formulaire (`cle` du champ,
+  sinon la clé enregistrée pour son `id`), sans relancer l'application. Motif : code court,
+  jamais un corps de réponse ; `cle-autre-hote` (sans requête) si la clé enregistrée est liée
+  à un autre hôte ou preset que celui du formulaire.
+
 Les libellés des mentions sont des propositions, à valider par Anaël.
 """
 
@@ -39,7 +59,11 @@ from slmsp.app.pont.erreurs import NonImplementee
 from slmsp.core.erreurs import SlmspError
 
 if TYPE_CHECKING:
+    from slmsp.app.cle_externe import CoffreCles
     from slmsp.app.stockage import Stockage
+
+TesterExterne = Callable[[dict[str, Any], Any], dict[str, Any]]
+"""`(entrée validée, clé SecretStr | None)` -> résultat de `modele_externe.tester_connexion`."""
 
 LOGGER: Final = logging.getLogger("slmsp.app.pont.reglages")
 CRANS_TAILLE: Final = (100, 112, 125, 137, 150)
@@ -47,7 +71,18 @@ RESSOURCES: Final = Path(__file__).resolve().parents[1] / "ressources"
 FICHIER_LICENCES: Final = "licences-tierces.json"
 FICHIER_EMPREINTE: Final = "empreinte-application.txt"  # produit au build (12.12), optionnel
 METHODES: Final = frozenset(
-    {"lire", "ecrire", "effacer_historique", "a_propos", "langues_traduction", "modeles"}
+    {
+        "lire",
+        "ecrire",
+        "effacer_historique",
+        "a_propos",
+        "langues_traduction",
+        "modeles",
+        "fournisseurs_externes",
+        "enregistrer_cle",
+        "effacer_cle",
+        "tester_modele_externe",
+    }
 )
 CODE_INVALIDE: Final = "reglage-invalide"
 
@@ -97,6 +132,12 @@ def _version_application() -> str | None:
         return None
 
 
+def _liaison(entree: dict[str, Any]) -> dict[str, str]:
+    from slmsp.app.modele_externe import liaison
+
+    return liaison(entree)
+
+
 class PontReglages:
     """Réglages persistants (via `Stockage`) et rubrique « À propos »."""
 
@@ -108,8 +149,16 @@ class PontReglages:
         version: Callable[[], str | None] | None = None,
         apres_effacement: Callable[[], None] | None = None,
         modele_actif: str | None = None,
+        *,
+        coffre: CoffreCles | None = None,
+        tester: TesterExterne | None = None,
+        modele_externe: dict[str, Any] | None = None,
     ) -> None:
         self._modele_actif = modele_actif
+        self._coffre = coffre
+        self._tester = tester
+        # {tete, preset, hote, modele, secours} si un fournisseur est actif depuis le démarrage
+        self._externe_en_cours = modele_externe
         self._apres_effacement = apres_effacement
         self._stockage = stockage
         self._racine = racine
@@ -135,6 +184,8 @@ class PontReglages:
         stock = self._stock()
         if cle == "modele":
             return self._choisir_modele(valeur)
+        if cle == "fournisseurs_externes":
+            return self._ecrire_externe(valeur)
         if cle != "taille_texte" or not _est_cran(valeur):
             return {
                 "ok": False,
@@ -156,6 +207,111 @@ class PontReglages:
             }
         self._stock().ecrire_reglage("modele", valeur)
         return {"ok": True}
+
+    # -- Fournisseurs externes (story 17.4) ----------------------------------------------
+
+    @staticmethod
+    def _refus(message: str) -> dict[str, Any]:
+        return {"ok": False, "erreur": {"code": CODE_INVALIDE, "message": message}}
+
+    def _ecrire_externe(self, valeur: Any) -> dict[str, Any]:
+        from slmsp.app.modele_externe import CLE_REGLAGE, valider_reglage
+
+        try:
+            entrees = valider_reglage(valeur)
+        except ValueError as exc:
+            return self._refus(f"Fournisseurs externes : {exc}.")
+        self._stock().ecrire_reglage(CLE_REGLAGE, entrees)
+        if self._coffre is not None:
+            self._coffre.ne_garder_que(e["id"] for e in entrees)
+            for e in entrees:
+                self._coffre.effacer_si_autre_hote(e["id"], **_liaison(e))
+        return {"ok": True, "fournisseurs": self._avec_cles(entrees)}
+
+    def _cle_enregistree(self, entree: dict[str, Any]) -> bool:
+        return (
+            self._coffre is not None
+            and self._coffre.etat(entree["id"], **_liaison(entree)) == "liee"
+        )
+
+    def _avec_cles(self, entrees: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [{**e, "cle_enregistree": self._cle_enregistree(e)} for e in entrees]
+
+    def _entree_pour_cle(self, identifiant: Any, valeurs: Any) -> dict[str, Any] | None:
+        """Entrée à laquelle lier la clé : `valeurs` du formulaire (même `id`), à défaut
+        l'entrée enregistrée ; `None` si aucune."""
+        from slmsp.app.modele_externe import lire_reglage, valider_entree
+
+        if isinstance(valeurs, dict):
+            valeurs = {k: v for k, v in valeurs.items() if k != "cle"}
+            try:
+                entree = valider_entree({**valeurs, "actif": True})
+            except ValueError:
+                return None
+            return entree if entree["id"] == identifiant else None
+        return next((e for e in lire_reglage(self._stock()) if e["id"] == identifiant), None)
+
+    def fournisseurs_externes(self) -> dict[str, Any]:
+        from slmsp.app.modele_externe import MAX_FOURNISSEURS, lire_reglage, presets_vue
+
+        en_cours = self._externe_en_cours
+        return {
+            "ok": True,
+            "fournisseurs": self._avec_cles(lire_reglage(self._stock())),
+            "presets": presets_vue(),
+            "max": MAX_FOURNISSEURS,
+            "en_cours": dict(en_cours) if en_cours else None,
+        }
+
+    def enregistrer_cle(self, identifiant: Any, cle: Any, valeurs: Any = None) -> dict[str, Any]:
+        if self._coffre is None:
+            raise NonImplementee("reglages : coffre de clé indisponible")
+        entree = self._entree_pour_cle(identifiant, valeurs)
+        if entree is None:
+            return self._refus("Fournisseur à compléter avant d'enregistrer la clé.")
+        try:
+            self._coffre.enregistrer(identifiant, cle, **_liaison(entree))
+        except ValueError:
+            return self._refus("Clé invalide.")
+        except OSError as exc:
+            LOGGER.error("clé du fournisseur non enregistrée : %s", type(exc).__name__)
+            return self._refus("La clé n'a pas pu être enregistrée.")
+        return {"ok": True, "cle_enregistree": self._cle_enregistree(entree)}
+
+    def effacer_cle(self, identifiant: Any) -> dict[str, Any]:
+        if self._coffre is not None:
+            self._coffre.effacer(identifiant)
+        return {
+            "ok": True,
+            "cle_enregistree": self._coffre is not None and self._coffre.presente(identifiant),
+        }
+
+    def tester_modele_externe(self, valeurs: Any) -> dict[str, Any]:
+        from pydantic import SecretStr
+
+        from slmsp.app.modele_externe import valider_entree
+
+        if self._tester is None:
+            raise NonImplementee("reglages : test du modèle externe indisponible")
+        if not isinstance(valeurs, dict):
+            return self._refus("Fournisseur externe : objet attendu.")
+        valeurs = dict(valeurs)
+        saisie = valeurs.pop("cle", None)
+        try:
+            entree = valider_entree({**valeurs, "actif": True})
+        except ValueError as exc:
+            return self._refus(f"Fournisseur externe : {exc}.")
+        if isinstance(saisie, str) and saisie.strip():
+            cle: SecretStr | None = SecretStr(saisie.strip())
+        elif self._coffre is None:
+            cle = None
+        else:
+            # Une clé enregistrée ne part jamais vers un autre hôte que le sien.
+            lie = _liaison(entree)
+            if self._coffre.etat(entree["id"], **lie) == "autre-hote":
+                return {"ok": True, "reussi": False, "motif": "cle-autre-hote", "hote": lie["hote"]}
+            cle = self._coffre.lire(entree["id"], **lie)
+        return {"ok": True, **self._tester(entree, cle)}
 
     def modeles(self) -> dict[str, Any]:
         from slmsp.app.modele_actif import resoudre_modele_actif
@@ -188,6 +344,7 @@ class PontReglages:
             "ok": True,
             "application": {"version": self._version(), "empreinte": self._empreinte()},
             "modele": self._modele(),
+            "modele_externe": dict(self._externe_en_cours) if self._externe_en_cours else None,
             "index": self._index(),
             "liste_blanche": self._liste_blanche(),
             "licences": self._licences(),

@@ -41,6 +41,16 @@ PONT_SIMULE = """
       }
       if (nom === 'reglages.lire') return { ok: true, reglages: { taille_texte: 100 } };
       if (nom === 'reglages.a_propos') return window.__apropos;
+      if (nom === 'reglages.fournisseurs_externes') return { ok: true, max: 3, en_cours: null, fournisseurs: [], presets: [
+        { nom: 'openrouter', libelle: 'OpenRouter', url_base: 'https://openrouter.ai/api/v1', modeles: ['qwen/qwen3.6-27b'], parametres_libres: false },
+        { nom: 'mistral', libelle: 'Mistral AI', url_base: 'https://api.mistral.ai/v1', modeles: ['mistral-small-latest'], parametres_libres: false },
+        { nom: 'generique', libelle: 'Autre', url_base: null, modeles: [], parametres_libres: true },
+      ] };
+      if (nom === 'reglages.ecrire' && args[0] === 'fournisseurs_externes') {
+        return { ok: true, fournisseurs: args[1].map((e) => ({ ...e, cle_enregistree: false })) };
+      }
+      if (nom === 'reglages.enregistrer_cle') return { ok: true, cle_enregistree: true };
+      if (nom === 'reglages.tester_modele_externe') return { ok: true, reussi: false, motif: 'http-401', hote: 'h.example' };
       if (nom === 'reglages.modeles') return { ok: true, actif: 'm-1', choisi: 'm-1', modeles: [{ slug: 'm-1', nom: 'm-1' }, { slug: 'm-2', nom: 'm-2' }] };
       return { ok: true };
     },
@@ -221,3 +231,63 @@ def test_effacer_historique_annule_ne_vide_rien(page) -> None:
     page.wait_for_timeout(5500)
     assert _appels(page, "reglages.effacer_historique") == []
     assert page.locator("#parametres-effacer").is_enabled()
+
+
+def test_fournisseurs_externes_liste_ordonnee_cle_et_test(page) -> None:
+    """Story 17.4 (amendement 14) : ajouter, preset qui préremplit, ordre, clé, test."""
+    _ouvrir(page)
+    page.get_by_text("Le texte de vos demandes est envoyé à ces hôtes").wait_for()
+    ajouter = page.locator("#parametres-externe-ajouter")
+    ajouter.click()
+    premier = page.locator(".parametres-fournisseur").nth(0)
+    assert premier.locator("input[type=url]").input_value() == "https://openrouter.ai/api/v1"
+    premier.locator("select").select_option("mistral")
+    assert premier.locator("input[type=url]").input_value() == "https://api.mistral.ai/v1"
+    assert premier.locator("input[list]").input_value() == "mistral-small-latest"
+    premier.locator("input[type=checkbox]").check()
+    ajouter.click()
+    ajouter.click()
+    assert ajouter.is_disabled()  # 3 au plus
+    page.locator(".parametres-fournisseur").nth(2).get_by_role("button", name="Retirer").click()
+    page.locator(".parametres-fournisseur").nth(0).get_by_role("button", name="Descendre").click()
+    page.click("#parametres-externe-enregistrer")
+    page.wait_for_function(
+        "() => window.__appels.some(a => a[0] === 'reglages.ecrire' && a[1] === 'fournisseurs_externes')"
+    )
+    liste = [a for a in _appels(page, "reglages.ecrire") if a[1] == "fournisseurs_externes"][0][2]
+    assert [e["preset"] for e in liste] == ["openrouter", "mistral"]
+    assert [e["actif"] for e in liste] == [False, True]
+    assert "prochain démarrage" in page.locator("#parametres-externe-etat").inner_text()
+
+    second = page.locator(".parametres-fournisseur").nth(1)
+    second.locator("input[type=password]").fill("<cle-factice>")
+    second.get_by_role("button", name="Tester la connexion").click()
+    second.get_by_text("Échec de la connexion (http-401).").wait_for()
+    test = _appels(page, "reglages.tester_modele_externe")[0][1]
+    assert test["preset"] == "mistral" and test["cle"] == "<cle-factice>"
+    second.get_by_role("button", name="Enregistrer la clé").click()
+    second.get_by_text("Clé enregistrée : oui").wait_for()
+    assert second.locator("input[type=password]").input_value() == ""
+    appel = _appels(page, "reglages.enregistrer_cle")[0]
+    assert appel[1:3] == [liste[1]["id"], "<cle-factice>"]
+    # revue 17.4 : la clé est liée à l'hôte et au preset de l'entrée
+    assert appel[3]["preset"] == "mistral" and appel[3]["url_base"] == "https://api.mistral.ai/v1"
+
+
+def test_cle_saisie_conservee_au_deplacement(page) -> None:
+    """Revue 17.4 : une clé saisie non enregistrée survit au redessin (déplacement, retrait)."""
+    _ouvrir(page)
+    page.get_by_text("Le texte de vos demandes est envoyé à ces hôtes").wait_for()
+    ajouter = page.locator("#parametres-externe-ajouter")
+    for _ in range(3):
+        ajouter.click()
+    entrees = page.locator(".parametres-fournisseur")
+    entrees.nth(0).locator("input[type=password]").fill("<cle-factice-1>")
+    entrees.nth(1).locator("input[type=password]").fill("<cle-factice-2>")
+    entrees.nth(0).get_by_role("button", name="Descendre").click()
+    assert entrees.nth(0).locator("input[type=password]").input_value() == "<cle-factice-2>"
+    assert entrees.nth(1).locator("input[type=password]").input_value() == "<cle-factice-1>"
+    entrees.nth(0).get_by_role("button", name="Retirer").click()
+    assert entrees.count() == 2
+    assert entrees.nth(0).locator("input[type=password]").input_value() == "<cle-factice-1>"
+    assert entrees.nth(1).locator("input[type=password]").input_value() == ""

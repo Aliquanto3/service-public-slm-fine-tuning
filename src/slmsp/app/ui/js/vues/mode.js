@@ -23,6 +23,17 @@ function el(nom, attributs = {}, texte) {
   return e;
 }
 
+/**
+ * Fournisseur externe de tête et secours (story 17.4), ou "" si aucun n'est actif.
+ * @param {object} etat État poussé par le pont (`modele_externe`, `secours_externes`).
+ */
+export function libelleExterne(etat) {
+  if (!etat?.modele_externe) return "";
+  const n = Number(etat.secours_externes) || 0;
+  const secours = n === 0 ? "" : n === 1 ? " (+1 en secours)" : ` (+${n} en secours)`;
+  return `Modèle externe : ${etat.modele_externe}${secours}`;
+}
+
 /** Libellé de la pastille selon l'état poussé par le pont. */
 export function libelle(etat) {
   if (etat.force) return LIBELLES.force;
@@ -62,6 +73,7 @@ export function monter(conteneur, pont, contexte = {}) {
   const menu = el("div", { id: "mode-menu", class: "mode-menu", role: "menu", hidden: "" });
   menu.setAttribute("aria-label", "Mode de connexion");
   const statut = el("p", { class: "mode-statut", role: "none" });
+  const externe = el("p", { class: "mode-statut mode-externe", role: "none", hidden: "" });
   const basculer = el(
     "button",
     { type: "button", role: "menuitemcheckbox", "aria-checked": "false", class: "mode-element" },
@@ -72,7 +84,7 @@ export function monter(conteneur, pont, contexte = {}) {
     { type: "button", role: "menuitem", class: "mode-element" },
     "Journal des requêtes sortantes",
   );
-  menu.append(statut, basculer, voirJournal);
+  menu.append(statut, externe, basculer, voirJournal);
 
   const dialogue = el("dialog", { class: "mode-journal", "aria-labelledby": "mode-journal-titre" });
   const tete = el("div", { class: "dialogue-tete" });
@@ -96,6 +108,11 @@ export function monter(conteneur, pont, contexte = {}) {
     racine.dataset.mode = !connu ? "inconnu" : etat.force ? "force" : etat.hors_ligne ? "hors-ligne" : "connecte";
     statut.textContent = connu ? `Mode actuel : ${libelle(etat)}` : "Mode en cours de lecture…";
     basculer.setAttribute("aria-checked", String(Boolean(etat.force)));
+    const texteExterne = libelleExterne(etat);
+    externe.textContent = texteExterne;
+    externe.hidden = !texteExterne;
+    if (texteExterne) pastille.title = texteExterne;
+    else pastille.removeAttribute("title");
   }
 
   /** Applique un état venu du pont ; une seule annonce, et seulement s'il a changé. */
@@ -103,7 +120,12 @@ export function monter(conteneur, pont, contexte = {}) {
     if (!nouveau || typeof nouveau.hors_ligne !== "boolean") return;
     const avant = { ...etat };
     const etaitConnu = connu;
-    etat = { hors_ligne: nouveau.hors_ligne, force: Boolean(nouveau.force) };
+    etat = {
+      hors_ligne: nouveau.hors_ligne,
+      force: Boolean(nouveau.force),
+      modele_externe: nouveau.modele_externe ?? null,
+      secours_externes: nouveau.secours_externes ?? 0,
+    };
     connu = true;
     afficher();
     const change = !etaitConnu || avant.hors_ligne !== etat.hors_ligne || avant.force !== etat.force;

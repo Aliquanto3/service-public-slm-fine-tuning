@@ -251,9 +251,275 @@ export function monter(conteneur, pont, contexte = {}) {
   });
   chargerModeles();
 
+  // Fournisseurs externes (story 17.4, amendement 14) : liste ordonnée (ordre d'essai), 3 au
+  // plus ; chaque entrée a son preset (qui préremplit URL et modèle), sa clé masquée (jamais
+  // relue : seul « clé enregistrée : oui/non » revient du pont) et son test de connexion.
+  // Enregistrée par « Enregistrer les fournisseurs » ; appliquée au démarrage suivant.
+  const RAPPEL_EXTERNE =
+    "Le texte de vos demandes est envoyé à ces hôtes ; l'Index et l'historique restent sur le poste.";
+  const blocExterne = el("div", { class: "parametres-externes" });
+  const listeExterne = el("ol", { class: "parametres-fournisseurs", "aria-label": "Fournisseurs externes, dans l'ordre d'essai" });
+  const ajouterExterne = el("button", { type: "button", class: "bouton-secondaire", id: "parametres-externe-ajouter" }, "Ajouter un fournisseur");
+  const enregistrerExterne = el("button", { type: "button", class: "bouton-secondaire", id: "parametres-externe-enregistrer" }, "Enregistrer les fournisseurs");
+  const etatExterne = el("p", { class: "parametres-aide", id: "parametres-externe-etat", role: "status" });
+  const rangExterne = el("div", { class: "parametres-rang" });
+  rangExterne.append(ajouterExterne, enregistrerExterne);
+  blocExterne.append(
+    el("p", { class: "parametres-aide" }, RAPPEL_EXTERNE),
+    el("p", { class: "parametres-aide" }, "Ils sont essayés dans l'ordre, puis le modèle local. " + MESSAGE_MODELE),
+    listeExterne,
+    rangExterne,
+    etatExterne,
+  );
+  const sectionExterne = section("Fournisseurs externes (expérimental)", blocExterne);
+  let presets = [];
+  let maxExterne = 3;
+  let entrees = [];
+
+  function presetDe(nom) {
+    return presets.find((p) => p.nom === nom) ?? presets[presets.length - 1];
+  }
+  function nouvelId() {
+    return `f${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+  }
+  function libelleEntree(i) {
+    return `Fournisseur ${i + 1}`;
+  }
+
+  function rendreExternes() {
+    listeExterne.replaceChildren(
+      ...entrees.map((entree, i) => {
+        const pref = `parametres-externe-${entree.id}`;
+        const li = el("li", { class: "parametres-fournisseur", "data-id": entree.id });
+        const titre = el("h4", { id: `${pref}-titre` }, libelleEntree(i));
+        li.setAttribute("aria-labelledby", `${pref}-titre`);
+
+        const actif = el("input", { type: "checkbox", id: `${pref}-actif` });
+        actif.checked = Boolean(entree.actif);
+        actif.addEventListener("change", () => (entree.actif = actif.checked));
+        const rangActif = el("div", { class: "parametres-rang" });
+        rangActif.append(actif, el("label", { for: `${pref}-actif` }, "Activer"));
+
+        const choixPreset = el("select", { id: `${pref}-preset` });
+        choixPreset.replaceChildren(...presets.map((p) => el("option", { value: p.nom }, p.libelle)));
+        choixPreset.value = entree.preset;
+        const url = el("input", { type: "url", id: `${pref}-url`, inputmode: "url", spellcheck: "false" });
+        url.value = entree.url_base ?? "";
+        const listeModeles = el("datalist", { id: `${pref}-modeles` });
+        const modele = el("input", { type: "text", id: `${pref}-modele`, list: `${pref}-modeles`, spellcheck: "false" });
+        modele.value = entree.modele ?? "";
+        function proposerModeles() {
+          listeModeles.replaceChildren(...presetDe(choixPreset.value).modeles.map((m) => el("option", { value: m })));
+        }
+        proposerModeles();
+        const parametres = el("textarea", { id: `${pref}-parametres`, rows: "2", spellcheck: "false" });
+        // Saisie non enregistrée conservée quand la liste est redessinée (déplacement, retrait).
+        parametres.value =
+          entree._parametres ??
+          (Object.keys(entree.parametres_supplementaires ?? {}).length
+            ? JSON.stringify(entree.parametres_supplementaires)
+            : "");
+        const rangParametres = el("div", { class: "parametres-champ" });
+        rangParametres.append(el("label", { for: `${pref}-parametres` }, "Paramètres supplémentaires (JSON)"), parametres);
+        rangParametres.hidden = !presetDe(choixPreset.value).parametres_libres;
+
+        choixPreset.addEventListener("change", () => {
+          const p = presetDe(choixPreset.value);
+          entree.preset = p.nom;
+          url.value = p.url_base ?? "";
+          modele.value = p.modeles[0] ?? "";
+          entree.url_base = url.value;
+          entree.modele = modele.value;
+          proposerModeles();
+          rangParametres.hidden = !p.parametres_libres;
+          if (!p.parametres_libres) {
+            // Paramètres libres : preset générique seulement (refusés sinon par le pont).
+            parametres.value = "";
+            entree._parametres = "";
+          }
+        });
+        url.addEventListener("input", () => (entree.url_base = url.value.trim()));
+        modele.addEventListener("input", () => (entree.modele = modele.value.trim()));
+        parametres.addEventListener("input", () => (entree._parametres = parametres.value));
+
+        const champ = (libelle, controle, id) => {
+          const bloc = el("div", { class: "parametres-champ" });
+          bloc.append(el("label", { for: id }, libelle), controle);
+          return bloc;
+        };
+
+        const cle = el("input", { type: "password", id: `${pref}-cle`, autocomplete: "off", spellcheck: "false" });
+        // Clé saisie non enregistrée : gardée en mémoire de la page seulement (jamais envoyée
+        // sans action), pour survivre au redessin de la liste.
+        cle.value = entree._cle ?? "";
+        cle.addEventListener("input", () => (entree._cle = cle.value));
+        const etatCle = el("span", { class: "parametres-aide", id: `${pref}-cle-etat` }, `Clé enregistrée : ${entree.cle_enregistree ? "oui" : "non"}`);
+        cle.setAttribute("aria-describedby", `${pref}-cle-etat`);
+        const enregistrerCle = el("button", { type: "button", class: "bouton-secondaire" }, "Enregistrer la clé");
+        const effacerCle = el("button", { type: "button", class: "bouton-secondaire" }, "Effacer la clé");
+        const majCle = (r) => {
+          entree.cle_enregistree = Boolean(r.cle_enregistree);
+          etatCle.textContent = `Clé enregistrée : ${entree.cle_enregistree ? "oui" : "non"}`;
+        };
+        enregistrerCle.addEventListener("click", async () => {
+          try {
+            // Valeurs de l'entrée : la clé est liée à son hôte et à son preset.
+            const r = await pont.appeler("reglages.enregistrer_cle", entree.id, cle.value, valeursEntree(entree));
+            if (!r || r.ok === false) throw new Error(r?.erreur?.message ?? "refus");
+            cle.value = "";
+            entree._cle = "";
+            majCle(r);
+            annoncer("Clé enregistrée.");
+          } catch {
+            annoncer("La clé n'a pas pu être enregistrée.");
+            etatCle.textContent = "La clé n'a pas pu être enregistrée.";
+          }
+        });
+        effacerCle.addEventListener("click", async () => {
+          try {
+            const r = await pont.appeler("reglages.effacer_cle", entree.id);
+            if (!r || r.ok === false) throw new Error("refus");
+            majCle(r);
+            annoncer("Clé effacée.");
+          } catch {
+            annoncer("La clé n'a pas pu être effacée.");
+          }
+        });
+        const rangCle = el("div", { class: "parametres-rang" });
+        rangCle.append(enregistrerCle, effacerCle, etatCle);
+
+        const tester = el("button", { type: "button", class: "bouton-secondaire" }, "Tester la connexion");
+        const resultat = el("output", { class: "parametres-aide", id: `${pref}-test`, "aria-live": "polite" });
+        tester.addEventListener("click", async () => {
+          resultat.textContent = "Test en cours…";
+          tester.disabled = true;
+          try {
+            const valeurs = valeursEntree(entree);
+            if (cle.value) valeurs.cle = cle.value;
+            const r = await pont.appeler("reglages.tester_modele_externe", valeurs);
+            if (!r || r.ok === false) throw new Error(r?.erreur?.message ?? "Test impossible.");
+            resultat.textContent = r.reussi
+              ? `Connexion réussie (${r.latence_ms} ms).`
+              : `Échec de la connexion (${r.motif}).`;
+          } catch (e) {
+            if (e instanceof SyntaxError) resultat.textContent = "Paramètres supplémentaires : JSON invalide.";
+            else resultat.textContent = e instanceof Error && e.message !== "refus" ? e.message : "Test impossible.";
+          } finally {
+            tester.disabled = false;
+          }
+        });
+        const rangTest = el("div", { class: "parametres-rang" });
+        rangTest.append(tester, resultat);
+
+        const monter_ = el("button", { type: "button", class: "bouton-secondaire", "aria-label": `Monter le ${libelleEntree(i).toLowerCase()}` }, "Monter");
+        const descendre = el("button", { type: "button", class: "bouton-secondaire", "aria-label": `Descendre le ${libelleEntree(i).toLowerCase()}` }, "Descendre");
+        const retirer = el("button", { type: "button", class: "bouton-secondaire", "aria-label": `Retirer le ${libelleEntree(i).toLowerCase()}` }, "Retirer");
+        monter_.disabled = i === 0;
+        descendre.disabled = i === entrees.length - 1;
+        const deplacer = (j) => {
+          [entrees[i], entrees[j]] = [entrees[j], entrees[i]];
+          rendreExternes();
+          listeExterne.children[j]?.querySelector("h4")?.focus?.();
+          annoncer(`${libelleEntree(j)} : ${presetDe(entrees[j].preset).libelle}`);
+        };
+        monter_.addEventListener("click", () => deplacer(i - 1));
+        descendre.addEventListener("click", () => deplacer(i + 1));
+        retirer.addEventListener("click", () => {
+          entrees.splice(i, 1);
+          rendreExternes();
+          annoncer("Fournisseur retiré. Enregistrez pour confirmer.");
+          ajouterExterne.focus();
+        });
+        const rangOrdre = el("div", { class: "parametres-rang" });
+        rangOrdre.append(monter_, descendre, retirer);
+
+        titre.tabIndex = -1;
+        li.append(
+          titre,
+          rangActif,
+          champ("Fournisseur", choixPreset, `${pref}-preset`),
+          champ("URL de base", url, `${pref}-url`),
+          champ("Modèle", modele, `${pref}-modele`),
+          listeModeles,
+          rangParametres,
+          champ("Clé d'accès", cle, `${pref}-cle`),
+          rangCle,
+          rangTest,
+          rangOrdre,
+        );
+        return li;
+      }),
+    );
+    ajouterExterne.disabled = entrees.length >= maxExterne;
+  }
+
+  function valeursEntree(entree) {
+    const valeurs = {
+      id: entree.id,
+      preset: entree.preset,
+      url_base: entree.url_base ?? "",
+      modele: entree.modele ?? "",
+      actif: Boolean(entree.actif),
+    };
+    const texte = (entree._parametres ?? "").trim();
+    if (entree._parametres === undefined) valeurs.parametres_supplementaires = entree.parametres_supplementaires ?? {};
+    else if (texte) valeurs.parametres_supplementaires = JSON.parse(texte);
+    else valeurs.parametres_supplementaires = {};
+    return valeurs;
+  }
+
+  ajouterExterne.addEventListener("click", () => {
+    if (entrees.length >= maxExterne || presets.length === 0) return;
+    const p = presets[0];
+    entrees.push({ id: nouvelId(), preset: p.nom, url_base: p.url_base ?? "", modele: p.modeles[0] ?? "", actif: false, parametres_supplementaires: {}, cle_enregistree: false });
+    rendreExternes();
+    listeExterne.lastElementChild?.querySelector("select")?.focus();
+  });
+
+  enregistrerExterne.addEventListener("click", async () => {
+    let valeurs;
+    try {
+      valeurs = entrees.map(valeursEntree);
+    } catch {
+      etatExterne.textContent = "Paramètres supplémentaires : JSON invalide.";
+      annoncer(etatExterne.textContent);
+      return;
+    }
+    try {
+      const r = await pont.appeler("reglages.ecrire", "fournisseurs_externes", valeurs);
+      if (!r || r.ok === false) throw new Error(r?.erreur?.message ?? "refus");
+      const saisies = new Map(entrees.map((e) => [e.id, e._cle]));
+      entrees = (r.fournisseurs ?? entrees).map((e) => ({ ...e, _cle: saisies.get(e.id) }));
+      rendreExternes();
+      etatExterne.textContent = `Fournisseurs enregistrés. ${MESSAGE_MODELE}`;
+    } catch (e) {
+      etatExterne.textContent = e instanceof Error && e.message !== "refus" ? e.message : "Les fournisseurs n'ont pas pu être enregistrés.";
+    }
+    annoncer(etatExterne.textContent);
+  });
+
+  async function chargerExternes() {
+    try {
+      const r = await pont.appeler("reglages.fournisseurs_externes");
+      if (!r || r.ok === false || !Array.isArray(r.fournisseurs)) throw new Error("refus");
+      presets = Array.isArray(r.presets) ? r.presets : [];
+      maxExterne = r.max ?? 3;
+      entrees = r.fournisseurs;
+      rendreExternes();
+      if (r.en_cours) {
+        const n = r.en_cours.secours ?? 0;
+        etatExterne.textContent = `En service depuis le démarrage : ${r.en_cours.tete}${n ? ` (+${n} en secours)` : ""}.`;
+      }
+    } catch {
+      sectionExterne.hidden = true;
+    }
+  }
+  chargerExternes();
+
   general.append(
     section("Taille du texte", rangTaille, aideTaille),
     section("Modèle", rangModele, aideModele),
+    sectionExterne,
     section("Connexion", rangHL, aideHL),
     section("Historique", effacer, confirmation, aideEff),
   );
@@ -283,6 +549,15 @@ export function monter(conteneur, pont, contexte = {}) {
           ligne("Application", app.version),
           ligne("Empreinte de l'application (SHA-256)", app.empreinte),
           ligne("Modèle embarqué", modele?.slug),
+          ...(r.modele_externe
+            ? [
+                ligne(
+                  "Modèle externe",
+                  `${r.modele_externe.tete} (${r.modele_externe.hote})` +
+                    (r.modele_externe.secours ? `, +${r.modele_externe.secours} en secours` : ""),
+                ),
+              ]
+            : []),
           ligne("Empreinte attendue du modèle (SHA-256)", modele?.sha256_attendu),
           ligne("Index", index?.version),
           ligne("Date de l'Index", index ? formaterDate(index.date_snapshot) : null),
