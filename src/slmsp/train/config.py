@@ -96,6 +96,11 @@ class HyperParametres(ModeleConfig):
     """Un checkpoint tous les `pas_sauvegarde` pas (jamais de `save_total_limit`)."""
     orpo_beta: float = Field(default=0.1, gt=0)
     """Poids du terme de préférence d'ORPO (ignoré par les autres méthodes)."""
+    kl_base: float = Field(default=0.0, ge=0)
+    """Poids de KL(élève ‖ base) ajouté à l'entropie croisée (story 16.6a, `train.kl_base`) ;
+    0 : chemin SFT inchangé. QLoRA seulement."""
+    kl_temperature: float = Field(default=1.0, gt=0)
+    """Température des deux distributions du terme KL (sans effet si `kl_base` = 0)."""
 
 
 class RunConfig(ModeleConfig):
@@ -130,6 +135,12 @@ class RunConfig(ModeleConfig):
             raise ValueError("sft_run_id n'est permis qu'avec methode = orpo")
         if self.methode == "qlora-unsloth" and self.precision_base != PRECISION_BASE_DEFAUT:
             raise ValueError("precision_base ne s'applique pas à qlora-unsloth (pile Unsloth)")
+        if self.hyperparametres.kl_base > 0 and self.methode != "qlora":
+            raise ValueError(
+                f"kl_base > 0 n'est permis qu'avec methode = qlora (reçu : {self.methode}) : "
+                "la régularisation KL vers la base n'existe ni dans Unsloth, ni dans ORPO, ni "
+                "dans les autres méthodes"
+            )
         if self.repli_torch and self.longueur_max > LONGUEUR_MAX_REPLI_TORCH:
             raise ValueError(
                 f"repli_torch = true exige longueur_max <= {LONGUEUR_MAX_REPLI_TORCH} "

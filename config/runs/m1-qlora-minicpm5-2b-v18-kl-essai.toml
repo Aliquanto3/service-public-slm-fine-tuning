@@ -1,0 +1,27 @@
+# Essai de 5 pas de la régularisation KL vers la base (story 16.6a) : mesure du surcoût en temps
+# et en VRAM et du rapport KL / entropie croisée en début d'entraînement (choix de kl_base pour
+# T6 de 16.6). Campagne à part : ce run n'entre pas dans le comparatif de minicpm5-2b-v18.
+# Mêmes réglages que m1-qlora-minicpm5-2b-v18.toml, plus pas_max = 5, kl_base et kl_temperature.
+
+campagne = "minicpm5-2b-v18-kl-essai"
+modele = "minicpm5-2b"
+methode = "qlora"
+jeu_version = "v18"
+graine = 1234
+longueur_max = 8192
+precision_base = "bf16"
+
+[hyperparametres]
+lora_rang = 16
+lora_alpha = 32
+lora_dropout = 0.0
+taux_apprentissage = 2e-4
+epoques = 1.0
+pas_max = 5
+taille_lot = 1
+accumulation = 8
+planificateur = "cosine"
+echauffement_ratio = 0.03
+pas_sauvegarde = 100
+kl_base = 0.1
+kl_temperature = 1.0

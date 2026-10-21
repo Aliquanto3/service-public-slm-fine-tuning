@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any, Final, Literal
 
 from slmsp.core.erreurs import ConfigurationInvalide
+from slmsp.train import kl_base
 from slmsp.train.config import RunConfig
 from slmsp.train.couts import ARGUMENTS_TRAINER
 from slmsp.train.environnement import (
@@ -275,12 +276,21 @@ def creer_entraineur(
     collateur: Any,
     arguments: Mapping[str, Any],
     callbacks: Sequence[Any] = (),
+    kl: float = 0.0,
+    kl_temperature: float = 1.0,
+    journal: kl_base.Journal | None = None,
 ) -> Any:
     """`SFTTrainer` (jeu pré-tokenisé, collateur du masque) ou `ORPOTrainer`.
 
     ORPO reçoit des paires `{prompt, chosen, rejected}` déjà rendues en texte
     (`chargement.preparer_preferences`) et garde son collateur de paires (`collateur` ignoré).
+    `kl` > 0 (QLoRA seulement) : `SFTTrainer` avec le terme KL vers la base (`train.kl_base`),
+    pertes journalisées par `journal` ; `kl` = 0 : `SFTTrainer` tel quel.
     """
+    if kl > 0 and plan.methode != "qlora":
+        raise ConfigurationInvalide(
+            f"kl_base > 0 n'est permis qu'avec methode = qlora (reçu : {plan.methode})"
+        )
     if plan.entraineur == "orpo":
         orpo = importlib.import_module("trl.experimental.orpo")
         return orpo.ORPOTrainer(
@@ -290,7 +300,7 @@ def creer_entraineur(
             processing_class=tokenizer,
             callbacks=list(callbacks),
         )
-    return pile.trl.SFTTrainer(
+    communs: dict[str, Any] = dict(
         model=modele,
         args=pile.trl.SFTConfig(**arguments),
         train_dataset=jeu,
@@ -298,3 +308,7 @@ def creer_entraineur(
         processing_class=tokenizer,
         callbacks=list(callbacks),
     )
+    if kl > 0:
+        classe = kl_base.classe_entraineur_kl(pile.trl.SFTTrainer, pile.torch)
+        return classe(**communs, kl_base=kl, kl_temperature=kl_temperature, journal=journal)
+    return pile.trl.SFTTrainer(**communs)

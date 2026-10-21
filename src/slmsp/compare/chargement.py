@@ -83,6 +83,8 @@ class Entrainement:
     methode: str | None
     couts: Couts | None
     evaluations: tuple[EvaluationIntermediaire, ...]
+    kl_base: tuple[float, float] | None = None
+    """(`kl_base`, `kl_temperature`) d'un run régularisé vers la base (16.6a) ; sinon `None`."""
 
 
 @dataclass(frozen=True)
@@ -196,6 +198,15 @@ def _methode(config: dict[str, Any]) -> str | None:
     return str(methode) if methode is not None else None
 
 
+def _kl_base(config: dict[str, Any]) -> tuple[float, float] | None:
+    """`kl_base` et `kl_temperature` du TOML résolu ; `None` sans KL vers la base."""
+    toml = config.get("toml")
+    hp = toml.get("hyperparametres") if isinstance(toml, dict) else None
+    if not isinstance(hp, dict) or not hp.get("kl_base"):
+        return None
+    return float(hp["kl_base"]), float(hp.get("kl_temperature", 1.0))
+
+
 def _resolution(entrainements: dict[str, Run], exports: list[Run]) -> dict[str, str]:
     """Identifiant X d'un `ft:<X>` → run d'entraînement (X est le run ou son export)."""
     table = {run_id: run_id for run_id in entrainements}
@@ -268,6 +279,7 @@ def charger(racine: Path, campagne: str, *, jeu: str | None = None) -> Donnees:
             methode=_methode(run.manifeste.config),
             couts=_couts(run.dossier),
             evaluations=_evaluations(run.dossier),
+            kl_base=_kl_base(run.manifeste.config),
         )
         for run_id, run in sorted(complets.items())
     }

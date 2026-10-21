@@ -49,7 +49,7 @@ from slmsp.train.config import (
     charger_config_couts,
     charger_run_config,
 )
-from slmsp.train.couts import creer_callback, ecrire_mesures
+from slmsp.train.couts import NOM_METRIQUES, creer_callback, ecrire_mesures
 from slmsp.train.masque import VERSION_MASQUE, empreinte_decoupage
 
 TYPE_RUN: Final = "train"
@@ -247,13 +247,18 @@ def _charger_tokenizer(pile: environnement.Pile, dossier: Path) -> Any:
 
 
 def _toml_resolu(config: RunConfig) -> dict[str, Any]:
-    """TOML résolu de `run.json` ; `precision_base` et `repli_torch` absentes au défaut
-    (reprise des runs d'avant)."""
+    """TOML résolu de `run.json` ; `precision_base`, `repli_torch`, `kl_base` et
+    `kl_temperature` absentes au défaut (reprise des runs d'avant)."""
     toml = config.model_dump(mode="json")
     if toml.get("precision_base") == PRECISION_BASE_DEFAUT:
         del toml["precision_base"]
     if not toml.get("repli_torch"):
         toml.pop("repli_torch", None)
+    hp = toml.get("hyperparametres", {})
+    if not hp.get("kl_base"):  # sans KL vers la base (16.6a) : config des runs d'avant
+        hp.pop("kl_base", None)
+        if hp.get("kl_temperature") == 1.0:
+            hp.pop("kl_temperature", None)
     return toml
 
 
@@ -616,6 +621,9 @@ def _entrainer(
         collateur=collateur,
         arguments=arguments,
         callbacks=[callback],
+        kl=config.hyperparametres.kl_base,
+        kl_temperature=config.hyperparametres.kl_temperature,
+        journal=lambda ligne: run.ajouter_jsonl(NOM_METRIQUES, dict(ligne)),
     )
     if controle_noyaux is not None:
         run.ajouter_jsonl(

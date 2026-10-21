@@ -300,3 +300,20 @@ def test_notation_distante_exclue_avec_motif(campagne_complete: Path) -> None:
         (e.type, e.run_id, e.motif) for e in donnees.exclus
     }
     assert all(ref != "distant:qwen3.6-27b" for ref, _ in donnees.baselines)
+
+
+def test_kl_vers_la_base_affichee(campagne_complete: Path) -> None:
+    """Story 16.6a : poids et température du terme KL à côté de la méthode ; rien sinon."""
+    identifiant = run_id("20261001-150000", "m1-kl", "5555")
+    config = {
+        "campagne": "camp-test",
+        "toml": {
+            "methode": "qlora",
+            "hyperparametres": {"kl_base": 0.25, "kl_temperature": 1.0},
+        },
+        "plan": {"methode": "qlora"},
+    }
+    ecrire_run(campagne_complete, "train", identifiant, config=config, modele_ref="base:granite")
+    rendu = _rendu(campagne_complete)
+    assert f"(qlora, KL base 0.25, T 1, run {identifiant})" in rendu
+    assert f"(qlora, run {M1})" in rendu

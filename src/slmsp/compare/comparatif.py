@@ -123,6 +123,9 @@ def _methodes(donnees: Donnees) -> list[Entrainement]:
 
 def _nom(entrainement: Entrainement) -> str:
     methode = entrainement.methode or "?"
+    if entrainement.kl_base is not None:  # story 16.6a : poids et température du terme KL
+        poids, temperature = entrainement.kl_base
+        methode = f"{methode}, KL base {poids:g}, T {temperature:g}"
     return f"{_label(entrainement)} ({methode}, run {entrainement.run_id})"
 
 
