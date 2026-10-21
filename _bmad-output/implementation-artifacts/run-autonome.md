@@ -58,3 +58,9 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-21 11:37 · OVH · essai `distant:qwen3.6-27b-ovh` : HTTP 401 « Your token is not allowed to perform the required actions on any tenant » sur les 2 items, 0 € : clé à vérifier par Anaël · —
 - 2026-10-21 11:37 · 17.6 · dev lancé (Opus) après second avis de la spec (6 high intégrés en amendements) · —
 - 2026-10-21 19:16 · run · décision · journal de la journée séparé du run de nuit (archivé) ; périmètre epic 17 et sprint status mis à jour après un rapport d'avancement trompeur (périmètre resté sur l'epic 15) · —
+- 2026-10-21 19:47 · 17.6 · dev · fini · 8505cfd
+- 2026-10-21 19:47 · 17.6 · second-avis · 2 medium, 3 low · —
+- 2026-10-21 19:47 · 17.6 · review · Opus, corrigé, impact réaligné sur EcoLogits (page relevée le 21/10, valeurs vérifiées à la main) · ef86d61
+- 2026-10-21 19:47 · 17.6 · fusion · squash dans main · f4e58ff
+- 2026-10-21 19:47 · main · décision · test_aucun_innerhtml (commentaire de vues/modeles.js) et test d'imputation OVH corrigés · 1dacc17
+- 2026-10-21 19:47 · 17.4b · dev · lancé (OVH sans clé, demande d'Anaël) · —
