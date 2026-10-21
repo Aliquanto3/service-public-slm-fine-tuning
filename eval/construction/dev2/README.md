@@ -41,6 +41,8 @@ DeepSeek + GLM, consigne 3 : 130 retenus, 26 rejetés, 4 incomplets (LC-615 à L
 
 Détail : `_bmad-output/implementation-artifacts/spec-15-5b-dev2-corrections.md`.
 
+Revérification ciblée : 152 retenus, 3 LC rejetés (615, 616, 619 : grille trop résumée). Corrigés en 15.5c, grille au plus près des articles ; détail : `_bmad-output/implementation-artifacts/spec-15-5c-dev2-lc.md`.
+
 ## Reste à faire (orchestrateur)
 
 Contre-vérification croisée DeepSeek + GLM (`verifier_jeu_croise.py verifier --version dev2 --juges deepseek,glm`, 320 appels), réassemblage, puis gel `relu-llm` (hors story 15.5).
