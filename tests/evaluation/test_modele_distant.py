@@ -801,7 +801,8 @@ def test_budgets_du_depot_imputent_par_fournisseur() -> None:
     imputations = charger_budgets().imputations
     assert imputations["eval-distant"] == "openrouter"
     assert imputations["eval-distant-mistral"].partition(".")[0] == "mistral"
-    assert "eval-distant-ovh" not in imputations
+    # Poste ovh approuvé par Anaël le 2026-10-21 (campagne demo-2026-10-21).
+    assert imputations["eval-distant-ovh"] == "ovh"
     assert MISTRAL_ID in charger_tarifs().modeles
 
 
