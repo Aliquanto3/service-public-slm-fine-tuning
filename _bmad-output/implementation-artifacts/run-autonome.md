@@ -115,3 +115,5 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-21 23:59 · main · suite complète après les fusions de l'epic 16 : **6 528 passés**, 13 ignorés, 0 échec · 97b6ef7
 - 2026-10-21 23:59 · 16.6 · T2 entraîné (`20261021-232323-…-derive-t2-5df9`), export `20261021-235706-lora-minicpm5-2b-b10a` ; T3 en cours · —
 - 2026-10-22 01:22 · 16.6 · T3 (`…-t3-e20f`, export `20261022-003038-lora-minicpm5-2b-6315`), T4 (`…-t4-ff60`, export `20261022-010509-lora-minicpm5-2b-3840`), T5 (`…-t5-f1e8`, demi-époque, export `20261022-012215-lora-minicpm5-2b-2968`) entraînés et exportés sans erreur ; essai KL de 5 pas puis T6 en cours · —
+- 2026-10-22 02:08 · 16.6a · essai réel de 5 pas (`20261022-012336-…-kl-essai-7ab0`) : VRAM max **4,27 Go** (KL par tranches validée), KL moyenne 0,137 pour une entropie croisée de 1,04 → kl_base = 1,9 (la KL part de 0 et croît : régularisation forte en fin d'époque) · —
+- 2026-10-22 02:08 · 16.6 · T6 (KL vers la base, kl_base 1,9) entraîné en 42 min (+24 %) (`…-t6-8807`), export `20261022-020810-lora-minicpm5-2b-8cf5` ; chaîne d'évaluation démarrée · —
