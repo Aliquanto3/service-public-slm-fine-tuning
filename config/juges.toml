@@ -106,3 +106,11 @@ marge_raisonnement = 0
 [jeux.dev1]
 juge_principal = "glm"
 second_juge = false
+
+# Même règle pour dev2 (story 16.7, §16.7 de l'epic 16 validée par Anaël : notation GLM, second
+# juge désactivé). Section ajoutée le 2026-10-22 après deux notations de dev2 faites par erreur
+# avec le juge de test Claude (runs 20261022-053207-minicpm5-2b-d828 et 20261022-054028-lora-
+# minicpm5-2b-bd32, à ne pas utiliser).
+[jeux.dev2]
+juge_principal = "glm"
+second_juge = false
