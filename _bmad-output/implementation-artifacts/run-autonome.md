@@ -122,3 +122,30 @@ Règles de la nuit : aucune release, aucun push hors fusion locale dans main, au
 - 2026-10-22 06:12 · 16.7 · **erreur de l'orchestrateur** : dev2 n'avait pas de section `[jeux.dev2]` dans `config/juges.toml` → deux notations faites avec le juge de test Claude (3,68 € Anthropic, runs `20261022-053207-…-d828` et `20261022-054028-…-bd32`, à écarter) ; section ajoutée (GLM), notations refaites (`20261022-055524-minicpm5-2b-01f1`, `20261022-060230-lora-minicpm5-2b-c0a9`, CO `20261022-061117-lora-minicpm5-2b-d154`) · —
 - 2026-10-22 06:12 · 16.7 · dev2 (GLM) : Baseline 55,6 ; **routage CO confirmé** (composé `20261022-061137-compose-34c1` : CO +12,4 [+5,6 ; +18,7], autres tâches inchangées, Qualité +1,5 [+0,7 ; +2,3]) ; **échelle 0,25 non confirmée** (50,6, −5,0 [−9,5 ; −0,1]) · —
 - 2026-10-22 06:12 · 16.5 · défaut relevé : un run composé n'a pas l'empreinte de la grille (« absente ») → regroupement dev1+dev2 du routage refusé ; à corriger dans `eval composer` (report) · —
+
+## Bilan de la nuit du 21-22/10 (pour Anaël)
+**Livré dans main** (chaque story : développement, second avis, revue, fusion ; suite complète verte, 6 528 tests) : 16.1a (revérification forcée), 16.2 (Q à 8 passages, préfixe dédoublonné, harnais v2), 16.3 (garde-fou anti-boucle ; jeu v21 **bloqué par D1**), 16.4 (composition d'un run routé partiel), 16.5 (comparaison dev1 + dev2 regroupés), 16.6a (régularisation KL vers la base, par tranches), 16.8 (abstention Q, désactivée par défaut), 17.3 (fiche de démonstration `docs/fiche-demonstration-hybride.md`). dev2 gelé (160 items, les 5 items relancés ont été retenus). Qwen3.8-27B mesuré (74,1) et ajouté au comparatif.
+
+**Résultats** (harnais v2, juge GLM ; Baseline dev1 53,0, dev2 55,6) :
+| Configuration | dev1 | écart dev1 (IC95) | dev2 | écart dev2 (IC95) |
+|---|---|---|---|---|
+| T1 taux ÷ 4 | 45,1 | −7,9 [−11,8 ; −2,4] | — | — |
+| T2 taux ÷ 2 | 42,7 | −10,3 [−14,0 ; −5,5] | — | — |
+| T3 rang 4 | 45,7 | −7,4 [−11,3 ; −2,2] | — | — |
+| T4 rang 8, taux ÷ 2 | 44,4 | −8,6 [−12,6 ; −3,6] | — | — |
+| T5 demi-époque | 45,0 | −8,0 [−11,8 ; −3,3] | — | — |
+| T6 KL vers la base (1,9) | 53,3 | +0,3 [−3,4 ; +4,4] | — | — |
+| LoRA v18 à 0,25 | 55,4 | +2,4 [−1,5 ; +7,1] | 50,6 | −5,0 [−9,5 ; −0,1] |
+| **Routage CO** | 54,1 | +1,1 [+0,5 ; +1,8] ; CO +9,1 [+4,0 ; +14,6] | **57,1** | **+1,5 [+0,7 ; +2,3] ; CO +12,4 [+5,6 ; +18,7]** |
+
+Lecture : réduire le taux, le rang ou les pas ne corrige pas la dérive (CR, LC, RE perdent toujours) ; la KL vers la base la supprime mais efface aussi le gain CO ; l'échelle 0,25 n'est pas confirmée sur dev2 ; **le routage CO est confirmé sur dev2** (règle écrite avant calcul). Q : la Baseline v2 fait 5 sur dev1 (15 avec le harnais v1) et 20 sur dev2 : le passage à 8 passages ne montre pas de gain mesurable (20 items, bruit large).
+
+**Décisions qui t'attendent** :
+1. Jeu v21 (alignement CT) : fournir une formulation d'une ligne contenant `{libelles}` et son origine non-Claude, puis l'inscrire dans `[alignement_ct] origines_admises` de `config/donnees.toml`.
+2. Textes fixes de l'abstention Q (`config/prompts/q-abstention.toml`) à relire avant de l'activer et de la mesurer.
+3. Suite de l'épistémologie : le fine-tuning général dérive quel que soit le réglage ; garder le routage CO (déjà retenu) et décider s'il faut poursuivre l'entraînement (complément de données CR ? autre méthode ?) ou s'arrêter là pour le pilote.
+4. Fiche de démonstration à relire.
+
+**Erreurs de l'orchestrateur cette nuit** : (a) script d'évaluation sans `--quantification` (générations LoRA relancées, ~40 min perdues) ; (b) dev2 noté par erreur avec le juge de test Claude, faute de section `[jeux.dev2]` (3,68 € Anthropic, runs écartés, notations refaites avec GLM, section ajoutée) ; (c) le PC s'est mis en veille de 19 h 53 à 22 h 03 faute de bloqueur de veille (corrigé).
+**Dépenses de la campagne demo-2026-10-21** : OpenRouter 3,23 € (plafond 14,22), Anthropic 3,68 € (plafond 50, erreur ci-dessus), Mistral 0,00 €, OVH 0 €.
+**Reports** : empreinte de grille absente d'un run composé (bloque le regroupement du routage) ; mesures CPU des Qwen3.5 locaux ; worktrees de la nuit à supprimer (`git worktree prune` puis suppression, fichiers verrouillés sous Windows) ; un `.venv` vide dans `slmsp-wt/16-6a-kl-base`.

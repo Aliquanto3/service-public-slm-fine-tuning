@@ -182,13 +182,13 @@ development_status:
   16-4-eval-composer-route-partiel: done
   16-5-eval-comparer-jeux-regroupes: done
   16-6a-regularisation-kl-vers-la-base: done
-  16-6-essais-contre-la-derive: in-progress  # entraînements autorisés par Anaël le 21/10 au soir ; sur v18
-  16-7-confirmation-dev1-dev2: backlog
-  16-8-q-abstention: review
+  16-6-essais-contre-la-derive: done  # T1-T6 sur v18 : aucune configuration retenue
+  16-7-confirmation-dev1-dev2: done  # routage CO confirmé sur dev2 ; 0,25 non confirmé
+  16-8-q-abstention: done  # désactivée ; textes à relire, mesure à faire
   epic-17: in-progress
   17-1-modele-distant-eval-run: done
   17-1b-fournisseurs-mistral-ovh: done
-  17-2-mesures-qualite-modeles-distants: in-progress  # Qwen3.6-27B et Mistral Small mesurés ; OVH en attente (clé 401)
+  17-2-mesures-qualite-modeles-distants: done  # Qwen3.6-27B, Qwen3.8-27B, Mistral Small ; OVH abandonné (clé)
   17-3-fiche-demonstration: review  # docs/fiche-demonstration-hybride.md, à relire par Anaël
   17-4-mode-hybride-app: done
   17-5a-donnees-comparatif-modeles: done
