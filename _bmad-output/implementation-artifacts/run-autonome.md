@@ -143,7 +143,7 @@ Lecture : réduire le taux, le rang ou les pas ne corrige pas la dérive (CR, LC
 **Décisions qui t'attendent** :
 1. Jeu v21 (alignement CT) : fournir une formulation d'une ligne contenant `{libelles}` et son origine non-Claude, puis l'inscrire dans `[alignement_ct] origines_admises` de `config/donnees.toml`.
 2. Textes fixes de l'abstention Q (`config/prompts/q-abstention.toml`) à relire avant de l'activer et de la mesurer.
-3. Suite de l'épistémologie : le fine-tuning général dérive quel que soit le réglage ; garder le routage CO (déjà retenu) et décider s'il faut poursuivre l'entraînement (complément de données CR ? autre méthode ?) ou s'arrêter là pour le pilote.
+3. Suite de la méthode : le fine-tuning général dérive quel que soit le réglage ; garder le routage CO (déjà retenu) et décider s'il faut poursuivre l'entraînement (complément de données CR ? autre méthode ?) ou s'arrêter là pour le pilote.
 4. Fiche de démonstration à relire.
 
 **Erreurs de l'orchestrateur cette nuit** : (a) script d'évaluation sans `--quantification` (générations LoRA relancées, ~40 min perdues) ; (b) dev2 noté par erreur avec le juge de test Claude, faute de section `[jeux.dev2]` (3,68 € Anthropic, runs écartés, notations refaites avec GLM, section ajoutée) ; (c) le PC s'est mis en veille de 19 h 53 à 22 h 03 faute de bloqueur de veille (corrigé).
