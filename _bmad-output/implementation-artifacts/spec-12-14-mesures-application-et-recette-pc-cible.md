@@ -2,7 +2,7 @@
 title: 'Story 12.14 — Mesures FR-26 de l''application installée et protocole de recette sur PC cible'
 type: 'feature'
 created: '2026-10-23'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'aa6223f87d3dacdeaa16f89e95ea1968dc8b3c16'
 route: 'dispatch'
 review_loop_iteration: 0
