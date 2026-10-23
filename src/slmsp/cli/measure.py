@@ -1,13 +1,21 @@
-"""Sous-commande `slmsp measure run` : mesures techniques FR-26 (NFR-1 à NFR-3, NFR-6).
+"""Sous-commandes `slmsp measure` : mesures techniques FR-26 (NFR-1 à NFR-3, NFR-6).
 
     slmsp measure run --modele base:<slug> [--quantification q4_k_m] [--racine DOSSIER]
                        [--speculatif {aucun,brouillon,ngram}] [--brouillon <slug>]
                        [--brouillon-n-max N]
+    slmsp measure application --exe AssistantSP.exe [--duree SECONDES]
+                               [--mesures-csv CSV] [--racine DOSSIER]
 
-Assemble l'Assistant complet comme `slmsp ask` (deux `llama-server` en variante `cpu`,
+`run` assemble l'Assistant complet comme `slmsp ask` (deux `llama-server` en variante `cpu`,
 threads plafonnés par `config/mesures.toml`, Index local chargé), mesure des Questions avec
-recherche dans l'Index et écrit `runs/measure/<run_id>/resultat.json`. Refuse
-(`RessourceOccupee`, code 5) si une autre commande `slmsp` tient le verrou.
+recherche dans l'Index et écrit `runs/measure/<run_id>/resultat.json`.
+
+`application` (story 12.14) lance l'exécutable installé (onedir, pywebview + WebView2 +
+deux `llama-server`) et échantillonne la RAM de tout son arbre pendant qu'Anaël l'utilise ;
+débit et délai au premier jeton viennent, en option, d'un export CSV des mesures de
+l'application. Protocole manuel (capture réseau, NFR-7) : `docs/recette-pc-cible.md`.
+
+Les deux refusent (`RessourceOccupee`, code 5) si une autre commande `slmsp` tient le verrou.
 """
 
 from __future__ import annotations
@@ -77,6 +85,32 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
     )
     p.add_argument("--racine", type=Path, default=None, help="racine de index/ et runs/")
     p.set_defaults(func=_run)
+
+    pa = actions.add_parser(
+        "application",
+        help="mesurer la RAM de l'application installée, et en option son débit et sa latence",
+    )
+    pa.add_argument(
+        "--exe", required=True, type=Path, help="chemin de l'exécutable installé (AssistantSP.exe)"
+    )
+    pa.add_argument(
+        "--duree",
+        type=float,
+        default=900.0,
+        metavar="SECONDES",
+        help="durée maximale de la fenêtre de mesure (défaut 900 s) ; la fermeture de "
+        "l'application ou Ctrl+C y mettent fin plus tôt, sans jamais tuer le processus",
+    )
+    pa.add_argument(
+        "--mesures-csv",
+        type=Path,
+        default=None,
+        metavar="CSV",
+        help="export CSV des mesures de l'application (menu Méthode) ; sans lui, débit et "
+        "délai au premier jeton restent absents du résultat",
+    )
+    pa.add_argument("--racine", type=Path, default=None, help="racine de runs/")
+    pa.set_defaults(func=_application)
 
 
 def _composants(serveurs: list[Any], racine: Path, version: str | None) -> dict[str, Path]:
@@ -254,6 +288,42 @@ def _run(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
     print(f"{resultat.hypothese} ({ref}) : {resultat.verdict}")
+    for nom, valeur in valeurs.items():
+        print(f"  {nom} : {'n/d' if valeur is None else f'{valeur:.3f}'}")
+    for nom, ok in resultat.conformite.items():
+        print(f"  {nom} : {'conforme' if ok else 'NON conforme'}")
+    print(resultat.avertissement)
+    print(f"run {resultat.run_id} : {racine / 'runs' / 'measure' / resultat.run_id}")
+    return int(CodeSortie.SUCCES)
+
+
+def _application(args: argparse.Namespace) -> int:
+    from slmsp.measure.application import CsvInvalide, InstanceDejaOuverte, mesurer_application
+    from slmsp.measure.config import charger_config_mesures
+    from slmsp.measure.protocole import verrou_mesure
+
+    if not args.exe.is_file():
+        print(f"slmsp : {args.exe} : exécutable introuvable", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    config = charger_config_mesures()
+    racine = (args.racine if args.racine is not None else racine_ecriture()).resolve()
+    try:
+        with verrou_mesure(commande="slmsp measure application"):
+            resultat = mesurer_application(
+                args.exe,
+                config,
+                duree_s=args.duree,
+                mesures_csv=args.mesures_csv,
+                racine=racine,
+            )
+    except InstanceDejaOuverte as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.ERREUR)
+    except CsvInvalide as exc:
+        print(f"slmsp : {exc}", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    valeurs = resultat.valeurs
+    print(f"{resultat.hypothese} (application installée) : {resultat.verdict}")
     for nom, valeur in valeurs.items():
         print(f"  {nom} : {'n/d' if valeur is None else f'{valeur:.3f}'}")
     for nom, ok in resultat.conformite.items():

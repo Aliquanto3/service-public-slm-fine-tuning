@@ -36,6 +36,36 @@ def somme_arbre(racine: psutil.Process) -> int:
     return sum(working_set(p) for p in processus)
 
 
+CATEGORIES_NOM: Final = {
+    "assistantsp": "assistantsp",
+    "msedgewebview2": "msedgewebview2",
+    "llama-server": "llama-server",
+}
+"""Noms de processus (sans `.exe`, en minuscules) regroupés sous leur propre clé (story 12.14)."""
+AUTRES: Final = "autres"
+
+
+def repartition_par_nom(racine: psutil.Process) -> dict[str, int]:
+    """Working sets de `racine` et de ses descendants, sommés par nom de processus canonique.
+
+    Un processus disparu ou inaccessible compte 0 (même tolérance que `working_set`) ; son nom,
+    s'il est illisible, le classe dans `"autres"`.
+    """
+    try:
+        processus = [racine, *racine.children(recursive=True)]
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        processus = [racine]
+    repartition: dict[str, int] = {}
+    for p in processus:
+        try:
+            nom = p.name().lower().removesuffix(".exe")
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            nom = ""
+        cle = CATEGORIES_NOM.get(nom, AUTRES)
+        repartition[cle] = repartition.get(cle, 0) + working_set(p)
+    return repartition
+
+
 class EchantillonneurRam:
     """Contexte qui échantillonne l'arbre de processus de `racine` (défaut : le courant)."""
 

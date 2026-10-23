@@ -2,7 +2,7 @@
 title: 'Story 12.14 — Mesures FR-26 de l''application installée et protocole de recette sur PC cible'
 type: 'feature'
 created: '2026-10-23'
-status: 'in-progress'
+status: 'review'
 baseline_commit: 'aa6223f87d3dacdeaa16f89e95ea1968dc8b3c16'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -64,12 +64,12 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `src/slmsp/measure/protocole.py` -- `verrou_mesure(commande: str = "slmsp measure run")` -- libellé juste pour la nouvelle commande.
-- [ ] `src/slmsp/measure/application.py` -- `mesurer_application(exe, config, *, duree_s, mesures_csv, racine, lancer=subprocess.Popen, horloge, echantillonneur)` : lance, échantillonne jusqu'à fin, répartition au pic, lecture CSV, conformité, `ResultatMesure` slug `application`, hypothèse `H-RAM`, avertissement « à consigner dans docs/recette-pc-cible.md ; vérifier que la machine est le PC cible (empreinte) » ; exceptions dédiées (`InstanceDejaOuverte`, `CsvInvalide`) -- cœur testable sans GUI.
-- [ ] `src/slmsp/cli/measure.py` -- action `application` (`--exe` requis, `--duree`, `--mesures-csv`, `--racine`), affichage du résumé et du chemin du run ; docstring du module mise à jour.
-- [ ] `tests/measure/test_application.py` -- matrice ci-dessus avec un faux exécutable Python (enfant qui alloue, petit-enfant, sortie rapide), CSV factices (préfixe `'`, hors fenêtre, non local, interrompu), seuil dépassé → repli §D, verrou tenu, exe absent ; test CLI via `main([...])` ou équivalent existant.
-- [ ] `docs/recette-pc-cible.md` -- protocole : préparation (PC 16 Go sans GPU, installateur 12.13 + SHA-256, uv + dépôt + `uv sync`), mesure RAM (commande exacte, une Question, export CSV puis `--mesures-csv`), capture réseau hors ligne forcé 10 min et connecté (pktmon en admin : `pktmon start --capture --comp nics`, `pktmon stop`, `pktmon etl2pcapng`, filtrage par PID de l'arbre relevé via `Get-Process`/`netstat -ano`, alternative Wireshark), lecture : aucun paquet hors ligne, seuls les hôtes de la Liste blanche en connecté, résidus WebView2 consignés (Q1) ; liste de contrôle NFR-7 (clavier, contraste, libellés) ; tableau de consignation des résultats et des écarts ; leviers §D si dépassement.
-- [ ] `_bmad-output/implementation-artifacts/sprint-status.yaml` -- 12-14 → `review` (recette Anaël en attente).
+- [x] `src/slmsp/measure/protocole.py` -- `verrou_mesure(commande: str = "slmsp measure run")` -- libellé juste pour la nouvelle commande.
+- [x] `src/slmsp/measure/application.py` -- `mesurer_application(exe, config, *, duree_s, mesures_csv, racine, lancer=subprocess.Popen, horloge, echantillonneur)` : lance, échantillonne jusqu'à fin, répartition au pic, lecture CSV, conformité, `ResultatMesure` slug `application`, hypothèse `H-RAM`, avertissement « à consigner dans docs/recette-pc-cible.md ; vérifier que la machine est le PC cible (empreinte) » ; exceptions dédiées (`InstanceDejaOuverte`, `CsvInvalide`) -- cœur testable sans GUI.
+- [x] `src/slmsp/cli/measure.py` -- action `application` (`--exe` requis, `--duree`, `--mesures-csv`, `--racine`), affichage du résumé et du chemin du run ; docstring du module mise à jour.
+- [x] `tests/measure/test_application.py` -- matrice ci-dessus avec un faux exécutable Python (enfant qui alloue, petit-enfant, sortie rapide), CSV factices (préfixe `'`, hors fenêtre, non local, interrompu), seuil dépassé → repli §D, verrou tenu, exe absent ; test CLI via `main([...])` ou équivalent existant.
+- [x] `docs/recette-pc-cible.md` -- protocole : préparation (PC 16 Go sans GPU, installateur 12.13 + SHA-256, uv + dépôt + `uv sync`), mesure RAM (commande exacte, une Question, export CSV puis `--mesures-csv`), capture réseau hors ligne forcé 10 min et connecté (pktmon en admin : `pktmon start --capture --comp nics`, `pktmon stop`, `pktmon etl2pcapng`, filtrage par PID de l'arbre relevé via `Get-Process`/`netstat -ano`, alternative Wireshark), lecture : aucun paquet hors ligne, seuls les hôtes de la Liste blanche en connecté, résidus WebView2 consignés (Q1) ; liste de contrôle NFR-7 (clavier, contraste, libellés) ; tableau de consignation des résultats et des écarts ; leviers §D si dépassement.
+- [x] `_bmad-output/implementation-artifacts/sprint-status.yaml` -- 12-14 → `review` (recette Anaël en attente).
 
 **Acceptance Criteria:**
 - Given l'application lancée par la commande, when elle tourne avec des descendants, then le pic consigné inclut l'exécutable et tous ses descendants, avec la répartition par nom.
@@ -77,6 +77,21 @@ context:
 - Given `docs/recette-pc-cible.md`, when Anaël le suit, then chaque critère 1 à 4 de la story a une étape, une commande ou une case, et un emplacement où consigner le résultat.
 
 ## Implementation Notes
+
+- `mesurer_application` répartit le pic par nom de processus via un `lire` dédié passé à
+  `EchantillonneurRam` (`_LectureArbre` dans `application.py`) : il renvoie le total (compatible
+  avec le suivi du pic existant de `EchantillonneurRam`) et garde en mémoire la répartition par
+  nom du dernier total au moins aussi grand que le pic courant, pour rester synchronisée avec
+  `ram.pic_octets`. `repartition_par_nom` (ajoutée à `measure/ram.py`) regroupe par nom canonique
+  (`assistantsp`, `msedgewebview2`, `llama-server`, sinon `autres`).
+- Ctrl+C pendant la fenêtre de mesure est capté dans `_attendre_fin` (pas remonté comme
+  interruption) : conformément à la consigne, c'est une fin normale, le run reste `complet`.
+- `--racine` de `measure application` n'est que la racine d'écriture des runs (comme `measure
+  run`), pas le processus échantillonné.
+- Décision seule, simple et réversible : conformité `nfr-2`/`nfr-3` absente du dict quand aucun
+  CSV n'est fourni (plutôt que `False`), pour que le verdict ne porte que sur NFR-1 sans CSV,
+  comme demandé par la matrice. Le texte du repli reprend mot pour mot l'ordre des leviers de la
+  consigne (contexte réduit, cache KV q4, usearch i8, embedding plus léger, corpus restreint).
 
 ## Spec Change Log
 
