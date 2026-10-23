@@ -47,12 +47,13 @@ REPLI: Final = (
 
 
 @contextmanager
-def verrou_mesure() -> Iterator[Path]:
+def verrou_mesure(commande: str = "slmsp measure run") -> Iterator[Path]:
     """Exclusivité de la mesure : tient `gpu.lock` sans attente (AD-27).
 
-    Lève `RessourceOccupee` (code 5) si une autre commande `slmsp` le détient.
+    Lève `RessourceOccupee` (code 5) si une autre commande `slmsp` le détient. `commande`
+    est le libellé inscrit dans le verrou (story 12.14 : `slmsp measure application`).
     """
-    with verrou_gpu(commande="slmsp measure run") as chemin:
+    with verrou_gpu(commande=commande) as chemin:
         yield chemin
 
 
