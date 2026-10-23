@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-12-2026 07:28
-last_updated: 2026-10-20 08:03
+last_updated: 2026-10-23
 project: service-public-slm-fine-tuning
 project_key: NOKEY
 tracking_system: file-system
@@ -43,7 +43,7 @@ development_status:
   1-5-registre-de-budget-persistant-avec-arrêt-au-plafond: done
   epic-1-retrospective: optional
 
-  epic-2: in-progress
+  epic-2: done
   2-1-téléchargeur-unique-slmsp-fetch-llama-cpp-corpus-mediatech-b: done
   2-2-inférence-par-llama-server-géré-génération-et-embedding: done
   2-3-index-local-construction-recherche-exacte-et-mesure-h-vec: done
@@ -56,7 +56,7 @@ development_status:
   3-3-client-mcp-en-direct-enregistrement-et-slmsp-mcp-record: done
   epic-3-retrospective: optional
 
-  epic-4: in-progress
+  epic-4: done
   4-1-table-des-tâches-prompts-de-tâche-et-construction-unique-des: done
   4-2-assistantservice-flux-d-évènements-question-fondée-sur-l-ind: done
   4-3-recherche-de-données-boucle-d-outils-modes-et-repli: done
@@ -73,7 +73,7 @@ development_status:
   5-6-évaluation-phase-notation-contrôles-automatiques-scores-de-t: done
   epic-5-retrospective: optional
 
-  epic-6: in-progress
+  epic-6: done
   6-1-orchestrateur-déclaratif-de-benchmarks-et-téléchargement-des: done
   6-2-moteur-lm-eval-qcm-sur-poids-hf-et-ifeval-contre-llama-serve: done
   6-3-moteurs-de-traduction-sacrebleu-et-bfcl-vérificateur-isolé: done
@@ -89,14 +89,14 @@ development_status:
   7-6-double-vérification-finale-échantillon-de-revue-et-gel-v1-0: done
   epic-7-retrospective: optional
 
-  epic-8: in-progress
+  epic-8: done  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   8-1-téléchargement-et-préparation-des-modèles-de-base-candidats: done
   8-2-sonde-de-tool-calling-par-modèle-h-tools: done
-  8-3-exécution-de-la-baseline-jeu-maison-benchmarks-mesures: review
-  8-4-rapport-de-baseline: review
+  # 8-3-exécution-de-la-baseline-jeu-maison-benchmarks-mesures: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
+  # 8-4-rapport-de-baseline: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   epic-8-retrospective: optional
 
-  epic-9: in-progress
+  epic-9: done  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   9-1-registre-des-licences-et-configuration-des-données: done
   9-2-générateur-mistral-prouvé-gabarits-sans-exemple-journal-d-ap: done
   9-3-étape-seed-amorces-publiques-ou-mistral-exclusion-anti-fuite: done
@@ -104,10 +104,10 @@ development_status:
   9-5-étapes-validate-et-filter: done
   9-6-étape-build-re-dérivation-jeu-versionné-et-suite-des-verrous: done
   9-7-paires-de-préférence-orpo: done
-  9-8-campagne-de-génération-de-la-nuit-jeu-v1: review
+  # 9-8-campagne-de-génération-de-la-nuit-jeu-v1: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   epic-9-retrospective: optional
 
-  epic-10: in-progress
+  epic-10: done  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   10-1-environnement-d-entraînement-windows-et-mesure-h-win-train: done
   10-2-rendu-en-tokens-et-masque-de-perte-h-masque: done
   10-3-mesures-de-coût-d-un-run-fr-33: done
@@ -116,9 +116,9 @@ development_status:
   10-6-export-gguf-et-contrôle-après-quantification: done
   epic-10-retrospective: optional
 
-  epic-11: in-progress
+  epic-11: done  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   11-1-squelette-du-comparatif: done
-  11-2-essai-m1-qlora-de-la-nuit-et-mini-rapport: backlog
+  # 11-2-essai-m1-qlora-de-la-nuit-et-mini-rapport: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   epic-11-retrospective: optional
 
   # Epics 12 (J4) et 13 (J5) : découpage validé par Anaël le 2026-10-16 (lots L1 à L8, epics.md)
@@ -149,7 +149,7 @@ development_status:
   13-7-dossier-de-publication-et-fiche-modele-fr-37: done
   13-8-reinstallateur-j5-et-recette-des-taches-secondaires: backlog
   epic-13-retrospective: optional
-  epic-14: in-progress
+  epic-14: done  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   14-1-tests-figes-sur-la-config: done  # C1
   14-2-jamais-de-reponse-tronquee-reutilisee: done  # C2
   14-3-export-dora-qwen3-5: done  # C3
@@ -160,25 +160,25 @@ development_status:
   14-9-conditions-mistral-verification-quotidienne: done  # C9
   14-10-juge-de-donnees-deepseek: done  # O1
   14-11-jeu-de-developpement-code: done  # O4a
-  14-12-jeu-de-developpement-construction: in-progress  # O4b
+  # 14-12-jeu-de-developpement-construction: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   14-13-alignement-entrainement-evaluation: done  # O5
   14-14-generation-verifiee-verification: done  # O6a
   14-15-generation-verifiee-regeneration: done  # O6b
   14-16-variance-bootstrap-et-graine: done  # E1
-  14-17-jeu-v17-verifie-et-m1-minicpm5-2b: in-progress  # V17
-  14-18-routage-par-tache-sur-jeu-dev: backlog  # E5
-  epic-15: in-progress
+  # 14-17-jeu-v17-verifie-et-m1-minicpm5-2b: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
+  # 14-18-routage-par-tache-sur-jeu-dev: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
+  epic-15: done  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   15-1-eval-composer-routage-par-tache: done  # N1
   15-2-candidats-multiples-base-et-deepseek: done  # N2 (O2)
   15-3-selection-des-cibles: done  # N3 (O3)
   15-4-second-juge-desactive-pour-dev: done  # N4
-  15-5-dev2-vingt-items-par-tache: review  # 155 items fusionnés, revérification ciblée, 5 items et gel en attente d Anaël  # N5
+  # 15-5-dev2-vingt-items-par-tache: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   15-6-lora-gguf-et-lora-scaled: done  # N6
 
-  epic-16: in-progress  # stories de code la nuit du 21-22/10 ; 16.1, 16.6, 16.7 attendent Anaël
+  epic-16: done  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   16-1-dev2-relance-unique-exclusion-gel: done  # 5 items retenus, dev2 gelé 160 items
   16-2-q-huit-passages-dedoublonnage: done
-  16-3-ct-prompts-alignes-anti-boucle: in-progress  # anti-boucle fait ; v21 attend la formulation d'Anaël (D1)
+  # 16-3-ct-prompts-alignes-anti-boucle: clos  # clos le 2026-10-23 (fine-tuning arrêté), voir backlog-fine-tuning.md
   16-4-eval-composer-route-partiel: done
   16-5-eval-comparer-jeux-regroupes: done
   16-6a-regularisation-kl-vers-la-base: done
@@ -193,4 +193,4 @@ development_status:
   17-4-mode-hybride-app: done
   17-5a-donnees-comparatif-modeles: done
   17-5b-onglet-modeles: done
-  17-6-observabilite-cout-impact-plafond: in-progress
+  17-6-observabilite-cout-impact-plafond: done  # fusionnée f4e58ff, livrée en v0.3.1
