@@ -456,7 +456,7 @@ def test_construire_protection_sans_dev_inchange(tmp_path: Path) -> None:
         construire_protection(("dev1",), charger_config_donnees(), tmp_path)
 
 
-def test_ouvrir_juges_dev2_sans_section_n_ouvre_pas_mistral(
+def test_ouvrir_juges_jeu_dev_sans_section_n_ouvre_pas_mistral(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Isolé du `.env` réel : `juges.toml` a depuis gagné une section `[jeux.dev2]` (story
