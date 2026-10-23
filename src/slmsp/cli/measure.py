@@ -106,8 +106,9 @@ def enregistrer(sous_parseurs: argparse._SubParsersAction) -> None:
         type=Path,
         default=None,
         metavar="CSV",
-        help="export CSV des mesures de l'application (menu Méthode) ; sans lui, débit et "
-        "délai au premier jeton restent absents du résultat",
+        help="chemin (encore inexistant) où exporter, pendant la fenêtre, le CSV des mesures "
+        "(Observabilité > Exporter en CSV) ; lu à la fin. Sans lui, débit et délai au premier "
+        "jeton restent absents du résultat",
     )
     pa.add_argument("--racine", type=Path, default=None, help="racine de runs/")
     pa.set_defaults(func=_application)
@@ -305,6 +306,22 @@ def _application(args: argparse.Namespace) -> int:
     if not args.exe.is_file():
         print(f"slmsp : {args.exe} : exécutable introuvable", file=sys.stderr)
         return int(CodeSortie.USAGE)
+    if args.duree <= 0:
+        print("slmsp : --duree doit être strictement positive", file=sys.stderr)
+        return int(CodeSortie.USAGE)
+    if args.mesures_csv is not None:
+        # Le CSV est exporté depuis l'application pendant la fenêtre, puis lu à la fin : seul
+        # son dossier doit exister au départ. L'application refuse d'écraser un fichier.
+        if not args.mesures_csv.parent.is_dir():
+            print(f"slmsp : {args.mesures_csv.parent} : dossier introuvable", file=sys.stderr)
+            return int(CodeSortie.USAGE)
+        if args.mesures_csv.exists():
+            print(
+                f"slmsp : {args.mesures_csv} existe déjà ; l'application n'écrase pas un "
+                "export : choisir un nouveau nom",
+                file=sys.stderr,
+            )
+            return int(CodeSortie.USAGE)
     config = charger_config_mesures()
     racine = (args.racine if args.racine is not None else racine_ecriture()).resolve()
     try:
@@ -321,6 +338,11 @@ def _application(args: argparse.Namespace) -> int:
         return int(CodeSortie.ERREUR)
     except CsvInvalide as exc:
         print(f"slmsp : {exc}", file=sys.stderr)
+        if exc.resultat is not None:
+            ram = exc.resultat.valeurs["ram_max_go"]
+            print(f"  ram_max_go : {ram:.3f} (débit et latence n/d)", file=sys.stderr)
+            chemin_run = racine / "runs" / "measure" / exc.resultat.run_id
+            print(f"run {exc.resultat.run_id} : {chemin_run}", file=sys.stderr)
         return int(CodeSortie.USAGE)
     valeurs = resultat.valeurs
     print(f"{resultat.hypothese} (application installée) : {resultat.verdict}")

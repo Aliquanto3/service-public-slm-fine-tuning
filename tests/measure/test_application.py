@@ -196,3 +196,103 @@ def test_reel_measure_application() -> None:
     pytest.skip(
         "mesure réelle : `uv run slmsp measure application --exe <chemin>\\AssistantSP.exe`"
     )
+
+
+# --- correctifs de revue -------------------------------------------------------------------
+
+
+def test_csv_absent_a_la_fin_conserve_la_ram(tmp_path: Path) -> None:
+    config = charger_config_mesures()
+    with pytest.raises(CsvInvalide) as info:
+        mesurer_application(
+            "exe-factice",
+            config,
+            duree_s=0.3,
+            mesures_csv=tmp_path / "jamais-exporte.csv",
+            racine=tmp_path,
+            lancer=_lancer_code(CODE_ENFANT),
+        )
+    resultat = info.value.resultat
+    assert resultat is not None
+    assert resultat.valeurs["ram_max_go"] > 0
+    assert resultat.valeurs["debit_tps_mediane"] is None
+    assert "erreur_csv" in resultat.details
+    assert (tmp_path / "runs" / "measure" / resultat.run_id / "resultat.json").is_file()
+
+
+def test_csv_horodatage_sans_fuseau_ou_nombre_invalide_ecarte(tmp_path: Path) -> None:
+    debut = datetime(2026, 1, 1, tzinfo=UTC)
+    fin = debut + timedelta(minutes=10)
+    valide = (debut + timedelta(minutes=1)).isoformat()
+    chemin = tmp_path / "mesures.csv"
+    chemin.write_text(
+        f"{ENTETE}\r\n2026-01-01T00:01:00;{FOURNISSEUR_LOCAL};50;0;2000;500\r\n"
+        f"{valide};{FOURNISSEUR_LOCAL};abc;0;2000;500\r\n"
+        f"{valide};{FOURNISSEUR_LOCAL};50;0;2000;500\r\n",
+        encoding="utf-8",
+    )
+    debits, _ = _lire_mesures_csv(chemin, debut, fin)
+    assert debits == pytest.approx([50 / 1.5])
+
+
+def test_processus_deja_mort_devient_instance_deja_ouverte(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import psutil
+
+    def absent(_pid: int) -> None:
+        raise psutil.NoSuchProcess(_pid)
+
+    monkeypatch.setattr("slmsp.measure.application.psutil.Process", absent)
+    with pytest.raises(InstanceDejaOuverte):
+        mesurer_application(
+            "exe-factice",
+            charger_config_mesures(),
+            duree_s=0.3,
+            racine=tmp_path,
+            lancer=_lancer_code(CODE_SORTIE_RAPIDE),
+        )
+
+
+def test_cli_verrou_tenu_code_5(tmp_path: Path) -> None:
+    exe = tmp_path / "AssistantSP.exe"
+    exe.write_bytes(b"")
+    with verrou_gpu(commande="autre commande slmsp"):
+        code = main(["measure", "application", "--exe", str(exe), "--racine", str(tmp_path)])
+    assert code == CodeSortie.RESSOURCE_OCCUPEE
+
+
+def test_cli_csv_invalide_renvoie_usage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    exe = tmp_path / "AssistantSP.exe"
+    exe.write_bytes(b"")
+
+    def leve(*_a, **_k):
+        raise CsvInvalide("aucune ligne retenue")
+
+    monkeypatch.setattr("slmsp.measure.application.mesurer_application", leve)
+    code = main(
+        [
+            "measure",
+            "application",
+            "--exe",
+            str(exe),
+            "--racine",
+            str(tmp_path),
+            "--mesures-csv",
+            str(tmp_path / "export.csv"),
+        ]
+    )
+    assert code == CodeSortie.USAGE
+
+
+@pytest.mark.parametrize("cas", ["dossier-absent", "fichier-existant"])
+def test_cli_chemin_csv_refuse_au_depart(tmp_path: Path, cas: str) -> None:
+    exe = tmp_path / "AssistantSP.exe"
+    exe.write_bytes(b"")
+    if cas == "dossier-absent":
+        csv_ = tmp_path / "absent" / "export.csv"
+    else:
+        csv_ = tmp_path / "export.csv"
+        csv_.write_text("", encoding="utf-8")
+    code = main(["measure", "application", "--exe", str(exe), "--mesures-csv", str(csv_)])
+    assert code == CodeSortie.USAGE

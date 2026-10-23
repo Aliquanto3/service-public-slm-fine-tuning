@@ -27,24 +27,29 @@ pas la base SQLite de l'application et ne pilote jamais l'interface.
 
 ## 1. Mesure RAM (NFR-1), en option débit et latence (NFR-2, NFR-3)
 
-1. Lancer la mesure (racine du dépôt, après `uv sync`) :
+1. Fermer l'Assistant s'il est ouvert (instance unique : un second lancement sort aussitôt).
+2. Lancer la mesure en un seul passage (racine du dépôt, après `uv sync`), avec un chemin
+   d'export **qui n'existe pas encore** (l'application n'écrase jamais un fichier) dans un
+   dossier existant :
    ```powershell
-   uv run slmsp measure application --exe "<dossier d'installation>\AssistantSP.exe"
+   uv run slmsp measure application --exe "<dossier d'installation>\AssistantSP.exe" `
+       --mesures-csv "$HOME\Documents\mesures-recette.csv"
    ```
-   Durée par défaut : 900 s (`--duree` pour changer). La fenêtre se termine à la fermeture de
-   l'Assistant, à la durée écoulée, ou par Ctrl+C — jamais en tuant le processus.
-2. Pendant la fenêtre, utiliser l'Assistant normalement : poser au moins une Question, laisser
+   Durée maximale par défaut : 900 s (`--duree` pour changer). La fenêtre se termine à la
+   fermeture de l'Assistant, à la durée écoulée, ou par Ctrl+C — jamais en tuant le processus.
+   Sans `--mesures-csv`, seul le critère RAM est mesuré.
+3. Pendant la fenêtre, utiliser l'Assistant normalement : poser au moins une Question, laisser
    la génération se terminer.
-3. Dans l'application, ouvrir **Méthode** et exporter les mesures (CSV) vers un fichier.
-   Relancer la mesure avec ce fichier pour obtenir débit et latence :
-   ```powershell
-   uv run slmsp measure application --exe "<dossier>\AssistantSP.exe" --mesures-csv "<export>.csv"
-   ```
-   (Le premier passage sans `--mesures-csv` donne déjà le critère 1 à lui seul ; refaire la
-   mesure avec l'export évite de rouvrir l'application juste pour relire son CSV.)
-4. Lire le résumé affiché (`nfr-1`, `nfr-1-cible`, et `nfr-2`/`nfr-3` si un CSV a été fourni) et
+4. Toujours pendant la fenêtre : ouvrir **Observabilité**, cliquer **Exporter en CSV** et, dans
+   la boîte « Enregistrer sous », enregistrer exactement au chemin passé à `--mesures-csv`
+   (dossier et nom). Attendre « Mesures enregistrées : … », puis fermer l'Assistant.
+5. La commande lit le CSV après la fin de la fenêtre et ne retient que les appels locaux faits
+   pendant celle-ci. Si le CSV est absent ou sans ligne retenue, elle sort en code 2 avec le
+   motif, mais `resultat.json` est quand même écrit avec la RAM (motif dans
+   `details.erreur_csv`) : refaire seulement si débit et latence sont nécessaires.
+6. Lire le résumé affiché (`nfr-1`, `nfr-1-cible`, et `nfr-2`/`nfr-3` si le CSV a été lu) et
    le run écrit sous `runs/measure/<run_id>/resultat.json`.
-5. **Si le pic dépasse 5 Go** : le `resultat.json` porte un `repli` avec les leviers de
+7. **Si le pic dépasse 5 Go** : le `resultat.json` porte un `repli` avec les leviers de
    l'addendum §D, dans l'ordre (contexte réduit, cache KV en q4, usearch en i8, embedding plus
    léger, corpus restreint) — à **proposer**, jamais à appliquer d'office pendant la recette.
 

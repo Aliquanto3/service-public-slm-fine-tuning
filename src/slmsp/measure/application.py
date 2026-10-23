@@ -66,7 +66,13 @@ class InstanceDejaOuverte(RuntimeError):
 
 
 class CsvInvalide(RuntimeError):
-    """Le CSV des mesures est illisible, mal formé ou ne contient aucune ligne retenue."""
+    """Le CSV des mesures est illisible, mal formé ou ne contient aucune ligne retenue.
+
+    Levée par `mesurer_application` après l'écriture de `resultat.json` (RAM conservée, motif
+    dans `details["erreur_csv"]`) : `resultat` porte alors ce résultat partiel.
+    """
+
+    resultat: ResultatMesure | None = None
 
 
 def _demarquer(valeur: str) -> str:
@@ -109,13 +115,15 @@ def _lire_mesures_csv(
             continue
         try:
             horodatage = datetime.fromisoformat(valeurs["horodatage"])
+            premier_token_ms = float(valeurs["premier_token_ms"])
+            duree_ms = float(valeurs["duree_ms"])
+            tokens_sortie = float(valeurs["tokens_sortie"] or 0)
         except ValueError:
             continue
-        if not (debut <= horodatage <= fin):
+        # Horodatage sans fuseau (CSV retouché à la main) : incomparable à la fenêtre, écarté.
+        if horodatage.tzinfo is None or not (debut <= horodatage <= fin):
             continue
-        premier_token_ms = float(valeurs["premier_token_ms"])
-        duree_generation_s = (float(valeurs["duree_ms"]) - premier_token_ms) / 1000
-        tokens_sortie = float(valeurs["tokens_sortie"] or 0)
+        duree_generation_s = (duree_ms - premier_token_ms) / 1000
         if duree_generation_s <= 0 or tokens_sortie <= 0:
             continue
         debits.append(tokens_sortie / duree_generation_s)
@@ -166,14 +174,19 @@ class _LectureArbre:
 
 def _conformite(valeurs: dict[str, float | None], config: ConfigMesures) -> dict[str, bool]:
     seuils = config.seuils
+    ram = valeurs["ram_max_go"]
+    if ram is None:
+        raise ValueError("ram_max_go absent")
     conformite = {
-        "nfr-1": valeurs["ram_max_go"] <= seuils.ram_max_go,
-        "nfr-1-cible": valeurs["ram_max_go"] <= seuils.ram_cible_go,
+        "nfr-1": ram <= seuils.ram_max_go,
+        "nfr-1-cible": ram <= seuils.ram_cible_go,
     }
-    if valeurs["debit_tps_mediane"] is not None:
-        conformite["nfr-2"] = valeurs["debit_tps_mediane"] >= seuils.debit_min_tps
-    if valeurs["premier_token_s_p95"] is not None:
-        conformite["nfr-3"] = valeurs["premier_token_s_p95"] < seuils.premier_token_max_s
+    debit = valeurs["debit_tps_mediane"]
+    if debit is not None:
+        conformite["nfr-2"] = debit >= seuils.debit_min_tps
+    premier_p95 = valeurs["premier_token_s_p95"]
+    if premier_p95 is not None:
+        conformite["nfr-3"] = premier_p95 < seuils.premier_token_max_s
     return conformite
 
 
@@ -195,7 +208,9 @@ def mesurer_application(
     lancé — qui est, lui, échantillonné par `echantillonneur(racine=<processus>, ...)`.
     Lève `InstanceDejaOuverte` si le processus lancé sort en moins de `SORTIE_RAPIDE_S`
     (une instance de l'application tournait déjà) et `CsvInvalide` si `mesures_csv` est
-    illisible, mal formé ou sans ligne retenue. En cas d'erreur, le run est `partiel-erreur`.
+    illisible, mal formé ou sans ligne retenue — dans ce cas après avoir écrit `resultat.json`
+    (RAM conservée, débit et latence `None`, motif dans `details["erreur_csv"]`). En cas
+    d'erreur, le run est `partiel-erreur`.
     """
     racine_ecr = (Path(racine) if racine is not None else racine_ecriture()).resolve()
     parametres: dict[str, Any] = {
@@ -214,7 +229,13 @@ def mesurer_application(
     try:
         debut = datetime.now().astimezone()
         processus = lancer([str(exe)])
-        processus_racine = psutil.Process(processus.pid)
+        try:
+            processus_racine = psutil.Process(processus.pid)
+        except psutil.NoSuchProcess as exc:
+            raise InstanceDejaOuverte(
+                f"l'instance lancée ({exe}) s'est fermée aussitôt : "
+                "fermer l'Assistant déjà ouvert puis relancer"
+            ) from exc
         lecture = _LectureArbre()
         with echantillonneur(
             racine=processus_racine, periode_s=config.periode_ms / 1000, lire=lecture
@@ -229,10 +250,16 @@ def mesurer_application(
         repartition_go = {nom: octets / GO for nom, octets in lecture.repartition_au_pic.items()}
         ram_max_go = ram.pic_octets / GO
         debit_med = premier_med = premier_p95 = None
+        erreur_csv: CsvInvalide | None = None
         if mesures_csv is not None:
-            debits, premiers = _lire_mesures_csv(Path(mesures_csv), debut, fin)
-            debit_med = mediane_p95(debits)[0]
-            premier_med, premier_p95 = mediane_p95(premiers)
+            try:
+                debits, premiers = _lire_mesures_csv(Path(mesures_csv), debut, fin)
+            except CsvInvalide as exc:
+                # La RAM mesurée pendant la fenêtre reste consignée (resultat.json écrit).
+                erreur_csv = exc
+            else:
+                debit_med = mediane_p95(debits)[0]
+                premier_med, premier_p95 = mediane_p95(premiers)
         valeurs: dict[str, float | None] = {
             "ram_max_go": ram_max_go,
             "debit_tps_mediane": debit_med,
@@ -257,12 +284,16 @@ def mesurer_application(
                 "repartition_pic_go": repartition_go,
                 "fenetre_mesure": [debut.isoformat(), fin.isoformat()],
                 "unite": "Go = 1024³ octets ; ram = pic de la somme des working sets de l'arbre",
+                **({"erreur_csv": str(erreur_csv)} if erreur_csv is not None else {}),
             },
             conformite=conformite,
             environnement=empreinte_environnement(racine_ecr),
             avertissement=AVERTISSEMENT,
         )
         run.ecrire(NOM_RESULTAT, json_canonique(resultat.model_dump(mode="json")) + b"\n")
+        if erreur_csv is not None:
+            erreur_csv.resultat = resultat
+            raise erreur_csv
     except Exception as exc:
         run.terminer("partiel-erreur", f"{type(exc).__name__} : {exc}")
         raise

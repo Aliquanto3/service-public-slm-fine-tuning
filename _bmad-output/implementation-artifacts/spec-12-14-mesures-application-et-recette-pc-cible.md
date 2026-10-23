@@ -2,7 +2,7 @@
 title: 'Story 12.14 — Mesures FR-26 de l''application installée et protocole de recette sur PC cible'
 type: 'feature'
 created: '2026-10-23'
-status: 'review'
+status: 'in-review'
 baseline_commit: 'aa6223f87d3dacdeaa16f89e95ea1968dc8b3c16'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -96,6 +96,16 @@ context:
 ## Spec Change Log
 
 ## Review Triage Log
+
+- high · corrigé · parcours CSV de la doc en deux passages : le second ouvrait une nouvelle fenêtre, toutes les lignes tombaient hors fenêtre (`CsvInvalide`). Un seul passage : `--mesures-csv` = chemin à créer, export depuis Observabilité > Exporter en CSV pendant la fenêtre, lecture après la fin ; la CLI vérifie au départ que le dossier existe (USAGE sinon).
+- medium · corrigé (constat propre) · l'application refuse d'écraser un export existant (`fichier-existant`) : un chemin `--mesures-csv` déjà présent aurait fait relire un ancien fichier ; refus USAGE au départ.
+- medium · corrigé · CSV absent ou invalide après la fenêtre : la RAM était perdue. `resultat.json` écrit quand même (débit/latence `None`, `details.erreur_csv`), run `partiel-erreur`, CLI USAGE (2) avec la RAM et le chemin du run.
+- medium · corrigé (constat propre) · `_lire_mesures_csv` : cellule numérique invalide (`ValueError`) ou horodatage sans fuseau (`TypeError` à la comparaison) faisaient planter la lecture ; ligne désormais écartée.
+- low · corrigé · `psutil.Process` sur un processus déjà mort (`NoSuchProcess`) → `InstanceDejaOuverte`.
+- low · corrigé · Pyright `<=` sur `float | None` dans `_conformite` : variables locales typées.
+- low · corrigé · tests CLI ajoutés : verrou tenu (5), `CsvInvalide` (2), chemin CSV refusé au départ (dossier absent, fichier existant), CSV absent en fin de fenêtre, processus mort.
+- low · corrigé (constat propre) · `--duree` ≤ 0 acceptée : refus USAGE.
+- — · rejeté (second avis) · horodatages UTC, hôtes de la liste blanche, Ctrl+C avec exe `console=False` : vérifiés par le second avis, pas de preuve contraire.
 
 ## Design Notes
 
