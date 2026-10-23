@@ -456,14 +456,20 @@ def test_construire_protection_sans_dev_inchange(tmp_path: Path) -> None:
         construire_protection(("dev1",), charger_config_donnees(), tmp_path)
 
 
-def test_ouvrir_juges_dev2_sans_section_n_ouvre_pas_mistral(
+def test_ouvrir_juges_jeu_dev_sans_section_n_ouvre_pas_mistral(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Isolé du `.env` réel : `juges.toml` a depuis gagné une section `[jeux.dev2]` (story
+    16.7, juge tiers glm) ; on rejoue ici le cas « jeu dev* sans section dédiée », qui doit
+    retomber sur Claude sans jamais lire de secret OpenRouter ni ouvrir Mistral."""
     import slmsp.judge.claude as module_claude
+    import slmsp.judge.config as module_config
 
+    config_sans_section = charger_juges().model_copy(update={"jeux": {}})
+    monkeypatch.setattr(module_config, "charger_juges", lambda *a, **k: config_sans_section)
     monkeypatch.setattr(module_claude, "fabriquer_client", lambda config: object())
     appels_mistral = _sdk_mistral_interdit(monkeypatch)
-    for jeu in ("dev2", "dev10"):  # pas de section [jeux.dev2] : la règle vaut pour tout dev*
+    for jeu in ("dev2", "dev10"):  # aucune section dans cette config : la règle vaut pour tout dev*
         juges = notation.ouvrir_juges(racine_projet(), None, jeu)
         assert juges.second is None and juges.nom_principal == "claude"
         assert "second" not in juges.description
