@@ -3,7 +3,7 @@ title: 'Story 12.14 — Mesures FR-26 de l''application installée et protocole 
 type: 'feature'
 created: '2026-10-23'
 status: 'in-progress'
-baseline_commit: '140aab22a3aed67df43de1ffcf5c8f022fb2491e'
+baseline_commit: 'aa6223f87d3dacdeaa16f89e95ea1968dc8b3c16'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
