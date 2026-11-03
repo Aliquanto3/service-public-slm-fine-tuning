@@ -9,7 +9,7 @@ Reprise sur le PC portable (32 Go, RTX 3060 6 Go) depuis `docs/reprise-deuxieme-
 - Suite complète : 5 028 réussis sur 18ad3ea (avec `SLMSP_EVAL_SOURCES`), 4 811 sur f2f6830 (sans).
 
 ## Branches en attente
-- `feat/outils-rendu` (worktree `C:\Users\Anael\dev\slmsp-wt\outils-rendu`) : spec R7 `spec-outils-rendu.md`, en draft, relue par le second avis, **sans code**. Elle attend les décisions ci-dessous. À rebaser sur main (part de 62831f8).
+- `feat/outils-rendu` (worktree `<WORKTREES>\outils-rendu`) : spec R7 `spec-outils-rendu.md`, en draft, relue par le second avis, **sans code**. Elle attend les décisions ci-dessous. À rebaser sur main (part de 62831f8).
 
 ## Décisions d'Anaël du 2026-10-17 (à reporter dans decisions.md)
 - Règle de taille : ≤ 2B de paramètres texte servis (vision exclue) ; Qwen3.5-2B reste dans la Baseline (remplace la décision de 09h).

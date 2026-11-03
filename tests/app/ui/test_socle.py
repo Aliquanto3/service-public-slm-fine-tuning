@@ -159,7 +159,7 @@ def test_ordre_de_tabulation_focus_visible_et_libelles(page) -> None:
             }"""
         )
         assert info["nom"], info
-        assert info["contour"] == "solid 2px rgb(69, 29, 199)", info
+        assert info["contour"] == "solid 2px rgb(31, 95, 209)", info
         vus.append(info["id"])
         if info["id"] == "sources-fermer":
             break

@@ -21,7 +21,7 @@ Tout vient de GitHub, sans copie de disque à disque :
    ```
 2. Cloner au même chemin que sur la tour. La mémoire de Claude Code est rangée selon ce chemin.
    ```powershell
-   cd C:\Users\Utilisateur\Documents\GitHub
+   cd <DOSSIER_PARENT>
    gh repo clone Aliquanto3/service-public-slm-fine-tuning
    ```
 3. Copier `.env.example` en `.env`, puis remplir `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY` et `HF_TOKEN`. Claude ne lit jamais ce fichier.

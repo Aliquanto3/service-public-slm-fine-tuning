@@ -63,7 +63,7 @@ deferred: []
 - `tests/test_architecture.py` -- `index` couche 2 runtime, `indexation` couche 4 ; `pyarrow`/`duckdb` interdits dans la fermeture runtime (AC4 déjà vérifié par la règle `lourd-runtime`).
 - `config/sources.toml` -- jeux `service-public` (révision `7ddda096b33d48dbda8143fc8c349a8b0e031a3a`) et `data-gouv-datasets-catalog` (`11f3d3c9481ad478dbcff52e85d73b7fd10533ce`) ; non importable depuis `indexation` (même couche que `fetch`).
 - Relevés réels (2026-10-12) : service-public 35 758 lignes (1 fichier), catalogue 3 fichiers (≈ 107 679 lignes). Colonnes communes : `chunk_id`, `doc_id`, `title`, `url`, `chunk_text`, `embeddings_bge-m3` (chaîne JSON de 1024 flottants). Pas de colonne `source` dans le catalogue. Dates des révisions HF (`lastModified`) : service-public 2026-09-25, catalogue 2026-09-26 → version `20260926`.
-- Fichiers lourds (dépôt principal) : `data/raw/mediatech/...` ; la construction et la mesure réelles tournent avec `--racine C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning`.
+- Fichiers lourds (dépôt principal) : `data/raw/mediatech/...` ; la construction et la mesure réelles tournent avec `--racine <DEPOT_PRINCIPAL>`.
 
 ## Tasks & Acceptance
 

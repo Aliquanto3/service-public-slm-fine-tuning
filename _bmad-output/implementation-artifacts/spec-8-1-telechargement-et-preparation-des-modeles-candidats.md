@@ -157,7 +157,7 @@ deferred:
 | qwen-4b | `Qwen/Qwen3-4B-Instruct-2507` | `unsloth/…-GGUF` (communautaire) | template dans `tokenizer_config.json` |
 | ministral-3-8b | `mistralai/Ministral-3-8B-Instruct-2512-GGUF` | même dépôt (officielle) | `fichiers = []`, `exclure_vision = true` |
 
-Taille et SHA-256 de chacun des 46 fichiers préchargés (calculés le 2026-10-12, recoupés avec l'API paths-info de HF aux révisions épinglées : sha256 LFS et oid git conformes) : `C:\Users\UTILIS~1\AppData\Local\Temp\claude\C--Users-Utilisateur-Documents-GitHub-service-public-slm-fine-tuning\2b525399-9658-4abc-ae6d-dabcdbffc874\scratchpad\sha_modeles.json` (clé `<slug>/<hf|gguf>/<fichier>` → `[taille, sha256]`). `fichiers` = tous les fichiers de `hf/` de cette liste.
+Taille et SHA-256 de chacun des 46 fichiers préchargés (calculés le 2026-10-12, recoupés avec l'API paths-info de HF aux révisions épinglées : sha256 LFS et oid git conformes) : `<SCRATCH>\sha_modeles.json` (clé `<slug>/<hf|gguf>/<fichier>` → `[taille, sha256]`). `fichiers` = tous les fichiers de `hf/` de cette liste.
 
 Valeurs communes : `contexte = 8192`, `cache_kv = "f16"`, `reasoning = "off"`, `protocole_outils = "natif"` (provisoire, fixé par la story 8.2).
 

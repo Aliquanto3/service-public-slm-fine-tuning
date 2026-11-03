@@ -37,7 +37,7 @@ Suite complète verte sur main avant les dernières fusions (5 099). Tests cibl�
 | granite-4.0-350m | 15,9 | 39,6 | 1,73 | candidat (trop faible) |
 | granite-4.0-h-350m | 14,5 | mesure plantée, à refaire | — | Baseline seulement |
 
-Qualité = moyenne des 8 Scores de Tâche. Graphiques de Pareto (privés) : https://claude.ai/artifact/JaoY5EntJqPKKeqFk5Grwh. Leurs données sont figées : à rafraîchir avec les Granite.
+Qualité = moyenne des 8 Scores de Tâche. Graphiques de Pareto (privés) : lien privé retiré. Leurs données sont figées : à rafraîchir avec les Granite.
 
 ## Entraînement (enquête `enquete-entrainement-hybrides-2026-10-18.md`)
 - MiniCPM5-2B, Windows natif, `precision_base = "bf16"` : 4096 tokens en 3,72 Gio (766 t/s), 8192 tokens en 4,69 Gio (596 t/s). Le fine-tuning à 8192 tokens tient sur le portable.
@@ -45,7 +45,7 @@ Qualité = moyenne des 8 Scores de Tâche. Graphiques de Pareto (privés) : http
 - Unsloth refuse minicpm5-2b (« untrained tokens »), et ce n'est plus nécessaire.
 
 ## En cours au moment du /clear
-- **Benchmarks des trois Granite** (GGUF cuda `--parallele 4`, puis HF ; démarrés à 18:37, fin estimée vers 21-22 h). Le script `reprise_h350m.ps1` tourne en tâche de fond et tient `gpu.lock`. Sa sortie est dans `C:\Users\Anael\AppData\Local\Temp\claude\C--Users-Anael-dev-service-public-slm-fine-tuning\8425203b-8fb9-480d-859b-87874a7321c6\tasks\bphw1hiqu.output` et se termine par `=== fin`. Pour savoir s'il tourne encore, lire `%LOCALAPPDATA%\slmsp\var\gpu.lock` ou chercher un processus `slmsp bench run`. Ensuite, commiter les runs `runs/bench/2026101818*` et suivants.
+- **Benchmarks des trois Granite** (GGUF cuda `--parallele 4`, puis HF ; démarrés à 18:37, fin estimée vers 21-22 h). Le script `reprise_h350m.ps1` tourne en tâche de fond et tient `gpu.lock`. Sa sortie est dans `<SORTIE_TACHE>` et se termine par `=== fin`. Pour savoir s'il tourne encore, lire `%LOCALAPPDATA%\slmsp\var\gpu.lock` ou chercher un processus `slmsp bench run`. Ensuite, commiter les runs `runs/bench/2026101818*` et suivants.
 - **Bloqueur de veille** actif (processus PowerShell). L'arrêter une fois le GPU libre et les mesures faites.
 
 ## À faire, dans l'ordre
@@ -65,8 +65,8 @@ Qualité = moyenne des 8 Scores de Tâche. Graphiques de Pareto (privés) : http
 6. v0.2.0 après la Baseline (release annotée, topic `status-bench`).
 
 ## Points d'environnement
-- **Téléchargements** : venv séparé `C:\Users\Anael\dev\slmsp-venv-fetch` (extras de la phase 1). Lancer avec `$env:UV_PROJECT_ENVIRONMENT = "C:\Users\Anael\dev\slmsp-venv-fetch"; uv run --no-sync slmsp fetch modeles …`. Le venv principal reste en phase 2.
+- **Téléchargements** : venv séparé `<VENV_FETCH>` (extras de la phase 1). Lancer avec `$env:UV_PROJECT_ENVIRONMENT = "<VENV_FETCH>"; uv run --no-sync slmsp fetch modeles …`. Le venv principal reste en phase 2.
 - **`eval run --reprendre`** enchaîne génération et notation par défaut (`--phase toutes`). Un item en erreur compte comme « déjà présent » et n'est pas rejoué. Granite H 350M a ainsi été noté deux fois (0,64 € de trop) ; le doublon `runs/eval-notation/20261018-182840-…-70ce` n'est pas suivi.
 - **Runs ratés non suivis, à supprimer avec accord** : `runs/bench/20261018-0441*`, `0444*`, `0447*`, `0450*`, `0559*`, `1458*` (EuroLLM, partiel), `runs/measure/20261018-180957-h-ram-b59e`.
-- **Worktrees fusionnés à retirer** sous `C:\Users\Anael\dev\slmsp-wt\` : hybrides-baseline, candidats-registre, masque-minicpm5, bench-parallele, outils-rendu, rd-connecte, granite-petits, precision-base, decodage-speculatif. Garder qwen35-entrainable : la spec B n'est pas fusionnée.
+- **Worktrees fusionnés à retirer** sous `<WORKTREES>\` : hybrides-baseline, candidats-registre, masque-minicpm5, bench-parallele, outils-rendu, rd-connecte, granite-petits, precision-base, decodage-speculatif. Garder qwen35-entrainable : la spec B n'est pas fusionnée.
 - **Cache HF des jeux lm_eval** : `models/.cache-hf`. `NLTK_DATA=data/cache/nltk_data` doit être défini pour les benchmarks.

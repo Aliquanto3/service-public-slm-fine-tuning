@@ -39,13 +39,13 @@ Vérifié : chaque FR à composante UI (FR-1 à FR-23, FR-38) a une surface dans
 Toutes les couleurs ont un hex. Le thème clair seul est une décision explicite. Toutes les références `{…}` de la prose se résolvent.
 
 ### Constats
-- **bas** `{colors.warning}` (#FFCA4A) en bordure sur blanc fait environ 1,5:1. L'information est portée par le texte, donc c'est conforme, mais la bordure ne doit jamais être le seul signal. *Correction :* rien à changer, garder le texte toujours présent. *Statut :* sans objet
+- **bas** `{colors.warning}` (#E8A317) en bordure sur blanc fait environ 1,5:1. L'information est portée par le texte, donc c'est conforme, mais la bordure ne doit jamais être le seul signal. *Correction :* rien à changer, garder le texte toujours présent. *Statut :* sans objet
 - **bas** L'anneau de focus de 2 px est cité dans EXPERIENCE.md mais sa largeur n'est pas un token. *Statut :* sans objet (valeur explicite suffisante)
 
 ## 3. Couverture des composants — mince
 
 ### Constats
-- **haut** Composants utilisés sans spec visuelle dans DESIGN.md : carte de jeu de données, zone de saisie, encarts d'état (repli data.gouv en jaune, erreur en rouge), passage signalé (Langage clair), emplacement de Courrier type, boîte de dialogue, confirmation discrète (« Copié », « Merci, retour enregistré »). Un agent autonome inventera des couleurs, ce qui est interdit par « toute couleur inventée ». *Correction :* ajouter ces composants au YAML et à la prose, en n'utilisant que les tokens existants. *Statut :* corrigé
+- **haut** Composants utilisés sans spec visuelle dans DESIGN.md : carte de jeu de données, zone de saisie, encarts d'état (repli data.gouv en ambre, erreur en rouge), passage signalé (Langage clair), emplacement de Courrier type, boîte de dialogue, confirmation discrète (« Copié », « Merci, retour enregistré »). Un agent autonome inventera des couleurs, ce qui est interdit par « toute couleur inventée ». *Correction :* ajouter ces composants au YAML et à la prose, en n'utilisant que les tokens existants. *Statut :* corrigé
 - **moyen** Le tableau de données a une spec visuelle mais pas de token YAML. *Correction :* l'ajouter. *Statut :* corrigé
 
 ## 4. Couverture des états — adéquate

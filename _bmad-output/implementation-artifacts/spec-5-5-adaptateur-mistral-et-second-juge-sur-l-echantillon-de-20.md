@@ -169,7 +169,7 @@ Revue de code du lot 1, le 2026-10-12. Détail et constats rejetés : `revue-cod
 - `uv run pytest tests/mistral tests/judge -q` -- expected: tout passe (tests réels désélectionnés)
 - `uv run pytest -q` -- expected: aucun échec hors échecs préexistants listés
 - `uv run ruff check` et `uv run ruff format --check src/slmsp/mistral src/slmsp/judge tests/mistral tests/judge` -- expected: propre
-- `$env:SLMSP_ENV_FILE='C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\.env'; uv run pytest tests/judge/test_second_reel.py -m "reseau and payant" -s` -- expected: 2 verdicts valides, coût total ≤ 0,20 €. Payant : l'implémenteur ne le lance **jamais** ; seul l'orchestrateur de la story le lance, une fois, après la revue.
+- `$env:SLMSP_ENV_FILE='<DEPOT_PRINCIPAL>\.env'; uv run pytest tests/judge/test_second_reel.py -m "reseau and payant" -s` -- expected: 2 verdicts valides, coût total ≤ 0,20 €. Payant : l'implémenteur ne le lance **jamais** ; seul l'orchestrateur de la story le lance, une fois, après la revue.
 
 ## Auto Run Result
 

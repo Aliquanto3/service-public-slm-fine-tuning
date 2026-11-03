@@ -1,24 +1,24 @@
 /* Jetons de DESIGN.md (UX-DR1). Tailles de texte en rem, espacements et rayons en px (base 4). */
 :root {
-  --primary: #451dc7;
-  --primary-hover: #250f6b;
-  --primary-soft: #ede7fe;
+  --primary: #0b6b78;
+  --primary-hover: #084e58;
+  --primary-soft: #dceff1;
   --on-primary: #ffffff;
-  --accent: #04f06a;
-  --accent-soft: #cafee0;
-  --ink: #0a0a14;
-  --ink-soft: #4a4a5e;
-  --gray: #8a8a9e;
-  --line: #e6e6ec;
+  --accent: #b4500f;
+  --accent-soft: #fbe7d7;
+  --ink: #141a1f;
+  --ink-soft: #4b5560;
+  --gray: #737e85;
+  --line: #c9d1d3;
   --surface: #ffffff;
-  --surface-alt: #f6f5fa;
-  --warning: #ffca4a;
-  --danger: #ff2a49;
-  --focus-ring: #451dc7;
-  --scrim: rgba(10, 10, 20, 0.32);
+  --surface-alt: #eef1f0;
+  --warning: #e8a317;
+  --danger: #b42318;
+  --focus-ring: #1f5fd1;
+  --scrim: rgba(20, 26, 31, 0.32);
 
-  --police: Aptos, Inter, "Segoe UI", sans-serif;
-  --police-etiquette: Manrope, Inter, sans-serif;
+  --police: system-ui, "Segoe UI", Roboto, sans-serif;
+  --police-etiquette: system-ui, "Segoe UI", Roboto, sans-serif;
   --police-mono: "Cascadia Mono", Consolas, monospace;
   --t-display: 1.75rem;
   --t-title: 1.25rem;
@@ -48,5 +48,5 @@
   --r-lg: 16px;
   --r-full: 9999px;
 
-  --ombre: 0 8px 24px rgba(10, 10, 20, 0.08);
+  --ombre: 0 8px 24px rgba(20, 26, 31, 0.08);
 }

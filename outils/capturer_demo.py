@@ -26,9 +26,7 @@ from playwright.sync_api import sync_playwright
 
 RACINE = Path(__file__).resolve().parents[1]
 UI = RACINE / "src" / "slmsp" / "app" / "ui"
-DEPOT = Path(
-    os.environ.get("SLMSP_DEPOT_PRINCIPAL", r"C:\Users\Anael\dev\service-public-slm-fine-tuning")
-)
+DEPOT = Path(os.environ.get("SLMSP_DEPOT_PRINCIPAL", str(RACINE)))
 GENERATIONS = DEPOT / "runs/eval-generation/20261020-163743-minicpm5-2b-f9fc/generations.jsonl"
 ITEMS = DEPOT / "eval/jeu/dev1/items.jsonl"
 SORTIE = RACINE / "docs" / "assets" / "demo-assistant.gif"

@@ -1,56 +1,56 @@
 ---
 name: Assistant IA local secteur public (nom de produit à trouver)
-description: Assistant IA local et hors ligne pour les agents publics, application de bureau Windows. Identité visuelle Wavestone, adaptée à un outil de travail quotidien plutôt qu'à une page vitrine.
+description: Assistant IA local et hors ligne pour les agents publics, application de bureau Windows. Identité visuelle générique, adaptée à un outil de travail quotidien plutôt qu'à une page vitrine.
 status: final
 created: 2026-10-11
 updated: 2026-10-11
 colors:
-  primary: '#451DC7'            # violet Wavestone, ancre de marque
-  primary-hover: '#250F6B'      # violet profond, survol et état pressé
-  primary-soft: '#EDE7FE'       # violet doux : sélection, survol de ligne, bulle de l'Agent
+  primary: '#0B6B78'            # bleu pétrole, ancre de marque
+  primary-hover: '#084E58'      # bleu pétrole profond, survol et état pressé
+  primary-soft: '#DCEFF1'       # bleu pétrole doux : sélection, survol de ligne, bulle de l'Agent
   on-primary: '#FFFFFF'
-  accent: '#04F06A'             # vert Wavestone : seul accent secondaire, jamais en texte sur fond clair
-  accent-soft: '#CAFEE0'        # vert clair : fond des états de succès
-  ink: '#0A0A14'                # texte principal
-  ink-soft: '#4A4A5E'           # texte secondaire (contraste AA sur blanc)
-  gray: '#8A8A9E'               # décor, icônes inactives ; jamais pour du texte de moins de 18,66 px
-  line: '#E6E6EC'               # bordures, séparateurs
+  accent: '#B4500F'             # orange brûlé : seul accent secondaire, marque non textuelle
+  accent-soft: '#FBE7D7'        # orange clair : fond des insertions
+  ink: '#141A1F'                # texte principal
+  ink-soft: '#4B5560'           # texte secondaire (contraste AA sur blanc)
+  gray: '#737E85'               # décor, icônes inactives ; jamais pour du texte de moins de 18,66 px
+  line: '#C9D1D3'               # bordures, séparateurs
   surface: '#FFFFFF'            # fond des zones de travail
-  surface-alt: '#F6F5FA'        # fond de la colonne de gauche, du panneau Sources, des zones d'entrée
-  warning: '#FFCA4A'            # jaune : avertissement juridique, mode dégradé (icône et bordure seulement)
-  danger: '#FF2A49'             # rouge : erreur (icône et bordure seulement, le texte reste en ink)
-  focus-ring: '#451DC7'
+  surface-alt: '#EEF1F0'        # fond de la colonne de gauche, du panneau Sources, des zones d'entrée
+  warning: '#E8A317'            # ambre : avertissement juridique, mode dégradé (icône et bordure seulement)
+  danger: '#B42318'             # rouge : erreur (icône et bordure seulement, le texte reste en ink)
+  focus-ring: '#1F5FD1'
 typography:
   # Toutes les tailles sont en rem. L'échelle globale (100 à 150 %) agit sur la taille racine.
   display:
-    fontFamily: 'Aptos, Inter, Segoe UI, sans-serif'
+    fontFamily: 'system-ui, Segoe UI, Roboto, sans-serif'
     fontSize: 1.75rem
     fontWeight: '800'
     lineHeight: '1.2'
     letterSpacing: -0.02em
   title:
-    fontFamily: 'Aptos, Inter, Segoe UI, sans-serif'
+    fontFamily: 'system-ui, Segoe UI, Roboto, sans-serif'
     fontSize: 1.25rem
     fontWeight: '700'
     lineHeight: '1.3'
     letterSpacing: -0.01em
   body:
-    fontFamily: 'Aptos, Inter, Segoe UI, sans-serif'
+    fontFamily: 'system-ui, Segoe UI, Roboto, sans-serif'
     fontSize: 1rem
     fontWeight: '400'
     lineHeight: '1.6'
   body-strong:
-    fontFamily: 'Aptos, Inter, Segoe UI, sans-serif'
+    fontFamily: 'system-ui, Segoe UI, Roboto, sans-serif'
     fontSize: 1rem
     fontWeight: '600'
     lineHeight: '1.6'
   small:
-    fontFamily: 'Aptos, Inter, Segoe UI, sans-serif'
+    fontFamily: 'system-ui, Segoe UI, Roboto, sans-serif'
     fontSize: 0.875rem
     fontWeight: '400'
     lineHeight: '1.5'
   label:
-    fontFamily: 'Manrope, Inter, sans-serif'
+    fontFamily: 'system-ui, Segoe UI, Roboto, sans-serif'
     fontSize: 0.78rem
     fontWeight: '700'
     lineHeight: '1.4'
@@ -184,8 +184,8 @@ components:
   dialog:
     background: '{colors.surface}'
     radius: '{rounded.lg}'
-    shadow: '0 8px 24px rgba(10,10,20,0.08)'
-    scrim: 'rgba(10,10,20,0.32)'
+    shadow: '0 8px 24px rgba(20,26,31,0.08)'
+    scrim: 'rgba(20,26,31,0.32)'
   inline-confirmation:
     foreground: '{colors.ink-soft}'
     typography: '{typography.small}'
@@ -193,37 +193,36 @@ components:
 
 ## Brand & Style
 
-L'Assistant reprend l'identité Wavestone, transposée d'une page vitrine à un **outil de travail quotidien**. La marque se reconnaît au violet `{colors.primary}`, au rythme typographique serré des titres et aux étiquettes en Manrope capitales. Les effets de vitrine de la charte web sont exclus : animations au défilement, curseur personnalisé, compteurs animés, visuels en orbite. Un agent d'accueil l'ouvre vingt fois par jour, devant un usager. L'interface doit être calme, lisible et prévisible.
+L'Assistant suit une charte graphique générique, pensée pour un **outil de travail quotidien**. L'identité se reconnaît au bleu pétrole `{colors.primary}`, au rythme typographique serré des titres et aux étiquettes en capitales. Les effets de vitrine sont exclus : animations au défilement, curseur personnalisé, compteurs animés, visuels en orbite. Un agent d'accueil l'ouvre vingt fois par jour, devant un usager. L'interface doit être calme, lisible et prévisible.
 
 Posture : **sobre, digne de confiance, jamais officielle**. L'Assistant n'imite ni le Système de design de l'État (DSFR) ni la marque Marianne. Rien ne doit laisser croire à un outil de l'État.
 
-Le logo Wavestone est placé en bas de la colonne de gauche, en petit, avec la mention du nom de produit. `[ASSUMPTION : nom et marquage définitifs à trancher lors du brainstorm « Wave… » ; à vérifier si la démo est montrée chez un client qui ne doit pas voir la marque]`
+Le logotype (pictogramme à trois barres et nom affiché en texte) est placé en bas de la colonne de gauche, en petit, avec la mention du nom de produit.
 
 ## Colors
 
-- **Violet `{colors.primary}`.** C'est l'ancre de marque. Il sert aux actions principales, à la Tâche active, aux puces de citation, aux liens et à l'anneau de focus. Contraste d'environ 9:1 sur blanc, donc utilisable en texte.
-- **Violet profond `{colors.primary-hover}`.** Réservé au survol et à l'état pressé des actions violettes.
-- **Violet doux `{colors.primary-soft}`.** Sert de fond pour la sélection, la bulle de l'Agent et les puces de citation. Jamais en grand aplat décoratif.
-- **Vert `{colors.accent}`.** Seul accent secondaire, avec deux usages : la pastille du Mode connecté et le fond des insertions en Correction (`{colors.accent-soft}`).
-  - Il n'est **jamais utilisé en texte sur fond clair**, car son contraste est insuffisant.
+- **Bleu pétrole `{colors.primary}`.** C'est l'ancre de marque. Il sert aux actions principales, à la Tâche active, aux puces de citation et aux liens. Contraste de 6,2:1 sur blanc, donc utilisable en texte. L'anneau de focus a sa propre couleur, `{colors.focus-ring}` (bleu vif, 5,8:1 sur blanc).
+- **Bleu pétrole profond `{colors.primary-hover}`.** Réservé au survol et à l'état pressé des actions principales.
+- **Bleu pétrole doux `{colors.primary-soft}`.** Sert de fond pour la sélection, la bulle de l'Agent et les puces de citation. Jamais en grand aplat décoratif.
+- **Orange brûlé `{colors.accent}`.** Seul accent secondaire, avec deux usages : la pastille du Mode connecté et le fond des insertions en Correction (`{colors.accent-soft}`).
+  - Il n'est **jamais utilisé en texte** : c'est une marque non textuelle (3:1 requis, 5,1:1 sur blanc).
 - **Encres.**
   - `{colors.ink}` : texte principal.
   - `{colors.ink-soft}` : texte secondaire, contraste AA.
   - `{colors.gray}` : icônes inactives et décor uniquement.
 - **Surfaces.**
   - `{colors.surface}` (blanc) : zones de travail.
-  - `{colors.surface-alt}` (crème) : colonne de gauche, panneau Sources et zones de saisie.
-- **États.** `{colors.warning}` (jaune) et `{colors.danger}` (rouge) colorent uniquement des icônes et des bordures. Le texte reste en `{colors.ink}`.
-  - Le **Mode hors ligne est un état normal**, pas une alerte. Sa pastille est grise, jamais rouge ni jaune.
+  - `{colors.surface-alt}` (gris clair) : colonne de gauche, panneau Sources et zones de saisie.
+- **États.** `{colors.warning}` (ambre) et `{colors.danger}` (rouge) colorent uniquement des icônes et des bordures. Le texte reste en `{colors.ink}`.
+  - Le **Mode hors ligne est un état normal**, pas une alerte. Sa pastille est grise, jamais rouge ni ambre.
 
-À éviter : magenta, rose, dégradés non violets, toute couleur inventée hors de cette liste.
+À éviter : magenta, rose, dégradés, toute couleur inventée hors de cette liste.
 
 ## Typography
 
 - **Polices.**
-  - **Aptos** est la police de la marque, présente sur les postes Windows équipés de Microsoft 365.
-  - **Inter**, embarquée dans l'application, sert de repli. Aucune police n'est chargée depuis Internet : l'application est hors ligne.
-  - **Manrope**, également embarquée, est réservée aux `{typography.label}` : étiquettes de section en capitales, comme « TÂCHES », « HISTORIQUE » ou « SOURCES ».
+  - **Pile système** (`system-ui`, Segoe UI, Roboto) pour tout le texte : aucune police n'est embarquée ni chargée depuis Internet, l'application est hors ligne.
+  - Les `{typography.label}` (étiquettes de section en capitales, comme « TÂCHES », « HISTORIQUE » ou « SOURCES ») utilisent la même pile, en graisse 700.
 - **Rôles.**
   - `{typography.display}` : écran de bienvenue et en-tête vide d'une Tâche.
   - `{typography.title}` : titres de panneau.
@@ -260,23 +259,23 @@ Ces rayons sont un peu plus serrés que ceux de la charte web (12/16/22), pour u
 
 ## Components
 
-Références visuelles : `mockups/question.html` et `mockups/compte-rendu.html`. En cas de conflit, les spines priment. Les maquettes chargent Inter et Manrope depuis Google Fonts, alors que l'application les embarque.
+Références visuelles : `mockups/question.html` et `mockups/compte-rendu.html`. En cas de conflit, les spines priment. Les maquettes utilisent la même pile système que l'application.
 
 - **Navigation des Tâches** (`task-nav-item`). Liste verticale dans la colonne de gauche.
   - Les quatre Tâches prioritaires sont visibles. Les quatre secondaires sont repliées sous « Plus ».
   - L'élément actif reçoit un fond `{colors.primary-soft}`, un texte `{colors.primary}` et une barre de 3 px à gauche.
   - Chaque Tâche a une icône linéaire de 20 px, sans emoji.
 - **Indicateur de Mode** (`mode-indicator-*`). Pastille arrondie dans la barre supérieure, avec un point coloré et un libellé (« Hors ligne » ou « Connecté »).
-  - Le point est gris hors ligne, vert en Mode connecté.
+  - Le point est gris hors ligne, orange en Mode connecté.
   - Le libellé est toujours présent : la couleur seule ne porte jamais l'information.
 - **Message** (`message-agent`, `message-assistant`).
-  - Message de l'Agent : bulle alignée à droite sur fond violet doux.
+  - Message de l'Agent : bulle alignée à droite sur fond bleu pétrole doux.
   - Réponse de l'Assistant : bloc pleine largeur, bordé, avec trois éléments sous le texte :
     - la rangée de puces de citation ;
     - l'avertissement juridique ;
     - les actions Copier, Retour (pouce haut ou bas) et Régénérer.
 - **Puce de citation** (`citation-chip`). Numéro + titre court de la source, sur une seule ligne tronquée. Un clic ouvre le panneau Sources sur cette source.
-- **Avertissement juridique** (`legal-notice`). Bandeau discret avec une bordure gauche jaune et le texte « Ne vaut pas avis juridique ». Il n'est jamais rouge, car ce n'est pas une erreur.
+- **Avertissement juridique** (`legal-notice`). Bandeau discret avec une bordure gauche ambre et le texte « Ne vaut pas avis juridique ». Il n'est jamais rouge, car ce n'est pas une erreur.
 - **Carte de source** (`source-card`). Elle contient :
   - le titre ;
   - l'origine, libellée sans jargon : « Documents installés », « data.gouv » ou « Page consultée » ;
@@ -285,14 +284,14 @@ Références visuelles : `mockups/question.html` et `mockups/compte-rendu.html`.
   - un bouton « Ouvrir » vers le lien.
 - **Volets de rédaction** (`editor-pane`). Volet Entrée éditable et volet Résultat en lecture seule. La barre d'actions du Résultat contient Copier (bouton principal), Régénérer et Affiner (bouton secondaire).
 - **Différences de Correction** (`diff-insert`, `diff-delete`).
-  - Insertion : fond vert clair et soulignement.
+  - Insertion : fond orange clair et soulignement.
   - Suppression : texte barré en `{colors.ink-soft}`.
   - Le marquage ne repose jamais sur la seule couleur.
 - **Tableau de données** (`data-table`). Grille simple à lignes alternées `{colors.surface-alt}`, en-têtes en `{typography.body-strong}` et pied de tableau sourcé en `{typography.small}`.
 - **Zone de saisie** (`composer`). Champ multiligne sur fond `{colors.surface-alt}`, bouton Envoyer (`button-primary`) aligné en bas à droite. Au focus, la bordure passe à 2 px `{colors.focus-ring}`.
 - **Carte de jeu de données** (`dataset-card`). Même gabarit que la carte de source : titre en `{typography.body-strong}`, puis une ligne de métadonnées en `{typography.small}` `{colors.ink-soft}` (producteur · date de mise à jour), puis les actions « Ouvrir » et « Voir les données » (`button-secondary`).
-- **Encarts d'état** (`callout-warning`, `callout-danger`). Même gabarit que l'avertissement juridique, en texte `{colors.ink}` : bordure gauche jaune pour le repli data.gouv, rouge pour l'erreur interne. Une icône linéaire précède le texte ; l'action « Réessayer » est un `button-secondary`.
-- **Passage signalé** (`flagged-passage`, Langage clair). Fond `{colors.surface-alt}` et soulignement pointillé jaune de 2 px. Il se distingue ainsi des insertions de Correction (fond vert, soulignement plein).
+- **Encarts d'état** (`callout-warning`, `callout-danger`). Même gabarit que l'avertissement juridique, en texte `{colors.ink}` : bordure gauche ambre pour le repli data.gouv, rouge pour l'erreur interne. Une icône linéaire précède le texte ; l'action « Réessayer » est un `button-secondary`.
+- **Passage signalé** (`flagged-passage`, Langage clair). Fond `{colors.surface-alt}` et soulignement pointillé ambre de 2 px. Il se distingue ainsi des insertions de Correction (fond orange clair, soulignement plein).
 - **Emplacement de courrier** (`letter-placeholder`, Courrier type). Texte entre crochets en `{colors.primary}` gras sur fond `{colors.primary-soft}`.
 - **Boîte de dialogue** (`dialog`). Fond blanc, rayon `{rounded.lg}`, ombre douce, voile d'ink à 32 %. Largeur 640 px au plus, titre en `{typography.title}`, bouton × en haut à droite.
 - **Confirmation discrète** (`inline-confirmation`). Texte `{typography.small}` `{colors.ink-soft}` affiché à côté de l'action qui l'a déclenchée (« Copié », « Merci, retour enregistré sur ce poste »), puis effacé après 3 s. Pas de toast flottant.
@@ -301,11 +300,11 @@ Références visuelles : `mockups/question.html` et `mockups/compte-rendu.html`.
 
 | À faire | À ne pas faire |
 |---|---|
-| Garder `{colors.primary}` pour l'action principale et la sélection | Multiplier les aplats violets décoratifs |
-| Réserver le vert à la pastille du Mode connecté et aux insertions | Mettre du texte vert sur fond clair |
-| Traiter le Mode hors ligne comme un état normal (gris) | Afficher « Hors ligne » en rouge ou en jaune |
-| Embarquer Inter et Manrope dans l'application | Charger des polices ou des icônes depuis Internet |
+| Garder `{colors.primary}` pour l'action principale et la sélection | Multiplier les aplats décoratifs de couleur primaire |
+| Réserver l'orange à la pastille du Mode connecté et aux insertions | Mettre du texte orange sur fond clair |
+| Traiter le Mode hors ligne comme un état normal (gris) | Afficher « Hors ligne » en rouge ou en ambre |
+| Utiliser la pile de polices système | Charger des polices ou des icônes depuis Internet |
 | Exprimer toutes les tailles en rem | Fixer des tailles en px qui cassent l'échelle de texte |
 | Utiliser des icônes linéaires 24×24 qui héritent de la couleur du texte | Utiliser des emojis ou des illustrations décoratives |
-| Garder une interface calme, sans animation au défilement | Reprendre les effets de la charte web (curseur, orbites, compteurs) |
+| Garder une interface calme, sans animation au défilement | Reprendre des effets de vitrine (curseur, orbites, compteurs) |
 | Rester sobre et neutre | Imiter le DSFR, Marianne ou tout signe de l'État |

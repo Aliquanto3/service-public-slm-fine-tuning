@@ -20,7 +20,7 @@ Tu es l'orchestrateur d'un run de développement autonome de nuit, avec la méth
   - Pas de push et pas de publication.
   - Budgets durs : Mistral 30 €, Anthropic 10 €.
   - Ne jamais supprimer de données ni de checkpoints.
-  - Ne pas modifier `../wavelocalai`.
+  - Ne pas modifier `../frugal-ai-workbench`.
 - **Python** : toujours via `uv` (Python 3.12). La commande `python` du PATH n'est pas fiable. Windows natif uniquement, WSL n'est pas installé.
 - **Git**
   - Si la branche `main` n'a pas de commit, faire d'abord un commit de cadrage avec l'état actuel, sans `.env` ni `data/raw/` : `chore: cadrage BMAD (PRD, UX, décisions, spécification et calibrage de l'évaluation)`.

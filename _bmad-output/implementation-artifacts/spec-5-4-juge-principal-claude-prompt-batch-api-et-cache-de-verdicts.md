@@ -184,7 +184,7 @@ Une note est `{"type":"object","additionalProperties":false,"required":["note","
 - `uv run pytest tests/judge -q` -- expected: tous les tests passent (le test réel est désélectionné)
 - `uv run pytest -q` -- expected: aucun échec (hors échecs préexistants listés)
 - `uv run ruff check` et `uv run ruff format --check src/slmsp/judge src/slmsp/core/schemas/verdict.py tests/judge` -- expected: propre
-- `$env:SLMSP_ENV_FILE='C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\.env'; uv run pytest tests/judge/test_claude_reel.py -m "reseau and payant" -s` -- expected: 2 verdicts valides, coût total ≤ 0,30 €. Payant : l'implémenteur ne le lance **jamais** ; seul l'orchestrateur de la story le lance, une seule fois, après la revue.
+- `$env:SLMSP_ENV_FILE='<DEPOT_PRINCIPAL>\.env'; uv run pytest tests/judge/test_claude_reel.py -m "reseau and payant" -s` -- expected: 2 verdicts valides, coût total ≤ 0,30 €. Payant : l'implémenteur ne le lance **jamais** ; seul l'orchestrateur de la story le lance, une seule fois, après la revue.
 
 ## Auto Run Result
 

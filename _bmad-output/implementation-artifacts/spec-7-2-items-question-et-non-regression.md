@@ -122,7 +122,7 @@ deferred:
 
 La rédaction est découpée en lots confiés à des sous-agents distincts. Chacun écrit **seulement** son fichier de lot `<SCRATCH>/lots/<LOT>.jsonl` ; l'agent de story fusionne les lots dans `Q.jsonl` et `NR.jsonl`, puis lance le vérificateur.
 
-`<SCRATCH>` = `C:\Users\UTILIS~1\AppData\Local\Temp\claude\C--Users-Utilisateur-Documents-GitHub-service-public-slm-fine-tuning\2b525399-9658-4abc-ae6d-dabcdbffc874\scratchpad`. Outils (lancés par `uv run --offline --no-project --python 3.12 --with duckdb python -I <script> …`) :
+`<SCRATCH>` = `<SCRATCH>`. Outils (lancés par `uv run --offline --no-project --python 3.12 --with duckdb python -I <script> …`) :
 - `<SCRATCH>/fiches.py F10009 F12006 …` exporte le texte des fiches dans `<SCRATCH>/fiches/<ID>.txt` (chunks numérotés), à lire ensuite avec l'outil Read.
 - `<SCRATCH>/recherche.py "motif" …` : recherche regex insensible à la casse dans le parquet (preuve d'absence, choix des fiches).
 - `<SCRATCH>/titres.txt` : `doc_id | url | titre | nb chunks | surtitre` des 3 569 fiches (UTF-8).
