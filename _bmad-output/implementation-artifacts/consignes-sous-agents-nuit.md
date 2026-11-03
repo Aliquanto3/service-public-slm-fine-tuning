@@ -21,7 +21,7 @@ Ce fichier est lu par chaque sous-agent de story avant de commencer. Il fait aut
 3. **Aucune publication** : pas de push et rien sur Hugging Face. Réseau limité à la liste D1.5, plus `download.pytorch.org` (D-nuit-A1-17).
 4. **Budgets durs** : Mistral 30 € et Anthropic 10 €, sur toute la nuit et pour tous les agents. Les tests unitaires ne font **aucun** appel d'API payant : mocks et cassettes uniquement.
 5. **Ne jamais supprimer** de données, de checkpoints ni d'artefacts d'évaluation.
-6. **Ne pas modifier** `../wavelocalai`, ni les documents de décision : PRD, UX, decisions.md, SPEC, grille, architecture.
+6. **Ne pas modifier** `../frugal-ai-workbench`, ni les documents de décision : PRD, UX, decisions.md, SPEC, grille, architecture.
 
 ## Outillage
 - **Python 3.12 via `uv` uniquement** (`uv sync`, `uv run pytest`, `uv run ruff check`). La commande `python` du PATH n'est pas fiable. Windows natif, sans WSL.

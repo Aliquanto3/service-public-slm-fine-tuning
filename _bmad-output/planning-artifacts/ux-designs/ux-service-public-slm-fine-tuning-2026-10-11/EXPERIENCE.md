@@ -108,7 +108,7 @@ Ce document décrit le comportement des composants. Leur aspect visuel est décr
 | Génération en cours | Toutes | Le texte apparaît progressivement. Une animation discrète « … » s'affiche avant le premier mot. Le bouton « Arrêter » est disponible. |
 | Aucune source trouvée | Question | L'Assistant répond qu'il n'a pas trouvé de Source officielle et oriente vers un service. Aucune puce de citation n'est affichée. Ce n'est pas un état d'erreur. |
 | Mode hors ligne | Global | Pastille grise « Hors ligne ». Aucun bandeau d'alerte. Dans la Recherche de données, une ligne d'information sous le titre indique : « Hors ligne : catalogue installé uniquement, sans chiffres à jour. » |
-| Repli data.gouv (délai dépassé ou erreur) | Recherche | La réponse est précédée d'un encart bordé de jaune : « data.gouv ne répond pas. Réponse établie à partir du catalogue installé. » Il propose une action « Réessayer ». |
+| Repli data.gouv (délai dépassé ou erreur) | Recherche | La réponse est précédée d'un encart bordé d'ambre : « data.gouv ne répond pas. Réponse établie à partir du catalogue installé. » Il propose une action « Réessayer ». |
 | Valeurs demandées hors ligne | Recherche | L'Assistant indique que les valeurs ne sont disponibles qu'en Mode connecté et donne le lien de la ressource (FR-8). |
 | Hôte bloqué (hors Liste blanche) | Global | Rien n'est affiché pendant l'échange. L'évènement est inscrit au journal des Requêtes sortantes avec le statut « Bloqué ». |
 | Entrée trop longue | Vues de rédaction | Au-delà de la capacité, un message s'affiche : « Texte long : je le traite en plusieurs parties. » Une progression « Partie 2 sur 4 » suit, puis le Résultat fusionné (FR-13). |
@@ -137,13 +137,13 @@ La souris et le clavier sont à égalité. Les agents utilisent surtout la souri
 
 ## Accessibility Floor
 
-Ce document fixe les exigences de comportement. Les contrastes sont définis dans `DESIGN.md` : texte en ink et ink-soft sur blanc, jamais de vert en texte.
+Ce document fixe les exigences de comportement. Les contrastes sont définis dans `DESIGN.md` : texte en ink et ink-soft sur blanc, jamais d'orange en texte.
 
 - **Critères RGAA vérifiés en v1 (NFR-7)** :
   - navigation complète au clavier ;
   - contraste d'au moins 4,5:1 ;
   - libellés accessibles sur tous les contrôles.
-- **Ordre de tabulation** : colonne de gauche, puis barre supérieure, puis zone centrale, puis panneau Sources. Le focus est toujours visible (anneau violet de 2 px).
+- **Ordre de tabulation** : colonne de gauche, puis barre supérieure, puis zone centrale, puis panneau Sources. Le focus est toujours visible (anneau de focus bleu de 2 px).
 - **Lecteur d'écran.**
   - La réponse en cours est annoncée par une région `aria-live` polie, une fois la génération terminée, et non mot à mot.
   - Les puces de citation sont lues sous la forme « Source 1 : titre ».
@@ -211,7 +211,7 @@ Les identifiants UJ-n renvoient aux parcours du PRD (§2.3).
 5. **Point culminant** : un tableau de 50 lignes s'affiche sous la carte, avec en pied « Source : data.gouv.fr, [nom du jeu], consulté le 11 oct. 2026 ». Thomas copie le tableau.
 6. Par curiosité, il ouvre le menu de la pastille, puis « Voir ce qui a été envoyé ». Il y lit trois lignes horodatées vers `mcp.data.gouv.fr`, avec les termes « places EHPAD commune » et l'identifiant du jeu. Sa phrase n'y figure pas en entier.
 
-**Échec possible** : data.gouv ne répond pas. Un encart jaune annonce un repli sur le catalogue installé, sans tableau de valeurs, avec un bouton « Réessayer ».
+**Échec possible** : data.gouv ne répond pas. Un encart ambre annonce un repli sur le catalogue installé, sans tableau de valeurs, avec un bouton « Réessayer ».
 
 ### Flux 3 : Thomas transforme ses notes en compte rendu (UJ-3)
 

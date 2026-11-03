@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Maquette - Compte rendu</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Manrope:wght@700&display=swap" rel="stylesheet">
 <style>
 /*
   Maquette clé : vue de rédaction Compte rendu, Flux 3 étape 4 (Thomas relit les Décisions puis copie).
@@ -14,27 +12,27 @@
     Components (task-nav-item, mode-indicator-online, editor-pane, button-primary, button-secondary, feedback-button).
   - EXPERIENCE.md : Information Architecture (Compte rendu), Component Patterns (Vue de rédaction,
     Barre d'actions du Résultat, Retour, Indicateur de Mode, Historique), Key Flows > Flux 3 étapes 1-4.
-  Le vert n'apparaît que sur la pastille « Connecté » (point), jamais en texte.
-  Les polices Inter et Manrope sont chargées depuis Google Fonts pour la maquette seulement.
+  L'orange n'apparaît que sur la pastille « Connecté » (point), jamais en texte.
+  Police : pile système (aucune police chargée).
 */
 :root{
-  --primary:#451DC7; --primary-hover:#250F6B; --primary-soft:#EDE7FE; --on-primary:#FFFFFF;
-  --accent:#04F06A; --accent-soft:#CAFEE0;
-  --ink:#0A0A14; --ink-soft:#4A4A5E; --gray:#8A8A9E; --line:#E6E6EC;
-  --surface:#FFFFFF; --surface-alt:#F6F5FA; --warning:#FFCA4A; --danger:#FF2A49;
-  --font:Aptos, Inter, "Segoe UI", sans-serif; --font-label:Manrope, Inter, sans-serif;
+  --primary:#0B6B78; --primary-hover:#084E58; --primary-soft:#DCEFF1; --on-primary:#FFFFFF;
+  --accent:#B4500F; --accent-soft:#FBE7D7;
+  --ink:#141A1F; --ink-soft:#4B5560; --gray:#737E85; --line:#C9D1D3;
+  --surface:#FFFFFF; --surface-alt:#EEF1F0; --warning:#E8A317; --danger:#B42318;
+  --font:system-ui, "Segoe UI", Roboto, sans-serif; --font-label:system-ui, "Segoe UI", Roboto, sans-serif;
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-full:9999px;
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px}
-body{background:#D9D7E3;font-family:var(--font);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--s5)}
+body{background:#E3E8E7;font-family:var(--font);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--s5)}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 svg.i.sm{width:16px;height:16px}
 
-.window{width:1280px;height:800px;background:var(--surface);border-radius:var(--r-sm);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(10,10,20,.08);border:1px solid var(--line)}
+.window{width:1280px;height:800px;background:var(--surface);border-radius:var(--r-sm);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(20,26,31,.08);border:1px solid var(--line)}
 .titlebar{height:32px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 0 0 var(--s3);background:var(--surface-alt);border-bottom:1px solid var(--line);font-size:.875rem;color:var(--ink-soft)}
 .titlebar .ctrl{display:flex}
 .titlebar .ctrl span{width:46px;height:32px;display:flex;align-items:center;justify-content:center}
@@ -60,8 +58,8 @@ svg.i.sm{width:16px;height:16px}
 .history a:hover{background:var(--primary-soft)}
 .history a.current{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
 .sidebar-foot{border-top:1px solid var(--line);padding:var(--s3) var(--s3) 0;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;flex-direction:column;gap:2px}
-.brand svg{width:84px;height:auto}
+.brand{display:flex;align-items:center;gap:8px}
+.brand svg{width:28px;height:28px}
 .brand span{font-size:.875rem;color:var(--ink-soft)}
 .icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);color:var(--ink-soft)}
 .icon-btn:hover{background:var(--primary-soft);color:var(--primary)}
@@ -72,7 +70,7 @@ svg.i.sm{width:16px;height:16px}
 .topbar h1{font-size:1.25rem;font-weight:700;line-height:1.3;letter-spacing:-.01em}
 .mode{display:inline-flex;align-items:center;gap:var(--s2);padding:6px var(--s3);border-radius:var(--r-full);background:var(--surface-alt);border:1px solid var(--line);font-size:.875rem;font-weight:600;color:var(--ink)}
 .mode .dot{width:8px;height:8px;border-radius:50%;background:var(--gray)}
-.mode.online .dot{background:var(--accent);box-shadow:0 0 0 1px rgba(10,10,20,.15)}
+.mode.online .dot{background:var(--accent);box-shadow:0 0 0 1px rgba(20,26,31,.15)}
 
 /* Vue de rédaction */
 .workspace{flex:1;display:flex;gap:var(--s5);padding:var(--s5);min-height:0}
@@ -169,18 +167,7 @@ td.nowrap{white-space:nowrap}
 
       <div class="sidebar-foot">
         <div class="brand">
-          <svg viewBox="0 0 307 42" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wavestone" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2">
-            <path d="M-3.843-8.349h16.891l-2.409 3.746-12.447-.019-2.035-3.727Z" style="fill:#431cc7;fill-rule:nonzero" transform="scale(2 -2) rotate(-61.367 .264 -10.29)"/>
-            <path d="M0 12.081c-3.666 0-5.343-2.682-5.343-6.041C-5.343 2.682-3.666 0 0 0s5.343 2.682 5.343 6.04c0 3.359-1.677 6.041-5.343 6.041M0-1.617c-4.933 0-8.833 2.907-8.833 7.657 0 4.751 3.9 7.658 8.833 7.658 4.932 0 8.833-2.907 8.833-7.658 0-4.75-3.901-7.657-8.833-7.657" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 221.951 14.024)"/>
-            <path d="M0-10.554h5.34V2.011h3.329v-12.565h5.34v-2.011H0v2.011Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 173.832 36.636)"/>
-            <path d="M0-3.449c-2.126-.554-4.134-1.078-4.134-2.391 0-1.323 1.848-1.915 3.679-1.915 1.82 0 3.546.456 5.278 1.392l.42.227v-1.927l-.165-.082C3.516-8.92 1.457-9.383-.429-9.383c-3.162 0-6.54 1.165-6.540 4.436 0 3.154 3.247 4.013 6.112 4.772C1.3.395 3.336.934 3.336 2.334c0 1.338-1.927 1.980-3.717 1.98-2.118 0-4.221-.665-6.248-1.957l-.227-.145-.942 1.367.255.173c2.018 1.367 4.779 2.182 7.384 2.182 3.945 0 6.493-1.756 6.493-4.439 0-3.292-3.512-4.208-6.334-4.944" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 156.98 29.542)"/>
-            <path d="M0 2h8.257l.006-2.016H0v-4.251h8.904l.006-2.017H-3.329V8.284H9.035l.006-2.016H0V2Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 117.545 24.063)"/>
-            <path d="M0 10.535V6.267h8.257l.006-2.016H0V0h8.905l.005-2.016H-3.329v14.567H9.035l.006-2.016H0Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 288.814 15.528)"/>
-            <path d="M0 5.542 2.493.901l2.542 4.641H0Zm-4.823 4.64 2.329.003 1.411-2.627H6.14l1.438 2.624h3.783L3.267-4.643l-8.09 14.825Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 54.77 20.265)"/>
-            <path d="m0 3.74-5.085-9.281h-3.784L-.775 9.284l8.090-14.825-2.330-.003L0 3.740Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 90.655 22.593)"/>
-            <path d="m0-14.575.004 9.072-12.051-9.333V-.003h2.014l.014-9.063L2.014.261l.002-14.836H0Z" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 270.249 40.645)"/>
-            <path d="M0-20.58h-2.653c-2.896 3.035-5.583 6.249-7.672 9.626a51.752 51.752 0 0 0-2.356 4.236l-4.442-8.107h-4.246L-13.275 0l.002-.008C-10.777-7.504-6.209-14.46 0-20.58" style="fill:#431cc7;fill-rule:nonzero" transform="matrix(2 0 0 2 60.381 41.16)"/>
-          </svg>
+          <svg class="picto" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="var(--primary)"/><path d="M9 10h14M9 16h9M9 22h14" stroke="var(--on-primary)" stroke-width="3" stroke-linecap="round"/><circle cx="23" cy="16" r="2.5" fill="var(--accent)"/></svg>
           <span>Assistant local</span>
         </div>
         <button class="icon-btn" aria-label="Paramètres">

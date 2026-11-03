@@ -37,7 +37,7 @@ Une décision qui n'est couverte ni ici ni dans le PRD ou l'UX est prise par l'a
    Au-delà, l'agent s'arrête sur ce poste et passe à la suite.
 7. **Ne jamais supprimer** de données téléchargées, de checkpoints ni d'artefacts d'évaluation. Ne jamais réécrire l'historique git.
 8. **Ne jamais modifier** les décisions explicites du PRD, de l'UX, de la spécification du Jeu d'évaluation maison, de la Grille du Juge ou du présent document. Un désaccord se signale dans le journal de la nuit.
-9. **Ne pas modifier le dépôt voisin `../wavelocalai`.** Il est consultable en lecture seule (voir D6).
+9. **Ne pas modifier le dépôt voisin `../frugal-ai-workbench`.** Il est consultable en lecture seule (voir D6).
 
 ## D2. Environnement
 
@@ -102,7 +102,7 @@ L'architecture fixe la bibliothèque vectorielle et le modèle d'embedding, par 
 
 ## D6. Réutilisation
 
-- **`../wavelocalai`** (projet d'Anaël, Streamlit) : il contient un banc de benchmark de SLM (`benchmarks/`) et la mesure carbone avec CodeCarbon. Il peut servir de référence ou d'inspiration en lecture seule. Le code utile est recopié et adapté, sans dépendance croisée.
+- **`../frugal-ai-workbench`** (projet d'Anaël, Streamlit) : il contient un banc de benchmark de SLM (`benchmarks/`) et la mesure carbone avec CodeCarbon. Il peut servir de référence ou d'inspiration en lecture seule. Le code utile est recopié et adapté, sans dépendance croisée.
 - **Calibrage du Jeu d'évaluation** : `eval/calibrage/` (16 items validés, script `build_calibrage.py`, cassettes MCP). C'est la référence de format pour le jeu complet.
 
 ## D7. Constats d'environnement (2026-10-12)

@@ -56,7 +56,7 @@ Donner à un Agent d'accueil (sans droits administrateur sur son poste) une appl
 
 ## UX & Interaction Patterns
 
-- Palette Wavestone : violet `#451DC7` (actions principales, Tâche active, puces de citation, liens, anneau de focus — contraste ~9:1, utilisable en texte) ; violet profond `#250F6B` pour survol/pressé. Vert/jaune/rouge jamais utilisés en texte sur fond clair et jamais seuls porteurs d'une information.
+- Palette générique : bleu pétrole `#0B6B78` (actions principales, Tâche active, puces de citation, liens — contraste 6,2:1, utilisable en texte) ; bleu pétrole profond `#084E58` pour survol/pressé ; anneau de focus bleu `#1F5FD1`. Orange/ambre/rouge jamais utilisés en texte et jamais seuls porteurs d'une information.
 - Disposition trois colonnes, responsive : le panneau Sources pousse la zone centrale à partir de 1280 px, la recouvre en dessous ; pas de défilement horizontal, y compris à 150 % de taille de texte dans une fenêtre 1024×640.
 - Zone de saisie : Entrée envoie, Maj+Entrée insère une ligne, Envoyer inactif si vide ; rappel sur les données personnelles affiché dans le champ vide. Raccourcis Ctrl+1 à 4 pour les Tâches prioritaires, Ctrl+/−/0 pour la taille du texte (cinq crans, mémorisés).
 - Pendant la préparation de l'Assistant (pont pas encore `pret`), la saisie reste possible mais Envoyer affiche « Préparation… » et reste inactif.

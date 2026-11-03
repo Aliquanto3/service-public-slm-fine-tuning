@@ -37,7 +37,7 @@ deferred: []
 ## Acceptance (état)
 
 1. 1 024 × 640 à 150 % : aucun débordement horizontal sur les 8 Tâches, Sources ouvertes comprises ; Sources poussent à 1 280 px, recouvrent à 1 100 px (testé).
-2. Ordre de tabulation, focus violet 2 px, libellés ; Ctrl+1 à 4 et annonce de la Tâche active (testé).
+2. Ordre de tabulation, focus bleu 2 px, libellés ; Ctrl+1 à 4 et annonce de la Tâche active (testé).
 3. Entrée envoie, Maj+Entrée ligne, Envoyer inactif si vide, rappel données personnelles en placeholder, « Arrêter » en génération (testé).
 4. Couples texte/fond ≥ 4,5:1 sur les jetons ; aucune couleur d'état en texte (testé, sans navigateur).
 5. Aucune requête hors du serveur local, CSP effective (un `fetch` externe est refusé) (testé).
@@ -59,7 +59,7 @@ Décisions prises seul (réversibles) :
 - l'évènement `{type: "pret"}` poussé par Python via `evaluate_js("window.slmspRecevoir(...)")`, et la liste de méthodes du pont (`envoyer`, `arreter`, `appeler`) : à aligner sur 12.5 ;
 - le service des fichiers : les icônes sont des masques CSS (`mask-image`), qui exigent un schéma `http(s)` (pywebview `http_server=True`) et non `file://` : à vérifier en 12.6 ;
 - la persistance des préférences d'interface dans `localStorage` de WebView2 plutôt que dans `app.stockage` (12.2) ;
-- polices Inter et Manrope non embarquées (aucun fichier fourni, licence OFL) : repli sur Aptos puis Segoe UI ; logo Wavestone non intégré (nom de produit à trancher) ;
+- aucune police embarquée : pile système ; logotype (pictogramme et nom en texte) ; nom de produit à trancher ;
 - la dépendance de dev `playwright==1.64.0` (roue Python, pilote Node inclus, aucun navigateur) et le marqueur `ui` ajouté au `-m` par défaut de pytest ;
 - `Échap` arrête la génération seulement si le focus est dans un élément `[data-reponse]` (à poser par la vue Question).
 

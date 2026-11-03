@@ -161,7 +161,7 @@ D1.2 et PRD §8 demandent en outre de revérifier les conditions §3.3 **avant**
 - **FR-8.** « Les valeurs affichées sont identiques à celles renvoyées par l'outil. » Le spine ne dit pas si le tableau est rendu par le Harnais à partir de `ResultatOutil` ou généré par le modèle, puis vérifié. À fixer dans AD-14, puisque FR-8 est dans J1.
 - **FR-26.** La « taille installée » n'est pas mesurée par AD-15. En J1, ajouter la taille sur disque de GGUF + index + binaires comme approximation de NFR-6.
 - **NFR-8.** Inscrire la variante llama.cpp (`cpu-x64` ou `cuda-12.4-x64`) dans `run.json`, puisque AD-15 autorise les deux pour des usages différents. Fixer `--parallel 1` pour les évaluations, car le batching de llama-server n'est pas déterministe.
-- **D6.** Ajouter à AD-1 : aucune dépendance de chemin vers `../wavelocalai` dans `pyproject.toml`. Le code est recopié et adapté.
+- **D6.** Ajouter à AD-1 : aucune dépendance de chemin vers `../frugal-ai-workbench` dans `pyproject.toml`. Le code est recopié et adapté.
 - **§9.3, ordre de coupe.** L'ensemble des Tâches actives est piloté par la config (prompts et table des Tâches), pour qu'une coupe (Traduction, Courrier type, Résumé, Correction, FR-12) se fasse sans toucher au code. Les méthodes M3 et M4 sont déjà des données (AD-18).
 - **FR-30.** L'export d'un échantillon des Données d'entraînement pour relecture humaine, non bloquant, n'est pas mentionné dans AD-17.
 - **D7.** Lecture directe des parquet avec reprises après échec, sans passer par le datasets-server : à rattacher à `slmsp.net` (politique de reprise) ou à `index build`.

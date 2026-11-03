@@ -64,19 +64,19 @@ COUPLES = [
 def test_jetons_de_design_md_presents() -> None:
     jetons = _jetons()
     attendus = {
-        "primary": "#451dc7",
-        "primary-hover": "#250f6b",
-        "primary-soft": "#ede7fe",
-        "accent": "#04f06a",
-        "ink": "#0a0a14",
-        "ink-soft": "#4a4a5e",
-        "gray": "#8a8a9e",
-        "line": "#e6e6ec",
+        "primary": "#0b6b78",
+        "primary-hover": "#084e58",
+        "primary-soft": "#dceff1",
+        "accent": "#b4500f",
+        "ink": "#141a1f",
+        "ink-soft": "#4b5560",
+        "gray": "#737e85",
+        "line": "#c9d1d3",
         "surface": "#ffffff",
-        "surface-alt": "#f6f5fa",
-        "warning": "#ffca4a",
-        "danger": "#ff2a49",
-        "focus-ring": "#451dc7",
+        "surface-alt": "#eef1f0",
+        "warning": "#e8a317",
+        "danger": "#b42318",
+        "focus-ring": "#1f5fd1",
     }
     for nom, valeur in attendus.items():
         assert jetons[nom].lower() == valeur, nom
