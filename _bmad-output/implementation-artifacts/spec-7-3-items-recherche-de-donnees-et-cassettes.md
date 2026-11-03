@@ -101,7 +101,7 @@ Exemple :
 
 ## Lots
 
-`<SCRATCH>` = `C:\Users\UTILIS~1\AppData\Local\Temp\claude\C--Users-Utilisateur-Documents-GitHub-service-public-slm-fine-tuning\2b525399-9658-4abc-ae6d-dabcdbffc874\scratchpad`.
+`<SCRATCH>` = `<SCRATCH>`.
 
 | Lot | Ids | Thème | F/M/D | Valeurs | Repli |
 |---|---|---|---|---|---|

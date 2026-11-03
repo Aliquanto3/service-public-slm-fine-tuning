@@ -17,7 +17,7 @@ Jeux lm-eval (hors `fetch`, figés par le cache HF, révisions dans `[options.je
 ## Variables d'environnement
 - `HF_HOME` est imposé par `env_sous_processus` à `<models>/.cache-hf` : le cache est dans `models/.cache-hf` (dépôt principal, ignoré par git). Ne pas le fixer ailleurs.
 - `HF_HUB_OFFLINE=1` et `HF_DATASETS_OFFLINE=1` sont posés par le moteur ; `PYTHONUTF8=1` aussi (voir correctifs).
-- `NLTK_DATA=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\data\cache\nltk_data` (punkt_tab, requis par IFEval ; `data/cache/` est ignoré). À poser avant `bench run`.
+- `NLTK_DATA=<DEPOT_PRINCIPAL>\data\cache\nltk_data` (punkt_tab, requis par IFEval ; `data/cache/` est ignoré). À poser avant `bench run`.
 - `HF_TOKEN` dans `.env` (jamais lu ici) : seulement pour FLORES.
 
 ## Correctifs de code (tests ajoutés)
@@ -35,7 +35,7 @@ Jeux lm-eval (hors `fetch`, figés par le cache HF, révisions dans `[options.je
 
 ## Commande de `bench run` (orchestrateur, depuis le dépôt principal après intégration, GPU libre)
 ```
-$env:NLTK_DATA = "C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\data\cache\nltk_data"
+$env:NLTK_DATA = "<DEPOT_PRINCIPAL>\data\cache\nltk_data"
 uv run --extra bench slmsp bench run --modele base:<slug> --socle
 ```
 Durée estimée (non mesurée), par modèle : QCM sur poids HF 30 à 60 min (MMLU : `--limit` est par sous-tâche, donc `limite = 500` ne coupe presque rien et ~14 000 questions tournent ; à confirmer par Anaël), IFEval et traduction contre llama-server 1 à 2 h par variante, BFCL moins de 15 min. FLORES sauté tant que non obtenu.

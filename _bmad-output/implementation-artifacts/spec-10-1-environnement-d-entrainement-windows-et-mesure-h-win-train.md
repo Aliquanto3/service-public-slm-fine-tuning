@@ -62,7 +62,7 @@ deferred: []
 - `src/slmsp/cli/fetch.py` -- modèle de sous-commandes avec `--racine`.
 - `tests/test_architecture.py` -- `train` : pas d'`open()`, `.read_text()`, `json.load` ; `push_to_hub` seulement `False` ; pas d'import de `fetch`/`measure`/`judge`.
 - `tests/test_cli.py:83` -- le test « non implémentée » se saute dès que `cli/train.py` existe.
-- `C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models\{granite-4.0-1b,smollm3-3b}\hf\` -- poids bf16 réels (Granite : `granitemoehybrid`, tout attention).
+- `<DEPOT_PRINCIPAL>\models\{granite-4.0-1b,smollm3-3b}\hf\` -- poids bf16 réels (Granite : `granitemoehybrid`, tout attention).
 - `.venv` du worktree -- torch 2.14.1+cu130 (CUDA OK, capacité 8.6, bf16), bitsandbytes 0.50.2, trl 1.13.0, peft 0.21.2, datasets 5.1.0 ; SFTTrainer accepte un jeu pré-tokenisé (`input_ids`).
 
 ## Tasks & Acceptance

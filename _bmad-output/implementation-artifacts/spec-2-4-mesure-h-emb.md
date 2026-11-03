@@ -40,7 +40,7 @@ deferred:
 
 - Tests : `uv run --extra data pytest -q --tb=short tests/indexation/test_verification_embedding.py` (embedder factice = vecteurs MediaTech bruités, cas confirmée et infirmée, CLI par injection ; un test `lent` réel, ignoré sans `SLMSP_RACINE_REELLE`).
 - **Commande à lancer plus tard (mesure réelle, CPU, sans API)** :
-  `uv run --extra data slmsp index verifier-embedding --echantillon 200 --graine 42 --racine C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning`
+  `uv run --extra data slmsp index verifier-embedding --echantillon 200 --graine 42 --racine <DEPOT_PRINCIPAL>`
   avec `SLMSP_MODELS_DIR` et `SLMSP_VENDOR_DIR` du dépôt principal. En cas d'infirmation : créer `config/modeles/bge-m3-f16.toml`, relancer avec `--modele bge-m3-f16`.
 
 ## Auto Run Result
@@ -63,5 +63,5 @@ Status: review
 - Fichier placé dans `models/bge-m3-f16/gguf/` du dépôt principal. `slmsp fetch modeles --racine` n'écrit pas `models/` : il faut `SLMSP_MODELS_DIR` pour viser le dépôt principal (déplacé à la main ici).
 - Tests : config valide et `--modele bge-m3-f16` accepté (embedder injecté).
 - **Commande à lancer (CPU, sans API, sans GPU)** :
-  `uv run --extra data slmsp index verifier-embedding --modele bge-m3-f16 --echantillon 200 --graine 42 --racine C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning`
+  `uv run --extra data slmsp index verifier-embedding --modele bge-m3-f16 --echantillon 200 --graine 42 --racine <DEPOT_PRINCIPAL>`
   avec `SLMSP_MODELS_DIR` et `SLMSP_VENDOR_DIR` du dépôt principal, depuis le code de la branche `prep/bge-m3-f16`.

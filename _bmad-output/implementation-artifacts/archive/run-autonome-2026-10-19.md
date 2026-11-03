@@ -40,9 +40,9 @@ Au plus 3 stories en développement à la fois.
 - 2026-10-19 21:53 · run · décision · Anaël : clé OpenRouter disponible, recommandations validées (générateurs v12 : Mistral Large 4 en référence, DeepSeek V4 Pro et GLM-5.x via OpenRouter ; GPT et Gemini en comparaison seulement, licence à trancher par Anaël), budgets Mistral et OpenRouter rechargés. Plafonds retenus : openai 10 €, google 10 €, openrouter 10 €, mistral.generation 10 € · —
 - 2026-10-19 21:53 · S3 · décision · fournisseur openrouter ajouté au périmètre (message à l'agent) · —
 - 2026-10-19 21:54 · S1 · review · 10 constats corrigés, tests JS rejetés · 6223c0b
-- 2026-10-19 21:54 · S1 · fusion · HTML `C:\Users\Anael\dev\slmsp-auditudit-verdicts.html` (170 items, 110 désaccords) · 0032eba
+- 2026-10-19 21:54 · S1 · fusion · HTML `<DOSSIER_AUDIT>/audit-verdicts.html` (170 items, 110 désaccords) · 0032eba
 - 2026-10-19 21:54 · S1 · review · 10 constats corrigés, tests JS rejetés · 6223c0b
-- 2026-10-19 21:54 · S1 · fusion · HTML `C:/Users/Anael/dev/slmsp-audit/audit-verdicts.html` (170 items, 110 désaccords, 5 notations) · 65763d2
+- 2026-10-19 21:54 · S1 · fusion · HTML `<DOSSIER_AUDIT>/audit-verdicts.html` (170 items, 110 désaccords, 5 notations) · 65763d2
 - 2026-10-19 21:55 · run · décision · Anaël : **GPT et Gemini retirés** (générateurs et juges), risque de licence non instruit. Fournisseur unique pour S3 et S4 : OpenRouter (DeepSeek, GLM, Kimi…), plus Mistral (Large 4 et Large 3). Plafonds : openrouter 10 €, mistral.generation 10 € · —
 - 2026-10-19 21:56 · S2 · review · 2 medium (nettoyage depuis un sous-ensemble refusé ; préférences testées), 5 low corrigés · e7613e7
 - 2026-10-19 21:56 · S2 · fusion · tests ciblés verts (93) · 2aff428

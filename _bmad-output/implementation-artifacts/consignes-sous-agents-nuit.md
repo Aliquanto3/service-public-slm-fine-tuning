@@ -7,7 +7,7 @@ Ce fichier est lu par chaque sous-agent de story avant de commencer. Il fait aut
 - **Worktree isolé.** Tu travailles dans un worktree git dédié, sur une branche dédiée. Plusieurs stories tournent en parallèle dans d'autres worktrees.
   - Ne touche qu'aux fichiers de la zone de ta story (« Fichiers et modules », et la table « Dépendances et zones de fichiers » de `epics.md`).
   - Ne fais jamais de `git checkout` ni de `git switch` vers une autre branche, de `git stash`, de `git reset --hard`, de `git rebase` ni de `git push`, et ne réécris pas l'historique.
-- **Dépôt principal** (lecture des fichiers non versionnés) : `C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning`.
+- **Dépôt principal** (lecture des fichiers non versionnés) : `<DEPOT_PRINCIPAL>`.
   - Les secrets sont dans `<dépôt principal>\.env`. Lis-les par chemin absolu. Ne recopie jamais leur valeur dans un fichier versionné ni dans un log.
   - Les données brutes sont dans `<dépôt principal>\data\raw\` (lecture seule).
   - **État machine** : registre de budget, cache des verdicts, `gpu.lock` et `pids/`. Il va dans `SLMSP_VAR_DIR`, selon l'architecture (par défaut `%LOCALAPPDATA%\slmsp\var\`). Ce dossier est partagé par tous les worktrees.
@@ -45,10 +45,10 @@ Ce fichier est lu par chaque sous-agent de story avant de commencer. Il fait aut
 Dans cet environnement, **tout lancement de sous-agent est asynchrone**, même quand le workflow BMAD exige un appel bloquant. Lance les sous-agents demandés par une étape, puis attends la notification de fin de chacun avant de passer à la suite. **Ne rends jamais la main** (compte rendu final) avant le HALT final du workflow, avec `## Auto Run Result` écrit et le commit fait. Rendre la main pendant qu'un sous-agent tourne interrompt la story.
 
 ## Accès au dépôt principal depuis un worktree (story 1.2, fusionnée)
-- `SLMSP_ENV_FILE=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\.env` donne accès aux secrets.
-- `SLMSP_MODELS_DIR=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\models` donne accès aux modèles, avec `HF_HOME=<models>/.cache-hf`. Les modèles candidats sont déjà préchargés : voir `models/PRECHARGEMENT.md`.
+- `SLMSP_ENV_FILE=<DEPOT_PRINCIPAL>\.env` donne accès aux secrets.
+- `SLMSP_MODELS_DIR=<DEPOT_PRINCIPAL>\models` donne accès aux modèles, avec `HF_HOME=<models>/.cache-hf`. Les modèles candidats sont déjà préchargés : voir `models/PRECHARGEMENT.md`.
 - Le verrou GPU est `gpu.lock`, dans `SLMSP_VAR_DIR`. Toute commande CUDA le prend.
-- `SLMSP_VENDOR_DIR=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\vendor` contient les binaires llama.cpp b11429, en variantes cpu et cuda. Le modèle d'embedding BGE-M3 est sous `models/bge-m3/gguf/`. Le corpus MediaTech est sous `data/raw/mediatech/`.
+- `SLMSP_VENDOR_DIR=<DEPOT_PRINCIPAL>\vendor` contient les binaires llama.cpp b11429, en variantes cpu et cuda. Le modèle d'embedding BGE-M3 est sous `models/bge-m3/gguf/`. Le corpus MediaTech est sous `data/raw/mediatech/`.
 - Les tests réels de llama-server sont marqués `integration` (story 2.2). Granite 1B en CPU débite environ 42 tokens/s.
 
 ## Mode économe (à partir de 15h35, D-nuit-4)

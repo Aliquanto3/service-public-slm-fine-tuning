@@ -13,7 +13,7 @@ Suite de `etat-run-2026-10-19-portable.md` (journal du 19, décisions d'Anaël) 
    - Configs `config/runs/m1-qlora-<slug>-v11.toml` (prêtes et validées par `charger_run_config` ; campagne `<slug>-v11`, `jeu_version = "v11"`).
    - Hyperparamètres : bf16, 8 192 tokens, rang 16, lr 2e-4, 1 époque, lot 1 × 8, graine 1234.
 2. Pour chaque M1 : export cuda, génération q4_k_m sur le jeu v1.1 en cuda, puis notation avec `--plafond-estime 4.5`.
-   - Script : `C:\Users\Anael\dev\slmsp-wt\scripts-campagne\campagne-run.ps1 -Toml <toml>`. Il tourne sous garde RAM à 28 Go, avec `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
+   - Script : `<WORKTREES>\scripts-campagne\campagne-run.ps1 -Toml <toml>`. Il tourne sous garde RAM à 28 Go, avec `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
    - La notation d'un run peut tourner pendant l'entraînement suivant.
 3. **Règle de suite** : M3 DoRA (`m3-dora-<slug>-v11.toml`, prêtes) et M4 ORPO seulement pour un modèle dont M1 dépasse **sa** Baseline.
    - Baselines : MiniCPM5-2B 41,1 ; Qwen3.5-2B 36,0 ; Qwen3.5-0.8B 27,5.
@@ -22,7 +22,7 @@ Suite de `etat-run-2026-10-19-portable.md` (journal du 19, décisions d'Anaël) 
 5. **Mesures CPU** (`measure run`) des runs retenus, à la fin et machine au repos.
 
 ## Règles
-- Bloqueur de veille : `C:\Users\Anael\dev\slmsp-wt\scripts-campagne\veille.ps1`, à lancer en tâche de fond pendant la campagne et à arrêter à la fin.
+- Bloqueur de veille : `<WORKTREES>\scripts-campagne\veille.ps1`, à lancer en tâche de fond pendant la campagne et à arrêter à la fin.
 - Toujours `uv run --no-sync`, ou `python -m slmsp` pour les tâches longues : `slmsp.exe` verrouillé empêche de réinstaller.
 - Journaliser chaque étape ci-dessous, avec l'heure prise par `date`, puis commiter. Ne rien pousser sans demande.
 - Arrêt : si une notation dépasse 4,5 €, ou si la RAM dépasse le seuil de la garde. Un blocage ne suspend que ses suites.

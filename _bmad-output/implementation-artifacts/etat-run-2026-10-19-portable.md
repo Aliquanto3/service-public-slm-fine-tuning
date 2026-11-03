@@ -8,7 +8,7 @@ Point de reprise après `/clear`. Il fait suite à `etat-run-2026-10-18-portable
 - **Budget** : campagne `finetune-minicpm5-2b-2026-10-19`. Anthropic dispose de 15,09 € (3,09 € reportés + 12 €) pour noter les runs de MiniCPM5-2B. Granite 1B est entraîné sans être noté.
 
 ## Fait cette nuit (main)
-- Benchs GGUF des Granite et sonde EuroLLM commités. Les runs ratés et 9 worktrees fusionnés sont supprimés, avec l'accord d'Anaël. Graphique de Pareto rafraîchi avec les Granite (https://claude.ai/artifact/JaoY5EntJqPKKeqFk5Grwh).
+- Benchs GGUF des Granite et sonde EuroLLM commités. Les runs ratés et 9 worktrees fusionnés sont supprimés, avec l'accord d'Anaël. Graphique de Pareto rafraîchi avec les Granite (lien privé retiré).
 - Sonde precision_base de minicpm5-2b : bf16 tient 8192 (4,6 Gio), fp32-kbit déborde dès 4096.
 - Validation à 100 pas, 2048 tokens : bf16 et fp32-kbit ont la même perte à moins de 1 % près. La campagne part en bf16 à 8192.
 - **Story C** fusionnée : `config/runs/m1…m4-minicpm5-2b.toml` et `m1…m4-granite-4.0-1b-v2.toml`.

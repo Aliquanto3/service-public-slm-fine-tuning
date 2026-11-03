@@ -7,3 +7,4 @@
 - Logotype : pictogramme à trois barres et nom en texte, à la place de l'ancien logo des maquettes.
 - Retrait des mentions de l'ancienne charte et des informations internes dans la documentation de conception (`_bmad-output`).
 - Le nom du dépôt, le paquet `slmsp`, la commande et les variables d'environnement ne changent pas.
+- La capture de démonstration `docs/assets/demo-assistant.gif` montre encore l'ancienne palette : à régénérer avec `outils/capturer_demo.py` (elle lit des résultats de génération non suivis par git).

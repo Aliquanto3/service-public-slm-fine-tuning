@@ -84,7 +84,7 @@ deferred:
 - `tests/eval_outils/test_construire_jeu.py` -- chargement de l'outil par chemin (`importlib`), fixtures `tmp_path` ; `tests/eval_outils/test_items_co_re_ct.py` -- modèle de tests CT (verdicts, lecteur strict).
 - `eval/construction/v1.0/CT.jsonl` -- 15 CT ; libellés hétérogènes (`[Commune]`, `[Nom de la commune]`, `[Lieu d'émission du courrier]`…), absents des consignes.
 - `eval/construction/v1.0/verification/*.jsonl` -- verdicts en ajout seul ; le dernier l'emporte.
-- Sources figées (lecture seule) : `C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\data\raw\eval-sources\` (parquet service-public `hf/AgentPublic/service-public/latest/train/0000.parquet`, LEGI `hf/AgentPublic/legi/data/legi-latest/legi_<code>/*.parquet`, corpus d'amorces, `INDEX.json`). Outils d'exploration déjà écrits, dans le scratchpad `C:\Users\UTILIS~1\AppData\Local\Temp\claude\C--Users-Utilisateur-Documents-GitHub-service-public-slm-fine-tuning\2b525399-9658-4abc-ae6d-dabcdbffc874\scratchpad\` : `s75\explore.py` (`fiche F…`, `titre <motif>`), `s75\legi.py`, `fiches.py`, `recherche.py`, `titres.txt`, `sp_questions.jsonl`, `assistant_ia.jsonl`. Ils se lancent par `uv run --no-project --python 3.12 --with duckdb python -I <script>`, avec `PYTHONIOENCODING=utf-8`. Le gabarit Q est dans `spec-7-2-…md` (« Gabarit Q »), le format CT dans `spec-7-5-…md`.
+- Sources figées (lecture seule) : `<DEPOT_PRINCIPAL>\data\raw\eval-sources\` (parquet service-public `hf/AgentPublic/service-public/latest/train/0000.parquet`, LEGI `hf/AgentPublic/legi/data/legi-latest/legi_<code>/*.parquet`, corpus d'amorces, `INDEX.json`). Outils d'exploration déjà écrits, dans le scratchpad `<SCRATCH>\` : `s75\explore.py` (`fiche F…`, `titre <motif>`), `s75\legi.py`, `fiches.py`, `recherche.py`, `titres.txt`, `sp_questions.jsonl`, `assistant_ia.jsonl`. Ils se lancent par `uv run --no-project --python 3.12 --with duckdb python -I <script>`, avec `PYTHONIOENCODING=utf-8`. Le gabarit Q est dans `spec-7-2-…md` (« Gabarit Q »), le format CT dans `spec-7-5-…md`.
 - `_bmad-output/planning-artifacts/architecture/.../ARCHITECTURE-SPINE.md:555` -- contrôle CT : « libellé exact entre crochets de `champs_a_laisser_en_emplacement` ».
 
 ## Tasks & Acceptance
@@ -196,7 +196,7 @@ deferred:
 **Commands:**
 - `uv run --no-project --python 3.12 --with duckdb --with openpyxl python -I eval/outils/construire_jeu.py composition` -- expected: 8 Tâches aux cibles, aucune anomalie, aucun item sans verdict.
 - `uv run --no-project --python 3.12 --with duckdb --with openpyxl python -I eval/outils/construire_jeu.py rejets` -- expected: taux par Tâche affichés.
-- Avec `SLMSP_EVAL_SOURCES=C:\Users\Utilisateur\Documents\GitHub\service-public-slm-fine-tuning\data\raw\eval-sources` : `uv run --with duckdb pytest tests/eval_outils -q -rs` -- expected: tout passe, aucun test verbatim ignoré.
+- Avec `SLMSP_EVAL_SOURCES=<DEPOT_PRINCIPAL>\data\raw\eval-sources` : `uv run --with duckdb pytest tests/eval_outils -q -rs` -- expected: tout passe, aucun test verbatim ignoré.
 - Copie temporaire de `eval/` et `config/` : `assembler --racine <copie> --version v1.0`, puis `uv run slmsp eval gel --version v1.0 --verifier-seulement --racine <copie>` -- expected: 225 items, 0 erreur bloquante, code 0.
 - `uv run pytest -q` et `uv run ruff check` -- expected: verts, ou échecs préexistants hors zone listés.
 

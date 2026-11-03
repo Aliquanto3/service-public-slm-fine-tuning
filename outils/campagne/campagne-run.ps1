@@ -1,7 +1,8 @@
 # Campagne v11 (MiniCPM5-2B, Qwen3.5-2B, Qwen3.5-0.8B) : un run (TOML en argument) sous garde RAM, puis export cuda et notation
 # (q4_k_m, jeu v1.1, comme la Baseline), avec garde-fou de coût Anthropic (4,5 EUR par notation).
 param([string]$Toml, [string]$RunId, [switch]$SansNotation)
-Set-Location C:\Users\Anael\dev\service-public-slm-fine-tuning
+$racine = if ($env:SLMSP_DEPOT_PRINCIPAL) { $env:SLMSP_DEPOT_PRINCIPAL } else { Split-Path -Parent (Split-Path -Parent $PSScriptRoot) }
+Set-Location $racine
 $env:PYTORCH_CUDA_ALLOC_CONF = "expandable_segments:True"
 $env:GARDE_RAM_GO = "28"
 $py = ".venv\Scripts\python.exe"

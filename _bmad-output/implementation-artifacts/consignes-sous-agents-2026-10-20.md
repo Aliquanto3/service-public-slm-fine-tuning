@@ -3,9 +3,9 @@
 Complète `consignes-sous-agents-nuit.md` (règles D1, Definition of Done) ; ce fichier prime en cas d'écart (chemins du portable).
 
 ## Environnement d'un worktree
-- Dépôt principal : `C:\Users\Anael\dev\service-public-slm-fine-tuning` (venv, `models/`, `vendor/`, `data/`, `runs/`). Worktrees : `C:\Users\Anael\dev\slmsp-wt\<story>`, sans venv.
+- Dépôt principal : `<DEPOT_PRINCIPAL>` (venv, `models/`, `vendor/`, `data/`, `runs/`). Worktrees : `<WORKTREES>\<story>`, sans venv.
 - Avant toute commande (Bash) :
-  `export SLMSP_RACINE='C:\Users\Anael\dev\slmsp-wt\<story>' PYTHONPATH='C:\Users\Anael\dev\slmsp-wt\<story>\src' SLMSP_MODELS_DIR='C:\Users\Anael\dev\service-public-slm-fine-tuning\models' SLMSP_VENDOR_DIR='C:\Users\Anael\dev\service-public-slm-fine-tuning\vendor' PATH="/c/Users/Anael/dev/service-public-slm-fine-tuning/.venv/Scripts:$PATH"`
+  `export SLMSP_RACINE='<WORKTREES>\<story>' PYTHONPATH='<WORKTREES>\<story>\src' SLMSP_MODELS_DIR='<DEPOT_PRINCIPAL>\models' SLMSP_VENDOR_DIR='<DEPOT_PRINCIPAL>\vendor' PATH="<DEPOT_PRINCIPAL>/.venv/Scripts:$PATH"`
   puis `python -m pytest -q --tb=short <chemins>`, `ruff check`, `ruff format --check`, `python outils/controle_rapide.py` (venv principal, jamais `uv sync` dans le worktree). La CLI : `slmsp.exe`.
 - N'écris **que** dans ton worktree. Ne modifie jamais le dépôt principal. Ne lis jamais `.env`.
 
