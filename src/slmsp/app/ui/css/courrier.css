@@ -5,42 +5,42 @@
   gap: var(--sp-1);
 }
 .courrier-etiquette {
-  font-family: var(--police-etiquette);
+  font-family: var(--police-texte);
   font-size: var(--t-label);
   line-height: var(--lh-label);
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .courrier-type,
 .courrier-objet {
   box-sizing: border-box;
   width: 100%;
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait-fort);
   border-radius: var(--r-sm);
   font: inherit;
-  color: var(--ink);
+  color: var(--texte);
   background: var(--surface);
 }
 .courrier-type:focus-visible,
 .courrier-objet:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 /* Emplacement : lisible sans la couleur (cadre en pointillés, et « à compléter » pour les lecteurs d'écran). */
 .letter-placeholder {
   padding: 0 var(--sp-1);
-  border: 2px dashed var(--ink-soft);
+  border: 2px dashed var(--trait-fort);
   border-radius: var(--r-sm);
   background: var(--surface-alt);
-  color: var(--ink);
+  color: var(--texte);
 }
 .letter-placeholder:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .courrier-compte {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .courrier-notes {

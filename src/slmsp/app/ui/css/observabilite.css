@@ -15,7 +15,7 @@
 .observabilite-vide,
 .observabilite-etat {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .observabilite-actions {
@@ -38,7 +38,7 @@
 .observabilite-table th,
 .observabilite-table td {
   padding: var(--sp-1) var(--sp-2);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--trait);
   text-align: left;
   vertical-align: top;
 }
@@ -61,14 +61,14 @@
   max-width: 100%;
 }
 .observabilite-alerte {
-  color: var(--ink);
+  color: var(--texte);
   font-weight: 600;
   font-size: var(--t-small);
 }
 .observabilite-methode,
 .details-appel {
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-sm);
   background: var(--surface-alt);
   font-size: var(--t-small);
@@ -80,7 +80,7 @@
 }
 .details-appel {
   margin-top: var(--sp-2);
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .details-appel dl {
   display: grid;

@@ -4,7 +4,12 @@ Un assistant pour les agents du service public : un modèle de langage qui tourn
 
 ![Démonstration de l'assistant](docs/assets/demo-assistant.gif)
 
-*Réponse réelle de MiniCPM5-2B (jeu dev1), rejouée dans l'interface.*
+*Réponse réelle de MiniCPM5-2B (jeu dev1), rejouée dans l'interface. Ce GIF montre encore l'ancienne palette (à refaire avec `outils/capturer_demo.py`) ; la capture ci-dessous montre l'interface actuelle.*
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/charte-v2/assistant-clair.png">
+  <img alt="Écran d'accueil de l'assistant (charte v2.1)" src="docs/media/charte-v2/assistant-sombre.png">
+</picture>
 
 ## Installer
 

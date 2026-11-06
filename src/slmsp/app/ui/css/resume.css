@@ -10,7 +10,7 @@
 .choix-titre {
   padding: 0;
   margin-bottom: var(--sp-1);
-  color: var(--ink);
+  color: var(--texte);
   font-size: var(--t-small);
   font-weight: 600;
 }
@@ -23,6 +23,6 @@
 }
 .mention-trop-longue {
   margin: var(--sp-3) 0 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }

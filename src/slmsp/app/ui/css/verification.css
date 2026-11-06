@@ -9,13 +9,13 @@
 }
 .verification-resultat {
   max-width: 100%;
-  color: var(--ink);
+  color: var(--texte);
 }
 .verification-resultat p {
   margin: 0;
 }
 .verification-attente {
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .verification-concordant {
@@ -26,10 +26,10 @@
 }
 .verification-extrait {
   margin: var(--sp-2) 0 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .verification-resultat:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 

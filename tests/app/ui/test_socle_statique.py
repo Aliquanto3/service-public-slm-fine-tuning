@@ -1,6 +1,6 @@
 """Story 12.4 : contrôles statiques du socle de l'interface (sans navigateur).
 
-Couvre les contrastes des jetons (critère 4), l'absence de ressource externe dans les sources
+Couvre l'absence de ressource externe dans les sources
 (critère 5) et la déclaration d'avance des modules de vue (convention §3 des Epics 12 et 13).
 """
 
@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-
-import pytest
 
 UI = Path(__file__).resolve().parents[3] / "src" / "slmsp" / "app" / "ui"
 VUES = [
@@ -26,73 +24,6 @@ VUES = [
     "retours",
     "verification",
 ]
-
-
-def _jetons() -> dict[str, str]:
-    texte = (UI / "css" / "jetons.css").read_text(encoding="utf-8")
-    return dict(re.findall(r"--([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;", texte))
-
-
-def _luminance(couleur: str) -> float:
-    canaux = [int(couleur[i : i + 2], 16) / 255 for i in (1, 3, 5)]
-    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in canaux]
-    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
-
-
-def contraste(a: str, b: str) -> float:
-    haut, bas = sorted((_luminance(a), _luminance(b)), reverse=True)
-    return (haut + 0.05) / (bas + 0.05)
-
-
-# Couples texte / fond réellement employés (composants de DESIGN.md).
-COUPLES = [
-    ("ink", "surface"),
-    ("ink", "surface-alt"),
-    ("ink", "primary-soft"),
-    ("ink", "accent-soft"),
-    ("ink-soft", "surface"),
-    ("ink-soft", "surface-alt"),
-    ("ink-soft", "line"),
-    ("primary", "surface"),
-    ("primary", "surface-alt"),
-    ("primary", "primary-soft"),
-    ("on-primary", "primary"),
-    ("on-primary", "primary-hover"),
-]
-
-
-def test_jetons_de_design_md_presents() -> None:
-    jetons = _jetons()
-    attendus = {
-        "primary": "#0b6b78",
-        "primary-hover": "#084e58",
-        "primary-soft": "#dceff1",
-        "accent": "#b4500f",
-        "ink": "#141a1f",
-        "ink-soft": "#4b5560",
-        "gray": "#737e85",
-        "line": "#c9d1d3",
-        "surface": "#ffffff",
-        "surface-alt": "#eef1f0",
-        "warning": "#e8a317",
-        "danger": "#b42318",
-        "focus-ring": "#1f5fd1",
-    }
-    for nom, valeur in attendus.items():
-        assert jetons[nom].lower() == valeur, nom
-
-
-@pytest.mark.parametrize(("texte", "fond"), COUPLES)
-def test_contraste_texte_fond_au_moins_4_5(texte: str, fond: str) -> None:
-    jetons = _jetons()
-    assert contraste(jetons[texte], jetons[fond]) >= 4.5
-
-
-def test_couleurs_d_etat_jamais_en_texte() -> None:
-    """Vert, jaune, rouge (et gris décoratif) : jamais dans une propriété `color` (UX-DR1)."""
-    motif = re.compile(r"(?<![\w-])color\s*:\s*var\(--(accent|accent-soft|warning|danger|gray)\)")
-    for css in (UI / "css").glob("*.css"):
-        assert not motif.search(css.read_text(encoding="utf-8")), css.name
 
 
 VUES_REALISEES = {

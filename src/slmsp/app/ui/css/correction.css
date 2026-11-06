@@ -2,17 +2,17 @@
 .diff-insert {
   text-decoration: underline 2px;
   text-underline-offset: 3px;
-  background: var(--accent-soft);
-  color: var(--ink);
+  background: var(--accent-doux);
+  color: var(--texte);
 }
 .diff-delete {
   text-decoration: line-through 2px;
   background: var(--surface);
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .diff-resume {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .sr-only {

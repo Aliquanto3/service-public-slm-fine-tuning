@@ -2,7 +2,7 @@
 .parametres-onglets {
   display: flex;
   gap: var(--sp-1);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--trait);
   margin-bottom: var(--sp-4);
 }
 .parametres-onglet {
@@ -10,17 +10,17 @@
   border: 0;
   border-bottom: 3px solid transparent;
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 .parametres-onglet:hover {
-  background: var(--primary-soft);
+  background: var(--primaire-doux);
 }
 .parametres-onglet[aria-selected="true"] {
-  border-bottom-color: var(--primary);
-  color: var(--primary);
+  border-bottom-color: var(--primaire);
+  color: var(--primaire);
 }
 .parametres-panneau[hidden] {
   display: none;
@@ -44,7 +44,7 @@
 }
 .parametres-aide {
   margin: var(--sp-2) 0 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .parametres-confirmation {
@@ -64,10 +64,10 @@
   grid-template-columns: minmax(12ch, 1fr) 2fr;
   gap: var(--sp-3);
   padding: var(--sp-1) 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--trait);
 }
 .parametres-ligne dt {
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .parametres-ligne dd {
   margin: 0;
@@ -89,7 +89,7 @@
   gap: var(--sp-2);
   margin-bottom: var(--sp-3);
   padding: var(--sp-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-md);
 }
 .parametres-fournisseur h4 {
