@@ -15,7 +15,7 @@
   gap: var(--sp-3);
   min-width: 0;
   padding: var(--sp-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-md);
   background: var(--surface);
 }
@@ -26,25 +26,25 @@
 }
 .volet-invite {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .redaction-saisie {
   width: 100%;
   min-height: 16rem;
   box-sizing: border-box;
   padding: var(--sp-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait-fort);
   border-radius: var(--r-sm);
   font: inherit;
   line-height: var(--lh-body);
-  color: var(--ink);
+  color: var(--texte);
   background: var(--surface);
   resize: vertical;
 }
 .redaction-saisie:focus-visible,
 .resultat:focus-visible,
 .flagged-passage:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .volet-pied {
@@ -56,7 +56,7 @@
 }
 .compteur-mots {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .volet-pied [hidden],
@@ -90,13 +90,13 @@
 }
 .resultat-vide {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .resultat-passages {
   margin-top: var(--sp-4);
   padding-top: var(--sp-3);
-  border-top: 1px solid var(--line);
-  color: var(--ink-soft);
+  border-top: 1px solid var(--trait);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .resultat-actions {
@@ -110,17 +110,17 @@
 .volet-resultat .mention-echec,
 .volet-entree .mention-refus {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .inline-confirmation {
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 .flagged-passage {
   position: relative;
   background: var(--surface);
-  text-decoration: underline dotted 2px var(--warning);
+  text-decoration: underline dotted 2px var(--alerte-texte);
   text-underline-offset: 3px;
   cursor: help;
 }
@@ -134,8 +134,8 @@
   max-width: 18rem;
   padding: var(--sp-1) var(--sp-3);
   border-radius: var(--r-sm);
-  background: var(--ink);
-  color: var(--surface);
+  background: var(--encre-pleine);
+  color: var(--sur-encre);
   font-size: var(--t-small);
   line-height: var(--lh-small);
   white-space: normal;

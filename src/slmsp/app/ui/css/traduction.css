@@ -7,7 +7,7 @@
   margin: 0 0 var(--sp-3);
 }
 .choix-langue {
-  color: var(--ink);
+  color: var(--texte);
   font-size: var(--t-small);
   font-weight: 600;
 }
@@ -27,7 +27,7 @@
 }
 .mention-traduction {
   margin: var(--sp-3) 0 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 
@@ -35,7 +35,7 @@
   flex-basis: 100%;
   margin: 0;
   padding-left: var(--sp-2);
-  border-left: 3px solid var(--danger);
+  border-left: 3px solid var(--erreur);
 }
 
 .message-langues[hidden] {

@@ -5,11 +5,11 @@
 }
 .historique-jour-titre {
   margin: var(--sp-3) 0 var(--sp-1);
-  font-family: var(--police-etiquette);
+  font-family: var(--police-texte);
   font-size: var(--t-label);
   line-height: var(--lh-label);
   font-weight: 600;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   text-transform: capitalize;
 }
 .historique-entrees {
@@ -27,7 +27,7 @@
 }
 .historique-entree:hover,
 .historique-entree:focus-within {
-  background: var(--primary-soft);
+  background: var(--primaire-doux);
 }
 .historique-ouvrir {
   flex: 1 1 auto;
@@ -35,7 +35,7 @@
   padding: var(--sp-2) var(--sp-3);
   border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--texte);
   text-align: left;
   cursor: pointer;
   overflow: hidden;
@@ -49,7 +49,7 @@
   border: 0;
   border-radius: var(--r-sm);
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   cursor: pointer;
   visibility: hidden;
@@ -59,13 +59,13 @@
   visibility: visible;
 }
 .historique-supprimer:hover {
-  color: var(--ink);
+  color: var(--texte);
   text-decoration: underline;
 }
 .historique-vide,
 .historique-echec {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
@@ -83,7 +83,7 @@
 .historique-annuler-bouton {
   border: 0;
   background: transparent;
-  color: var(--primary);
+  color: var(--primaire);
   font-weight: 600;
   text-decoration: underline;
   cursor: pointer;

@@ -5,7 +5,7 @@
 }
 .info-mode {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
@@ -16,7 +16,7 @@
 }
 .vide-intro {
   margin: 0 0 var(--sp-4);
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .exemples {
   list-style: none;
@@ -30,20 +30,20 @@
   text-align: left;
   font: inherit;
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait-fort);
   border-radius: var(--r-md);
   background: var(--surface);
-  color: var(--ink);
+  color: var(--texte);
   cursor: pointer;
 }
 .exemple:hover {
-  background: var(--primary-soft);
+  background: var(--primaire-doux);
 }
 .exemple:focus-visible,
 .reponse:focus-visible,
 .citation-chip:focus-visible,
 .data-table-defilement:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .fil {
@@ -64,7 +64,7 @@
   max-width: 85%;
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-md);
-  background: var(--primary-soft);
+  background: var(--primaire-doux);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -73,7 +73,7 @@
   gap: var(--sp-3);
   min-width: 0;
   padding: var(--sp-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-md);
   background: var(--surface);
 }
@@ -84,7 +84,7 @@
 }
 .attente {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 @media (prefers-reduced-motion: no-preference) {
   .attente {
@@ -101,7 +101,7 @@
 .mention-echec,
 .reponse-modele {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
@@ -117,8 +117,8 @@
   padding: 0 var(--sp-2);
   border: 0;
   border-radius: var(--r-full);
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--primaire-doux);
+  color: var(--primaire);
   font: inherit;
   font-size: var(--t-small);
   line-height: var(--lh-small);
@@ -126,8 +126,9 @@
   cursor: pointer;
 }
 .citation-chip:hover {
-  background: var(--primary);
-  color: var(--on-primary);
+  color: var(--primaire-vif);
+  box-shadow: inset 0 0 0 1px var(--primaire);
+  text-decoration: underline;
 }
 .citation-numero {
   font-weight: 700;
@@ -142,8 +143,8 @@
   margin: 0;
   padding: var(--sp-2) var(--sp-3);
   background: var(--surface-alt);
-  border-left: 3px solid var(--warning);
-  color: var(--ink-soft);
+  border-left: 3px solid var(--alerte-texte);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
@@ -158,7 +159,7 @@
   display: none;
 }
 .inline-confirmation {
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
 }
 
@@ -171,14 +172,14 @@
   display: grid;
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-md);
   background: var(--surface);
   min-width: 0;
 }
 .source-card[aria-current] {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary);
+  border-color: var(--primaire);
+  box-shadow: 0 0 0 1px var(--primaire);
 }
 .source-card h3 {
   margin: 0;
@@ -189,7 +190,7 @@
 .source-meta,
 .source-extrait {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }

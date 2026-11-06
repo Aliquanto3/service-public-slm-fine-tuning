@@ -8,24 +8,24 @@
 }
 .retour-pouce {
   padding: var(--sp-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait-fort);
   background: var(--surface);
-  color: var(--ink);
+  color: var(--texte);
 }
 .retour-bas svg {
   transform: rotate(180deg);
 }
 .retour-pouce[aria-pressed="true"] {
-  background: var(--primary-soft);
-  border-color: var(--primary);
-  color: var(--primary);
+  background: var(--primaire-doux);
+  border-color: var(--primaire);
+  color: var(--primaire);
 }
 .retour-pouce:disabled {
   cursor: default;
 }
 .retour-message {
   font-size: var(--t-small);
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .retour-commentaire {
   flex-basis: 100%;
@@ -38,12 +38,12 @@
 .retour-commentaire textarea {
   width: 100%;
   padding: var(--sp-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait-fort);
   border-radius: var(--r-sm);
   font: inherit;
 }
 .retour-facultatif {
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 
 /* Export, onglet Retours des Paramètres */
@@ -53,7 +53,7 @@
 }
 .retours-etat {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .retours-apercu {
   display: grid;
@@ -67,10 +67,10 @@
   margin: 0;
   padding: var(--sp-3);
   overflow: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-sm);
   background: var(--surface-alt);
-  font-family: var(--police-mono);
+  font-family: var(--police-code);
   font-size: var(--t-small);
   white-space: pre-wrap;
   overflow-wrap: anywhere;

@@ -20,9 +20,9 @@ body {
   grid-template-areas:
     "colonne barre sources"
     "colonne principal sources";
-  background: var(--surface);
-  color: var(--ink);
-  font-family: var(--police);
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--police-texte);
   font-size: var(--t-body);
   line-height: var(--lh-body);
   overflow-wrap: anywhere;
@@ -32,8 +32,23 @@ textarea {
   font: inherit;
   color: inherit;
 }
+/* Champs de saisie : jetons de la charte plutôt que les couleurs du navigateur (`color-scheme`).
+   `:where()` garde une spécificité nulle : les règles propres à une vue (composer…) l'emportent. */
+:where(input:not([type="checkbox"], [type="radio"]), select, textarea) {
+  border: 1px solid var(--trait-fort);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--texte);
+}
+:where(input, select, textarea)::placeholder {
+  color: var(--texte-attenue);
+  opacity: 1;
+}
+:where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--bouton);
+}
 :focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .visuellement-cache {
@@ -43,6 +58,13 @@ textarea {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Titres secondaires : Sora, graisse de la charte. */
+h2,
+h3 {
+  font-family: var(--police-titres);
+  font-weight: var(--graisse-titres);
 }
 
 /* Icônes locales : masque sur un fichier SVG, couleur héritée du texte. */
@@ -77,27 +99,46 @@ textarea {
   flex-direction: column;
   min-height: 0;
   background: var(--surface-alt);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--trait);
   padding: var(--sp-4) var(--sp-3);
   gap: var(--sp-3);
 }
 .marque {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   margin: 0;
+  font-family: var(--police-titres);
   font-size: var(--t-title);
   line-height: var(--lh-title);
-  font-weight: 700;
+  font-weight: var(--graisse-titres);
   letter-spacing: -0.01em;
-  color: var(--primary);
+  color: var(--texte);
+}
+.pictogramme {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.picto-tuile {
+  fill: var(--picto-tuile);
+}
+.picto-barres {
+  fill: none;
+  stroke: var(--picto-barres);
+}
+.picto-point {
+  fill: var(--picto-point);
 }
 .etiquette {
   margin: 0 0 var(--sp-2);
-  font-family: var(--police-etiquette);
+  font-family: var(--police-texte);
   font-size: var(--t-label);
   line-height: var(--lh-label);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .taches {
   list-style: none;
@@ -116,16 +157,16 @@ textarea {
   border: 0;
   border-radius: var(--r-sm);
   background: transparent;
-  color: var(--ink);
+  color: var(--texte);
   text-align: left;
   cursor: pointer;
 }
 .tache:hover {
-  background: var(--primary-soft);
+  background: var(--primaire-doux);
 }
 .tache[aria-current="true"] {
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--primaire-doux);
+  color: var(--texte);
   font-weight: 600;
 }
 .tache[aria-current="true"]::before {
@@ -136,7 +177,7 @@ textarea {
   bottom: var(--sp-1);
   width: 3px;
   border-radius: var(--r-full);
-  background: var(--primary);
+  background: var(--primaire);
 }
 .plus {
   margin-top: var(--sp-2);
@@ -171,36 +212,37 @@ textarea {
   transition: background-color 0.15s;
 }
 .bouton-primaire {
-  border: 1px solid var(--primary);
-  background: var(--primary);
-  color: var(--on-primary);
+  border: 1px solid var(--bouton);
+  background: var(--bouton);
+  color: var(--sur-bouton);
 }
 .bouton-primaire:hover:not(:disabled) {
-  background: var(--primary-hover);
+  border-color: var(--bouton-survol);
+  background: var(--bouton-survol);
 }
 .bouton-primaire:disabled {
-  border-color: var(--line);
-  background: var(--line);
-  color: var(--ink-soft);
+  border-color: var(--trait);
+  background: var(--trait);
+  color: var(--texte-attenue);
   cursor: not-allowed;
 }
 .bouton-secondaire {
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--primary);
+  border: 1px solid var(--trait-fort);
+  background: transparent;
+  color: var(--texte);
 }
 .bouton-secondaire:hover {
-  background: var(--primary-soft);
+  background: var(--primaire-doux);
 }
 .bouton-icone {
   padding: var(--sp-2);
   border: 1px solid transparent;
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .bouton-icone:hover {
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--primaire-doux);
+  color: var(--texte);
 }
 
 /* Barre supérieure */
@@ -211,14 +253,15 @@ textarea {
   align-items: center;
   gap: var(--sp-2) var(--sp-4);
   padding: var(--sp-2) var(--sp-5);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  border-bottom: 1px solid var(--trait);
+  background: var(--fond);
 }
 .barre h1 {
   margin: 0;
+  font-family: var(--police-titres);
   font-size: var(--t-title);
   line-height: var(--lh-title);
-  font-weight: 700;
+  font-weight: var(--graisse-titres);
   letter-spacing: -0.01em;
 }
 .barre-actions {
@@ -250,15 +293,15 @@ textarea {
 }
 .non-disponible {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
 }
 .bandeau {
   margin: 0;
   padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-sm);
   background: var(--surface-alt);
-  border: 1px solid var(--line);
-  color: var(--ink-soft);
+  border: 1px solid var(--trait);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
@@ -270,14 +313,14 @@ textarea {
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-sm);
   background: var(--surface-alt);
-  color: var(--ink);
+  color: var(--texte);
 }
 .callout p {
   margin: 0;
   flex: 1 1 12rem;
 }
 .callout-danger {
-  border-left: 3px solid var(--danger);
+  border-left: 3px solid var(--erreur);
 }
 /* Garde de démarrage : n'apparaît qu'après 2 s, pour ne pas clignoter avant que app.js le masque.
    Durée nulle : ce n'est pas une animation, d'où le `!important` face à « réduire les animations ». */
@@ -293,25 +336,35 @@ textarea {
   }
 }
 .callout-danger .icone {
-  background-color: var(--danger);
+  background-color: var(--erreur);
 }
 .callout-warning {
-  border-left: 3px solid var(--warning);
+  border-left: 3px solid var(--alerte-texte);
 }
 .legal {
   padding: var(--sp-2) var(--sp-3);
   background: var(--surface-alt);
-  border-left: 3px solid var(--warning);
-  color: var(--ink-soft);
+  border-left: 3px solid var(--alerte-texte);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
 .bienvenue h2 {
   margin: 0 0 var(--sp-3);
+  font-family: var(--police-titres);
   font-size: var(--t-display);
   line-height: var(--lh-display);
-  font-weight: 800;
+  font-weight: var(--graisse-titres);
   letter-spacing: -0.02em;
+}
+.bienvenue h2::after {
+  content: "";
+  display: block;
+  width: 96px;
+  height: 4px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--accent);
 }
 .bienvenue p {
   margin: 0 0 var(--sp-3);
@@ -324,12 +377,12 @@ textarea {
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait-fort);
   border-radius: var(--r-md);
   background: var(--surface-alt);
 }
 .composer:focus-within {
-  border: 2px solid var(--focus-ring);
+  border: 2px solid var(--focus);
   padding: calc(var(--sp-3) - 1px);
 }
 .composer textarea {
@@ -346,7 +399,7 @@ textarea {
   outline: none;
 }
 .composer textarea::placeholder {
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   opacity: 1;
 }
 .composer .bouton-primaire {
@@ -373,7 +426,7 @@ textarea {
   overflow-y: auto;
   padding: var(--sp-4);
   background: var(--surface-alt);
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--trait);
 }
 .sources-tete {
   display: flex;
@@ -395,7 +448,7 @@ textarea {
     bottom: 0;
     z-index: 10;
     width: min(var(--sources-width), 100%);
-    box-shadow: var(--ombre);
+    box-shadow: var(--halo);
   }
 }
 
@@ -407,11 +460,11 @@ dialog {
   border: 0;
   border-radius: var(--r-lg);
   background: var(--surface);
-  color: var(--ink);
-  box-shadow: var(--ombre);
+  color: var(--texte);
+  box-shadow: var(--halo);
 }
 dialog::backdrop {
-  background: var(--scrim);
+  background: var(--voile);
 }
 .dialogue-tete {
   display: flex;

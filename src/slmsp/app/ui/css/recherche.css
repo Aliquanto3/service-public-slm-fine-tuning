@@ -7,7 +7,7 @@
   display: grid;
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-md);
   background: var(--surface);
   min-width: 0;
@@ -20,7 +20,7 @@
 }
 .dataset-meta {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
@@ -37,7 +37,7 @@
 .data-table-defilement {
   max-width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--trait);
   border-radius: var(--r-sm);
 }
 .data-table {
@@ -52,7 +52,7 @@
   font-weight: 700;
   white-space: nowrap;
   background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--trait);
 }
 .data-table th,
 .data-table td {
@@ -71,7 +71,7 @@
   display: grid;
   gap: var(--sp-2);
   margin-top: var(--sp-2);
-  color: var(--ink-soft);
+  color: var(--texte-attenue);
   font-size: var(--t-small);
   line-height: var(--lh-small);
 }
