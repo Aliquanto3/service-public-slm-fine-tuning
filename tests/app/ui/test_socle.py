@@ -142,6 +142,13 @@ def test_ordre_de_tabulation_focus_visible_et_libelles(page) -> None:
     page.evaluate(  # point de départ de la navigation au clavier : la marque, en tête de colonne
         "() => { const m = document.querySelector('.marque'); m.tabIndex = -1; m.focus(); }"
     )
+    # Couleur du jeton `focus` du thème actif (Playwright émule le clair par défaut, la page est
+    # sombre d'abord) : le test vaut dans les deux thèmes.
+    focus = page.evaluate(
+        """() => { const e = document.createElement('span'); e.style.color = 'var(--focus)';
+          document.body.append(e); const c = getComputedStyle(e).color; e.remove(); return c; }"""
+    )
+    assert focus in ("rgb(31, 95, 209)", "rgb(158, 192, 255)"), focus
     vus = []
     for _ in range(14):
         page.keyboard.press("Tab")
@@ -159,7 +166,7 @@ def test_ordre_de_tabulation_focus_visible_et_libelles(page) -> None:
             }"""
         )
         assert info["nom"], info
-        assert info["contour"] == "solid 2px rgb(31, 95, 209)", info
+        assert info["contour"] == f"solid 2px {focus}", info
         vus.append(info["id"])
         if info["id"] == "sources-fermer":
             break

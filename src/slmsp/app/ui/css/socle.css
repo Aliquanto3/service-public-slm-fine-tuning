@@ -32,6 +32,21 @@ textarea {
   font: inherit;
   color: inherit;
 }
+/* Champs de saisie : jetons de la charte plutôt que les couleurs du navigateur (`color-scheme`).
+   `:where()` garde une spécificité nulle : les règles propres à une vue (composer…) l'emportent. */
+:where(input:not([type="checkbox"], [type="radio"]), select, textarea) {
+  border: 1px solid var(--trait-fort);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--texte);
+}
+:where(input, select, textarea)::placeholder {
+  color: var(--texte-attenue);
+  opacity: 1;
+}
+:where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--bouton);
+}
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;

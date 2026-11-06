@@ -235,6 +235,8 @@ def test_focus_et_filet_or() -> None:
 def test_aucun_hex_hors_des_jetons() -> None:
     fichiers = [p for p in CSS.glob("*.css") if p.name != "jetons.css"]
     fichiers += [UI / "index.html", *(UI / "icones").glob("*.svg")]
+    # `favicon.svg` est exclu, et lui seul : c'est une image chargée par l'onglet, qui ne lit pas
+    # les variables CSS de la page. Il garde donc les hex de `dist/favicon.svg` (charte v2.1).
     fichiers += [p for p in UI.glob("charte/*.svg") if p.name != "favicon.svg"]
     for fichier in fichiers:
         texte = re.sub(r"&#\w+;", "", _lire(fichier))
@@ -242,6 +244,25 @@ def test_aucun_hex_hors_des_jetons() -> None:
         assert not re.search(r"var\(--[\w-]+\s*,\s*(?:#|rgb|hsl)", texte), (
             f"repli dans var() : {fichier.name}"
         )
+
+
+def test_champs_de_saisie_aux_jetons() -> None:
+    """Champs, listes et zones de texte : `surface`, `texte` et `trait-fort`, pas les couleurs du
+    navigateur sous `color-scheme: dark`. Couples gardés : (texte, surface) dans TEXTE,
+    (trait-fort, surface) et (focus, surface) dans NON_TEXTE."""
+    corps = dict(_regles(_lire(CSS / "socle.css")))
+    champs = corps[':where(input:not([type="checkbox"], [type="radio"]), select, textarea)']
+    for attendu in (
+        "background: var(--surface)",
+        "color: var(--texte)",
+        "border: 1px solid var(--trait-fort)",
+    ):
+        assert attendu in champs
+    assert "var(--texte-attenue)" in corps[":where(input, select, textarea)::placeholder"]
+    for couple in (("texte", "surface"), ("texte-attenue", "surface")):
+        assert couple in TEXTE
+    for couple in (("trait-fort", "surface"), ("focus", "surface")):
+        assert couple in NON_TEXTE
 
 
 def test_icones_en_couleur_courante() -> None:

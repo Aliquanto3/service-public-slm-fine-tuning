@@ -19,6 +19,9 @@ Limites
 - Historique non migré : `_bmad/`, `_bmad-output/` (maquettes, `DESIGN.md`), notes de version précédentes de ce fichier.
 - Le gabarit d'audit est un fichier autonome : les polices de la charte y figurent dans la pile de repli, sans fichier embarqué.
 - Captures réalisées avec le pont factice (`?pont=factice`), sans modèle : seul l'écran d'accueil est montré.
+- `src/slmsp/app/ui/charte/favicon.svg` garde les hex de `dist/favicon.svg` : chargé comme image par l'onglet, il ne lit pas les variables CSS. C'est le seul fichier exclu du test « aucun hex hors des jetons ».
+- `audit.py --strict` tourne avec `--ignorer "CHANGELOG.md"` pour les hex des notes antérieures (0.3.2). L'exclusion couvre aussi cette entrée 0.4.0, qui ne contient aucun hex.
+- Champs de saisie : jetons `surface`, `texte` et `trait-fort` (règle commune de `socle.css`), cases à cocher en `accent-color: bouton`. Le rendu natif des listes déroulantes ouvertes reste celui du système.
 
 ## 0.3.2
 
